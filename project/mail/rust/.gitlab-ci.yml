@@ -16,6 +16,10 @@ default:
   tags:
     - shared-medium
 
+# Ensure submodules are fully initialized
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
 # Config git acccess to other repos
 .script-config-git:
   script:

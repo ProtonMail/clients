@@ -101,8 +101,8 @@ build-ios:
     - cargo build --release --target --target x86_64-apple-ios
     - cargo build --release --target --target aarch64-apple-ios-sim
     - cargo build --release --target --target aarch64-apple-ios
-    - rust-build/build_ios_framework_uniffi.sh proton-mail-uniffi proton-mail-uniffi/uniffi.toml "./tmp/ios-framework"
-    - CRATE_VERSION=$(cargo pkgid --manifest-path=proton-mail-uniffi/Cargo.toml | cut -d "#" -f2)
+    - rust-build/build_ios_framework_uniffi.sh proton-mail-uniffi crates/mail-uniffi/uniffi.toml "./tmp/ios-framework"
+    - CRATE_VERSION=$(cargo pkgid --manifest-path=crates/mail-uniffi/Cargo.toml | cut -d "#" -f2)
     - cd "./tmp/ios-framework/$CRATE_VERSION" && xcodebuild -scheme proton_app_uniffi -destination generic/platform=iOS -configuration="Release build"
 
   artifacts:
@@ -117,14 +117,14 @@ build-android:
   script:
     - !reference [.script-config-git, script]
     - cargo ndk -t "armeabi-v7a" -t "arm64-v8a" -t "x86_64" build --release
-    - rust-build/build_android.sh proton-mail-uniffi proton-mail-uniffi/uniffi.toml ./proton-mail-uniffi/android/lib/src/main/
-    - ./proton-mail-uniffi/android/build-android-archive.sh
+    - rust-build/build_android.sh proton-mail-uniffi crates/mail-uniffi/uniffi.toml ./crates/mail-uniffi/android/lib/src/main/
+    - ./crates/mail-uniffi/android/build-android-archive.sh
 
   artifacts:
     name: proton-mail-android
     paths:
-      - ./proton-mail-uniffi/android/lib/src/main
-      - ./proton-mail-uniffi/android/lib/build/
+      - ./crates/mail-uniffi/android/lib/src/main
+      - ./crates/mail-uniffi/android/lib/build/
     when: always
     expire_in: 4 hrs
 
@@ -161,7 +161,7 @@ publish-android:
       when: always
       allow_failure: true
   script:
-    - ./proton-mail-uniffi/android/publish.sh
+    - ./crates/mail-uniffi/android/publish.sh
   dependencies:
     - build-android
   needs:
@@ -169,7 +169,7 @@ publish-android:
   artifacts:
     name: proton-mail-android-lib
     paths:
-      - ./proton-mail-uniffi/android/lib/build/outputs/
+      - ./crates/mail-uniffi/android/lib/build/outputs/
     when: always
     expire_in: 4 hrs
 
@@ -182,7 +182,7 @@ publish-ios:
       when: always
       allow_failure: true
   script:
-    - ./proton-mail-uniffi/ios/publish.sh
+    - ./crates/mail-uniffi/ios/publish.sh
   dependencies:
     - build-ios
   needs:

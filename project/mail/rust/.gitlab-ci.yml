@@ -82,12 +82,12 @@ build-wasm:
   stage: build
   script:
     - !reference [.script-config-git, script]
-    - cd proton-mail-wasm
+    - cd crates/mail-wasm
     - wasm-pack build -d "./web_pkg"
   artifacts:
     name: proton-mail-wasm
     paths:
-      - proton-mail-wasm/web_pkg
+      - crates/mail-wasm/web_pkg
     when: always
     expire_in: 4 hrs
 

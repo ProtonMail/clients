@@ -186,10 +186,14 @@ publish-crates:
     - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
       when: manual
       allow_failure: true
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      when: manual
+      variables: { DRY_RUN: "--dry-run" }
+      allow_failure: true
   before_script:
     - apt-get update && apt-get install -y clang golang python3-packaging
   script:
-    - cargo xtask publish
+    - cargo xtask publish $DRY_RUN
       --reg-name proton
       --reg-repo $RUST_REGISTRY_URL
       --name "$GITLAB_USER_NAME"

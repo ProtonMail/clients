@@ -187,7 +187,7 @@ publish-crates:
       variables:
         DRY_RUN: "--dry-run"
   before_script:
-    - apt-get update && apt-get install -y python3-packaging
+    - apt-get update && apt-get install -y clang golang python3-packaging
   script:
     - cargo xtask publish $DRY_RUN
       --reg-name proton

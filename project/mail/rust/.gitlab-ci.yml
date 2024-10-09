@@ -150,7 +150,6 @@ build-android:
     - cargo ndk -t "armeabi-v7a" -t "arm64-v8a" -t "x86_64" build --release
     - rust-build/build_android.sh proton-mail-uniffi ./crates/mail-uniffi/uniffi.toml ./crates/mail-uniffi/android/lib/src/main/
     - ./crates/mail-uniffi/android/build-android-archive.sh
-
   artifacts:
     name: proton-mail-android
     paths:
@@ -194,11 +193,14 @@ publish-crates:
   before_script:
     - apt-get update && apt-get install -y clang golang python3-packaging
   script:
+    - git add .
+    - git stash
     - cargo xtask publish $DRY_RUN
       --reg-name proton
       --reg-repo $RUST_REGISTRY_URL
       --name "$GITLAB_USER_NAME"
       --email "$GITLAB_USER_EMAIL"
+    - git stash pop
 
 publish-android:
   stage: deploy

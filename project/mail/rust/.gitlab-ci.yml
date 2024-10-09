@@ -79,6 +79,11 @@ build-macos:
     - inbox-tart
   image: "inbox-rust:1.81.0"
   stage: build
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
+      when: manual
+      allow_failure: true
   script:
     - !reference [.script-config-git, script]
     - cargo build --release
@@ -86,6 +91,11 @@ build-macos:
 
 build-wasm:
   stage: build
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
+      when: manual
+      allow_failure: true
   script:
     - !reference [.script-config-git, script]
     - cd ./crates/mail-wasm
@@ -102,6 +112,11 @@ build-ios:
     - inbox-tart
   image: "inbox-rust:1.81.0"
   stage: build
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
+      when: manual
+      allow_failure: true
   script:
     - !reference [.script-config-git, script]
     - cargo build --release --target --target x86_64-apple-ios
@@ -120,6 +135,11 @@ build-ios:
 
 build-android:
   stage: build
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
+      when: manual
+      allow_failure: true
   script:
     - !reference [.script-config-git, script]
     - cargo ndk -t "armeabi-v7a" -t "arm64-v8a" -t "x86_64" build --release

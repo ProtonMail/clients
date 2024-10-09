@@ -4,9 +4,9 @@ include:
 
 workflow:
   rules:
-    - if: '$CI_DEFAULT_BRANCH == $CI_COMMIT_BRANCH'
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/'
+    - if: $CI_DEFAULT_BRANCH == $CI_COMMIT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
 
 default:
   image: gitlab.protontech.ch:4567/rust/inbox/docker-images:rust-1.81.0-v3
@@ -183,16 +183,13 @@ publish-crates:
   image: rustlang/rust:nightly
   stage: deploy
   rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH
-      variables: { DRY_RUN: "--dry-run" }
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
       when: manual
       allow_failure: true
   before_script:
     - apt-get update && apt-get install -y clang golang python3-packaging
   script:
-    - cargo xtask publish $DRY_RUN
+    - cargo xtask publish
       --reg-name proton
       --reg-repo $RUST_REGISTRY_URL
       --name "$GITLAB_USER_NAME"
@@ -203,8 +200,8 @@ publish-android:
   tags:
     - xlarge-k8s
   rules:
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/'
-      when: always
+    - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
+      when: manual
       allow_failure: true
   script:
     - ./crates/mail-uniffi/android/publish.sh
@@ -224,8 +221,8 @@ publish-ios:
   tags:
     - xlarge-k8s
   rules:
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/'
-      when: always
+    - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
+      when: manual
       allow_failure: true
   script:
     - ./crates/mail-uniffi/ios/publish.sh

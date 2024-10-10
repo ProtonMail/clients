@@ -209,10 +209,6 @@ publish-crates:
       --repository $RUST_REGISTRY_GIT_URL
       --name "$GITLAB_USER_NAME"
       --email "$GITLAB_USER_EMAIL"
-      --exclude proton-mail-uniffi
-      --exclude proton-mail-wasm
-      --exclude uniffi-bindgen
-      --exclude xtask
     - git stash pop
 
 publish-android:

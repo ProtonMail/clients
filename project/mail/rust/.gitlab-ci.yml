@@ -23,8 +23,11 @@ variables:
   # The token used to "publish" (clone) the registry
   RUST_REGISTRY_TOKEN: glpat-xzG3FqKqXs4jLwD8Ey2a
 
-  # The URL of the rust registry
-  RUST_REGISTRY_URL: ${CI_SERVER_PROTOCOL}://git:${RUST_REGISTRY_TOKEN}@${CI_SERVER_HOST}/${RUST_REGISTRY}.git
+  # The name of the registry
+  RUST_REGISTRY_NAME: proton
+
+  # The git URL of the rust registry
+  RUST_REGISTRY_GIT_URL: ${CI_SERVER_PROTOCOL}://git:${RUST_REGISTRY_TOKEN}@${CI_SERVER_HOST}/${RUST_REGISTRY}.git
 
 # Config git acccess to other repos
 .script-config-git:
@@ -193,13 +196,16 @@ publish-crates:
   before_script:
     - apt-get update && apt-get install -y clang golang python3-packaging
   script:
-    - git add .
-    - git stash
+    - git stash --all
     - cargo xtask publish $DRY_RUN
-      --reg-name proton
-      --reg-repo $RUST_REGISTRY_URL
+      --registry $RUST_REGISTRY_NAME
+      --repository $RUST_REGISTRY_GIT_URL
       --name "$GITLAB_USER_NAME"
       --email "$GITLAB_USER_EMAIL"
+      --exclude proton-mail-uniffi
+      --exclude proton-mail-wasm
+      --exclude uniffi-bindgen
+      --exclude xtask
     - git stash pop
 
 publish-android:

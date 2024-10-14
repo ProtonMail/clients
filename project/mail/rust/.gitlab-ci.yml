@@ -20,9 +20,6 @@ variables:
   # The rust registry project
   RUST_REGISTRY: rust/shared/registry
 
-  # The token used to "publish" (clone) the registry
-  RUST_REGISTRY_TOKEN: glpat-xzG3FqKqXs4jLwD8Ey2a
-
   # The name of the registry
   RUST_REGISTRY_NAME: proton
 

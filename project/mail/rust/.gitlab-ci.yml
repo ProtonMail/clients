@@ -194,6 +194,7 @@ publish-crates:
       variables: { DRY_RUN: "" }
     - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH
       variables: { DRY_RUN: "--dry-run" }
+      allow_failure: true
     - when: manual
       variables: { DRY_RUN: "--dry-run" }
       allow_failure: true

@@ -9,7 +9,7 @@ workflow:
     - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
 
 default:
-  image: gitlab.protontech.ch:4567/rust/inbox/docker-images:rust-1.81.0-v3
+  image: gitlab.protontech.ch:4567/rust/inbox/docker-images:rust-1.82.0
   tags:
     - shared-medium
 
@@ -82,7 +82,7 @@ build:
 build-macos:
   tags:
     - inbox-tart
-  image: "inbox-rust:1.81.0"
+  image: "inbox-rust:1.82.0"
   stage: build
   rules:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
@@ -117,7 +117,7 @@ build-wasm:
 build-ios:
   tags:
     - inbox-tart
-  image: "inbox-rust:1.81.0"
+  image: "inbox-rust:1.82.0"
   stage: build
   rules:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
@@ -186,28 +186,28 @@ pages:
       when: manual
       allow_failure: true
 
-publish-crates:
-  image: rustlang/rust:nightly
-  stage: deploy
-  rules:
-    - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
-      variables: { DRY_RUN: "" }
-    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH
-      variables: { DRY_RUN: "--dry-run" }
-      allow_failure: true
-    - when: manual
-      variables: { DRY_RUN: "--dry-run" }
-      allow_failure: true
-  before_script:
-    - apt-get update && apt-get install -y clang golang python3-packaging
-  script:
-    - git stash --all
-    - cargo xtask publish $DRY_RUN
-      --registry $RUST_REGISTRY_NAME
-      --repository $RUST_REGISTRY_GIT_URL
-      --name "$GITLAB_USER_NAME"
-      --email "$GITLAB_USER_EMAIL"
-    - git stash pop
+#publish-crates:
+#  image: rustlang/rust:nightly
+#  stage: deploy
+#  rules:
+#    - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
+#      variables: { DRY_RUN: "" }
+#    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH
+#      variables: { DRY_RUN: "--dry-run" }
+#      allow_failure: true
+#    - when: manual
+#      variables: { DRY_RUN: "--dry-run" }
+#      allow_failure: true
+#  before_script:
+#    - apt-get update && apt-get install -y clang golang python3-packaging
+#  script:
+#    - git stash --all
+#    - cargo xtask publish $DRY_RUN
+#      --registry $RUST_REGISTRY_NAME
+#      --repository $RUST_REGISTRY_GIT_URL
+#      --name "$GITLAB_USER_NAME"
+#      --email "$GITLAB_USER_EMAIL"
+#    - git stash pop
 
 publish-android:
   stage: deploy

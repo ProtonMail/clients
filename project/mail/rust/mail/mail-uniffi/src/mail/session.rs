@@ -253,6 +253,7 @@ impl MailSession {
         uniffi_async(async move {
             let mut accounts = Vec::new();
 
+            // TODO(ET-1431): Compute this on the core side.
             for account in ctx.get_accounts().await? {
                 if let Some(state) = ctx.get_account_state(account.remote_id.clone()).await? {
                     accounts.push(StoredAccount::new(account, state));
@@ -280,6 +281,7 @@ impl MailSession {
 
             let (initial, rx) = ctx.watch_accounts().await?;
 
+            // TODO(ET-1431): Compute this on the core side.
             for account in initial {
                 if let Some(state) = ctx.get_account_state(account.remote_id.clone()).await? {
                     accounts.push(StoredAccount::new(account, state));
@@ -287,6 +289,114 @@ impl MailSession {
             }
 
             Ok(WatchedAccounts::new(accounts, rx, callback))
+        })
+        .await
+    }
+
+    /// Get all API sessions.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if we fail to retrieve the sessions from the db.
+    pub async fn get_sessions(&self) -> MailSessionResult<Vec<Arc<StoredSession>>> {
+        let ctx = self.ctx.clone();
+
+        uniffi_async(async move {
+            let mut sessions = Vec::new();
+
+            // TODO(ET-1431): Compute this on the core side.
+            for session in ctx.get_sessions().await? {
+                if let Some(state) = ctx.get_session_state(session.remote_id.clone()).await? {
+                    sessions.push(StoredSession::new(session, state));
+                };
+            }
+
+            Ok(sessions)
+        })
+        .await
+    }
+
+    /// Watch all API sessions for changes.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the watcher cannot be registered with the database.
+    pub async fn watch_sessions(
+        &self,
+        callback: Box<dyn LiveQueryCallback>,
+    ) -> MailSessionResult<WatchedSessions> {
+        let ctx = self.ctx.clone();
+
+        uniffi_async(async move {
+            let mut sessions = Vec::new();
+
+            let (initial, rx) = ctx.watch_sessions().await?;
+
+            // TODO(ET-1431): Compute this on the core side.
+            for session in initial {
+                if let Some(state) = ctx.get_session_state(session.remote_id.clone()).await? {
+                    sessions.push(StoredSession::new(session, state));
+                };
+            }
+
+            Ok(WatchedSessions::new(sessions, rx, callback))
+        })
+        .await
+    }
+
+    /// Get all API sessions associated with a given account.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if we fail to retrieve the sessions from the db.
+    pub async fn get_account_sessions(
+        &self,
+        account: Arc<StoredAccount>,
+    ) -> MailSessionResult<Vec<Arc<StoredSession>>> {
+        let ctx = self.ctx.clone();
+
+        uniffi_async(async move {
+            let account = account.account();
+
+            let mut sessions = Vec::new();
+
+            // TODO(ET-1431): Compute this on the core side.
+            for session in ctx.get_account_sessions(account.remote_id.clone()).await? {
+                if let Some(state) = ctx.get_session_state(session.remote_id.clone()).await? {
+                    sessions.push(StoredSession::new(session, state));
+                };
+            }
+
+            Ok(sessions)
+        })
+        .await
+    }
+
+    /// Watch an account's API sessions for changes.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the watcher cannot be registered with the database.
+    pub async fn watch_account_sessions(
+        &self,
+        account: Arc<StoredAccount>,
+        callback: Box<dyn LiveQueryCallback>,
+    ) -> MailSessionResult<WatchedSessions> {
+        let ctx = self.ctx.clone();
+
+        uniffi_async(async move {
+            let mut sessions = Vec::new();
+
+            let (initial, rx) = ctx.watch_account_sessions(account.user_id().into()).await?;
+
+            // TODO(ET-1431): Compute this on the core side.
+            for session in initial {
+                if let Some(state) = ctx.get_session_state(session.remote_id.clone()).await? {
+                    sessions.push(StoredSession::new(session, state));
+                };
+            }
+
+            Ok(WatchedSessions::new(sessions, rx, callback))
         })
         .await
     }
@@ -307,66 +417,12 @@ impl MailSession {
                 return Ok(None);
             };
 
+            // TODO(ET-1431): Compute this on the core side.
             let Some(state) = ctx.get_account_state(account.remote_id.clone()).await? else {
                 return Ok(None);
             };
 
             Ok(Some(StoredAccount::new(account, state)))
-        })
-        .await
-    }
-
-    /// Get all API sessions associated with a given account.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if we fail to retrieve the sessions from the db.
-    pub async fn get_sessions(
-        &self,
-        account: Arc<StoredAccount>,
-    ) -> MailSessionResult<Vec<Arc<StoredSession>>> {
-        let ctx = self.ctx.clone();
-
-        uniffi_async(async move {
-            let account = account.account();
-
-            let mut sessions = Vec::new();
-
-            for session in ctx.get_sessions(account.remote_id.clone()).await? {
-                if let Some(state) = ctx.get_session_state(session.remote_id.clone()).await? {
-                    sessions.push(StoredSession::new(session, state));
-                };
-            }
-
-            Ok(sessions)
-        })
-        .await
-    }
-
-    /// Watch an account's API sessions for changes.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the watcher cannot be registered with the database.
-    pub async fn watch_sessions(
-        &self,
-        account: Arc<StoredAccount>,
-        callback: Box<dyn LiveQueryCallback>,
-    ) -> MailSessionResult<WatchedSessions> {
-        let ctx = self.ctx.clone();
-
-        uniffi_async(async move {
-            let mut sessions = Vec::new();
-
-            let (initial, rx) = ctx.watch_sessions(account.user_id().into()).await?;
-
-            for session in initial {
-                if let Some(state) = ctx.get_session_state(session.remote_id.clone()).await? {
-                    sessions.push(StoredSession::new(session, state));
-                };
-            }
-
-            Ok(WatchedSessions::new(sessions, rx, callback))
         })
         .await
     }
@@ -387,6 +443,7 @@ impl MailSession {
                 return Ok(None);
             };
 
+            // TODO(ET-1431): Compute this on the core side.
             let Some(state) = ctx.get_session_state(session.remote_id.clone()).await? else {
                 return Ok(None);
             };
@@ -530,7 +587,7 @@ impl MailSession {
         &self,
         account: Arc<StoredAccount>,
     ) -> MailSessionResult<Vec<Arc<StoredSession>>> {
-        async_runtime().block_on(self.get_sessions(account))
+        async_runtime().block_on(self.get_account_sessions(account))
     }
 
     /// A blocking form of `get_session`.

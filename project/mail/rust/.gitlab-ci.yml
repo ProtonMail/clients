@@ -114,7 +114,7 @@ build-wasm:
     when: always
     expire_in: 4 hrs
 
-build-ios:
+build-mail-uniffi-ios:
   tags:
     - inbox-tart
   image: "inbox-rust:1.82.0"
@@ -130,9 +130,6 @@ build-ios:
     - !reference [.before-script-jq, before_script]
   script:
     - !reference [.script-config-git, script]
-    - cargo build --release --target --target x86_64-apple-ios -p proton-mail-uniffi
-    - cargo build --release --target --target aarch64-apple-ios-sim -p proton-mail-uniffi
-    - cargo build --release --target --target aarch64-apple-ios -p proton-mail-uniffi
     - rust-build/build_ios_framework_uniffi.sh proton-mail-uniffi ./mail/mail-uniffi/uniffi.toml "./tmp/ios-framework"
     - CRATE_VERSION=$(cargo metadata --format-version 1 --no-deps | jq '.packages[] | select(.name == "proton-mail-uniffi") | .version' | jq -r)
     - cd "./tmp/ios-framework/$CRATE_VERSION" && xcodebuild -scheme proton_app_uniffi -destination generic/platform=iOS -configuration="Release build"
@@ -143,7 +140,7 @@ build-ios:
     when: always
     expire_in: 4 hrs
 
-build-android:
+build-mail-uniffi-android:
   stage: build
   rules:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
@@ -154,7 +151,6 @@ build-android:
       allow_failure: true
   script:
     - !reference [.script-config-git, script]
-    - cargo ndk -t "armeabi-v7a" -t "arm64-v8a" -t "x86_64" build --release -p proton-mail-uniffi
     - rust-build/build_android.sh proton-mail-uniffi ./mail/mail-uniffi/uniffi.toml ./mail/mail-uniffi/android/lib/src/main/
     - ./mail/mail-uniffi/android/build-android-archive.sh
   artifacts:
@@ -209,7 +205,7 @@ pages:
 #      --email "$GITLAB_USER_EMAIL"
 #    - git stash pop
 
-publish-android:
+publish-mail-uniffi-android:
   stage: deploy
   tags:
     - xlarge-k8s
@@ -220,9 +216,9 @@ publish-android:
   script:
     - ./mail/mail-uniffi/android/publish.sh
   dependencies:
-    - build-android
+    - build-mail-uniffi-android
   needs:
-    - build-android
+    - build-mail-uniffi-android
   artifacts:
     name: proton-mail-android-lib
     paths:
@@ -230,7 +226,7 @@ publish-android:
     when: always
     expire_in: 4 hrs
 
-publish-ios:
+publish-mail-uniffi-ios:
   stage: deploy
   tags:
     - xlarge-k8s
@@ -241,6 +237,6 @@ publish-ios:
   script:
     - ./mail/mail-uniffi/ios/publish.sh
   dependencies:
-    - build-ios
+    - build-mail-uniffi-ios
   needs:
-    - build-ios
+    - build-mail-uniffi-ios

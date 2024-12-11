@@ -49,7 +49,7 @@ stages:
 .do_clippy_check:
   script:
     - !reference [.script-config-git, script]
-    - cargo clippy -- -D warnings
+    - cargo clippy --all-targets -- -D warnings
 
 .do_proton_mail_uniffi_version:
   script:

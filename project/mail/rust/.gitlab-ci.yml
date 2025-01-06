@@ -245,15 +245,15 @@ publish-mail-uniffi-ios:
     - build-mail-uniffi-ios
 
 # Allows to publish proton-crypto-account to the internal repository.
-publish-crypto-account:
-  stage: deploy
-  extends: .deploy_to_protonvpn_repository
-  image: gitlab.protontech.ch:4567/rust/inbox/docker-images:rust-1.82.0
-  rules:
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-      changes:
-        - crypto/crypto-account/Cargo.toml
-  variables:
-    CARGO_PACKAGE_OPTIONS: "--manifest-path crypto/crypto-account/Cargo.toml"
-    CARGO_MANIFEST_OPTIONS: "--manifest-path crypto/crypto-account/Cargo.toml"
-  when: manual
+# publish-crypto-account:
+#   stage: deploy
+#   extends: .deploy_to_protonvpn_repository
+#   image: gitlab.protontech.ch:4567/rust/inbox/docker-images:rust-1.82.0
+#   rules:
+#     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+#       changes:
+#         - crypto/crypto-account/Cargo.toml
+#   variables:
+#     CARGO_PACKAGE_OPTIONS: "--manifest-path crypto/crypto-account/Cargo.toml"
+#     CARGO_MANIFEST_OPTIONS: "--manifest-path crypto/crypto-account/Cargo.toml"
+#   when: manual

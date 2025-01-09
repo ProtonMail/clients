@@ -11,7 +11,7 @@ workflow:
     - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
 
 default:
-  image: gitlab.protontech.ch:4567/rust/inbox/docker-images:rust-1.82.0
+  image: gitlab.protontech.ch:4567/rust/inbox/docker-images:rust-1.82.0-v2
   tags:
     - shared-medium
 
@@ -32,11 +32,6 @@ variables:
 .script-config-git:
   script:
     - git config --global url.https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}.insteadOf https://${CI_SERVER_HOST}
-
-# Install jq for use with cargo metadata
-.before-script-jq:
-  before_script:
-    - apt-get update && apt-get install -y jq
 
 stages:
   - lint
@@ -78,7 +73,6 @@ build:
   stage: build
   script:
     - !reference [.script-config-git, script]
-    - apt update && apt install mold
     - RUSTFLAGS="-C link-arg=-fuse-ld=mold" cargo build
     - RUSTFLAGS="-C link-arg=-fuse-ld=mold" cargo nextest run --color=never
 
@@ -129,8 +123,6 @@ build-mail-uniffi-ios:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: manual
       allow_failure: true
-  before_script:
-    - !reference [.before-script-jq, before_script]
   script:
     - !reference [.script-config-git, script]
     - rust-build/build_ios_framework_uniffi.sh proton-mail-uniffi ./mail/mail-uniffi/uniffi.toml "./tmp/ios-framework"
@@ -214,8 +206,6 @@ publish-mail-uniffi-android:
     - xlarge-k8s
   rules:
     - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
-  before_script:
-    - !reference [.before-script-jq, before_script]
   script:
     - ./mail/mail-uniffi/android/publish.sh
   dependencies:
@@ -235,8 +225,6 @@ publish-mail-uniffi-ios:
     - xlarge-k8s
   rules:
     - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
-  before_script:
-    - !reference [.before-script-jq, before_script]
   script:
     - ./mail/mail-uniffi/ios/publish.sh
   dependencies:

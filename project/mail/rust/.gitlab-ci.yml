@@ -201,28 +201,27 @@ pages:
       when: manual
       allow_failure: true
 
-#publish-crates:
-#  image: rustlang/rust:nightly
-#  stage: deploy
-#  rules:
-#    - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
-#      variables: { DRY_RUN: "" }
-#    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH
-#      variables: { DRY_RUN: "--dry-run" }
-#      allow_failure: true
-#    - when: manual
-#      variables: { DRY_RUN: "--dry-run" }
-#      allow_failure: true
-#  before_script:
-#    - apt-get update && apt-get install -y clang golang python3-packaging
-#  script:
-#    - git stash --all
-#    - cargo xtask publish $DRY_RUN
-#      --registry $RUST_REGISTRY_NAME
-#      --repository $RUST_REGISTRY_GIT_URL
-#      --name "$GITLAB_USER_NAME"
-#      --email "$GITLAB_USER_EMAIL"
-#    - git stash pop
+.disabled-publish-crates:
+  image: rustlang/rust:nightly
+  stage: deploy
+  rules:
+    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH
+      variables: { DRY_RUN: "--dry-run" }
+      allow_failure: true
+    - when: manual
+      variables: { DRY_RUN: "--dry-run" }
+      allow_failure: true
+  before_script:
+    - apt-get update && apt-get install -y clang golang python3-packaging
+    - cargo install --registry proton cargo-proton-utils
+  script:
+    - git stash --all
+    - cargo proton-utils publish $DRY_RUN
+      --registry $RUST_REGISTRY_NAME
+      --repository $RUST_REGISTRY_GIT_URL
+      --name $GITLAB_USER_NAME
+      --email $GITLAB_USER_EMAIL
+    - git stash pop
 
 publish-mail-uniffi-android:
   stage: deploy

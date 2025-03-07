@@ -9,7 +9,7 @@ workflow:
     - if: $CI_COMMIT_TAG =~ /^mail-uniffi-v[0-9]+\.[0-9]+\.[0-9]+$/
 
 default:
-  image: gitlab.protontech.ch:4567/rust/inbox/docker-images:rust-1.82.0-v2
+  image: gitlab.protontech.ch:4567/rust/inbox/docker-images:rust-1.85.0
   tags:
     - shared-medium
 
@@ -107,7 +107,7 @@ build-macos:
     - inbox-tart
   rules:
     - if: $CI_COMMIT_TAG !~ /^mail-uniffi-v[0-9]+\.[0-9]+\.[0-9]+$/
-  image: "inbox-rust:1.82.0"
+  image: "inbox-rust:1.85.0"
   stage: build
   script:
     - !reference [.script-config-git, script]
@@ -132,7 +132,7 @@ build-wasm:
 build-mail-uniffi-ios:
   tags:
     - inbox-tart
-  image: "inbox-rust:1.82.0"
+  image: "inbox-rust:1.85.0"
   stage: build
   script:
     - !reference [.script-config-git, script]

@@ -81,6 +81,8 @@ format:
     - !reference [.do_fmt_check, script]
 
 clippy:
+  tags:
+    - shared-large
   stage: lint
   script:
     - !reference [.do_clippy_check, script]

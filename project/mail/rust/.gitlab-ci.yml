@@ -147,6 +147,8 @@ build-mail-uniffi-ios:
     expire_in: 4 hrs
 
 build-mail-uniffi-android:
+  tags:
+    - shared-large
   stage: build
   script:
     - !reference [.script-config-git, script]

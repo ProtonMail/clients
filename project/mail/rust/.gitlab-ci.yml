@@ -69,8 +69,6 @@ stages:
           fi
       done
 
-
-
 .do_proton_mail_uniffi_version:
   script:
     - cd proton_mail_uniffi
@@ -115,6 +113,34 @@ build-macos:
     - !reference [.script-config-git, script]
     - cargo build
     - cargo nextest run --color=never
+
+build-php:
+  tags:
+    - shared-medium
+  image: harbor.protontech.ch/storage/container/php-ext-builder:${ROCKY_VERSION}-${PHP_VERSION}-${BUILD_ARCH}
+  variables:
+    BUILD_ARCH: amd64
+    PHP: /usr/bin/php
+    PHP_CONFIG: /usr/bin/php-config
+    PHP_VERSION: '8.3'
+    ROCKY_VERSION: '8.9'
+  stage: build
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+      allow_failure: true
+  script:
+    - !reference [.script-config-git, script]
+    - . "$HOME/.cargo/env"
+    - RUSTFLAGS="-C link-arg=-Wl,-undefined,dynamic_lookup" cargo build -p ical --release --features php
+  artifacts:
+    name: proton-ical-php-ext
+    paths:
+      - ./target/release/libical.so
+    when: always
+    expire_in: 4 hrs
 
 build-wasm:
   stage: build

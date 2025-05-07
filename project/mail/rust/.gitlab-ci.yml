@@ -26,6 +26,10 @@ variables:
   # The git URL of the rust registry
   RUST_REGISTRY_GIT_URL: ${CI_SERVER_PROTOCOL}://git:${RUST_REGISTRY_TOKEN}@${CI_SERVER_HOST}/${RUST_REGISTRY}.git
 
+  ROCKY_VERSION: '9.3'
+  PHP_VERSION: '8.3'
+  BUILD_ARCH: amd64
+
 # Config git acccess to other repos
 .script-config-git:
   script:
@@ -68,8 +72,6 @@ stages:
               fi
           fi
       done
-
-
 
 .do_proton_mail_uniffi_version:
   script:
@@ -115,6 +117,63 @@ build-macos:
     - !reference [.script-config-git, script]
     - cargo build
     - cargo nextest run --color=never
+
+build-ical-php-ext:
+  tags:
+    - shared-medium
+  image: harbor.protontech.ch/storage/container/php-ext-builder:${ROCKY_VERSION}-${PHP_VERSION}-${BUILD_ARCH}
+  variables:
+    PHP: /usr/bin/php
+    PHP_CONFIG: /usr/bin/php-config
+  stage: build
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+      allow_failure: true
+  script:
+    - !reference [.script-config-git, script]
+    - . "$HOME/.cargo/env"
+    - RUSTFLAGS="-C link-arg=-Wl,-undefined,dynamic_lookup" cargo +nightly build -p proton-ical --release --features php
+    - cd core/ical
+    - mkdir -p build/ packages/${ROCKY_VERSION%%.*}
+    - cd build/
+    - cmake3 ../
+    - cpack3 -G RPM ./
+    - mv -v *.rpm ../packages/${ROCKY_VERSION%%.*}
+    - mv ../packages ../../..
+  artifacts:
+    paths:
+      - ./packages
+
+publish-ical-php-ext:
+  image: harbor.protontech.ch/storage/container/php-ext-builder:${ROCKY_VERSION}-${PHP_VERSION}-${BUILD_ARCH}
+  stage: deploy
+  needs:
+    - build-ical-php-ext
+  tags:
+    - shared-small
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - set -e;
+      pushd packages;
+      for os_major in *; do
+        pushd $os_major;
+        for rpm in *.rpm; do
+          arch=$(rpm -qp "$rpm" --qf "%{ARCH}");
+          echo "Uploading ${os_major}/${arch}/$rpm";
+          if [ "$NEXUS_UPLOADER_PASSWORD" = '' ]; then echo '$NEXUS_UPLOADER_PASSWORD is empty' >&2; exit 1; fi;
+          curl -w '%{method} to %{url} -> %{http_code}\n' -f --progress-bar -u $NEXUS_UPLOADER_USERNAME:$NEXUS_UPLOADER_PASSWORD --upload-file $rpm "https://nexus.protontech.ch/repository/backend-team-rpm/el${os_major}/${arch}/";
+        done;
+        popd;
+      done;
+      popd;
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: manual
+      allow_failure: true
 
 build-wasm:
   stage: build

@@ -164,6 +164,8 @@ publish-ical-php-ext:
   needs:
     - build-ical-php-ext:amd64
     - build-ical-php-ext:arm64
+  rules:
+    - !reference [.build-ical-php-ext, rules]
   tags:
     - shared-small
   variables:
@@ -182,10 +184,6 @@ publish-ical-php-ext:
         popd;
       done;
       popd;
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-      when: manual
-      allow_failure: true
 
 build-wasm:
   stage: build

@@ -26,10 +26,6 @@ variables:
   # The git URL of the rust registry
   RUST_REGISTRY_GIT_URL: ${CI_SERVER_PROTOCOL}://git:${RUST_REGISTRY_TOKEN}@${CI_SERVER_HOST}/${RUST_REGISTRY}.git
 
-  ROCKY_VERSION: '9.3'
-  PHP_VERSION: '8.3'
-  BUILD_ARCH: amd64
-
 # Config git acccess to other repos
 .script-config-git:
   script:
@@ -118,20 +114,21 @@ build-macos:
     - cargo build
     - cargo nextest run --color=never
 
-build-ical-php-ext:
-  tags:
-    - shared-medium
+.build-ical-php-ext:
   image: harbor.protontech.ch/storage/container/php-ext-builder:${ROCKY_VERSION}-${PHP_VERSION}-${BUILD_ARCH}
   variables:
     PHP: /usr/bin/php
     PHP_CONFIG: /usr/bin/php-config
   stage: build
+  parallel:
+    matrix:
+      - ROCKY_VERSION: ['8.9', '9.3']
+        PHP_VERSION: ['8.2', '8.3', '8.4']
   rules:
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: manual
-      allow_failure: true
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == "master"
+      changes:
+        - .gitlab-ci.yml
+        - core/ical/**/*
   script:
     - !reference [.script-config-git, script]
     - . "$HOME/.cargo/env"
@@ -147,11 +144,26 @@ build-ical-php-ext:
     paths:
       - ./packages
 
+build-ical-php-ext:amd64:
+  extends: .build-ical-php-ext
+  tags:
+    - shared-medium
+  variables:
+    BUILD_ARCH: amd64
+
+build-ical-php-ext:arm64:
+  extends: .build-ical-php-ext
+  tags:
+    - m1-docker
+  variables:
+    BUILD_ARCH: arm64
+
 publish-ical-php-ext:
   image: harbor.protontech.ch/storage/container/php-ext-builder:${ROCKY_VERSION}-${PHP_VERSION}-${BUILD_ARCH}
   stage: deploy
   needs:
-    - build-ical-php-ext
+    - build-ical-php-ext:amd64
+    - build-ical-php-ext:arm64
   tags:
     - shared-small
   variables:

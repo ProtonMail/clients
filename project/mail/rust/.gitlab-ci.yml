@@ -38,17 +38,29 @@ stages:
   - doc
   - deploy
 
-.do_fmt_check:
+cargo-fmt:
+  stage: lint
   script:
     - cargo fmt --check
 
-.do_clippy_check:
+taplo-fmt:
+  stage: lint
+  before_script:
+    - cargo install taplo-cli@0.9.3 --locked # TODO: cache if slow?
+  script:
+    - taplo fmt --check
+
+clippy:
+  tags:
+    - shared-large
+  stage: lint
   script:
     - !reference [.script-config-git, script]
     - cargo clippy --all-targets -- -D warnings
 
-.do_gopenpgp_sys_check:
-   script:
+gopenpgp:
+  stage: lint
+  script:
     - !reference [.script-config-git, script]
     - |
       pattern=".*gopenpgp-sys (v[0-9]+\\.[0-9]+\\.[0-9]+).*"
@@ -69,27 +81,6 @@ stages:
               fi
           fi
       done
-
-.do_proton_mail_uniffi_version:
-  script:
-    - cd proton_mail_uniffi
-
-format:
-  stage: lint
-  script:
-    - !reference [.do_fmt_check, script]
-
-clippy:
-  tags:
-    - shared-large
-  stage: lint
-  script:
-    - !reference [.do_clippy_check, script]
-
-gopenpgp:
-  stage: lint
-  script:
-    - !reference [.do_gopenpgp_sys_check, script]
 
 build:
   tags:
@@ -123,8 +114,8 @@ build-macos:
   stage: build
   parallel:
     matrix:
-      - ROCKY_VERSION: ['8.9', '9.3']
-        PHP_VERSION: ['8.2', '8.3', '8.4']
+      - ROCKY_VERSION: ["8.9", "9.3"]
+        PHP_VERSION: ["8.2", "8.3", "8.4"]
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == "master"
       changes:
@@ -174,22 +165,22 @@ publish-ical-php-ext:
     # Note that this step actually deploys all of the artifacts, we just need
     # to provide some vars so that we can pick a Docker image (any variant would
     # work)
-    ROCKY_VERSION: '9.3'
-    PHP_VERSION: '8.3'
+    ROCKY_VERSION: "9.3"
+    PHP_VERSION: "8.3"
     BUILD_ARCH: amd64
     GIT_STRATEGY: none
   script:
     - set -e;
       pushd packages;
       for os_major in *; do
-        pushd $os_major;
-        for rpm in *.rpm; do
-          arch=$(rpm -qp "$rpm" --qf "%{ARCH}");
-          echo "Uploading ${os_major}/${arch}/$rpm";
-          if [ "$NEXUS_UPLOADER_PASSWORD" = '' ]; then echo '$NEXUS_UPLOADER_PASSWORD is empty' >&2; exit 1; fi;
-          curl -w '%{method} to %{url} -> %{http_code}\n' -f --progress-bar -u $NEXUS_UPLOADER_USERNAME:$NEXUS_UPLOADER_PASSWORD --upload-file $rpm "https://nexus.protontech.ch/repository/backend-team-rpm/el${os_major}/${arch}/";
-        done;
-        popd;
+      pushd $os_major;
+      for rpm in *.rpm; do
+      arch=$(rpm -qp "$rpm" --qf "%{ARCH}");
+      echo "Uploading ${os_major}/${arch}/$rpm";
+      if [ "$NEXUS_UPLOADER_PASSWORD" = '' ]; then echo '$NEXUS_UPLOADER_PASSWORD is empty' >&2; exit 1; fi;
+      curl -w '%{method} to %{url} -> %{http_code}\n' -f --progress-bar -u $NEXUS_UPLOADER_USERNAME:$NEXUS_UPLOADER_PASSWORD --upload-file $rpm "https://nexus.protontech.ch/repository/backend-team-rpm/el${os_major}/${arch}/";
+      done;
+      popd;
       done;
       popd;
 
@@ -317,4 +308,3 @@ publish-mail-uniffi-ios:
     - build-mail-uniffi-ios
   needs:
     - build-mail-uniffi-ios
-

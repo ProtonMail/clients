@@ -46,7 +46,7 @@ cargo-fmt:
 taplo-fmt:
   stage: lint
   before_script:
-    - cargo install taplo-cli --locked # TODO: cache if slow?
+    - cargo install taplo-cli@0.9.3 --locked # TODO: cache if slow?
   script:
     - taplo fmt --check
 

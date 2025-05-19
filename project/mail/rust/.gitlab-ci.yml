@@ -237,7 +237,7 @@ pages:
   script:
     - echo "CI_PAGES_URL = ${CI_PAGES_URL}"
     - !reference [.script-config-git, script]
-    - cargo doc --workspace --all-features --no-deps
+    - cargo doc --workspace --no-deps --features sql --features test-utils
     - rm -rf public
     - mv target/doc public
     - echo "<meta http-equiv=\"refresh\" content=\"0; url=$CI_PAGES_URL/proton_mail_uniffi/index.html\">" > public/index.html

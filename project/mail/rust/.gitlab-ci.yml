@@ -32,6 +32,16 @@ variables:
   script:
     - git config --global url.https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}.insteadOf https://${CI_SERVER_HOST}
 
+# Cache cargo
+.use_cargo_cache:
+  variables:
+    CARGO_HOME: $CI_PROJECT_DIR/.cargo
+  cache:
+    key: cargo-only
+    paths:
+      - .cargo/git/
+      - .cargo/registry/
+
 stages:
   - lint
   - build
@@ -40,26 +50,34 @@ stages:
 
 cargo-fmt:
   stage: lint
+  extends:
+    - .use_cargo_cache
   script:
     - cargo fmt --check
 
 taplo-fmt:
   stage: lint
+  extends:
+    - .use_cargo_cache
   before_script:
     - cargo install taplo-cli@0.9.3 --locked # TODO: cache if slow?
   script:
-    - taplo fmt --check
+    - ./.cargo/bin/taplo fmt --check
 
 clippy:
   tags:
     - shared-large
   stage: lint
+  extends:
+    - .use_cargo_cache
   script:
     - !reference [.script-config-git, script]
     - cargo clippy --all-targets -- -D warnings
 
 gopenpgp:
   stage: lint
+  extends:
+    - .use_cargo_cache
   script:
     - !reference [.script-config-git, script]
     - |
@@ -83,11 +101,13 @@ gopenpgp:
       done
 
 build:
+  stage: build
+  extends:
+    - .use_cargo_cache
   tags:
     - shared-large
   rules:
     - if: $CI_COMMIT_TAG !~ /^mail-uniffi-v[0-9]+\.[0-9]+\.[0-9]+$/
-  stage: build
   script:
     - !reference [.script-config-git, script]
     - RUSTFLAGS="-C linker=clang -C link-arg=-fuse-ld=mold" cargo check
@@ -186,6 +206,8 @@ publish-ical-php-ext:
 
 build-wasm:
   stage: build
+  extends:
+    - .use_cargo_cache
   rules:
     - if: $CI_COMMIT_TAG !~ /^mail-uniffi-v[0-9]+\.[0-9]+\.[0-9]+$/
   script:

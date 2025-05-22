@@ -90,9 +90,9 @@ build:
   stage: build
   script:
     - !reference [.script-config-git, script]
-    - RUSTFLAGS="-C link-arg=-fuse-ld=mold" cargo build
-    - RUSTFLAGS="-C link-arg=-fuse-ld=mold" cargo nextest run --color=never
-    - RUSTFLAGS="-C link-arg=-fuse-ld=mold" cargo test --doc
+    - RUSTFLAGS="-C linker=clang -C link-arg=-fuse-ld=mold" cargo build
+    - RUSTFLAGS="-C linker=clang -C link-arg=-fuse-ld=mold" cargo nextest run --color=never
+    - RUSTFLAGS="-C linker=clang -C link-arg=-fuse-ld=mold" cargo test --doc
 
 build-macos:
   tags:

@@ -42,6 +42,15 @@ variables:
       - .cargo/git/
       - .cargo/registry/
 
+.use_cargo_cache_mac:
+  variables:
+    CARGO_HOME: $CI_PROJECT_DIR/.cargo
+  cache:
+    key: cargo-only-mac
+    paths:
+      - .cargo/git/
+      - .cargo/registry/
+
 stages:
   - lint
   - build
@@ -128,6 +137,8 @@ test-linux:
 check-macos:
   tags:
     - inbox-tart
+  extends:
+    - .use_cargo_cache_mac
   rules:
     - if: $CI_COMMIT_TAG !~ /^mail-uniffi-v[0-9]+\.[0-9]+\.[0-9]+$/
   image: "inbox-rust:1.85.0"
@@ -139,6 +150,8 @@ check-macos:
 test-macos:
   tags:
     - inbox-tart
+  extends:
+    - .use_cargo_cache_mac
   rules:
     - if: $CI_COMMIT_TAG !~ /^mail-uniffi-v[0-9]+\.[0-9]+\.[0-9]+$/
   image: "inbox-rust:1.85.0"
@@ -246,6 +259,8 @@ build-mail-uniffi-ios:
   tags:
     - inbox-tart
   image: "inbox-rust:1.85.0"
+  extends:
+    - .use_cargo_cache_mac
   stage: build
   script:
     - !reference [.script-config-git, script]
@@ -262,6 +277,8 @@ build-mail-uniffi-ios:
 build-mail-uniffi-android:
   tags:
     - shared-large
+  extends:
+    - .use_cargo_cache
   stage: build
   script:
     - !reference [.script-config-git, script]
@@ -277,6 +294,8 @@ build-mail-uniffi-android:
 
 pages:
   stage: doc
+  extends:
+    - .use_cargo_cache
   script:
     - echo "CI_PAGES_URL = ${CI_PAGES_URL}"
     - !reference [.script-config-git, script]

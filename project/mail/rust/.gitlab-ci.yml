@@ -90,7 +90,7 @@ build:
   stage: build
   script:
     - !reference [.script-config-git, script]
-    - RUSTFLAGS="-C linker=clang -C link-arg=-fuse-ld=mold" cargo build
+    - RUSTFLAGS="-C linker=clang -C link-arg=-fuse-ld=mold" cargo check
     - RUSTFLAGS="-C linker=clang -C link-arg=-fuse-ld=mold" cargo nextest run --color=never
     - RUSTFLAGS="-C linker=clang -C link-arg=-fuse-ld=mold" cargo test --doc
 
@@ -103,7 +103,7 @@ build-macos:
   stage: build
   script:
     - !reference [.script-config-git, script]
-    - cargo build --release
+    - cargo check
     - cargo nextest run --color=never
 
 .build-ical-php-ext:

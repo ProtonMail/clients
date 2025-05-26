@@ -117,7 +117,7 @@ check-linux:
   stage: build
   script:
     - !reference [.script-config-git, script]
-    - cargo check
+    - cargo check --release
 
 test-linux:
   tags:
@@ -143,7 +143,7 @@ check-macos:
   stage: build
   script:
     - !reference [.script-config-git, script]
-    - cargo check
+    - cargo check --release
 
 test-macos:
   tags:

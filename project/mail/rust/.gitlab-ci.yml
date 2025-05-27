@@ -10,7 +10,7 @@ workflow:
     - if: $CI_COMMIT_TAG =~ /^mail-uniffi-v[0-9]+\.[0-9]+\.[0-9]+$/
 
 default:
-  image: gitlab.protontech.ch:4567/rust/inbox/docker-images:rust-1.85.0
+  image: gitlab.protontech.ch:4567/rust/inbox/docker-images:rust-1.85.1v2
   tags:
     - shared-medium
 
@@ -59,19 +59,13 @@ stages:
 
 cargo-fmt:
   stage: lint
-  extends:
-    - .use_cargo_cache
   script:
     - cargo fmt --check
 
 taplo-fmt:
   stage: lint
-  extends:
-    - .use_cargo_cache
-  before_script:
-    - cargo install taplo-cli@0.9.3 --locked # TODO: cache if slow?
   script:
-    - ./.cargo/bin/taplo fmt --check
+    - taplo fmt --check
 
 clippy:
   tags:
@@ -131,8 +125,8 @@ test-linux:
   stage: build
   script:
     - !reference [.script-config-git, script]
-    - RUSTFLAGS="-C linker=clang -C link-arg=-fuse-ld=mold" cargo nextest run --color=never -j 8
-    - RUSTFLAGS="-C linker=clang -C link-arg=-fuse-ld=mold" cargo test --doc
+    - MOLD_JOBS=4 RUSTFLAGS="-C linker=clang -C link-arg=-fuse-ld=mold" cargo nextest run --color=never -j 8
+    - MOLD_JOBS=4 RUSTFLAGS="-C linker=clang -C link-arg=-fuse-ld=mold" cargo test --doc
 
 check-macos:
   tags:

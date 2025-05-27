@@ -59,15 +59,11 @@ stages:
 
 cargo-fmt:
   stage: lint
-  extends:
-    - .use_cargo_cache
   script:
     - cargo fmt --check
 
 taplo-fmt:
   stage: lint
-  extends:
-    - .use_cargo_cache
   script:
     - taplo fmt --check
 

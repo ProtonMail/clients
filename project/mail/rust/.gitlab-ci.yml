@@ -272,7 +272,7 @@ build-mail-uniffi-ios:
 
 build-mail-uniffi-android:
   tags:
-    - shared-large
+    - android-xlarge
   extends:
     - .use_cargo_cache
   stage: build
@@ -338,7 +338,7 @@ pages:
 publish-mail-uniffi-android:
   stage: deploy
   tags:
-    - shared-medium
+    - shared-large
   rules:
     - if: $CI_COMMIT_TAG =~ /^mail-uniffi-v[0-9]+\.[0-9]+\.[0-9]+$/
   script:

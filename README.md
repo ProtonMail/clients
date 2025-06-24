@@ -1,0 +1,103 @@
+# Proton Clients Monorepo
+
+**Status**: WIP  
+**Contact**: @nmarietta, @eackerma  
+**Started**: June 2025  
+
+This monorepo hosts client-side code for Proton applications (e.g. Mail, Calendar), shared SDKs, and supporting tools.
+
+## Structure
+
+```text
+project/
+  <project>/
+    <platform>/         # android, apple, rust
+      <module>/         # e.g. mail-composer, calendar-api
+build/                  # scripts and tools
+doc/                    # versioned ADRs, RFCs, guidelines
+```
+
+Each project is self-contained, and code is grouped by product first, then platform.
+
+## Conventions
+
+### Commits
+
+You SHOULD use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
+
+Your commit SHOULD:
+* Use a proper sentence as a description — start with an Uppercase letter, end with a dot.
+* Use the common commit types.
+* Whenever possible use a project as a scope (e.g. `fix(mail,apple): Fixed schedule send delay.`).
+* Remember: the commits will be used to generate changelog.
+
+#### Allowed commit types
+
+- `build`: Changes that affect build system (e.g. Bazel/Gradle updates).
+- `ci`: CI configuration.
+- `doc`: Documentation changes.
+- `feat`: A new feature.
+- `fix`: Bug fixes.
+- `i18n`: Internationalization and translations.
+- `refactor`: A change in the source code that neither fixes a bug nor adds a feature.
+- `revert`: Reverting a commit.
+- `style`: Code style changes, not affecting code meaning (formatting).
+- `test`: Adding new tests or improving existing ones.
+- `theme`: Changes related to UI theming
+
+### Branching
+
+| Branch name | Pattern                  | Remarks                                                                   |
+|-------------|--------------------------|---------------------------------------------------------------------------|
+| main        | `main`                   | Main line branch, where we merge back, should always be production ready. |
+| feature     | `<project>/feature/...`  |                                                                           |
+| fix         | `<project>/fix/...`      |                                                                           |
+| refactor    | `<project>/refactor/...` |                                                                           |
+| release     | `<project>/release/...`  | See Releasing section below.                                              |
+
+### Merging
+
+When merging into `main` branch:
+* You MUST rebase and fast-forward in order to keep the history linear.
+* You MUST NOT use merge commits.
+* You MUST only merge if the pipeline is successful, passing all minimal tests (described in the containing folder changes).
+* You SHOULD run enough tests to be sure the MR is not breaking any tests in the monorepo.
+
+### Reverting
+
+When a merged commit break a test/project/platform/app, by default:
+* The affected team SHOULD ask for a revert/rollback.
+* The team owner of the breaking commit SHOULD take care of the revert process (e.g. MR, review, conflict, git revert).
+
+### Releasing
+
+You MUST create a release branch from the `main` branch, following this pattern:
+
+`<project>/release/<platform>/.../<version>`
+
+You MAY work on this branch for final release touch-ups. If you do, you SHOULD cherry-pick back to main.
+
+Note: The preferred process is to fix the main branch, and then cherry-pick the commit in your release branch.
+
+You MAY tag by project and module:  
+Example: `@mail/android/mail-composer-1.0.2`
+
+### Code Owners
+
+There SHOULD be a CODEOWNERS file per directory that scopes the CODEOWNERS independently of the file structure.
+That has the effect that CODEOWNERS will be enforced even if the directory is moved.
+
+### CI/CD
+
+* CI/CD triggers MUST be scoped per project with independent pipelines.
+* Main branch changes trigger all minimal tests execution.
+* Nightly tests might execute more than all minimal tests.
+* The CI system MUST utilize the same commands employed by developers for building and testing purpose.
+* Each project SHOULD provide a Gitlab CI pipeline yml file (.gitlab-ci.yml) with:
+    * Minimal tests: Any change in a specific project will run at least this set of tests.
+    * Manual tests: Any team should be able to manually run any tests.
+
+## Open Source Mirror
+
+A sanitized mirror will be published to:  
+https://github.com/ProtonMail/clients

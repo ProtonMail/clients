@@ -232,23 +232,6 @@ publish-ical-php-ext:
       done;
       popd;
 
-build-wasm:
-  stage: build
-  extends:
-    - .use_cargo_cache
-  rules:
-    - if: $CI_COMMIT_TAG !~ /^mail-uniffi-v[0-9]+\.[0-9]+\.[0-9]+$/
-  script:
-    - !reference [ .script-config-git, script ]
-    - cd ./mail/mail-wasm
-    - wasm-pack build -d "./web_pkg"
-  artifacts:
-    name: proton-mail-wasm
-    paths:
-      - ./mail/mail-wasm/web_pkg
-    when: always
-    expire_in: 4 hrs
-
 build-mail-uniffi-ios:
   tags:
     - inbox-tart

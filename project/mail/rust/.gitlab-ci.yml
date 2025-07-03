@@ -10,7 +10,7 @@ workflow:
     - if: $CI_COMMIT_TAG =~ /^mail-uniffi-v[0-9]+\.[0-9]+\.[0-9]+$/
 
 default:
-  image: gitlab.protontech.ch:4567/rust/inbox/docker-images:rust-1.85.1v2
+  image: gitlab.protontech.ch:4567/rust/inbox/docker-images:rust-1.88.0v2
   tags:
     - shared-medium
 
@@ -133,7 +133,7 @@ check-macos:
     - inbox-tart
   extends:
     - .use_cargo_cache_mac
-  image: "inbox-rust:1.85.0"
+  image: "inbox-rust:1.88.0"
   stage: build
   script:
     - !reference [ .script-config-git, script ]
@@ -146,7 +146,7 @@ test-macos:
     - .use_cargo_cache_mac
   rules:
     - if: $CI_COMMIT_TAG !~ /^mail-uniffi-v[0-9]+\.[0-9]+\.[0-9]+$/
-  image: "inbox-rust:1.85.0"
+  image: "inbox-rust:1.88.0"
   stage: build
   needs:
     - check-macos
@@ -235,7 +235,7 @@ publish-ical-php-ext:
 build-mail-uniffi-ios:
   tags:
     - inbox-tart
-  image: "inbox-rust:1.85.0"
+  image: "inbox-rust:1.88.0"
   extends:
     - .use_cargo_cache_mac
   stage: build

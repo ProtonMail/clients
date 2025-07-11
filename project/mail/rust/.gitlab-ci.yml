@@ -57,6 +57,11 @@ stages:
   - doc
   - deploy
 
+migration-filenames-check:
+  stage: lint
+  script:
+    - ./scripts/lint-migration-filenames/run.sh
+
 cargo-fmt:
   stage: lint
   script:

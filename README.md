@@ -56,6 +56,7 @@ Your commit SHOULD:
 
 - `build`: Changes that affect build system (e.g. Bazel/Gradle updates).
 - `ci`: CI configuration.
+- `chore`: No source or test files modified (e.g. tooling, script, dependency updates, maintenance).
 - `doc`: Documentation changes.
 - `feat`: A new feature.
 - `fix`: Bug fixes.
@@ -64,7 +65,7 @@ Your commit SHOULD:
 - `revert`: Reverting a commit.
 - `style`: Code style changes, not affecting code meaning (formatting).
 - `test`: Adding new tests or improving existing ones.
-- `theme`: Changes related to UI theming
+- `perf`: Performance improvements, changes that make the code run faster, use less memory, etc. No functionality change.
 
 ### Branching
 

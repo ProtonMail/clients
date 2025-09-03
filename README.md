@@ -19,6 +19,27 @@ doc/                    # versioned ADRs, RFCs, guidelines
 
 Each project is self-contained, and code is grouped by product first, then platform.
 
+## Creating New Projects
+
+To create a new project with the proper structure and GitLab CI configuration, use the `create_project.sh` script:
+
+```bash
+./create_project.sh <ProjectName>
+```
+
+This script will:
+- Create the project directory structure (`project/<project>/android/`, `project/<project>/apple/`, `project/<project>/rust/`)
+- Generate appropriate `.gitignore` files for each platform
+- Create placeholder `README.md` files
+- Set up the GitLab CI configuration file (`.gitlab-ci.yml`) for the project
+- Automatically update the main `.gitlab-ci.yml` to include the new project
+
+Example:
+```bash
+./create_project.sh Pass
+# Creates project/pass/ with all necessary files and configuration
+```
+
 ## Conventions
 
 ### Commits

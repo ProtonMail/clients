@@ -10,7 +10,7 @@ workflow:
     - if: $CI_COMMIT_TAG =~ /^mail-uniffi-v[0-9]+\.[0-9]+\.[0-9]+$/
 
 default:
-  image: harbor.protontech.ch/engineering-transformation/rust:rust-1.88
+  image: harbor.protontech.ch/engineering-transformation/rust:rust-1.88-v2
   tags:
     - shared-medium
 
@@ -63,6 +63,20 @@ migration-filenames-check:
   stage: lint
   script:
     - ./scripts/lint-migration-filenames/run.sh
+
+audit:
+  stage: lint
+  script:
+    - cargo audit
+
+deny:
+  stage: lint
+  extends:
+    - .use_cargo_cache
+  script:
+    - !reference [ .script-config-git, script ]
+  script:
+    - cargo deny check bans
 
 cargo-fmt:
   stage: lint

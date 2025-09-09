@@ -34,25 +34,6 @@ variables:
   script:
     - git config --global url.https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}.insteadOf https://${CI_SERVER_HOST}
 
-# Cache cargo
-.use_cargo_cache:
-  variables:
-    CARGO_HOME: $CI_PROJECT_DIR/.cargo
-  cache:
-    key: cargo-only-harbor
-    paths:
-      - .cargo/git/
-      - .cargo/registry/
-
-.use_cargo_cache_mac:
-  variables:
-    CARGO_HOME: $CI_PROJECT_DIR/.cargo
-  cache:
-    key: cargo-only-mac
-    paths:
-      - .cargo/git/
-      - .cargo/registry/
-
 stages:
   - lint
   - build
@@ -71,8 +52,6 @@ audit:
 
 deny:
   stage: lint
-  extends:
-    - .use_cargo_cache
   script:
     - !reference [ .script-config-git, script ]
   script:
@@ -92,16 +71,12 @@ clippy:
   tags:
     - shared-large
   stage: lint
-  extends:
-    - .use_cargo_cache
   script:
     - !reference [ .script-config-git, script ]
     - cargo clippy --all-targets -- -D warnings
 
 gopenpgp:
   stage: lint
-  extends:
-    - .use_cargo_cache
   script:
     - !reference [ .script-config-git, script ]
     - |
@@ -127,8 +102,6 @@ gopenpgp:
 check-linux:
   tags:
     - shared-large
-  extends:
-    - .use_cargo_cache
   stage: build
   script:
     - !reference [ .script-config-git, script ]
@@ -137,8 +110,6 @@ check-linux:
 test-linux:
   tags:
     - shared-large
-  extends:
-    - .use_cargo_cache
   rules:
     - if: $CI_COMMIT_TAG !~ /^mail-uniffi-v[0-9]+\.[0-9]+\.[0-9]+$/
   needs:
@@ -152,8 +123,6 @@ test-linux:
 check-macos:
   tags:
     - inbox-tart
-  extends:
-    - .use_cargo_cache_mac
   image: "inbox-rust:1.88.0"
   stage: build
   script:
@@ -163,8 +132,6 @@ check-macos:
 test-macos:
   tags:
     - inbox-tart
-  extends:
-    - .use_cargo_cache_mac
   rules:
     - if: $CI_COMMIT_TAG !~ /^mail-uniffi-v[0-9]+\.[0-9]+\.[0-9]+$/
   image: "inbox-rust:1.88.0"
@@ -257,8 +224,6 @@ build-mail-uniffi-ios:
   tags:
     - inbox-tart
   image: "inbox-rust:1.88.0"
-  extends:
-    - .use_cargo_cache_mac
   stage: build
   needs:
     - check-macos
@@ -277,8 +242,6 @@ build-mail-uniffi-ios:
 build-mail-uniffi-android:
   tags:
     - android-xlarge
-  extends:
-    - .use_cargo_cache
   stage: build
   needs:
     - check-linux
@@ -296,8 +259,6 @@ build-mail-uniffi-android:
 
 pages:
   stage: doc
-  extends:
-    - .use_cargo_cache
   script:
     - echo "CI_PAGES_URL = ${CI_PAGES_URL}"
     - !reference [ .script-config-git, script ]

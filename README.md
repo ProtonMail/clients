@@ -193,6 +193,8 @@ Generate and record visual snapshot tests:
 ./gradlew -p project/account/android :account-manager-ui:recordPaparazziDebug
 ```
 
+**Note**: Snapshot PNG files are tracked with **Git LFS** to avoid repository bloat.
+
 ## Open Source Mirror
 
 A sanitized mirror will be published to:  

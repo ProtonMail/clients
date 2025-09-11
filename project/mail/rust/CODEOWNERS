@@ -1,5 +1,7 @@
-/.cargo/* @lbeernae @prynowie
+* @rust/inbox
+
+/.cargo/ @lbeernae @prynowie
 deny.toml @lbeernae @prynowie
-/3rdparty/* @lbeernae @prynowie
+/3rdparty/ @lbeernae @prynowie
 Cargo.lock @lbeernae @prynowie
 

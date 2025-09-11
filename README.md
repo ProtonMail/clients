@@ -181,6 +181,18 @@ dependencies {
 
 Shared dependencies are managed through a **centralized version catalog** (`gradle/libs.versions.toml`):
 
+### Testing
+
+#### Snapshot Testing with Paparazzi
+The project uses **JUnit4 with TestParameterInjector** for parameterized snapshot tests.
+
+Generate and record visual snapshot tests:
+
+```bash
+# Record golden snapshots (update baseline images)
+./gradlew -p project/account/android :account-manager-ui:recordPaparazziDebug
+```
+
 ## Open Source Mirror
 
 A sanitized mirror will be published to:  

@@ -119,6 +119,68 @@ That has the effect that CODEOWNERS will be enforced even if the directory is mo
     * Minimal tests: Any change in a specific project will run at least this set of tests.
     * Manual tests: Any team should be able to manually run any tests.
 
+## Android Development
+
+### Build System Overview
+
+The Android projects use **Gradle composite builds** to manage dependencies between modules across different projects. This enables sharing common modules (like `core/design-system`) across multiple Android applications while maintaining project separation.
+
+#### Project Structure
+```
+project/
+  core/android/                 # Shared modules
+    design-system/              # UI components, themes, utilities
+      test-fixtures/            # Test utilities (e.g. snapshot testing)
+  account/android/              # Account-specific modules
+    account-manager-ui/         # Account UI components
+    app/                       # Account demo/test application
+  <other-projects>/android/     # Additional Android projects
+```
+
+### Building Modules
+
+Run Gradle commands from the monorepo root using the `-p` flag to specify the project directory:
+
+```bash
+# Build a specific module
+./gradlew -p project/account/android :app:assembleDebug
+
+# Run tests
+./gradlew -p project/account/android :account-manager-ui:testDebugUnitTest
+```
+
+### Composite Build Configuration
+
+Android projects that depend on core modules use **composite builds** with **dependency substitution**:
+
+#### settings.gradle.kts Example
+```kotlin
+// Include the core Android project as a composite build
+includeBuild("../../core/android") {
+    dependencySubstitution {
+        substitute(module("me.proton.core:design-system"))
+            .using(project(":design-system"))
+    }
+}
+
+// Redundant with composite build but required for the IDE to work properly
+include(":design-system")
+project(":design-system").projectDir = file("../../core/android/design-system")
+```
+
+#### Using Core Dependencies
+Reference core modules in your `build.gradle.kts`:
+
+```kotlin
+dependencies {
+    implementation(libs.core.designsystem)                    // From version catalog
+}
+```
+
+### Version Catalog
+
+Shared dependencies are managed through a **centralized version catalog** (`gradle/libs.versions.toml`):
+
 ## Open Source Mirror
 
 A sanitized mirror will be published to:  

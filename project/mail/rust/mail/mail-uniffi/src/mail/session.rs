@@ -219,11 +219,10 @@ async fn create_mail_session_inner(
     let user_ctx_map = MailUserContextMap::new();
     let weak_user_ctx_map = Arc::downgrade(&user_ctx_map);
 
-    if let Some(session_service) = mail_ctx
-        .core_context()
-        .get_service_opt::<SessionObserverService>()
-    {
-        session_service.on_session_deleted(move |_session_id, user_id| {
+    let core_ctx = mail_ctx.core_context();
+    if let Some(session_service) = core_ctx.get_service_opt::<SessionObserverService>() {
+        let event_service = core_ctx.event_service();
+        session_service.on_session_deleted(event_service, move |_session_id, user_id| {
             let weak_user_ctx_map = weak_user_ctx_map.clone();
             async move {
                 tracing::warn!("Session ended. Removing from the map");
@@ -1180,12 +1179,13 @@ impl MailSession {
     }
 
     pub fn on_enter_foreground(&self) {
-        self.resume_work();
+        self.ctx().core_context().on_enter_foreground();
     }
 
     pub fn on_exit_foreground(&self) {
-        self.pause_work();
+        self.ctx().core_context().on_exit_foreground();
     }
+
     /// Pause all background work
     ///
     /// This should be called once the application enters the background.
@@ -1208,18 +1208,6 @@ impl MailSession {
                 error!("Failed to await paused work: {e:?}");
             }
         });
-    }
-
-    /// Resume all background work
-    ///
-    /// This should be called once the application enters the foreground.
-    pub fn resume_work(&self) {
-        let ctx = self.mail_ctx.core_context();
-        let ctx_cloned = ctx.clone();
-        ctx.task_service().spawn(async move {
-            ctx_cloned.network_monitor_service().check_now().await;
-        });
-        ctx.task_service().resume_main();
     }
 
     /// Export all logs into a single file wih the given `file_path`

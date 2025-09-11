@@ -1,3 +1,5 @@
+* @rust/inbox
+
 /.cargo/ @lbeernae @prynowie
 deny.toml @lbeernae @prynowie
 /3rdparty/ @lbeernae @prynowie

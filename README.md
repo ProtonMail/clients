@@ -183,6 +183,10 @@ Shared dependencies are managed through a **centralized version catalog** (`grad
 
 ### Testing
 
+#### Unit Tests
+
+The project uses **JUnit5** for parameterized unit tests.
+
 #### Snapshot Testing with Paparazzi
 The project uses **JUnit4 with TestParameterInjector** for parameterized snapshot tests.
 

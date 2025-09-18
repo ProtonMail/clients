@@ -162,10 +162,6 @@ includeBuild("../../core/android") {
             .using(project(":design-system"))
     }
 }
-
-// Redundant with composite build but required for the IDE to work properly
-include(":design-system")
-project(":design-system").projectDir = file("../../core/android/design-system")
 ```
 
 #### Using Core Dependencies
@@ -173,7 +169,7 @@ Reference core modules in your `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation(libs.core.designsystem)                    // From version catalog
+    implementation(libs.proton.core.designsystem) // From version catalog
 }
 ```
 

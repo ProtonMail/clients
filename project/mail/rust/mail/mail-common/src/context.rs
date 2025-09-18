@@ -38,7 +38,9 @@ use proton_core_common::{OnSessionDeletedResponse, UserDatabaseInitializer};
 use proton_crypto_inbox::attachment::AttachmentEncryptionError;
 use proton_crypto_inbox::keys::EncryptionPreferencesError;
 use proton_event_loop::EventLoopError;
-use proton_issue_reporter_service::IssueReporter;
+use proton_issue_reporter_service::{
+    IssueLevel, IssueReportKeys, IssueReporter, TracedIssueReporter,
+};
 use proton_log_service::LogService;
 use proton_network_monitor_service::NetworkMonitorServiceError;
 use proton_sqlite3::MigratorError;
@@ -276,6 +278,7 @@ impl MailContext {
         network_monitor_config: proton_network_monitor_service::Config,
         issue_reporter: Arc<dyn IssueReporter>,
     ) -> Result<Arc<Self>, MailContextError> {
+        let issue_reporter = Arc::new(TracedIssueReporter::new(issue_reporter));
         let initializers: Vec<Box<dyn UserDatabaseInitializer>> =
             vec![Box::new(MailUserDatabaseInitializer {})];
 
@@ -952,6 +955,20 @@ impl MailContext {
             // but if for some reason it slips through the cracks,
             // catch it again.
             if upgraded.session_id() != core_context.session_id() {
+                core_context.issue_reporter_service().report(
+                    IssueLevel::Error,
+                    "Duplicate mail user context detected".into(),
+                    IssueReportKeys::from([
+                        (
+                            "ExistingSessionId".into(),
+                            upgraded.session_id().clone().into_inner(),
+                        ),
+                        (
+                            "NewSessionId".into(),
+                            core_context.session_id().clone().into_inner(),
+                        ),
+                    ]),
+                );
                 return Err(MailContextError::DuplicateContext(
                     core_context.user_id().clone(),
                 ));

@@ -54,7 +54,6 @@ Your commit SHOULD:
 
 #### Allowed commit types
 
-- `build`: Changes that affect build system (e.g. Bazel/Gradle updates).
 - `ci`: CI configuration.
 - `chore`: No source or test files modified (e.g. tooling, script, dependency updates, maintenance).
 - `doc`: Documentation changes.

@@ -15,9 +15,6 @@
 [workspace.dependencies.account-crux-proc]
   path = "project/account/rust/account-crux-proc"
 
-[workspace.dependencies.account-crux-utils]
-  path = "project/account/rust/account-crux-utils"
-
 [workspace.dependencies.account-db]
   path = "project/account/rust/account-db"
 

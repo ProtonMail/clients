@@ -1,0 +1,41 @@
+[workspace]
+  members = ["project/account/rust/account*"]
+  resolver = "3"
+
+[workspace.package]
+  edition = "2024"
+
+[workspace.dependencies.account-crux]
+  path = "project/account/rust/account-crux"
+  features = ["typegen"]
+
+[workspace.dependencies.account-crux-proc]
+  path = "project/account/rust/account-crux-proc"
+
+[workspace.dependencies.account-crux-utils]
+  path = "project/account/rust/account-crux-utils"
+
+[workspace.dependencies.account-db]
+  path = "project/account/rust/account-db"
+
+[workspace.dependencies.account-muon]
+  path = "project/account/rust/account-muon"
+
+[workspace.dependencies.proton-crypto]
+  version = "0.7"
+  registry = "proton"
+
+[workspace.dependencies.proton-crypto-account]
+  version = "0.12"
+  registry = "proton"
+
+[workspace.lints.clippy.all]
+  level = "deny"
+
+[profile.android]
+  inherits = "release"
+  panic = "abort"
+  opt-level = "s"
+  lto = true
+  incremental = false
+  codegen-units = 1

@@ -24,6 +24,9 @@
 [workspace.dependencies.account-muon]
   path = "project/account/rust/account-muon"
 
+[workspace.dependencies.core-muon-op]
+  path = "project/account/rust/core-muon-op"
+
 [workspace.dependencies.proton-crypto]
   version = "0.7"
   registry = "proton"

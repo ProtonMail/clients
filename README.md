@@ -141,7 +141,6 @@ The Android projects use **Gradle composite builds** to manage dependencies betw
 project/
   core/android/                 # Shared modules
     design-system/              # UI components, themes, utilities
-      test-fixtures/            # Test utilities (e.g. snapshot testing)
   account/android/              # Account-specific modules
     account-manager-ui/         # Account UI components
     app/                       # Account demo/test application
@@ -162,28 +161,23 @@ Run Gradle commands from the monorepo root using the `-p` flag to specify the pr
 
 ### Composite Build Configuration
 
-Android projects that depend on core modules use **composite builds** with **dependency substitution**:
+Android projects that depend on core modules use **composite builds**:
 
 #### settings.gradle.kts Example
 ```kotlin
 // Include the core Android project as a composite build
-includeBuild("../../core/android") {
-    dependencySubstitution {
-        substitute(module("me.proton.core:design-system"))
-            .using(project(":design-system"))
-    }
-}
+includeBuild("../../core/android")
 ```
+Note: Make sure all dependencies module follow `group:artefact[:version]` (e.g. module: "core-design-system" + `group = "me.proton"` -> `me.proton:core-design-system`). 
 
 #### Using Core Dependencies
 Reference core modules in your `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation(libs.proton.core.designsystem) // From version catalog
+    implementation(libs.proton.monorepo.core.design.system) // From version catalog
 }
 ```
-
 ### Version Catalog
 
 Shared dependencies are managed through a **centralized version catalog** (`gradle/libs.versions.toml`):

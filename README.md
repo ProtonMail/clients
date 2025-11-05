@@ -118,6 +118,18 @@ That has the effect that CODEOWNERS will be enforced even if the directory is mo
     * Minimal tests: Any change in a specific project will run at least this set of tests.
     * Manual tests: Any team should be able to manually run any tests.
 
+#### Docker image
+
+* `ci/Dockerfile`: Main Dockerfile.
+* `ci/docker.gitlab-ci.yml`: Image jobs.
+
+##### Update image
+
+1. Update the `ci/Dockerfile` (e.g. `ENV`, `RUN`, ...).
+2. Update image version in `ci/docker.gitlab-ci.yml` (e.g. `1.0.5` -> `1.0.6`).
+3. Update image version in `ci/base.gitlab-ci.yml` (e.g. `1.0.6`).
+4. Open an MR.
+
 ## Android Development
 
 ### Build System Overview

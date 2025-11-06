@@ -37,13 +37,15 @@
 [workspace.dependencies.core-user-manager]
   path = "project/core/rust/core-user-manager"
 
-[workspace.dependencies.proton-crypto]
-  version = "0.7"
-  registry = "proton"
-
 [workspace.dependencies.proton-crypto-account]
-  version = "0.12"
-  registry = "proton"
+  # Use experimental version based on rprp instead of gopenpgp-sys.
+  git = "https://gitlab.protontech.ch/rust/proton-crypto-rs.git"
+  branch = "development/proton-rpgp"
+
+[workspace.dependencies.proton-crypto]
+  # Use experimental version based on rprp instead of gopenpgp-sys.
+  git = "https://gitlab.protontech.ch/rust/proton-crypto-rs.git"
+  branch = "development/proton-rpgp"
 
 [workspace.dependencies.serde]
   version = "1"

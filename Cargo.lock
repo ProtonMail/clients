@@ -94,6 +94,7 @@ dependencies = [
  "diesel_migrations",
  "futures",
  "libsqlite3-sys",
+ "num_enum",
  "proton-crypto-account",
  "serde",
  "serde_json",

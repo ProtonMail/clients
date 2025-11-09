@@ -1,6 +1,7 @@
 [workspace]
   members = [
     "project/account/rust/account*",
+    "project/core/rust/core-*",
     "project/core/telemetry/rust",
   ]
   resolver = "3"
@@ -22,7 +23,19 @@
   path = "project/account/rust/account-muon"
 
 [workspace.dependencies.core-muon-op]
-  path = "project/account/rust/core-muon-op"
+  path = "project/core/rust/core-muon-op"
+
+[workspace.dependencies.core-db-op]
+  path = "project/core/rust/core-db-op"
+
+[workspace.dependencies.core-key]
+  path = "project/core/rust/core-key"
+
+[workspace.dependencies.core-user]
+  path = "project/core/rust/core-user"
+
+[workspace.dependencies.core-user-manager]
+  path = "project/core/rust/core-user-manager"
 
 [workspace.dependencies.proton-crypto]
   version = "0.7"
@@ -31,6 +44,29 @@
 [workspace.dependencies.proton-crypto-account]
   version = "0.12"
   registry = "proton"
+
+[workspace.dependencies.serde]
+  version = "1"
+  features = ["derive"]
+
+[workspace.dependencies.serde_json]
+  version = "1"
+
+[workspace.dependencies.serde_repr]
+  version = "0.1"
+
+[workspace.dependencies.serde_with]
+  version = "3"
+
+[workspace.dependencies.thiserror]
+  version = "2"
+
+[workspace.dependencies.tracing]
+  version = "0.1"
+
+[workspace.dependencies.derive_more]
+  version = "2"
+  features = ["full"]
 
 [workspace.lints.clippy.all]
   level = "deny"

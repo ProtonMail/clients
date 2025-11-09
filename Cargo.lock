@@ -13,6 +13,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "bitflags",
+ "core-db-op",
  "core-muon-op",
  "coset",
  "crux_core",
@@ -865,6 +866,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "core-db-op"
+version = "0.1.0"
+dependencies = [
+ "account-db",
+ "async-trait",
+ "derive_more 2.0.1",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.17",
+]
+
+[[package]]
 name = "core-foundation"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -891,6 +904,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "773648b94d0e5d620f64f280777445740e61fe701025087ec8b57f45c791888b"
 
 [[package]]
+name = "core-key"
+version = "0.1.0"
+dependencies = [
+ "proton-crypto-account",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "serde_with",
+ "thiserror 2.0.17",
+]
+
+[[package]]
 name = "core-muon-op"
 version = "0.1.0"
 dependencies = [
@@ -901,6 +926,39 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 2.0.17",
+]
+
+[[package]]
+name = "core-user"
+version = "0.1.0"
+dependencies = [
+ "proton-crypto-account",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "serde_with",
+]
+
+[[package]]
+name = "core-user-manager"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "core-db-op",
+ "core-key",
+ "core-muon-op",
+ "core-user",
+ "derive_more 2.0.1",
+ "hex",
+ "proton-crypto-account",
+ "serde",
+ "serde-aux",
+ "serde_json",
+ "serde_repr",
+ "serde_with",
+ "sha2",
+ "thiserror 2.0.17",
+ "tracing",
 ]
 
 [[package]]
@@ -3247,6 +3305,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ordered-float"
+version = "2.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "68f19d67e5a2795c94e73e0bb1cc1a7edeb2e28efd39e2e1c9b7a40c1108b11c"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
 name = "p256"
 version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4461,6 +4528,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde-aux"
+version = "4.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "207f67b28fe90fb596503a9bf0bf1ea5e831e21307658e177c5dfcdfc3ab8a0a"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde-value",
+ "serde_json",
+]
+
+[[package]]
 name = "serde-generate"
 version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4483,6 +4562,16 @@ dependencies = [
  "once_cell",
  "serde",
  "thiserror 1.0.69",
+]
+
+[[package]]
+name = "serde-value"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f3a1a3341211875ef120e117ea7fd5228530ae7e7036a779fdc9117be6b3282c"
+dependencies = [
+ "ordered-float",
+ "serde",
 ]
 
 [[package]]

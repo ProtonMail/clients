@@ -16,6 +16,8 @@ dependencies = [
  "core-muon-op",
  "coset",
  "crux_core",
+ "ctor 0.6.1",
+ "data-encoding",
  "derive_more 2.0.1",
  "futures",
  "itertools 0.14.0",
@@ -24,15 +26,21 @@ dependencies = [
  "passkey",
  "proton-crypto",
  "proton-crypto-account",
+ "public-suffix",
  "rand 0.9.2",
+ "scraper",
  "serde",
  "serde_json",
  "serde_repr",
+ "tempfile",
+ "test-case",
  "thiserror 2.0.17",
  "tokio",
+ "totp-rs",
  "tracing",
  "tracing-subscriber",
  "uniffi",
+ "url",
 ]
 
 [[package]]
@@ -42,38 +50,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.108",
-]
-
-[[package]]
-name = "account-crux-tests"
-version = "0.1.0"
-dependencies = [
- "account-crux",
- "account-db",
- "account-muon",
- "anyhow",
- "async-trait",
- "crux_core",
- "ctor 0.6.0",
- "data-encoding",
- "derive_more 2.0.1",
- "futures",
- "itertools 0.14.0",
- "num",
- "parking_lot",
- "passkey",
- "public-suffix",
- "rand 0.9.2",
- "scraper",
- "serde",
- "serde_json",
- "tempfile",
- "test-case",
- "tokio",
- "totp-rs",
- "tracing",
- "tracing-subscriber",
- "url",
 ]
 
 [[package]]
@@ -1081,9 +1057,9 @@ dependencies = [
 
 [[package]]
 name = "ctor"
-version = "0.6.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "59c9b8bdf64ee849747c1b12eb861d21aa47fa161564f48332f1afe2373bf899"
+checksum = "3ffc71fcdcdb40d6f087edddf7f8f1f8f79e6cf922f555a9ee8779752d4819bd"
 dependencies = [
  "ctor-proc-macro",
  "dtor",

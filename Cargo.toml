@@ -22,6 +22,12 @@
 [workspace.dependencies.account-muon]
   path = "project/account/rust/account-muon"
 
+[workspace.dependencies.core-message]
+  path = "project/core/rust/core-message"
+
+[workspace.dependencies.core-message-macro]
+  path = "project/core/rust/core-message-macro"
+
 [workspace.dependencies.core-muon-op]
   path = "project/core/rust/core-muon-op"
 

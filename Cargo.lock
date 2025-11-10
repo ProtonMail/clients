@@ -917,6 +917,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "core-message"
+version = "0.1.0"
+
+[[package]]
+name = "core-message-macro"
+version = "0.1.0"
+dependencies = [
+ "core-message",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.108",
+]
+
+[[package]]
 name = "core-muon-op"
 version = "0.1.0"
 dependencies = [

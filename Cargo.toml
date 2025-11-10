@@ -22,6 +22,9 @@
 [workspace.dependencies.account-muon]
   path = "project/account/rust/account-muon"
 
+[workspace.dependencies.account-pass-validator]
+  path = "project/account/rust/account-pass-validator"
+
 [workspace.dependencies.core-message]
   path = "project/core/rust/core-message"
 

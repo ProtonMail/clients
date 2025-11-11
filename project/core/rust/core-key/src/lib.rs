@@ -1,18 +1,14 @@
 // Core key library
 
-use proton_crypto_account::{
-    errors::{AccountCryptoError, SKLError},
-    keys::{
-        KeyFlag, KeyId, LocalAddressKey, LocalSignedKeyList, LocalUserKey, UnlockedAddressKeys,
-        UnlockedUserKey,
-    },
-    proton_crypto::{
-        CryptoError,
-        crypto::{KeyGeneratorAlgorithm, PGPProviderSync},
-        srp::SRPProvider,
-    },
-    salts::{KeySalt, KeySecret, SaltError},
+use proton_crypto_account::errors::{AccountCryptoError, SKLError};
+use proton_crypto_account::keys::{
+    KeyFlag, KeyId, LocalAddressKey, LocalSignedKeyList, LocalUserKey, UnlockedAddressKeys,
+    UnlockedUserKey,
 };
+use proton_crypto_account::proton_crypto::CryptoError;
+use proton_crypto_account::proton_crypto::crypto::{KeyGeneratorAlgorithm, PGPProviderSync};
+use proton_crypto_account::proton_crypto::srp::SRPProvider;
+use proton_crypto_account::salts::{KeySalt, KeySecret, SaltError};
 use thiserror::Error;
 
 #[derive(Debug, Error)]

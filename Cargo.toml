@@ -79,6 +79,12 @@
   version = "2"
   features = ["full"]
 
+[workspace.dependencies.fancy-regex]
+    version = "0.16"
+
+[workspace.dependencies.secrecy]
+    version = "0.10"
+
 [workspace.lints.clippy.all]
   level = "deny"
 

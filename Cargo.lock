@@ -9,6 +9,7 @@ dependencies = [
  "account-crux-proc",
  "account-db",
  "account-muon",
+ "account-pass-validator",
  "aes-gcm",
  "anyhow",
  "async-trait",

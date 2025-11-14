@@ -944,6 +944,10 @@ dependencies = [
 [[package]]
 name = "core-message"
 version = "0.1.0"
+dependencies = [
+ "facet",
+ "serde",
+]
 
 [[package]]
 name = "core-message-macro"

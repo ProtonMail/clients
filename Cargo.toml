@@ -11,7 +11,7 @@
 
 [workspace.dependencies.account-crux]
   path = "project/account/rust/account-crux"
-  features = ["typegen"]
+  features = ["facet_typegen"]
 
 [workspace.dependencies.account-crux-proc]
   path = "project/account/rust/account-crux-proc"
@@ -49,12 +49,22 @@
 [workspace.dependencies.proton-crypto-account]
   # Use experimental version based on rprp instead of gopenpgp-sys.
   git = "https://gitlab.protontech.ch/rust/proton-crypto-rs.git"
-  branch = "development/proton-rpgp"
+  tag = "proton-rpgp-v0.1.0-alpha.2"
+  features = ["facet"]
 
 [workspace.dependencies.proton-crypto]
   # Use experimental version based on rprp instead of gopenpgp-sys.
   git = "https://gitlab.protontech.ch/rust/proton-crypto-rs.git"
-  branch = "development/proton-rpgp"
+  tag = "proton-rpgp-v0.1.0-alpha.2"
+  features = ["facet"]
+
+[workspace.dependencies.crux_core]
+  version = "0.16"
+  features = ["facet_typegen"]
+
+[workspace.dependencies.facet]
+  version = "0.28"
+  features = ["chrono", "time"]
 
 [workspace.dependencies.serde]
   version = "1"

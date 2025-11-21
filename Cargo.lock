@@ -82,6 +82,7 @@ name = "account-db"
 version = "0.1.0"
 dependencies = [
  "bitflags",
+ "core-user",
  "deadpool-diesel",
  "derive_more 2.0.1",
  "diesel",
@@ -1052,7 +1053,10 @@ dependencies = [
 name = "core-user"
 version = "0.1.0"
 dependencies = [
+ "bitflags",
+ "derive_more 2.0.1",
  "facet",
+ "num_enum",
  "proton-crypto-account",
  "serde",
  "serde_json",

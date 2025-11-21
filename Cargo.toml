@@ -107,6 +107,9 @@
 [workspace.dependencies.secrecy]
   version = "0.10"
 
+[workspace.dependencies.num_enum]
+  version = "0.7"
+
 [workspace.lints.clippy]
   all = "deny"
 

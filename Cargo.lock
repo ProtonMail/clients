@@ -38,6 +38,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_repr",
+ "serde_with",
  "tempfile",
  "test-case",
  "thiserror 2.0.17",
@@ -71,6 +72,7 @@ dependencies = [
 name = "account-db"
 version = "0.1.0"
 dependencies = [
+ "bitflags",
  "deadpool-diesel",
  "derive_more 2.0.1",
  "diesel",
@@ -982,6 +984,7 @@ dependencies = [
 name = "core-user"
 version = "0.1.0"
 dependencies = [
+ "facet",
  "proton-crypto-account",
  "serde",
  "serde_json",

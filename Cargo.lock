@@ -8,7 +8,6 @@ version = "0.1.0"
 dependencies = [
  "account-crux-proc",
  "account-db",
- "account-muon",
  "account-pass-validator",
  "aes-gcm",
  "anyhow",
@@ -27,6 +26,7 @@ dependencies = [
  "facet",
  "futures",
  "itertools 0.14.0",
+ "muon",
  "num",
  "parking_lot",
  "passkey",
@@ -85,16 +85,6 @@ dependencies = [
  "proton-crypto-account",
  "serde",
  "serde_json",
- "thiserror 2.0.17",
-]
-
-[[package]]
-name = "account-muon"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "futures",
- "muon",
  "thiserror 2.0.17",
 ]
 
@@ -970,11 +960,11 @@ dependencies = [
 name = "core-muon-op"
 version = "0.1.0"
 dependencies = [
- "account-muon",
  "async-trait",
  "derive_more 2.0.1",
  "facet",
  "futures",
+ "muon",
  "serde",
  "serde_json",
  "thiserror 2.0.17",
@@ -1047,12 +1037,6 @@ checksum = "9481c1c90cbf2ac953f07c8d4a58aa3945c425b7185c9154d67a65e4230da511"
 dependencies = [
  "cfg-if",
 ]
-
-[[package]]
-name = "critical-section"
-version = "1.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "790eea4361631c5e7d22598ecd5723ff611904e3344ce8720784c93e3d83d40b"
 
 [[package]]
 name = "crossbeam-channel"
@@ -2165,9 +2149,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "899def5c37c4fd7b2664648c28120ecec138e4d395b459e5ca34f9cce2dd77fd"
 dependencies = [
  "cfg-if",
+ "js-sys",
  "libc",
  "r-efi",
  "wasip2",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -2306,9 +2292,9 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "hickory-client"
-version = "0.25.2"
+version = "0.24.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c466cd63a4217d5b2b8e32f23f58312741ce96e3c84bf7438677d2baff0fc555"
+checksum = "156579a5cd8d1fc6f0df87cc21b6ee870db978a163a1ba484acd98a4eff5a6de"
 dependencies = [
  "cfg-if",
  "data-encoding",
@@ -2317,17 +2303,17 @@ dependencies = [
  "hickory-proto",
  "once_cell",
  "radix_trie",
- "rand 0.9.2",
- "thiserror 2.0.17",
+ "rand 0.8.5",
+ "thiserror 1.0.69",
  "tokio",
  "tracing",
 ]
 
 [[package]]
 name = "hickory-proto"
-version = "0.25.2"
+version = "0.24.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8a6fe56c0038198998a6f217ca4e7ef3a5e51f46163bd6dd60b5c71ca6c6502"
+checksum = "92652067c9ce6f66ce53cc38d1169daa36e6e7eb7dd3b63b5103bd9d97117248"
 dependencies = [
  "async-trait",
  "cfg-if",
@@ -2339,9 +2325,8 @@ dependencies = [
  "idna",
  "ipnet",
  "once_cell",
- "rand 0.9.2",
- "ring",
- "thiserror 2.0.17",
+ "rand 0.8.5",
+ "thiserror 1.0.69",
  "tinyvec",
  "tokio",
  "tracing",
@@ -3096,8 +3081,9 @@ dependencies = [
 
 [[package]]
 name = "muon"
-version = "1.7.1"
-source = "git+https://gitlab.protontech.ch/jhoulahan/muon.git#45776b9fd0d9f32ce18795f644ade401159a687b"
+version = "1.8.1"
+source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/registry/index/"
+checksum = "100c69cc1db07481a11c1391b4f7282d30f4308cc184eb9402f342109c8743c5"
 dependencies = [
  "anyhow",
  "async-channel",
@@ -3118,6 +3104,7 @@ dependencies = [
  "futures-rustls",
  "futures-timer",
  "getrandom 0.2.16",
+ "getrandom 0.3.4",
  "h2",
  "hickory-client",
  "hickory-proto",
@@ -3152,9 +3139,9 @@ dependencies = [
 
 [[package]]
 name = "muon-proc"
-version = "0.5.0"
+version = "0.6.0"
 source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/registry/index/"
-checksum = "f460da90475d8acb9f3e5071e49324b890b27ea80fc71288dc56dfe1ff6f396a"
+checksum = "896ca7b0894a20c29b620dcce23a3dc34516cc08de1530e9c1915a5cc653300f"
 dependencies = [
  "cfg-if",
  "proc-macro2",
@@ -3389,10 +3376,6 @@ name = "once_cell"
 version = "1.21.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "42f5e15c9953c5e4ccceeb2e7382a716482c34515315f7b03532b8b4e8393d2d"
-dependencies = [
- "critical-section",
- "portable-atomic",
-]
 
 [[package]]
 name = "opaque-debug"
@@ -3912,12 +3895,6 @@ dependencies = [
  "opaque-debug",
  "universal-hash",
 ]
-
-[[package]]
-name = "portable-atomic"
-version = "1.11.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f84267b20a16ea918e43c6a88433c2d54fa145c92a811b5b047ccbe153674483"
 
 [[package]]
 name = "potential_utf"
@@ -4508,7 +4485,7 @@ dependencies = [
  "security-framework 3.5.1",
  "security-framework-sys",
  "webpki-root-certs",
- "windows-sys 0.61.2",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]

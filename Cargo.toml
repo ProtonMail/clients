@@ -19,9 +19,6 @@
 [workspace.dependencies.account-db]
   path = "project/account/rust/account-db"
 
-[workspace.dependencies.account-muon]
-  path = "project/account/rust/account-muon"
-
 [workspace.dependencies.account-pass-validator]
   path = "project/account/rust/account-pass-validator"
 

@@ -19,8 +19,8 @@
 [workspace.dependencies.account-db]
   path = "project/account/rust/account-db"
 
-[workspace.dependencies.account-pass-validator]
-  path = "project/account/rust/account-pass-validator"
+[workspace.dependencies.account-validator-password]
+  path = "project/account/rust/account-validator-password"
 
 [workspace.dependencies.core-message]
   path = "project/core/rust/core-message"

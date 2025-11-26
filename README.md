@@ -123,12 +123,20 @@ That has the effect that CODEOWNERS will be enforced even if the directory is mo
 * `ci/Dockerfile`: Main Dockerfile.
 * `ci/docker.gitlab-ci.yml`: Image jobs.
 
-##### Update image
+##### Updating the image
 
 1. Update the `ci/Dockerfile` (e.g. `ENV`, `RUN`, ...).
-2. Update image version in `ci/docker.gitlab-ci.yml` (e.g. `1.0.5` -> `1.0.6`).
-3. Update image version in `ci/base.gitlab-ci.yml` (e.g. `1.0.6`).
+2. Update image version in `ci/docker.gitlab-ci.yml` (e.g. `1.0.10` -> `1.0.11`).
+3. Update image version in `ci/base.gitlab-ci.yml` (e.g. `1.0.11`).
 4. Open an MR.
+
+##### Updating Gradle
+
+Gradle is cached and shared between jobs. To update the verstion of Gradle:
+
+1. Change the version of gradle in `gradle/wrapper/gradle-wrapper.properties`.
+1. Change the cache key used by the template `.build_android_template` in `ci/base.gitlab-ci.yml` appropriately.
+1. Change the cache key used by the job `dowload:gradle` in `ci/project.gitlab-ci.yml` appropriately.
 
 ## Android Development
 

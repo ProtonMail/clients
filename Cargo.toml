@@ -31,8 +31,14 @@
 [workspace.dependencies.core-muon-op]
   path = "project/core/rust/core-muon-op"
 
+[workspace.dependencies.core-proc]
+  path = "project/core/rust/core-proc"
+
 [workspace.dependencies.core-db-op]
   path = "project/core/rust/core-db-op"
+
+[workspace.dependencies.core-hv-op]
+  path = "project/core/rust/core-hv-op"
 
 [workspace.dependencies.core-key]
   path = "project/core/rust/core-key"

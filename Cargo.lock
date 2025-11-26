@@ -14,10 +14,12 @@ dependencies = [
  "async-trait",
  "bitflags",
  "core-db-op",
+ "core-hv-op",
  "core-key",
  "core-message",
  "core-message-macro",
  "core-muon-op",
+ "core-proc",
  "core-user",
  "core-user-manager",
  "coset",
@@ -901,6 +903,8 @@ version = "0.1.0"
 dependencies = [
  "account-db",
  "async-trait",
+ "core-proc",
+ "crux_core",
  "derive_more 2.0.1",
  "facet",
  "serde",
@@ -933,6 +937,19 @@ name = "core-foundation-sys"
 version = "0.8.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "773648b94d0e5d620f64f280777445740e61fe701025087ec8b57f45c791888b"
+
+[[package]]
+name = "core-hv-op"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "core-proc",
+ "crux_core",
+ "derive_more 2.0.1",
+ "facet",
+ "serde",
+ "thiserror 2.0.17",
+]
 
 [[package]]
 name = "core-key"
@@ -970,6 +987,9 @@ name = "core-muon-op"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "core-hv-op",
+ "core-proc",
+ "crux_core",
  "derive_more 2.0.1",
  "facet",
  "futures",
@@ -977,6 +997,16 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 2.0.17",
+ "tracing",
+]
+
+[[package]]
+name = "core-proc"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.110",
 ]
 
 [[package]]

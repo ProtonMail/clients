@@ -8,7 +8,7 @@ version = "0.1.0"
 dependencies = [
  "account-crux-proc",
  "account-db",
- "account-pass-validator",
+ "account-validator-password",
  "aes-gcm",
  "anyhow",
  "async-trait",
@@ -94,7 +94,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "account-pass-validator"
+name = "account-validator-password"
 version = "0.1.0"
 dependencies = [
  "core-message",

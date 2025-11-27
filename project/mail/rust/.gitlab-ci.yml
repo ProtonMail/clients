@@ -117,7 +117,7 @@ test-linux:
   stage: build
   script:
     - !reference [ .script-config-git, script ]
-    - MOLD_JOBS=4 RUSTFLAGS="-C linker=clang -C link-arg=-fuse-ld=mold" cargo nextest run --features=action_rebase --color=never -j 8
+    - MOLD_JOBS=4 RUSTFLAGS="-C linker=clang -C link-arg=-fuse-ld=mold" cargo nextest run --color=never -j 8
     - MOLD_JOBS=4 RUSTFLAGS="-C linker=clang -C link-arg=-fuse-ld=mold" cargo test --doc
 
 check-macos:

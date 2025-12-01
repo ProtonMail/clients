@@ -52,6 +52,7 @@ dependencies = [
  "totp-rs",
  "tracing",
  "tracing-subscriber",
+ "unicode-segmentation",
  "uniffi",
  "url",
 ]

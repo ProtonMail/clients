@@ -1010,11 +1010,17 @@ dependencies = [
  "core-observability-proc",
  "facet",
  "serde",
+ "serde_json",
 ]
 
 [[package]]
 name = "core-observability-impl"
 version = "0.1.0"
+dependencies = [
+ "facet",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "core-observability-proc"

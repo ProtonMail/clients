@@ -23,6 +23,7 @@ dependencies = [
  "core-proc",
  "core-user",
  "core-user-manager",
+ "core-validator",
  "coset",
  "crux_core",
  "ctor 0.6.1",
@@ -1086,6 +1087,16 @@ dependencies = [
  "sha2",
  "thiserror 2.0.17",
  "tracing",
+]
+
+[[package]]
+name = "core-validator"
+version = "0.1.0"
+dependencies = [
+ "core-message",
+ "facet",
+ "secrecy",
+ "serde",
 ]
 
 [[package]]

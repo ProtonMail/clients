@@ -58,6 +58,9 @@
 [workspace.dependencies.core-observability-impl]
   path = "project/core/rust/core-observability-impl"
 
+[workspace.dependencies.core-validator]
+    path = "project/core/rust/core-validator"
+
 [workspace.dependencies.proton-crypto-account]
   # Use experimental version based on rprp instead of gopenpgp-sys.
   git = "https://gitlab.protontech.ch/rust/proton-crypto-rs.git"

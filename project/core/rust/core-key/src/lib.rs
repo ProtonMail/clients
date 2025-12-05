@@ -13,16 +13,16 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum SharedCryptoError {
-    #[error("Salt error: {0}")]
+    #[error("salt: {0}")]
     Salt(#[from] SaltError),
 
-    #[error("Crypto error: {0}")]
+    #[error("crypto: {0}")]
     Crypto(#[from] CryptoError),
 
-    #[error("Account crypto error: {0}")]
+    #[error("account crypto: {0}")]
     AccountCrypto(#[from] AccountCryptoError),
 
-    #[error("SKL error: {0}")]
+    #[error("skl: {0}")]
     SKL(#[from] SKLError),
 }
 

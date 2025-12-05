@@ -1075,6 +1075,7 @@ dependencies = [
  "core-muon-op",
  "core-user",
  "derive_more 2.0.1",
+ "futures",
  "hex",
  "proton-crypto-account",
  "serde",

@@ -1086,6 +1086,7 @@ dependencies = [
  "core-db-op",
  "core-key",
  "core-muon-op",
+ "core-observability",
  "core-user",
  "derive_more 2.0.1",
  "futures",

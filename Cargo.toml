@@ -19,8 +19,17 @@
 [workspace.dependencies.account-db]
   path = "project/account/rust/account-db"
 
+[workspace.dependencies.account-db-op]
+  path = "project/account/rust/account-db-op"
+
 [workspace.dependencies.account-validator-password]
   path = "project/account/rust/account-validator-password"
+
+[workspace.dependencies.core-crux-types]
+  path = "project/core/rust/core-crux-types"
+
+[workspace.dependencies.core-db-op]
+  path = "project/core/rust/core-db-op"
 
 [workspace.dependencies.core-message]
   path = "project/core/rust/core-message"
@@ -33,9 +42,6 @@
 
 [workspace.dependencies.core-proc]
   path = "project/core/rust/core-proc"
-
-[workspace.dependencies.core-db-op]
-  path = "project/core/rust/core-db-op"
 
 [workspace.dependencies.core-hv-op]
   path = "project/core/rust/core-hv-op"
@@ -80,6 +86,10 @@
 [workspace.dependencies.facet]
   version = "0.28"
   features = ["chrono", "time"]
+
+[workspace.dependencies.uniffi]
+  version = "0.30"
+  features = ["cli"]
 
 [workspace.dependencies.serde]
   version = "1"

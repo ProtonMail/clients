@@ -8,12 +8,12 @@ version = "0.1.0"
 dependencies = [
  "account-crux-proc",
  "account-db",
+ "account-db-op",
  "account-validator-password",
  "aes-gcm",
  "anyhow",
  "async-trait",
  "bitflags",
- "core-db-op",
  "core-hv-op",
  "core-key",
  "core-message",
@@ -74,7 +74,6 @@ version = "0.1.0"
 dependencies = [
  "account-crux",
  "anyhow",
- "core-message",
  "crux_core",
 ]
 
@@ -97,6 +96,22 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_repr",
+ "thiserror 2.0.17",
+]
+
+[[package]]
+name = "account-db-op"
+version = "0.1.0"
+dependencies = [
+ "account-db",
+ "async-trait",
+ "core-db-op",
+ "core-proc",
+ "crux_core",
+ "derive_more 2.0.1",
+ "facet",
+ "serde",
+ "serde_json",
  "thiserror 2.0.17",
 ]
 
@@ -887,17 +902,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "core-crux-types"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "core-hv-op",
+ "core-message",
+ "core-muon-op",
+ "core-user",
+ "crux_core",
+]
+
+[[package]]
 name = "core-db-op"
 version = "0.1.0"
 dependencies = [
  "account-db",
- "async-trait",
- "core-proc",
  "crux_core",
  "derive_more 2.0.1",
  "facet",
  "serde",
- "serde_json",
  "thiserror 2.0.17",
 ]
 

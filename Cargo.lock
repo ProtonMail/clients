@@ -3770,8 +3770,7 @@ dependencies = [
 [[package]]
 name = "muon"
 version = "1.8.1"
-source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/registry/index/"
-checksum = "100c69cc1db07481a11c1391b4f7282d30f4308cc184eb9402f342109c8743c5"
+source = "git+https://gitlab.protontech.ch/ProtonVPN/rust/muon?branch=feat%2Fmake-more-error-ty-public#0af5fd2f8559c7dd18c8f7ce798bb54635ee82d5"
 dependencies = [
  "anyhow",
  "async-channel",

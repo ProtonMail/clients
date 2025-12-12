@@ -3769,8 +3769,9 @@ dependencies = [
 
 [[package]]
 name = "muon"
-version = "1.8.1"
-source = "git+https://gitlab.protontech.ch/ProtonVPN/rust/muon?branch=feat%2Fmake-more-error-ty-public#0af5fd2f8559c7dd18c8f7ce798bb54635ee82d5"
+version = "1.9.0"
+source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/registry/index/"
+checksum = "a04f3eb892b6ac1581926cdb7a4d49ff83cc30b92f4b990ebd4415c932f6e452"
 dependencies = [
  "anyhow",
  "async-channel",
@@ -5981,7 +5982,7 @@ version = "0.8.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c1c97747dbf44bb1ca44a561ece23508e99cb592e862f22222dcf42f51d1e451"
 dependencies = [
- "heck 0.5.0",
+ "heck 0.4.1",
  "proc-macro2",
  "quote",
  "syn 2.0.110",

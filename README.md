@@ -1,9 +1,5 @@
 # Proton Clients Monorepo
 
-**Status**: WIP  
-**Contact**: @nmarietta, @eackerma  
-**Started**: June 2025  
-
 This monorepo hosts client-side code for Proton applications (e.g. Mail, Calendar), shared SDKs, and supporting tools.
 
 ## Structure

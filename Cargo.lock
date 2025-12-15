@@ -502,11 +502,11 @@ dependencies = [
 
 [[package]]
 name = "bitfields"
-version = "1.0.1"
+version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f7b84260234ecc8ba5a13cac862569913ee84281f108e6520121de0d50ac4db"
+checksum = "d866f92dc1574aa8da443eacb06ad8fbe4056dbc1b7c3aae508cbccd46c7e706"
 dependencies = [
- "bitfields-impl 1.0.1",
+ "bitfields-impl 1.0.2",
 ]
 
 [[package]]
@@ -523,9 +523,9 @@ dependencies = [
 
 [[package]]
 name = "bitfields-impl"
-version = "1.0.1"
+version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e80ed89419086de767177cc00f0a9af47c9b34646c7c6d2203cd04b2a15c672a"
+checksum = "c09459e6af3016ea58af8332e31d5da117d33a621bad7019355eefccc4a567d4"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3796,7 +3796,7 @@ dependencies = [
  "aes-kw",
  "argon2",
  "base64",
- "bitfields 1.0.1",
+ "bitfields 1.0.2",
  "block-padding",
  "blowfish",
  "buffer-redux",
@@ -4116,14 +4116,14 @@ dependencies = [
 
 [[package]]
 name = "proton-crypto"
-version = "0.7.0"
-source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?tag=proton-rpgp-v0.1.0-alpha.3#c6ce0368edae6a363d47aac8042dd0bf28b92a68"
+version = "0.7.1"
+source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?tag=proton-rpgp-v0.1.0-alpha.5#dba09fe94eab904db466dc9ddc319c35b5976ce2"
 dependencies = [
  "facet",
  "hex",
  "parking_lot",
  "proton-rpgp",
- "proton-srp 0.7.1 (git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?tag=proton-rpgp-v0.1.0-alpha.3)",
+ "proton-srp 0.7.1 (git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?tag=proton-rpgp-v0.1.0-alpha.5)",
  "rand 0.8.5",
  "serde",
  "subtle",
@@ -4133,8 +4133,8 @@ dependencies = [
 
 [[package]]
 name = "proton-crypto-account"
-version = "0.12.2"
-source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?tag=proton-rpgp-v0.1.0-alpha.3#c6ce0368edae6a363d47aac8042dd0bf28b92a68"
+version = "0.12.3"
+source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?tag=proton-rpgp-v0.1.0-alpha.5#dba09fe94eab904db466dc9ddc319c35b5976ce2"
 dependencies = [
  "base64",
  "derive_more 2.0.1",
@@ -4153,7 +4153,7 @@ dependencies = [
 [[package]]
 name = "proton-rpgp"
 version = "0.1.0"
-source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?tag=proton-rpgp-v0.1.0-alpha.3#c6ce0368edae6a363d47aac8042dd0bf28b92a68"
+source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?tag=proton-rpgp-v0.1.0-alpha.5#dba09fe94eab904db466dc9ddc319c35b5976ce2"
 dependencies = [
  "chrono",
  "hex",
@@ -4188,12 +4188,11 @@ dependencies = [
 [[package]]
 name = "proton-srp"
 version = "0.7.1"
-source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?tag=proton-rpgp-v0.1.0-alpha.3#c6ce0368edae6a363d47aac8042dd0bf28b92a68"
+source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?tag=proton-rpgp-v0.1.0-alpha.5#dba09fe94eab904db466dc9ddc319c35b5976ce2"
 dependencies = [
  "base64",
  "bcrypt",
  "crypto-bigint",
- "pgp 0.16.0",
  "rand 0.8.5",
  "sha2",
  "thiserror 1.0.69",
@@ -5064,7 +5063,7 @@ version = "0.8.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c1c97747dbf44bb1ca44a561ece23508e99cb592e862f22222dcf42f51d1e451"
 dependencies = [
- "heck 0.5.0",
+ "heck 0.4.1",
  "proc-macro2",
  "quote",
  "syn 2.0.110",

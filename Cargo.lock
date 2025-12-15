@@ -29,6 +29,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "bitflags",
+ "core-aes-op",
  "core-fido-op",
  "core-hv-op",
  "core-key",
@@ -91,6 +92,7 @@ name = "account-db"
 version = "0.1.0"
 dependencies = [
  "bitflags",
+ "core-aes-op",
  "core-user",
  "deadpool-diesel",
  "derive_more 2.0.1",
@@ -114,6 +116,7 @@ version = "0.1.0"
 dependencies = [
  "account-db",
  "async-trait",
+ "core-aes-op",
  "core-db-op",
  "core-proc",
  "crux_core",
@@ -1070,6 +1073,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bb402b8d4c85569410425650ce3eddc7d698ed96d39a73f941b08fb63082f1e7"
 dependencies = [
  "unicode-segmentation",
+]
+
+[[package]]
+name = "core-aes-op"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "core-proc",
+ "crux_core",
+ "derive_more 2.0.1",
+ "diesel",
+ "diesel-derive-newtype",
+ "facet",
+ "serde",
+ "thiserror 2.0.17",
 ]
 
 [[package]]

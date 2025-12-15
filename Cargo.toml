@@ -22,6 +22,9 @@
 [workspace.dependencies.account-validator-password]
   path = "project/account/rust/account-validator-password"
 
+[workspace.dependencies.core-aes-op]
+  path = "project/core/rust/core-aes-op"
+
 [workspace.dependencies.core-crux-types]
   path = "project/core/rust/core-crux-types"
 

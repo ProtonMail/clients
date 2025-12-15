@@ -13,9 +13,6 @@
   path = "project/account/rust/account-crux"
   features = ["facet_typegen"]
 
-[workspace.dependencies.account-crux-proc]
-  path = "project/account/rust/account-crux-proc"
-
 [workspace.dependencies.account-db]
   path = "project/account/rust/account-db"
 
@@ -42,6 +39,9 @@
 
 [workspace.dependencies.core-proc]
   path = "project/core/rust/core-proc"
+
+[workspace.dependencies.core-fido-op]
+  path = "project/core/rust/core-fido-op"
 
 [workspace.dependencies.core-hv-op]
   path = "project/core/rust/core-hv-op"

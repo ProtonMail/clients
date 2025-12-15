@@ -22,7 +22,6 @@ checksum = "366ffbaa4442f4684d91e2cd7c5ea7c4ed8add41959a31447066e279e432b618"
 name = "account-crux"
 version = "0.1.0"
 dependencies = [
- "account-crux-proc",
  "account-db",
  "account-db-op",
  "account-validator-password",
@@ -30,6 +29,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "bitflags",
+ "core-fido-op",
  "core-hv-op",
  "core-key",
  "core-message",
@@ -40,7 +40,6 @@ dependencies = [
  "core-user",
  "core-user-manager",
  "core-validator",
- "coset",
  "crux_core",
  "ctor 0.6.1",
  "data-encoding",
@@ -76,15 +75,6 @@ dependencies = [
  "unicode-segmentation",
  "uniffi",
  "url",
-]
-
-[[package]]
-name = "account-crux-proc"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.110",
 ]
 
 [[package]]
@@ -1103,6 +1093,23 @@ dependencies = [
  "derive_more 2.0.1",
  "facet",
  "serde",
+ "thiserror 2.0.17",
+]
+
+[[package]]
+name = "core-fido-op"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "core-proc",
+ "coset",
+ "crux_core",
+ "derive_more 2.0.1",
+ "facet",
+ "itertools 0.14.0",
+ "passkey",
+ "serde",
+ "serde_json",
  "thiserror 2.0.17",
 ]
 

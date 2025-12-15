@@ -70,13 +70,13 @@
 [workspace.dependencies.proton-crypto-account]
   # Use experimental version based on rprp instead of gopenpgp-sys.
   git = "https://gitlab.protontech.ch/rust/proton-crypto-rs.git"
-  tag = "proton-rpgp-v0.1.0-alpha.3"
+  tag = "proton-rpgp-v0.1.0-alpha.5"
   features = ["facet"]
 
 [workspace.dependencies.proton-crypto]
   # Use experimental version based on rprp instead of gopenpgp-sys.
   git = "https://gitlab.protontech.ch/rust/proton-crypto-rs.git"
-  tag = "proton-rpgp-v0.1.0-alpha.3"
+  tag = "proton-rpgp-v0.1.0-alpha.5"
   features = ["facet"]
 
 [workspace.dependencies.crux_core]

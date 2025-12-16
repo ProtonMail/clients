@@ -2,7 +2,6 @@
   members = [
     "project/account/rust/account*",
     "project/core/rust/core-*",
-    "project/core/telemetry/rust",
   ]
   resolver = "3"
 

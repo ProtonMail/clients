@@ -1,0 +1,14 @@
+# Rust build artifacts
+/target/
+*.pdb
+Cargo.lock
+
+# Library outputs
+*.so
+*.dylib
+*.dll
+*.a
+
+# IDE
+.vscode/
+.idea/

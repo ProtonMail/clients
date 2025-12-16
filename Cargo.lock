@@ -106,7 +106,6 @@ dependencies = [
  "proton-crypto-account",
  "serde",
  "serde_json",
- "serde_repr",
  "thiserror 2.0.17",
 ]
 

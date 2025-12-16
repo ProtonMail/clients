@@ -1028,6 +1028,9 @@ name = "core-crux-types"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "core-aes-op",
+ "core-db-op",
+ "core-fido-op",
  "core-hv-op",
  "core-message",
  "core-muon-op",

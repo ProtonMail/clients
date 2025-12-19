@@ -5,6 +5,9 @@ include:
 workflow:
   rules:
     - if: $CI_DEFAULT_BRANCH == $CI_COMMIT_BRANCH
+      changes:
+         - "docs/**/*"
+      when: never
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_TAG =~ /^core-ical-v[0-9]+\.[0-9]+\.[0-9]+$/
     - if: $CI_COMMIT_TAG =~ /^mail-uniffi-v[0-9]+\.[0-9]+\.[0-9]+$/

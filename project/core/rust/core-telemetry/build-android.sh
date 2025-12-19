@@ -17,7 +17,7 @@ STRIP_BIN=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/${OS_NAME}-x86_64/bin/llvm-
 
 ANDROID_MODULE_DIR="../../android/core-telemetry-ffi"
 LIB_NAME="libcore_telemetry.so"
-OUT_DIR="generated"
+OUT_DIR="$TARGET_DIR/android/core-telemetry"
 PROFILE="android"
 FEATURES="uniffi,sqlite,http"
 

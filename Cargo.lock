@@ -1431,15 +1431,13 @@ checksum = "460fbee9c2c2f33933d720630a6a0bac33ba7053db5344fac858d4b8952d77d5"
 
 [[package]]
 name = "crux_core"
-version = "0.16.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a64410ab92e0d0ca634a249a75a3cfe8da977a7f22b5477dd2ed25c290645149"
+version = "0.17.0-rc1"
+source = "git+https://github.com/o0Ignition0o/crux?branch=bump_facet_dependency#d0188b46e19be54c1a87cdba86d490bb69137ec5"
 dependencies = [
  "anyhow",
  "bincode",
  "crossbeam-channel",
  "crux_macros",
- "erased-serde",
  "facet",
  "facet_generate",
  "futures",
@@ -1452,11 +1450,10 @@ dependencies = [
 
 [[package]]
 name = "crux_macros"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ceee550b136afd8b746e5fd91167ce9b9142661f283c86f423d0fd170f5addb6"
+version = "0.8.0-rc1"
+source = "git+https://github.com/o0Ignition0o/crux?branch=bump_facet_dependency#d0188b46e19be54c1a87cdba86d490bb69137ec5"
 dependencies = [
- "darling 0.21.3",
+ "darling 0.23.0",
  "heck 0.5.0",
  "proc-macro-error",
  "proc-macro2",
@@ -1631,6 +1628,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "darling"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "25ae13da2f202d56bd7f91c25fba009e7717a1e4a1cc98a76d844b65ae912e9d"
+dependencies = [
+ "darling_core 0.23.0",
+ "darling_macro 0.23.0",
+]
+
+[[package]]
 name = "darling_core"
 version = "0.20.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1659,6 +1666,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "darling_core"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9865a50f7c335f53564bb694ef660825eb8610e0a53d3e11bf1b0d3df31e03b0"
+dependencies = [
+ "ident_case",
+ "proc-macro2",
+ "quote",
+ "strsim",
+ "syn 2.0.110",
+]
+
+[[package]]
 name = "darling_macro"
 version = "0.20.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1676,6 +1696,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d38308df82d1080de0afee5d069fa14b0326a88c14f15c5ccda35b4a6c414c81"
 dependencies = [
  "darling_core 0.21.3",
+ "quote",
+ "syn 2.0.110",
+]
+
+[[package]]
+name = "darling_macro"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ac3984ec7bd6cfa798e62b4a642426a5be0e68f9401cfc2a01e3fa9ea2fcdb8d"
+dependencies = [
+ "darling_core 0.23.0",
  "quote",
  "syn 2.0.110",
 ]
@@ -2214,17 +2245,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 
 [[package]]
-name = "erased-serde"
-version = "0.4.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "89e8918065695684b2b0702da20382d5ae6065cf3327bc2d6436bd49a71ce9f3"
-dependencies = [
- "serde",
- "serde_core",
- "typeid",
-]
-
-[[package]]
 name = "errno"
 version = "0.3.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2272,9 +2292,9 @@ dependencies = [
 
 [[package]]
 name = "facet"
-version = "0.28.3"
+version = "0.31.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fa721ef7c3d28dad0a82f12b58ed06f8d55ded9fff60cca2bdd26eea8ef0b23e"
+checksum = "4d643309d7c46d073b6c51e29901ed9bc3d858dc09aa21f5b32b424491e1bbef"
 dependencies = [
  "facet-core",
  "facet-macros",
@@ -2283,9 +2303,9 @@ dependencies = [
 
 [[package]]
 name = "facet-core"
-version = "0.28.3"
+version = "0.31.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d53f437ef568ab97c56f53561b21facc5999fe97eb4b4360c932a110d00a2a9"
+checksum = "ac27076d75388bffb6c5e5118078dcbb46f2090b35256c45372ff1c1910b1aaf"
 dependencies = [
  "bitflags",
  "chrono",
@@ -2295,9 +2315,9 @@ dependencies = [
 
 [[package]]
 name = "facet-macros"
-version = "0.28.3"
+version = "0.31.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b50ab132d5eb441268c9a838aafa4fd0f98ed7250af72b83ae5f8bcaffe03252"
+checksum = "391fcf43b68a76ba4a494710629a7b6fb430345a5623a6a87f7c263bfadb1643"
 dependencies = [
  "facet-core",
  "facet-macros-emit",
@@ -2305,9 +2325,9 @@ dependencies = [
 
 [[package]]
 name = "facet-macros-emit"
-version = "0.28.3"
+version = "0.31.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46b24923c18ba3e49a574839946c77dce37f67b3fc2d78d0aa7c342382bd7599"
+checksum = "e81e536ccafa7d5ef71822c9a67a28a0b29fe0170eaf2d134c36854a3d56ee9a"
 dependencies = [
  "facet-macros-parse",
  "quote",
@@ -2315,9 +2335,9 @@ dependencies = [
 
 [[package]]
 name = "facet-macros-parse"
-version = "0.28.3"
+version = "0.31.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2919451ef356233d910b5c7b127721ea254062b0043a43d5643e0a750cfd9da9"
+checksum = "8da5d4ded1874033bdef5000712d80d28feefe2abb48bb6f31b6fe59b7e9792f"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2326,9 +2346,9 @@ dependencies = [
 
 [[package]]
 name = "facet_generate"
-version = "0.11.7"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "25bb3c8327d7234f010d338de480fc200e755e5aded1de4c5539d784aba8aece"
+checksum = "d8c393ef685c430de9611c131be6bd55e02c083d3dbccc74f39eca8aef8e12d2"
 dependencies = [
  "derive_builder",
  "facet",
@@ -2336,6 +2356,7 @@ dependencies = [
  "include_dir",
  "indent",
  "indoc",
+ "regex",
  "serde",
  "serde_json",
  "textwrap",
@@ -3539,9 +3560,9 @@ dependencies = [
 
 [[package]]
 name = "log"
-version = "0.4.28"
+version = "0.4.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "34080505efa8e45a4b816c349525ebe327ceaa8559756f0356cba97ef3bf7432"
+checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
 
 [[package]]
 name = "loop9"
@@ -4787,14 +4808,14 @@ dependencies = [
 
 [[package]]
 name = "proton-crypto"
-version = "0.7.1"
-source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?tag=proton-rpgp-v0.1.0-alpha.5#dba09fe94eab904db466dc9ddc319c35b5976ce2"
+version = "0.7.0"
+source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?branch=chore%2Fupgrade-facet-dependency#adf1f491d4df1cb17e6d6a09a723b9412c394495"
 dependencies = [
  "facet",
  "hex",
  "parking_lot",
  "proton-rpgp",
- "proton-srp 0.7.1 (git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?tag=proton-rpgp-v0.1.0-alpha.5)",
+ "proton-srp 0.7.1 (git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?branch=chore%2Fupgrade-facet-dependency)",
  "rand 0.8.5",
  "serde",
  "subtle",
@@ -4804,8 +4825,8 @@ dependencies = [
 
 [[package]]
 name = "proton-crypto-account"
-version = "0.12.3"
-source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?tag=proton-rpgp-v0.1.0-alpha.5#dba09fe94eab904db466dc9ddc319c35b5976ce2"
+version = "0.12.2"
+source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?branch=chore%2Fupgrade-facet-dependency#adf1f491d4df1cb17e6d6a09a723b9412c394495"
 dependencies = [
  "base64",
  "derive_more 2.0.1",
@@ -4824,7 +4845,7 @@ dependencies = [
 [[package]]
 name = "proton-rpgp"
 version = "0.1.0"
-source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?tag=proton-rpgp-v0.1.0-alpha.5#dba09fe94eab904db466dc9ddc319c35b5976ce2"
+source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?branch=chore%2Fupgrade-facet-dependency#adf1f491d4df1cb17e6d6a09a723b9412c394495"
 dependencies = [
  "chrono",
  "hex",
@@ -4859,11 +4880,12 @@ dependencies = [
 [[package]]
 name = "proton-srp"
 version = "0.7.1"
-source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?tag=proton-rpgp-v0.1.0-alpha.5#dba09fe94eab904db466dc9ddc319c35b5976ce2"
+source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?branch=chore%2Fupgrade-facet-dependency#adf1f491d4df1cb17e6d6a09a723b9412c394495"
 dependencies = [
  "base64",
  "bcrypt",
  "crypto-bigint",
+ "pgp 0.16.0",
  "rand 0.8.5",
  "sha2",
  "thiserror 1.0.69",
@@ -5845,12 +5867,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "shadow_counted"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "65da48d447333cebe1aadbdd3662f3ba56e76e67f53bc46f3dd5f67c74629d6b"
-
-[[package]]
 name = "sharded-slab"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6639,12 +6655,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "typeid"
-version = "1.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc7d623258602320d5c55d1bc22793b57daff0ec7efc270ea7d55ce1d5f5471c"
-
-[[package]]
 name = "typenum"
 version = "1.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6841,14 +6851,13 @@ dependencies = [
 
 [[package]]
 name = "unsynn"
-version = "0.1.1"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7940603a9e25cf11211cc43b81f4fcad2b8ab4df291ca855f32c40e1ac22d5bc"
+checksum = "501a7adf1a4bd9951501e5c66621e972ef8874d787628b7f90e64f936ef7ec0a"
 dependencies = [
- "fxhash",
  "mutants",
  "proc-macro2",
- "shadow_counted",
+ "rustc-hash 2.1.1",
 ]
 
 [[package]]

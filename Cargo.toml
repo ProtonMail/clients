@@ -2,6 +2,7 @@
   members = [
     "project/account/rust/account*",
     "project/core/rust/core-*",
+    "project/core/rust/lattice",
     "tools/uniffi-bindgen",
   ]
   resolver = "3"
@@ -55,9 +56,6 @@
 [workspace.dependencies.core-key]
   path = "project/core/rust/core-key"
 
-[workspace.dependencies.core-user]
-  path = "project/core/rust/core-user"
-
 [workspace.dependencies.core-user-manager]
   path = "project/core/rust/core-user-manager"
 
@@ -75,6 +73,9 @@
 
 [workspace.dependencies.core-validator]
   path = "project/core/rust/core-validator"
+
+[workspace.dependencies.lattice]
+  path = "project/core/rust/lattice"
 
 [workspace.dependencies.proton-crypto-account]
   # Use experimental version based on rprp instead of gopenpgp-sys.

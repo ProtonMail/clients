@@ -1,0 +1,27 @@
+[package]
+  name = "lattice"
+  version = "0.1.0"
+  edition.workspace = true
+
+[features]
+  core = ["auth", "dep:passkey", "dep:bitflags", "dep:proton-crypto-account", "dep:num_enum"]
+  auth = ["dep:passkey", "dep:bitflags"]
+  default = []
+  facet = ["dep:facet"]
+  serde = ["dep:serde", "dep:serde_json", "bitflags?/serde"]
+  muon = ["dep:muon"]
+
+[dependencies]
+  serde = { optional = true, version = "^1.0.228", features = ["derive"] }
+  serde_json = { optional = true, version = "1.0.149" }
+  facet = { workspace = true, optional = true }
+  zeroize = { version = "1.8.2" }
+  derive_more = { workspace = true }
+  passkey = { optional = true, version = "0.4" }
+  bitflags = { optional = true, version = "2" }
+  proton-crypto-account = { optional = true, workspace = true }
+  num_enum = { workspace = true, optional = true }
+  muon = { version = "2.0.3", registry = "proton", default-features = false, optional = true }
+
+[lints]
+  workspace = true

@@ -41,18 +41,18 @@ dependencies = [
  "core-muon-op",
  "core-observability",
  "core-proc",
- "core-user",
  "core-user-manager",
  "core-validator",
  "crux_core",
  "ctor",
  "data-encoding",
- "derive_more 2.0.1",
+ "derive_more 2.1.1",
  "facet",
  "fancy-regex 0.16.2",
  "futures",
  "image",
  "itertools 0.14.0",
+ "lattice",
  "muon",
  "num",
  "parking_lot",
@@ -99,14 +99,14 @@ dependencies = [
  "bitflags",
  "core-aes-op",
  "core-common-types",
- "core-user",
  "deadpool-diesel",
- "derive_more 2.0.1",
+ "derive_more 2.1.1",
  "diesel",
  "diesel-derive-newtype",
  "diesel_migrations",
  "facet",
  "futures",
+ "lattice",
  "libsqlite3-sys",
  "num_enum",
  "proton-crypto-account",
@@ -125,7 +125,7 @@ dependencies = [
  "core-db-op",
  "core-proc",
  "crux_core",
- "derive_more 2.0.1",
+ "derive_more 2.1.1",
  "facet",
  "serde",
  "serde_json",
@@ -139,6 +139,8 @@ dependencies = [
  "core-message",
  "core-message-macro",
  "fancy-regex 0.16.2",
+ "lattice",
+ "thiserror 2.0.17",
  "tracing",
 ]
 
@@ -993,9 +995,9 @@ dependencies = [
 
 [[package]]
 name = "convert_case"
-version = "0.7.1"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb402b8d4c85569410425650ce3eddc7d698ed96d39a73f941b08fb63082f1e7"
+checksum = "633458d4ef8c78b72454de2d54fd6ab2e60f9e02be22f3c6104cdc8a4e0fceb9"
 dependencies = [
  "unicode-segmentation",
 ]
@@ -1007,7 +1009,7 @@ dependencies = [
  "async-trait",
  "core-proc",
  "crux_core",
- "derive_more 2.0.1",
+ "derive_more 2.1.1",
  "diesel",
  "diesel-derive-newtype",
  "facet",
@@ -1036,9 +1038,9 @@ dependencies = [
  "core-hv-op",
  "core-message",
  "core-muon-op",
- "core-user",
  "core-validator",
  "crux_core",
+ "lattice",
 ]
 
 [[package]]
@@ -1047,7 +1049,7 @@ version = "0.1.0"
 dependencies = [
  "account-db",
  "crux_core",
- "derive_more 2.0.1",
+ "derive_more 2.1.1",
  "facet",
  "serde",
  "thiserror 2.0.17",
@@ -1088,9 +1090,10 @@ dependencies = [
  "core-proc",
  "coset",
  "crux_core",
- "derive_more 2.0.1",
+ "derive_more 2.1.1",
  "facet",
  "itertools 0.14.0",
+ "lattice",
  "passkey",
  "serde",
  "serde_json",
@@ -1120,7 +1123,7 @@ dependencies = [
  "async-trait",
  "core-proc",
  "crux_core",
- "derive_more 2.0.1",
+ "derive_more 2.1.1",
  "facet",
  "serde",
  "serde_json",
@@ -1179,9 +1182,10 @@ dependencies = [
  "core-hv-op",
  "core-proc",
  "crux_core",
- "derive_more 2.0.1",
+ "derive_more 2.1.1",
  "facet",
  "futures",
+ "lattice",
  "muon",
  "serde",
  "serde_json",
@@ -1214,7 +1218,7 @@ name = "core-observability-proc"
 version = "0.1.0"
 dependencies = [
  "core-observability-impl",
- "derive_more 2.0.1",
+ "derive_more 2.1.1",
  "glob",
  "heck 0.5.0",
  "itertools 0.14.0",
@@ -1255,23 +1259,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "core-user"
-version = "0.1.0"
-dependencies = [
- "bitflags",
- "core-common-types",
- "derive_more 2.0.1",
- "facet",
- "num_enum",
- "proton-crypto-account",
- "serde",
- "serde_json",
- "serde_repr",
- "serde_with",
- "zeroize",
-]
-
-[[package]]
 name = "core-user-manager"
 version = "0.1.0"
 dependencies = [
@@ -1281,15 +1268,13 @@ dependencies = [
  "core-key",
  "core-muon-op",
  "core-observability",
- "core-user",
- "derive_more 2.0.1",
+ "derive_more 2.1.1",
  "futures",
  "hex",
+ "lattice",
  "proton-crypto-account",
  "serde",
- "serde-aux",
  "serde_json",
- "serde_repr",
  "serde_with",
  "sha2",
  "thiserror 2.0.17",
@@ -1803,11 +1788,11 @@ dependencies = [
 
 [[package]]
 name = "derive_more"
-version = "2.0.1"
+version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "093242cf7570c207c83073cf82f79706fe7b8317e98620a47d5be7c3d8497678"
+checksum = "d751e9e49156b02b44f9c1815bcb94b984cdcc4396ecc32521c739452808b134"
 dependencies = [
- "derive_more-impl 2.0.1",
+ "derive_more-impl 2.1.1",
 ]
 
 [[package]]
@@ -1825,13 +1810,14 @@ dependencies = [
 
 [[package]]
 name = "derive_more-impl"
-version = "2.0.1"
+version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bda628edc44c4bb645fbe0f758797143e4e07926f7ebf4e9bdfbd3d2ce621df3"
+checksum = "799a97264921d8623a957f6c3b9011f3b5492f557bbb7a5a19b7fa6d06ba8dcb"
 dependencies = [
- "convert_case 0.7.1",
+ "convert_case 0.10.0",
  "proc-macro2",
  "quote",
+ "rustc_version",
  "syn 2.0.110",
  "unicode-xid",
 ]
@@ -3324,6 +3310,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "lattice"
+version = "0.1.0"
+dependencies = [
+ "bitflags",
+ "derive_more 2.1.1",
+ "facet",
+ "muon",
+ "num_enum",
+ "passkey",
+ "proton-crypto-account",
+ "serde",
+ "serde_json",
+ "zeroize",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3674,7 +3676,7 @@ dependencies = [
  "cfg-if",
  "common-multipart-rfc7578",
  "data-encoding",
- "derive_more 2.0.1",
+ "derive_more 2.1.1",
  "futures",
  "futures-rustls",
  "getrandom 0.2.16",
@@ -3711,7 +3713,7 @@ version = "0.1.0"
 source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/registry/index/"
 checksum = "d6ee1b56091056f8214e6802d015273a2ae7be8d37d6abdf6cc8c512362f86d8"
 dependencies = [
- "derive_more 2.0.1",
+ "derive_more 2.1.1",
  "serde",
  "serde_json",
  "serde_repr",
@@ -3962,15 +3964,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
 
 [[package]]
-name = "ordered-float"
-version = "2.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68f19d67e5a2795c94e73e0bb1cc1a7edeb2e28efd39e2e1c9b7a40c1108b11c"
-dependencies = [
- "num-traits",
-]
-
-[[package]]
 name = "owned_ttf_parser"
 version = "0.25.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4185,7 +4178,7 @@ dependencies = [
  "curve25519-dalek",
  "cx448",
  "derive_builder",
- "derive_more 2.0.1",
+ "derive_more 2.1.1",
  "des",
  "digest",
  "dsa",
@@ -4253,7 +4246,7 @@ dependencies = [
  "curve25519-dalek",
  "cx448",
  "derive_builder",
- "derive_more 2.0.1",
+ "derive_more 2.1.1",
  "des",
  "digest",
  "dsa",
@@ -4612,7 +4605,7 @@ version = "0.12.3"
 source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?branch=chore%2Frpgp-v0.1.0-alpha.5-facet-0.31#b75f5cdffe9284d5ad36da84f25db0b5b8b89a29"
 dependencies = [
  "base64",
- "derive_more 2.0.1",
+ "derive_more 2.1.1",
  "facet",
  "futures",
  "hex",
@@ -5373,7 +5366,7 @@ checksum = "5685b6ae43bfcf7d2e7dfcfb5d8e8f61b46442c902531e41a32a9a8bf0ee0fb6"
 dependencies = [
  "bitflags",
  "cssparser",
- "derive_more 2.0.1",
+ "derive_more 2.1.1",
  "fxhash",
  "log",
  "new_debug_unreachable",
@@ -5402,28 +5395,6 @@ checksum = "9a8e94ea7f378bd32cbbd37198a4a91436180c5bb472411e48b5ec2e2124ae9e"
 dependencies = [
  "serde_core",
  "serde_derive",
-]
-
-[[package]]
-name = "serde-aux"
-version = "4.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "207f67b28fe90fb596503a9bf0bf1ea5e831e21307658e177c5dfcdfc3ab8a0a"
-dependencies = [
- "chrono",
- "serde",
- "serde-value",
- "serde_json",
-]
-
-[[package]]
-name = "serde-value"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f3a1a3341211875ef120e117ea7fd5228530ae7e7036a779fdc9117be6b3282c"
-dependencies = [
- "ordered-float",
- "serde",
 ]
 
 [[package]]

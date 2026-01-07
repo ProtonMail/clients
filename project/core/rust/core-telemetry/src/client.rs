@@ -197,8 +197,6 @@ impl std::fmt::Debug for Tcl {
 
 #[cfg(test)]
 mod tests {
-    use crate::{TelemetryConfig, TelemetryEvent};
-
     // cargo test --features "http,sqlite" -- --nocapture
     // cargo test --features "http,sqlite" -- --ignored --nocapture
     // this is more of an integration test
@@ -208,6 +206,7 @@ mod tests {
     #[cfg(all(feature = "sqlite", feature = "http"))]
     async fn test_log_and_sync() {
         use crate::client::Tcl;
+        use crate::{TelemetryConfig, TelemetryEvent};
 
         let temp_file = tempfile::NamedTempFile::new().unwrap();
         let db_path = temp_file.path().to_str().unwrap();

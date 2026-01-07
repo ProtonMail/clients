@@ -31,6 +31,7 @@ dependencies = [
  "async-trait",
  "bitflags",
  "core-aes-op",
+ "core-common-types",
  "core-fido-op",
  "core-hv-op",
  "core-key",
@@ -77,6 +78,7 @@ dependencies = [
  "unicode-segmentation",
  "uniffi",
  "url",
+ "zeroize",
 ]
 
 [[package]]
@@ -94,6 +96,7 @@ version = "0.1.0"
 dependencies = [
  "bitflags",
  "core-aes-op",
+ "core-common-types",
  "core-user",
  "deadpool-diesel",
  "derive_more 2.0.1",
@@ -1011,6 +1014,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "core-common-types"
+version = "0.1.0"
+dependencies = [
+ "facet",
+ "serde",
+ "zeroize",
+]
+
+[[package]]
 name = "core-crux-types"
 version = "0.1.0"
 dependencies = [
@@ -1200,6 +1212,7 @@ name = "core-user"
 version = "0.1.0"
 dependencies = [
  "bitflags",
+ "core-common-types",
  "derive_more 2.0.1",
  "facet",
  "num_enum",
@@ -1208,6 +1221,7 @@ dependencies = [
  "serde_json",
  "serde_repr",
  "serde_with",
+ "zeroize",
 ]
 
 [[package]]
@@ -1215,6 +1229,7 @@ name = "core-user-manager"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "core-common-types",
  "core-db-op",
  "core-key",
  "core-muon-op",
@@ -1232,6 +1247,7 @@ dependencies = [
  "sha2",
  "thiserror 2.0.17",
  "tracing",
+ "zeroize",
 ]
 
 [[package]]
@@ -1241,6 +1257,7 @@ dependencies = [
  "core-message",
  "facet",
  "serde",
+ "zeroize",
 ]
 
 [[package]]

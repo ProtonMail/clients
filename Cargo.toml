@@ -66,8 +66,11 @@
 [workspace.dependencies.core-observability-impl]
   path = "project/core/rust/core-observability-impl"
 
+[workspace.dependencies.core-common-types]
+  path = "project/core/rust/core-common-types"
+
 [workspace.dependencies.core-validator]
-    path = "project/core/rust/core-validator"
+  path = "project/core/rust/core-validator"
 
 [workspace.dependencies.proton-crypto-account]
   # Use experimental version based on rprp instead of gopenpgp-sys.

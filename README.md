@@ -1,11 +1,8 @@
+[![codecov](https://codecov.protontech.ch/gitlab_enterprise/proton:clients/monorepo/graph/badge.svg?token=9JP2XJP0RY)](https://codecov.protontech.ch/gitlab_enterprise/proton:clients/monorepo)
+
 # Proton Clients Monorepo
 
 This monorepo hosts client-side code for Proton applications (e.g. Mail, Calendar), shared SDKs, and supporting tools.
-
-## Code Coverage
-
-Core Android coverage: [![Core Android Coverage](https://gitlab.protontech.ch/proton/clients/monorepo/badges/main/coverage.svg?job=core:android:unit_test)](https://gitlab.protontech.ch/proton/clients/monorepo/-/jobs)
-Account Android coverage: [![Account Android Coverage](https://gitlab.protontech.ch/proton/clients/monorepo/badges/main/coverage.svg?job=account:android:unit_test)](https://gitlab.protontech.ch/proton/clients/monorepo/-/jobs)
 
 ## Structure
 

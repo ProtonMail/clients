@@ -31,10 +31,5 @@ tempfile = "3"
 crate-type = ["staticlib", "cdylib", "lib"]
 name = "core_telemetry"
 
-[[bin]]
-name = "uniffi-bindgen-tcl"
-path = "uniffi-bindgen.rs"
-required-features = ["uniffi"]
-
 [lints]
 workspace = true

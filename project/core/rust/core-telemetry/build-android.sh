@@ -35,7 +35,8 @@ function build() {
   cargo ndk -t "armeabi-v7a" -t "arm64-v8a" -t "x86_64" build --features "$FEATURES" --target-dir "$TARGET_DIR" --profile "$PROFILE"
 
   echo "Generating Kotlin bindings from so file..."
-  cargo run --bin uniffi-bindgen-tcl --features "uniffi" --release --target-dir "$TARGET_DIR" generate \
+  cargo run -p uniffi-bindgen --target-dir "$TARGET_DIR" -- \
+    generate \
     --library "$TARGET_DIR/aarch64-linux-android/$PROFILE/${LIB_NAME}" \
     --language kotlin \
     --out-dir "$OUT_DIR/kotlin" \

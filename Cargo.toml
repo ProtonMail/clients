@@ -2,6 +2,7 @@
   members = [
     "project/account/rust/account*",
     "project/core/rust/core-*",
+    "tools/uniffi-bindgen",
   ]
   resolver = "3"
 
@@ -94,7 +95,6 @@
 
 [workspace.dependencies.uniffi]
   version = "0.30"
-  features = ["cli"]
 
 [workspace.dependencies.serde]
   version = "1"

@@ -154,7 +154,7 @@ test-macos:
   parallel:
     matrix:
       - ROCKY_VERSION: [ "8.9", "9.3" ]
-        PHP_VERSION: [ "8.2", "8.3", "8.4" ]
+        PHP_VERSION: [ "8.4", "8.5" ]
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == "master"
       changes:
@@ -205,7 +205,7 @@ publish-ical-php-ext:
     # to provide some vars so that we can pick a Docker image (any variant would
     # work)
     ROCKY_VERSION: "9.3"
-    PHP_VERSION: "8.3"
+    PHP_VERSION: "8.4"
     BUILD_ARCH: amd64
     GIT_STRATEGY: none
   script:

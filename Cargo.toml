@@ -75,21 +75,21 @@
 [workspace.dependencies.proton-crypto-account]
   # Use experimental version based on rprp instead of gopenpgp-sys.
   git = "https://gitlab.protontech.ch/rust/proton-crypto-rs.git"
-  branch = "chore/rpgp-v0.1.0-alpha.5-facet-0.30"
+  branch = "chore/rpgp-v0.1.0-alpha.5-facet-0.31"
   features = ["facet"]
 
 [workspace.dependencies.proton-crypto]
   # Use experimental version based on rprp instead of gopenpgp-sys.
   git = "https://gitlab.protontech.ch/rust/proton-crypto-rs.git"
-  branch = "chore/rpgp-v0.1.0-alpha.5-facet-0.30"
+  branch = "chore/rpgp-v0.1.0-alpha.5-facet-0.31"
   features = ["facet"]
 
 [workspace.dependencies.crux_core]
-  version = "0.17.0-rc1"
+  version = "0.17.0-rc2"
   features = ["facet_typegen"]
 
 [workspace.dependencies.facet]
-  version = "=0.30"
+  version = "=0.31"
   features = ["chrono", "time"]
 
 [workspace.dependencies.uniffi]

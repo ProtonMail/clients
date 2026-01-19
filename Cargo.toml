@@ -34,6 +34,9 @@
 [workspace.dependencies.core-message]
   path = "project/core/rust/core-message"
 
+[workspace.dependencies.core-device-info-op]
+  path = "project/core/rust/core-device-info-op"
+
 [workspace.dependencies.core-message-macro]
   path = "project/core/rust/core-message-macro"
 

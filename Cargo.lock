@@ -32,6 +32,7 @@ dependencies = [
  "bitflags",
  "core-aes-op",
  "core-common-types",
+ "core-device-info-op",
  "core-fido-op",
  "core-hv-op",
  "core-key",
@@ -1030,6 +1031,7 @@ dependencies = [
  "anyhow",
  "core-aes-op",
  "core-db-op",
+ "core-device-info-op",
  "core-fido-op",
  "core-hv-op",
  "core-message",
@@ -1049,6 +1051,16 @@ dependencies = [
  "facet",
  "serde",
  "thiserror 2.0.17",
+]
+
+[[package]]
+name = "core-device-info-op"
+version = "0.1.0"
+dependencies = [
+ "core-proc",
+ "crux_core",
+ "facet",
+ "serde",
 ]
 
 [[package]]

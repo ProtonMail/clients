@@ -8,14 +8,11 @@ use serde_json::json;
 
 const BASE_URL: &str = "https://mail.proton.me/api";
 
-#[cfg_attr(feature = "uniffi", derive(uniffi::Object))]
 pub struct TelemetryHttpClient {
     client: Client,
 }
 
-#[cfg_attr(feature = "uniffi", uniffi::export)]
 impl TelemetryHttpClient {
-    #[cfg_attr(feature = "uniffi", uniffi::constructor)]
     pub fn new() -> Self {
         Self {
             client: Client::new(),
@@ -29,8 +26,7 @@ impl Default for TelemetryHttpClient {
     }
 }
 
-#[cfg_attr(not(target_family = "wasm"), async_trait)]
-#[cfg_attr(target_family = "wasm", async_trait(?Send))]
+#[async_trait]
 impl TelemetryHttpClientEx for TelemetryHttpClient {
     async fn send(&self, events: Vec<TelemetryEvent>) -> Result<()> {
         if events.is_empty() {

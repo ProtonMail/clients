@@ -16,6 +16,18 @@ The library targets **4 different platforms**:
 - **WebAssembly** (Web browsers)
 - **Android**/**iOS** (via uniffi)
 
+:warning: The `sqlite` feature cannot be used on WASM (doesn't compile)
+
+## Thread Safety
+
+- The built-in `TelemetryHttpClient` and `SqliteDatabase` is thread-safe (uses `Mutex` internally)
+- Concurrent `publish_events` calls: The `Tcl` struct does **not** synchronize `publish_events`. Calling it concurrently from multiple tasks can cause duplicate events to be sent (both tassks fetch the same events before either deletes them).
+
+To prevent this, a custom implementations should serialize `publish_events` calls or only call from a single task
+
+- `store_events`: Safe to call concurrently with other `store_events` or `publish_events` calls.
+- WASM: Thread safe since WASM is single-threaded.
+
 ## Features
 
 ### Cargo Features
@@ -50,15 +62,20 @@ tcl = { git = "git+ssh://git@gitlab.protontech.ch/proton/clients/monorepo.git", 
 ```
 
 ```rust
-// Uses built-in HTTP Client + Db
-let config = TelemetryConfig {
-    storage_path: "/tmp/telemetry.db".to_string(),
-    max_storage_size: 1024,
-};
-let tcl = Tcl::init(config)?;
+use core_telemetry::storage::SqliteDatabase;
+use core_telemetry::http::TelemetryHttpClient;
+use core_telemetry::Tcl;
 
-tcl.log(vec![event]).await?;
-tcl.sync(100).await?;
+let http = TelemetryHttpClient::new();
+let db = SqliteDatabase::new("/tmp/telemetry.db")?;
+
+// With references - can reuse http/db or create multiple Tcl instances
+let tcl = Tcl::new(&http, &db);
+tcl.store_events(vec![event]).await?;
+tcl.publish_events(100).await?;
+
+// Or with owned values - takes ownership of http/db
+let tcl = Tcl::new(http, db);
 ```
 
 ### Rust (Native) - Bring-your-own HTTP Client
@@ -69,11 +86,16 @@ tcl = { git = "git+ssh://git@gitlab.protontech.ch/proton/clients/monorepo.git", 
 ```
 
 ```rust
+use core_telemetry::storage::SqliteDatabase;
+use core_telemetry::{Tcl, TelemetryHttpClientEx};
+
 // Provide your own HTTP client implementation
 struct MyHttpClient { /* ... */ }
 impl TelemetryHttpClientEx for MyHttpClient { /* ... */ }
 
-let tcl = Tcl::init(config, Arc::new(MyHttpClient::new()))?;
+let http = MyHttpClient::new();
+let db = SqliteDatabase::new("/tmp/telemetry.db")?;
+let tcl = Tcl::new(&http, &db);
 ```
 
 ### WASM - Bring-your-own Database
@@ -84,14 +106,19 @@ tcl = { git = "git+ssh://git@gitlab.protontech.ch/proton/clients/monorepo.git", 
 ```
 
 ```rust
+use core_telemetry::http::TelemetryHttpClient;
+use core_telemetry::{Tcl, TelemetryDbEx};
+
 // Provide IndexedDB wrapper (WASM has no filesystem)
 struct IndexedDbWrapper { /* ... */ }
 impl TelemetryDbEx for IndexedDbWrapper { /* ... */ }
 
-let tcl = Tcl::init(config, Arc::new(IndexedDbWrapper::new()))?;
+let http = TelemetryHttpClient::new();
+let db = IndexedDbWrapper::new();
+let tcl = Tcl::new(&http, &db);
 
-tcl.log(vec![event]).await?;
-tcl.sync(100).await?;
+tcl.store_events(vec![event]).await?;
+tcl.publish_events(100).await?;
 ```
 
 **Note**: WASM has unique constraints:
@@ -102,19 +129,10 @@ tcl.sync(100).await?;
 
 ### Android/iOS - via UniFFI
 
-```toml
-[dependencies]
-tcl = { git = "git+ssh://git@gitlab.protontech.ch/proton/clients/monorepo.git", features = ["http", "sqlite", "uniffi"] }
-```
-
 ```kotlin
-val config = TelemetryConfig(
-    storagePath = "/data/app/telemetry.db",
-    maxStorageSize = 1024u
-)
-val tcl = Tcl.init(config)
-tcl.log(listOf(event))
-tcl.sync(10u)
+val tcl = TclFfi("/data/app/telemetry.db")
+tcl.storeEvents(listOf(event))
+tcl.publishEvents(10u)
 ```
 
 ## Build Commands Reference
@@ -127,7 +145,7 @@ cargo build --features "sqlite,http"
 cargo build --target wasm32-unknown-unknown --features "http"
 
 # Android/iOS - everything + uniffi
-cargo build --features "sqlite,http,uniffi"
+cargo build --features "uniffi"
 
 # Run tests (native with all features)
 cargo test --features "http,sqlite" -- --nocapture

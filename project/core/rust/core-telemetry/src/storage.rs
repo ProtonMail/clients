@@ -6,14 +6,11 @@ use std::path::PathBuf;
 use crate::queries;
 use crate::{Result, TelemetryDbEx, TelemetryError, TelemetryEvent};
 
-#[cfg_attr(feature = "uniffi", derive(uniffi::Object))]
 pub struct SqliteDatabase {
     conn: Mutex<Connection>,
 }
 
-#[cfg_attr(feature = "uniffi", uniffi::export)]
 impl SqliteDatabase {
-    #[cfg_attr(feature = "uniffi", uniffi::constructor)]
     pub fn new(storage_path: &str) -> Result<Self> {
         let storage_path = PathBuf::from(storage_path);
 
@@ -37,8 +34,7 @@ impl SqliteDatabase {
     }
 }
 
-#[cfg_attr(not(target_family = "wasm"), async_trait)]
-#[cfg_attr(target_family = "wasm", async_trait(?Send))]
+#[async_trait]
 impl TelemetryDbEx for SqliteDatabase {
     async fn get_events(&self, limit: u32) -> Result<Vec<TelemetryEvent>> {
         let conn = self.conn.lock().await;

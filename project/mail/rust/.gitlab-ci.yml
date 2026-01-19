@@ -48,6 +48,7 @@ migration-filenames-check:
 audit:
   stage: lint
   script:
+    - cargo install --locked --force cargo-audit
     - cargo audit
 
 deny:

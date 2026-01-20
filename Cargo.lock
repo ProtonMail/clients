@@ -1094,6 +1094,7 @@ dependencies = [
  "derive_more 2.0.1",
  "facet",
  "serde",
+ "serde_json",
  "thiserror 2.0.17",
 ]
 

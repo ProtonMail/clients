@@ -2,6 +2,16 @@ include:
   - project: "rust/shared/registry"
     file: "upload_template.yml"
 
+  - component: gitlab.protontech.ch/proton/devops/cicd-components/tools/github-mirror/ssh@0.0.3
+    inputs:
+      github-url: $SSH_MIRROR_GITHUB_URL
+      vault-kv-path: "inbox-mobile_team/gitlab-projects/variables/${CI_PROJECT_ID}/github"
+      vault-kv-field: ssh-key
+      stage: github_mirror
+      push-tags: true
+      sync-from-branch: $CI_COMMIT_BRANCH
+      sync-to-branch: $CI_COMMIT_BRANCH
+
 workflow:
   rules:
     - if: $CI_DEFAULT_BRANCH == $CI_COMMIT_BRANCH
@@ -39,6 +49,7 @@ stages:
   - build
   - doc
   - deploy
+  - github_mirror
 
 migration-filenames-check:
   stage: lint
@@ -334,3 +345,12 @@ publish-mail-uniffi-ios:
     - build-mail-uniffi-ios
   needs:
     - build-mail-uniffi-ios
+
+github-sync-ssh:
+  image: "harbor.protontech.ch/devops/tools/github-mirror:0.0.3"
+  stage: github_mirror
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
+      allow_failure: true
+    - when: never

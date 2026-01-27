@@ -1,0 +1,25 @@
+[package]
+  name = "core-event-loop"
+  version = "0.1.0"
+  edition.workspace = true
+
+[dependencies]
+  anyhow = "1.0.69"
+  async-trait = "0.1.89"
+  serde = { workspace = true }
+  serde_json = { workspace = true }
+  serde_with = { workspace = true }
+  thiserror = { workspace = true }
+  tracing = { workspace = true }
+  slotmap = { version = "1.1.1" }
+  topological-sort = "0.2.2"
+
+[dev-dependencies]
+  mockall = "0.14.0"
+  tokio = { version = "1.46.1", features = ["macros", "rt-multi-thread"] }
+
+[features]
+  default = []
+
+[lints]
+  workspace = true

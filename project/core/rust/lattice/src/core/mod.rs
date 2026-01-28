@@ -122,8 +122,7 @@ pub struct LtCoreAddress {
 
     pub signature: Option<String>,
 
-    #[cfg_attr(feature = "serde", serde(default))]
-    pub signed_key_list: LtCoreAddressSignedKeyList,
+    pub signed_key_list: Option<LtCoreAddressSignedKeyList>,
 
     pub status: LtCoreAddressStatus,
 }

@@ -3690,7 +3690,7 @@ dependencies = [
  "muon-rest",
  "pin-project",
  "proton-os-interface",
- "proton-srp 0.7.1 (sparse+https://rust.gitlab-pages.protontech.ch/shared/registry/index/)",
+ "proton-srp 0.7.1",
  "rand_chacha 0.9.0",
  "reqwest",
  "semver",
@@ -4584,14 +4584,14 @@ dependencies = [
 
 [[package]]
 name = "proton-crypto"
-version = "0.7.1"
-source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?branch=chore%2Frpgp-v0.1.0-alpha.5-facet-0.31#b75f5cdffe9284d5ad36da84f25db0b5b8b89a29"
+version = "0.8.0"
+source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?tag=proton-rpgp-v0.1.0-alpha.9#0e316a1b498855fda29f969d64f4c1e962b384fc"
 dependencies = [
  "facet",
  "hex",
  "parking_lot",
  "proton-rpgp",
- "proton-srp 0.7.1 (git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?branch=chore%2Frpgp-v0.1.0-alpha.5-facet-0.31)",
+ "proton-srp 0.8.0",
  "rand 0.8.5",
  "serde",
  "subtle",
@@ -4601,8 +4601,8 @@ dependencies = [
 
 [[package]]
 name = "proton-crypto-account"
-version = "0.12.3"
-source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?branch=chore%2Frpgp-v0.1.0-alpha.5-facet-0.31#b75f5cdffe9284d5ad36da84f25db0b5b8b89a29"
+version = "0.13.0"
+source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?tag=proton-rpgp-v0.1.0-alpha.9#0e316a1b498855fda29f969d64f4c1e962b384fc"
 dependencies = [
  "base64",
  "derive_more 2.1.1",
@@ -4648,7 +4648,7 @@ dependencies = [
 [[package]]
 name = "proton-rpgp"
 version = "0.1.0"
-source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?branch=chore%2Frpgp-v0.1.0-alpha.5-facet-0.31#b75f5cdffe9284d5ad36da84f25db0b5b8b89a29"
+source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?tag=proton-rpgp-v0.1.0-alpha.9#0e316a1b498855fda29f969d64f4c1e962b384fc"
 dependencies = [
  "chrono",
  "hex",
@@ -4682,12 +4682,14 @@ dependencies = [
 
 [[package]]
 name = "proton-srp"
-version = "0.7.1"
-source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?branch=chore%2Frpgp-v0.1.0-alpha.5-facet-0.31#b75f5cdffe9284d5ad36da84f25db0b5b8b89a29"
+version = "0.8.0"
+source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?tag=proton-rpgp-v0.1.0-alpha.9#0e316a1b498855fda29f969d64f4c1e962b384fc"
 dependencies = [
  "base64",
  "bcrypt",
  "crypto-bigint",
+ "hex",
+ "md-5",
  "rand 0.8.5",
  "sha2",
  "thiserror 1.0.69",

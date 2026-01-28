@@ -83,6 +83,12 @@
 [workspace.dependencies.core-common-types]
   path = "project/core/rust/core-common-types"
 
+[workspace.dependencies.core-logging]
+  path = "project/core/rust/core-logging"
+
+[workspace.dependencies.core-logging-op]
+  path = "project/core/rust/core-logging-op"
+
 [workspace.dependencies.core-validator]
   path = "project/core/rust/core-validator"
 
@@ -104,7 +110,8 @@
   registry = "proton"
 
 [workspace.dependencies.crux_core]
-  version = "0.17.0-rc2"
+  git = "https://github.com/redbadger/crux"
+  rev = "cb3cc8f7807d3fe4c6e13ffe774367859af8cdaa"
   features = ["facet_typegen"]
 
 [workspace.dependencies.facet]

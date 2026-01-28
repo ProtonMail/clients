@@ -46,6 +46,7 @@ dependencies = [
  "core-fido-op",
  "core-hv-op",
  "core-key",
+ "core-logging-op",
  "core-message",
  "core-message-macro",
  "core-muon-op",
@@ -59,6 +60,7 @@ dependencies = [
  "derive_more 2.1.1",
  "facet",
  "fancy-regex 0.16.2",
+ "flume",
  "futures",
  "image",
  "itertools 0.14.0",
@@ -83,7 +85,6 @@ dependencies = [
  "thiserror 2.0.17",
  "totp-rs",
  "tracing",
- "tracing-subscriber",
  "unicode-segmentation",
  "url",
  "zeroize",
@@ -113,12 +114,15 @@ dependencies = [
  "async-trait",
  "cfg-if",
  "core-device-info-op",
+ "core-logging",
+ "core-logging-op",
  "core-muon-op",
  "crux_core",
  "ctor",
  "data-encoding",
  "derive_more 2.1.1",
  "fancy-regex 0.16.2",
+ "flume",
  "futures",
  "image",
  "itertools 0.14.0",
@@ -136,8 +140,6 @@ dependencies = [
  "tokio",
  "totp-rs",
  "tracing",
- "tracing-android",
- "tracing-oslog",
  "tracing-subscriber",
  "uniffi",
  "url",
@@ -1115,6 +1117,7 @@ dependencies = [
  "core-device-info-op",
  "core-fido-op",
  "core-hv-op",
+ "core-logging-op",
  "core-message",
  "core-muon-op",
  "core-validator",
@@ -1219,6 +1222,29 @@ dependencies = [
  "serde_repr",
  "serde_with",
  "thiserror 2.0.17",
+]
+
+[[package]]
+name = "core-logging"
+version = "0.1.0"
+dependencies = [
+ "core-logging-op",
+ "itertools 0.14.0",
+ "serde_json",
+ "tracing",
+ "tracing-android",
+ "tracing-oslog",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "core-logging-op"
+version = "0.1.0"
+dependencies = [
+ "crux_core",
+ "facet",
+ "serde",
+ "tracing",
 ]
 
 [[package]]
@@ -1464,8 +1490,7 @@ checksum = "460fbee9c2c2f33933d720630a6a0bac33ba7053db5344fac858d4b8952d77d5"
 [[package]]
 name = "crux_core"
 version = "0.17.0-rc2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f7dcabcd8aad70780470a8fbc05ebe29ff3a2a836e613f050d64bb97650942c"
+source = "git+https://github.com/redbadger/crux?rev=cb3cc8f7807d3fe4c6e13ffe774367859af8cdaa#cb3cc8f7807d3fe4c6e13ffe774367859af8cdaa"
 dependencies = [
  "anyhow",
  "bincode",
@@ -1484,8 +1509,7 @@ dependencies = [
 [[package]]
 name = "crux_macros"
 version = "0.8.0-rc2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c18ba1052a1f28c97e3595e5a64496921953b3945cf7537e0544f93b36735e74"
+source = "git+https://github.com/redbadger/crux?rev=cb3cc8f7807d3fe4c6e13ffe774367859af8cdaa#cb3cc8f7807d3fe4c6e13ffe774367859af8cdaa"
 dependencies = [
  "darling 0.23.0",
  "heck 0.5.0",
@@ -1564,9 +1588,9 @@ dependencies = [
 
 [[package]]
 name = "ctor"
-version = "0.6.1"
+version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3ffc71fcdcdb40d6f087edddf7f8f1f8f79e6cf922f555a9ee8779752d4819bd"
+checksum = "424e0138278faeb2b401f174ad17e715c829512d74f3d1e81eb43365c2e0590e"
 dependencies = [
  "ctor-proc-macro",
  "dtor",
@@ -2428,6 +2452,9 @@ name = "fastrand"
 version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37909eebbb50d72f9059c3b6d82c0463f2ff062c9e95845c43a6c9c0355411be"
+dependencies = [
+ "getrandom 0.2.16",
+]
 
 [[package]]
 name = "fax"
@@ -2490,6 +2517,18 @@ dependencies = [
  "crc32fast",
  "libz-rs-sys",
  "miniz_oxide",
+]
+
+[[package]]
+name = "flume"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5e139bc46ca777eb5efaf62df0ab8cc5fd400866427e56c68b22e414e53bd3be"
+dependencies = [
+ "fastrand",
+ "futures-core",
+ "futures-sink",
+ "spin 0.9.8",
 ]
 
 [[package]]
@@ -5823,6 +5862,9 @@ name = "spin"
 version = "0.9.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6980e8d7511241f8acf4aebddbb1ff938df5eebe98691418c4468d0b72a96a67"
+dependencies = [
+ "lock_api",
+]
 
 [[package]]
 name = "spin"

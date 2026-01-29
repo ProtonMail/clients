@@ -250,33 +250,36 @@ pub struct LtCoreEvents {
     pub addresses: Vec<LtCoreEventItem<LtAuthAddressId>>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
-#[repr(C)]
-#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-// Tells Serde: "Action" is the key for the variant, "ID" is the key for the data
-#[cfg_attr(feature = "serde", serde(tag = "Action", content = "ID"))]
-pub enum LtCoreEventItem<T: Clone + PartialEq + Eq> {
-    #[cfg_attr(feature = "serde", serde(rename = "0"))]
-    Delete(T),
+pub struct LtCoreEventItem<Id> {
+    #[cfg_attr(feature = "serde", serde(rename = "ID"))]
+    pub id: Id,
 
-    #[cfg_attr(feature = "serde", serde(rename = "1"))]
-    Create(T),
+    #[cfg_attr(feature = "serde", serde(rename = "Action"))]
+    pub action: LtCoreEventAction,
+}
 
-    #[cfg_attr(feature = "serde", serde(rename = "2"))]
-    Update(T),
-
-    #[cfg_attr(feature = "serde", serde(rename = "3"))]
-    UpdateFlags(T),
+#[repr(u8)]
+#[derive(Debug, Clone, Copy)]
+#[derive(PartialEq, Eq, Hash)]
+#[derive(IntoPrimitive, TryFromPrimitive)]
+#[cfg_attr(feature = "facet", derive(facet::Facet))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(into = "u8", try_from = "u8"))]
+pub enum LtCoreEventAction {
+    Delete = 0,
+    Create = 1,
+    Update = 2,
+    UpdateFlags = 3,
 }
 
 impl<T: Clone + PartialEq + Eq> LtCoreEventItem<T> {
     pub fn into<E: From<T> + Clone + PartialEq + Eq>(self) -> LtCoreEventItem<E> {
-        match self {
-            Self::Create(e) => LtCoreEventItem::Create(e.into()),
-            Self::Update(e) => LtCoreEventItem::Update(e.into()),
-            Self::Delete(e) => LtCoreEventItem::Delete(e.into()),
-            Self::UpdateFlags(e) => LtCoreEventItem::UpdateFlags(e.into()),
+        LtCoreEventItem {
+            id: self.id.into(),
+            action: self.action,
         }
     }
 }

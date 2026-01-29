@@ -25,8 +25,7 @@ pub mod bool_int {
             1 => Ok(true),
             0 => Ok(false),
             _ => Err(serde::de::Error::custom(format!(
-                "invalid boolean integer: {}, expected 0 or 1",
-                val
+                "invalid boolean integer: {val}, expected 0 or 1"
             ))),
         }
     }

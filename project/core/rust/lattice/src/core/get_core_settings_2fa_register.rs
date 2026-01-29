@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{AuthReq, LatticeContract, LatticeError, auth::LtAuthFidoKey};
-use passkey::types::webauthn::*;
+use passkey::types::webauthn::{AttestationStatementFormatIdentifiers, CredentialCreationOptions};
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug)]

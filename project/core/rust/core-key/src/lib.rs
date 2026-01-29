@@ -96,7 +96,7 @@ fn create_addr_skl<P: PGPProviderSync>(
     addr_key: &LocalAddressKey,
 ) -> Result<LocalSignedKeyList, SharedCryptoError> {
     let key_id = new_key_id();
-    let addr_key = addr_key.unlock_and_assign_key_id(pgp, key_id.clone(), user_key)?;
+    let addr_key = addr_key.unlock_and_assign_key_id(pgp, key_id, user_key)?;
     let addr_skl = LocalSignedKeyList::generate(pgp, &UnlockedAddressKeys(vec![addr_key]))?;
 
     Ok(addr_skl)

@@ -97,6 +97,7 @@ dependencies = [
  "account-crux-client-info",
  "account-db",
  "account-db-op",
+ "account-ephemeral-db",
  "anyhow",
  "async-compat",
  "async-trait",
@@ -176,6 +177,18 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 2.0.17",
+]
+
+[[package]]
+name = "account-ephemeral-db"
+version = "0.1.0"
+dependencies = [
+ "account-crux",
+ "async-trait",
+ "core-aes-op",
+ "futures",
+ "lattice",
+ "proton-crypto-account",
 ]
 
 [[package]]

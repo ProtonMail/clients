@@ -31,6 +31,13 @@ function build() {
   echo "Building Rust library..."
   cargo build --target-dir "$TARGET_DIR" --features "$FEATURES"
 
+  # Install cargo ndk if needed
+  if ! command -v cargo-ndk; then
+      cargo install cargo-ndk@3.5.4
+  else
+      echo "cargo-ndk is already installed"
+  fi
+
   echo "Building Android so files for all architectures..."
   cargo ndk -t "armeabi-v7a" -t "arm64-v8a" -t "x86_64" build --features "$FEATURES" --target-dir "$TARGET_DIR" --profile "$PROFILE"
 

@@ -12,9 +12,6 @@ cd "$SCRIPT_DIR"
 TARGET_DIR=$(cargo metadata --format-version 1 --no-deps | jq -r '.target_directory')
 #TARGET_DIR="$SCRIPT_DIR/target"
 
-OS_NAME=$(uname -s | tr '[:upper:]' '[:lower:]')
-STRIP_BIN=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/${OS_NAME}-x86_64/bin/llvm-strip
-
 ANDROID_MODULE_DIR="../../android/core-telemetry-ffi"
 LIB_NAME="libcore_telemetry.so"
 OUT_DIR="$TARGET_DIR/android/core-telemetry"
@@ -44,16 +41,16 @@ function build() {
   echo "Generating Kotlin bindings from so file..."
   cargo run -p uniffi-bindgen --target-dir "$TARGET_DIR" -- \
     generate \
-    --library "$TARGET_DIR/aarch64-linux-android/$PROFILE/${LIB_NAME}" \
+    --library "$TARGET_DIR/debug/${LIB_NAME}" \
     --language kotlin \
     --out-dir "$OUT_DIR/kotlin" \
     --no-format \
     --config uniffi.toml
 
-  echo "Strip symbols from .so files..."
-  "$STRIP_BIN" "$TARGET_DIR/aarch64-linux-android/$PROFILE/$LIB_NAME" -o "$OUT_DIR/jniLibs/arm64-v8a/$LIB_NAME"
-  "$STRIP_BIN" "$TARGET_DIR/armv7-linux-androideabi/$PROFILE/$LIB_NAME" -o "$OUT_DIR/jniLibs/armeabi-v7a/$LIB_NAME"
-  "$STRIP_BIN" "$TARGET_DIR/x86_64-linux-android/$PROFILE/$LIB_NAME" -o "$OUT_DIR/jniLibs/x86_64/$LIB_NAME"
+  echo "Copying .so files..."
+  cp "$TARGET_DIR/aarch64-linux-android/$PROFILE/$LIB_NAME" "$OUT_DIR/jniLibs/arm64-v8a/$LIB_NAME"
+  cp "$TARGET_DIR/armv7-linux-androideabi/$PROFILE/$LIB_NAME" "$OUT_DIR/jniLibs/armeabi-v7a/$LIB_NAME"
+  cp "$TARGET_DIR/x86_64-linux-android/$PROFILE/$LIB_NAME" "$OUT_DIR/jniLibs/x86_64/$LIB_NAME"
 
   echo "Copying Android output..."
   mkdir -p "$ANDROID_MODULE_DIR/src/main/kotlin/me/proton"

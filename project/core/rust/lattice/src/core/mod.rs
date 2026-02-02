@@ -102,7 +102,7 @@ pub struct LtCoreAddress {
 
     pub display_name: Option<String>,
 
-    #[serde(rename = "DomainID")]
+    #[cfg_attr(feature = "serde", serde(rename = "DomainID"))]
     pub domain_id: Option<String>,
 
     pub email: String,
@@ -111,7 +111,7 @@ pub struct LtCoreAddress {
 
     pub order: u32,
 
-    #[serde(rename = "ProtonMX")]
+    #[cfg_attr(feature = "serde", serde(rename = "ProtonMX"))]
     pub proton_mx: bool,
 
     #[cfg_attr(feature = "serde", serde(with = "crate::helpers::bool_int"))]
@@ -133,13 +133,13 @@ pub struct LtCoreAddress {
 pub struct LtCoreAddressSignedKeyList {
     pub data: Option<String>,
 
-    #[serde(rename = "ExpectedMinEpochID")]
+    #[cfg_attr(feature = "serde", serde(rename = "ExpectedMinEpochID"))]
     pub expected_min_epoch_id: Option<u64>,
 
-    #[serde(rename = "MaxEpochID")]
+    #[cfg_attr(feature = "serde", serde(rename = "MaxEpochID"))]
     pub max_epoch_id: Option<u64>,
 
-    #[serde(rename = "MinEpochID")]
+    #[cfg_attr(feature = "serde", serde(rename = "MinEpochID"))]
     pub min_epoch_id: Option<u64>,
 
     pub obsolescence_token: Option<String>,

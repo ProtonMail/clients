@@ -3,7 +3,7 @@ pub(crate) mod helpers;
 #[cfg(feature = "auth")]
 pub mod auth;
 
-#[cfg(feature = "muon")]
+#[cfg(all(feature = "muon", feature = "serde"))]
 pub mod muon;
 
 #[cfg(feature = "core")]
@@ -21,8 +21,6 @@ pub use sensitive::*;
 
 use std::{borrow::Cow, collections::HashMap};
 
-use crate::api_definitions::LtApiCode;
-
 /// An error type for Lattice operations.
 ///
 /// This error type is used to wrap errors from the `serde_json` crate.
@@ -30,12 +28,16 @@ use crate::api_definitions::LtApiCode;
 pub enum LatticeError {
     #[cfg(feature = "serde")]
     SerdeJSON(serde_json::Error),
+
     #[cfg(feature = "muon")]
     Muon(::muon::Error),
+
     #[display("UnexpectedStatusCode {_0}: {_1:?}")]
     UnexpectedStatusCode(u16, Vec<u8>),
+
+    #[cfg(feature = "serde")]
     #[display("ApiError Status({_0}), {_1:?}: {_2:#?}")]
-    ApiError(u16, LtApiCode, serde_json::Value),
+    ApiError(u16, crate::api_definitions::LtApiCode, serde_json::Value),
 }
 
 /// A trait for all Lattice contracts.

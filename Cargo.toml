@@ -41,6 +41,9 @@
 [workspace.dependencies.core-db-op]
   path = "project/core/rust/core-db-op"
 
+[workspace.dependencies.core-event-loop]
+  path = "project/core/rust/core-event-loop"
+
 [workspace.dependencies.core-message]
   path = "project/core/rust/core-message"
 

@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use derive_more::{AsRef, Deref, From, Into};
+use derive_more::{AsRef, Deref, Display, From, Into};
 use passkey::types::webauthn::CredentialRequestOptions;
 use zeroize::Zeroize;
 
@@ -38,25 +38,25 @@ pub struct LtAuthApiSession {
 #[derive(Into, From, Deref, AsRef)]
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Display, Clone, PartialEq, Eq, Hash)]
 pub struct LtAuthEventId(pub String);
 
 #[derive(Into, From, Deref, AsRef)]
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Display, Clone, PartialEq, Eq, Hash)]
 pub struct LtAuthSessionId(pub String);
 
 #[derive(Into, From, Deref, AsRef)]
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Display, Clone, PartialEq, Eq, Hash)]
 pub struct LtAuthUserId(pub String);
 
 #[derive(Into, From, Deref, AsRef)]
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Display, Clone, PartialEq, Eq, Hash)]
 pub struct LtAuthAddressId(pub String);
 
 #[derive(Zeroize)]

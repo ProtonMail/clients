@@ -104,7 +104,7 @@ pub struct LtCoreUser {
     pub delinquent: LtCoreDelinquentState,
     #[cfg_attr(feature = "serde", serde(with = "crate::helpers::bool_int"))]
     pub billed: bool,
-    #[facet(namespace = "CoreCruxTypes")]
+    #[cfg_attr(feature = "facet", facet(namespace = "CoreCruxTypes"))]
     pub keys: LtCoreSensitiveUserKeys,
     #[cfg_attr(feature = "serde", serde(with = "crate::helpers::bool_int"))]
     pub to_migrate: bool,

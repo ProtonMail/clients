@@ -1,9 +1,3 @@
-// #[async_trait]
-// pub trait MuonSessionExt {
-
-//     async
-// }
-
 use muon::{
     Session,
     common::ContentType,
@@ -52,6 +46,7 @@ pub fn from_muon_res<T: LatticeContract>(response: &HttpRes) -> Result<T::Respon
 
         return Ok(api_response.body);
     }
+
     if (400..500).contains(&s) {
         let body = response.body();
 
@@ -60,6 +55,7 @@ pub fn from_muon_res<T: LatticeContract>(response: &HttpRes) -> Result<T::Respon
 
         return Err(LatticeError::ApiError(s, value.code, value.body));
     }
+
     Err(LatticeError::UnexpectedStatusCode(
         s,
         response.body().to_vec(),

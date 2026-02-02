@@ -35,13 +35,14 @@ function build() {
       echo "cargo-ndk is already installed"
   fi
 
-  echo "Building Android so files for all architectures..."
+  echo "Building Android optimized so files for all architectures..."
   cargo ndk -t "armeabi-v7a" -t "arm64-v8a" -t "x86_64" build --features "$FEATURES" --target-dir "$TARGET_DIR" --profile "$PROFILE"
 
-  echo "Generating Kotlin bindings from so file..."
+  echo "Generating Kotlin bindings from debug arm .so file..."
+  cargo ndk -t "arm64-v8a" build --features "$FEATURES" --target-dir "$TARGET_DIR" --profile "dev"
   cargo run -p uniffi-bindgen --target-dir "$TARGET_DIR" -- \
     generate \
-    --library "$TARGET_DIR/debug/${LIB_NAME}" \
+    --library "$TARGET_DIR/aarch64-linux-android/debug/${LIB_NAME}" \
     --language kotlin \
     --out-dir "$OUT_DIR/kotlin" \
     --no-format \

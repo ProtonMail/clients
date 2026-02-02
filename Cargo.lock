@@ -1265,6 +1265,7 @@ dependencies = [
  "async-trait",
  "core-common-types",
  "core-db-op",
+ "core-device-info-op",
  "core-key",
  "core-muon-op",
  "core-observability",

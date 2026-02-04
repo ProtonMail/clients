@@ -1032,6 +1032,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "core-aes-op",
+ "core-common-types",
  "core-db-op",
  "core-device-info-op",
  "core-fido-op",

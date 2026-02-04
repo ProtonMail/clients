@@ -2292,9 +2292,9 @@ dependencies = [
 
 [[package]]
 name = "facet_generate"
-version = "0.13.1"
+version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "80242518ba0e3b736d8b18be022b9916508c496231ef25001ef7634311d2b86f"
+checksum = "64bf6066ad1a7c80b07db8e092e6f7b54ae757f71b28fdda8211d080c2ad2ce8"
 dependencies = [
  "derive_builder",
  "facet",
@@ -5721,7 +5721,7 @@ version = "0.8.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c1c97747dbf44bb1ca44a561ece23508e99cb592e862f22222dcf42f51d1e451"
 dependencies = [
- "heck 0.5.0",
+ "heck 0.4.1",
  "proc-macro2",
  "quote",
  "syn 2.0.110",

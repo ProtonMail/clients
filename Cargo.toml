@@ -119,6 +119,15 @@
 [workspace.dependencies.tracing]
   version = "0.1"
 
+[workspace.dependencies.tracing-android]
+  version = "0.2"
+
+[workspace.dependencies.tracing-oslog]
+  version = "0.3.0"
+
+[workspace.dependencies.cfg-if]
+  version = "1.0.4"
+
 [workspace.dependencies.derive_more]
   version = "2"
   features = ["full"]

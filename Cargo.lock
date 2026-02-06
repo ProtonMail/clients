@@ -97,7 +97,7 @@ dependencies = [
  "account-crux-client-info",
  "account-db",
  "account-db-op",
- "account-ephemeral-db",
+ "account-in-memory-db",
  "anyhow",
  "async-compat",
  "async-trait",
@@ -180,7 +180,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "account-ephemeral-db"
+name = "account-in-memory-db"
 version = "0.1.0"
 dependencies = [
  "account-crux",

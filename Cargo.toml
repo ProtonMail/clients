@@ -23,6 +23,9 @@
 [workspace.dependencies.account-db]
   path = "project/account/rust/account-db"
 
+[workspace.dependencies.account-in-memory-db]
+  path = "project/account/rust/account-in-memory-db"
+
 [workspace.dependencies.account-db-op]
   path = "project/account/rust/account-db-op"
 

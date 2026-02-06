@@ -19,18 +19,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "366ffbaa4442f4684d91e2cd7c5ea7c4ed8add41959a31447066e279e432b618"
 
 [[package]]
+name = "account-aes"
+version = "0.1.0"
+dependencies = [
+ "account-crux",
+ "aes-gcm",
+ "anyhow",
+ "async-trait",
+ "proton-crypto-subtle",
+]
+
+[[package]]
 name = "account-crux"
 version = "0.1.0"
 dependencies = [
- "account-db",
  "account-db-op",
  "account-validator-password",
- "aes-gcm",
- "anyhow",
  "async-compat",
  "async-trait",
  "bitflags",
- "cfg-if",
  "core-aes-op",
  "core-common-types",
  "core-device-info-op",
@@ -45,7 +52,6 @@ dependencies = [
  "core-user-manager",
  "core-validator",
  "crux_core",
- "ctor",
  "data-encoding",
  "derive_more 2.1.1",
  "facet",
@@ -54,36 +60,73 @@ dependencies = [
  "image",
  "itertools 0.14.0",
  "lattice",
- "muon",
  "num",
  "parking_lot",
  "passkey",
  "proton-crypto",
  "proton-crypto-account",
- "proton-crypto-subtle",
- "public-suffix",
  "qrcode",
- "rand 0.9.2",
  "rxing",
- "scraper",
  "secrecy",
  "serde",
  "serde_json",
  "serde_repr",
  "serde_with",
+ "thiserror 2.0.17",
+ "tracing",
+ "tracing-subscriber",
+ "unicode-segmentation",
+ "zeroize",
+]
+
+[[package]]
+name = "account-crux-client-info"
+version = "0.1.0"
+dependencies = [
+ "account-crux",
+ "crux_core",
+ "tracing",
+]
+
+[[package]]
+name = "account-crux-ffi"
+version = "0.1.0"
+dependencies = [
+ "account-aes",
+ "account-crux",
+ "account-crux-client-info",
+ "account-db",
+ "account-db-op",
+ "anyhow",
+ "async-compat",
+ "async-trait",
+ "cfg-if",
+ "core-device-info-op",
+ "core-muon-op",
+ "crux_core",
+ "ctor",
+ "data-encoding",
+ "derive_more 2.1.1",
+ "futures",
+ "image",
+ "muon",
+ "passkey",
+ "public-suffix",
+ "qrcode",
+ "rand 0.9.2",
+ "scraper",
+ "serde",
+ "serde_json",
  "tempfile",
  "test-case",
- "thiserror 2.0.17",
  "tokio",
  "totp-rs",
  "tracing",
  "tracing-android",
  "tracing-oslog",
  "tracing-subscriber",
- "unicode-segmentation",
  "uniffi",
  "url",
- "zeroize",
 ]
 
 [[package]]

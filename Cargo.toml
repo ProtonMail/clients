@@ -14,6 +14,12 @@
   path = "project/account/rust/account-crux"
   features = ["facet_typegen"]
 
+[workspace.dependencies.account-crux-client-info]
+  path = "project/account/rust/account-crux-client-info"
+
+[workspace.dependencies.account-aes]
+  path = "project/account/rust/account-aes"
+
 [workspace.dependencies.account-db]
   path = "project/account/rust/account-db"
 

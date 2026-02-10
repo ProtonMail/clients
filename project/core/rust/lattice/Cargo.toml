@@ -10,6 +10,7 @@
   facet = ["dep:facet"]
   serde = ["dep:serde", "dep:serde_json", "bitflags?/serde"]
   muon = ["dep:muon"]
+  observability = ["serde"]
 
 [dependencies]
   serde = { optional = true, version = "^1.0.228", features = ["derive"] }

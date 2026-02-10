@@ -9,6 +9,9 @@ pub mod muon;
 #[cfg(feature = "core")]
 pub mod core;
 
+#[cfg(feature = "observability")]
+pub mod observability;
+
 pub mod api_definitions;
 
 mod sensitive;

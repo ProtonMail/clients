@@ -22,7 +22,7 @@
   bitflags = { optional = true, version = "2" }
   proton-crypto-account = { optional = true, workspace = true }
   num_enum = { workspace = true, optional = true }
-  muon = { version = "2.0.3", registry = "proton", default-features = false, optional = true }
+  muon = { workspace = true, optional = true }
 
 [lints]
   workspace = true

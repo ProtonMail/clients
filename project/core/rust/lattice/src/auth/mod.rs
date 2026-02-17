@@ -107,8 +107,8 @@ pub struct LtAuthSrpChallenge {
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
 pub struct LtAuthTwoFactorOptions {
     pub enabled: LtAuthTwoFactorMethod,
-    #[cfg_attr(feature = "serde", serde(rename = "FIDO2", default))]
-    pub fido: LtAuthFidoOptions,
+    #[cfg_attr(feature = "serde", serde(rename = "FIDO2"))]
+    pub fido: Option<LtAuthFidoOptions>,
 }
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]

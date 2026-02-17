@@ -15,15 +15,21 @@ pub struct LtAuthPostInfoReq {
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
-pub struct LtAuthPostInfoRes {
-    pub username: Option<String>,
+#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase", untagged))]
+pub enum LtAuthPostInfoRes {
+    SrpChallenge {
+        username: Option<String>,
 
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub srp_challenge: LtAuthSrpChallenge,
+        #[cfg_attr(feature = "serde", serde(flatten))]
+        srp_challenge: LtAuthSrpChallenge,
 
-    #[cfg_attr(feature = "serde", serde(rename = "2FA", default))]
-    pub tfa: LtAuthTwoFactorOptions,
+        #[cfg_attr(feature = "serde", serde(rename = "2FA"))]
+        tfa: Box<Option<LtAuthTwoFactorOptions>>,
+    },
+    SsoChallenge {
+        #[cfg_attr(feature = "serde", serde(rename = "SSOChallengeToken"))]
+        sso_challenge_token: String,
+    },
 }
 
 impl LatticeContract for LtAuthPostInfoReq {

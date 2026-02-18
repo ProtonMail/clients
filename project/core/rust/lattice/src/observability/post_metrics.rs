@@ -10,15 +10,15 @@ pub const DATA_V1_METRICS_PATH: &str = "/data/v1/metrics";
 pub const METRICS_PRIORITY_HEADER_VALUE: &str = "u=6";
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone)]
 pub struct LtDataPostMetricsReq {
     pub metrics: Vec<LtDataPostMetricsElement>,
 }
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone)]
 pub struct LtDataPostMetricsElement {
     pub name: String,
     pub version: u64,
@@ -26,7 +26,6 @@ pub struct LtDataPostMetricsElement {
     pub data: serde_json::Value,
 }
 
-#[cfg(feature = "serde")]
 impl LatticeContract for LtDataPostMetricsReq {
     type Response = ();
     type Body<'b> = &'b Self;

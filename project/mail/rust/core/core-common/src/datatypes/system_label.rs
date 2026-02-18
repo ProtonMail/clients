@@ -23,7 +23,17 @@ use crate::datatypes::{LabelId, LabelType};
 ///
 /// In the future this enum might be extended by labels from other contexts
 #[derive(
-    Copy, Clone, Debug, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize, TryFrom,
+    Copy,
+    Clone,
+    Debug,
+    Deserialize,
+    Eq,
+    Hash,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+    TryFrom
 )]
 #[try_from(repr)]
 #[repr(u8)]

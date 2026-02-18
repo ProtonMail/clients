@@ -43,7 +43,18 @@ use tracing::error;
 use typed_builder::TypedBuilder;
 
 /// Identifier for draft [`DraftMetadata`]
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
+#[derive(
+    Debug,
+    Copy,
+    Clone,
+    Eq,
+    PartialEq,
+    Hash,
+    Ord,
+    PartialOrd,
+    Serialize,
+    Deserialize
+)]
 pub struct MetadataId(pub u64);
 
 impl Display for MetadataId {
@@ -564,7 +575,15 @@ impl DraftSendResult {
 ///
 /// Unfortunately we can not re-use [`DraftSaveSendErrorReason`] as we can not take ownership of
 /// the error so we have to do our own conversion.
-#[derive(serde::Serialize, serde::Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(
+    serde::Serialize,
+    serde::Deserialize,
+    Debug,
+    Clone,
+    Eq,
+    PartialEq,
+    Hash
+)]
 pub enum DraftSendFailure {
     Save(DraftSendFailureSave),
     Send(DraftSendFailureSend),
@@ -575,7 +594,15 @@ pub enum DraftSendFailure {
     Internal,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(
+    serde::Serialize,
+    serde::Deserialize,
+    Debug,
+    Clone,
+    Eq,
+    PartialEq,
+    Hash
+)]
 pub enum DraftSendFailureSave {
     AddressDisabled(String),
     AddressDoesNotHavePrimaryKey(AddressId),
@@ -584,7 +611,15 @@ pub enum DraftSendFailureSave {
     MessageDoesNotExist,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(
+    serde::Serialize,
+    serde::Deserialize,
+    Debug,
+    Clone,
+    Eq,
+    PartialEq,
+    Hash
+)]
 pub enum DraftSendFailureSend {
     NoRecipients,
     RecipientEmailInvalid(PrivateEmail),
@@ -600,7 +635,15 @@ pub enum DraftSendFailureSend {
     BadRequest(String),
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(
+    serde::Serialize,
+    serde::Deserialize,
+    Debug,
+    Clone,
+    Eq,
+    PartialEq,
+    Hash
+)]
 pub enum DraftSendFailureAttachment {
     Crypto(String),
     TooManyAttachments,
@@ -613,7 +656,15 @@ pub enum DraftSendFailureAttachment {
     Other(String),
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(
+    serde::Serialize,
+    serde::Deserialize,
+    Debug,
+    Clone,
+    Eq,
+    PartialEq,
+    Hash
+)]
 pub enum DraftSendFailureDispositionSwap {
     AttachmentDoesNotExist,
     AttachmentMessagedDoesNotExist,
@@ -623,7 +674,17 @@ pub enum DraftSendFailureDispositionSwap {
 sql_using_serde!(DraftSendFailure);
 
 /// Track the origin/context of this draft status
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, Hash, TryFrom)]
+#[derive(
+    Debug,
+    Copy,
+    Clone,
+    Eq,
+    PartialEq,
+    Serialize,
+    Deserialize,
+    Hash,
+    TryFrom
+)]
 #[try_from(repr)]
 #[repr(u8)]
 pub enum DraftSendResultOrigin {

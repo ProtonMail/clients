@@ -2872,7 +2872,18 @@ pub struct ConversationLabel {
     pub deleted: bool,
 }
 
-#[derive(Debug, Copy, Clone, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[derive(
+    Debug,
+    Copy,
+    Clone,
+    Eq,
+    Hash,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+    Deserialize
+)]
 pub struct ContextExpirationTime(UnixTimestamp);
 
 impl Default for ContextExpirationTime {

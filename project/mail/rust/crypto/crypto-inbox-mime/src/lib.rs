@@ -13,7 +13,18 @@ pub mod write;
 
 /// Possible dispositions of an attachment in the MIME builder.
 /// Either inline or an attachment.
-#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Deserialize,
+    Eq,
+    Hash,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize
+)]
 pub enum Disposition {
     /// A regular attachment.
     Attachment,

@@ -104,7 +104,17 @@ pub enum MessageButtons {
 }
 
 /// TODO: Document this enum.
-#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, Eq, Hash, PartialEq)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Default,
+    Serialize,
+    Deserialize,
+    Eq,
+    Hash,
+    PartialEq
+)]
 pub enum MimeType {
     /// TODO: Document this variant.
     #[serde(rename = "application/json")]

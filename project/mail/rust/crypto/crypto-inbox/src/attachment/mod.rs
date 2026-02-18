@@ -71,7 +71,15 @@ pub enum ArmorEncodingError {
 }
 
 /// A raw binary detached signature over the attachment.
-#[derive(Debug, serde::Deserialize, serde::Serialize, Eq, PartialEq, Hash, Clone)]
+#[derive(
+    Debug,
+    serde::Deserialize,
+    serde::Serialize,
+    Eq,
+    PartialEq,
+    Hash,
+    Clone
+)]
 pub struct BinaryAttachmentSignature(pub Vec<u8>);
 
 impl<T: Into<Vec<u8>>> From<T> for BinaryAttachmentSignature {
@@ -106,7 +114,15 @@ impl BinaryAttachmentSignature {
 }
 
 /// A raw encrypted binary detached signature over the attachment.
-#[derive(Debug, serde::Deserialize, serde::Serialize, Eq, PartialEq, Hash, Clone)]
+#[derive(
+    Debug,
+    serde::Deserialize,
+    serde::Serialize,
+    Eq,
+    PartialEq,
+    Hash,
+    Clone
+)]
 pub struct BinaryAttachmentEncryptedSignature(pub Vec<u8>);
 
 impl<T: Into<Vec<u8>>> From<T> for BinaryAttachmentEncryptedSignature {

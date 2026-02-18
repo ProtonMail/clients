@@ -10,7 +10,15 @@ use std::{borrow::Borrow, fmt, ops::Deref};
 ///
 /// `foo@bar.com` is printed as `fXX@XX.XXX`
 #[derive(
-    Default, Clone, serde::Deserialize, Eq, Hash, PartialEq, Ord, PartialOrd, serde::Serialize,
+    Default,
+    Clone,
+    serde::Deserialize,
+    Eq,
+    Hash,
+    PartialEq,
+    Ord,
+    PartialOrd,
+    serde::Serialize
 )]
 pub struct PrivateEmail(String);
 
@@ -154,7 +162,15 @@ fn sanitize_string(value: &str) -> String {
 
 /// New type wrapper which hides the string from Display and Debug outputs.
 #[derive(
-    Default, Clone, serde::Deserialize, Eq, Hash, PartialEq, Ord, PartialOrd, serde::Serialize,
+    Default,
+    Clone,
+    serde::Deserialize,
+    Eq,
+    Hash,
+    PartialEq,
+    Ord,
+    PartialOrd,
+    serde::Serialize
 )]
 pub struct PrivateString(String);
 

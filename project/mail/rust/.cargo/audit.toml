@@ -12,4 +12,5 @@ ignore = [
 "RUSTSEC-2025-0081", # unic-char-property unmaintained (via proton-foundation-search)
 "RUSTSEC-2025-0075", # unic-char-range unmaintained (via proton-foundation-search)
 "RUSTSEC-2025-0080", # unic-common unmaintained (via proton-foundation-search)
+"RUSTSEC-2026-0012", # Need to update srp after migration
 ]

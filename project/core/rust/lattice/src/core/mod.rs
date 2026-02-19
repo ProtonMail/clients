@@ -188,8 +188,8 @@ pub enum LtCoreAddressStatus {
     TryFromPrimitive,
     IntoPrimitive
 )]
-#[repr(u8)]
-#[cfg_attr(feature = "serde", serde(into = "u8", try_from = "u8"))]
+#[repr(i32)]
+#[cfg_attr(feature = "serde", serde(into = "i32", try_from = "i32"))]
 pub enum LtCoreAddressType {
     /// An initial type of address.
     Original = 1,

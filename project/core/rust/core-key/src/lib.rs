@@ -47,15 +47,16 @@ impl NewUserKey {
         Ok(Self { key, salt, pass })
     }
 
-    pub fn init_addr<P: PGPProviderSync>(
+    pub fn init_addr_key<P: PGPProviderSync>(
         &self,
         pgp: &P,
         addr: &str,
+        flags: KeyFlag,
     ) -> Result<NewAddrKey, SharedCryptoError> {
         let key_id = new_key_id();
         let user_key = self.key.unlock_and_assign_key_id(pgp, key_id, &self.pass)?;
 
-        NewAddrKey::init(pgp, &user_key, addr)
+        NewAddrKey::init(pgp, &user_key, addr, flags)
     }
 }
 
@@ -70,13 +71,25 @@ impl NewAddrKey {
         pgp: &P,
         user_key: &UnlockedUserKey<P>,
         addr: &str,
+        flags: KeyFlag,
     ) -> Result<Self, SharedCryptoError> {
         let algo = KeyGeneratorAlgorithm::default();
-        let key = create_addr_key(pgp, algo, user_key, addr)?;
+        let key = create_addr_key(pgp, algo, user_key, addr, flags)?;
         let skl = create_addr_skl(pgp, user_key, &key)?;
 
         Ok(Self { key, skl })
     }
+}
+
+pub fn new_key_flags(external: bool) -> KeyFlag {
+    let mut flags = KeyFlag::default();
+
+    if external {
+        flags.set_email_no_encryption();
+        flags.set_email_no_sign();
+    }
+
+    flags
 }
 
 fn create_addr_key<P: PGPProviderSync>(
@@ -84,8 +97,9 @@ fn create_addr_key<P: PGPProviderSync>(
     alg: KeyGeneratorAlgorithm,
     user_key: &UnlockedUserKey<P>,
     addr: &str,
+    flags: KeyFlag,
 ) -> Result<LocalAddressKey, SharedCryptoError> {
-    let addr_key = LocalAddressKey::generate(pgp, addr, alg, KeyFlag::default(), true, user_key)?;
+    let addr_key = LocalAddressKey::generate(pgp, addr, alg, flags, true, user_key)?;
 
     Ok(addr_key)
 }

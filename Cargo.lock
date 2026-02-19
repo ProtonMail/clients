@@ -2276,7 +2276,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -3863,7 +3863,7 @@ version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -4300,9 +4300,9 @@ dependencies = [
 
 [[package]]
 name = "pgp"
-version = "0.18.0"
+version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "66d4a27a4d5cfd4e185ddd3eff94dee0f611c4c3e776422254237c54c336c160"
+checksum = "eaffe1ec22db286599c30ae6be75b37493b558735d86c8e59ec5c38794415fe4"
 dependencies = [
  "aead",
  "aes",
@@ -4319,7 +4319,6 @@ dependencies = [
  "camellia",
  "cast5",
  "cfb-mode",
- "chrono",
  "cipher",
  "const-oid",
  "crc24",
@@ -4664,14 +4663,15 @@ dependencies = [
 
 [[package]]
 name = "proton-crypto"
-version = "0.8.0"
-source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?tag=proton-rpgp-v0.1.0-alpha.9#0e316a1b498855fda29f969d64f4c1e962b384fc"
+version = "0.9.0"
+source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/registry/index/"
+checksum = "c4af1e80811d267f3b3a174b365d067e08178a045196cc46d6d9db19d934e8b2"
 dependencies = [
  "facet",
  "hex",
  "parking_lot",
  "proton-rpgp",
- "proton-srp 0.8.0",
+ "proton-srp 0.8.1",
  "rand 0.8.5",
  "serde",
  "subtle",
@@ -4681,8 +4681,9 @@ dependencies = [
 
 [[package]]
 name = "proton-crypto-account"
-version = "0.13.0"
-source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?tag=proton-rpgp-v0.1.0-alpha.9#0e316a1b498855fda29f969d64f4c1e962b384fc"
+version = "0.14.0"
+source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/registry/index/"
+checksum = "55f72e7fc90524832b08b68de1976fdd641ecbcff952b8fd64cd1d291d74cbfd"
 dependencies = [
  "base64",
  "derive_more 2.1.1",
@@ -4728,18 +4729,18 @@ dependencies = [
 [[package]]
 name = "proton-rpgp"
 version = "0.1.0"
-source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?tag=proton-rpgp-v0.1.0-alpha.9#0e316a1b498855fda29f969d64f4c1e962b384fc"
+source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/registry/index/"
+checksum = "cc96389ef1f61be1361d1e6c33d130594076a5950be2e74ebc17ce1e36c93729"
 dependencies = [
- "chrono",
  "hex",
  "kem",
  "nom 8.0.0",
- "pgp 0.18.0",
+ "pgp 0.19.0",
  "rand 0.8.5",
  "rsa",
  "sha2",
  "smallvec",
- "thiserror 2.0.17",
+ "thiserror 1.0.69",
  "web-time",
  "zeroize",
 ]
@@ -4762,8 +4763,9 @@ dependencies = [
 
 [[package]]
 name = "proton-srp"
-version = "0.8.0"
-source = "git+https://gitlab.protontech.ch/rust/proton-crypto-rs.git?tag=proton-rpgp-v0.1.0-alpha.9#0e316a1b498855fda29f969d64f4c1e962b384fc"
+version = "0.8.1"
+source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/registry/index/"
+checksum = "d76c1af913844c45e95375bedd80a6bcb635e0027b469aba58abb3d7c561c9fd"
 dependencies = [
  "base64",
  "bcrypt",
@@ -4876,7 +4878,7 @@ dependencies = [
  "once_cell",
  "socket2",
  "tracing",
- "windows-sys 0.60.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -5191,9 +5193,9 @@ dependencies = [
 
 [[package]]
 name = "rsa"
-version = "0.9.9"
+version = "0.9.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "40a0376c50d0358279d9d643e4bf7b7be212f1f4ff1da9070a7b54d22ef75c88"
+checksum = "b8573f03f5883dcaebdfcf4725caa1ecb9c15b2ef50c43a07b816e06799bb12d"
 dependencies = [
  "const-oid",
  "digest",
@@ -5257,7 +5259,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -5800,7 +5802,7 @@ version = "0.8.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c1c97747dbf44bb1ca44a561ece23508e99cb592e862f22222dcf42f51d1e451"
 dependencies = [
- "heck 0.5.0",
+ "heck 0.4.1",
  "proc-macro2",
  "quote",
  "syn 2.0.110",
@@ -6011,7 +6013,7 @@ dependencies = [
  "getrandom 0.3.4",
  "once_cell",
  "rustix",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -6941,7 +6943,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]

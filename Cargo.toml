@@ -17,9 +17,6 @@
 [workspace.dependencies.account-crux-client-info]
   path = "project/account/rust/account-crux-client-info"
 
-[workspace.dependencies.account-aes]
-  path = "project/account/rust/account-aes"
-
 [workspace.dependencies.account-db]
   path = "project/account/rust/account-db"
 
@@ -32,9 +29,6 @@
 [workspace.dependencies.account-validator-password]
   path = "project/account/rust/account-validator-password"
 
-[workspace.dependencies.core-aes-op]
-  path = "project/core/rust/core-aes-op"
-
 [workspace.dependencies.core-crux-types]
   path = "project/core/rust/core-crux-types"
 
@@ -43,6 +37,9 @@
 
 [workspace.dependencies.core-event-loop]
   path = "project/core/rust/core-event-loop"
+
+[workspace.dependencies.core-keystore-op]
+  path = "project/core/rust/core-keystore-op"
 
 [workspace.dependencies.core-message]
   path = "project/core/rust/core-message"

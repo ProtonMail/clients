@@ -19,17 +19,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "366ffbaa4442f4684d91e2cd7c5ea7c4ed8add41959a31447066e279e432b618"
 
 [[package]]
-name = "account-aes"
-version = "0.1.0"
-dependencies = [
- "account-crux",
- "aes-gcm",
- "anyhow",
- "async-trait",
- "proton-crypto-subtle 0.1.0",
-]
-
-[[package]]
 name = "account-crux"
 version = "0.1.0"
 dependencies = [
@@ -39,7 +28,6 @@ dependencies = [
  "async-compat",
  "async-trait",
  "bitflags",
- "core-aes-op",
  "core-client-info-op",
  "core-common-types",
  "core-device-info-op",
@@ -47,6 +35,7 @@ dependencies = [
  "core-fido-op",
  "core-hv-op",
  "core-key",
+ "core-keystore-op",
  "core-logging-op",
  "core-message",
  "core-message-macro",
@@ -72,7 +61,7 @@ dependencies = [
  "passkey",
  "proton-crypto",
  "proton-crypto-account",
- "proton-crypto-subtle 0.2.1",
+ "proton-crypto-subtle",
  "public-suffix",
  "qrcode",
  "rxing",
@@ -96,7 +85,6 @@ dependencies = [
 name = "account-crux-ffi"
 version = "0.1.0"
 dependencies = [
- "account-aes",
  "account-crux",
  "account-db",
  "account-db-op",
@@ -106,6 +94,7 @@ dependencies = [
  "async-trait",
  "cfg-if",
  "core-client-info-op",
+ "core-common-types",
  "core-device-info-op",
  "core-logging",
  "core-logging-op",
@@ -152,8 +141,8 @@ name = "account-db"
 version = "0.1.0"
 dependencies = [
  "bitflags",
- "core-aes-op",
  "core-common-types",
+ "core-keystore-op",
  "deadpool-diesel",
  "derive_more 2.1.1",
  "diesel",
@@ -176,8 +165,8 @@ version = "0.1.0"
 dependencies = [
  "account-db",
  "async-trait",
- "core-aes-op",
  "core-db-op",
+ "core-keystore-op",
  "core-proc",
  "crux_core",
  "derive_more 2.1.1",
@@ -193,7 +182,7 @@ version = "0.1.0"
 dependencies = [
  "account-crux",
  "async-trait",
- "core-aes-op",
+ "core-keystore-op",
  "futures",
  "lattice",
  "proton-crypto-account",
@@ -1044,21 +1033,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "core-aes-op"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "core-proc",
- "crux_core",
- "derive_more 2.1.1",
- "diesel",
- "diesel-derive-newtype",
- "facet",
- "serde",
- "thiserror 2.0.18",
-]
-
-[[package]]
 name = "core-client-info-op"
 version = "0.1.0"
 dependencies = [
@@ -1082,13 +1056,13 @@ name = "core-crux-types"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "core-aes-op",
  "core-client-info-op",
  "core-common-types",
  "core-db-op",
  "core-device-info-op",
  "core-fido-op",
  "core-hv-op",
+ "core-keystore-op",
  "core-logging-op",
  "core-message",
  "core-muon-op",
@@ -4687,19 +4661,6 @@ dependencies = [
  "serde_json",
  "serde_repr",
  "serde_with",
- "thiserror 1.0.69",
- "zeroize",
-]
-
-[[package]]
-name = "proton-crypto-subtle"
-version = "0.1.0"
-source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/registry/index/"
-checksum = "0590198ea347ad60b41ec87b1bdb7575e6a75799816ec93960db20d70f5a3f61"
-dependencies = [
- "aes-gcm",
- "base64",
- "rand 0.8.5",
  "thiserror 1.0.69",
  "zeroize",
 ]

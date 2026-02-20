@@ -26,7 +26,7 @@ dependencies = [
  "aes-gcm",
  "anyhow",
  "async-trait",
- "proton-crypto-subtle",
+ "proton-crypto-subtle 0.1.0",
 ]
 
 [[package]]
@@ -72,6 +72,7 @@ dependencies = [
  "passkey",
  "proton-crypto",
  "proton-crypto-account",
+ "proton-crypto-subtle 0.2.1",
  "public-suffix",
  "qrcode",
  "rxing",
@@ -1192,6 +1193,22 @@ dependencies = [
  "serde_json",
  "serde_repr",
  "serde_with",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "core-keystore-op"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "core-common-types",
+ "core-proc",
+ "crux_core",
+ "derive_more 2.1.1",
+ "diesel",
+ "diesel-derive-newtype",
+ "facet",
+ "serde",
  "thiserror 2.0.18",
 ]
 
@@ -4683,6 +4700,21 @@ dependencies = [
  "aes-gcm",
  "base64",
  "rand 0.8.5",
+ "thiserror 1.0.69",
+ "zeroize",
+]
+
+[[package]]
+name = "proton-crypto-subtle"
+version = "0.2.1"
+source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/registry/index/"
+checksum = "0a0d3d11e6f10b8594ef4acf8460ad705cae77873683fee4ae54489c869a7bfc"
+dependencies = [
+ "aes-gcm",
+ "base64",
+ "hkdf",
+ "rand 0.8.5",
+ "sha2",
  "thiserror 1.0.69",
  "zeroize",
 ]

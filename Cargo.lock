@@ -40,6 +40,7 @@ dependencies = [
  "async-trait",
  "bitflags",
  "core-aes-op",
+ "core-client-info-op",
  "core-common-types",
  "core-device-info-op",
  "core-event-loop",
@@ -91,21 +92,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "account-crux-client-info"
-version = "0.1.0"
-dependencies = [
- "account-crux",
- "crux_core",
- "tracing",
-]
-
-[[package]]
 name = "account-crux-ffi"
 version = "0.1.0"
 dependencies = [
  "account-aes",
  "account-crux",
- "account-crux-client-info",
  "account-db",
  "account-db-op",
  "account-in-memory-db",
@@ -113,6 +104,7 @@ dependencies = [
  "async-compat",
  "async-trait",
  "cfg-if",
+ "core-client-info-op",
  "core-device-info-op",
  "core-logging",
  "core-logging-op",
@@ -1066,6 +1058,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "core-client-info-op"
+version = "0.1.0"
+dependencies = [
+ "core-proc",
+ "crux_core",
+ "facet",
+ "serde",
+]
+
+[[package]]
 name = "core-common-types"
 version = "0.1.0"
 dependencies = [
@@ -1080,6 +1082,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "core-aes-op",
+ "core-client-info-op",
  "core-common-types",
  "core-db-op",
  "core-device-info-op",

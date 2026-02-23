@@ -26,6 +26,7 @@ use crate::{conv_id, conversation, message, msg_id};
 use futures::FutureExt;
 use futures::future::BoxFuture;
 use proton_core_api::services::proton::LabelId;
+use proton_core_common::datatypes::SystemLabel;
 use proton_core_common::datatypes::{LabelColor, LabelType};
 use proton_core_common::models::Label;
 use proton_core_common::test_utils::addresses::MY_ADDRESS_ID;
@@ -61,6 +62,14 @@ static INBOX: LazyLock<Label> = LazyLock::new(
 
 static LABEL: LazyLock<Label> = LazyLock::new(
     || label!(label_type: LabelType::Label, remote_id: Some("label".into()), name: "Label".to_owned(), color: LabelColor::black()),
+);
+
+static SENT: LazyLock<Label> = LazyLock::new(
+    || label!(label_type: LabelType::System, remote_id: Some(SystemLabel::Sent.label_id()), name: "Sent".to_owned(), color: LabelColor::black()),
+);
+
+static ALL_SENT: LazyLock<Label> = LazyLock::new(
+    || label!(label_type: LabelType::System, remote_id: Some(SystemLabel::AllSent.label_id()), name: "All Sent".to_owned(), color: LabelColor::black()),
 );
 
 mod available_label_as_actions {
@@ -535,6 +544,62 @@ mod available_move_to_actions {
                 ]
             }),
         ]); "TEST6: Message in nested custom folder")]
+    #[test_case(
+        &SENT,
+        vec![
+            MessageWithLabels { message: message!(remote_id: msg_id!("message_1")), labels: vec![SENT.clone()] },
+        ],
+        vec![],
+        Ok(&[
+            ExpectedMoveAction::SystemFolder(ExpectedSystemFolder {
+                label_id: SystemLabel::Archive.label_id(),
+                name: MovableSystemFolder::Archive,
+            }),
+            ExpectedMoveAction::SystemFolder(ExpectedSystemFolder {
+                label_id: SystemLabel::Trash.label_id(),
+                name: MovableSystemFolder::Trash,
+            }),
+        ]); "TEST7: Message in Sent folder - Inbox and Spam should be filtered out")]
+    #[test_case(
+        &ALL_SENT,
+        vec![
+            MessageWithLabels { message: message!(remote_id: msg_id!("message_1")), labels: vec![ALL_SENT.clone()] },
+        ],
+        vec![],
+        Ok(&[
+            ExpectedMoveAction::SystemFolder(ExpectedSystemFolder {
+                label_id: SystemLabel::Archive.label_id(),
+                name: MovableSystemFolder::Archive,
+            }),
+            ExpectedMoveAction::SystemFolder(ExpectedSystemFolder {
+                label_id: SystemLabel::Trash.label_id(),
+                name: MovableSystemFolder::Trash,
+            }),
+        ]); "TEST8: Message in All Sent folder - Inbox and Spam should be filtered out")]
+    #[test_case(
+        &SENT,
+        vec![
+            MessageWithLabels { message: message!(remote_id: msg_id!("message_1")), labels: vec![SENT.clone()] },
+            MessageWithLabels { message: message!(remote_id: msg_id!("message_2")), labels: vec![INBOX.clone()] },
+        ],
+        vec![
+            label!(remote_id: lbl_id!("custom1"), label_type: LabelType::Folder, name: "Custom Folder".to_string(), color: LabelColor::purple()),
+        ],
+        Ok(&[
+            ExpectedMoveAction::SystemFolder(ExpectedSystemFolder {
+                label_id: SystemLabel::Archive.label_id(),
+                name: MovableSystemFolder::Archive,
+            }),
+            ExpectedMoveAction::SystemFolder(ExpectedSystemFolder {
+                label_id: SystemLabel::Trash.label_id(),
+                name: MovableSystemFolder::Trash,
+            }),
+            ExpectedMoveAction::CustomFolder(ExpectedCustomFolder {
+                label_id: "custom1".into(),
+                name: "Custom Folder".into(),
+                children: vec![],
+            }),
+        ]); "TEST9: Mixed messages from Sent view with custom folders - Inbox and Spam filtered")]
     #[tokio::test]
     async fn test_move_to_actions(
         view: &Label,

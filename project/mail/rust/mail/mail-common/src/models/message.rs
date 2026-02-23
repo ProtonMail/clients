@@ -967,10 +967,21 @@ impl Message {
 
         debug!("{message_ids:?}");
 
+        let moving_from_sent = matches!(
+            SystemLabel::from_opt_rid(view.remote_id.as_ref()),
+            Some(SystemLabel::AllSent | SystemLabel::Sent)
+        );
         let all_system = Label::find_by_kind(LabelType::System, tether).await?;
-        let all_system_excluding_view = all_system
-            .iter()
-            .filter(|label| label.local_id != view.local_id);
+        let all_system_excluding_view = all_system.iter().filter(|label| {
+            let sent_move = moving_from_sent
+                && matches!(
+                    SystemLabel::from_opt_rid(label.remote_id.as_ref()),
+                    Some(SystemLabel::Inbox | SystemLabel::Spam)
+                );
+
+            label.local_id != view.local_id && !sent_move
+        });
+
         let all_custom_folders = Label::find_by_kind(LabelType::Folder, tether).await?;
         let all_move_to_actions = MoveAction::vec(
             all_system_excluding_view

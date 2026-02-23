@@ -28,6 +28,7 @@ use proton_crypto_inbox::message::DecryptedBody;
 use proton_crypto_inbox::proton_crypto::crypto::VerificationError;
 use proton_crypto_inbox::proton_crypto_inbox_mime::{ProcessedBodyType, ProcessedMessage};
 use proton_mail_html_transformer::Transformer;
+use proton_mail_html_transformer::remote_content::RemoteContentOutput;
 use proton_mail_html_transformer::sanitizer::StripStyleSheets;
 use proton_mail_html_transformer::transforms::ColorMode;
 use proton_mail_html_transformer::transforms::styles::{BrowserCapabilities, IncludeFullStaticCss};
@@ -482,7 +483,7 @@ impl DecryptedMessageBody {
             banners.push(MessageBanner::UnableToDecrypt);
         }
 
-        let mut output = transform_html_with_banners(
+        let mut output = transform_message_with_banners(
             sender,
             // At this point in time we do not have a list of trusted senders.
             // We also do not store that in the database as there is no syncing with the server.
@@ -853,38 +854,32 @@ pub struct BodyOutput {
     pub body_banners: Vec<MessageBanner>,
 }
 
-/// # Parameters
-/// * `sender` - the email address of the sender. Example: `test@pm.me`
-/// * `trusted_senders` - list of senders (email addresses, example: `test@pm.me`) that we trust that they support dark mode natively.
-pub fn transform_html(
-    sender: &str,
-    trusted_senders: &[&str],
-    html: &str,
-    opts: TransformOptsResolved,
-    mime_type: MessageMimeType,
-) -> BodyOutput {
-    transform_html_with_banners(sender, trusted_senders, html, opts, mime_type, vec![])
+pub struct TransformationOutput {
+    /// The transformed html of the message.
+    pub content: String,
+
+    /// Whether or not [`RemoteContent::Strip`] removed a blockquote.
+    pub had_blockquote: bool,
+
+    /// How many html tags it has removed.
+    pub tags_stripped: u64,
+
+    /// Set of UTM tracking params that were removed.
+    pub utm_stripped: BTreeSet<StrippedUTM>,
+
+    pub remote_content: RemoteContentOutput,
+
+    /// The transform opts that were used. All fields are actually Some.
+    pub opts: TransformOptsResolved,
 }
 
-/// # Parameters
-/// * `sender` - the email address of the sender. Example: `test@pm.me`
-/// * `trusted_senders` - list of senders (email addresses, example: `test@pm.me`) that we trust that they support dark mode natively.
-#[tracing::instrument(skip_all)]
-pub fn transform_html_with_banners(
+pub fn transform_message(
     sender: &str,
     trusted_senders: &[&str],
-    html: &str,
-    opts: TransformOptsResolved,
+    content: &str,
     mime_type: MessageMimeType,
-    mut banners: Vec<MessageBanner>,
-) -> BodyOutput {
-    trace!(
-        "\
-Beginning html transform:
-opts: {opts:#?}
-mime_type: {mime_type:?}"
-    );
-
+    opts: TransformOptsResolved,
+) -> TransformationOutput {
     // The order at which we run the transforms is not random, it's been chosen for maximum
     // efficiency.
     let TransformOptsResolved {
@@ -897,12 +892,12 @@ mime_type: {mime_type:?}"
     // If the message is text/plain we need to apply some extra transforms to it like
     // preserving whitespaces and adding links.
     let mut transformer = if mime_type == MessageMimeType::TextPlain {
-        let mut transformer = Transformer::new_text_plain(html);
+        let mut transformer = Transformer::new_text_plain(content);
         let tok = transformer.add_noreferrer();
         transformer.insert_links(tok);
         transformer
     } else {
-        let mut transformer = Transformer::new(html);
+        let mut transformer = Transformer::new(content);
         transformer.add_noreferrer();
         transformer
     };
@@ -910,8 +905,7 @@ mime_type: {mime_type:?}"
     let tags_stripped = transformer.strip_whitelist(StripStyleSheets::No);
     let utm_stripped = transformer.strip_utm();
 
-    let disable_output = transformer.disable_content(hide_remote_images, hide_embedded_images);
-    let remote_urls = disable_output.remote_urls;
+    let remote_content = transformer.disable_content(hide_remote_images, hide_embedded_images);
 
     let had_blockquote = if !show_block_quote {
         transformer.strip_blockquote()
@@ -937,22 +931,53 @@ mime_type: {mime_type:?}"
 
     transformer.inject_common_css();
 
-    if opts.hide_remote_images && !remote_urls.is_empty() {
+    TransformationOutput {
+        content: transformer.to_string(),
+        had_blockquote,
+        tags_stripped,
+        utm_stripped,
+        remote_content,
+        opts,
+    }
+}
+
+/// # Parameters
+/// * `sender` - the email address of the sender. Example: `test@pm.me`
+/// * `trusted_senders` - list of senders (email addresses, example: `test@pm.me`) that we trust that they support dark mode natively.
+#[tracing::instrument(skip_all)]
+pub fn transform_message_with_banners(
+    sender: &str,
+    trusted_senders: &[&str],
+    html: &str,
+    opts: TransformOptsResolved,
+    mime_type: MessageMimeType,
+    mut banners: Vec<MessageBanner>,
+) -> BodyOutput {
+    trace!(
+        "\
+Beginning html transform:
+opts: {opts:#?}
+mime_type: {mime_type:?}"
+    );
+
+    let output = transform_message(sender, trusted_senders, html, mime_type, opts);
+
+    if opts.hide_remote_images && !output.remote_content.remote_urls.is_empty() {
         banners.push(MessageBanner::RemoteContent);
     }
 
-    if opts.hide_embedded_images && !disable_output.embedded_urls.is_empty() {
+    if opts.hide_embedded_images && !output.remote_content.embedded_urls.is_empty() {
         banners.push(MessageBanner::EmbeddedImages);
     }
 
     banners.sort_unstable();
 
     let output = BodyOutput {
-        body: transformer.to_string(),
-        had_blockquote,
-        tags_stripped,
-        utm_stripped,
-        remote_urls,
+        body: output.content,
+        had_blockquote: output.had_blockquote,
+        tags_stripped: output.tags_stripped,
+        utm_stripped: output.utm_stripped,
+        remote_urls: output.remote_content.remote_urls,
         transform_opts: opts.into(),
         body_banners: banners,
     };

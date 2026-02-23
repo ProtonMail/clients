@@ -11,7 +11,7 @@ use crate::errors::{
     ProtonError, VoidActionResult,
 };
 use crate::mail::datatypes::privacy_lock::PrivacyLock;
-use crate::mail::datatypes::{LabelAsOutput, Undo};
+use crate::mail::datatypes::{LabelAsOutput, MessageMimeType, Undo};
 use crate::mail::mail_scroller::{
     MessageScroller, MessageScrollerLiveQueryCallback, SearchScroller,
     spawn_message_scroller_watcher,
@@ -34,7 +34,8 @@ use proton_mail_common::datatypes::{
 };
 use proton_mail_common::decrypted_message::{
     BodyOutput as RealBodyOutput, DecryptedMessageBody, ThemeOpts as RealThemeOpts,
-    TransformOpts as RealTransformOpts,
+    TransformOpts as RealTransformOpts, TransformOptsResolved as RealTransformOptsResolved,
+    transform_message,
 };
 use proton_mail_common::models::{self, IncomingDefault, Message as RealMessage};
 use proton_mail_common::{
@@ -58,6 +59,19 @@ impl DecryptedMessage {
             .upgrade()
             .ok_or(RealProtonMailError::Unexpected(Unexpected::Internal))
     }
+}
+
+/// This function should be used ONLY for snapshot tests.
+/// It takes a HTML string as a parameter does some transformations (identical to those in DecryptedMessage::body() )
+/// and returns the transformed HTML string.
+#[uniffi_export]
+#[must_use]
+pub fn snapshot_tests_transform_message(
+    content: &str,
+    mime_type: MessageMimeType,
+    opts: SnapshotTestsTransformOpts,
+) -> String {
+    transform_message("", &[], content, mime_type.into(), opts.into()).content
 }
 
 #[uniffi_export]
@@ -304,6 +318,42 @@ impl From<TransformOpts> for RealTransformOpts {
             hide_remote_images: opts.hide_remote_images,
             hide_embedded_images: opts.hide_embedded_images,
             theme: opts.theme.map(Into::into),
+        }
+    }
+}
+
+/// Those are matching TransformOpts but all fields are required.
+#[derive(Debug, Clone, Copy, uniffi::Record)]
+pub struct SnapshotTestsTransformOpts {
+    /// Whether should show block quotes or not. Default: true
+    #[uniffi(default = true)]
+    pub show_block_quote: bool,
+
+    #[uniffi(default = false)]
+    pub hide_remote_images: bool,
+
+    #[uniffi(default = false)]
+    pub hide_embedded_images: bool,
+
+    /// Current settings related to the color scheme.
+    /// It affects on which CSS style is used in the HTML body of the message
+    ///
+    /// Default: None
+    /// It assumes that the device supports `@media` queries. In that case
+    /// passing theme would be irrelevant.
+    ///
+    #[uniffi(default = None)]
+    pub theme: Option<ThemeOpts>,
+}
+impl From<SnapshotTestsTransformOpts> for RealTransformOptsResolved {
+    fn from(value: SnapshotTestsTransformOpts) -> Self {
+        Self {
+            show_block_quote: value.show_block_quote,
+            hide_remote_images: value.hide_remote_images,
+            hide_embedded_images: value.hide_embedded_images,
+            theme: value
+                .theme
+                .map_or_else(RealThemeOpts::for_modern_device, Into::into),
         }
     }
 }

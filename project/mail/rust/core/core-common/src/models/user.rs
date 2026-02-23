@@ -232,18 +232,7 @@ bitflags::bitflags! {
     }
 }
 
-#[derive(
-    Clone,
-    Copy,
-    Debug,
-    Default,
-    Deserialize,
-    Eq,
-    Hash,
-    PartialEq,
-    Serialize,
-    TryFrom
-)]
+#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize, TryFrom)]
 #[try_from(repr)]
 #[repr(u32)]
 pub enum Role {
@@ -289,18 +278,7 @@ impl ToSql for Role {
     }
 }
 
-#[derive(
-    Clone,
-    Copy,
-    Debug,
-    Default,
-    Deserialize,
-    Eq,
-    Hash,
-    PartialEq,
-    Serialize,
-    TryFrom
-)]
+#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize, TryFrom)]
 #[try_from(repr)]
 #[repr(u32)]
 pub enum DelinquentState {

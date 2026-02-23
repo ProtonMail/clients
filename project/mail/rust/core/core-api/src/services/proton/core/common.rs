@@ -60,16 +60,7 @@ pub enum LightOrDarkMode {
 }
 
 /// Represents which kind of label we are dealing with
-#[derive(
-    Clone,
-    Copy,
-    Debug,
-    Deserialize_repr,
-    Eq,
-    Hash,
-    PartialEq,
-    Serialize_repr
-)]
+#[derive(Clone, Copy, Debug, Deserialize_repr, Eq, Hash, PartialEq, Serialize_repr)]
 #[repr(u8)]
 pub enum LabelType {
     /// TODO: Document this variant.
@@ -88,16 +79,7 @@ pub enum LabelType {
 /// In which environment are we going to register the device
 /// for the push notification.
 ///
-#[derive(
-    Clone,
-    Copy,
-    Debug,
-    Deserialize_repr,
-    Eq,
-    Hash,
-    PartialEq,
-    Serialize_repr
-)]
+#[derive(Clone, Copy, Debug, Deserialize_repr, Eq, Hash, PartialEq, Serialize_repr)]
 #[repr(u8)]
 pub enum DeviceEnvironment {
     Google = 4,

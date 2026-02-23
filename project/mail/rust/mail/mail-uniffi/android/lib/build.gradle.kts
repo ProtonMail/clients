@@ -20,10 +20,8 @@ val privateProperties = Properties().apply {
 }
 
 val gitHubDomain = "githubProtonMailDomain".fromVariable()
-val mavenUser = "mavenCentralUsername".fromVariable()
-val mavenPassword = "mavenCentralPassword".fromVariable()
-val mavenSigningKey = "mavenSigningKey".fromVariable()
-val mavenSigningKeyPassword = "mavenSigningKeyPassword".fromVariable()
+val mavenSigningKey = "PROTON_MAIL_MAVEN_SIGNING_KEY".fromVariable()
+val mavenSigningKeyPassword = "PROTON_MAIL_MAVEN_SIGNING_KEY_PASSWORD".fromVariable()
 
 android {
     namespace = "proton.android.mail.commonrust"

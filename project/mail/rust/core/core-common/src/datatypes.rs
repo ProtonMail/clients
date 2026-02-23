@@ -508,18 +508,7 @@ impl ToSql for LogAuth {
 }
 
 /// TODO: Document this enum.
-#[derive(
-    Clone,
-    Copy,
-    Debug,
-    Default,
-    Deserialize,
-    Eq,
-    Hash,
-    PartialEq,
-    Serialize,
-    TryFrom
-)]
+#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize, TryFrom)]
 #[try_from(repr)]
 #[repr(u8)]
 pub enum TfaStatus {
@@ -1734,18 +1723,7 @@ impl ToSql for Timestamp {
     }
 }
 
-#[derive(
-    Clone,
-    Debug,
-    Default,
-    Deserialize,
-    Eq,
-    Hash,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    Serialize
-)]
+#[derive(Clone, Debug, Default, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
 pub struct LabelColor(String);
 
 impl LabelColor {

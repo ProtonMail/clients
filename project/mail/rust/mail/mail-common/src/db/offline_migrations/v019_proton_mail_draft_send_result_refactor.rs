@@ -11,15 +11,7 @@ use stash::{UserDb, params, sql_using_serde};
 
 pub struct DraftSendResultMigration;
 
-#[derive(
-    serde::Serialize,
-    serde::Deserialize,
-    Debug,
-    Clone,
-    Eq,
-    PartialEq,
-    Hash
-)]
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
 enum OldDraftSendFailure {
     NoRecipients,
     AddressDoesNotHavePrimaryKey(AddressId),

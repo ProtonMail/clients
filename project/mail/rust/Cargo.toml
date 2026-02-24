@@ -89,6 +89,7 @@ fxhash = "=0.2.1" # used by kuchikiki and tui-logger , force to this version to 
 jiff = { version = "0.2.4", features = ["serde"] }
 file-format = { version = "0.26.0", features = ["reader"] }
 mime = "0.3.17"
+muon = { version = "1.7.1", registry = "proton", features = ["unsealed"] }
 parking_lot = "0.12.3"
 paste = "1"
 pin-project = "1"
@@ -298,11 +299,6 @@ version = "0.1"
 path = "crypto/crypto-pin-hash"
 registry = "proton"
 
-[workspace.dependencies.muon]
-git = "https://gitlab.protontech.ch/rust/inbox/muon.git"
-rev = "2970c71eaa5dd5c1c4f127535870d16155ef46da"
-features = ["unsealed"]
-
 [workspace.dependencies.proton-log-service]
 path = "shared/log-service"
 version = "0.1"
@@ -363,6 +359,9 @@ path = "shared/mailto"
 version = "1.1.2"
 registry = "proton"
 default-features = false
+
+[patch.proton]
+muon = { path = "forks/muon", features = ["unsealed"] }
 
 [workspace.lints.rust]
 trivial_numeric_casts = "warn"

@@ -2,9 +2,7 @@
 
 set -euo pipefail
 
-uv run --project ./scripts/changelog changelog "$@" \
-	--only mail-uniffi \
-	--init mail-uniffi-v0.68.2 \
-	> mail/mail-uniffi/CHANGELOG.md
+ROOT=project/mail/rust
+INIT=mail-uniffi-v0.1.9122
 
-cat mail/mail-uniffi/CHANGELOG.old.md >> mail/mail-uniffi/CHANGELOG.md
+uv run --project $ROOT/scripts/changelog changelog "$@" --init $INIT --path $ROOT

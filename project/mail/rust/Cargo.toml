@@ -361,7 +361,7 @@ registry = "proton"
 default-features = false
 
 [patch.proton]
-muon = { path = "forks/muon", features = ["unsealed"] }
+muon = { path = "forks/muon" }
 
 [workspace.lints.rust]
 trivial_numeric_casts = "warn"

@@ -1,5 +1,5 @@
 use crate::{RsvpError, RsvpKeys, RsvpResult};
-use proton_calendar_api::{CalendarBootstrap, CalendarEvent, CalendarEventPayload};
+use proton_calendar_api_v1::{CalendarBootstrap, CalendarEvent, CalendarEventPayload};
 use proton_crypto::crypto::PGPProviderSync;
 use proton_crypto_account::keys::UnlockedAddressKeys;
 use proton_crypto_calendar::{

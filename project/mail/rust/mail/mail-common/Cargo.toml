@@ -54,7 +54,7 @@ mime = { workspace = true }
 parking_lot = { workspace = true }
 proton-action-queue = { workspace = true }
 proton-account-api = { workspace = true }
-proton-calendar-api = { workspace = true }
+proton-calendar-api-v1 = { workspace = true }
 proton-calendar-common = { workspace = true }
 proton-core-api = { workspace = true, features = ["sql"] }
 proton-mail-api = { workspace = true, features = ["sql"] }
@@ -102,7 +102,7 @@ clap = { workspace = true }
 color-backtrace = { workspace = true }
 insta = { workspace = true }
 pretty_assertions = { workspace = true }
-proton-calendar-api = { workspace = true, features = ["test-utils"] }
+proton-calendar-api-v1 = { workspace = true, features = ["test-utils"] }
 proton-core-api = { workspace = true }
 proton-crypto-calendar = { workspace = true }
 proton-ical = { workspace = true }

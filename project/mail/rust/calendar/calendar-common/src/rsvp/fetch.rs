@@ -10,7 +10,7 @@ use jiff::{
     Zoned,
     civil::{Date, Weekday},
 };
-use proton_calendar_api::{
+use proton_calendar_api_v1::{
     CalendarAttendeeId, CalendarAttendeeStatus, CalendarBootstrap, CalendarEvent, ProtonCalendar,
 };
 use proton_canonical_email::{self as email, CanonicalEmail};

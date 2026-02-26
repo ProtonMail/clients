@@ -308,7 +308,7 @@ version = "0.1"
 path = "shared/task-service"
 registry = "proton"
 
-[workspace.dependencies.proton-calendar-api]
+[workspace.dependencies.proton-calendar-api-v1]
 version = "0.1"
 path = "calendar/calendar-api"
 registry = "proton"

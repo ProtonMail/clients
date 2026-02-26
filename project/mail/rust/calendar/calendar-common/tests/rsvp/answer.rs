@@ -7,7 +7,7 @@ use indoc::indoc;
 use itertools::Itertools;
 use jiff::civil::Weekday;
 use pretty_assertions as pa;
-use proton_calendar_api::{
+use proton_calendar_api_v1::{
     CalendarAttendeeStatus, CalendarNotificationsUpdate, ProtonCalendarMock,
 };
 use proton_calendar_common::{RsvpAnswer, RsvpEventId, RsvpMail};

@@ -6,7 +6,7 @@ use crate::{
 use indoc::indoc;
 use jiff::{Zoned, civil::Weekday};
 use pretty_assertions as pa;
-use proton_calendar_api::{CalendarAttendee, CalendarAttendeeStatus, ProtonCalendarMock};
+use proton_calendar_api_v1::{CalendarAttendee, CalendarAttendeeStatus, ProtonCalendarMock};
 use proton_calendar_common::{
     RsvpAttendee, RsvpError, RsvpEventId, RsvpFetchApiError, RsvpFetchError, RsvpIntent,
     RsvpOrganizer, RsvpProgress, RsvpRecency, RsvpRelation,

@@ -12,7 +12,7 @@
 
 use indoc::indoc;
 use pretty_assertions as pa;
-use proton_calendar_api::{
+use proton_calendar_api_v1::{
     CalendarBootstrap, CalendarKey, CalendarKeyFlags, CalendarMember, CalendarMemberPassphrase,
     CalendarPassphrase,
 };

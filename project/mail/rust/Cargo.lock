@@ -5242,7 +5242,7 @@ name = "proton-api-utils"
 version = "0.1.0"
 
 [[package]]
-name = "proton-calendar-api"
+name = "proton-calendar-api-v1"
 version = "0.1.0"
 dependencies = [
  "function_name",
@@ -5269,7 +5269,7 @@ dependencies = [
  "itertools 0.13.0",
  "jiff",
  "pretty_assertions",
- "proton-calendar-api",
+ "proton-calendar-api-v1",
  "proton-canonical-email",
  "proton-core-api",
  "proton-core-common",
@@ -5435,7 +5435,7 @@ dependencies = [
  "derive_more 2.0.1",
  "indoc",
  "pretty_assertions",
- "proton-calendar-api",
+ "proton-calendar-api-v1",
  "proton-crypto",
  "proton-crypto-account",
  "serde",
@@ -5675,7 +5675,7 @@ dependencies = [
  "pretty_assertions",
  "proton-account-api",
  "proton-action-queue",
- "proton-calendar-api",
+ "proton-calendar-api-v1",
  "proton-calendar-common",
  "proton-canonical-email",
  "proton-core-api",
@@ -5801,7 +5801,7 @@ dependencies = [
  "log",
  "proton-account-api",
  "proton-action-queue",
- "proton-calendar-api",
+ "proton-calendar-api-v1",
  "proton-calendar-common",
  "proton-core-common",
  "proton-crypto-inbox",
@@ -5847,7 +5847,7 @@ dependencies = [
  "proton-account-api",
  "proton-account-uniffi",
  "proton-action-queue",
- "proton-calendar-api",
+ "proton-calendar-api-v1",
  "proton-calendar-common",
  "proton-core-api",
  "proton-core-common",

@@ -1,9 +1,9 @@
 //! Compatability wrappers to run v5 event loop code on top of v6 setup.
 
 use crate::events::event_source::MailEventSourceV5;
+use core_event_loop::v6::{EventSource, EventSubscriber};
+use core_event_loop::{EventSubscriberResult, RefreshFlag};
 use proton_core_common::event_loop::event_source::CoreEventSource;
-use proton_event_loop::v6::{EventSource, EventSubscriber};
-use proton_event_loop::{EventSubscriberResult, RefreshFlag};
 
 pub struct MailEventV5SubscriberCompat<T: EventSubscriber<CoreEventSource>>(pub T);
 #[async_trait::async_trait]

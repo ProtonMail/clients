@@ -44,7 +44,7 @@ async fn main() {
         .parse_lossy(
             "info,proton_sqlite3=trace,\
                 proton_core_common=trace,proton_mail_common=trace,\
-                proton_event_loop=trace,proton_core_api=trace,\
+                core_event_loop=trace,proton_core_api=trace,\
                 proton_action_queue=trace,proton_mail_api=trace,\
                 stash=error",
         );

@@ -11,14 +11,15 @@ use crate::models::{
 };
 use anyhow::{Context, anyhow};
 use async_trait::async_trait;
+use core_event_loop::v6::{EventSource, EventSubscriber};
+use core_event_loop::{EventSubscriberError, EventSubscriberResult, RefreshFlag};
 use indoc::formatdoc;
 use itertools::Itertools;
 use proton_action_queue::rebase::RebaseChangeSet;
 use proton_core_common::datatypes::SystemLabel;
 use proton_core_common::join_task;
 use proton_core_common::models::Label;
-use proton_event_loop::v6::{EventSource, EventSubscriber};
-use proton_event_loop::{EventSubscriberError, EventSubscriberResult, RefreshFlag};
+use proton_core_common::services::event_loop_service::EventManagerContext;
 use proton_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
 use stash::orm::Model;
 use std::collections::HashMap;
@@ -34,13 +35,14 @@ impl From<Weak<MailUserContext>> for MailEventV6Subscriber {
 }
 
 #[async_trait]
-impl EventSubscriber<MailEventSourceV6> for MailEventV6Subscriber {
+impl EventSubscriber<EventManagerContext, MailEventSourceV6> for MailEventV6Subscriber {
     fn name(&self) -> &'static str {
         "mail-v6-subscriber"
     }
 
     async fn on_event(
         &self,
+        _: &EventManagerContext,
         event: &<MailEventSourceV6 as EventSource>::Event,
         cache: &mut <MailEventSourceV6 as EventSource>::Cache,
     ) -> EventSubscriberResult<()> {
@@ -177,6 +179,7 @@ impl EventSubscriber<MailEventSourceV6> for MailEventV6Subscriber {
 
     async fn on_refresh(
         &self,
+        _: &EventManagerContext,
         _: RefreshFlag,
         _: &mut <MailEventSourceV6 as EventSource>::Cache,
     ) -> EventSubscriberResult<()> {

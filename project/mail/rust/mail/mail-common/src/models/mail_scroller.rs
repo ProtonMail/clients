@@ -211,7 +211,8 @@ impl ScrollData for MessageScrollData {
         //NOTE: we only check the display order for elements with matching time
         // or we will get incorrect query results.
 
-        let (time_op, display_order_op, local_id_op, sort_op) = if order_dir == ScrollOrderDir::Desc {
+        let (time_op, display_order_op, local_id_op, sort_op) = if order_dir == ScrollOrderDir::Desc
+        {
             ('>', '>', ">=", "DESC")
         } else {
             ('<', '<', "<=", "ASC")
@@ -482,7 +483,8 @@ impl ScrollData for ConversationScrollData {
         time: UnixTimestamp,
         snooze_time: UnixTimestamp,
     ) -> String {
-        let (time_op, display_order_op, local_id_op, sort_op) = if order_dir == ScrollOrderDir::Desc {
+        let (time_op, display_order_op, local_id_op, sort_op) = if order_dir == ScrollOrderDir::Desc
+        {
             ('>', '>', ">=", "DESC")
         } else {
             ('<', '<', "<=", "ASC")
@@ -1173,7 +1175,11 @@ impl<T: ScrollData> ScrollQuery<T> {
 
         let items = T::Model::find(
             query,
-            params![self.cursor.local_label_id, self.cursor.display_order, self.cursor.local_id],
+            params![
+                self.cursor.local_label_id,
+                self.cursor.display_order,
+                self.cursor.local_id
+            ],
             tether,
         )
         .await?;
@@ -1202,7 +1208,11 @@ impl<T: ScrollData> ScrollQuery<T> {
 
         T::Model::count(
             query,
-            params![self.cursor.local_label_id, self.cursor.display_order, self.cursor.local_id],
+            params![
+                self.cursor.local_label_id,
+                self.cursor.display_order,
+                self.cursor.local_id
+            ],
             tether,
         )
         .await

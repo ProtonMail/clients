@@ -26,6 +26,8 @@ use crate::{
 use anyhow::anyhow;
 use attachment_cache::AttachmentCacheState;
 use builder::MailUserContextBuilder;
+use core_event_loop::EventLoopError;
+use core_event_loop::v6::{EventSubscriber, EventSubscriberId};
 use events::event_subscriber::MailEventV5Subscriber;
 use initialization::InitializationMediator;
 use parking_lot::Mutex;
@@ -45,6 +47,7 @@ use proton_core_common::datatypes::{
 };
 use proton_core_common::event_loop::EventPollMode;
 use proton_core_common::models::{Address, PaidSubscription, Role, User, UserSettings};
+use proton_core_common::services::event_loop_service::EventManagerContext;
 use proton_core_common::services::{
     EventLoopService, EventPollConfigService, NetworkMonitorService, UserIssueReporterService,
 };
@@ -59,8 +62,6 @@ use proton_crypto_inbox::keys::{
 use proton_crypto_inbox::proton_crypto::CryptoClockProvider;
 use proton_crypto_inbox::proton_crypto::crypto::PGPProviderSync;
 use proton_crypto_inbox::proton_crypto_account::keys::{UnlockedAddressKeys, UnlockedUserKeys};
-use proton_event_loop::EventLoopError;
-use proton_event_loop::v6::{EventSubscriber, EventSubscriberId};
 use proton_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
 use proton_task_service::Spawner;
 use stash::UserDb;
@@ -1015,7 +1016,9 @@ impl MailUserContext {
         self.user_context.connection_status()
     }
 
-    pub fn event_subscriber(&self) -> impl EventSubscriber<MailEventSourceV5> + 'static {
+    pub fn event_subscriber(
+        &self,
+    ) -> impl EventSubscriber<EventManagerContext, MailEventSourceV5> + 'static {
         MailEventV5Subscriber::new(Weak::clone(&self.this))
     }
 

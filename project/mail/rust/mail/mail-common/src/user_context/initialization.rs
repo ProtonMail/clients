@@ -9,8 +9,8 @@ use proton_core_common::models::{
     InitializedComponent, User,
 };
 
+use core_event_loop::EventLoopError;
 use proton_core_common::services::{EventLoopService, InitializationService};
-use proton_event_loop::EventLoopError;
 use proton_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
 use proton_task_service::TaskService;
 use stash::params;

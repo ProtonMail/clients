@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use core_event_loop::EventLoopError;
 use proton_action_queue::queue::{ActionError, AsActionError, QueuedError};
 use proton_core_api::services::proton::common::ApiErrorInfo;
 use proton_core_common::actions::event_poll::ActionEventLoopError;
@@ -7,7 +8,6 @@ use proton_core_common::datatypes::{Refresh, SystemLabel};
 use proton_core_common::models::{ModelExtension, ModelIdExtension};
 use proton_core_common::test_utils::account::test_api_address;
 use proton_core_common::test_utils::addresses::MY_ADDRESS_ID;
-use proton_event_loop::EventLoopError;
 use proton_mail_api::services::proton::prelude::ViewMode;
 use proton_mail_common::actions::refresh::ActionRefresh;
 use proton_mail_common::models::{Conversation, DraftMetadata, Message};

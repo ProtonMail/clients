@@ -1,4 +1,6 @@
 use crate::UserContext;
+use core_event_loop::EventLoopError;
+use core_event_loop::v6::EventSubscriberError;
 use proton_action_queue::action::{
     ActionDependencyKey, ActionDependencyKeys, FactoryResult, VersionConverter,
     VersionConverterError, deserialize,
@@ -8,8 +10,6 @@ use proton_action_queue::{
     action::{self, Action, ActionId, Handler, Priority, Type, WriterGuard, WriterGuardError},
     queue::ActionRequeueReason,
 };
-use proton_event_loop::EventLoopError;
-use proton_event_loop::v6::EventSubscriberError;
 use serde::{Deserialize, Serialize};
 use stash::UserDb;
 use stash::stash::Bond;

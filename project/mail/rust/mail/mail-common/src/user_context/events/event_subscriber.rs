@@ -10,13 +10,14 @@ use crate::user_context::events::messages::handle_message_events;
 use crate::{AppError, MailContextError, MailUserContext};
 use anyhow::Context;
 use async_trait::async_trait;
+use core_event_loop::RefreshFlag;
 use proton_action_queue::action::ActionGroup;
 use proton_action_queue::queue::{ActionError as QueueActionError, QueuedActionOutput};
 use proton_action_queue::rebase::RebaseChangeSet;
 use proton_core_api::service::ApiServiceError;
 use proton_core_common::datatypes::{Refresh, SystemLabel};
 use proton_core_common::models::LabelError;
-use proton_event_loop::RefreshFlag;
+use proton_core_common::services::event_loop_service::EventManagerContext;
 use stash::UserDb;
 use stash::orm::Model;
 use std::sync::{Arc, Weak};
@@ -26,7 +27,7 @@ use crate::datatypes::dependencies::DependencyFetcher;
 use crate::events::v6;
 use crate::user_context::events::event_model::MailEvent;
 use crate::user_context::events::event_source::MailEventSourceV5;
-use proton_event_loop::v6::{
+use core_event_loop::v6::{
     EventSource, EventSubscriber, EventSubscriberError, EventSubscriberResult,
 };
 use proton_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
@@ -155,13 +156,14 @@ impl EventSubscriberError for MailEventSubscriberError {
 }
 
 #[async_trait]
-impl EventSubscriber<MailEventSourceV5> for MailEventV5Subscriber {
+impl EventSubscriber<EventManagerContext, MailEventSourceV5> for MailEventV5Subscriber {
     fn name(&self) -> &'static str {
         "proton-mail-event-subscriber"
     }
 
     async fn on_event(
         &self,
+        _: &EventManagerContext,
         event: &MailEventV5,
         _: &mut <MailEventSourceV5 as EventSource>::Cache,
     ) -> EventSubscriberResult<()> {
@@ -271,6 +273,7 @@ impl EventSubscriber<MailEventSourceV5> for MailEventV5Subscriber {
 
     async fn on_refresh(
         &self,
+        _: &EventManagerContext,
         refresh_flag: RefreshFlag,
         _: &mut <MailEventSourceV5 as EventSource>::Cache,
     ) -> EventSubscriberResult<()> {

@@ -1,11 +1,12 @@
 use std::sync::Arc;
 
+use core_event_loop::v6::EventSubscriber;
 use proton_core_api::services::proton::{Action, ContactEventV6, ContactId, ContactRootEventV6};
 use proton_core_common::{
     event_loop::v6::{ContactEventCache, ContactEventV6Subscriber},
+    services::event_loop_service::EventManagerContext,
     test_utils::test_context::TestContext,
 };
-use proton_event_loop::v6::EventSubscriber;
 
 #[tokio::test]
 async fn deleted_contact_does_not_fail_event_poll() {
@@ -32,5 +33,8 @@ async fn deleted_contact_does_not_fail_event_poll() {
     ctx.mock_get_full_contact_does_not_exist(contact_id).await;
 
     // Fire event:
-    subscriber.on_event(&event, &mut cache).await.unwrap();
+    subscriber
+        .on_event(&EventManagerContext, &event, &mut cache)
+        .await
+        .unwrap();
 }

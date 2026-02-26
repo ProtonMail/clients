@@ -1,11 +1,11 @@
 use crate::MailUserContext;
+use core_event_loop::MAX_ERROR_RETRIES;
 use proton_action_queue::action::{
     Action, ActionId, DefaultVersionConverter, Handler, Priority, Type, WriterGuard,
 };
 use proton_action_queue::rebase::RebaseChangeSet;
 use proton_core_common::actions::event_poll::ActionEventLoopError;
 use proton_core_common::datatypes::Refresh;
-use proton_event_loop::MAX_ERROR_RETRIES;
 use serde::{Deserialize, Serialize};
 use stash::UserDb;
 use stash::stash::Bond;

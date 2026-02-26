@@ -76,7 +76,7 @@ pub fn app_tracing_env_filter_default() -> EnvFilter {
             proton_calendar_common=debug,\
             proton_core_common=debug,\
             proton_mail_common=debug,\
-            proton_event_loop=debug,\
+            core_event_loop=debug,\
             proton_core_api=debug,\
             proton_action_queue=trace,\
             proton_mail_api=debug,\
@@ -104,7 +104,7 @@ pub fn app_tracing_env_filter_trace() -> EnvFilter {
             proton_calendar_common=trace,\
             proton_core_common=trace,\
             proton_mail_common=trace,\
-            proton_event_loop=trace,\
+            core_event_loop=trace,\
             proton_core_api=trace,\
             proton_action_queue=trace,\
             proton_network_monitor_service=debug,\

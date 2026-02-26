@@ -1,8 +1,9 @@
+use crate::services::event_loop_service::EventManagerContext;
 use crate::{CoreEventLoopContext, UserContext};
 use anyhow::anyhow;
 use async_trait::async_trait;
+use core_event_loop::store::EventStore;
 use proton_core_api::services::proton::EventId;
-use proton_event_loop::store::EventStore;
 use stash::params;
 use stash::stash::{Bond, StashError, Tether};
 use tracing::error;
@@ -14,13 +15,20 @@ pub const CONTACT_EVENT_TYPE_ID: &str = "proton-contact-event";
 pub const MAIL_EVENT_TYPE_ID: &str = "proton-mail-event";
 
 #[async_trait]
-impl EventStore for CoreEventLoopContext {
-    async fn load(&self) -> anyhow::Result<Option<proton_event_loop::EventId>> {
+impl EventStore<EventManagerContext> for CoreEventLoopContext {
+    async fn load(
+        &self,
+        _: &EventManagerContext,
+    ) -> anyhow::Result<Option<core_event_loop::EventId>> {
         let ctx = self.inner()?;
         load_event_id(&ctx, CORE_EVENT_TYPE_ID).await
     }
 
-    async fn store(&self, id: proton_event_loop::EventId) -> anyhow::Result<()> {
+    async fn store(
+        &self,
+        _: &EventManagerContext,
+        id: core_event_loop::EventId,
+    ) -> anyhow::Result<()> {
         let ctx = self.inner()?;
         // Start storing the event ids for contacts and mail as well. Backend uses
         // the same cursor internally. When we switch feature on, it will just progress
@@ -44,7 +52,7 @@ impl EventStore for CoreEventLoopContext {
 pub async fn load_event_id(
     ctx: &UserContext,
     key: &'static str,
-) -> anyhow::Result<Option<proton_event_loop::EventId>> {
+) -> anyhow::Result<Option<core_event_loop::EventId>> {
     let tether = ctx.stash().connection().await?;
     match load_event_id_query(key, &tether).await {
         Ok(value) => Ok(value.map(|id| id.into_inner().into())),
@@ -70,7 +78,7 @@ pub async fn load_event_id_query(
 pub async fn store_event_id(
     ctx: &UserContext,
     key: &'static str,
-    id: proton_event_loop::EventId,
+    id: core_event_loop::EventId,
 ) -> anyhow::Result<()> {
     ctx.stash()
         .connection()
@@ -85,7 +93,7 @@ pub async fn store_event_id(
 
 pub async fn store_event_id_query(
     key: &'static str,
-    id: proton_event_loop::EventId,
+    id: core_event_loop::EventId,
     tx: &Bond<'_>,
 ) -> Result<(), StashError> {
     tx.execute(

@@ -4,6 +4,7 @@ use crate::db::account::{CoreAccount, CoreSession};
 use crate::event_loop::EventPollMode;
 use crate::event_loop::event_source::CoreEventSource;
 use crate::models::ModelExtension;
+use crate::services::event_loop_service::EventManagerContext;
 use crate::services::global_feature_flags::FeatureFlagsBackgroundTask;
 use crate::test_utils::account::{TEST_USER_ID, TEST_USER_MAIL, testdata_user_secret};
 use crate::test_utils::utils::mock_auth_endpoints;
@@ -12,12 +13,12 @@ use crate::{
     db::account::SessionEncryptionKey,
     os::{InMemoryKeyChain, KeyChain, KeyChainExt},
 };
+use core_event_loop::v6::{EventSource, EventSubscriberResult};
 use proton_core_api::auth::{Tokens, UserKeySecret};
 use proton_core_api::exports::RetryPolicy;
 use proton_core_api::services::proton::{SessionId, UserId};
 use proton_core_api::session::{AppVersion, Env, Server};
 use proton_core_api::session::{Endpoint, EnvId};
-use proton_event_loop::v6::{EventSource, EventSubscriberResult};
 use proton_issue_reporter_service::{IssueReporter, NoopIssueReporter};
 use proton_log_service::LogService;
 use proton_sqlite3::MigratorError;
@@ -326,10 +327,12 @@ impl UserContextTestExtension for UserContext {
         self: &Arc<Self>,
         event: &<CoreEventSource as EventSource>::Event,
     ) -> EventSubscriberResult<()> {
-        use proton_event_loop::v6::EventSubscriber;
+        use core_event_loop::v6::EventSubscriber;
         let subscriber = self.event_subscriber();
         let mut cache = <CoreEventSource as EventSource>::Cache::default();
-        subscriber.on_event(event, &mut cache).await
+        subscriber
+            .on_event(&EventManagerContext, event, &mut cache)
+            .await
     }
 }
 

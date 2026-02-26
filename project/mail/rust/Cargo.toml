@@ -9,7 +9,6 @@ members = [
   "calendar/calendar-common",
   "core/core-api",
   "core/core-common",
-  "core/event-loop",
   "crypto/crypto-calendar",
   "crypto/crypto-inbox",
   "crypto/crypto-inbox-mime",
@@ -194,9 +193,9 @@ path = "core/core-common"
 registry = "proton"
 features = ["sql"]
 
-[workspace.dependencies.proton-event-loop]
-version = "0.7"
-path = "core/event-loop"
+[workspace.dependencies.core-event-loop]
+version = "0.1"
+path = "../../core/rust/core-event-loop"
 registry = "proton"
 
 [workspace.dependencies.proton-sqlite3]

@@ -14,6 +14,8 @@ use crate::{
     draft::SaveError as DraftSaveError, draft::SendError as DraftSendError,
     draft::UndoError as DraftUndoError,
 };
+use core_event_loop::v6::EventSubscriberError;
+use core_event_loop::{EventLoopError, EventProviderError};
 use proton_action_queue::action::Action;
 use proton_action_queue::queue::{ActionError as InternalActionError, MultiActionError};
 use proton_core_api::service::ApiServiceError;
@@ -21,8 +23,6 @@ use proton_core_common::ContactError;
 use proton_core_common::device_registration::RegisteredDeviceTaskError;
 use proton_core_common::models::LabelError;
 use proton_core_common::pin_code::PinError;
-use proton_event_loop::v6::EventSubscriberError;
-use proton_event_loop::{EventLoopError, EventProviderError};
 use stash::UserDb;
 
 /// Categories of errors that can be returned by the ProtonMail SDK.

@@ -1,4 +1,5 @@
 #![allow(clippy::needless_pass_by_value)]
+use core_event_loop::v6::EventSubscriber;
 use pretty_assertions::assert_eq;
 use proton_core_api::services::proton::{
     Action, ContactBasic as ApiContactBasic, ContactCard as ApiContactCard,
@@ -12,13 +13,13 @@ use proton_core_common::event_loop::v6::CoreEventCache;
 use proton_core_common::models::{
     Contact, ContactCard, ContactEmail, ModelExtension, ModelIdExtension,
 };
+use proton_core_common::services::event_loop_service::EventManagerContext;
 use proton_core_common::test_utils::account::unlocked_user_key;
 use proton_core_common::test_utils::test_context::TestContext;
 use proton_core_common::{AddressKeysContactFetchPolicy, UserContext};
 use proton_crypto_account::contacts::ContactCardType;
 use proton_crypto_account::proton_crypto::crypto::AccessKeyInfo;
 use proton_crypto_account::proton_crypto::new_pgp_provider;
-use proton_event_loop::v6::EventSubscriber;
 use stash::orm::Model;
 use stash::params;
 use std::sync::Arc;
@@ -205,7 +206,7 @@ async fn test_sync_and_delete_event_contact() {
     let mut cache = CoreEventCache::default();
     // Fire event:
     test_event_subscriber
-        .on_event(&event, &mut cache)
+        .on_event(&EventManagerContext, &event, &mut cache)
         .await
         .expect("failed to execute event");
 
@@ -259,7 +260,7 @@ async fn test_sync_and_modify_event_contact() {
     // Fire event:
     let mut cache = CoreEventCache::default();
     test_event_subscriber
-        .on_event(&event, &mut cache)
+        .on_event(&EventManagerContext, &event, &mut cache)
         .await
         .expect("failed to execute event");
 

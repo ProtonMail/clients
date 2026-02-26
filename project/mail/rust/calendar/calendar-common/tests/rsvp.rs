@@ -6,7 +6,7 @@ mod rsvp {
 use indoc::indoc;
 use jiff::tz::TimeZone;
 use jiff::{Timestamp, Zoned};
-use proton_calendar_api::{
+use proton_calendar_api_v1::{
     CalendarAttendee, CalendarAttendeeStatus, CalendarBootstrap, CalendarEvent,
     CalendarEventPayload, CalendarEventPayloadType, CalendarId, CalendarKey, CalendarKeyFlags,
     CalendarMember, CalendarMemberPassphrase, CalendarPassphrase,

@@ -6,7 +6,7 @@ use jiff::{
     Zoned,
     civil::{Date, Weekday},
 };
-use proton_calendar_api::{
+use proton_calendar_api_v1::{
     CalendarAttendeeId, CalendarAttendeeStatus, CalendarAttendeeToken, CalendarBootstrap,
     CalendarColor, CalendarEvent, CalendarEventId, CalendarEventRecurrenceId, CalendarEventUid,
     CalendarId,

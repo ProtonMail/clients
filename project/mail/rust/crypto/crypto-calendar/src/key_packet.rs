@@ -1,5 +1,5 @@
 use base64::{Engine, prelude::BASE64_STANDARD};
-use proton_calendar_api::CalendarEvent;
+use proton_calendar_api_v1::CalendarEvent;
 
 #[derive(Clone, Debug)]
 pub struct KeyPacket(String);

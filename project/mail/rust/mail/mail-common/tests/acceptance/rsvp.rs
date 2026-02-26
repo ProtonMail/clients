@@ -1,6 +1,6 @@
 use indoc::formatdoc;
 use jiff::Zoned;
-use proton_calendar_api::{self as cal, ProtonCalendarMock};
+use proton_calendar_api_v1::{self as cal, ProtonCalendarMock};
 use proton_calendar_common::{RsvpAnswer, RsvpEventId, RsvpOrganizer};
 use proton_core_api::services::proton::{GetKeysAllResponse, PrivateString, UserId};
 use proton_core_common::datatypes::AddressFlags;

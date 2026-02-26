@@ -4,7 +4,7 @@ use crate::errors::{ProtonError, RsvpEventGetResult, VoidAnswerRsvpResult};
 use crate::uniffi_async;
 use itertools::Itertools;
 use parking_lot::Mutex;
-use proton_calendar_api as cal_api;
+use proton_calendar_api_v1 as cal_api;
 use proton_calendar_common as cal;
 use proton_core_common::datatypes::UnixTimestamp as RealUnixTimestamp;
 use proton_ical as ical;

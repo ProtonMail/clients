@@ -1,4 +1,4 @@
-use proton_calendar_api::{CalendarBootstrap, CalendarId};
+use proton_calendar_api_v1::{CalendarBootstrap, CalendarId};
 use proton_calendar_common as cal;
 use std::collections::HashMap;
 use tokio::sync::Mutex;

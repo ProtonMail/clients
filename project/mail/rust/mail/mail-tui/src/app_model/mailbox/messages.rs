@@ -20,7 +20,7 @@ use anyhow::{Context, Result, anyhow};
 use futures::FutureExt;
 use futures::future::try_join_all;
 use itertools::Itertools as _;
-use proton_calendar_api::CalendarAttendeeStatus;
+use proton_calendar_api_v1::CalendarAttendeeStatus;
 use proton_calendar_common::{RsvpAnswer, RsvpOccurrence, RsvpProgress, RsvpRecency, RsvpRelation};
 use proton_core_common::datatypes::LocalLabelId;
 use proton_core_common::os::safe_write;

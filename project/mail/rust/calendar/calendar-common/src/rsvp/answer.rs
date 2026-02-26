@@ -5,7 +5,7 @@ use crate::{
 };
 use itertools::Itertools;
 use jiff::Zoned;
-use proton_calendar_api::{
+use proton_calendar_api_v1::{
     CalendarAttendeeId, CalendarAttendeeStatus, CalendarAttendeeToken, CalendarBootstrap,
     CalendarColor, CalendarEvent, CalendarNotificationsUpdate, ProtonCalendar,
 };

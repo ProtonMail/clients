@@ -1,6 +1,7 @@
 use crate::event_loop::event_subscriber::CoreEventSubscriberError;
 use crate::event_loop::v6::CoreEventSourceV6;
 use crate::models::{Contact, Label};
+use core_event_loop::v6::{EventSource, EventSourceDependencyList};
 use futures::StreamExt;
 use futures::future::BoxFuture;
 use futures::stream::FuturesUnordered;
@@ -11,7 +12,6 @@ use proton_core_api::services::proton::{
     Action, ContactId, ContactRootEventV6, LabelId, ProtonCore,
 };
 use proton_core_api::session::Session;
-use proton_event_loop::v6::{EventSource, EventSourceDependencyList};
 use std::collections::HashMap;
 use tracing::{debug, error};
 

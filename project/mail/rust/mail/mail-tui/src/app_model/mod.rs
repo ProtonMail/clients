@@ -636,7 +636,7 @@ fn app_tracing_env_filter(trace: bool) -> EnvFilter {
         proton_sqlite3={log_level},
         proton_core_common={log_level},
         proton_mail_common={log_level},
-        proton_event_loop={log_level},
+        core_event_loop={log_level},
         proton_action_queue={log_level},
         proton_calendar_common={log_level},
         proton_network_monitor_service=debug,

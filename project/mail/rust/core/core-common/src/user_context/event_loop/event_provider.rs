@@ -1,9 +1,10 @@
 use crate::CoreEventLoopContext;
+use crate::services::event_loop_service::EventManagerContext;
 use async_trait::async_trait;
+use core_event_loop::RawEvent;
+use core_event_loop::provider::{EventProvider, EventProviderError, EventProviderResult};
 use proton_core_api::service::ApiServiceError;
 use proton_core_api::services::proton::ProtonCore;
-use proton_event_loop::RawEvent;
-use proton_event_loop::provider::{EventProvider, EventProviderError, EventProviderResult};
 
 #[derive(Debug, thiserror::Error)]
 pub enum CoreEventProviderError {
@@ -23,8 +24,11 @@ impl EventProviderError for CoreEventProviderError {
 }
 
 #[async_trait]
-impl EventProvider for CoreEventLoopContext {
-    async fn get_latest_event_id(&self) -> EventProviderResult<proton_event_loop::EventId> {
+impl EventProvider<EventManagerContext> for CoreEventLoopContext {
+    async fn get_latest_event_id(
+        &self,
+        _: &EventManagerContext,
+    ) -> EventProviderResult<core_event_loop::EventId> {
         async {
             let ctx = self.inner()?;
             Ok::<_, CoreEventProviderError>(
@@ -42,7 +46,8 @@ impl EventProvider for CoreEventLoopContext {
 
     async fn get_event(
         &self,
-        event_id: &proton_event_loop::EventId,
+        _: &EventManagerContext,
+        event_id: &core_event_loop::EventId,
     ) -> EventProviderResult<RawEvent> {
         async {
             let ctx = self.inner()?;

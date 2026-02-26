@@ -1,7 +1,8 @@
 use crate::events::v6::MailEventLoopV6Context;
 use async_trait::async_trait;
+use core_event_loop::{EventProvider, EventProviderError, EventProviderResult, RawEvent};
 use proton_core_api::service::ApiServiceError;
-use proton_event_loop::{EventProvider, EventProviderError, EventProviderResult, RawEvent};
+use proton_core_common::services::event_loop_service::EventManagerContext;
 use proton_mail_api::services::proton::ProtonMail;
 
 #[derive(Debug, thiserror::Error)]
@@ -22,8 +23,11 @@ impl EventProviderError for MailEventProviderError {
 }
 
 #[async_trait]
-impl EventProvider for MailEventLoopV6Context {
-    async fn get_latest_event_id(&self) -> EventProviderResult<proton_event_loop::EventId> {
+impl EventProvider<EventManagerContext> for MailEventLoopV6Context {
+    async fn get_latest_event_id(
+        &self,
+        _: &EventManagerContext,
+    ) -> EventProviderResult<core_event_loop::EventId> {
         async {
             let ctx = self.inner()?;
             Ok::<_, MailEventProviderError>(
@@ -41,7 +45,8 @@ impl EventProvider for MailEventLoopV6Context {
 
     async fn get_event(
         &self,
-        event_id: &proton_event_loop::EventId,
+        _: &EventManagerContext,
+        event_id: &core_event_loop::EventId,
     ) -> EventProviderResult<RawEvent> {
         async {
             let ctx = self.inner()?;

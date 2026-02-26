@@ -2469,10 +2469,7 @@ async fn test_cached_scroller_no_items_lost_with_tied_snooze_and_time() {
     let mut tether = stash.connection().await.unwrap();
 
     let mut lbl = label!(remote_id: lbl_id!("test_label"));
-    tether
-        .tx(async |bond| lbl.save(bond).await)
-        .await
-        .unwrap();
+    tether.tx(async |bond| lbl.save(bond).await).await.unwrap();
 
     let mut newest = conversation!(remote_id: conv_id!("conv_newest"), display_order: 0);
     let mut conv_a = conversation!(remote_id: conv_id!("conv_a"), display_order: 0);

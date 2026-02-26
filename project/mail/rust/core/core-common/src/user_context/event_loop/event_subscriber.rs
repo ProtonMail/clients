@@ -4,11 +4,12 @@ use crate::{
     CoreContextError, UserContext,
     datatypes::Refresh,
     models::{Address, Contact, Label, User},
+    services::event_loop_service::EventManagerContext,
 };
 use anyhow::Context;
 use async_trait::async_trait;
+use core_event_loop::{EventLoopError, RefreshFlag};
 use proton_core_api::services::proton::UserId;
-use proton_event_loop::{EventLoopError, RefreshFlag};
 use stash::{
     orm::Model,
     stash::{Bond, StashError},
@@ -58,11 +59,11 @@ use crate::event_loop::events::LabelEvent;
 use crate::event_loop::v6;
 use crate::event_loop::v6::CoreEventCache;
 use crate::user_context::event_loop::events::{AddressEvent, ContactEvent, CoreEvent};
+use core_event_loop::v6::{EventSource, EventSubscriberResult};
+use core_event_loop::v6::{EventSubscriber, EventSubscriberError};
 use proton_action_queue::action::ActionGroup;
 use proton_action_queue::rebase::RebaseChangeSet;
 use proton_core_api::service::ApiServiceError;
-use proton_event_loop::v6::{EventSource, EventSubscriberResult};
-use proton_event_loop::v6::{EventSubscriber, EventSubscriberError};
 
 #[derive(Debug, thiserror::Error)]
 pub enum CoreEventSubscriberError {
@@ -129,7 +130,7 @@ impl From<Weak<UserContext>> for CoreEventSubscriber {
 }
 
 #[async_trait]
-impl EventSubscriber<CoreEventSource> for CoreEventSubscriber {
+impl EventSubscriber<EventManagerContext, CoreEventSource> for CoreEventSubscriber {
     fn name(&self) -> &'static str {
         "core-event-subscriber"
     }
@@ -137,6 +138,7 @@ impl EventSubscriber<CoreEventSource> for CoreEventSubscriber {
     #[tracing::instrument(skip_all)]
     async fn on_event(
         &self,
+        _: &EventManagerContext,
         event: &<CoreEventSource as EventSource>::Event,
         _: &mut CoreEventCache,
     ) -> EventSubscriberResult<()> {
@@ -178,6 +180,7 @@ impl EventSubscriber<CoreEventSource> for CoreEventSubscriber {
 
     async fn on_refresh(
         &self,
+        _: &EventManagerContext,
         refresh_flag: RefreshFlag,
         _: &mut CoreEventCache,
     ) -> EventSubscriberResult<()> {
@@ -394,35 +397,37 @@ impl UserContext {
     }
 
     #[must_use]
-    pub fn event_subscriber(self: &Arc<Self>) -> impl EventSubscriber<CoreEventSource> + 'static {
+    pub fn event_subscriber(
+        self: &Arc<Self>,
+    ) -> impl EventSubscriber<EventManagerContext, CoreEventSource> + 'static {
         CoreEventSubscriber::from(Arc::downgrade(self))
     }
 
     #[must_use]
     pub fn core_event_subscriber_v6(
         self: &Arc<Self>,
-    ) -> impl EventSubscriber<v6::CoreEventSourceV6> + 'static {
+    ) -> impl EventSubscriber<EventManagerContext, v6::CoreEventSourceV6> + 'static {
         v6::CoreEventV6Subscriber::from(Arc::downgrade(self))
     }
 
     #[must_use]
     pub fn contact_event_subscriber_v6(
         self: &Arc<Self>,
-    ) -> impl EventSubscriber<v6::ContactEventSourceV6> + 'static {
+    ) -> impl EventSubscriber<EventManagerContext, v6::ContactEventSourceV6> + 'static {
         v6::ContactEventV6Subscriber::from(Arc::downgrade(self))
     }
 
     #[must_use]
     pub fn account_event_subscriber_v6(
         self: &Arc<Self>,
-    ) -> impl EventSubscriber<v6::CoreEventSourceV6> + 'static {
+    ) -> impl EventSubscriber<EventManagerContext, v6::CoreEventSourceV6> + 'static {
         v6::AccountEventV6Subscriber::from(Arc::downgrade(self))
     }
 
     #[must_use]
     pub fn account_event_subscriber(
         self: &Arc<Self>,
-    ) -> impl EventSubscriber<CoreEventSource> + 'static {
+    ) -> impl EventSubscriber<EventManagerContext, CoreEventSource> + 'static {
         AccountEventSubscriber::from(Arc::downgrade(self))
     }
 }

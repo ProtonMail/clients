@@ -62,7 +62,7 @@ proton-canonical-email = { workspace = true }
 proton-core-common = { workspace = true }
 proton-crypto-account = { workspace = true }
 proton-crypto-inbox = { workspace = true }
-proton-event-loop = { workspace = true }
+core-event-loop = { workspace = true }
 proton-foundation-search = { workspace = true, optional = true }
 proton-mail-search = { workspace = true, optional = true }
 proton-mail-html-transformer = { workspace = true }

@@ -1,6 +1,7 @@
 use crate::MailContextError;
 use crate::datatypes::dependencies::DependencyFetcher;
 use crate::models::{Conversation, MailSettings};
+use core_event_loop::v6::{EventSource, EventSourceDependencyList};
 use futures::StreamExt;
 use futures::future::BoxFuture;
 use futures::stream::FuturesUnordered;
@@ -10,7 +11,6 @@ use proton_core_api::services::proton::{Action, LabelId, ProtonCore};
 use proton_core_api::session::Session;
 use proton_core_common::event_loop::v6::CoreEventSourceV6;
 use proton_core_common::models::Label;
-use proton_event_loop::v6::{EventSource, EventSourceDependencyList};
 use proton_mail_api::services::proton::ProtonMail;
 use proton_mail_api::services::proton::common::{ConversationId, MessageId};
 use proton_mail_api::services::proton::prelude::{

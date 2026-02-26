@@ -27,6 +27,7 @@ use proton_core_common::post_login_check::DefaultPostLoginValidator;
 use proton_core_common::services::global_feature_flags::FeatureFlagsBackgroundTask;
 use proton_core_common::services::issue_reporter_service::IssueReporterService;
 
+use core_event_loop::EventLoopError;
 use proton_core_common::services::{
     DeviceInfoService, NetworkMonitorService, SessionObserverService,
 };
@@ -37,7 +38,6 @@ use proton_core_common::{
 use proton_core_common::{OnSessionDeletedResponse, UserDatabaseInitializer};
 use proton_crypto_inbox::attachment::AttachmentEncryptionError;
 use proton_crypto_inbox::keys::EncryptionPreferencesError;
-use proton_event_loop::EventLoopError;
 use proton_issue_reporter_service::{
     IssueLevel, IssueReportKeys, IssueReporter, TracedIssueReporter,
 };

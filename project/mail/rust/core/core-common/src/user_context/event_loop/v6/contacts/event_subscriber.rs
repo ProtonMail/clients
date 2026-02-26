@@ -1,13 +1,14 @@
 use crate::event_loop::event_subscriber::CoreEventSubscriberError;
 use crate::event_loop::v6::ContactEventSourceV6;
 use crate::models::{Contact, Label, ModelExtension};
+use crate::services::event_loop_service::EventManagerContext;
 use crate::{UserContext, join_task};
 use anyhow::Context;
 use async_trait::async_trait;
+use core_event_loop::v6::{EventSource, EventSubscriber};
+use core_event_loop::{EventSubscriberError, EventSubscriberResult, RefreshFlag};
 use proton_action_queue::action::ActionGroup;
 use proton_action_queue::rebase::RebaseChangeSet;
-use proton_event_loop::v6::{EventSource, EventSubscriber};
-use proton_event_loop::{EventSubscriberError, EventSubscriberResult, RefreshFlag};
 use proton_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
 use std::collections::HashMap;
 use std::sync::Weak;
@@ -23,13 +24,14 @@ impl From<Weak<UserContext>> for ContactEventV6Subscriber {
 }
 
 #[async_trait]
-impl EventSubscriber<ContactEventSourceV6> for ContactEventV6Subscriber {
+impl EventSubscriber<EventManagerContext, ContactEventSourceV6> for ContactEventV6Subscriber {
     fn name(&self) -> &'static str {
         "contact-v6-subscriber"
     }
 
     async fn on_event(
         &self,
+        _: &EventManagerContext,
         event: &<ContactEventSourceV6 as EventSource>::Event,
         cache: &mut <ContactEventSourceV6 as EventSource>::Cache,
     ) -> EventSubscriberResult<()> {
@@ -99,6 +101,7 @@ impl EventSubscriber<ContactEventSourceV6> for ContactEventV6Subscriber {
 
     async fn on_refresh(
         &self,
+        _: &EventManagerContext,
         _: RefreshFlag,
         _: &mut <ContactEventSourceV6 as EventSource>::Cache,
     ) -> EventSubscriberResult<()> {

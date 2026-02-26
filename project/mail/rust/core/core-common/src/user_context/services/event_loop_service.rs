@@ -1,7 +1,7 @@
 use crate::event_loop::EventLoopActionIds;
-use proton_event_loop::store::EventStore;
-use proton_event_loop::v6::{EventSource, EventSubscriber, EventSubscriberId};
-use proton_event_loop::{EventLoopError, EventProvider, v6};
+use core_event_loop::store::EventStore;
+use core_event_loop::v6::{EventSource, EventSubscriber, EventSubscriberId};
+use core_event_loop::{EventLoopError, EventProvider, v6};
 use proton_task_service::TaskService;
 use std::sync::Arc;
 use tokio::sync::{Mutex, mpsc, oneshot};
@@ -37,6 +37,8 @@ impl EventLoopService {
     }
 }
 
+pub struct EventManagerContext;
+
 pub struct EventManager {
     tx: mpsc::Sender<EventManagerMessage>,
 }
@@ -54,15 +56,15 @@ impl EventManager {
     }
     pub async fn add<E: EventSource>(
         &self,
-        provider: Box<dyn EventProvider>,
-        store: Box<dyn EventStore>,
+        provider: Box<dyn EventProvider<EventManagerContext>>,
+        store: Box<dyn EventStore<EventManagerContext>>,
     ) -> Result<(), EventLoopError> {
         self.run(move |manager| manager.add::<E>(provider, store))
             .await?
     }
     pub async fn subscribe<E: EventSource>(
         &self,
-        subscriber: impl EventSubscriber<E>,
+        subscriber: impl EventSubscriber<EventManagerContext, E> + 'static,
     ) -> Result<Option<EventSubscriberId<E>>, EventLoopError> {
         self.run(move |manager| manager.subscribe(subscriber)).await
     }
@@ -70,7 +72,7 @@ impl EventManager {
     pub async fn unsubscribe<E: EventSource>(
         &self,
         subscriber_id: EventSubscriberId<E>,
-    ) -> Result<Option<Box<dyn EventSubscriber<E>>>, EventLoopError> {
+    ) -> Result<Option<Box<dyn EventSubscriber<EventManagerContext, E>>>, EventLoopError> {
         self.run(move |manager| manager.unsubscribe(subscriber_id))
             .await
     }
@@ -97,7 +99,7 @@ impl EventManager {
 
     async fn run<F, T>(&self, closure: F) -> Result<T, EventLoopError>
     where
-        F: FnOnce(&mut v6::EventManager) -> T + Send + 'static,
+        F: FnOnce(&mut v6::EventManager<EventManagerContext>) -> T + Send + 'static,
         T: Send + 'static,
     {
         let (tx, rx) = oneshot::channel();
@@ -114,13 +116,14 @@ impl EventManager {
 }
 
 enum EventManagerMessage {
-    Run(Box<dyn FnOnce(&mut v6::EventManager) + Send + 'static>),
+    #[allow(clippy::type_complexity, reason = "Only used in this module")]
+    Run(Box<dyn FnOnce(&mut v6::EventManager<EventManagerContext>) + Send + 'static>),
     Poll(oneshot::Sender<Result<(), EventLoopError>>, Span),
     Init(oneshot::Sender<Result<(), EventLoopError>>, Span),
 }
 struct EventManagerActor {
     rx: mpsc::Receiver<EventManagerMessage>,
-    manager: v6::EventManager,
+    manager: v6::EventManager<EventManagerContext>,
 }
 
 impl EventManagerActor {
@@ -136,11 +139,19 @@ impl EventManagerActor {
             match event {
                 EventManagerMessage::Run(f) => f(&mut self.manager),
                 EventManagerMessage::Poll(sender, span) => {
-                    let r = self.manager.poll().instrument(span).await;
+                    let r = self
+                        .manager
+                        .poll(&EventManagerContext)
+                        .instrument(span)
+                        .await;
                     let _ = sender.send(r);
                 }
                 EventManagerMessage::Init(sender, span) => {
-                    let r = self.manager.initialize_all().instrument(span).await;
+                    let r = self
+                        .manager
+                        .initialize_all(&EventManagerContext)
+                        .instrument(span)
+                        .await;
                     let _ = sender.send(r);
                 }
             }

@@ -1175,6 +1175,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "core-event-loop"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "slotmap",
+ "thiserror 2.0.18",
+ "topological-sort",
+ "tracing",
+]
+
+[[package]]
 name = "core-foundation"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5323,6 +5338,7 @@ dependencies = [
  "bitflags 2.9.4",
  "bytes",
  "chrono",
+ "core-event-loop",
  "derive_more 2.0.1",
  "email_address",
  "flume 0.11.1",
@@ -5346,7 +5362,6 @@ dependencies = [
  "proton-crypto-account",
  "proton-crypto-notifications",
  "proton-crypto-pin-hash",
- "proton-event-loop",
  "proton-event-service",
  "proton-issue-reporter-service",
  "proton-log-service",
@@ -5487,23 +5502,6 @@ dependencies = [
  "rand 0.8.5",
  "thiserror 1.0.69",
  "zeroize",
-]
-
-[[package]]
-name = "proton-event-loop"
-version = "0.7.29"
-dependencies = [
- "anyhow",
- "async-trait",
- "mockall",
- "serde",
- "serde_json",
- "serde_with",
- "slotmap",
- "thiserror 1.0.69",
- "tokio",
- "topological-sort",
- "tracing",
 ]
 
 [[package]]
@@ -5656,6 +5654,7 @@ dependencies = [
  "chrono",
  "clap",
  "color-backtrace",
+ "core-event-loop",
  "criterion 0.7.0",
  "derivative",
  "derive_more 2.0.1",
@@ -5684,7 +5683,6 @@ dependencies = [
  "proton-crypto-account",
  "proton-crypto-calendar",
  "proton-crypto-inbox",
- "proton-event-loop",
  "proton-foundation-search",
  "proton-ical",
  "proton-issue-reporter-service",
@@ -5838,6 +5836,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "chrono",
+ "core-event-loop",
  "derive_more 2.0.1",
  "flume 0.11.1",
  "futures",
@@ -5854,7 +5853,6 @@ dependencies = [
  "proton-core-common",
  "proton-crypto-account",
  "proton-crypto-inbox",
- "proton-event-loop",
  "proton-ical",
  "proton-issue-reporter-service-uniffi",
  "proton-log-service",

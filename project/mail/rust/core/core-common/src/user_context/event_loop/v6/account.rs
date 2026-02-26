@@ -2,11 +2,12 @@ use crate::UserContext;
 use crate::db::account::CoreAccount;
 use crate::event_loop::account_event_subscriber::AccountEventSubscriberError;
 use crate::event_loop::v6::CoreEventSourceV6;
+use crate::services::event_loop_service::EventManagerContext;
 use anyhow::anyhow;
 use async_trait::async_trait;
+use core_event_loop::v6::{EventSource, EventSubscriber};
+use core_event_loop::{EventSubscriberError, EventSubscriberResult, RefreshFlag};
 use proton_core_api::services::proton::User;
-use proton_event_loop::v6::{EventSource, EventSubscriber};
-use proton_event_loop::{EventSubscriberError, EventSubscriberResult, RefreshFlag};
 use proton_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
 use stash::AccountDb;
 use stash::orm::Model;
@@ -24,13 +25,14 @@ impl From<Weak<UserContext>> for AccountEventV6Subscriber {
 }
 
 #[async_trait]
-impl EventSubscriber<CoreEventSourceV6> for AccountEventV6Subscriber {
+impl EventSubscriber<EventManagerContext, CoreEventSourceV6> for AccountEventV6Subscriber {
     fn name(&self) -> &'static str {
         "account-v6-event-subscriber"
     }
 
     async fn on_event(
         &self,
+        _: &EventManagerContext,
         event: &<CoreEventSourceV6 as EventSource>::Event,
         cache: &mut <CoreEventSourceV6 as EventSource>::Cache,
     ) -> EventSubscriberResult<()> {
@@ -53,6 +55,7 @@ impl EventSubscriber<CoreEventSourceV6> for AccountEventV6Subscriber {
 
     async fn on_refresh(
         &self,
+        _: &EventManagerContext,
         _: RefreshFlag,
         cache: &mut <CoreEventSourceV6 as EventSource>::Cache,
     ) -> EventSubscriberResult<()> {

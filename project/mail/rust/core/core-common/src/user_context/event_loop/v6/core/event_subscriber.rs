@@ -1,13 +1,14 @@
 use crate::event_loop::event_subscriber::CoreEventSubscriberError;
 use crate::event_loop::v6::CoreEventSourceV6;
 use crate::models::{Address, Contact, Label, ModelExtension, User};
+use crate::services::event_loop_service::EventManagerContext;
 use crate::{UserContext, join_task};
 use anyhow::Context;
 use async_trait::async_trait;
+use core_event_loop::v6::{EventSource, EventSubscriber};
+use core_event_loop::{EventSubscriberError, EventSubscriberResult, RefreshFlag};
 use proton_action_queue::action::ActionGroup;
 use proton_action_queue::rebase::RebaseChangeSet;
-use proton_event_loop::v6::{EventSource, EventSubscriber};
-use proton_event_loop::{EventSubscriberError, EventSubscriberResult, RefreshFlag};
 use proton_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
 use stash::orm::Model;
 use std::collections::HashMap;
@@ -24,13 +25,14 @@ impl From<Weak<UserContext>> for CoreEventV6Subscriber {
 }
 
 #[async_trait]
-impl EventSubscriber<CoreEventSourceV6> for CoreEventV6Subscriber {
+impl EventSubscriber<EventManagerContext, CoreEventSourceV6> for CoreEventV6Subscriber {
     fn name(&self) -> &'static str {
         "core-v6-subscriber"
     }
 
     async fn on_event(
         &self,
+        _: &EventManagerContext,
         event: &<CoreEventSourceV6 as EventSource>::Event,
         cache: &mut <CoreEventSourceV6 as EventSource>::Cache,
     ) -> EventSubscriberResult<()> {
@@ -105,6 +107,7 @@ impl EventSubscriber<CoreEventSourceV6> for CoreEventV6Subscriber {
 
     async fn on_refresh(
         &self,
+        _: &EventManagerContext,
         _: RefreshFlag,
         _: &mut <CoreEventSourceV6 as EventSource>::Cache,
     ) -> EventSubscriberResult<()> {

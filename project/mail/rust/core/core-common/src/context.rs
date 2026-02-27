@@ -33,37 +33,35 @@ use async_trait::async_trait;
 use core_event_loop::EventLoopError;
 use futures::TryFutureExt;
 use itertools::Itertools;
-use proton_action_queue::action::{self, Action, WriterGuardError};
-use proton_action_queue::queue::{
-    ActionError as QueueActionError, ActionRequeueReason, QueuedError,
-};
-use proton_core_api::auth::{Auth, Tokens};
-use proton_core_api::service::ApiServiceError;
-use proton_core_api::services::proton::muon::client::{Fingerprint, InfoProvider};
-use proton_core_api::services::proton::{BuildError, PrivateEmail};
-use proton_core_api::services::proton::{SessionId, UserId};
-use proton_core_api::session::Config as RealApiConfig;
-use proton_core_api::session::Session as ApiSession;
-use proton_core_api::store::{MbpMode, Store, TempStore, UserData};
-use proton_core_api::verification::DynChallengeNotifier;
+use mail_action_queue::action::{self, Action, WriterGuardError};
+use mail_action_queue::queue::{ActionError as QueueActionError, ActionRequeueReason, QueuedError};
+use mail_core_api::auth::{Auth, Tokens};
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::mail_muon::client::{Fingerprint, InfoProvider};
+use mail_core_api::services::proton::{BuildError, PrivateEmail};
+use mail_core_api::services::proton::{SessionId, UserId};
+use mail_core_api::session::Config as RealApiConfig;
+use mail_core_api::session::Session as ApiSession;
+use mail_core_api::store::{MbpMode, Store, TempStore, UserData};
+use mail_core_api::verification::DynChallengeNotifier;
+use mail_issue_reporter_service::{IssueLevel, IssueReporter, issue_report_keys_from_error};
+use mail_log_service::LogService;
+use mail_network_monitor_service::{ConnectionMonitor, NetworkMonitorServiceError};
+use mail_sqlite3::MigratorError;
+use mail_stash::orm::Model as _;
+use mail_stash::stash::{Stash, StashConfiguration, StashError, WatcherHandle};
+use mail_stash::{AccountDb, UserDb};
+use mail_task_service::{BackgroundAwareTaskService, TaskService};
+use mail_task_service::{Spawner, SpawnerRef};
+use mail_vcard::VcardValidationError;
 use proton_crypto_account::keys::PGPDeviceKey;
 use proton_crypto_account::proton_crypto::crypto::PGPProviderSync;
-use proton_issue_reporter_service::{IssueLevel, IssueReporter, issue_report_keys_from_error};
-use proton_log_service::LogService;
-use proton_network_monitor_service::{ConnectionMonitor, NetworkMonitorServiceError};
-use proton_sqlite3::MigratorError;
-use proton_task_service::{BackgroundAwareTaskService, TaskService};
-use proton_task_service::{Spawner, SpawnerRef};
-use proton_vcard::VcardValidationError;
 use secrecy::{ExposeSecret, SecretVec};
 use serde_json::json;
 use services::{
     DeviceInfoService, EventPollConfigService, FeatureFlagsService, HvNotifierService,
     SessionObserverService,
 };
-use stash::orm::Model as _;
-use stash::stash::{Stash, StashConfiguration, StashError, WatcherHandle};
-use stash::{AccountDb, UserDb};
 use std::fs;
 use std::future::Future;
 use std::path::{Path, PathBuf};
@@ -93,7 +91,7 @@ pub enum CoreContextError {
     #[error("QueuedAction: {0}")]
     QueuedAction(#[from] QueuedError),
     #[error("Action Queue: {0}")]
-    ActionQueue(#[from] proton_action_queue::queue::Error),
+    ActionQueue(#[from] mail_action_queue::queue::Error),
     #[error("IO Error: {0}")]
     IO(#[from] std::io::Error),
     #[error("Database Migration Error: {0}")]
@@ -322,7 +320,7 @@ impl Context {
         cache_path: impl Into<PathBuf>,
         log_service: LogService,
         event_poll_mode: EventPollMode,
-        network_monitor_config: proton_network_monitor_service::Config,
+        network_monitor_config: mail_network_monitor_service::Config,
         issue_reporter: Arc<dyn IssueReporter>,
         ff_task: FeatureFlagsBackgroundTask,
     ) -> CoreContextResult<Arc<Self>> {
@@ -784,7 +782,7 @@ impl Context {
 
         if let Some(user_ctx) = user_ctx_opt {
             tracing::info!("Clear all user data from database");
-            if let Ok(tether) = user_ctx.stash().connection().await
+            if let Ok(tether) = user_ctx.mail_stash().connection().await
                 && let Err(e) = nuke::drop_database_tables(tether).await
             {
                 tracing::error!("Could not clean user database, details: `{e}`");
@@ -1029,7 +1027,7 @@ impl Context {
 
         let account_stash = self.account_stash().to_owned();
         let keychain = Arc::clone(&self.key_chain);
-        // WARNING: make sure you are not actually using the store in any muon client here.
+        // WARNING: make sure you are not actually using the store in any mail_muon client here.
         // We use it only to get key secret in convenient way.
         let db_store = AuthStore::new(
             account_stash,
@@ -1084,7 +1082,7 @@ impl Context {
         Ok(forked_session)
     }
 
-    /// Get the stash in use
+    /// Get the `mail_stash` in use
     pub fn account_stash(&self) -> &Stash<AccountDb> {
         &self.account_stash
     }

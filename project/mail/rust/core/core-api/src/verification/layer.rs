@@ -3,9 +3,9 @@ use crate::services::proton::HumanVerificationChallenge;
 use crate::services::proton::common::ApiErrorInfo;
 use crate::verification::notifier::ChallengeResponse;
 use crate::verification::{ChallengePayload, ChallengeServer, DynChallengeNotifier};
-use muon::common::{BoxFut, Sender, SenderLayer};
-use muon::util::ProtonRequestExt;
-use muon::{ProtonRequest, ProtonResponse, Result as MuonResult, Status};
+use mail_muon::common::{BoxFut, Sender, SenderLayer};
+use mail_muon::util::ProtonRequestExt;
+use mail_muon::{ProtonRequest, ProtonResponse, Result as MuonResult, Status};
 use tracing::{debug, error, info, trace, warn};
 
 /// A type that wraps a [`ChallengeObserver`] and to implement the [`SenderLayer`] trait.

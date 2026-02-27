@@ -3,8 +3,8 @@ use crate::{
     OsNetworkStatusObserver, RequestNetworkStatus, update_watcher_value,
 };
 use futures::FutureExt;
-use muon::common::RetryPolicy;
-use proton_task_service::{DynSpawner, SpawnerRef};
+use mail_muon::common::RetryPolicy;
+use mail_task_service::{DynSpawner, SpawnerRef};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::{mpsc, oneshot, watch};
@@ -714,7 +714,7 @@ mod tests {
         );
         let mut service = NetworkMonitorService::new(config);
         service
-            .start(&proton_task_service::Tokio::spawner(), Arc::new(tester))
+            .start(&mail_task_service::Tokio::spawner(), Arc::new(tester))
             .unwrap();
         service
     }

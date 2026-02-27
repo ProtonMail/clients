@@ -1,20 +1,20 @@
 use crate::datatypes::attachment;
 use crate::test_utils::test_context::MailTestContext;
-use proton_core_api::services::proton::AddressId;
-use proton_core_api::services::proton::common::ApiErrorInfo;
-use proton_core_common::test_utils::account::TEST_ADDRESS_ID;
-use proton_crypto_inbox::attachment::KeyPackets;
-use proton_mail_api::services::proton::common::{AttachmentId, ConversationId, MessageId};
-use proton_mail_api::services::proton::prelude::{
+use mail_api::services::proton::common::{AttachmentId, ConversationId, MessageId};
+use mail_api::services::proton::prelude::{
     NewAttachmentDisposition, NewAttachmentParams, PutAttachmentDispositionRequest,
 };
-use proton_mail_api::services::proton::response_data::{
+use mail_api::services::proton::response_data::{
     Attachment as ApiAttachment, AttachmentMetadata as ApiAttachmentMetadata,
     Disposition as ApiDisposition,
 };
-use proton_mail_api::services::proton::responses::{
+use mail_api::services::proton::responses::{
     GetAttachmentMetadataResponse, PostAttachmentResponse,
 };
+use mail_core_api::services::proton::AddressId;
+use mail_core_api::services::proton::common::ApiErrorInfo;
+use mail_core_common::test_utils::account::TEST_ADDRESS_ID;
+use mail_crypto_inbox::attachment::KeyPackets;
 use wiremock::matchers::{body_json, method, path};
 use wiremock::{Mock, ResponseTemplate, Times};
 

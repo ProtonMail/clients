@@ -1,10 +1,10 @@
-use proton_mail_api::services::proton::request_data::PutMobileSettings;
-use proton_mail_api::services::proton::response_data::MobileAction as ApiMobileAction;
-use proton_mail_api::services::proton::responses::PutMobileSettingsResponse;
-use proton_mail_common::datatypes::MobileAction;
-use proton_mail_common::models::MailSettings;
-use proton_mail_common::test_utils::init::Params as TestParams;
-use proton_mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
+use mail_api::services::proton::request_data::PutMobileSettings;
+use mail_api::services::proton::response_data::MobileAction as ApiMobileAction;
+use mail_api::services::proton::responses::PutMobileSettingsResponse;
+use mail_common::datatypes::MobileAction;
+use mail_common::models::MailSettings;
+use mail_common::test_utils::init::Params as TestParams;
+use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
 use wiremock::ResponseTemplate;
 
 fn test_init_params() -> TestParams {

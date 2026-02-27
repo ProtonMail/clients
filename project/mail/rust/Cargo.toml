@@ -88,7 +88,7 @@ fxhash = "=0.2.1" # used by kuchikiki and tui-logger , force to this version to 
 jiff = { version = "0.2.4", features = ["serde"] }
 file-format = { version = "0.26.0", features = ["reader"] }
 mime = "0.3.17"
-muon = { version = "1.7.1", registry = "proton", features = ["unsealed"] }
+mail-muon = { version = "1.7.1", registry = "proton", features = ["unsealed"] }
 parking_lot = "0.12.3"
 paste = "1"
 pin-project = "1"
@@ -159,35 +159,35 @@ features = ["serde"]
 git = "https://github.com/ProtonMail/rust-email_address.git"
 branch = "fix/parse-display-format-without-whitespace"
 
-[workspace.dependencies.proton-api-utils]
+[workspace.dependencies.mail-api-utils]
 version = "0.1.0"
 path = "shared/api-utils"
 
-[workspace.dependencies.proton-account-api]
+[workspace.dependencies.mail-account-api]
 version = "0.1"
 path = "account/account-api"
 registry = "proton"
 
-[workspace.dependencies.proton-account-common]
+[workspace.dependencies.mail-account-common]
 version = "0.1"
 path = "account/account-common"
 registry = "proton"
 
-[workspace.dependencies.proton-account-uniffi]
+[workspace.dependencies.mail-account-uniffi]
 path = "account/account-uniffi"
 registry = "proton"
 
-[workspace.dependencies.proton-action-queue]
+[workspace.dependencies.mail-action-queue]
 version = "0.7"
 path = "shared/action-queue"
 registry = "proton"
 
-[workspace.dependencies.proton-core-api]
+[workspace.dependencies.mail-core-api]
 version = "0.8"
 path = "core/core-api"
 registry = "proton"
 
-[workspace.dependencies.proton-core-common]
+[workspace.dependencies.mail-core-common]
 version = "0.9"
 path = "core/core-common"
 registry = "proton"
@@ -198,78 +198,78 @@ version = "0.1"
 path = "../../core/rust/core-event-loop"
 registry = "proton"
 
-[workspace.dependencies.proton-sqlite3]
+[workspace.dependencies.mail-sqlite3]
 version = "0.7"
 path = "shared/sqlite3"
 registry = "proton"
 
-[workspace.dependencies.proton-canonical-email]
+[workspace.dependencies.mail-canonical-email]
 version = "0.1"
 path = "shared/canonical-email"
 registry = "proton"
 
-[workspace.dependencies.proton-ical]
+[workspace.dependencies.mail-ical]
 path = "shared/ical"
 
-[workspace.dependencies.proton-ical-cli]
+[workspace.dependencies.mail-ical-cli]
 path = "shared/ical-cli"
 
-[workspace.dependencies.proton-ical-tz]
+[workspace.dependencies.mail-ical-tz]
 path = "shared/ical-tz"
 
-[workspace.dependencies.proton-vcard]
+[workspace.dependencies.mail-vcard]
 version = "0.2"
 path = "shared/vcard"
 registry = "proton"
 
-[workspace.dependencies.stash]
+[workspace.dependencies.mail-stash]
 version = "0.2"
 path = "shared/stash"
 registry = "proton"
 
-[workspace.dependencies.stash-macros]
+[workspace.dependencies.mail-stash-macros]
 version = "0.2"
 path = "shared/stash-macros"
 registry = "proton"
 
-[workspace.dependencies.proton-mail-api]
+[workspace.dependencies.mail-api]
 version = "0.5"
 path = "mail/mail-api"
 registry = "proton"
 
-[workspace.dependencies.proton-mail-common]
+[workspace.dependencies.mail-common]
 version = "0.8"
 path = "mail/mail-common"
 registry = "proton"
 features = ["sql"]
 
-[workspace.dependencies.proton-mail-common-derive]
+[workspace.dependencies.mail-common-derive]
 version = "0.1"
 path = "mail/mail-common-derive"
 
-[workspace.dependencies.proton-mail-search]
+[workspace.dependencies.mail-search]
 version = "0.1"
 path = "mail/mail-search"
 
-[workspace.dependencies.proton-mail-uniffi]
+[workspace.dependencies.mail-uniffi]
 path = "mail/mail-uniffi"
 registry = "proton"
 
-[workspace.dependencies.uniffi-macros]
+[workspace.dependencies.mail-uniffi-macros]
 path = "uniffi/uniffi-macros"
 
-[workspace.dependencies.uniffi-runtime]
+[workspace.dependencies.mail-uniffi-runtime]
 path = "uniffi/uniffi-runtime"
 
-[workspace.dependencies.uniffi-common]
+[workspace.dependencies.mail-uniffi-common]
 path = "uniffi/uniffi-common"
 
-[workspace.dependencies.proton-crypto-inbox]
+[workspace.dependencies.mail-crypto-inbox]
 version = "0.9.0"
 path = "crypto/crypto-inbox"
 registry = "proton"
 
-[workspace.dependencies.proton-crypto-inbox-mime]
+[workspace.dependencies.mail-crypto-inbox-mime]
 version = "0.4.1"
 path = "crypto/crypto-inbox-mime"
 registry = "proton"
@@ -288,70 +288,70 @@ version = "0.1.0"
 registry = "proton"
 features = ["legacy"]
 
-[workspace.dependencies.proton-crypto-notifications]
+[workspace.dependencies.mail-crypto-notifications]
 version = "0.1"
 path = "crypto/crypto-notifications"
 registry = "proton"
 
-[workspace.dependencies.proton-crypto-pin-hash]
+[workspace.dependencies.mail-crypto-pin-hash]
 version = "0.1"
 path = "crypto/crypto-pin-hash"
 registry = "proton"
 
-[workspace.dependencies.proton-log-service]
+[workspace.dependencies.mail-log-service]
 path = "shared/log-service"
 version = "0.1"
 registry = "proton"
 
-[workspace.dependencies.proton-task-service]
+[workspace.dependencies.mail-task-service]
 version = "0.1"
 path = "shared/task-service"
 registry = "proton"
 
-[workspace.dependencies.proton-calendar-api-v1]
+[workspace.dependencies.mail-calendar-api-v1]
 version = "0.1"
 path = "calendar/calendar-api"
 registry = "proton"
 
-[workspace.dependencies.proton-calendar-common]
+[workspace.dependencies.mail-calendar-common]
 version = "0.1"
 path = "calendar/calendar-common"
 registry = "proton"
 
-[workspace.dependencies.proton-crypto-calendar]
+[workspace.dependencies.mail-crypto-calendar]
 version = "0.1"
 path = "crypto/crypto-calendar"
 registry = "proton"
 
-[workspace.dependencies.proton-mail-html-transformer]
+[workspace.dependencies.mail-html-transformer]
 version = "0.2"
 path = "mail/mail-html-transformer"
 registry = "proton"
 
-[workspace.dependencies.proton-event-service]
+[workspace.dependencies.mail-event-service]
 version = "0.1.0"
 path = "shared/event-service"
 registry = "proton"
 
-[workspace.dependencies.proton-network-monitor-service]
+[workspace.dependencies.mail-network-monitor-service]
 version = "0.1.0"
 path = "shared/network-monitor-service"
 registry = "proton"
 
-[workspace.dependencies.proton-issue-reporter-service]
+[workspace.dependencies.mail-issue-reporter-service]
 version = "0.1.0"
 path = "shared/issue-reporter-service"
 registry = "proton"
 
-[workspace.dependencies.proton-issue-reporter-service-uniffi]
+[workspace.dependencies.mail-issue-reporter-service-uniffi]
 version = "0.1.0"
 path = "shared/issue-reporter-service-uniffi"
 registry = "proton"
 
-[workspace.dependencies.proton-observability]
+[workspace.dependencies.mail-observability]
 path = "shared/observability"
 
-[workspace.dependencies.proton-mailto]
+[workspace.dependencies.mail-mailto]
 path = "shared/mailto"
 
 [workspace.dependencies.proton-foundation-search]
@@ -360,7 +360,7 @@ registry = "proton"
 default-features = false
 
 [patch.proton]
-muon = { path = "forks/muon" }
+mail-muon = { path = "forks/muon" }
 
 [workspace.lints.rust]
 trivial_numeric_casts = "warn"

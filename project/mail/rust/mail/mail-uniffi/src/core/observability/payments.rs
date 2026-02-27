@@ -1,4 +1,4 @@
-use proton_observability::{PreLoginMetricRecorder, metric};
+use mail_observability::{PreLoginMetricRecorder, metric};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, uniffi::Enum)]

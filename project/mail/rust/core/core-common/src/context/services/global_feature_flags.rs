@@ -4,10 +4,10 @@ use crate::models::{FeatureFlag, ModelExtension};
 use crate::{Context, services::Service};
 use crate::{CoreContextError, CoreContextResult, Origin};
 use anyhow::{Context as _, Result};
-use proton_core_api::services::proton::ProtonCore as _;
-use proton_core_api::session::Session;
-use stash::stash::WatcherHandle;
-use stash::watcher::TableWatcher;
+use mail_core_api::services::proton::ProtonCore as _;
+use mail_core_api::session::Session;
+use mail_stash::stash::WatcherHandle;
+use mail_stash::watcher::TableWatcher;
 use std::collections::BTreeMap;
 use std::sync::Weak;
 use std::time::{Duration, Instant};
@@ -98,7 +98,7 @@ impl FeatureFlagsService {
 
     #[cfg(feature = "test-utils")]
     pub async fn test_override(&self, key: &str, value: bool) -> CoreContextResult<()> {
-        use stash::orm::Model;
+        use mail_stash::orm::Model;
 
         let ctx = self.ctx.upgrade().context("Could not upgrade context")?;
         let mut tether = ctx.account_stash().connection().await?;
@@ -127,7 +127,7 @@ impl FeatureFlagsService {
             return vec![];
         };
         let Ok(tether) = ctx.account_stash().connection().await else {
-            warn!("Failed to connect to account stash");
+            warn!("Failed to connect to account mail_stash");
             return vec![];
         };
         let flags = FeatureFlag::all(&tether)
@@ -146,8 +146,8 @@ impl FeatureFlagsService {
     pub async fn watch(&self) -> CoreContextResult<WatcherHandle> {
         let ctx = self.ctx.upgrade().context("Could not upgrade context")?;
 
-        let stash = ctx.account_stash();
-        TableWatcher::<FeatureFlag>::watch(stash)
+        let mail_stash = ctx.account_stash();
+        TableWatcher::<FeatureFlag>::watch(mail_stash)
             .await
             .map_err(CoreContextError::from)
     }

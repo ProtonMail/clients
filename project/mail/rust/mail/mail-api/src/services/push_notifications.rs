@@ -1,5 +1,5 @@
 use super::proton::common::MessageId;
-use proton_core_api::services::proton::{PrivateEmail, PrivateString};
+use mail_core_api::services::proton::{PrivateEmail, PrivateString};
 use serde::Deserialize;
 use serde_with::{BoolFromInt, serde_as};
 

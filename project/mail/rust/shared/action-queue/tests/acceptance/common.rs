@@ -1,10 +1,10 @@
-use proton_action_queue::action::{Action, Factory};
-use proton_action_queue::queue::Queue;
-pub use proton_action_queue::tests::common::DefaultError;
-use proton_action_queue::tests::common::TestDb;
-use stash::exports::SqliteError;
-use stash::params;
-use stash::stash::{Bond, Stash, StashConfiguration, StashError, Tether};
+use mail_action_queue::action::{Action, Factory};
+use mail_action_queue::queue::Queue;
+pub use mail_action_queue::tests::common::DefaultError;
+use mail_action_queue::tests::common::TestDb;
+use mail_stash::exports::SqliteError;
+use mail_stash::params;
+use mail_stash::stash::{Bond, Stash, StashConfiguration, StashError, Tether};
 
 pub async fn new_queue(factory: Factory<TestDb>) -> Queue<TestDb> {
     Queue::with_factory(new_stash().await, factory)
@@ -12,19 +12,22 @@ pub async fn new_queue(factory: Factory<TestDb>) -> Queue<TestDb> {
         .unwrap()
 }
 
-pub async fn new_queue_with_stash(stash: Stash<TestDb>, factory: Factory<TestDb>) -> Queue<TestDb> {
-    Queue::with_factory(stash, factory).await.unwrap()
+pub async fn new_queue_with_stash(
+    mail_stash: Stash<TestDb>,
+    factory: Factory<TestDb>,
+) -> Queue<TestDb> {
+    Queue::with_factory(mail_stash, factory).await.unwrap()
 }
 
 pub async fn new_stash() -> Stash<TestDb> {
-    let stash = Stash::new(StashConfiguration::test()).unwrap();
-    let mut conn = stash.connection().await.unwrap();
+    let mail_stash = Stash::new(StashConfiguration::test()).unwrap();
+    let mut conn = mail_stash.connection().await.unwrap();
 
     conn.tx(async |tx| tx.ext_create_table().await)
         .await
         .unwrap();
 
-    stash
+    mail_stash
 }
 
 pub async fn new_queue_typed<T: Action<TestDb>>(handler: T::Handler) -> Queue<TestDb> {

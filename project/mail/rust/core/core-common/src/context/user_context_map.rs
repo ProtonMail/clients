@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::Weak};
 
-use proton_core_api::services::proton::UserId;
+use mail_core_api::services::proton::UserId;
 
 use crate::{UserContext, app_events::OnUserContextMapChanged};
 

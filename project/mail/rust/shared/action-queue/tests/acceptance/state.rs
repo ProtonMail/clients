@@ -1,12 +1,12 @@
 use super::common::{DefaultError, TestReadExtension, TestWriteExtension};
 use super::common::{new_factory, new_queue};
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
 };
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_action_queue::tests::common::TestDb;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_action_queue::tests::common::TestDb;
+use mail_stash::stash::Bond;
 use serde::{Deserialize, Serialize};
-use stash::stash::Bond;
 
 #[tokio::test]
 async fn state_preserved_after_local_change() {
@@ -27,7 +27,7 @@ async fn state_preserved_after_local_change() {
     // Check local state is as expected.
     assert_eq!(
         queue
-            .stash()
+            .mail_stash()
             .connection()
             .await
             .unwrap()
@@ -61,7 +61,7 @@ async fn rebase_state() {
         .unwrap();
 
     queue
-        .stash()
+        .mail_stash()
         .connection()
         .await
         .unwrap()
@@ -77,7 +77,7 @@ async fn rebase_state() {
     // Check local state is as expected.
     assert_eq!(
         queue
-            .stash()
+            .mail_stash()
             .connection()
             .await
             .unwrap()

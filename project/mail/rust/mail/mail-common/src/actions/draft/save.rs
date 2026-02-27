@@ -18,23 +18,21 @@ use crate::models::{
 };
 use crate::{AppError, MailContextError, MailUserContext, draft};
 use indoc::indoc;
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionGroup, ActionId, FactoryResult, Handler, Priority, Type, VersionConverter,
     VersionConverterError, WriterGuard, WriterGuardError, deserialize,
 };
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::services::proton::{AddressId, LabelId};
-use proton_core_common::datatypes::UnixTimestamp;
-use proton_core_common::models::{Address, ModelExtension, ModelIdExtension};
-use proton_crypto_inbox::message::EncryptedDraft;
-use proton_mail_api::services::proton::prelude::{
-    DraftParams, DraftReplyOrForwardParams, ExternalId,
-};
-use proton_mail_api::services::proton::request_data::DraftSender;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_api::services::proton::prelude::{DraftParams, DraftReplyOrForwardParams, ExternalId};
+use mail_api::services::proton::request_data::DraftSender;
+use mail_core_api::services::proton::{AddressId, LabelId};
+use mail_core_common::datatypes::UnixTimestamp;
+use mail_core_common::models::{Address, ModelExtension, ModelIdExtension};
+use mail_crypto_inbox::message::EncryptedDraft;
+use mail_stash::orm::Model;
+use mail_stash::stash::{Bond, StashError};
+use mail_stash::{UserDb, params};
 use serde::{Deserialize, Serialize};
-use stash::orm::Model;
-use stash::stash::{Bond, StashError};
-use stash::{UserDb, params};
 use std::sync::Weak;
 use tracing::{debug, error, info, warn};
 

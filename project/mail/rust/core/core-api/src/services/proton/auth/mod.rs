@@ -3,7 +3,7 @@ mod responses;
 
 pub use self::responses::*;
 use crate::service::ApiServiceResult;
-use muon::rest::auth::v4::{fido2, tfa::TFA};
+use mail_muon::rest::auth::v4::{fido2, tfa::TFA};
 use serde::{Deserialize, Serialize};
 
 /// The Proton Auth API base path (v4).

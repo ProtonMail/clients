@@ -1,15 +1,15 @@
 use anyhow::Context as _;
 use itertools::Itertools as _;
-use proton_vcard::address::Address as VcardAddress;
-use proton_vcard::vcard::{PropertyUid, ToSorted, VCard};
+use mail_vcard::address::Address as VcardAddress;
+use mail_vcard::vcard::{PropertyUid, ToSorted, VCard};
 
-use proton_vcard::gender::GenderValue;
+use mail_vcard::gender::GenderValue;
 
-use proton_vcard::parameters::type_tel::TelType;
+use mail_vcard::parameters::type_tel::TelType;
 
-use proton_vcard::parameters::type_generic::GenericType;
-use stash::orm::Model as _;
-use stash::stash::Tether;
+use mail_stash::orm::Model as _;
+use mail_stash::stash::Tether;
+use mail_vcard::parameters::type_generic::GenericType;
 use tracing::warn;
 
 use crate::UserContext;
@@ -18,12 +18,12 @@ use crate::models::{Contact, ContactEmail, Label};
 use crate::utils::{MapVec as _, proton_color};
 use core::fmt;
 use indexmap::IndexSet;
-use proton_core_api::services::proton::{ContactId, LabelId, PrivateEmail};
+use mail_core_api::services::proton::{ContactId, LabelId, PrivateEmail};
+use mail_vcard::categories::Category;
+use mail_vcard::email::Email;
+use mail_vcard::values::date_and_or_time::MaybeDateAndOrTime;
+use mail_vcard::values::uri::MaybeUri;
 use proton_crypto::new_pgp_provider;
-use proton_vcard::categories::Category;
-use proton_vcard::email::Email;
-use proton_vcard::values::date_and_or_time::MaybeDateAndOrTime;
-use proton_vcard::values::uri::MaybeUri;
 use std::collections::HashMap;
 use std::fmt::Display;
 use url::Url;
@@ -514,8 +514,8 @@ pub(crate) mod test {
     use bytes::Buf as _;
     use ical::VcardParser;
     use insta::assert_snapshot;
-    use proton_core_api::services::proton::{ContactId, LabelId};
-    use proton_vcard::vcard::VCard;
+    use mail_core_api::services::proton::{ContactId, LabelId};
+    use mail_vcard::vcard::VCard;
 
     #[allow(unused, reason = "The fields are only used for their debug impl")]
     #[derive(Debug)]

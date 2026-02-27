@@ -6,12 +6,12 @@
 mod mailbox_labels;
 
 use crate::datatypes::{MessageRecipientDisplayMode, SystemLabelId, ViewMode};
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::datatypes::{LabelType, SystemLabel};
-use proton_core_common::{datatypes::LocalLabelId, models::Label};
-use stash::UserDb;
-use stash::stash::Tether;
-use stash::{macros::Model, stash::StashError};
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::datatypes::{LabelType, SystemLabel};
+use mail_core_common::{datatypes::LocalLabelId, models::Label};
+use mail_stash::UserDb;
+use mail_stash::stash::Tether;
+use mail_stash::{macros::Model, stash::StashError};
 
 use super::MailSettings;
 

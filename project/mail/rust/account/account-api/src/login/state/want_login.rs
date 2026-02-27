@@ -6,18 +6,18 @@ use crate::shared::challenge::{Behavior, ChallengeInfo, ChallengePayload};
 use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
 use futures::TryFutureExt;
-use muon::client::flow::{AuthFlow, LoginFlow, LoginFlowData, WithCodeFlow};
-use muon::client::{Auth, Tokens};
+use mail_muon::client::flow::{AuthFlow, LoginFlow, LoginFlowData, WithCodeFlow};
+use mail_muon::client::{Auth, Tokens};
 
-use proton_core_api::auth::KeySecret;
-use proton_core_api::service::ApiServiceError;
-use proton_core_api::services::observability::ApiServiceObservabilityResponse;
-use proton_core_api::services::proton::{SessionId, UserId};
-use proton_core_api::session::SessionParts;
-use proton_core_api::store::{AuthInfo, TfaMode, UserData};
+use mail_core_api::auth::KeySecret;
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::observability::ApiServiceObservabilityResponse;
+use mail_core_api::services::proton::{SessionId, UserId};
+use mail_core_api::session::SessionParts;
+use mail_core_api::store::{AuthInfo, TfaMode, UserData};
+use mail_observability::metrics::AuthV4RequestMetric;
+use mail_observability::{PreLoginMetricRecorder, metric};
 use proton_crypto_account::proton_crypto::generate_secure_random_bytes;
-use proton_observability::metrics::AuthV4RequestMetric;
-use proton_observability::{PreLoginMetricRecorder, metric};
 use secrecy::{ExposeSecret, SecretString};
 use serde_json::to_value;
 use tracing::info;
@@ -25,12 +25,12 @@ use tracing::info;
 use super::want_qr_confirmation::WantQrConfirmation;
 
 #[allow(deprecated)]
-use muon::client::flow::LoginExtraInfo;
+use mail_muon::client::flow::LoginExtraInfo;
 
 /// Represents the initial state of the login flow;
 /// the user must call `login` to proceed.
 pub struct WantLogin {
-    client: muon::Client,
+    client: mail_muon::Client,
     flow: AuthFlow,
     parts: SessionParts,
     observability: PreLoginMetricRecorder,
@@ -39,7 +39,7 @@ pub struct WantLogin {
 
 impl WantLogin {
     pub fn new(
-        client: muon::Client,
+        client: mail_muon::Client,
         parts: SessionParts,
         challenge_info: Option<ChallengeInfo>,
     ) -> Self {
@@ -131,7 +131,7 @@ impl WantLogin {
     ///
     pub async fn migrate(
         self,
-        client: muon::Client,
+        client: mail_muon::Client,
         user_id: UserId,
         session_id: SessionId,
         user_data: UserData,
@@ -144,7 +144,7 @@ impl WantLogin {
 
     async fn try_migrate(
         self,
-        client: muon::Client,
+        client: mail_muon::Client,
         user_id: UserId,
         session_id: SessionId,
         user_data: UserData,
@@ -258,7 +258,7 @@ impl WantLogin {
             }
 
             LoginFlow::Failed { reason, .. } => {
-                let api_service_err: ApiServiceError = muon::Error::from(reason).into();
+                let api_service_err: ApiServiceError = mail_muon::Error::from(reason).into();
                 let metric_response: ApiServiceObservabilityResponse = (&api_service_err).into();
                 self.observability
                     .record(AuthV4RequestMetric::new(metric_response));
@@ -294,11 +294,11 @@ impl QrLoginInitiateFork {
     }
 }
 
-// Check that the auth was saved by muon to the store.
+// Check that the auth was saved by mail_muon to the store.
 // Our db has the constraint that each account can have at most one session.
 // If a user tries to log in with the same account twice, the second session will be rejected.
-// However, muon fails silently if it cannot write to the store (not my fault).
-// So here we check that muon actually managed to save the auth.
+// However, mail_muon fails silently if it cannot write to the store (not my fault).
+// So here we check that mail_muon actually managed to save the auth.
 async fn check_store_auth(parts: &SessionParts, user_id: &str) -> Result<(), LoginError> {
     let lock = parts.store.read().await;
 

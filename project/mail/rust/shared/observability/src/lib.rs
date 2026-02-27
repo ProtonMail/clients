@@ -1,6 +1,4 @@
-use proton_core_api::services::proton::prelude::{
-    PostMetricsRequestData, PostMetricsRequestElement,
-};
+use mail_core_api::services::proton::prelude::{PostMetricsRequestData, PostMetricsRequestElement};
 use std::sync::{Arc, LazyLock};
 
 use chrono::Utc;

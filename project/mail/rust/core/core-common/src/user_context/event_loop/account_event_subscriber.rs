@@ -8,8 +8,8 @@ use core_event_loop::RefreshFlag;
 use core_event_loop::v6::{
     EventSource, EventSubscriber, EventSubscriberError, EventSubscriberResult,
 };
-use proton_core_api::service::ApiServiceError;
-use stash::stash::StashError;
+use mail_core_api::service::ApiServiceError;
+use mail_stash::stash::StashError;
 use std::sync::Weak;
 use tracing::{debug, warn};
 

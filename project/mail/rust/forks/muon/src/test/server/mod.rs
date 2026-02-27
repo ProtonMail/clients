@@ -155,7 +155,7 @@ impl Server {
         Ok(this)
     }
 
-    /// Create a new muon client for this server.
+    /// Create a new mail_muon client for this server.
     ///
     /// This is a convenience function that automatically configures the
     /// client's environment to target this server.
@@ -167,14 +167,14 @@ impl Server {
         Self::client_for(self, App::default())
     }
 
-    /// Create a new muon client for this server for the given app.
+    /// Create a new mail_muon client for this server for the given app.
     pub fn client_for(&self, app: App) -> Client {
         self.builder_for(app)
             .build()
             .expect("client should be built")
     }
 
-    /// Create a new muon client builder for this server.
+    /// Create a new mail_muon client builder for this server.
     ///
     /// This is a convenience function that automatically configures the
     /// client's environment to target this server.
@@ -186,7 +186,7 @@ impl Server {
         self.builder_for(App::default())
     }
 
-    /// Create a new muon client builder for this server for the given app.
+    /// Create a new mail_muon client builder for this server for the given app.
     pub fn builder_for(&self, app: App) -> crate::Builder {
         let env = EnvId::Custom(self.env().into_dyn());
         let store = TestStore::new(env);
@@ -387,7 +387,7 @@ impl Server {
             .route("/auth/v4/refresh", post(auth::v4::refresh::post))
             .route("/auth/v4/sessions", post(auth::v4::sessions::post))
             .route("/tests/ping", get(tests::ping::get))
-            .route("/muon/bench", post(crate::test::server::muon::bench::post));
+            .route("/mail_muon/bench", post(crate::test::server::mail_muon::bench::post));
 
         let auth = Router::new()
             .route("/core/v4/users", get(core::v4::users::get))

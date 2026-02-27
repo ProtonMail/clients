@@ -10,16 +10,16 @@ use crate::models::{Address, InitializationWatcher, Label, User, UserSettings};
 use crate::services::AddressService;
 use crate::{Context, CoreContextError, CoreContextResult, OnSessionDeletedResponse, Origin};
 pub use event_loop::CoreEventLoopContext;
-use proton_action_queue::queue::{self, Queue};
-use proton_core_api::services::proton::{SessionId, UserId};
-use proton_core_api::session::Session;
-use proton_log_service::LogService;
-use proton_sqlite3::MigratorError;
+use mail_action_queue::queue::{self, Queue};
+use mail_core_api::services::proton::{SessionId, UserId};
+use mail_core_api::session::Session;
+use mail_log_service::LogService;
+use mail_sqlite3::MigratorError;
+use mail_stash::orm::Model;
+use mail_stash::stash::{Stash, StashConfiguration, StashError, WatcherHandle};
+use mail_stash::watcher::TableWatcher;
+use mail_stash::{AccountDb, UserDb};
 use services::{PaymentsService, UserFeatureFlagsService};
-use stash::orm::Model;
-use stash::stash::{Stash, StashConfiguration, StashError, WatcherHandle};
-use stash::watcher::TableWatcher;
-use stash::{AccountDb, UserDb};
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
@@ -32,8 +32,8 @@ use std::sync::{Arc, Weak};
 use crate::services::event_loop_service::EventManager;
 use crate::services::user_issue_reporter_service::UserIssueReporterService;
 use anyhow::anyhow;
-use proton_core_api::connection_status::ConnectionStatus;
-use proton_issue_reporter_service::{IssueLevel, IssueReportKeys};
+use mail_core_api::connection_status::ConnectionStatus;
+use mail_issue_reporter_service::{IssueLevel, IssueReportKeys};
 use tokio::task::{self, JoinHandle};
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info, warn};
@@ -48,7 +48,7 @@ pub mod services;
 
 #[async_trait::async_trait]
 pub trait UserDatabaseInitializer: Send + Sync {
-    async fn initialize(&self, stash: &Stash<UserDb>) -> Result<(), MigratorError>;
+    async fn initialize(&self, mail_stash: &Stash<UserDb>) -> Result<(), MigratorError>;
 
     fn boxed(self) -> Box<dyn UserDatabaseInitializer>
     where
@@ -247,7 +247,7 @@ impl UserContext {
     }
 
     #[must_use]
-    pub fn stash(&self) -> &Stash<UserDb> {
+    pub fn mail_stash(&self) -> &Stash<UserDb> {
         &self.user_stash
     }
 
@@ -289,7 +289,7 @@ impl UserContext {
 
     pub async fn user_settings(&self) -> CoreContextResult<UserSettings> {
         let user_id = self.user_id();
-        let tether = self.stash().connection().await?;
+        let tether = self.mail_stash().connection().await?;
         let settings = UserSettings::load(user_id.to_owned(), &tether).await?;
 
         settings.ok_or_else(|| CoreContextError::SettingsMissing(user_id.to_owned()))
@@ -322,7 +322,7 @@ impl UserContext {
     ) -> Result<Stash<UserDb>, MigratorError> {
         let path = path.to_owned();
 
-        let stash = task::spawn_blocking(move || {
+        let mail_stash = task::spawn_blocking(move || {
             Stash::new(StashConfiguration {
                 path: Some(&path),
                 ..Default::default()
@@ -335,21 +335,21 @@ impl UserContext {
             Origin::App => {
                 debug!("initializing database");
 
-                migrate_core_db(&stash).await?;
+                migrate_core_db(&mail_stash).await?;
 
                 for init in inits {
-                    init.initialize(&stash).await?;
+                    init.initialize(&mail_stash).await?;
                 }
             }
 
             Origin::ShareExt => {
                 debug!("verifying database");
 
-                verify_core_db(&stash).await?;
+                verify_core_db(&mail_stash).await?;
             }
         }
 
-        Ok(stash)
+        Ok(mail_stash)
     }
 
     /// Spawns a new task.

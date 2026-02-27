@@ -11,17 +11,17 @@ use crate::datatypes::{
 };
 use crate::models::{Measurement, ModelExtension};
 use crate::{CoreContextError, UserContext};
-use proton_core_api::connection_status::ConnectionStatus;
-use proton_core_api::services::proton::measurements::requests::{
+use mail_core_api::connection_status::ConnectionStatus;
+use mail_core_api::services::proton::measurements::requests::{
     PostMeasurementEventRequest, PostMeasurementEventsRequest,
 };
-use proton_core_api::services::proton::{
+use mail_core_api::services::proton::{
     MeasurementEventType as ApiMeasurementEventType, MeasurementValue as ApiMeasurementValue,
     ProtonMeasurements,
 };
-use stash::AccountDb;
-use stash::orm::Model;
-use stash::stash::{Stash, StashError};
+use mail_stash::AccountDb;
+use mail_stash::orm::Model;
+use mail_stash::stash::{Stash, StashError};
 
 const MEASUREMENT_SEND_INTERVAL_SECS: u64 = 60;
 const MEASUREMENT_BATCH_SIZE: usize = 100;

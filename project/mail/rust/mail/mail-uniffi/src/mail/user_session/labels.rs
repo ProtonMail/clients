@@ -3,14 +3,14 @@ use crate::mail::MailUserSession;
 use crate::mail::datatypes::labels::custom_folder::SidebarCustomFolder;
 use crate::mail::datatypes::labels::custom_labels::SidebarCustomLabel;
 use crate::uniffi_async;
-use proton_core_api::services::proton::LabelId as RealLabelId;
-use proton_core_common::datatypes::LabelType as RealLabelType;
-use proton_core_common::models::Label as RealLabel;
-use proton_core_common::utils::MapVec as _;
-use proton_mail_common::ProtonMailError as RealProtonMailError;
-use proton_mail_common::datatypes::SystemLabelId;
-use proton_mail_common::datatypes::labels::custom_folder::CustomFolder as RealCustomFolder;
-use proton_mail_common::datatypes::labels::custom_labels::CustomLabel as RealCustomLabel;
+use mail_common::ProtonMailError as RealProtonMailError;
+use mail_common::datatypes::SystemLabelId;
+use mail_common::datatypes::labels::custom_folder::CustomFolder as RealCustomFolder;
+use mail_common::datatypes::labels::custom_labels::CustomLabel as RealCustomLabel;
+use mail_core_api::services::proton::LabelId as RealLabelId;
+use mail_core_common::datatypes::LabelType as RealLabelType;
+use mail_core_common::models::Label as RealLabel;
+use mail_core_common::utils::MapVec as _;
 
 #[uniffi_export]
 impl MailUserSession {

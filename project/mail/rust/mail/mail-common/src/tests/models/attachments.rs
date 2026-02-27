@@ -1,25 +1,25 @@
 use super::*;
 use crate::AppError;
-use proton_core_common::datatypes::{AddressFlags, AddressKeys, AddressStatus, AddressType};
-use proton_core_common::models::Address;
-use proton_crypto_inbox::attachment::{
-    AttachmentEncryptedSignature as RealAttachmentEncryptedSignature,
-    AttachmentSignature as RealAttachmentSignature, KeyPackets as RealKeyPackets,
-};
-use proton_mail_api::services::proton::response_data::{
+use mail_api::services::proton::response_data::{
     Attachment as ApiAttachment, AttachmentMetadata as ApiAttachmentMetadata,
     Disposition as ApiDisposition, MessageFlags as ApiMessageFlags,
     MessageMetadata as ApiMessageMetadata, MessageSender as ApiMessageSender,
 };
-use proton_mail_common::test_utils::db::new_test_connection_file;
-use stash::orm::Model;
+use mail_common::test_utils::db::new_test_connection_file;
+use mail_core_common::datatypes::{AddressFlags, AddressKeys, AddressStatus, AddressType};
+use mail_core_common::models::Address;
+use mail_crypto_inbox::attachment::{
+    AttachmentEncryptedSignature as RealAttachmentEncryptedSignature,
+    AttachmentSignature as RealAttachmentSignature, KeyPackets as RealKeyPackets,
+};
+use mail_stash::orm::Model;
 
 #[tokio::test]
 async fn test_attachment_create_without_metadata() {
     // Simulates an attachment's full info being stored without having any previous
     // message or conversation metadata.
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut conn = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut conn = mail_stash.connection().await.unwrap();
     let (_, _, _) = create_attachment_dependencies(&mut conn, None)
         .await
         .unwrap();
@@ -41,8 +41,8 @@ async fn test_attachment_create_without_metadata() {
 async fn test_attachment_create_with_metadata() {
     // Simulates an attachment's full info being stored with an existing
     // message or conversation metadata.
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut conn = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut conn = mail_stash.connection().await.unwrap();
     let api_attachment = test_attachment();
     let metadata = ApiAttachmentMetadata {
         id: api_attachment.id.clone(),

@@ -56,15 +56,15 @@ use crate::store::Store;
 use crate::verification::ChallengeNotifierLayer;
 use crate::verification::DynChallengeNotifier;
 use cookie::CookieJar;
-use muon::App;
-use muon::client::InfoProvider;
-use muon::client::middleware::{DisplayLogger, Tagger};
-use muon::common::ConstProxy;
-use muon::common::IntoDyn;
-use muon::common::ParseEndpointErr;
-use muon::dns::{GoogleDoh, Quad9Doh};
-use muon::error::ParseAppVersionErr;
-use proton_task_service::Tokio;
+use mail_muon::App;
+use mail_muon::client::InfoProvider;
+use mail_muon::client::middleware::{DisplayLogger, Tagger};
+use mail_muon::common::ConstProxy;
+use mail_muon::common::IntoDyn;
+use mail_muon::common::ParseEndpointErr;
+use mail_muon::dns::{GoogleDoh, Quad9Doh};
+use mail_muon::error::ParseAppVersionErr;
+use mail_task_service::Tokio;
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::RwLock;
@@ -87,8 +87,8 @@ pub use self::core::*;
 pub use self::data::*;
 pub use self::measurements::*;
 pub use self::payments::*;
-pub use muon;
-use muon::rt::{AsyncResolver, ResolverExt, with_fallback};
+pub use mail_muon;
+use mail_muon::rt::{AsyncResolver, ResolverExt, with_fallback};
 
 /// An error that can occur when building a Proton client.
 #[derive(Debug, Error)]
@@ -103,7 +103,7 @@ pub enum BuildError {
 
     /// The client could not be built.
     #[error(transparent)]
-    Build(#[from] muon::Error),
+    Build(#[from] mail_muon::Error),
 }
 
 /// Builds a new Proton client.
@@ -113,7 +113,7 @@ pub async fn build<S: Store>(
     notifier: DynChallengeNotifier,
     info_provider: Option<Arc<dyn InfoProvider>>,
     allow_doh: bool,
-) -> Result<muon::Client, BuildError> {
+) -> Result<mail_muon::Client, BuildError> {
     let store = MuonStoreImpl::new(&config.env_id, store);
 
     let app = if let Some(agent) = &config.user_agent {
@@ -122,7 +122,7 @@ pub async fn build<S: Store>(
         App::new(&config.app_version)?
     };
 
-    let mut builder = (muon::Client::builder_async(app, store).await)
+    let mut builder = (mail_muon::Client::builder_async(app, store).await)
         .layer_front(Tagger::default())
         .layer_back(SetCryptoClockLayer)
         .layer_back(SetDefaultServiceTypeLayer)

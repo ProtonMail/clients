@@ -5,7 +5,7 @@
 use std::{collections::BTreeMap, sync::Weak};
 
 use anyhow::Context;
-use proton_core_api::{
+use mail_core_api::{
     service::ApiServiceError,
     services::proton::{
         GetLegacyFeatureFlagsOptions, GetLegacyFeaturesResponse, GetUnleashFeaturesResponse,
@@ -13,7 +13,7 @@ use proton_core_api::{
     },
     session::Session,
 };
-use stash::{
+use mail_stash::{
     UserDb,
     orm::Model,
     params,
@@ -161,11 +161,11 @@ impl UserFeatureFlagsService {
     async fn refresh_unleash_flags(
         &self,
         api: &Session,
-        stash: &Stash<UserDb>,
+        mail_stash: &Stash<UserDb>,
         modify_time: UnixTimestamp,
     ) -> CoreContextResult<()> {
         let response = api.get_unleash_feature_flags().await?;
-        let mut tether = stash.connection().await?;
+        let mut tether = mail_stash.connection().await?;
         let mut flags = Self::fetch_from_cache(&tether, UserFeatureFlagSource::Unleash).await;
         for flag in flags.values_mut() {
             // Unleash returns only enabled flags. We don't want to remove them from cache or keep stale data.
@@ -188,7 +188,7 @@ impl UserFeatureFlagsService {
     async fn refresh_legacy_flags(
         &self,
         api: &Session,
-        stash: &Stash<UserDb>,
+        mail_stash: &Stash<UserDb>,
         modify_time: UnixTimestamp,
     ) -> CoreContextResult<()> {
         let initial_flags = GetLegacyFeatureFlagsOptions {
@@ -197,7 +197,7 @@ impl UserFeatureFlagsService {
         };
         let response = PaginateLegacyFeatureFlags::fetch_all_filtered(api, initial_flags).await?;
 
-        let mut tether = stash.connection().await?;
+        let mut tether = mail_stash.connection().await?;
         let mut cached_flags = Self::fetch_from_cache(&tether, UserFeatureFlagSource::Legacy)
             .await
             .into_iter()
@@ -237,8 +237,8 @@ impl UserFeatureFlagsService {
 
         let modify_time = UnixTimestamp::now();
 
-        let legacy_flags = self.refresh_legacy_flags(api, ctx.stash(), modify_time);
-        let unleash_flags = self.refresh_unleash_flags(api, ctx.stash(), modify_time);
+        let legacy_flags = self.refresh_legacy_flags(api, ctx.mail_stash(), modify_time);
+        let unleash_flags = self.refresh_unleash_flags(api, ctx.mail_stash(), modify_time);
 
         // We do not use `try_join` here because even if only one endpoint is working, we still want to
         // update those flags.
@@ -257,7 +257,7 @@ impl UserFeatureFlagsService {
     pub async fn get(&self, key: &str) -> CoreContextResult<Option<bool>> {
         let ctx = self.ctx.upgrade().context("Could not upgrade context")?;
         let feature_flag = {
-            let tether = ctx.stash().connection().await?;
+            let tether = ctx.mail_stash().connection().await?;
             UserFeatureFlag::by_name(key, &tether).await?
         };
         Ok(feature_flag.map(|flag| flag.is_enabled()))
@@ -268,8 +268,8 @@ impl UserFeatureFlagsService {
             tracing::warn!("Failed to upgrade context");
             return vec![];
         };
-        let Ok(tether) = ctx.stash().connection().await else {
-            tracing::warn!("Failed to connect to account stash");
+        let Ok(tether) = ctx.mail_stash().connection().await else {
+            tracing::warn!("Failed to connect to account mail_stash");
             return vec![];
         };
         let flags = UserFeatureFlag::all(&tether)
@@ -288,8 +288,8 @@ impl UserFeatureFlagsService {
     pub async fn watch(&self) -> CoreContextResult<WatcherHandle> {
         let ctx = self.ctx.upgrade().context("Could not upgrade context")?;
 
-        let stash = ctx.stash();
-        TableWatcher::<UserFeatureFlag>::watch(stash)
+        let mail_stash = ctx.mail_stash();
+        TableWatcher::<UserFeatureFlag>::watch(mail_stash)
             .await
             .map_err(CoreContextError::from)
     }

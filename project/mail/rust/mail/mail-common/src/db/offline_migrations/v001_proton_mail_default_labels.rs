@@ -1,9 +1,9 @@
-use proton_core_api::services::proton::LabelId;
-use stash::stash::{Bond, StashError};
-use stash::{UserDb, params};
+use mail_core_api::services::proton::LabelId;
+use mail_stash::stash::{Bond, StashError};
+use mail_stash::{UserDb, params};
 
 use crate::datatypes::SystemLabelId;
-use proton_sqlite3::Migration;
+use mail_sqlite3::Migration;
 
 pub(crate) fn default_labels() -> [(LabelId, &'static str); 19] {
     [

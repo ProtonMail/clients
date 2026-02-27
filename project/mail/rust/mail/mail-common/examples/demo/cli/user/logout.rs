@@ -1,6 +1,6 @@
 use crate::cli::ctx::MailContextExt;
 use anyhow::Result;
-use proton_mail_common::MailContext;
+use mail_common::MailContext;
 use std::sync::Arc;
 
 /// Logout from an account.

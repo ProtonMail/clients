@@ -9,17 +9,17 @@ use crate::{
     mail_scroller::MailScrollerSource,
     models::{Message, MessageCounter, MessageLabel, SearchScrollData},
 };
-use proton_action_queue::queue::Queue;
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::{services::proton::LabelId, session::Session};
-use proton_core_common::datatypes::{LocalLabelId, UnixTimestamp};
-use proton_core_common::models::{Label, ModelExtension, ModelIdExtension};
-use proton_mail_api::services::proton::{
+use mail_action_queue::queue::Queue;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_api::services::proton::{
     ProtonMail, common::MessageId, prelude::GetMessagesOptions,
     response_data::MessageMetadata as ApiMessageMetadata,
 };
-use stash::UserDb;
-use stash::{
+use mail_core_api::{services::proton::LabelId, session::Session};
+use mail_core_common::datatypes::{LocalLabelId, UnixTimestamp};
+use mail_core_common::models::{Label, ModelExtension, ModelIdExtension};
+use mail_stash::UserDb;
+use mail_stash::{
     orm::Model,
     stash::{StashError, Tether},
 };
@@ -99,11 +99,11 @@ impl SearchScrollerSource {
         search: SearchOptions,
         page_size: usize,
     ) -> Result<MailPaginatorJoinHandle, MailContextError> {
-        let stash = ctx.user_stash().clone();
+        let mail_stash = ctx.user_stash().clone();
         let session = ctx.session().clone();
 
         let task = ctx.spawn_ex(async move |ctx| {
-            let mut tether = stash.connection().await?;
+            let mut tether = mail_stash.connection().await?;
 
             Self::sync_first_page(
                 &session,
@@ -128,11 +128,11 @@ impl SearchScrollerSource {
         search: SearchOptions,
         page_size: usize,
     ) -> Result<MailPaginatorJoinHandle, MailContextError> {
-        let stash = ctx.user_stash().clone();
+        let mail_stash = ctx.user_stash().clone();
         let session = ctx.session().clone();
 
         let task = ctx.spawn_ex(async move |ctx| {
-            let tether = stash.connection().await?;
+            let tether = mail_stash.connection().await?;
 
             if let Some((remote_id, time)) =
                 SearchScrollData::last_remote_message_id_and_time(&tether).await?
@@ -298,7 +298,7 @@ impl SearchScrollerSource {
 
                 if let Err(e) = queue
                     .rebase_in(
-                        proton_action_queue::action::ActionGroup::default(),
+                        mail_action_queue::action::ActionGroup::default(),
                         &rebase_change_set,
                         tx,
                     )

@@ -1,13 +1,13 @@
 use super::common::DefaultError;
 use super::common::{TestReadExtension, TestWriteExtension, new_queue_typed};
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionId, DefaultVersionConverter, Handler, MetadataBuilder, Type, WriterGuard,
 };
-use proton_action_queue::queue::{ActionError, AsActionError, BroadcastMessage, QueuedError};
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_action_queue::tests::common::TestDb;
+use mail_action_queue::queue::{ActionError, AsActionError, BroadcastMessage, QueuedError};
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_action_queue::tests::common::TestDb;
+use mail_stash::stash::Bond;
 use serde::{Deserialize, Serialize};
-use stash::stash::Bond;
 
 #[tokio::test]
 async fn network_failure_causes_revert_on_apply() {
@@ -36,7 +36,7 @@ async fn network_failure_causes_revert_on_apply() {
     }
     assert!(
         queue
-            .stash()
+            .mail_stash()
             .connection()
             .await
             .unwrap()
@@ -66,7 +66,7 @@ async fn network_failure_causes_revert_on_queue() {
     // Check local state is present.
     assert_eq!(
         queue
-            .stash()
+            .mail_stash()
             .connection()
             .await
             .unwrap()
@@ -90,7 +90,7 @@ async fn network_failure_causes_revert_on_queue() {
     assert_eq!(metadata.id, action_id);
     assert!(
         queue
-            .stash()
+            .mail_stash()
             .connection()
             .await
             .unwrap()
@@ -115,7 +115,7 @@ async fn revert_cancels_all_dependent_actions() {
     let value4 = 400_u32;
 
     {
-        let mut conn = queue.stash().connection().await.unwrap();
+        let mut conn = queue.mail_stash().connection().await.unwrap();
         conn.tx(async |tx| tx.ext_insert_value(key, value).await)
             .await
             .unwrap();
@@ -162,7 +162,7 @@ async fn revert_cancels_all_dependent_actions() {
     // Check local state is present.
     assert_eq!(
         queue
-            .stash()
+            .mail_stash()
             .connection()
             .await
             .unwrap()
@@ -184,7 +184,7 @@ async fn revert_cancels_all_dependent_actions() {
     // Check state is reverted.
     assert_eq!(
         queue
-            .stash()
+            .mail_stash()
             .connection()
             .await
             .unwrap()

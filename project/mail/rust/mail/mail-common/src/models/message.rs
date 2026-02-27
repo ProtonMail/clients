@@ -24,21 +24,21 @@ use crate::models::*;
 use crate::{MailContextError, find_in_query};
 use futures::try_join;
 use indoc::{formatdoc, indoc};
-use proton_action_queue::action::ActionGroup;
-use proton_action_queue::action::MetadataBuilder;
-use proton_action_queue::enqueue;
-use proton_action_queue::queue::MultiActionError;
-use proton_action_queue::queue::{ActionError as QueueActionError, Queue, QueuedActionOutput};
-use proton_core_api::session::Session;
-use proton_core_common::utils::MapVec as _;
-use proton_sqlite3::rusqlite::Transaction;
-use proton_sqlite3::rusqlite::params_from_iter;
+use mail_action_queue::action::ActionGroup;
+use mail_action_queue::action::MetadataBuilder;
+use mail_action_queue::enqueue;
+use mail_action_queue::queue::MultiActionError;
+use mail_action_queue::queue::{ActionError as QueueActionError, Queue, QueuedActionOutput};
+use mail_core_api::session::Session;
+use mail_core_common::utils::MapVec as _;
+use mail_sqlite3::rusqlite::Transaction;
+use mail_sqlite3::rusqlite::params_from_iter;
+use mail_stash::UserDb;
+use mail_stash::exports::Connection;
+use mail_stash::orm::DbRecord;
+use mail_stash::rusqlite::OptionalExtension;
+use mail_stash::utils::{ConnectionExt, MapToSql, placeholders, placeholders_n};
 use sqlite_watcher::watcher::TableObserver;
-use stash::UserDb;
-use stash::exports::Connection;
-use stash::orm::DbRecord;
-use stash::rusqlite::OptionalExtension;
-use stash::utils::{ConnectionExt, MapToSql, placeholders, placeholders_n};
 
 use crate::MailContextResult;
 use crate::actions::{
@@ -55,34 +55,32 @@ use crate::mailbox::decrypted_message::DecryptedMessageBody;
 use crate::{AppError, MailUserContext};
 use anyhow::{Context, anyhow};
 use itertools::Itertools;
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::service::ApiServiceError;
-use proton_core_api::services::proton::{AddressId, LabelId};
-use proton_core_api::services::proton::{PrivateEmail, PrivateString};
-use proton_core_common::datatypes::{
-    LabelType, LocalAddressId, LocalLabelId, SystemLabel, UnixTimestamp,
-};
-use proton_core_common::event_loop::events::Action;
-use proton_core_common::models::{Address, Label, LabelError, ModelExtension, ModelIdExtension};
-use proton_crypto_inbox::proton_crypto;
-use proton_mail_api::MAX_PAGE_ELEMENT_COUNT;
-use proton_mail_api::services::proton::ProtonMail;
-use proton_mail_api::services::proton::common::{ConversationId, ExternalId, MessageId};
-use proton_mail_api::services::proton::prelude::{
-    MessageMetadata, MessageReplyTo as ApiMessageReplyTo,
-};
-use proton_mail_api::services::proton::requests::GetMessagesOptions;
-use proton_mail_api::services::proton::response_data::{
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_api::MAX_PAGE_ELEMENT_COUNT;
+use mail_api::services::proton::ProtonMail;
+use mail_api::services::proton::common::{ConversationId, ExternalId, MessageId};
+use mail_api::services::proton::prelude::{MessageMetadata, MessageReplyTo as ApiMessageReplyTo};
+use mail_api::services::proton::requests::GetMessagesOptions;
+use mail_api::services::proton::response_data::{
     Message as ApiMessage, MessageBody as ApiMessageBody, MessageMetadata as ApiMessageMetadata,
     OperationResult,
 };
-use proton_mail_api::services::proton::responses::GetMessagesResponse;
-use proton_mail_common_derive::ScrollerEq;
-use stash::exports::ToSql;
-use stash::macros::{DbRecord, Model};
-use stash::orm::{Model, ModelHooks};
-use stash::params;
-use stash::stash::{Bond, RunTransaction, Stash, StashError, Tether, WatcherHandle};
+use mail_api::services::proton::responses::GetMessagesResponse;
+use mail_common_derive::ScrollerEq;
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::{AddressId, LabelId};
+use mail_core_api::services::proton::{PrivateEmail, PrivateString};
+use mail_core_common::datatypes::{
+    LabelType, LocalAddressId, LocalLabelId, SystemLabel, UnixTimestamp,
+};
+use mail_core_common::event_loop::events::Action;
+use mail_core_common::models::{Address, Label, LabelError, ModelExtension, ModelIdExtension};
+use mail_crypto_inbox::proton_crypto;
+use mail_stash::exports::ToSql;
+use mail_stash::macros::{DbRecord, Model};
+use mail_stash::orm::{Model, ModelHooks};
+use mail_stash::params;
+use mail_stash::stash::{Bond, RunTransaction, Stash, StashError, Tether, WatcherHandle};
 use std::collections::HashSet;
 use std::collections::hash_map::Entry as HmEntry;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
@@ -221,7 +219,7 @@ impl Message {
     }
 
     pub async fn action_star(queue: &Queue<UserDb>, ids: Vec<LocalMessageId>) -> LabelAsResult {
-        let tether = queue.stash().connection().await?;
+        let tether = queue.mail_stash().connection().await?;
 
         let label_id = Label::remote_id_counterpart(LabelId::starred(), &tether)
             .await?
@@ -231,7 +229,7 @@ impl Message {
     }
 
     pub async fn action_unstar(queue: &Queue<UserDb>, ids: Vec<LocalMessageId>) -> LabelAsResult {
-        let tether = queue.stash().connection().await?;
+        let tether = queue.mail_stash().connection().await?;
 
         let label_id = Label::remote_id_counterpart(LabelId::starred(), &tether)
             .await?
@@ -322,7 +320,7 @@ impl Message {
         queue: &Queue<UserDb>,
         message_ids: Vec<LocalMessageId>,
     ) -> Result<(), MultiActionError> {
-        let tether = &queue.stash().connection().await?;
+        let tether = &queue.mail_stash().connection().await?;
         let inbox = Label::resolve_local_label_id(LabelId::inbox(), tether)
             .await
             .context("inbox doesn't exist?")?;
@@ -919,8 +917,8 @@ impl Message {
         Ok(res)
     }
 
-    pub async fn watch(stash: &Stash<UserDb>) -> Result<WatcherHandle, StashError> {
-        stash
+    pub async fn watch(mail_stash: &Stash<UserDb>) -> Result<WatcherHandle, StashError> {
+        mail_stash
             .subscribe_to(|sender| Box::new(MessageWatcher { sender }))
             .await
     }
@@ -2483,7 +2481,7 @@ impl ModelHooks for Message {
                         SELECT local_id FROM labels WHERE remote_id IN ({})
                     )
                 ",
-                    stash::utils::placeholders(&self.label_ids),
+                    mail_stash::utils::placeholders(&self.label_ids),
                 ),
                 params_from_iter(params),
             )?;
@@ -2545,7 +2543,7 @@ impl ModelHooks for Message {
                                 WHERE attachments.disposition = ? AND attachments.attachment_type <> ?
                                 AND attachments.local_id NOT IN ({})
                             )",
-                    stash::utils::placeholders_n(attachment_ids.len()),
+                    mail_stash::utils::placeholders_n(attachment_ids.len()),
                 ),
             params)
             ?;
@@ -2981,8 +2979,8 @@ impl MessageCounter {
         }
     }
 
-    pub async fn watch(stash: &Stash<UserDb>) -> Result<WatcherHandle, StashError> {
-        stash
+    pub async fn watch(mail_stash: &Stash<UserDb>) -> Result<WatcherHandle, StashError> {
+        mail_stash
             .subscribe_to(|sender| Box::new(MessageCounterWatcher { sender }))
             .await
     }

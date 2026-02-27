@@ -1,11 +1,11 @@
 use crate::datatypes::DeletedItemType;
 use crate::models::{Conversation, Message};
-use proton_core_common::datatypes::UnixTimestamp;
-use proton_core_common::models::{Label, ModelExtension, ModelIdExtension};
-use stash::macros::Model;
-use stash::orm::Model;
-use stash::stash::{Bond, StashError, Tether};
-use stash::{UserDb, params};
+use mail_core_common::datatypes::UnixTimestamp;
+use mail_core_common::models::{Label, ModelExtension, ModelIdExtension};
+use mail_stash::macros::Model;
+use mail_stash::orm::Model;
+use mail_stash::stash::{Bond, StashError, Tether};
+use mail_stash::{UserDb, params};
 use std::collections::HashSet;
 
 #[cfg(test)]
@@ -54,8 +54,8 @@ impl DeletedItem {
         item_type: DeletedItemType,
         tether: &Tether,
     ) -> Result<HashSet<String>, StashError> {
-        use stash::exports::ToSql;
-        use stash::utils::placeholders;
+        use mail_stash::exports::ToSql;
+        use mail_stash::utils::placeholders;
 
         let mut params: Vec<Box<dyn ToSql + Send>> = vec![Box::new(item_type)];
         for id in remote_ids {

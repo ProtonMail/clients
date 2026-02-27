@@ -1,49 +1,49 @@
-use proton_core_api::service::ApiServiceError;
-use proton_core_common::utils::Paginatable;
-use proton_core_common::utils::PaginateOptions;
-use proton_mail_api::services::proton::prelude::GetIncomingDefaultResponse;
+use mail_api::services::proton::prelude::GetIncomingDefaultResponse;
+use mail_core_api::service::ApiServiceError;
+use mail_core_common::utils::Paginatable;
+use mail_core_common::utils::PaginateOptions;
+use mail_stash::UserDb;
+use mail_stash::orm::ModelHooks;
 use regex::Regex;
 use serde::Deserialize;
 use serde::Serialize;
-use stash::UserDb;
-use stash::orm::ModelHooks;
 use std::sync::Arc;
 use std::sync::LazyLock;
 
 use indoc::indoc;
-use proton_core_api::session::Session;
-use proton_core_common::datatypes::InitializationKey;
-use proton_core_common::models::Address;
-use proton_core_common::models::InitializationError;
-use proton_core_common::models::InitializationWatcher;
-use proton_core_common::models::InitializedComponent;
-use proton_mail_api::INCOMING_DEFAULTS_PAGE_SIZE;
-use proton_mail_api::services::proton::ProtonMail;
-use stash::exports::Transaction;
+use mail_api::INCOMING_DEFAULTS_PAGE_SIZE;
+use mail_api::services::proton::ProtonMail;
+use mail_core_api::session::Session;
+use mail_core_common::datatypes::InitializationKey;
+use mail_core_common::models::Address;
+use mail_core_common::models::InitializationError;
+use mail_core_common::models::InitializationWatcher;
+use mail_core_common::models::InitializedComponent;
+use mail_stash::exports::Transaction;
 
 use derive_more::TryFrom;
-use proton_action_queue::queue::ActionError as QueueActionError;
-use proton_action_queue::queue::Queue;
-use proton_action_queue::queue::QueuedActionOutput;
-use proton_core_api::services::proton::IncomingDefaultId;
-use proton_core_api::services::proton::PrivateEmail;
-use stash::exports::FromSql;
-use stash::exports::FromSqlError;
-use stash::exports::SqliteError;
-use stash::exports::ToSql;
-use stash::exports::ToSqlOutput;
-use stash::exports::Value;
-use stash::macros::Model;
+use mail_action_queue::queue::ActionError as QueueActionError;
+use mail_action_queue::queue::Queue;
+use mail_action_queue::queue::QueuedActionOutput;
+use mail_core_api::services::proton::IncomingDefaultId;
+use mail_core_api::services::proton::PrivateEmail;
+use mail_stash::exports::FromSql;
+use mail_stash::exports::FromSqlError;
+use mail_stash::exports::SqliteError;
+use mail_stash::exports::ToSql;
+use mail_stash::exports::ToSqlOutput;
+use mail_stash::exports::Value;
+use mail_stash::macros::Model;
 
-use proton_mail_api::services::proton::response_data::IncomingDefault as ApiIncomingDefault;
-use proton_mail_api::services::proton::response_data::IncomingDefaultEvent as ApiIncomingDefaultEvent;
-use proton_mail_api::services::proton::response_data::IncomingDefaultLocation as ApiIncomingDefaultLocation;
-use stash::orm::Model;
-use stash::params;
-use stash::stash::Bond;
-use stash::stash::Stash;
-use stash::stash::StashError;
-use stash::stash::Tether;
+use mail_api::services::proton::response_data::IncomingDefault as ApiIncomingDefault;
+use mail_api::services::proton::response_data::IncomingDefaultEvent as ApiIncomingDefaultEvent;
+use mail_api::services::proton::response_data::IncomingDefaultLocation as ApiIncomingDefaultLocation;
+use mail_stash::orm::Model;
+use mail_stash::params;
+use mail_stash::stash::Bond;
+use mail_stash::stash::Stash;
+use mail_stash::stash::StashError;
+use mail_stash::stash::Tether;
 
 use crate::MailContextError;
 use crate::actions::MailActionError;
@@ -94,11 +94,14 @@ pub struct IncomingDefault {
 }
 
 impl ModelHooks for IncomingDefault {
-    fn after_load(&mut self, _: &stash::exports::Connection) -> stash::stash::StashResult<()> {
+    fn after_load(
+        &mut self,
+        _: &mail_stash::exports::Connection,
+    ) -> mail_stash::stash::StashResult<()> {
         Ok(())
     }
 
-    fn before_save(&mut self, _: &Transaction<'_>) -> stash::stash::StashResult<()> {
+    fn before_save(&mut self, _: &Transaction<'_>) -> mail_stash::stash::StashResult<()> {
         let email = self
             .email
             .as_ref()
@@ -109,7 +112,7 @@ impl ModelHooks for IncomingDefault {
         Ok(())
     }
 
-    fn after_save(&mut self, _: &Transaction<'_>) -> stash::stash::StashResult<()> {
+    fn after_save(&mut self, _: &Transaction<'_>) -> mail_stash::stash::StashResult<()> {
         Ok(())
     }
 }
@@ -288,7 +291,9 @@ impl From<ApiIncomingDefaultLocation> for IncomingDefaultLocation {
 }
 
 impl FromSql for IncomingDefaultLocation {
-    fn column_result(value: stash::exports::ValueRef<'_>) -> stash::exports::FromSqlResult<Self> {
+    fn column_result(
+        value: mail_stash::exports::ValueRef<'_>,
+    ) -> mail_stash::exports::FromSqlResult<Self> {
         let val = u8::column_result(value)?;
         Self::try_from(val).map_err(|_| FromSqlError::OutOfRange(i64::from(val)))
     }
@@ -307,13 +312,13 @@ impl IncomingDefault {
     pub async fn initialize(
         watcher: Arc<InitializationWatcher>,
         api: &Session,
-        stash: &Stash<UserDb>,
+        mail_stash: &Stash<UserDb>,
     ) -> Result<(), InitializationError<MailContextError>> {
         InitializedComponent::initialize(
             watcher,
             Self::INIT_KEY,
             &[Address::INIT_KEY],
-            stash.connection().await?,
+            mail_stash.connection().await?,
             async || Ok(Self::sync(api).await?),
             |tx, res| {
                 Self::replace_all_sync(res.into_iter().map(IncomingDefault::from).collect(), tx)?;

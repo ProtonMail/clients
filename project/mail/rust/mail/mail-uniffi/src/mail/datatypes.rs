@@ -17,17 +17,10 @@ pub use available_action::*;
 use core::fmt;
 pub use folder_banner::*;
 use itertools::Itertools;
-use parking_lot::Mutex;
-pub use privacy::*;
-use proton_core_common::datatypes::{
-    AvatarInformation as RealAvatarInformation, LabelColor as RealLabelColor,
-    LabelType as RealLabelType,
-};
-use proton_core_common::utils::MapVec as _;
-use proton_mail_api::services::proton::request_data::MessageMetadataSortMode as RealMessageMetadataSortMode;
-use proton_mail_common::ProtonMailError;
-use proton_mail_common::actions::{LabelAsOutput as RealLabelAsOutput, Undo as RealUndo};
-use proton_mail_common::datatypes::{
+use mail_api::services::proton::request_data::MessageMetadataSortMode as RealMessageMetadataSortMode;
+use mail_common::ProtonMailError;
+use mail_common::actions::{LabelAsOutput as RealLabelAsOutput, Undo as RealUndo};
+use mail_common::datatypes::{
     AlmostAllMail as RealAlmostAllMail, AttachmentMetadata as RealAttachmentMetadata,
     ComposerDirection as RealComposerDirection, ComposerMode as RealComposerMode,
     CustomLabel as RealCustomLabel, Disposition as RealDisposition,
@@ -41,22 +34,29 @@ use proton_mail_common::datatypes::{
     ShowMoved as RealShowMoved, SpamAction as RealSpamAction, SwipeAction as RealSwipeAction,
     ViewLayout as RealViewLayout, ViewMode as RealViewMode,
 };
-use proton_mail_common::datatypes::{
+use mail_common::datatypes::{
     ContextualConversation, ExclusiveLocation as RealExclusiveLocation,
     HiddenMessagesBanner as RealHiddenMessagesBanner,
 };
-use proton_mail_common::draft::recipients::MaybeEmptyString;
-use proton_mail_common::models::{
+use mail_common::draft::recipients::MaybeEmptyString;
+use mail_common::models::{
     MailSettings as RealMailSettings, Message as RealMessage,
     MessageMimeType as RealMessageMimeType, MessageReplyTo as RealMessageReplyTo,
 };
+use mail_core_common::datatypes::{
+    AvatarInformation as RealAvatarInformation, LabelColor as RealLabelColor,
+    LabelType as RealLabelType,
+};
+use mail_core_common::utils::MapVec as _;
+use mail_stash::orm::Model;
+use mail_uniffi_runtime::uniffi_async;
+use parking_lot::Mutex;
+pub use privacy::*;
 pub use snooze::*;
-use stash::orm::Model;
 use std::fmt::{Display, Formatter};
 use std::sync::Arc;
 pub use system_label::*;
 use tracing::warn;
-use uniffi_runtime::uniffi_async;
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, UniffiEnum)]
 #[repr(u8)]
@@ -1319,8 +1319,8 @@ pub struct Fork {
     pub id: String,
 }
 
-impl From<proton_core_api::session::Fork> for Fork {
-    fn from(value: proton_core_api::session::Fork) -> Self {
+impl From<mail_core_api::session::Fork> for Fork {
+    fn from(value: mail_core_api::session::Fork) -> Self {
         Self {
             selector: value.selector,
             id: value.id,

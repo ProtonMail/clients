@@ -142,7 +142,7 @@ impl StashConnectionPool {
 
         // interrupt all connections
         if !was_interrupted {
-            info!("Interrupting stash");
+            info!("Interrupting mail_stash");
             for handle in &self.interrupts {
                 handle.interrupt()
             }
@@ -151,7 +151,7 @@ impl StashConnectionPool {
 
     /// Resume execution and allow the tethers to proceed.
     pub fn resume(&self) {
-        info!("Resuming stash");
+        info!("Resuming mail_stash");
         let mut is_interrupted = self.interrupted.lock();
         *is_interrupted = false;
         self.wait_resume.notify_all();

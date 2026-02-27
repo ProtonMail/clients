@@ -19,32 +19,32 @@ use crate::mail::mail_scroller::{
 use crate::{LiveQueryCallback, WatchHandle, uniffi_async};
 use crate::{PaginatorSearchOptions, declare_live_query_tagger};
 use itertools::Itertools as _;
-use proton_core_api::services::proton::PrivateEmail;
-use proton_core_common::models::Label as RealLabel;
-use proton_core_common::utils::MapVec;
-use proton_mail_api::services::proton::common::MessageId;
-use proton_mail_common::MailScroller;
-use proton_mail_common::MailUserContext;
-use proton_mail_common::Unexpected;
-use proton_mail_common::datatypes::message_banner::MessageBanner as RealMessageBanner;
-use proton_mail_common::datatypes::theme::MailTheme as RealMailTheme;
-use proton_mail_common::datatypes::{
+use mail_api::services::proton::common::MessageId;
+use mail_common::MailScroller;
+use mail_common::MailUserContext;
+use mail_common::Unexpected;
+use mail_common::datatypes::message_banner::MessageBanner as RealMessageBanner;
+use mail_common::datatypes::theme::MailTheme as RealMailTheme;
+use mail_common::datatypes::{
     AttachmentMetadata as RealAttachmentMetadata, Disposition, MobileAction as RealMobileAction,
     ParsedHeaderValue,
 };
-use proton_mail_common::decrypted_message::{
+use mail_common::decrypted_message::{
     BodyOutput as RealBodyOutput, DecryptedMessageBody, ThemeOpts as RealThemeOpts,
     TransformOpts as RealTransformOpts, TransformOptsResolved as RealTransformOptsResolved,
     transform_message,
 };
-use proton_mail_common::models::{self, IncomingDefault, Message as RealMessage};
-use proton_mail_common::{
+use mail_common::models::{self, IncomingDefault, Message as RealMessage};
+use mail_common::{
     ActionErrorReason as RealActionErrorReason, ProtonMailError as RealProtonMailError,
 };
-use stash::orm::Model as _;
+use mail_core_api::services::proton::PrivateEmail;
+use mail_core_common::models::Label as RealLabel;
+use mail_core_common::utils::MapVec;
+use mail_stash::orm::Model as _;
+use mail_uniffi_runtime::async_runtime;
 use std::sync::Arc;
 use tracing::warn;
-use uniffi_runtime::async_runtime;
 
 #[derive(uniffi::Object)]
 pub struct DecryptedMessage {
@@ -505,9 +505,9 @@ pub async fn message(
     session: Arc<MailUserSession>,
     id: Id,
 ) -> Result<Option<Message>, ActionError> {
-    let stash = session.user_stash()?;
+    let mail_stash = session.user_stash()?;
     uniffi_async(async move {
-        let tether = stash.connection().await?;
+        let tether = mail_stash.connection().await?;
         Result::<_, RealProtonMailError>::Ok(
             RealMessage::load(id.into(), &tether).await?.map(Into::into),
         )
@@ -531,14 +531,14 @@ pub async fn watch_message(
     callback: Box<dyn LiveQueryCallback>,
 ) -> Result<Option<WatchedMessage>, ActionError> {
     let user_context = session.ctx()?;
-    let stash = session.user_stash()?;
+    let mail_stash = session.user_stash()?;
     uniffi_async(async move {
         let Some(message) = RealMessage::open_message(message_id.into(), &user_context).await?
         else {
             return Ok(None);
         };
 
-        let handle = RealMessage::watch(&stash).await?;
+        let handle = RealMessage::watch(&mail_stash).await?;
         let handle = WatchMessageMarker::watch_channel(&*user_context, handle, callback);
         Result::<_, RealProtonMailError>::Ok(Some(WatchedMessage {
             message: message.into(),
@@ -595,9 +595,9 @@ pub async fn available_label_as_actions_for_messages(
     mailbox: Arc<Mailbox>,
     ids: Vec<Id>,
 ) -> Result<Vec<LabelAsAction>, ActionError> {
-    let stash = mailbox.stash()?;
+    let mail_stash = mailbox.mail_stash()?;
     uniffi_async(async move {
-        let tether = stash.connection().await?;
+        let tether = mail_stash.connection().await?;
         let actions = RealMessage::available_label_as_actions(ids.map_vec(), &tether)
             .await?
             .map_vec();
@@ -613,10 +613,10 @@ pub async fn available_move_to_actions_for_messages(
     mailbox: Arc<Mailbox>,
     ids: Vec<Id>,
 ) -> Result<Vec<MoveAction>, ActionError> {
-    let stash = mailbox.stash()?;
+    let mail_stash = mailbox.mail_stash()?;
     uniffi_async(async move {
         let view = mailbox.mbox().label_id();
-        let tether = stash.connection().await?;
+        let tether = mail_stash.connection().await?;
         let view = RealLabel::load(view, &tether)
             .await?
             .ok_or_else(|| RealProtonMailError::reason(RealActionErrorReason::UnknownLabel))?;
@@ -641,9 +641,9 @@ pub async fn all_available_list_actions_for_messages(
     mailbox: Arc<Mailbox>,
     message_ids: Vec<Id>,
 ) -> Result<AllListActions, ActionError> {
-    let stash = mailbox.stash()?;
+    let mail_stash = mailbox.mail_stash()?;
     uniffi_async(async move {
-        let tether = stash.connection().await?;
+        let tether = mail_stash.connection().await?;
         let actions = RealMessage::all_available_list_actions_for_messages(
             mailbox.label_id().into(),
             message_ids.map_vec(),
@@ -663,10 +663,10 @@ pub async fn all_available_message_actions_for_message(
     theme: ThemeOpts,
     message_id: Id,
 ) -> Result<AllMessageActions, ActionError> {
-    let stash = mailbox.stash()?;
+    let mail_stash = mailbox.mail_stash()?;
     let current_label_id = mailbox.label_id();
     uniffi_async(async move {
-        let tether = stash.connection().await?;
+        let tether = mail_stash.connection().await?;
         let actions = RealMessage::all_available_message_actions_for_message(
             current_label_id.into(),
             message_id.into(),
@@ -688,10 +688,10 @@ pub async fn all_available_message_actions_for_action_sheet(
     theme: ThemeOpts,
     message_id: Id,
 ) -> Result<MessageActionSheet, ActionError> {
-    let stash = mailbox.stash()?;
+    let mail_stash = mailbox.mail_stash()?;
     let current_label_id = mailbox.label_id();
     uniffi_async(async move {
-        let tether = stash.connection().await?;
+        let tether = mail_stash.connection().await?;
         let action_sheet = RealMessage::all_available_message_actions_for_action_sheet(
             current_label_id.into(),
             message_id.into(),
@@ -1031,7 +1031,7 @@ pub async fn update_mobile_list_toolbar_actions(
     let ctx = session.ctx()?;
 
     uniffi_async(async move {
-        proton_mail_common::models::MailSettings::action_update_list_toolbar(
+        mail_common::models::MailSettings::action_update_list_toolbar(
             ctx.action_queue(),
             actions.map_vec(),
             false,
@@ -1052,7 +1052,7 @@ pub async fn update_mobile_message_toolbar_actions(
     let ctx = session.ctx()?;
 
     uniffi_async(async move {
-        proton_mail_common::models::MailSettings::action_update_message_toolbar(
+        mail_common::models::MailSettings::action_update_message_toolbar(
             ctx.action_queue(),
             actions.map_vec(),
             false,
@@ -1138,9 +1138,9 @@ pub async fn bulk_message_unread_status(
     session: Arc<MailUserSession>,
     remote_ids: Vec<RemoteId>,
 ) -> Result<Vec<bool>, ActionError> {
-    let stash = session.user_stash()?;
+    let mail_stash = session.user_stash()?;
     uniffi_async(async move {
-        let tether = stash.connection().await?;
+        let tether = mail_stash.connection().await?;
         let message_ids: Vec<MessageId> = remote_ids.into_iter().map(Into::into).collect();
         RealMessage::bulk_unread_status_by_remote_ids(message_ids, &tether)
             .await

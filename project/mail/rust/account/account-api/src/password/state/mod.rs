@@ -1,10 +1,10 @@
 use crate::password::state::want_tfa::WantTfa;
 use crate::shared::SecureString;
 use derive_more::{Debug, Display, From};
-use muon::Client;
-use proton_core_api::services::proton::prelude::*;
-use proton_core_api::{auth::KeySecret, session::SessionParts};
-use proton_core_common::datatypes::{PasswordMode, TfaStatus};
+use mail_core_api::services::proton::prelude::*;
+use mail_core_api::{auth::KeySecret, session::SessionParts};
+use mail_core_common::datatypes::{PasswordMode, TfaStatus};
+use mail_muon::Client;
 use proton_crypto_account::keys::UserKeys;
 
 pub mod want_tfa;

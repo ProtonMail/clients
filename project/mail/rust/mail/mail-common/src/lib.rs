@@ -49,27 +49,27 @@ pub use self::upsell_eligibility_watcher::*;
 pub use self::user_context::*;
 use crate::datatypes::{LocalAttachmentId, LocalConversationId, LocalMessageId};
 use datatypes::attachment::ContentId;
-use proton_action_queue::action::Action;
-use proton_action_queue::queue::{ActionError, MultiActionError};
-use proton_core_api::service::ApiServiceError;
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::datatypes::{LocalAddressId, LocalLabelId};
-use proton_core_common::models::LabelError;
-use proton_crypto_inbox::attachment::AttachmentDecryptionError;
-use proton_mail_api::services::proton::common::ConversationId;
-use stash::UserDb;
-use stash::stash::StashError;
+use mail_action_queue::action::Action;
+use mail_action_queue::queue::{ActionError, MultiActionError};
+use mail_api::services::proton::common::ConversationId;
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::datatypes::{LocalAddressId, LocalLabelId};
+use mail_core_common::models::LabelError;
+use mail_crypto_inbox::attachment::AttachmentDecryptionError;
+use mail_stash::UserDb;
+use mail_stash::stash::StashError;
 use thiserror::Error;
 
 #[macro_export]
 macro_rules! find_in_query {
     ($query:expr, $params:expr) => {{
-        use stash::exports::ToSql;
+        use mail_stash::exports::ToSql;
         let params = $params
             .into_iter()
             .map(|param| Box::new(param) as Box<dyn ToSql + Send>)
             .collect::<Vec<_>>();
-        let query = format!($query, ::stash::utils::placeholders(&params),);
+        let query = format!($query, ::mail_stash::utils::placeholders(&params),);
         (query, params)
     }};
 }

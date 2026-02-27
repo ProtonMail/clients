@@ -1,5 +1,5 @@
 [package]
-name = "proton-observability"
+name = "mail-observability"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
@@ -11,7 +11,7 @@ serde_json = { workspace = true }
 chrono = { workspace = true }
 parking_lot = { workspace = true }
 tracing = { workspace = true }
-proton-core-api = { workspace = true }
+mail-core-api = { workspace = true }
 
 [lints]
 workspace = true

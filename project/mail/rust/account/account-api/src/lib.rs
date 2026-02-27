@@ -3,10 +3,10 @@
 
 use crate::prelude::*;
 use derive_more::Display;
-use muon::{
+use mail_core_api::services::observability::ApiServiceObservabilityResponse;
+use mail_muon::{
     ProtonRequest, ProtonResponse, Status, common::Sender, http::HttpReqExt, serde_to_query,
 };
-use proton_core_api::services::observability::ApiServiceObservabilityResponse;
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -14,7 +14,7 @@ use serde_json::Value;
 extern crate tracing;
 
 #[macro_use]
-extern crate muon;
+extern crate mail_muon;
 
 pub mod countries;
 pub mod login;
@@ -35,10 +35,10 @@ pub enum ApiError {
     Serialization(#[from] serde_qs::Error),
 
     #[error(transparent)]
-    Muon(#[from] muon::Error),
+    Muon(#[from] mail_muon::Error),
 
     #[error(transparent)]
-    Status(#[from] muon::StatusErr),
+    Status(#[from] mail_muon::StatusErr),
 
     #[error("Internal error: {0}")]
     Internal(String),
@@ -67,7 +67,7 @@ pub struct ApiErrorInfo {
 impl ApiError {
     #[must_use]
     pub fn err_status(&self) -> Option<Status> {
-        if let Self::Status(muon::StatusErr(code, _)) = self {
+        if let Self::Status(mail_muon::StatusErr(code, _)) = self {
             Some(code.to_owned())
         } else {
             None
@@ -81,7 +81,7 @@ impl ApiError {
 
     #[must_use]
     pub fn err_info(&self) -> Option<ApiErrorInfo> {
-        if let Self::Status(muon::StatusErr(_, res)) = self {
+        if let Self::Status(mail_muon::StatusErr(_, res)) = self {
             serde_json::from_str(res.body_str().ok()?).ok()
         } else {
             None
@@ -90,7 +90,7 @@ impl ApiError {
 
     #[must_use]
     pub fn body_str(&self) -> Option<&str> {
-        if let Self::Status(muon::StatusErr(_, res)) = self {
+        if let Self::Status(mail_muon::StatusErr(_, res)) = self {
             res.body_str().ok()
         } else {
             None
@@ -529,7 +529,10 @@ impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> AccountApi for This {
     }
 }
 
-fn add_payment_header(request: muon::ProtonRequest, token: Option<&str>) -> muon::ProtonRequest {
+fn add_payment_header(
+    request: mail_muon::ProtonRequest,
+    token: Option<&str>,
+) -> mail_muon::ProtonRequest {
     if let Some(token) = token {
         request.header(("X-PM-Payment-Info-Token", token))
     } else {

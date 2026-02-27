@@ -8,8 +8,8 @@ use uniffi::Record as UniffiRecord;
 
 use super::MailUserSession;
 use super::datatypes::SystemLabel;
-use proton_mail_common::ProtonMailError as RealProtonMailError;
-use proton_mail_common::datatypes::{
+use mail_common::ProtonMailError as RealProtonMailError;
+use mail_common::datatypes::{
     AssignedSwipeAction as RealAssignedSwipeAction,
     AssignedSwipeActions as RealAssignedSwipeActions,
     SwipeActionMoveToTarget as RealSwipeActionMoveToTarget,
@@ -94,9 +94,9 @@ pub async fn assigned_swipe_actions(
     current_folder: Id,
     session: Arc<MailUserSession>,
 ) -> Result<AssignedSwipeActions, ActionError> {
-    let stash = session.user_stash()?;
+    let mail_stash = session.user_stash()?;
     uniffi_async(async move {
-        let tether = stash.connection().await?;
+        let tether = mail_stash.connection().await?;
         let actions = RealAssignedSwipeActions::get(current_folder.into(), &tether).await?;
 
         Ok::<_, RealProtonMailError>(AssignedSwipeActions::from(actions))

@@ -1,31 +1,31 @@
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::models::Address;
-use proton_core_common::models::ModelExtension as _;
-use proton_mail_api::services::proton::common::MessageId;
-use proton_mail_api::services::proton::response_data::IncomingDefault as ApiIncomingDefault;
-use proton_mail_api::services::proton::response_data::IncomingDefaultLocation as ApiIncomingDefaultLocation;
-use proton_mail_common::datatypes::ParsedHeaders;
-use proton_mail_common::datatypes::SystemLabelId as _;
-use proton_mail_common::datatypes::message_banner::MessageBanner;
-use proton_mail_common::datatypes::{MessageFlags, MimeType};
-use proton_mail_common::decrypted_message::DecryptedMessageBody;
-use proton_mail_common::models::IncomingDefault;
-use proton_mail_common::models::IncomingDefaultLocation;
-use proton_mail_common::models::MailSettings;
-use proton_mail_common::models::MessageBodyMetadata;
-use proton_mail_common::models::MessageMimeType;
-use proton_mail_common::models::{Conversation, RawMessageBody};
+use mail_api::services::proton::common::MessageId;
+use mail_api::services::proton::response_data::IncomingDefault as ApiIncomingDefault;
+use mail_api::services::proton::response_data::IncomingDefaultLocation as ApiIncomingDefaultLocation;
+use mail_common::datatypes::ParsedHeaders;
+use mail_common::datatypes::SystemLabelId as _;
+use mail_common::datatypes::message_banner::MessageBanner;
+use mail_common::datatypes::{MessageFlags, MimeType};
+use mail_common::decrypted_message::DecryptedMessageBody;
+use mail_common::models::IncomingDefault;
+use mail_common::models::IncomingDefaultLocation;
+use mail_common::models::MailSettings;
+use mail_common::models::MessageBodyMetadata;
+use mail_common::models::MessageMimeType;
+use mail_common::models::{Conversation, RawMessageBody};
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::models::Address;
+use mail_core_common::models::ModelExtension as _;
 
-use proton_mail_common::test_utils::init::Params;
-use stash::orm::Model;
-use stash::stash::Tether;
+use mail_common::test_utils::init::Params;
+use mail_stash::orm::Model;
+use mail_stash::stash::Tether;
 use test_case::test_case;
 
-use proton_mail_common::models::Message;
+use mail_common::models::Message;
 
-use proton_mail_common::test_utils::test_context::MailTestContext;
-use proton_mail_common::test_utils::test_context::MailUserContextTestExtension;
-use stash::stash::StashError;
+use mail_common::test_utils::test_context::MailTestContext;
+use mail_common::test_utils::test_context::MailUserContextTestExtension;
+use mail_stash::stash::StashError;
 use velcro::hash_map;
 use wiremock::Mock;
 use wiremock::MockServer;
@@ -125,7 +125,7 @@ async fn banners() {
         local_address_id: addr.id(),
         remote_address_id: addr.remote_id.clone().unwrap(),
         remote_id: Some(message_id),
-        sender: proton_mail_common::datatypes::MessageSender {
+        sender: mail_common::datatypes::MessageSender {
             address: "normal@email".into(),
             ..Default::default()
         },
@@ -161,7 +161,7 @@ async fn banners() {
 
     let msg_blocked = Message {
         remote_id: Some("blocked".into()),
-        sender: proton_mail_common::datatypes::MessageSender {
+        sender: mail_common::datatypes::MessageSender {
             address: "blocked@email".into(),
             ..Default::default()
         },
@@ -170,7 +170,7 @@ async fn banners() {
 
     let msg_blocked_domain = Message {
         remote_id: Some("blocked_domain".into()),
-        sender: proton_mail_common::datatypes::MessageSender {
+        sender: mail_common::datatypes::MessageSender {
             address: "dave@blocked.com".into(),
             ..Default::default()
         },
@@ -557,7 +557,7 @@ async fn banners_unsubscribe() {
         remote_conversation_id: conv.remote_id.clone(),
         remote_address_id: addr.remote_id.clone().unwrap(),
         remote_id: Some("".into()),
-        sender: proton_mail_common::datatypes::MessageSender {
+        sender: mail_common::datatypes::MessageSender {
             address: "normal@email".into(),
             ..Default::default()
         },

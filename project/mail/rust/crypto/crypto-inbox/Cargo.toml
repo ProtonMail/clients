@@ -1,5 +1,5 @@
 [package]
-name = "proton-crypto-inbox"
+name = "mail-crypto-inbox"
 version = "0.9.0"
 edition.workspace = true
 rust-version.workspace = true
@@ -7,7 +7,7 @@ license.workspace = true
 
 [dependencies]
 proton-crypto-account = { workspace = true }
-proton-crypto-inbox-mime = { workspace = true }
+mail-crypto-inbox-mime = { workspace = true }
 thiserror = { workspace = true }
 serde = { workspace = true }
 serde_repr = { workspace = true }

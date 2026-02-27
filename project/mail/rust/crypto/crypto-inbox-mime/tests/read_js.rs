@@ -1,8 +1,8 @@
 //! Tests from <https://github.com/ProtonMail/pmcrypto/blob/main/test/message/processMIME.spec.ts>
+use mail_crypto_inbox_mime::{MimeProcessor, MimeSignatureVerifier, ProcessMime};
 use proton_crypto::crypto::*;
 use proton_crypto::new_pgp_provider;
 use proton_crypto::utils::to_canonicalized_string;
-use proton_crypto_inbox_mime::{MimeProcessor, MimeSignatureVerifier, ProcessMime};
 
 pub const KEY: &str = r"-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: OpenPGP.js v4.4.6

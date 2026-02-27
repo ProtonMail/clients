@@ -9,11 +9,11 @@ use crate::prelude::{
 use crate::shared::SecureString;
 use crate::shared::challenge::get_auth_info;
 use futures::TryFutureExt as _;
-use muon::Client;
-use muon::rest::auth::v4::fido2;
-use proton_core_api::auth::UserKeySecret;
-use proton_core_api::services::proton::PostAuthInfoResponse;
-use proton_core_common::datatypes::PasswordMode;
+use mail_core_api::auth::UserKeySecret;
+use mail_core_api::services::proton::PostAuthInfoResponse;
+use mail_core_common::datatypes::PasswordMode;
+use mail_muon::Client;
+use mail_muon::rest::auth::v4::fido2;
 use proton_crypto_account::proton_crypto::crypto::{DataEncoding::Armor, PGPProviderSync};
 use proton_crypto_account::proton_crypto::srp::SRPProvider;
 use proton_crypto_account::proton_crypto::{self};

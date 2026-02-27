@@ -1,6 +1,6 @@
 use crate::datatypes::{AccountDetails, AvatarInformation};
 use crate::db::account::CoreAccount;
-use proton_core_api::services::proton::UserId;
+use mail_core_api::services::proton::UserId;
 use std::default::Default;
 
 impl Default for CoreAccount {

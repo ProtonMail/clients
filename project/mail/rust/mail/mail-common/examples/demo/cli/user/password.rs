@@ -3,8 +3,8 @@ use crate::cli::ctx::MailContextExt;
 use crate::cli::read;
 use clap::Args;
 use futures::TryFutureExt;
-use proton_account_api::password::state::StateKind;
-use proton_mail_common::{MailContext, MailUserContext};
+use mail_account_api::password::state::StateKind;
+use mail_common::{MailContext, MailUserContext};
 use std::sync::Arc;
 
 /// Change user password.

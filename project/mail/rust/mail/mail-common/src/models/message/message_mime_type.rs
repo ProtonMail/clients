@@ -1,9 +1,9 @@
 use crate::datatypes::MimeType;
-use proton_crypto_account::keys::EmailMimeType;
-use serde::{Deserialize, Serialize};
-use stash::exports::{
+use mail_stash::exports::{
     FromSql, FromSqlError, FromSqlResult, SqliteError, ToSql, ToSqlOutput, Value, ValueRef,
 };
+use proton_crypto_account::keys::EmailMimeType;
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MessageMimeType {

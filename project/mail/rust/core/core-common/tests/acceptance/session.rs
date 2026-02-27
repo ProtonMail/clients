@@ -1,11 +1,11 @@
-use proton_core_api::services::proton::{SessionId, UserId};
-use proton_core_common::OnSessionDeletedResponse;
-use proton_core_common::db::account::CoreSession;
-use proton_core_common::models::ModelExtension;
-use proton_core_common::services::SessionObserverService;
-use proton_core_common::test_utils::test_context::TestContext;
-use stash::stash::{Bond, StashError};
-use stash::{AccountDb, UserDb};
+use mail_core_api::services::proton::{SessionId, UserId};
+use mail_core_common::OnSessionDeletedResponse;
+use mail_core_common::db::account::CoreSession;
+use mail_core_common::models::ModelExtension;
+use mail_core_common::services::SessionObserverService;
+use mail_core_common::test_utils::test_context::TestContext;
+use mail_stash::stash::{Bond, StashError};
+use mail_stash::{AccountDb, UserDb};
 use std::time::Duration;
 
 #[tokio::test]
@@ -129,7 +129,7 @@ async fn test_session_observer_triggers_full_logout_on_session_deletion() {
     let user_db_path = ctx.context().user_db_path(&user_id);
     assert!(user_db_path.exists(), "User database should exist");
 
-    // Delete the session from the database (simulating what happens when muon's
+    // Delete the session from the database (simulating what happens when mail_muon's
     // AuthStore receives Auth::None after a failed token refresh on remote logout)
     ctx.context()
         .account_stash()
@@ -224,14 +224,14 @@ async fn test_manual_logout_with_session_observer_double_cleanup() {
     if user_db_path.exists() && !user_db_path.to_string_lossy().contains(".nuked") {
         // If database file still exists and isn't archived, verify tables are dropped
         // Try to open a connection to the user database directly
-        use stash::stash::{Stash, StashConfiguration};
+        use mail_stash::stash::{Stash, StashConfiguration};
         let user_stash: Result<Stash<UserDb>, _> = Stash::new(StashConfiguration {
             path: Some(&user_db_path),
             pool_size: Some(1),
             ..Default::default()
         });
-        if let Ok(stash) = user_stash
-            && let Ok(tether) = stash.connection().await
+        if let Ok(mail_stash) = user_stash
+            && let Ok(tether) = mail_stash.connection().await
         {
             let tables = tether
                     .query_values::<_, String>(

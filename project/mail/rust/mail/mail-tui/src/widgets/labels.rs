@@ -1,5 +1,5 @@
 use crate::widgets::AsList;
-use proton_core_common::models::Label;
+use mail_core_common::models::Label;
 use ratatui::widgets::{List, ListItem};
 
 impl AsList for Vec<Label> {

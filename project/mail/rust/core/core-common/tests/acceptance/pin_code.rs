@@ -1,10 +1,10 @@
-use proton_core_common::Context;
-use proton_core_common::test_utils::test_context::TestContext;
-use proton_core_common::{
+use mail_core_common::Context;
+use mail_core_common::test_utils::test_context::TestContext;
+use mail_core_common::{
     models::{AppProtection, AppSettings, ModelExtension, PinProtection},
     pin_code::{PinCode, PinError},
 };
-use stash::orm::Model;
+use mail_stash::orm::Model;
 
 #[tokio::test]
 async fn create_and_delete_pin() {

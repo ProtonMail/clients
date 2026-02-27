@@ -1,5 +1,5 @@
 [package]
-name = "uniffi-common"
+name = "mail-uniffi-common"
 version = "0.1.0"
 rust-version.workspace = true
 license.workspace = true
@@ -9,9 +9,9 @@ workspace = true
 
 [dependencies]
 uniffi.workspace = true
-uniffi-macros.workspace = true
-# uniffi-runtime.workspace = true
-proton-core-api = { workspace = true }
+mail-uniffi-macros.workspace = true
+# mail-uniffi-runtime.workspace = true
+mail-core-api = { workspace = true }
 
 [lints]
 workspace = true

@@ -10,19 +10,19 @@ use crate::action::{
 use chrono::{DateTime, Utc};
 use include_dir::{Dir, include_dir};
 use indoc::indoc;
-use proton_sqlite3::MigratorError;
-use proton_sqlite3::file::embedded_migrations;
-use proton_sqlite3::rusqlite::types::ValueRef;
-use stash::exports::{
+use mail_sqlite3::MigratorError;
+use mail_sqlite3::file::embedded_migrations;
+use mail_sqlite3::rusqlite::types::ValueRef;
+use mail_stash::exports::{
     Connection, FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, Transaction,
 };
-use stash::exports::{SqliteError, Value};
-use stash::macros::{DbRecord, Model};
-use stash::orm::{DbRecord, Model, ModelHooks};
-use stash::params;
-use stash::rusqlite::{OptionalExtension, params_from_iter};
-use stash::stash::{Bond, StashError, Tether};
-use stash::utils::{ConnectionExt, placeholders, placeholders_n};
+use mail_stash::exports::{SqliteError, Value};
+use mail_stash::macros::{DbRecord, Model};
+use mail_stash::orm::{DbRecord, Model, ModelHooks};
+use mail_stash::params;
+use mail_stash::rusqlite::{OptionalExtension, params_from_iter};
+use mail_stash::stash::{Bond, StashError, Tether};
+use mail_stash::utils::{ConnectionExt, placeholders, placeholders_n};
 use std::collections::HashSet;
 use std::hash::RandomState;
 use std::ops::Add;
@@ -87,7 +87,7 @@ impl ActionDependency {
 #[TableName("action_queue")]
 #[ModelHooks]
 #[Database(Db)]
-pub struct StoredAction<Db: stash::marker::DatabaseMarker> {
+pub struct StoredAction<Db: mail_stash::marker::DatabaseMarker> {
     #[IdField(autoincrement)]
     pub id: Option<ActionId>,
 
@@ -128,7 +128,7 @@ pub struct StoredAction<Db: stash::marker::DatabaseMarker> {
     pub _phantom: std::marker::PhantomData<Db>,
 }
 
-impl<Db: stash::marker::DatabaseMarker> StoredAction<Db> {
+impl<Db: mail_stash::marker::DatabaseMarker> StoredAction<Db> {
     /// Create a new stored action with the given `action` state and `metadata`.
     #[allow(dead_code)]
     pub(crate) fn new<T: Action<Db>>(
@@ -487,7 +487,7 @@ impl<Db: stash::marker::DatabaseMarker> StoredAction<Db> {
     }
 }
 
-impl<Db: stash::marker::DatabaseMarker> ModelHooks for StoredAction<Db> {
+impl<Db: mail_stash::marker::DatabaseMarker> ModelHooks for StoredAction<Db> {
     fn after_load(&mut self, conn: &Connection) -> Result<(), StashError> {
         // Dependencies
         let dependencies = Self::all_dependencies_sync(conn, self.id())
@@ -607,7 +607,7 @@ pub struct ExecutionGuard {
 
 impl ExecutionGuard {
     /// Check whether the action with `action_id` is being executed.
-    pub async fn has_executor<Db: stash::marker::DatabaseMarker>(
+    pub async fn has_executor<Db: mail_stash::marker::DatabaseMarker>(
         action_id: ActionId,
         bond: &Bond<'_, Db>,
     ) -> Result<bool, StashError> {
@@ -636,7 +636,7 @@ impl ExecutionGuard {
     /// This method does not check if we can legally acquire the execution lock.
     /// [`StoredAction::next()`] performs all the checks and returns the next action that
     /// can be acquired.
-    pub async fn acquire<Db: stash::marker::DatabaseMarker>(
+    pub async fn acquire<Db: mail_stash::marker::DatabaseMarker>(
         action_id: ActionId,
         executor_id: impl Into<String>,
         bond: &Bond<'_, Db>,
@@ -645,7 +645,7 @@ impl ExecutionGuard {
     }
 
     /// Same as [`acquire`] but allows one to specify the [`timestamp`] of acquisition.
-    pub async fn acquire_with_timestamp<Db: stash::marker::DatabaseMarker>(
+    pub async fn acquire_with_timestamp<Db: mail_stash::marker::DatabaseMarker>(
         action_id: ActionId,
         executor_id: impl Into<String>,
         timestamp: DateTime<Utc>,
@@ -675,7 +675,7 @@ impl ExecutionGuard {
 
     /// Clean any leftover stale locks. These can occur if the execution of background task
     /// is aborted or if for some reason we never managed to properly release our previous lock.
-    pub(crate) async fn clear_slate_state<Db: stash::marker::DatabaseMarker>(
+    pub(crate) async fn clear_slate_state<Db: mail_stash::marker::DatabaseMarker>(
         executor_id: String,
         bond: &Bond<'_, Db>,
     ) -> Result<(), StashError> {
@@ -688,7 +688,7 @@ impl ExecutionGuard {
     }
 
     /// Release the current access privileges.
-    pub async fn release<Db: stash::marker::DatabaseMarker>(
+    pub async fn release<Db: mail_stash::marker::DatabaseMarker>(
         self,
         bond: &Bond<'_, Db>,
     ) -> Result<(), StashError> {
@@ -715,7 +715,7 @@ impl ExecutionGuard {
     /// and prevent unnecessary re-runs.
     pub async fn tx<Db, F, T, E>(&self, tether: &mut Tether<Db>, closure: F) -> Result<T, E>
     where
-        Db: stash::marker::DatabaseMarker,
+        Db: mail_stash::marker::DatabaseMarker,
         F: AsyncFnOnce(&Bond<'_, Db>) -> Result<T, E>,
         E: From<WriterGuardError> + From<StashError>,
     {
@@ -740,7 +740,7 @@ impl ExecutionGuard {
         closure: F,
     ) -> Result<T, WriterGuardError>
     where
-        Db: stash::marker::DatabaseMarker,
+        Db: mail_stash::marker::DatabaseMarker,
         F: AsyncFnOnce(&Bond<'_, Db>) -> Result<T, StashError>,
     {
         tether
@@ -763,13 +763,13 @@ impl ExecutionGuard {
 }
 
 #[tracing::instrument(name = "Action Table Setup", skip(conn))]
-pub async fn migrate<Db: stash::marker::DatabaseMarker>(
+pub async fn migrate<Db: mail_stash::marker::DatabaseMarker>(
     conn: &mut Tether<Db>,
 ) -> Result<(), MigratorError> {
     const TABLE: &str = "action_queue_version";
     const MIGRATIONS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/src/db/migrations");
 
-    proton_sqlite3::Migrator::new(TABLE, embedded_migrations::<Db>(&MIGRATIONS))
+    mail_sqlite3::Migrator::new(TABLE, embedded_migrations::<Db>(&MIGRATIONS))
         .migrate(conn)
         .await?;
 
@@ -812,7 +812,7 @@ impl ActionDependencyKeysTable {
             ).map_err(Into::into)
     }
 
-    pub async fn resolve_dependency_keys<Db: stash::marker::DatabaseMarker>(
+    pub async fn resolve_dependency_keys<Db: mail_stash::marker::DatabaseMarker>(
         keys: Vec<ActionDependencyKey>,
         tether: &Tether<Db>,
     ) -> Result<Vec<ActionId>, StashError> {
@@ -821,7 +821,7 @@ impl ActionDependencyKeysTable {
             .await
     }
 
-    pub async fn store_dependency_keys<Db: stash::marker::DatabaseMarker>(
+    pub async fn store_dependency_keys<Db: mail_stash::marker::DatabaseMarker>(
         keys: Vec<ActionDependencyKey>,
         action_id: ActionId,
         bond: &Bond<'_, Db>,
@@ -830,7 +830,7 @@ impl ActionDependencyKeysTable {
             .await
     }
 
-    pub async fn delete_for_action_id<Db: stash::marker::DatabaseMarker>(
+    pub async fn delete_for_action_id<Db: mail_stash::marker::DatabaseMarker>(
         action_id: ActionId,
         bond: &Bond<'_, Db>,
     ) -> Result<(), StashError> {

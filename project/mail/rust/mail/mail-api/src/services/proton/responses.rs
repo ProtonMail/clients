@@ -5,8 +5,8 @@ use crate::services::proton::response_data::{
     Attachment, Conversation, ConversationCount, MailSettings, Message, MessageCount,
     MessageMetadata, OperationResult, UndoToken,
 };
-use proton_api_utils::PaginateResponse;
-use proton_core_api::services::proton::LabelId;
+use mail_api_utils::PaginateResponse;
+use mail_core_api::services::proton::LabelId;
 use serde::Deserialize;
 #[cfg(feature = "mocks")]
 use serde::Serialize;

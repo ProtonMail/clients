@@ -1,6 +1,6 @@
 //! # Muon Test
 //!
-//! This crate implements testing utilities for the `muon` crate.
+//! This crate implements testing utilities for the `mail_muon` crate.
 
 #[macro_use]
 mod cfg;

@@ -19,5 +19,5 @@ pub const MAX_PAGE_ELEMENT_COUNT: u64 = 200;
 pub const SYNC_CONTACT_PAGE_SIZE: u64 = 1000;
 
 pub mod exports {
-    pub use muon::common::RetryPolicy;
+    pub use mail_muon::common::RetryPolicy;
 }

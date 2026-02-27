@@ -3,22 +3,22 @@ use crate::datatypes::RollbackItemType;
 use crate::datatypes::dependencies::DependencyFetcher;
 use crate::models::{Conversation, Message, MessageSyncDecision};
 use futures::stream::{FuturesOrdered, FuturesUnordered, StreamExt};
-use proton_action_queue::queue::Queue;
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::consts::Mail;
-use proton_core_api::service::ApiServiceError;
-use proton_core_api::services::proton::ProtonCore;
-use proton_core_api::services::proton::{LabelId, ProtonIdMarker};
-use proton_core_api::session::Session;
-use proton_core_common::models::Label;
-use proton_mail_api::services::proton::ProtonMail;
-use proton_mail_api::services::proton::common::{ConversationId, MessageId};
-use proton_mail_api::services::proton::prelude::{GetConversationResponse, MessageMetadata};
-use proton_mail_api::services::proton::requests::GetMessagesOptions;
-use stash::macros::Model;
-use stash::orm::Model;
-use stash::stash::{Bond, RunTransaction, StashError, Tether};
-use stash::{UserDb, params};
+use mail_action_queue::queue::Queue;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_api::services::proton::ProtonMail;
+use mail_api::services::proton::common::{ConversationId, MessageId};
+use mail_api::services::proton::prelude::{GetConversationResponse, MessageMetadata};
+use mail_api::services::proton::requests::GetMessagesOptions;
+use mail_core_api::consts::Mail;
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::ProtonCore;
+use mail_core_api::services::proton::{LabelId, ProtonIdMarker};
+use mail_core_api::session::Session;
+use mail_core_common::models::Label;
+use mail_stash::macros::Model;
+use mail_stash::orm::Model;
+use mail_stash::stash::{Bond, RunTransaction, StashError, Tether};
+use mail_stash::{UserDb, params};
 use std::fmt::Display;
 use tracing::{debug, error, warn};
 
@@ -251,7 +251,7 @@ impl RollbackItem {
 
                     if let Err(e) = queue
                         .rebase_in(
-                            proton_action_queue::action::ActionGroup::default(),
+                            mail_action_queue::action::ActionGroup::default(),
                             &changeset,
                             tx,
                         )
@@ -456,7 +456,7 @@ impl RollbackHandler for ConversationRollbackHandler {
 struct LabelRollbackHandler {}
 
 impl RollbackHandler for LabelRollbackHandler {
-    type Item = proton_core_api::services::proton::Label;
+    type Item = mail_core_api::services::proton::Label;
     type RemoteId = LabelId;
 
     fn item_type() -> RollbackItemType {

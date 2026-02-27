@@ -1,7 +1,7 @@
 //! ## Muon Common
 //!
 //! This module defines a core set of types and traits used throughout the rest
-//! of the `muon` crate. These are intended to be flexible and reusable building
+//! of the `mail_muon` crate. These are intended to be flexible and reusable building
 //! blocks for building higher-level components.
 
 /// The common prelude: just re-exports everything.

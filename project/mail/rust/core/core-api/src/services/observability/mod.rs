@@ -8,7 +8,7 @@ pub enum ApiServiceObservabilityResponse {
     Http4xx,
     Http5xx,
 
-    /// An internal muon error has occurred. This could be due to a network
+    /// An internal `mail_muon` error has occurred. This could be due to a network
     /// error, or a misconfiguration, causing the request to fail.
     NetworkError,
 

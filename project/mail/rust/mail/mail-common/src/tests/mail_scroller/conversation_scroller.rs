@@ -1,21 +1,21 @@
-use proton_mail_common::datatypes::SystemLabelId;
+use mail_common::datatypes::SystemLabelId;
 use std::collections::BTreeMap;
 
-use crate as proton_mail_common;
+use crate as mail_common;
 use crate::datatypes::LocalConversationId;
 use crate::datatypes::labels::{ScrollOrderDir, ScrollOrderField};
 use crate::datatypes::{ContextualConversation, ReadFilter};
 use crate::models::{CachedScrollData, ConversationScrollData, ScrollData};
 use crate::models::{Conversation, ScrollCursor};
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::datatypes::SystemLabel;
-use proton_core_common::models::{Label, ModelExtension, ModelIdExtension};
-use proton_mail_api::services::proton::common::ConversationId;
-use proton_mail_common::test_utils::db::new_test_connection;
-use proton_mail_common::{conv_id, conv_label, conversation, label, lbl_id};
-use stash::orm::Model;
-use stash::stash::{Bond, StashError, Tether};
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_api::services::proton::common::ConversationId;
+use mail_common::test_utils::db::new_test_connection;
+use mail_common::{conv_id, conv_label, conversation, label, lbl_id};
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::datatypes::SystemLabel;
+use mail_core_common::models::{Label, ModelExtension, ModelIdExtension};
+use mail_stash::orm::Model;
+use mail_stash::stash::{Bond, StashError, Tether};
 use velcro::btree_map;
 
 fn test_conversations(n: usize, order_shift: u64) -> Vec<Conversation> {
@@ -86,8 +86,8 @@ fn expected_conversations(
 async fn test_scroller_reads_correct_items_within_visible_range() {
     const REMOTE_LABEL_ID: &str = "rid1";
 
-    let stash = new_test_connection().await;
-    let mut tether = stash.connection().await.unwrap();
+    let mail_stash = new_test_connection().await;
+    let mut tether = mail_stash.connection().await.unwrap();
     let mut data = btree_map! {
         REMOTE_LABEL_ID: test_conversations(100, 100),
         "rid2": test_conversations(50, 0),
@@ -213,8 +213,8 @@ async fn test_scroller_reads_correct_items_within_visible_range() {
 async fn test_cashed_scroller_reads_correct_items_within_visible_range() {
     const REMOTE_LABEL_ID: &str = "rid1";
 
-    let stash = new_test_connection().await;
-    let mut tether = stash.connection().await.unwrap();
+    let mail_stash = new_test_connection().await;
+    let mut tether = mail_stash.connection().await.unwrap();
     let mut data = btree_map! {
         REMOTE_LABEL_ID: test_conversations(100, 100),
         "rid2": test_conversations(50, 0),
@@ -455,8 +455,8 @@ async fn test_cashed_scroller_reads_correct_items_within_visible_range() {
 async fn test_cashed_scroller_reads_last_two_pages_together_when_last_page_is_not_filled() {
     const REMOTE_LABEL_ID: &str = "rid1";
 
-    let stash = new_test_connection().await;
-    let mut tether = stash.connection().await.unwrap();
+    let mail_stash = new_test_connection().await;
+    let mut tether = mail_stash.connection().await.unwrap();
     let mut data = btree_map! {
         REMOTE_LABEL_ID: test_conversations(5, 100),
         "rid2": test_conversations(50, 0),
@@ -514,8 +514,8 @@ async fn test_cashed_scroller_reads_last_two_pages_together_when_last_page_is_no
 
 #[tokio::test]
 async fn allow_different_filter_types_to_be_stored_in_database() {
-    let stash = new_test_connection().await;
-    let mut tether = stash.connection().await.unwrap();
+    let mail_stash = new_test_connection().await;
+    let mut tether = mail_stash.connection().await.unwrap();
     let local_label_id = SystemLabel::Inbox.local_id(&tether).await.unwrap().unwrap();
     // Create new entries for each filter type
     let mut scroller_all = ConversationScrollData::builder()
@@ -818,8 +818,8 @@ async fn allow_different_filter_types_to_be_stored_in_database() {
 
 #[tokio::test]
 async fn test_cashed_scroller_correctly_reads_empty_conversations_from_the_trash() {
-    let stash = new_test_connection().await;
-    let mut tether = stash.connection().await.unwrap();
+    let mail_stash = new_test_connection().await;
+    let mut tether = mail_stash.connection().await.unwrap();
     let trash_remote_id = SystemLabel::Trash.remote_id();
     let trash = Label::find_by_remote_id(trash_remote_id, &tether)
         .await
@@ -886,8 +886,8 @@ async fn test_create_or_get_local_fix_preserves_api_conversations_with_labels() 
     // (with labels) over unknown conversation data (without labels), ensuring conversations
     // pass the filter and reach the prefetcher successfully.
 
-    let stash = new_test_connection().await;
-    let mut tether = stash.connection().await.unwrap();
+    let mail_stash = new_test_connection().await;
+    let mut tether = mail_stash.connection().await.unwrap();
 
     // Set up inbox label
     let inbox_remote_id = SystemLabel::Inbox.remote_id();

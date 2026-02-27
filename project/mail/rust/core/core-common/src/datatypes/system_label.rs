@@ -3,9 +3,9 @@ use std::fmt::Display;
 use crate::datatypes::LocalLabelId;
 use crate::models::{Label, ModelIdExtension};
 use derive_more::TryFrom;
+use mail_stash::orm::Model;
+use mail_stash::stash::{StashError, Tether};
 use serde::{Deserialize, Serialize};
-use stash::orm::Model;
-use stash::stash::{StashError, Tether};
 
 use crate::datatypes::{LabelId, LabelType};
 

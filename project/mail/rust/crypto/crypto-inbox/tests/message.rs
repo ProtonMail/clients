@@ -1,9 +1,9 @@
-use proton_crypto_inbox::message::{DecryptableMessage, DecryptedBody, GettablePGPMessage};
-use proton_crypto_inbox::proton_crypto::crypto::VerificationError;
+use mail_crypto_inbox::message::{DecryptableMessage, DecryptedBody, GettablePGPMessage};
+use mail_crypto_inbox::proton_crypto::crypto::VerificationError;
 
 mod common;
 use common::{get_test_address_keys, get_test_public_address_keys};
-use proton_crypto_inbox_mime::ProcessedBodyType;
+use mail_crypto_inbox_mime::ProcessedBodyType;
 
 use crate::common::{get_test_address_key_source, get_test_public_address_key_source};
 
@@ -330,7 +330,7 @@ impl DecryptableMessage for TestMessage {
 
 #[test]
 fn test_message_decrypt_and_verify() {
-    let pgp = proton_crypto_inbox::proton_crypto::new_pgp_provider();
+    let pgp = mail_crypto_inbox::proton_crypto::new_pgp_provider();
     let decryption_keys = get_test_address_keys(&pgp);
     let mut verification_keys = get_test_public_address_keys(&pgp);
     let test_message = TestMessage(false, TEST_MESSAGE_BODY.into());
@@ -350,7 +350,7 @@ fn test_message_decrypt_and_verify() {
 
 #[test]
 fn test_message_decrypt_and_verify_mime() {
-    let pgp = proton_crypto_inbox::proton_crypto::new_pgp_provider();
+    let pgp = mail_crypto_inbox::proton_crypto::new_pgp_provider();
     let decryption_keys = get_test_address_key_source(&pgp, TEST_DECRYPTION_KEY_MIME, "password");
     let verification_keys = get_test_public_address_key_source(&pgp, TEST_VERIFICATION_KEY_MIME);
 
@@ -387,7 +387,7 @@ fn test_message_decrypt_and_verify_mime() {
 
 #[test]
 fn test_message_decrypt_and_verify_mime_go() {
-    let pgp = proton_crypto_inbox::proton_crypto::new_pgp_provider();
+    let pgp = mail_crypto_inbox::proton_crypto::new_pgp_provider();
     let decryption_keys = get_test_address_key_source(&pgp, TEST_DECRYPTION_KEY_GO, "test");
     let verification_keys = get_test_public_address_key_source(&pgp, TEST_VERIFICATION_KEY_GO);
 

@@ -9,22 +9,22 @@ use crate::models::{
 };
 use crate::{MailContextError, MailUserContext};
 use futures::future;
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionGroup, ActionId, FactoryResult, Handler, Priority, Type, VersionConverter,
     VersionConverterError, WriterGuard, WriterGuardError, deserialize,
 };
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::consts::Mail;
-use proton_core_api::service::ApiServiceError;
-use proton_core_api::services::proton::AddressId;
-use proton_core_common::models::{ModelExtension, ModelIdExtension};
-use proton_mail_api::services::proton::ProtonMail;
-use proton_mail_api::services::proton::common::MessageId;
-use proton_mail_api::services::proton::prelude::NewAttachmentParams;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_api::services::proton::ProtonMail;
+use mail_api::services::proton::common::MessageId;
+use mail_api::services::proton::prelude::NewAttachmentParams;
+use mail_core_api::consts::Mail;
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::AddressId;
+use mail_core_common::models::{ModelExtension, ModelIdExtension};
+use mail_stash::orm::Model;
+use mail_stash::stash::{Bond, Tether};
+use mail_stash::{UserDb, params};
 use serde::{Deserialize, Serialize};
-use stash::orm::Model;
-use stash::stash::{Bond, Tether};
-use stash::{UserDb, params};
 use std::sync::Weak;
 use std::time::Duration;
 use tokio::time;

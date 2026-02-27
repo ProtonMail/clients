@@ -15,18 +15,18 @@ use aes_gcm::{
 use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
 use derive_more::{AsRef, Deref};
-use proton_core_api::auth::{Tokens, UserKeySecret};
+use mail_core_api::auth::{Tokens, UserKeySecret};
 
-use proton_core_api::services::proton::{SessionId, UserId};
+use mail_core_api::services::proton::{SessionId, UserId};
+use mail_stash::AccountDb;
+use mail_stash::exports::{FromSql, FromSqlResult, SqliteError, ToSql, ToSqlOutput, ValueRef};
+use mail_stash::macros::Model;
+use mail_stash::orm::Model;
+use mail_stash::stash::{Stash, StashError, Tether, WatcherHandle};
+use mail_stash::{params, sql_using_serde};
 use secrecy::{ExposeSecret, SecretString};
 use serde::{Deserialize, Serialize};
 use sqlite_watcher::watcher::TableObserver;
-use stash::AccountDb;
-use stash::exports::{FromSql, FromSqlResult, SqliteError, ToSql, ToSqlOutput, ValueRef};
-use stash::macros::Model;
-use stash::orm::Model;
-use stash::stash::{Stash, StashError, Tether, WatcherHandle};
-use stash::{params, sql_using_serde};
 use std::collections::{BTreeSet, HashSet};
 use std::ops::Deref;
 use std::string::FromUtf8Error;
@@ -190,8 +190,8 @@ impl CoreAccount {
         }
     }
 
-    pub async fn watch(stash: &Stash<AccountDb>) -> Result<WatcherHandle, StashError> {
-        stash
+    pub async fn watch(mail_stash: &Stash<AccountDb>) -> Result<WatcherHandle, StashError> {
+        mail_stash
             .subscribe_to(|sender| Box::new(CoreAccountWatcher { sender }))
             .await
     }
@@ -345,8 +345,8 @@ impl CoreSession {
         })
     }
 
-    pub async fn watch(stash: &Stash<AccountDb>) -> Result<WatcherHandle, StashError> {
-        stash
+    pub async fn watch(mail_stash: &Stash<AccountDb>) -> Result<WatcherHandle, StashError> {
+        mail_stash
             .subscribe_to(|sender| Box::new(CoreSessionWatcher { sender }))
             .await
     }
@@ -673,23 +673,23 @@ impl From<CoreSession> for CoreSessionObserverValue {
 /// This observer only issues a series of notifications when changes occur in the session table.
 pub struct CoreSessionObserver {
     sessions: HashSet<CoreSessionObserverValue>,
-    stash: Stash<AccountDb>,
+    mail_stash: Stash<AccountDb>,
     watcher: WatcherHandle,
 }
 
 impl CoreSessionObserver {
-    pub async fn new(stash: Stash<AccountDb>) -> Result<Self, StashError> {
-        let tether = stash.connection().await?;
+    pub async fn new(mail_stash: Stash<AccountDb>) -> Result<Self, StashError> {
+        let tether = mail_stash.connection().await?;
         let existing = CoreSession::all(&tether)
             .await?
             .into_iter()
             .map(Into::into)
             .collect::<HashSet<_>>();
-        let watcher = CoreSession::watch(&stash).await?;
+        let watcher = CoreSession::watch(&mail_stash).await?;
 
         Ok(Self {
             sessions: existing,
-            stash,
+            mail_stash,
             watcher,
         })
     }
@@ -702,7 +702,7 @@ impl CoreSessionObserver {
                 .await
                 .map_err(|e| StashError::WatcherError(e.to_string()))?;
 
-            let tether = self.stash.connection().await?;
+            let tether = self.mail_stash.connection().await?;
             // Get all sessions
             let current = CoreSession::all(&tether)
                 .await?

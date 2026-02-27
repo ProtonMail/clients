@@ -1,5 +1,5 @@
-use proton_mail_common::test_utils::init::Params as TestParams;
-use proton_mail_common::test_utils::test_context::MailTestContext;
+use mail_common::test_utils::init::Params as TestParams;
+use mail_common::test_utils::test_context::MailTestContext;
 
 #[tokio::test]
 async fn test_init_after_login() {

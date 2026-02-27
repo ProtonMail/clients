@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
 use derive_more::derive::TryFrom;
-use proton_core_api::services::proton::{
+use mail_core_api::services::proton::{
     MeasurementEventType as ApiMeasurementEventType, MeasurementValue as ApiMeasurementValue,
 };
-use serde::{Deserialize, Serialize};
-use stash::exports::{
+use mail_stash::exports::{
     FromSql, FromSqlError, FromSqlResult, SqliteError, ToSql, ToSqlOutput, Value, ValueRef,
 };
-use stash::utils::sql_using_serde;
+use mail_stash::utils::sql_using_serde;
+use serde::{Deserialize, Serialize};
 
 use super::UnixTimestampMs;
 

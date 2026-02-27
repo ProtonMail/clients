@@ -6,19 +6,19 @@ use crate::datatypes::{LocalMessageId, RollbackItemType};
 use crate::models::{Conversation, Message};
 #[cfg(feature = "foundation_search")]
 use crate::search::MailSearchService;
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
 };
-use proton_action_queue::rebase::{RebaseChangeSet, RebaseKey};
-use proton_core_api::session::Session;
-use proton_core_common::datatypes::LocalLabelId;
-use proton_core_common::models::{ModelExtension, ModelIdExtension};
-use proton_mail_api::services::proton::ProtonMail;
+use mail_action_queue::rebase::{RebaseChangeSet, RebaseKey};
+use mail_api::services::proton::ProtonMail;
+use mail_core_api::session::Session;
+use mail_core_common::datatypes::LocalLabelId;
+use mail_core_common::models::{ModelExtension, ModelIdExtension};
+use mail_stash::exports::SqliteError;
+use mail_stash::orm::Model;
+use mail_stash::stash::{Bond, StashError};
+use mail_stash::{UserDb, params};
 use serde::{Deserialize, Serialize};
-use stash::exports::SqliteError;
-use stash::orm::Model;
-use stash::stash::{Bond, StashError};
-use stash::{UserDb, params};
 use tracing::{error, info};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

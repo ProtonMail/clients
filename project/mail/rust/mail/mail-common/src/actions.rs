@@ -27,35 +27,35 @@ use crate::{AppError, MailUserContext};
 use addresses::{block, unblock, update_incoming_defaults};
 use anyhow::{Context, anyhow};
 use indoc::formatdoc;
-use proton_action_queue::action::Action;
-use proton_action_queue::action::{
+use mail_action_queue::action::Action;
+use mail_action_queue::action::{
     self, ActionDependencyKey, ActionDependencyKeys, ActionGroup, ActionId, FactoryError, Handler,
     WriterGuard, WriterGuardError,
 };
-use proton_action_queue::queue::{ActionRequeueReason, Queue};
-use proton_action_queue::rebase::{RebaseChangeSet, RebaseKey};
-use proton_core_api::consts::General;
-use proton_core_api::service::ApiServiceError;
-use proton_core_api::services::proton::{LabelId, ProtonIdMarker};
-use proton_core_api::session::Session;
-use proton_core_common::Origin;
-use proton_core_common::action_queue::CoreActionError;
-use proton_core_common::actions::dependency_builder::{
+use mail_action_queue::queue::{ActionRequeueReason, Queue};
+use mail_action_queue::rebase::{RebaseChangeSet, RebaseKey};
+use mail_api::services::proton::ProtonMail;
+use mail_api::services::proton::response_data::OperationResult;
+use mail_core_api::consts::General;
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::{LabelId, ProtonIdMarker};
+use mail_core_api::session::Session;
+use mail_core_common::Origin;
+use mail_core_common::action_queue::CoreActionError;
+use mail_core_common::actions::dependency_builder::{
     ActionDependencyKeysBuilder, LocalIdActionDepExt,
 };
-use proton_core_common::datatypes::LocalLabelId;
-use proton_core_common::datatypes::SystemLabel;
-use proton_core_common::models::{Label, LabelError, ModelIdExtension};
-use proton_mail_api::services::proton::ProtonMail;
-use proton_mail_api::services::proton::response_data::OperationResult;
-use proton_sqlite3::rusqlite::ToSql;
+use mail_core_common::datatypes::LocalLabelId;
+use mail_core_common::datatypes::SystemLabel;
+use mail_core_common::models::{Label, LabelError, ModelIdExtension};
+use mail_sqlite3::rusqlite::ToSql;
+use mail_stash::UserDb;
+use mail_stash::exports::{Connection, Transaction};
+use mail_stash::orm::Model;
+use mail_stash::rusqlite::params_from_iter;
+use mail_stash::stash::{Bond, StashError, Tether};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
-use stash::UserDb;
-use stash::exports::{Connection, Transaction};
-use stash::orm::Model;
-use stash::rusqlite::params_from_iter;
-use stash::stash::{Bond, StashError, Tether};
 use std::any::type_name;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Display;
@@ -409,7 +409,7 @@ where
         &self,
         tether: &Tether<UserDb>,
     ) -> Result<Vec<T::IdType>, MailActionError> {
-        let placeholders = stash::utils::placeholders_n(self.target_ids.len());
+        let placeholders = mail_stash::utils::placeholders_n(self.target_ids.len());
         #[allow(trivial_casts)]
         let values = self
             .target_ids
@@ -1521,7 +1521,7 @@ where
 
         match old_version {
             1 => {
-                let data = proton_action_queue::action::deserialize::<OldAction<T>>(data)?;
+                let data = mail_action_queue::action::deserialize::<OldAction<T>>(data)?;
 
                 let mut items = HashMap::new();
                 for (id, labels_id) in data.added_labels {
@@ -1544,14 +1544,14 @@ where
                 })
             }
             2 => {
-                let old = proton_action_queue::action::deserialize::<LabelAsDataV2<T>>(data)?;
+                let old = mail_action_queue::action::deserialize::<LabelAsDataV2<T>>(data)?;
                 Ok(Self {
                     source_label_id: (old.source_label_id.as_u64() != 0)
                         .then_some(old.source_label_id),
                     items: Self::convert_label_pair_vec(old.add, old.remove),
                 })
             }
-            3 => Ok(proton_action_queue::action::deserialize::<Self>(data)?),
+            3 => Ok(mail_action_queue::action::deserialize::<Self>(data)?),
             other_version => Err(FactoryError::InvalidVersion(other_version)),
         }
     }

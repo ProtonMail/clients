@@ -1,12 +1,12 @@
 use crate::datatypes::{ProductUsedSpace, Refresh};
 use crate::models::{Address, Contact, ContactEmail, Label, User, UserSettings};
 use crate::utils::MapVec;
-use proton_core_api::services::proton::{
+use mail_core_api::services::proton::{
     Action as ApiAction, AddressEvent as ApiAddressEvent,
     ContactEmailEvent as ApiContactEmailEvent, ContactEvent as ApiContactEvent,
     CoreEvent as ApiCoreEvent, EventId, LabelEvent as ApiLabelEvent, LabelId, ProtonIdMarker,
 };
-use proton_core_api::services::proton::{AddressId, ContactEmailId, ContactId};
+use mail_core_api::services::proton::{AddressId, ContactEmailId, ContactId};
 
 /// TODO: Document this enum.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]

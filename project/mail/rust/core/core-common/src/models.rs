@@ -8,15 +8,15 @@
 //!
 //! Notably, the types in this module need to have [`Model`] applied, as they
 //! should represent a record in a database table. All of their fields need to
-//! be convertible to and from database-compatible format using [`ToSql`](stash::exports::ToSql)
-//! and [`FromSql`](stash::exports::FromSql). They do not generally need to be
+//! be convertible to and from database-compatible format using [`ToSql`](mail_stash::exports::ToSql)
+//! and [`FromSql`](mail_stash::exports::FromSql). They do not generally need to be
 //! serializable or deserializable, as they are not used for network
 //! communication or any other interchange purpose as a general requirement, and
 //! so implementation of [`Serialize`](serde::Serialize) and [`Deserialize`](serde::Deserialize)
 //! is not necessary and may be a sign of a mistake. The exception here is for
 //! child types, used by the models, for which these [`serde`] conversions are
 //! desirable to lean on in order to provide conversion to and from SQL types,
-//! for instance using [`sql_using_serde`](stash::utils::sql_using_serde), as a
+//! for instance using [`sql_using_serde`](mail_stash::utils::sql_using_serde), as a
 //! convenience mechanism. This is notably useful when wanting to store types as
 //! JSON in a database field, for instance. However, child types should be
 //! placed into the [`datatypes`](crate::datatypes) module, with only
@@ -60,15 +60,15 @@ pub use self::user_settings::*;
 use crate::datatypes::LocalIdMarker;
 use indoc::formatdoc;
 use itertools::Itertools as _;
-use proton_core_api::services::proton::ProtonIdMarker;
-use stash::exports::Transaction;
-use stash::exports::{FromSql, SqliteError, ToSql};
-use stash::orm::Model;
-use stash::params;
-use stash::rusqlite::params_from_iter;
-use stash::rusqlite::{Connection, OptionalExtension};
-use stash::stash::{Bond, StashError, Tether};
-use stash::utils::{ConnectionExt, IterMapToSql as _, MapToSql as _, placeholders};
+use mail_core_api::services::proton::ProtonIdMarker;
+use mail_stash::exports::Transaction;
+use mail_stash::exports::{FromSql, SqliteError, ToSql};
+use mail_stash::orm::Model;
+use mail_stash::params;
+use mail_stash::rusqlite::params_from_iter;
+use mail_stash::rusqlite::{Connection, OptionalExtension};
+use mail_stash::stash::{Bond, StashError, Tether};
+use mail_stash::utils::{ConnectionExt, IterMapToSql as _, MapToSql as _, placeholders};
 
 #[allow(async_fn_in_trait)]
 pub trait ModelExtension: Model {

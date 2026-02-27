@@ -6,7 +6,7 @@ use crate::actions::MovableSystemFolderAction;
 use crate::actions::{ActionContext, GenericAction, GenericMobileActions};
 use crate::datatypes::{MobileAction, theme::MailTheme};
 use crate::decrypted_message::ThemeOpts;
-use proton_core_api::services::proton::LabelId;
+use mail_core_api::services::proton::LabelId;
 
 /// Struct to reflect what kind of actions
 /// could be taken upon the message.

@@ -112,7 +112,7 @@ impl LoginFlow {
         let fingerprint = match extra_info {
             Some(info) => match info.fingerprint {
                 Some(fingerprint) => { 
-                    warn!("Warning: with_fingerprint is deprecated. Pass a provider to the muon client using with_info_provider. Muon will use this provider to ask for the fingerprint when needed.");
+                    warn!("Warning: with_fingerprint is deprecated. Pass a provider to the mail_muon client using with_info_provider. Muon will use this provider to ask for the fingerprint when needed.");
                     Some(fingerprint.to_owned()) 
                 },
                 None => provider_fingerprint
@@ -201,7 +201,7 @@ impl LoginFlow {
 /// Additional options for the login flow.
 #[must_use]
 #[derive(Debug, Default)]
-#[deprecated = "Instead of LoginExtraInfo, pass a provider to the muon client using with_info_provider. Muon will use this provider to ask for the fingerprint when needed."]
+#[deprecated = "Instead of LoginExtraInfo, pass a provider to the mail_muon client using with_info_provider. Muon will use this provider to ask for the fingerprint when needed."]
 pub struct LoginExtraInfo {
     fingerprint: Option<Fingerprint>,
 }
@@ -217,7 +217,7 @@ impl LoginExtraInfo {
 /// Builder for additional options for the login flow.
 #[must_use]
 #[derive(Debug, Default)]
-#[deprecated = "Instead of LoginExtraInfoBuilder, pass a provider to the muon client using with_info_provider. Muon will use this provider to ask for the fingerprint when needed."]
+#[deprecated = "Instead of LoginExtraInfoBuilder, pass a provider to the mail_muon client using with_info_provider. Muon will use this provider to ask for the fingerprint when needed."]
 pub struct LoginExtraInfoBuilder {
     fingerprint: Option<Fingerprint>,
 }
@@ -233,7 +233,7 @@ impl LoginExtraInfoBuilder {
 
     /// Include the given fingerprint payload,
     /// used when logging in, for anti-abuse.
-    #[deprecated = "Instead of using this function, pass a provider to the muon client using with_info_provider. Muon will use this provider to ask for the fingerprint when needed."]
+    #[deprecated = "Instead of using this function, pass a provider to the mail_muon client using with_info_provider. Muon will use this provider to ask for the fingerprint when needed."]
     pub fn with_fingerprint(mut self, fingerprint: Fingerprint) -> Self {
         self.fingerprint = Some(fingerprint);
         self

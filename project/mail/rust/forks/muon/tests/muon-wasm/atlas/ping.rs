@@ -1,7 +1,7 @@
 use anyhow::Result;
-use muon::test::store::TestStore;
-use muon::util::ProtonRequestExt;
-use muon::{App, Client, GET};
+use mail_muon::test::store::TestStore;
+use mail_muon::util::ProtonRequestExt;
+use mail_muon::{App, Client, GET};
 use wasm_bindgen_test::*;
 
 #[wasm_bindgen_test]

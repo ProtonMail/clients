@@ -25,12 +25,12 @@
 //!
 //! ```rust
 //! use std::sync::Arc;
-//! use proton_network_monitor_service::{Config, NetworkMonitorService, NetworkStatusObserver, OnlineTester, RequestNetworkStatus};
+//! use mail_network_monitor_service::{Config, NetworkMonitorService, NetworkStatusObserver, OnlineTester, RequestNetworkStatus};
 //!
 //! async fn monitor(tester:Arc<dyn OnlineTester>) {
 //!     let config = Config::default();
 //!     let mut service = NetworkMonitorService::new(config);
-//!     let spawner = proton_task_service::Tokio::spawner();
+//!     let spawner = mail_task_service::Tokio::spawner();
 //!
 //!     service.start(&spawner, tester).unwrap();
 //!

@@ -1,14 +1,14 @@
 use super::common::{new_factory, new_queue};
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionGroup, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
 };
-use proton_action_queue::queue::{
+use mail_action_queue::queue::{
     NoopOnlineStatusWaiter, NoopOnlineStatusWaiterBuilder, QueueAutoExecutorPool,
     QueueAutoTerminationPolicy, TokioTaskSpawner,
 };
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_action_queue::tests::common::{DefaultError, TestDb};
-use stash::stash::Bond;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_action_queue::tests::common::{DefaultError, TestDb};
+use mail_stash::stash::Bond;
 use std::num::NonZeroUsize;
 use std::time::Duration;
 

@@ -1,11 +1,11 @@
 use std::{collections::HashMap, fmt::Display, sync::Arc, time::Duration};
 
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::{
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::{
     datatypes::LocalLabelId,
     models::{Label, ModelExtension, ModelIdExtension},
 };
-use stash::{
+use mail_stash::{
     orm::Model,
     params,
     stash::{Bond, StashError, Tether},

@@ -5,7 +5,7 @@
 //! fetch message data (body, remote ID) from the main message store.
 
 use async_trait::async_trait;
-use proton_mail_api::services::proton::common::MessageId;
+use mail_api::services::proton::common::MessageId;
 
 use crate::error::SearchError;
 use crate::intent::LocalMessageId;
@@ -111,7 +111,7 @@ impl MessageMetadata {
 
 /// Trait for blob storage backends
 ///
-/// This trait exists to decouple `mail-search` from the `stash` crate,
+/// This trait exists to decouple `mail-search` from the `mail_stash` crate,
 /// allowing the search engine to remain storage-agnostic. While there's
 /// currently only one implementation (`StashBlobStorage` in `mail-search/src/storage.rs`),
 /// the trait enables unit testing with mock storage if needed.

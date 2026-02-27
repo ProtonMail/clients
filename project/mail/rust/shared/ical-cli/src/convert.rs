@@ -1,6 +1,6 @@
 use anyhow::{Context, Result, anyhow};
 use clap::Parser;
-use proton_ical::{VCalendar, ValidatedVCalendar};
+use mail_ical::{VCalendar, ValidatedVCalendar};
 use std::{fs, path::PathBuf};
 
 #[derive(Clone, Debug, Parser)]

@@ -5,14 +5,14 @@ use crate::{
 };
 use itertools::Itertools;
 use jiff::Zoned;
-use proton_calendar_api_v1::{
+use mail_calendar_api_v1::{
     CalendarAttendeeId, CalendarAttendeeStatus, CalendarAttendeeToken, CalendarBootstrap,
     CalendarColor, CalendarEvent, CalendarNotificationsUpdate, ProtonCalendar,
 };
-use proton_core_api::session::Session;
+use mail_core_api::session::Session;
+use mail_crypto_calendar::{CalendarKeyPacketUpgrader, KeyPacketRef, LockedCalendarKey};
+use mail_ical as ical;
 use proton_crypto::crypto::PGPProviderSync;
-use proton_crypto_calendar::{CalendarKeyPacketUpgrader, KeyPacketRef, LockedCalendarKey};
-use proton_ical as ical;
 use std::{iter, ops};
 use tracing::{debug, error, info, instrument, warn};
 

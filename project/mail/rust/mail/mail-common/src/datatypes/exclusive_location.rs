@@ -4,13 +4,13 @@ mod tests;
 
 use crate::datatypes::{LabelColor, LabelType};
 use itertools::Itertools;
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::datatypes::SystemLabel;
-use proton_core_common::models::ModelIdExtension;
-use proton_core_common::{datatypes::LocalLabelId, models::Label};
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::datatypes::SystemLabel;
+use mail_core_common::models::ModelIdExtension;
+use mail_core_common::{datatypes::LocalLabelId, models::Label};
+use mail_stash::exports::Connection;
+use mail_stash::stash::{StashError, Tether};
 use serde::{Deserialize, Serialize};
-use stash::exports::Connection;
-use stash::stash::{StashError, Tether};
 
 /// Exclusive location is the place in which a conversation or a message rests,
 /// e.g. Inbox, Archive or a custom folder; it's materialized from labels.

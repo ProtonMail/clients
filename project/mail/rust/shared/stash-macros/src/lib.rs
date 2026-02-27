@@ -1,7 +1,7 @@
-//! Macros for the `stash` crate.
+//! Macros for the `mail_stash` crate.
 //!
 //! The macros implemented in this crate are proc macros, which have to live
-//! separately from other code. They are part of the `stash` crate's ecosystem.
+//! separately from other code. They are part of the `mail_stash` crate's ecosystem.
 //!
 
 use itertools::Itertools;
@@ -38,8 +38,8 @@ use syn::{
 ///
 /// ```rust
 /// use serde::{Serialize, Deserialize};
-/// use stash::macros::DbRecord;
-/// use stash::orm::DbRecord;
+/// use mail_stash::macros::DbRecord;
+/// use mail_stash::orm::DbRecord;
 ///
 /// #[derive(Clone, Debug, DbRecord, Deserialize, PartialEq, Serialize)]
 /// struct Foo {
@@ -71,10 +71,10 @@ pub fn db_record_derive(input: TokenStream) -> TokenStream {
     let fn_from_row_impl = generate_fn_from_row_impl(&db_fields, &fields, &from_row_values_impl);
 
     (quote! {
-        impl #impl_generics stash::orm::DbRecord for #name #ty_generics #where_clause {
-            fn field_values(&self) -> impl Iterator<Item = &dyn ::stash::rusqlite::ToSql>  + '_ {
+        impl #impl_generics mail_stash::orm::DbRecord for #name #ty_generics #where_clause {
+            fn field_values(&self) -> impl Iterator<Item = &dyn ::mail_stash::rusqlite::ToSql>  + '_ {
                 [
-                    #(&self.#db_fields as &dyn ::stash::rusqlite::ToSql),*,
+                    #(&self.#db_fields as &dyn ::mail_stash::rusqlite::ToSql),*,
                 ].into_iter()
             }
 
@@ -139,10 +139,10 @@ pub fn db_record_derive(input: TokenStream) -> TokenStream {
 ///
 /// ```rust
 /// use serde::{Serialize, Deserialize};
-/// use stash::macros::Model;
-/// use stash::orm::Model;
-/// use stash::stash::Stash;
-/// use stash::UserDb;
+/// use mail_stash::macros::Model;
+/// use mail_stash::orm::Model;
+/// use mail_stash::stash::Stash;
+/// use mail_stash::UserDb;
 /// use uuid::Uuid;
 ///
 /// #[derive(Clone, Debug, Model, Deserialize, PartialEq, Serialize)]
@@ -164,10 +164,10 @@ pub fn db_record_derive(input: TokenStream) -> TokenStream {
 ///
 /// ```rust
 /// use serde::{Serialize, Deserialize};
-/// use stash::macros::Model;
-/// use stash::orm::Model;
-/// use stash::stash::Stash;
-/// use stash::UserDb;
+/// use mail_stash::macros::Model;
+/// use mail_stash::orm::Model;
+/// use mail_stash::stash::Stash;
+/// use mail_stash::UserDb;
 /// use uuid::Uuid;
 ///
 /// #[derive(Clone, Debug, Model, Deserialize, PartialEq, Serialize)]
@@ -189,10 +189,10 @@ pub fn db_record_derive(input: TokenStream) -> TokenStream {
 ///
 /// ```rust
 /// use serde::{Serialize, Deserialize};
-/// use stash::macros::Model;
-/// use stash::orm::Model;
-/// use stash::stash::Stash;
-/// use stash::UserDb;
+/// use mail_stash::macros::Model;
+/// use mail_stash::orm::Model;
+/// use mail_stash::stash::Stash;
+/// use mail_stash::UserDb;
 /// use uuid::Uuid;
 ///
 /// #[derive(Clone, Debug, Model, Deserialize, PartialEq, Serialize)]
@@ -294,23 +294,23 @@ WHERE {id_field} = ?
         let has_hooks = input.attrs.iter().any(|x| x.path().is_ident("ModelHooks"));
         (!has_hooks).then(|| {
             quote! {
-                impl ::stash::orm::ModelHooks for #name {}
+                impl ::mail_stash::orm::ModelHooks for #name {}
             }
         })
     };
 
     (quote! {
-        impl #impl_generics stash::orm::DbRecord for #name #ty_generics #where_clause {
-            fn field_values(&self) -> impl Iterator<Item = &dyn ::stash::rusqlite::ToSql>  + '_ {
+        impl #impl_generics mail_stash::orm::DbRecord for #name #ty_generics #where_clause {
+            fn field_values(&self) -> impl Iterator<Item = &dyn ::mail_stash::rusqlite::ToSql>  + '_ {
                 [
-                    #(&self.#fields as &dyn ::stash::rusqlite::ToSql),*,
+                    #(&self.#fields as &dyn ::mail_stash::rusqlite::ToSql),*,
                 ].into_iter()
             }
 
             #fn_from_row_impl
         }
 
-        impl #impl_generics stash::orm::Model for #name #ty_generics #where_clause {
+        impl #impl_generics mail_stash::orm::Model for #name #ty_generics #where_clause {
             type Database = #database_marker;
             type Id = #id_field_type;
             type IdType = #id_type;
@@ -328,7 +328,7 @@ WHERE {id_field} = ?
                 stringify!(#id_field)
             }
 
-            fn id_value(&self) -> Result<Self::IdType, stash::stash::StashError> {
+            fn id_value(&self) -> Result<Self::IdType, mail_stash::stash::StashError> {
                 #fn_id_value_impl
             }
 
@@ -603,7 +603,7 @@ fn generate_fn_from_row_impl(
         });
 
     quote! {
-        fn from_row(row: &stash::exports::Row) -> Result<Self, stash::orm::ConversionError> {
+        fn from_row(row: &mail_stash::exports::Row) -> Result<Self, mail_stash::orm::ConversionError> {
             Ok(Self {
                 #(
                     #db_fields: #from_row_values_impl,
@@ -619,7 +619,7 @@ fn generate_fn_from_row_impl(
 fn generate_fn_id_value_impl(id_field: &Ident, is_optional: bool) -> TokenStream2 {
     if is_optional {
         quote! {
-            self.#id_field.clone().ok_or(stash::stash::StashError::IdNotSet)
+            self.#id_field.clone().ok_or(mail_stash::stash::StashError::IdNotSet)
         }
     } else {
         quote! {

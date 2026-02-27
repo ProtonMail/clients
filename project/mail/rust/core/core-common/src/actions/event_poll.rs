@@ -1,18 +1,18 @@
 use crate::UserContext;
 use core_event_loop::EventLoopError;
 use core_event_loop::v6::EventSubscriberError;
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     ActionDependencyKey, ActionDependencyKeys, FactoryResult, VersionConverter,
     VersionConverterError, deserialize,
 };
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_action_queue::{
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_action_queue::{
     action::{self, Action, ActionId, Handler, Priority, Type, WriterGuard, WriterGuardError},
     queue::ActionRequeueReason,
 };
+use mail_stash::UserDb;
+use mail_stash::stash::Bond;
 use serde::{Deserialize, Serialize};
-use stash::UserDb;
-use stash::stash::Bond;
 use std::sync::Weak;
 
 /// Action which polls the event loop.

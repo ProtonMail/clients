@@ -95,14 +95,18 @@ impl From<&jiff::Zoned> for UnixTimestamp {
     }
 }
 
-impl stash::exports::ToSql for UnixTimestamp {
-    fn to_sql(&self) -> Result<stash::exports::ToSqlOutput<'_>, stash::exports::SqliteError> {
+impl mail_stash::exports::ToSql for UnixTimestamp {
+    fn to_sql(
+        &self,
+    ) -> Result<mail_stash::exports::ToSqlOutput<'_>, mail_stash::exports::SqliteError> {
         self.0.to_sql()
     }
 }
 
-impl stash::exports::FromSql for UnixTimestamp {
-    fn column_result(value: stash::exports::ValueRef<'_>) -> stash::exports::FromSqlResult<Self> {
+impl mail_stash::exports::FromSql for UnixTimestamp {
+    fn column_result(
+        value: mail_stash::exports::ValueRef<'_>,
+    ) -> mail_stash::exports::FromSqlResult<Self> {
         u64::column_result(value).map(Self)
     }
 }

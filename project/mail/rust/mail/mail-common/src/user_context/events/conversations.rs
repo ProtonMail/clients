@@ -2,9 +2,9 @@ use crate::AppError;
 use crate::models::Conversation;
 use crate::user_context::events::event_model::ConversationEvent;
 use crate::user_context::events::event_subscriber::PostEventSyncData;
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::services::proton::LabelId;
-use stash::stash::Bond;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_core_api::services::proton::LabelId;
+use mail_stash::stash::Bond;
 use std::collections::HashSet;
 
 pub async fn handle_conversation_events(

@@ -14,16 +14,16 @@ use crate::{
     os::{InMemoryKeyChain, KeyChain, KeyChainExt},
 };
 use core_event_loop::v6::{EventSource, EventSubscriberResult};
-use proton_core_api::auth::{Tokens, UserKeySecret};
-use proton_core_api::exports::RetryPolicy;
-use proton_core_api::services::proton::{SessionId, UserId};
-use proton_core_api::session::{AppVersion, Env, Server};
-use proton_core_api::session::{Endpoint, EnvId};
-use proton_issue_reporter_service::{IssueReporter, NoopIssueReporter};
-use proton_log_service::LogService;
-use proton_sqlite3::MigratorError;
-use stash::UserDb;
-use stash::stash::{Stash, StashError};
+use mail_core_api::auth::{Tokens, UserKeySecret};
+use mail_core_api::exports::RetryPolicy;
+use mail_core_api::services::proton::{SessionId, UserId};
+use mail_core_api::session::{AppVersion, Env, Server};
+use mail_core_api::session::{Endpoint, EnvId};
+use mail_issue_reporter_service::{IssueReporter, NoopIssueReporter};
+use mail_log_service::LogService;
+use mail_sqlite3::MigratorError;
+use mail_stash::UserDb;
+use mail_stash::stash::{Stash, StashError};
 use std::sync::{Arc, Weak};
 use std::time::Duration;
 use tempfile::TempDir;
@@ -117,16 +117,16 @@ pub struct TestContext {
 impl BaseTestContext for TestContext {}
 
 #[must_use]
-pub fn test_network_monitor_service_config() -> proton_network_monitor_service::Config {
+pub fn test_network_monitor_service_config() -> mail_network_monitor_service::Config {
     let never = RetryPolicy::default().never();
-    proton_network_monitor_service::Config {
-        immediate: proton_network_monitor_service::ImmediateConfig {
+    mail_network_monitor_service::Config {
+        immediate: mail_network_monitor_service::ImmediateConfig {
             retry_policy: never,
             command_timeout: Duration::from_secs(1),
             request_timeout: Duration::from_secs(2),
             retry_interval: Duration::from_secs(0),
         },
-        background: proton_network_monitor_service::BackgroundConfig {
+        background: mail_network_monitor_service::BackgroundConfig {
             retry_policy: never,
             timeout: Duration::from_secs(2),
             infinite_checks: false,
@@ -203,7 +203,7 @@ impl TestContext {
             all_initializers.append(&mut additional_initializers);
         }
 
-        let log_config = proton_log_service::Config::builder()
+        let log_config = mail_log_service::Config::builder()
             .directory(tmp_dir.path().into())
             .max_log_size(20 * 1024 * 1024)
             .name("log".into())
@@ -268,7 +268,7 @@ impl TestContext {
         key: SessionEncryptionKey,
     ) -> (CoreAccount, CoreSession) {
         let (core_account, core_session) = {
-            // Create a temporary stash just to insert the fake data.
+            // Create a temporary mail_stash just to insert the fake data.
             let mut tether = context.account_stash().connection().await.unwrap();
             tether
                 .tx::<_, _, StashError>(async |tx| {

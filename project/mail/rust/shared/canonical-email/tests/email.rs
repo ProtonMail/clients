@@ -1,4 +1,4 @@
-use proton_canonical_email::{CanonicalEmail, CanonicalizeScheme};
+use mail_canonical_email::{CanonicalEmail, CanonicalizeScheme};
 
 fn test_canonicalize(email: &str, scheme: CanonicalizeScheme, expected: &str) {
     let result = CanonicalEmail::with_scheme(email, scheme);

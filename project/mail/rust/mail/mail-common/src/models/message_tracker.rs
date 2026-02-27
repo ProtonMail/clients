@@ -1,6 +1,6 @@
 use crate::datatypes::LocalMessageId;
-use proton_core_common::datatypes::UnixTimestamp;
-use stash::{UserDb, macros::Model};
+use mail_core_common::datatypes::UnixTimestamp;
+use mail_stash::{UserDb, macros::Model};
 
 #[derive(Clone, Debug, Eq, PartialEq, Model)]
 #[TableName("message_trackers")]

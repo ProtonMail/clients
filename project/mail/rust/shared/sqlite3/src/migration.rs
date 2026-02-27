@@ -7,10 +7,10 @@ pub mod file;
 #[allow(unused_imports)]
 use futures::executor::block_on;
 use itertools::Itertools;
-use stash::exports::SqliteError;
-use stash::marker::DatabaseMarker;
-use stash::params;
-use stash::stash::{Bond, StashError, Tether};
+use mail_stash::exports::SqliteError;
+use mail_stash::marker::DatabaseMarker;
+use mail_stash::params;
+use mail_stash::stash::{Bond, StashError, Tether};
 use thiserror::Error;
 use tracing::{Instrument, debug};
 

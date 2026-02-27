@@ -1,7 +1,7 @@
 use crate::datatypes::SystemLabelId;
-use proton_core_api::services::proton::Label as ApiLabel;
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::datatypes::LabelType;
+use mail_core_api::services::proton::Label as ApiLabel;
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::datatypes::LabelType;
 
 pub trait ApiLabelTestUtils {
     fn create_api_label(label_name: &str, label_type: LabelType) -> (ApiLabel, LabelId);

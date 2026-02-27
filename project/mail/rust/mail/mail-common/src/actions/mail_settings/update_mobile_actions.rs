@@ -3,15 +3,15 @@ use crate::actions::MailActionError;
 use crate::datatypes::{MobileAction, MobileSetting, MobileSettings};
 use crate::models::MailSettings;
 use anyhow::Context;
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
 };
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::session::Session;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_core_api::session::Session;
+use mail_stash::UserDb;
+use mail_stash::orm::Model;
+use mail_stash::stash::{Bond, RunTransaction};
 use serde::{Deserialize, Serialize};
-use stash::UserDb;
-use stash::orm::Model;
-use stash::stash::{Bond, RunTransaction};
 use tracing::warn;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]

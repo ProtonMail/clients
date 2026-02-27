@@ -10,16 +10,16 @@
 //! Note that this module extends the code Proton API service with additional
 //! functionality relating to mail.
 //!
-//! For full documentation on the core API implementation, see [`Proton`](proton_core_api::services::proton::Proton).
+//! For full documentation on the core API implementation, see [`Proton`](mail_core_api::services::proton::Proton).
 //!
 
 use crate::services::proton::prelude::*;
 use bytes::Bytes;
-use muon::common::RetryPolicy;
-use proton_core_api::service::ApiServiceResult;
-use proton_core_api::services::proton::{
+use mail_core_api::service::ApiServiceResult;
+use mail_core_api::services::proton::{
     EventId, GetEventsLatestResponse, IncomingDefaultId, LabelId,
 };
+use mail_muon::common::RetryPolicy;
 use std::time::Duration;
 
 pub mod common;

@@ -26,45 +26,45 @@ use chrono::Local;
 use futures::future;
 use indoc::{formatdoc, indoc};
 use itertools::Itertools;
-use proton_action_queue::action::ActionGroup;
-use proton_action_queue::action::MetadataBuilder;
+use mail_action_queue::action::ActionGroup;
+use mail_action_queue::action::MetadataBuilder;
 
 use derivative::Derivative;
-use proton_action_queue::queue::{ActionError as QueueActionError, Queue, QueuedActionOutput};
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::consts::Mail;
-use proton_core_api::service::ApiServiceError;
-use proton_core_api::services::proton::{LabelId, ProtonIdMarker};
-use proton_core_api::session::Session;
-use proton_core_common::datatypes::{
-    InitializationKey, LabelType, LocalLabelId, SystemLabel, UnixTimestamp, WeekStart,
-};
-use proton_core_common::event_loop::events::Action;
-use proton_core_common::models::{
-    InitializationError, InitializationWatcher, InitializedComponent, Label, ModelExtension,
-    ModelIdExtension, User,
-};
-use proton_core_common::services::NetworkMonitorService;
-use proton_core_common::utils::MapVec as _;
-use proton_mail_api::services::proton::ProtonMail;
-use proton_mail_api::services::proton::common::ConversationId;
-use proton_mail_api::services::proton::requests::GetConversationsOptions;
-use proton_mail_api::services::proton::response_data::{
+use mail_action_queue::queue::{ActionError as QueueActionError, Queue, QueuedActionOutput};
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_api::services::proton::ProtonMail;
+use mail_api::services::proton::common::ConversationId;
+use mail_api::services::proton::requests::GetConversationsOptions;
+use mail_api::services::proton::response_data::{
     AttachmentMetadata as ApiAttachmentMetadata, Conversation as ApiConversation,
     ConversationLabel as ApiConversationLabel, MessageMetadata as ApiMessageMetadata,
     OperationResult,
 };
+use mail_core_api::consts::Mail;
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::{LabelId, ProtonIdMarker};
+use mail_core_api::session::Session;
+use mail_core_common::datatypes::{
+    InitializationKey, LabelType, LocalLabelId, SystemLabel, UnixTimestamp, WeekStart,
+};
+use mail_core_common::event_loop::events::Action;
+use mail_core_common::models::{
+    InitializationError, InitializationWatcher, InitializedComponent, Label, ModelExtension,
+    ModelIdExtension, User,
+};
+use mail_core_common::services::NetworkMonitorService;
+use mail_core_common::utils::MapVec as _;
+use mail_stash::exports::{Connection, ToSql};
+use mail_stash::exports::{SqliteError, Transaction};
+use mail_stash::macros::Model;
+use mail_stash::orm::Model;
+use mail_stash::orm::ModelHooks;
+use mail_stash::rusqlite::{OptionalExtension, params_from_iter};
+use mail_stash::stash::{Bond, RunTransaction, Stash, StashError, Tether, WatcherHandle};
+use mail_stash::utils::{ConnectionExt, IterMapToSql, MapToSql as _, placeholders, placeholders_n};
+use mail_stash::{UserDb, params};
 use serde::{Deserialize, Serialize};
 use sqlite_watcher::watcher::TableObserver;
-use stash::exports::{Connection, ToSql};
-use stash::exports::{SqliteError, Transaction};
-use stash::macros::Model;
-use stash::orm::Model;
-use stash::orm::ModelHooks;
-use stash::rusqlite::{OptionalExtension, params_from_iter};
-use stash::stash::{Bond, RunTransaction, Stash, StashError, Tether, WatcherHandle};
-use stash::utils::{ConnectionExt, IterMapToSql, MapToSql as _, placeholders, placeholders_n};
-use stash::{UserDb, params};
 use std::collections::{BTreeSet, HashMap, HashSet};
 use std::future::Future;
 use std::ops::{AddAssign, Deref, DerefMut};
@@ -199,7 +199,7 @@ impl Conversation {
         queue: &Queue<UserDb>,
         ids: Vec<LocalConversationId>,
     ) -> LabelAsResult {
-        let tether = queue.stash().connection().await?;
+        let tether = queue.mail_stash().connection().await?;
 
         let label_id = Label::remote_id_counterpart(LabelId::starred(), &tether)
             .await?
@@ -212,7 +212,7 @@ impl Conversation {
         queue: &Queue<UserDb>,
         ids: Vec<LocalConversationId>,
     ) -> LabelAsResult {
-        let tether = queue.stash().connection().await?;
+        let tether = queue.mail_stash().connection().await?;
 
         let label_id = Label::remote_id_counterpart(LabelId::starred(), &tether)
             .await?
@@ -2617,7 +2617,7 @@ impl ModelHooks for Conversation {
                     local_conversation_id = ?
                     AND remote_label_id NOT IN ({})
                 ",
-                    stash::utils::placeholders_n(params.len() - 1),
+                    mail_stash::utils::placeholders_n(params.len() - 1),
                 ),
                 params_from_iter(params),
             )?;
@@ -2725,7 +2725,7 @@ impl ModelHooks for Conversation {
 
         // Example... not good to do this here, though, as the total number comes
         // from the API.
-        // self.num_messages = stash.query::<_, QueryResultU64>(
+        // self.num_messages = mail_stash.query::<_, QueryResultU64>(
         //     "SELECT COUNT(*) FROM messages WHERE local_conversation_id = ?",
         //     params![self.local_id],
         // ).await?.into_iter().next().unwrap().value;
@@ -2911,14 +2911,18 @@ impl DerefMut for ContextExpirationTime {
         &mut self.0
     }
 }
-impl stash::exports::ToSql for ContextExpirationTime {
-    fn to_sql(&self) -> Result<stash::exports::ToSqlOutput<'_>, stash::exports::SqliteError> {
+impl mail_stash::exports::ToSql for ContextExpirationTime {
+    fn to_sql(
+        &self,
+    ) -> Result<mail_stash::exports::ToSqlOutput<'_>, mail_stash::exports::SqliteError> {
         self.0.to_sql()
     }
 }
 
-impl stash::exports::FromSql for ContextExpirationTime {
-    fn column_result(value: stash::exports::ValueRef<'_>) -> stash::exports::FromSqlResult<Self> {
+impl mail_stash::exports::FromSql for ContextExpirationTime {
+    fn column_result(
+        value: mail_stash::exports::ValueRef<'_>,
+    ) -> mail_stash::exports::FromSqlResult<Self> {
         u64::column_result(value).map(|v| Self(UnixTimestamp::new(v)))
     }
 }
@@ -2942,7 +2946,7 @@ impl From<u64> for ContextExpirationTime {
 }
 
 impl ModelHooks for ConversationLabel {
-    fn before_save(&mut self, tx: &Transaction<'_>) -> stash::stash::StashResult<()> {
+    fn before_save(&mut self, tx: &Transaction<'_>) -> mail_stash::stash::StashResult<()> {
         let local_conversation_id = self
             .local_conversation_id
             .context("Missing local conversation id")?;
@@ -3332,8 +3336,8 @@ impl ConversationCounter {
         }
     }
 
-    pub async fn watch(stash: &Stash<UserDb>) -> Result<WatcherHandle, StashError> {
-        stash
+    pub async fn watch(mail_stash: &Stash<UserDb>) -> Result<WatcherHandle, StashError> {
+        mail_stash
             .subscribe_to(|sender| Box::new(ConversationCounterWatcher { sender }))
             .await
     }
@@ -3353,13 +3357,13 @@ impl StoreLabelCounters {
     pub async fn initialize(
         watcher: Arc<InitializationWatcher>,
         api: &impl ProtonMail,
-        stash: &Stash<UserDb>,
+        mail_stash: &Stash<UserDb>,
     ) -> Result<(), InitializationError<AppError>> {
         InitializedComponent::initialize(
             watcher,
             Self::INIT_KEY,
             &[Label::INIT_KEY],
-            stash.connection().await?,
+            mail_stash.connection().await?,
             async || Ok(Self::fetch(api).await?),
             |tx, this| Ok(this.store(tx)?),
         )
@@ -3408,7 +3412,7 @@ impl Conversation {
         tether: &mut Tether,
     ) -> Result<(), AppError> {
         use crate::datatypes::labels::ScrollOrderField;
-        use proton_mail_api::MAX_PAGE_ELEMENT_COUNT;
+        use mail_api::MAX_PAGE_ELEMENT_COUNT;
 
         let order_field = ScrollOrderField::for_label(&label_id);
 

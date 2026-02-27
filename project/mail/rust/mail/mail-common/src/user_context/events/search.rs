@@ -9,10 +9,10 @@
 
 use crate::AppError;
 use crate::models::Message;
-use proton_core_common::event_loop::events::Action;
-use proton_core_common::models::ModelIdExtension;
-use proton_mail_api::services::proton::common::MessageId;
-use stash::stash::Bond;
+use mail_api::services::proton::common::MessageId;
+use mail_core_common::event_loop::events::Action;
+use mail_core_common::models::ModelIdExtension;
+use mail_stash::stash::Bond;
 use tracing::warn;
 
 #[cfg(feature = "foundation_search")]

@@ -1,14 +1,14 @@
-use muon::common::IntoDyn;
-use proton_account_api::password::state::StateKind;
-use proton_account_api::password::{FlowAuthError, PasswordError as RealPasswordError};
-use proton_account_api::password::{LoginFailedReason, PasswordFlow as RealPasswordFlow};
+use mail_account_api::password::state::StateKind;
+use mail_account_api::password::{FlowAuthError, PasswordError as RealPasswordError};
+use mail_account_api::password::{LoginFailedReason, PasswordFlow as RealPasswordFlow};
+use mail_muon::common::IntoDyn;
+use mail_uniffi_runtime::async_runtime;
+use mail_uniffi_runtime::uniffi_async;
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::Mutex;
 use tokio::task::JoinError;
 use tracing::warn;
-use uniffi_runtime::async_runtime;
-use uniffi_runtime::uniffi_async;
 
 use crate::login::datatypes::{Fido2RequestFfi, Fido2ResponseFfi};
 use crate::password_validator::PasswordType;

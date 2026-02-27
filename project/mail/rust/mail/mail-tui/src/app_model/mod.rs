@@ -30,14 +30,14 @@ use anyhow::anyhow;
 use chrono::Local;
 use crossterm::event::KeyModifiers;
 use futures::FutureExt;
-use proton_core_common::event_loop::EventPollMode;
-use proton_core_common::services::SessionObserverService;
-use proton_core_common::{OnSessionDeletedResponse, Origin};
-use proton_issue_reporter_service::NoopIssueReporter;
-use proton_log_service::LogService;
-use proton_log_service::WorkerGuard;
-use proton_mail_common::MailContext;
-use proton_network_monitor_service::{OsNetworkStatus, RequestNetworkStatus};
+use mail_common::MailContext;
+use mail_core_common::event_loop::EventPollMode;
+use mail_core_common::services::SessionObserverService;
+use mail_core_common::{OnSessionDeletedResponse, Origin};
+use mail_issue_reporter_service::NoopIssueReporter;
+use mail_log_service::LogService;
+use mail_log_service::WorkerGuard;
+use mail_network_monitor_service::{OsNetworkStatus, RequestNetworkStatus};
 use ratatui::crossterm::event::{Event, KeyCode, KeyEventKind};
 use ratatui::layout::{Constraint, Flex};
 use ratatui::prelude::*;
@@ -161,7 +161,7 @@ impl AppModel {
         std::fs::create_dir_all(&core_cache_dir)?;
         std::fs::create_dir_all(&user_db_path)?;
 
-        let config = proton_log_service::Config::builder()
+        let config = mail_log_service::Config::builder()
             .name("app".into())
             .directory(cache_dir.clone())
             .header(|| format!("\n--- Proton Mail TUI ---- Started at {}\n", Local::now()))
@@ -188,7 +188,7 @@ impl AppModel {
             None, // TODO: Add DeviceInfoProvider support for mail-tui.
             log_service,
             EventPollMode::Automatic(Duration::from_secs(CLI_ARGS.event_loop_time.unwrap_or(15))),
-            proton_network_monitor_service::Config::default(),
+            mail_network_monitor_service::Config::default(),
             Arc::new(NoopIssueReporter),
         )
         .await?;
@@ -631,16 +631,16 @@ fn app_tracing_env_filter(trace: bool) -> EnvFilter {
     let directives: String = directives
         .unwrap_or(format!(
             "info,
-        proton_mail_tui=debug,
-        proton_core_api={log_level},
-        proton_sqlite3={log_level},
-        proton_core_common={log_level},
-        proton_mail_common={log_level},
+        mail_tui=debug,
+        mail_core_api={log_level},
+        mail_sqlite3={log_level},
+        mail_core_common={log_level},
+        mail_common={log_level},
         core_event_loop={log_level},
-        proton_action_queue={log_level},
-        proton_calendar_common={log_level},
-        proton_network_monitor_service=debug,
-        stash=info,
+        mail_action_queue={log_level},
+        mail_calendar_common={log_level},
+        mail_network_monitor_service=debug,
+        mail_stash=info,
         {}",
             LogService::silence_muon_errors_evn_filter()
         ))

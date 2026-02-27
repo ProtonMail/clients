@@ -1,4 +1,4 @@
-use proton_crypto_inbox::{
+use mail_crypto_inbox::{
     message::packages::{EncryptablePackage, PackageMimeType},
     proton_crypto::crypto::{
         DataEncoding, Decryptor, DecryptorSync, PGPProviderSync, VerifiedData,
@@ -39,7 +39,7 @@ impl EncryptablePackage for TestPlainPackage {
 
 #[test]
 fn test_package_create() {
-    let pgp = proton_crypto_inbox::proton_crypto::new_pgp_provider();
+    let pgp = mail_crypto_inbox::proton_crypto::new_pgp_provider();
     let plain_package = TestPlainPackage::default();
     let address_keys = create_account_unlocked_address_keys(&pgp, TEST_DECRYPTION_KEY, "password");
     let primary = address_keys
@@ -65,7 +65,7 @@ fn test_package_create() {
 
 #[test]
 fn test_package_with_key_packets_create() {
-    let pgp = proton_crypto_inbox::proton_crypto::new_pgp_provider();
+    let pgp = mail_crypto_inbox::proton_crypto::new_pgp_provider();
     let plain_package = TestPlainPackage::default();
 
     let address_keys = create_account_unlocked_address_keys(&pgp, TEST_DECRYPTION_KEY, "password");
@@ -97,7 +97,7 @@ fn test_package_with_key_packets_create() {
 
 #[test]
 fn test_package_create_mime_large_compression() {
-    let pgp = proton_crypto_inbox::proton_crypto::new_pgp_provider();
+    let pgp = mail_crypto_inbox::proton_crypto::new_pgp_provider();
     let plain_package = TestPlainPackage {
         mime_type: PackageMimeType::Multipart,
         content: vec![1; 1024 * 1024 + 1],

@@ -1,5 +1,5 @@
 [package]
-name = "proton-issue-reporter-service"
+name = "mail-issue-reporter-service"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true

@@ -4,10 +4,10 @@ use crate::action::{
 };
 use crate::queue::ActionRequeueReason;
 use crate::tests::common::{NoopActionHandler, TestDb};
+use mail_stash::stash::StashConfiguration;
+use mail_stash::{orm::Model, stash::Stash};
 use pretty_assertions::assert_eq;
 use serde::{Deserialize, Serialize};
-use stash::stash::StashConfiguration;
-use stash::{orm::Model, stash::Stash};
 use tracing::subscriber::set_global_default;
 use tracing_subscriber::fmt::layer;
 use tracing_subscriber::layer::SubscriberExt;
@@ -76,8 +76,8 @@ async fn action_store_and_retrieve() {
         dependency_keys: ActionDependencyKeys::default(),
     };
 
-    let stash = new_test_connection().await;
-    let mut conn = stash.connection().await.unwrap();
+    let mail_stash = new_test_connection().await;
+    let mut conn = mail_stash.connection().await.unwrap();
     let mut stored = StoredAction::new::<TestAction>(&state, Metadata::default()).unwrap();
 
     conn.tx(async |tx| stored.save(tx).await).await.unwrap();
@@ -121,8 +121,8 @@ async fn action_store_with_non_existent_action_dependency_is_accepted() {
         dependency_keys: ActionDependencyKeys::default(),
     };
 
-    let stash = new_test_connection().await;
-    let mut conn = stash.connection().await.unwrap();
+    let mail_stash = new_test_connection().await;
+    let mut conn = mail_stash.connection().await.unwrap();
 
     let metadata = MetadataBuilder::new()
         .with_debug_string("my debug string")
@@ -144,8 +144,8 @@ async fn action_execution_lock() {
         dependency_keys: ActionDependencyKeys::default(),
     };
 
-    let stash = new_test_connection().await;
-    let mut conn = stash.connection().await.unwrap();
+    let mail_stash = new_test_connection().await;
+    let mut conn = mail_stash.connection().await.unwrap();
     let mut stored = StoredAction::new::<TestAction>(&state, Metadata::default()).unwrap();
 
     let (first_action_id, second_action_id, third_action_id) = conn
@@ -280,8 +280,8 @@ async fn leftover_execution_lock() {
         dependency_keys: ActionDependencyKeys::default(),
     };
 
-    let stash = new_test_connection().await;
-    let mut conn = stash.connection().await.unwrap();
+    let mail_stash = new_test_connection().await;
+    let mut conn = mail_stash.connection().await.unwrap();
     let mut stored1 = StoredAction::new::<TestAction>(&state, Metadata::default()).unwrap();
     let mut stored2 = StoredAction::new::<TestAction>(&state, Metadata::default()).unwrap();
 
@@ -321,8 +321,8 @@ async fn action_execution_group_selection() {
         dependency_keys: ActionDependencyKeys::default(),
     };
 
-    let stash = new_test_connection().await;
-    let mut conn = stash.connection().await.unwrap();
+    let mail_stash = new_test_connection().await;
+    let mut conn = mail_stash.connection().await.unwrap();
     let mut stored = StoredAction::new::<TestAction>(&state, Metadata::default()).unwrap();
 
     conn.tx(async |tx| stored.save(tx).await).await.unwrap();
@@ -370,8 +370,8 @@ async fn action_replace_or_queue() {
         dependency_keys: ActionDependencyKeys::default(),
     };
 
-    let stash = new_test_connection().await;
-    let mut conn = stash.connection().await.unwrap();
+    let mail_stash = new_test_connection().await;
+    let mut conn = mail_stash.connection().await.unwrap();
     let mut stored = StoredAction::new::<TestAction>(&state, Metadata::default()).unwrap();
 
     conn.tx(async |tx| stored.save(tx).await).await.unwrap();
@@ -442,8 +442,8 @@ async fn action_store_records_all_dependencies() {
         },
     };
 
-    let stash = new_test_connection().await;
-    let mut conn = stash.connection().await.unwrap();
+    let mail_stash = new_test_connection().await;
+    let mut conn = mail_stash.connection().await.unwrap();
 
     // Create first action, which registers the first dependency key
     let mut stored =
@@ -527,8 +527,8 @@ async fn clear_all_actions_in_chosen_action_group() {
         dependency_keys: ActionDependencyKeys::default(),
     };
 
-    let stash = new_test_connection().await;
-    let mut conn = stash.connection().await.unwrap();
+    let mail_stash = new_test_connection().await;
+    let mut conn = mail_stash.connection().await.unwrap();
 
     // Create two actions in the default group.
     let mut stored_default_1 =
@@ -600,8 +600,8 @@ async fn rebase_action_id_order() {
         dependency_keys: ActionDependencyKeys::default(),
     };
 
-    let stash = new_test_connection().await;
-    let mut conn = stash.connection().await.unwrap();
+    let mail_stash = new_test_connection().await;
+    let mut conn = mail_stash.connection().await.unwrap();
 
     // Create two actions in the default group.
     let mut stored_default_1 = StoredAction::new::<TestAction>(
@@ -668,10 +668,10 @@ async fn new_test_connection() -> Stash<TestDb> {
             .with(layer().with_test_writer()),
     );
 
-    let stash = Stash::new(StashConfiguration::test()).unwrap();
-    let mut tether = stash.connection().await.unwrap();
+    let mail_stash = Stash::new(StashConfiguration::test()).unwrap();
+    let mut tether = mail_stash.connection().await.unwrap();
 
     migrate(&mut tether).await.unwrap();
 
-    stash
+    mail_stash
 }

@@ -7,10 +7,12 @@
 
 use std::fmt;
 
-use stash::params;
-use stash::rusqlite::OptionalExtension;
-use stash::rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
-use stash::stash::{Bond, StashError, Tether};
+use mail_stash::params;
+use mail_stash::rusqlite::OptionalExtension;
+use mail_stash::rusqlite::types::{
+    FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef,
+};
+use mail_stash::stash::{Bond, StashError, Tether};
 use tracing::{debug, warn};
 
 /// Local message ID type (u64 wrapped for type safety)
@@ -43,7 +45,7 @@ impl fmt::Display for SearchOperation {
 }
 
 impl ToSql for SearchOperation {
-    fn to_sql(&self) -> stash::rusqlite::Result<ToSqlOutput<'_>> {
+    fn to_sql(&self) -> mail_stash::rusqlite::Result<ToSqlOutput<'_>> {
         Ok(ToSqlOutput::Borrowed(ValueRef::Text(
             self.as_str().as_bytes(),
         )))
@@ -243,7 +245,7 @@ impl SearchIndexIntent {
     /// The increment is done in SQL with RETURNING to get the accurate count,
     /// avoiding race conditions with concurrent updates.
     pub async fn mark_failed(&mut self, bond: &Bond<'_>) -> Result<(), StashError> {
-        use stash::utils::ConnectionExt;
+        use mail_stash::utils::ConnectionExt;
 
         // Safe cast: LocalMessageId (u64) to i64 for SQLite
         // In practice, message IDs will be much smaller than i64::MAX
@@ -311,7 +313,7 @@ impl SearchIndexIntent {
     /// to be processed first. Useful when an intent can't be processed yet but
     /// will likely be processable later (e.g., message waiting for remote ID).
     pub async fn defer(&self, bond: &Bond<'_>, delay_seconds: i64) -> Result<(), StashError> {
-        use stash::params;
+        use mail_stash::params;
 
         // Safe cast: LocalMessageId (u64) to i64 for SQLite
         // In practice, message IDs will be much smaller than i64::MAX
@@ -370,7 +372,7 @@ impl SearchIndexIntent {
         message_id: LocalMessageId,
         tether: &Tether,
     ) -> Result<Option<String>, StashError> {
-        use stash::rusqlite::OptionalExtension;
+        use mail_stash::rusqlite::OptionalExtension;
         let result = tether
             .sync_query(move |conn| {
                 conn.query_row(

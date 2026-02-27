@@ -14,18 +14,18 @@ use crate::models::{
 use crate::{AppError, MailContextResult, MailUserContext};
 use futures::try_join;
 use itertools::Itertools;
-use proton_action_queue::queue::Queue;
-use proton_core_api::services::proton::LabelId;
-use proton_core_api::session::Session;
-use proton_core_common::datatypes::{LocalLabelId, UnixTimestamp};
-use proton_core_common::models::{Label, LabelError, ModelExtension, ModelIdExtension as _, User};
-use proton_core_common::services::NetworkMonitorService;
-use proton_mail_api::services::proton::common::ConversationId;
-use proton_mail_common_derive::ScrollerEq;
+use mail_action_queue::queue::Queue;
+use mail_api::services::proton::common::ConversationId;
+use mail_common_derive::ScrollerEq;
+use mail_core_api::services::proton::LabelId;
+use mail_core_api::session::Session;
+use mail_core_common::datatypes::{LocalLabelId, UnixTimestamp};
+use mail_core_common::models::{Label, LabelError, ModelExtension, ModelIdExtension as _, User};
+use mail_core_common::services::NetworkMonitorService;
+use mail_stash::orm::Model;
+use mail_stash::stash::{Stash, StashError, Tether, WatcherHandle};
+use mail_stash::{UserDb, params};
 use sqlite_watcher::watcher::TableObserver;
-use stash::orm::Model;
-use stash::stash::{Stash, StashError, Tether, WatcherHandle};
-use stash::{UserDb, params};
 use std::collections::BTreeSet;
 use std::time::Instant;
 use tracing::{debug, info, warn};
@@ -154,7 +154,7 @@ impl ContextualConversation {
         ctx: &MailUserContext,
         origin: OpenConversationOrigin,
     ) -> Result<Option<ContextualConversationAndMessages>, AppError> {
-        let stash = ctx.user_stash();
+        let mail_stash = ctx.user_stash();
         let api = ctx.session();
         let conv_and_messages = match origin {
             OpenConversationOrigin::Default => {
@@ -163,7 +163,7 @@ impl ContextualConversation {
                     local_conversation_id,
                     local_label_id,
                     view_options,
-                    stash,
+                    mail_stash,
                     api,
                     ctx.action_queue(),
                 )
@@ -175,7 +175,7 @@ impl ContextualConversation {
                     local_conversation_id,
                     local_label_id,
                     view_options,
-                    stash,
+                    mail_stash,
                     api,
                     ctx.action_queue(),
                 )
@@ -204,18 +204,18 @@ impl ContextualConversation {
 
     /// Unlike [`conversation_and_messages()`] this version always sync the conversation
     /// data to ensure that we have the most up to date information.
-    #[tracing::instrument(skip(stash, api, network_monitor_service, queue))]
+    #[tracing::instrument(skip(mail_stash, api, network_monitor_service, queue))]
     pub async fn conversation_and_messages_from_push_notification(
         network_monitor_service: &NetworkMonitorService,
         local_conversation_id: LocalConversationId,
         local_label_id: LocalLabelId,
         view_options: ConversationViewOptions,
-        stash: &Stash<UserDb>,
+        mail_stash: &Stash<UserDb>,
         api: &Session,
         queue: &Queue<UserDb>,
     ) -> Result<Option<ContextualConversationAndMessages>, AppError> {
         let t = Instant::now();
-        let mut conn = stash.connection().await?;
+        let mut conn = mail_stash.connection().await?;
 
         let label = Label::find_by_id(local_label_id, &conn)
             .await?
@@ -276,13 +276,13 @@ impl ContextualConversation {
     ///
     /// This function also retrieve the messages from the server if
     /// they have never been synced before.
-    #[tracing::instrument(skip(stash, api, network_monitor_service, queue))]
+    #[tracing::instrument(skip(mail_stash, api, network_monitor_service, queue))]
     pub async fn conversation_and_messages(
         network_monitor_service: &NetworkMonitorService,
         local_conversation_id: LocalConversationId,
         local_label_id: LocalLabelId,
         view_options: ConversationViewOptions,
-        stash: &Stash<UserDb>,
+        mail_stash: &Stash<UserDb>,
         api: &Session,
         // set to some for rebasing
         queue: &Queue<UserDb>,
@@ -292,7 +292,7 @@ impl ContextualConversation {
             local_conversation_id,
             local_label_id,
             view_options,
-            stash,
+            mail_stash,
             api,
             false,
             queue,
@@ -300,13 +300,13 @@ impl ContextualConversation {
         .await
     }
 
-    #[tracing::instrument(skip(stash, api, network_monitor_service, queue))]
+    #[tracing::instrument(skip(mail_stash, api, network_monitor_service, queue))]
     pub async fn open_conversation_and_messages(
         network_monitor_service: &NetworkMonitorService,
         local_conversation_id: LocalConversationId,
         local_label_id: LocalLabelId,
         view_options: ConversationViewOptions,
-        stash: &Stash<UserDb>,
+        mail_stash: &Stash<UserDb>,
         api: &Session,
         queue: &Queue<UserDb>,
     ) -> Result<Option<ContextualConversationAndMessages>, AppError> {
@@ -315,7 +315,7 @@ impl ContextualConversation {
             local_conversation_id,
             local_label_id,
             view_options,
-            stash,
+            mail_stash,
             api,
             true,
             queue,
@@ -329,13 +329,13 @@ impl ContextualConversation {
         local_conversation_id: LocalConversationId,
         local_label_id: LocalLabelId,
         view_options: ConversationViewOptions,
-        stash: &Stash<UserDb>,
+        mail_stash: &Stash<UserDb>,
         api: &Session,
         extra_sync_allowed: bool,
         queue: &Queue<UserDb>,
     ) -> Result<Option<ContextualConversationAndMessages>, AppError> {
         let t = Instant::now();
-        let mut conn = stash.connection().await?;
+        let mut conn = mail_stash.connection().await?;
 
         let label = Label::find_by_id(local_label_id, &conn)
             .await?
@@ -389,8 +389,8 @@ impl ContextualConversation {
         }))
     }
 
-    pub async fn watch(stash: &Stash<UserDb>) -> Result<WatcherHandle, StashError> {
-        stash
+    pub async fn watch(mail_stash: &Stash<UserDb>) -> Result<WatcherHandle, StashError> {
+        mail_stash
             .subscribe_to(|sender| Box::new(ContextualConversationWatcher { sender }))
             .await
     }

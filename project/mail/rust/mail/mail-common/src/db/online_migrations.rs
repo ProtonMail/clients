@@ -4,9 +4,9 @@ mod fetch_contact_emails;
 use crate::{MailContextError, MailContextResult, MailUserContext};
 use anyhow::anyhow;
 use itertools::Itertools;
-use proton_core_common::models::ModelExtension;
-use proton_issue_reporter_service::{IssueLevel, IssueReportKeys};
-use stash::{UserDb, macros::Model};
+use mail_core_common::models::ModelExtension;
+use mail_issue_reporter_service::{IssueLevel, IssueReportKeys};
+use mail_stash::{UserDb, macros::Model};
 use std::sync::{Arc, Weak};
 use tracing::{Instrument, debug, error, info, instrument};
 
@@ -127,16 +127,16 @@ async fn migrate(
 #[cfg(test)]
 mod tests {
     use crate::test_utils::test_context::MailTestContext;
-    use parking_lot::Mutex;
-    use proton_core_api::services::proton::{
+    use mail_core_api::services::proton::{
         ContactEmail as ApiContactEmail, ContactEmailId, ContactFull, ContactId,
         ContactSendingPreferences as ApiContactSendingPreferences, ContactUID, PrivateEmail,
     };
-    use proton_core_common::{
+    use mail_core_common::{
         datatypes::{ContactSendingPreferences, ContactTypes, Labels, UnixTimestamp},
         models::{Contact, ContactEmail},
     };
-    use stash::orm::Model;
+    use mail_stash::orm::Model;
+    use parking_lot::Mutex;
     use std::{time::Duration, vec};
     use tokio::{sync::oneshot, time};
 
@@ -148,7 +148,13 @@ mod tests {
     #[tokio::test]
     async fn smoke() {
         let ctx = MailTestContext::new().await;
-        let tether = ctx.user_context().await.stash().connection().await.unwrap();
+        let tether = ctx
+            .user_context()
+            .await
+            .mail_stash()
+            .connection()
+            .await
+            .unwrap();
 
         tether
             .execute(
@@ -180,7 +186,7 @@ mod tests {
         let actual = ctx
             .user_context()
             .await
-            .stash()
+            .mail_stash()
             .connection()
             .await
             .unwrap()

@@ -1,7 +1,7 @@
 use crate::services::proton::common::ApiErrorInfo;
 use crate::store::StoreError;
-use muon::Status;
-use muon::common::ParseEndpointErr;
+use mail_muon::Status;
+use mail_muon::common::ParseEndpointErr;
 use serde_qs::Error as QueryStringError;
 use std::fmt::{Debug, Display};
 use std::string::FromUtf8Error;
@@ -68,20 +68,20 @@ pub type ApiServiceResult<T, E = ApiServiceError> = Result<T, E>;
 pub enum ApiServiceError {
     //  NETWORK ERRORS
     //==========================================================================
-    /// An internal muon error has occurred, specifically when attempting to make a connection.
+    /// An internal `mail_muon` error has occurred, specifically when attempting to make a connection.
     #[error("Network connection error: {0}")]
     ConnectionError(String),
 
-    /// An internal muon error has occurred. This could be due to a network
+    /// An internal `mail_muon` error has occurred. This could be due to a network
     /// error, or a misconfiguration, causing the request to fail.
     #[error("Network error: {0}")]
     NetworkError(String),
 
-    /// An internal muon error has occurred, specifically, we have been redirected.
+    /// An internal `mail_muon` error has occurred, specifically, we have been redirected.
     #[error("Redirect error for {0}: {1}")]
     Redirect(String, String),
 
-    /// An internal muon error has occurred, specifically, the HTTP request has timed out.
+    /// An internal `mail_muon` error has occurred, specifically, the HTTP request has timed out.
     #[error("Timeout: {0}")]
     Timeout(String),
 

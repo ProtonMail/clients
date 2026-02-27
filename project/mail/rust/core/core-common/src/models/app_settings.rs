@@ -1,14 +1,14 @@
 use std::time::Duration;
 
 use derive_more::derive::TryFrom;
-use stash::AccountDb;
-use stash::exports::{
+use mail_stash::AccountDb;
+use mail_stash::exports::{
     FromSql, FromSqlError, FromSqlResult, SqliteError, ToSql, ToSqlOutput, Transaction, Value,
     ValueRef,
 };
-use stash::macros::Model;
-use stash::orm::{Model, ModelHooks};
-use stash::stash::{StashError, Tether};
+use mail_stash::macros::Model;
+use mail_stash::orm::{Model, ModelHooks};
+use mail_stash::stash::{StashError, Tether};
 use tracing::{debug, instrument};
 
 use crate::Context;

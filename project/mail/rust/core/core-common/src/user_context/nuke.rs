@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use stash::stash::{StashError, Tether};
+use mail_stash::stash::{StashError, Tether};
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
@@ -201,7 +201,7 @@ fn remove_files_in_background(paths: &[PathBuf]) {
 mod tests {
     use super::*;
     use crate::test_utils::test_context::TestContext;
-    use stash::params;
+    use mail_stash::params;
     use std::path::Path;
     use tempfile::TempDir;
 
@@ -295,7 +295,7 @@ mod tests {
     async fn drop_database_tables_smoke() {
         let ctx = TestContext::new().await;
         let uctx = ctx.user_context().await;
-        let tether = uctx.stash().connection().await.unwrap();
+        let tether = uctx.mail_stash().connection().await.unwrap();
 
         tether
             .execute("CREATE TABLE foos (id INT NOT NULL PRIMARY KEY)", vec![])
@@ -312,7 +312,7 @@ mod tests {
 
         drop_database_tables(tether).await.unwrap();
 
-        let tether = uctx.stash().connection().await.unwrap();
+        let tether = uctx.mail_stash().connection().await.unwrap();
 
         assert!(!has_table(&tether, "foos").await);
         assert!(!has_table(&tether, "bars").await);

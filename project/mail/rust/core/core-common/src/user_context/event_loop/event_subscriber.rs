@@ -9,8 +9,8 @@ use crate::{
 use anyhow::Context;
 use async_trait::async_trait;
 use core_event_loop::{EventLoopError, RefreshFlag};
-use proton_core_api::services::proton::UserId;
-use stash::{
+use mail_core_api::services::proton::UserId;
+use mail_stash::{
     orm::Model,
     stash::{Bond, StashError},
 };
@@ -51,7 +51,7 @@ pub mod macros {
 use crate::models::LabelError;
 pub use macros::*;
 
-use proton_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
+use mail_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
 
 use crate::event_loop::account_event_subscriber::AccountEventSubscriber;
 use crate::event_loop::event_source::CoreEventSource;
@@ -61,9 +61,9 @@ use crate::event_loop::v6::CoreEventCache;
 use crate::user_context::event_loop::events::{AddressEvent, ContactEvent, CoreEvent};
 use core_event_loop::v6::{EventSource, EventSubscriberResult};
 use core_event_loop::v6::{EventSubscriber, EventSubscriberError};
-use proton_action_queue::action::ActionGroup;
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::service::ApiServiceError;
+use mail_action_queue::action::ActionGroup;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_core_api::service::ApiServiceError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum CoreEventSubscriberError {
@@ -148,8 +148,8 @@ impl EventSubscriber<EventManagerContext, CoreEventSource> for CoreEventSubscrib
                 return Ok(());
             };
             let user_id = ctx.user_id().clone();
-            let stash = ctx.stash().clone();
-            let mut conn = stash.connection().await?;
+            let mail_stash = ctx.mail_stash().clone();
+            let mut conn = mail_stash.connection().await?;
 
             let mut rebase_change_set = RebaseChangeSet::default();
 

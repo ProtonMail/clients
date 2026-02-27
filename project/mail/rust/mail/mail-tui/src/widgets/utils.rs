@@ -1,10 +1,8 @@
 use anyhow::{Context, anyhow};
 use chrono::{DateTime, Local, MappedLocalTime, NaiveDateTime, TimeZone};
 use crossterm::event::KeyCode;
-use proton_core_common::datatypes::UnixTimestamp;
-use proton_mail_common::datatypes::{
-    MessageRecipient, MessageRecipients, MessageSender, MessageSenders,
-};
+use mail_common::datatypes::{MessageRecipient, MessageRecipients, MessageSender, MessageSenders};
+use mail_core_common::datatypes::UnixTimestamp;
 use std::iter;
 
 pub fn date_from_timestamp(timestamp: UnixTimestamp) -> String {

@@ -1,9 +1,9 @@
-use proton_mail_api::services::proton::request_data::PutNextMessageOnMoveRequest;
-use proton_mail_api::services::proton::responses::PutNextMessageOnMoveResponse;
-use proton_mail_common::datatypes::NextMessageOnMove;
-use proton_mail_common::models::MailSettings;
-use proton_mail_common::test_utils::init::Params as TestParams;
-use proton_mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
+use mail_api::services::proton::request_data::PutNextMessageOnMoveRequest;
+use mail_api::services::proton::responses::PutNextMessageOnMoveResponse;
+use mail_common::datatypes::NextMessageOnMove;
+use mail_common::models::MailSettings;
+use mail_common::test_utils::init::Params as TestParams;
+use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
 use wiremock::ResponseTemplate;
 
 fn test_init_params() -> TestParams {
@@ -13,9 +13,9 @@ fn test_init_params() -> TestParams {
 }
 
 fn success_response_enabled() -> ResponseTemplate {
-    let mail_settings = proton_mail_api::services::proton::response_data::MailSettings {
+    let mail_settings = mail_api::services::proton::response_data::MailSettings {
         next_message_on_move: Some(
-            proton_mail_api::services::proton::response_data::NextMessageOnMove::EnabledExplicit,
+            mail_api::services::proton::response_data::NextMessageOnMove::EnabledExplicit,
         ),
         ..Default::default()
     };
@@ -27,9 +27,9 @@ fn success_response_enabled() -> ResponseTemplate {
 }
 
 fn success_response_disabled() -> ResponseTemplate {
-    let mail_settings = proton_mail_api::services::proton::response_data::MailSettings {
+    let mail_settings = mail_api::services::proton::response_data::MailSettings {
         next_message_on_move: Some(
-            proton_mail_api::services::proton::response_data::NextMessageOnMove::DisabledExplicit,
+            mail_api::services::proton::response_data::NextMessageOnMove::DisabledExplicit,
         ),
         ..Default::default()
     };

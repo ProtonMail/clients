@@ -15,8 +15,8 @@ use std::fmt::Debug;
 /// # Example
 ///
 /// ```ignore
-/// use proton_mail_common::traits::ScrollerEq as _;
-/// use proton_mail_common_derive::ScrollerEq;
+/// use mail_common::traits::ScrollerEq as _;
+/// use mail_common_derive::ScrollerEq;
 ///
 /// #[derive(ScrollerEq)]
 /// struct Conversation {

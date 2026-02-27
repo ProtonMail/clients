@@ -1,5 +1,5 @@
-use proton_sqlite3::Migration;
-use stash::{
+use mail_sqlite3::Migration;
+use mail_stash::{
     UserDb, params,
     stash::{Bond, StashError},
 };

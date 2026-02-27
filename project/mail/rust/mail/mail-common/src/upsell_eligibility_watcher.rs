@@ -1,15 +1,15 @@
-use proton_core_common::models::{User, UserSettings};
+use mail_core_common::models::{User, UserSettings};
+use mail_stash::UserDb;
+use mail_stash::orm::Model;
+use mail_stash::stash::{Stash, StashError, WatcherHandle};
 use sqlite_watcher::watcher::TableObserver;
-use stash::UserDb;
-use stash::orm::Model;
-use stash::stash::{Stash, StashError, WatcherHandle};
 use std::collections::BTreeSet;
 
 pub struct UpsellEligibilityWatcher;
 
 impl UpsellEligibilityWatcher {
-    pub async fn watch(stash: &Stash<UserDb>) -> Result<WatcherHandle, StashError> {
-        stash
+    pub async fn watch(mail_stash: &Stash<UserDb>) -> Result<WatcherHandle, StashError> {
+        mail_stash
             .subscribe_to(|sender| Box::new(UpsellEligibilityTableWatcher { sender }))
             .await
     }

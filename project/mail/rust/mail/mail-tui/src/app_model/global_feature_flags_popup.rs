@@ -3,7 +3,7 @@ use crate::app_model::Popup;
 use crate::messages::Messages;
 use crate::widgets::utils::ScrollableState;
 use crate::widgets::{ScrollableList, ScrollableListState, TextInput, TextInputState};
-use proton_mail_common::MailContext;
+use mail_common::MailContext;
 use ratatui::Frame;
 use ratatui::crossterm::event::{Event, KeyCode, KeyModifiers};
 use ratatui::layout::{Constraint, Layout, Rect};

@@ -1,6 +1,6 @@
 use crate::event_loop::v6::CoreEventCache;
 use core_event_loop::v6::EventSource;
-use proton_core_api::services::proton::CoreEvent;
+use mail_core_api::services::proton::CoreEvent;
 
 pub struct CoreEventSource;
 

@@ -1,10 +1,10 @@
-use proton_core_api::services::proton::Label as ApiLabel;
-use proton_core_api::services::proton::LabelId;
-use proton_core_api::services::proton::LabelType;
-use proton_mail_common::Sidebar;
-use proton_mail_common::datatypes::labels::custom_folder::CustomFolder;
-use proton_mail_common::test_utils::init::Params as TestParams;
-use proton_mail_common::test_utils::test_context::MailTestContext;
+use mail_common::Sidebar;
+use mail_common::datatypes::labels::custom_folder::CustomFolder;
+use mail_common::test_utils::init::Params as TestParams;
+use mail_common::test_utils::test_context::MailTestContext;
+use mail_core_api::services::proton::Label as ApiLabel;
+use mail_core_api::services::proton::LabelId;
+use mail_core_api::services::proton::LabelType;
 use std::iter::zip;
 use test_case::test_case;
 use velcro::hash_map;
@@ -116,8 +116,8 @@ async fn sidebar_custom_folders(labels: &[(&str, Option<&str>, &str, u32)], expe
 
     let user_ctx = ctx.mail_user_context().await;
 
-    let stash = user_ctx.user_stash();
-    let tether = stash.connection().await.unwrap();
+    let mail_stash = user_ctx.user_stash();
+    let tether = mail_stash.connection().await.unwrap();
 
     // Action
     let result = Sidebar.custom_folders(&tether).await.unwrap();

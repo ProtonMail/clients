@@ -1,6 +1,6 @@
-use proton_core_api::services::proton::AddressSignedKeyList;
-use stash::orm::Model;
-use stash::stash::StashError;
+use mail_core_api::services::proton::AddressSignedKeyList;
+use mail_stash::orm::Model;
+use mail_stash::stash::StashError;
 
 use crate::UserContext;
 use crate::datatypes::{AddressFlags, AddressStatus, AddressType};
@@ -181,7 +181,7 @@ async fn test_has_valid_sender_address_complex_scenario() {
 }
 
 async fn setup(ctx: &UserContext, addresses: Vec<Address>) {
-    let mut tether = ctx.stash().connection().await.unwrap();
+    let mut tether = ctx.mail_stash().connection().await.unwrap();
     tether
         .tx(async move |tx| {
             for mut address in addresses {

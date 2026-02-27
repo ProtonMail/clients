@@ -31,10 +31,10 @@
 //!
 //! ### Login via fork
 //! ```
-//! use muon::store::{Store, StoreError};
-//! use muon::client::{Auth, flow::{LoginFlow, WithSelectorFlow}};
-//! use muon::{App, Client, env::EnvId, GET};
-//! # fn handle_error(r : impl Into<muon::Error>) {}
+//! use mail_muon::store::{Store, StoreError};
+//! use mail_muon::client::{Auth, flow::{LoginFlow, WithSelectorFlow}};
+//! use mail_muon::{App, Client, env::EnvId, GET};
+//! # fn handle_error(r : impl Into<mail_muon::Error>) {}
 //! # fn store_payload(p: Option<Vec<u8>>) {}
 //! # async fn receive_selector_from_parent() -> String {"".to_owned()}
 //! # tokio_test::block_on(async {
@@ -62,9 +62,9 @@
 //!
 //! ### Login via fork with user code (interacts with [fork flows](#Fork))
 //! ```
-//! use muon::store::{Store, StoreError};
-//! use muon::client::{Auth, flow::{WithCodeFlow, WithCodePollFlow}};
-//! use muon::{App, Client, GET, env::EnvId};
+//! use mail_muon::store::{Store, StoreError};
+//! use mail_muon::client::{Auth, flow::{WithCodeFlow, WithCodePollFlow}};
+//! use mail_muon::{App, Client, GET, env::EnvId};
 //! struct MyPersistenceStorage;
 //! impl MyPersistenceStorage {
 //!     pub fn prod() -> Self { Self }
@@ -164,7 +164,7 @@ export! {
 /// An auth flow.
 ///
 /// This is the entry point for authenticating with the Proton API using the
-/// `muon` client. The auth flow enforces a strict sequence of steps to ensure
+/// `mail_muon` client. The auth flow enforces a strict sequence of steps to ensure
 /// things don't go wrong.
 #[must_use]
 #[derive(Debug)]
@@ -202,9 +202,9 @@ impl AuthFlow {
     /// # Example
     /// ```
     /// use serde_json::json;
-    /// use muon::{App, Client};
-    /// use muon::env::EnvId;
-    /// use muon::client::flow::{AuthFlow, LoginExtraInfo};
+    /// use mail_muon::{App, Client};
+    /// use mail_muon::env::EnvId;
+    /// use mail_muon::client::flow::{AuthFlow, LoginExtraInfo};
     ///
     /// let app = App::new("windows-vpn@4.1.0").unwrap();
     /// let env = EnvId::new_prod();
@@ -220,7 +220,7 @@ impl AuthFlow {
     /// let _ = client.auth().login_with_extra("user", "password", extra_info);
     /// ```
     #[deprecated(
-        note = "Use login instead. For the fingerprint pass a provider to the muon client using with_info_provider. Muon will use this provider to ask for the fingerprint when needed."
+        note = "Use login instead. For the fingerprint pass a provider to the mail_muon client using with_info_provider. Muon will use this provider to ask for the fingerprint when needed."
     )]
     #[allow(deprecated)]
     pub async fn login_with_extra(
@@ -248,8 +248,8 @@ impl AuthFlow {
     /// # Example
     ///
     /// ```
-    /// use muon::{App, Client};
-    /// # use muon::doc::*;
+    /// use mail_muon::{App, Client};
+    /// # use mail_muon::doc::*;
     /// # tokio_test::block_on(async {
     /// let store = MyPersistenceStorage::prod();
     /// let app = App::new("windows-vpn@4.1.0")?;
@@ -276,8 +276,8 @@ impl AuthFlow {
     /// TODO: Un-ignore this example when the FIDO2 flow is implemented.
     ///
     /// ```ignore
-    /// use muon::{App, Client};
-    /// # use muon::doc::*;
+    /// use mail_muon::{App, Client};
+    /// # use mail_muon::doc::*;
     /// # tokio_test::block_on(async {
     /// let store = MyPersistenceStorage::prod();
     /// let app = App::new("windows-vpn@4.1.0")?;
@@ -292,10 +292,10 @@ impl AuthFlow {
 
     /// Provide an externally managed session UID.
     ///
-    /// The `muon` client will set the session UID in outgoing requests but will
+    /// The `mail_muon` client will set the session UID in outgoing requests but will
     /// **not** manage the session; it is assumed that the session is
     /// managed by an external system, such as a browser. If the session's
-    /// access token expires, muon will not attempt to refresh it.
+    /// access token expires, mail_muon will not attempt to refresh it.
     pub async fn from_uid(self, user_id: impl AsRef<str>, uid: impl AsRef<str>) -> Client {
         // Build the auth object with only the UID.
         let auth = Auth::external(user_id, uid);

@@ -1,5 +1,5 @@
 [package]
-name = "proton-calendar-common"
+name = "mail-calendar-common"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
@@ -8,15 +8,15 @@ rust-version.workspace = true
 derive_more = { workspace = true }
 itertools = { workspace = true }
 jiff = { workspace = true }
-proton-calendar-api-v1 = { workspace = true }
-proton-canonical-email = { workspace = true }
-proton-core-api = { workspace = true }
-proton-core-common = { workspace = true }
+mail-calendar-api-v1 = { workspace = true }
+mail-canonical-email = { workspace = true }
+mail-core-api = { workspace = true }
+mail-core-common = { workspace = true }
 proton-crypto = { workspace = true }
 proton-crypto-account = { workspace = true }
-proton-crypto-calendar = { workspace = true }
-proton-ical = { workspace = true }
-proton-network-monitor-service = { workspace = true }
+mail-crypto-calendar = { workspace = true }
+mail-ical = { workspace = true }
+mail-network-monitor-service = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
@@ -24,9 +24,9 @@ tracing = { workspace = true }
 [dev-dependencies]
 indoc = { workspace = true }
 pretty_assertions = { workspace = true }
-proton-calendar-api-v1 = { workspace = true, features = ["test-utils"] }
-proton-core-api = { workspace = true }
-proton-core-common = { workspace = true, features = ["test-utils"] }
+mail-calendar-api-v1 = { workspace = true, features = ["test-utils"] }
+mail-core-api = { workspace = true }
+mail-core-common = { workspace = true, features = ["test-utils"] }
 test-case = { workspace = true }
 tokio = { workspace = true }
 

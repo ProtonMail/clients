@@ -1,7 +1,7 @@
 use crate::CoreContextError;
 use crate::services::Service;
 use async_trait::async_trait;
-use proton_issue_reporter_service::IssueReporter;
+use mail_issue_reporter_service::IssueReporter;
 use std::sync::Arc;
 
 pub struct IssueReporterService {

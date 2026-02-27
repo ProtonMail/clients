@@ -7,12 +7,12 @@ use crate::mail::datatypes::labels::custom_labels::SidebarCustomLabel;
 use crate::mail::datatypes::labels::system_labels::SidebarSystemLabel;
 use crate::mail::state::MailUserContextPtr;
 use crate::{LiveQueryCallback, WatchHandle, declare_live_query_tagger, uniffi_async};
-use proton_core_common::utils::MapVec as _;
-use proton_mail_common::ProtonMailError as RealProtonMailError;
-use proton_mail_common::models::LabelWithCounters as RealLabelWithCounters;
-use proton_mail_common::{MailUserContext, Sidebar as RealSidebar};
-use stash::UserDb;
-use stash::stash::Stash;
+use mail_common::ProtonMailError as RealProtonMailError;
+use mail_common::models::LabelWithCounters as RealLabelWithCounters;
+use mail_common::{MailUserContext, Sidebar as RealSidebar};
+use mail_core_common::utils::MapVec as _;
+use mail_stash::UserDb;
+use mail_stash::stash::Stash;
 use std::sync::Arc;
 
 #[derive(uniffi::Object)]
@@ -71,10 +71,10 @@ impl Sidebar {
 #[uniffi_export]
 impl Sidebar {
     pub async fn system_labels(&self) -> Result<Vec<SidebarSystemLabel>, ActionError> {
-        let stash = self.user_stash()?;
+        let mail_stash = self.user_stash()?;
 
         uniffi_async(async move {
-            let tether = stash.connection().await?;
+            let tether = mail_stash.connection().await?;
             let labels = RealSidebar.system_labels(&tether).await?;
 
             Result::<_, RealProtonMailError>::Ok(labels.map_vec())
@@ -84,10 +84,10 @@ impl Sidebar {
     }
 
     pub async fn custom_folders(&self) -> Result<Vec<SidebarCustomFolder>, ActionError> {
-        let stash = self.user_stash()?;
+        let mail_stash = self.user_stash()?;
 
         uniffi_async(async move {
-            let tether = stash.connection().await?;
+            let tether = mail_stash.connection().await?;
             let labels = RealSidebar.custom_folders(&tether).await?;
 
             Result::<_, RealProtonMailError>::Ok(labels.map_vec())
@@ -97,10 +97,10 @@ impl Sidebar {
     }
 
     pub async fn all_custom_folders(&self) -> Result<Vec<SidebarCustomFolder>, ActionError> {
-        let stash = self.user_stash()?;
+        let mail_stash = self.user_stash()?;
 
         uniffi_async(async move {
-            let tether = stash.connection().await?;
+            let tether = mail_stash.connection().await?;
             let labels = RealSidebar.all_custom_folders(&tether).await?;
 
             Result::<_, RealProtonMailError>::Ok(labels.map_vec())
@@ -110,10 +110,10 @@ impl Sidebar {
     }
 
     pub async fn custom_labels(&self) -> Result<Vec<SidebarCustomLabel>, ActionError> {
-        let stash = self.user_stash()?;
+        let mail_stash = self.user_stash()?;
 
         uniffi_async(async move {
-            let tether = stash.connection().await?;
+            let tether = mail_stash.connection().await?;
             let labels = RealSidebar.custom_labels(&tether).await?;
 
             Result::<_, RealProtonMailError>::Ok(labels.map_vec())
@@ -127,10 +127,10 @@ impl Sidebar {
         callback: Box<dyn LiveQueryCallback>,
     ) -> Result<Arc<WatchHandle>, ActionError> {
         let ctx = self.ctx()?;
-        let stash = self.user_stash()?;
+        let mail_stash = self.user_stash()?;
 
         uniffi_async(async move {
-            let handle = RealLabelWithCounters::watch(&stash).await?;
+            let handle = RealLabelWithCounters::watch(&mail_stash).await?;
             let handle = WatchSideBarLabelsMarker::watch_channel(&*ctx, handle, callback);
 
             Result::<_, RealProtonMailError>::Ok(handle)

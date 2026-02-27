@@ -1,6 +1,6 @@
 use super::ProtonError;
 use derive_more::From;
-use proton_mail_common::{MailContextError, ProtonMailError as RealProtonMailError};
+use mail_common::{MailContextError, ProtonMailError as RealProtonMailError};
 use tokio::task::JoinError;
 use uniffi::Enum;
 

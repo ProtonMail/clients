@@ -1,7 +1,7 @@
 use anyhow::Result;
-use muon::common::{Addr, Host, IntoDyn};
-use muon::dns::{CloudflareDns, DnsClient, DnsResolver, DynDnsService, GoogleDns, Quad9Dns};
-use muon::rt::{AsyncResolver, AsyncSpawner, Resolver};
+use mail_muon::common::{Addr, Host, IntoDyn};
+use mail_muon::dns::{CloudflareDns, DnsClient, DnsResolver, DynDnsService, GoogleDns, Quad9Dns};
+use mail_muon::rt::{AsyncResolver, AsyncSpawner, Resolver};
 use std::collections::HashSet;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use test_case::test_case;

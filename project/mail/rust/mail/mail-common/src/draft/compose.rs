@@ -12,24 +12,24 @@ use crate::{MailContextError, MailContextResult, MailUserContext};
 use anyhow::anyhow;
 use chrono::DateTime;
 use derive_more::Display;
-use proton_canonical_email::CanonicalEmail;
-use proton_core_api::services::proton::AddressId;
-use proton_core_common::Platform;
-use proton_core_common::datatypes::{AddressStatus, UnixTimestamp};
-use proton_core_common::models::{Address, ModelIdExtension, PaidSubscription, User};
-use proton_crypto_inbox::message::{
+use mail_api::services::proton::request_data::DraftRecipient;
+use mail_canonical_email::CanonicalEmail;
+use mail_core_api::services::proton::AddressId;
+use mail_core_common::Platform;
+use mail_core_common::datatypes::{AddressStatus, UnixTimestamp};
+use mail_core_common::models::{Address, ModelIdExtension, PaidSubscription, User};
+use mail_crypto_inbox::message::{
     DecryptableMessage, EncryptableDraft, EncryptedDraft, GettablePGPMessage, RawDecryptedBody,
 };
-use proton_crypto_inbox::proton_crypto::new_pgp_provider;
-use proton_mail_api::services::proton::request_data::DraftRecipient;
-use proton_mail_html_transformer::sanitizer::StripStyleSheets;
-use proton_mail_html_transformer::transforms::ColorMode;
-use proton_mail_html_transformer::transforms::styles::{
+use mail_crypto_inbox::proton_crypto::new_pgp_provider;
+use mail_html_transformer::sanitizer::StripStyleSheets;
+use mail_html_transformer::transforms::ColorMode;
+use mail_html_transformer::transforms::styles::{
     BrowserCapabilities, IncludeFullStaticCss, InjectDarkModeOptions, dark_mode_for_plaintext,
 };
-use proton_mail_html_transformer::{Html2TextOptions, Transformer};
-use stash::orm::Model as _;
-use stash::stash::{StashError, Tether};
+use mail_html_transformer::{Html2TextOptions, Transformer};
+use mail_stash::orm::Model as _;
+use mail_stash::stash::{StashError, Tether};
 use std::fmt::Display;
 use std::fmt::Write as _;
 use tracing::error;
@@ -48,7 +48,7 @@ pub(super) async fn patch_draft_with_reply_mode(
     reply_mode: ReplyMode,
 ) {
     let is_sent_message = source_message.is_sent();
-    let canonical_sender_email = proton_canonical_email::canonicalize_auto(&draft.sender);
+    let canonical_sender_email = mail_canonical_email::canonicalize_auto(&draft.sender);
     let subject_prefix = match reply_mode {
         ReplyMode::Sender | ReplyMode::All => REPLY_PREFIX,
         ReplyMode::Forward => FORWARD_PREFIX,
@@ -114,7 +114,7 @@ fn reply_all_recipients_for_received(
         .iter()
         .chain(&source_message.cc_list.value)
         .filter(|recipient| {
-            proton_canonical_email::canonicalize_auto(&recipient.address) != canonical_sender_email
+            mail_canonical_email::canonicalize_auto(&recipient.address) != canonical_sender_email
         })
         .cloned()
         .collect();

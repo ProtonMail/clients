@@ -6,12 +6,12 @@ use crate::{
 use indoc::indoc;
 use itertools::Itertools;
 use jiff::civil::Weekday;
-use pretty_assertions as pa;
-use proton_calendar_api_v1::{
+use mail_calendar_api_v1::{
     CalendarAttendeeStatus, CalendarNotificationsUpdate, ProtonCalendarMock,
 };
-use proton_calendar_common::{RsvpAnswer, RsvpEventId, RsvpMail};
-use proton_ical::ics;
+use mail_calendar_common::{RsvpAnswer, RsvpEventId, RsvpMail};
+use mail_ical::ics;
+use pretty_assertions as pa;
 use std::io;
 use test_case::test_case;
 

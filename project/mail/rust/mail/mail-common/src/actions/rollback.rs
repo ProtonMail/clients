@@ -1,15 +1,15 @@
 use crate::actions::PREFETCH_ROLLBACK_ACTION_GROUP;
 use crate::models::RollbackItem;
 use crate::{MailContextError, MailUserContext};
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionDependencyKeys, ActionGroup, ActionId, DefaultVersionConverter, Handler,
     Priority, Type, WriterGuard,
 };
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;
+use mail_stash::UserDb;
+use mail_stash::stash::Bond;
 use serde::{Deserialize, Serialize};
-use stash::UserDb;
-use stash::stash::Bond;
 use std::sync::Weak;
 
 /// This action flushes the rollback items.

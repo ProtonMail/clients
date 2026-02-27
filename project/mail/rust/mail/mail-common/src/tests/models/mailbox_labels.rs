@@ -1,11 +1,11 @@
 use crate::models::MailboxLabels;
-use proton_core_common::{
+use mail_common::test_utils::db::new_test_connection;
+use mail_core_common::{
     datatypes::{LabelColor, LabelType},
     models::Label,
 };
-use proton_mail_common::test_utils::db::new_test_connection;
-use stash::orm::Model;
-use stash::stash::StashError;
+use mail_stash::orm::Model;
+use mail_stash::stash::StashError;
 
 #[tokio::test]
 async fn test_mark_labels_as_initialized() {

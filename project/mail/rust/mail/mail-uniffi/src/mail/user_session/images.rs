@@ -1,9 +1,9 @@
 use crate::errors::UserSessionError;
 use crate::mail::MailUserSession;
 use crate::uniffi_async;
-use proton_core_common::datatypes::LightOrDarkMode;
-use proton_mail_common::ProtonMailError as RealProtonMailError;
-use proton_mail_common::Unexpected;
+use mail_common::ProtonMailError as RealProtonMailError;
+use mail_common::Unexpected;
+use mail_core_common::datatypes::LightOrDarkMode;
 
 #[uniffi_export]
 impl MailUserSession {

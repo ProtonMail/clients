@@ -7,13 +7,13 @@ use crate::models::{
     MailSettings, MessageTracker, MessageTrackerUrl, MessageUtmLink, MessageUtmLinkUrl,
 };
 use anyhow::Context;
-use proton_core_api::services::proton::ProtonCore;
-use proton_core_common::datatypes::UnixTimestamp;
-use proton_core_common::models::ModelExtension;
-use proton_mail_html_transformer::utm::StrippedUTM;
+use mail_core_api::services::proton::ProtonCore;
+use mail_core_common::datatypes::UnixTimestamp;
+use mail_core_common::models::ModelExtension;
+use mail_html_transformer::utm::StrippedUTM;
+use mail_stash::orm::Model;
+use mail_stash::stash::{StashError, Tether, WatcherHandle};
 use sqlite_watcher::watcher::TableObserver;
-use stash::orm::Model;
-use stash::stash::{StashError, Tether, WatcherHandle};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::sync::Weak;
 use std::time::Duration;
@@ -152,7 +152,7 @@ impl TrackerService {
 
     pub async fn get_info(&self, message_id: LocalMessageId) -> Result<PrivacyInfo, StashError> {
         let ctx = self.ctx.upgrade().context("Could not find the context")?;
-        let tether = ctx.user_context().stash().connection().await?;
+        let tether = ctx.user_context().mail_stash().connection().await?;
 
         Self::get_info_inner(&tether, message_id).await
     }
@@ -233,7 +233,7 @@ impl TrackerService {
 
     pub async fn watch(&self, message_id: LocalMessageId) -> Result<PrivacyWatchData, StashError> {
         let ctx = self.ctx.upgrade().context("Could not find the context")?;
-        let tether = ctx.user_context().stash().connection().await?;
+        let tether = ctx.user_context().mail_stash().connection().await?;
         let initial = Self::get_info_inner(&tether, message_id).await?;
 
         let handle = tether.subscribe_to(move |sender| Box::new(PrivacyDataWatcher { sender }))?;

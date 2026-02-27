@@ -3,13 +3,13 @@ use crate::{
     datatypes::attachment::ContentId,
     models::{AttachmentData, MailSettings},
 };
-use proton_core_api::{
+use mail_core_api::{
     service::{ApiServiceError, ApiServiceResult},
     services::proton::ProtonCore,
     utils::HeadersExt,
 };
+use mail_stash::stash::StashError;
 use reqwest::Method;
-use stash::stash::StashError;
 use std::{str::FromStr, sync::Weak};
 use thiserror::Error as TError;
 use tracing::instrument;
@@ -220,8 +220,8 @@ pub enum ImagePolicy {
 mod tests {
     use super::*;
     use crate::test_utils::test_context::MailTestContext;
-    use proton_core_common::datatypes::ImageProxy;
-    use stash::orm::Model;
+    use mail_core_common::datatypes::ImageProxy;
+    use mail_stash::orm::Model;
     use test_case::test_case;
     use wiremock::{
         Mock, ResponseTemplate,

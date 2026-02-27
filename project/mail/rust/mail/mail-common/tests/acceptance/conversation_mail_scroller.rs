@@ -1,31 +1,25 @@
 use core::ops::Range;
 use itertools::Itertools;
-use proton_core_api::services::proton::{Action, EventId, LabelId};
-use proton_core_common::models::ModelExtension;
-use proton_core_common::{
-    datatypes::SystemLabel,
-    models::{Label, ModelIdExtension},
-};
-use proton_mail_api::services::proton::common::MessageId;
-use proton_mail_api::services::proton::prelude::{
+use mail_api::services::proton::common::MessageId;
+use mail_api::services::proton::prelude::{
     ConversationEvent, GetConversationsCountResponse, MailEvent, RunningTasks,
 };
-use proton_mail_api::services::proton::response_data::ConversationCount;
-use proton_mail_api::services::proton::{
+use mail_api::services::proton::response_data::ConversationCount;
+use mail_api::services::proton::{
     common::ConversationId, prelude::GetConversationsResponse,
     response_data::Conversation as ApiConversation,
     response_data::ConversationLabel as ApiConversationLabel,
     response_data::MessageMetadata as ApiMessageMetadata,
 };
-use proton_mail_common::datatypes::{ConversationViewOptions, IncludeSwitch};
-use proton_mail_common::datatypes::{
+use mail_common::datatypes::{ConversationViewOptions, IncludeSwitch};
+use mail_common::datatypes::{
     SystemLabelId,
     labels::{ScrollOrderDir, ScrollOrderField},
 };
-use proton_mail_common::models::{
+use mail_common::models::{
     CachedScrollData, ConversationLabel, LabelExt, LabelWithCounters, Message, MessageCounter,
 };
-use proton_mail_common::test_utils::{
+use mail_common::test_utils::{
     init::Params as TestParams,
     scroller::{
         StoreLabeledModelMap, TestScroller, TestUpdate, save_single_conversation,
@@ -33,17 +27,23 @@ use proton_mail_common::test_utils::{
     },
     test_context::MailUserContextTestExtension,
 };
-use proton_mail_common::{
+use mail_common::{
     conv_id, conv_label, conversation, label, lbl_id,
     test_utils::{db::new_test_connection, test_context::MailTestContext},
 };
-use proton_mail_common::{
+use mail_common::{
     datatypes::{ContextualConversation, ReadFilter},
     models::{Conversation, ConversationCounter, ConversationScrollData},
 };
-use proton_network_monitor_service::OsNetworkStatus;
-use stash::orm::Model;
-use stash::stash::StashError;
+use mail_core_api::services::proton::{Action, EventId, LabelId};
+use mail_core_common::models::ModelExtension;
+use mail_core_common::{
+    datatypes::SystemLabel,
+    models::{Label, ModelIdExtension},
+};
+use mail_network_monitor_service::OsNetworkStatus;
+use mail_stash::orm::Model;
+use mail_stash::stash::StashError;
 use std::{collections::HashMap, time::Duration};
 use test_case::test_case;
 use velcro::hash_map;
@@ -2465,8 +2465,8 @@ pub async fn mock_not_responsive_api(ctx: &MailTestContext) {
 /// so `while_fetch_more` returns None and `conv_b` (or `conv_a`) is lost.
 #[tokio::test]
 async fn test_cached_scroller_no_items_lost_with_tied_snooze_and_time() {
-    let stash = new_test_connection().await;
-    let mut tether = stash.connection().await.unwrap();
+    let mail_stash = new_test_connection().await;
+    let mut tether = mail_stash.connection().await.unwrap();
 
     let mut lbl = label!(remote_id: lbl_id!("test_label"));
     tether.tx(async |bond| lbl.save(bond).await).await.unwrap();

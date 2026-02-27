@@ -1,15 +1,15 @@
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::models::ModelIdExtension;
-use proton_mail_api::services::proton::common::MessageId;
-use proton_mail_api::services::proton::response_data::{
+use mail_api::services::proton::common::MessageId;
+use mail_api::services::proton::response_data::{
     MailSettings as ApiMailSettings, MessageMetadata as ApiMessageMetadata, ViewMode as ApiViewMode,
 };
-use proton_mail_common::Mailbox;
-use proton_mail_common::datatypes::SystemLabelId;
-use proton_mail_common::models::Message;
-use proton_mail_common::test_utils::init::Params;
-use proton_mail_common::test_utils::test_context::MailTestContext;
-use stash::orm::Model;
+use mail_common::Mailbox;
+use mail_common::datatypes::SystemLabelId;
+use mail_common::models::Message;
+use mail_common::test_utils::init::Params;
+use mail_common::test_utils::test_context::MailTestContext;
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::models::ModelIdExtension;
+use mail_stash::orm::Model;
 use test_case::test_case;
 
 #[tokio::test]

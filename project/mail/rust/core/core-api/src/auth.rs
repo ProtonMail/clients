@@ -1,8 +1,8 @@
 /// Re-export the key secret type.
 pub use proton_crypto_account::salts::KeySecret;
 
-/// Re-export the muon auth type.
-pub use muon::client::{Auth, PasswordMode, Tokens};
+/// Re-export the `mail_muon` auth type.
+pub use mail_muon::client::{Auth, PasswordMode, Tokens};
 
 /// The user key secret to unlock user keys.
 #[derive(Debug, Clone)]

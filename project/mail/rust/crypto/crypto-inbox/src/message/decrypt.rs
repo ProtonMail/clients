@@ -5,7 +5,7 @@ use proton_crypto_account::proton_crypto::crypto::{
     VerifiedData,
 };
 
-use proton_crypto_inbox_mime::{MimeProcessor, ProcessMime, ProcessedMessage};
+use mail_crypto_inbox_mime::{MimeProcessor, ProcessMime, ProcessedMessage};
 
 use crate::message;
 

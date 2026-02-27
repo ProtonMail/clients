@@ -1,4 +1,4 @@
-use proton_core_api::services::observability::ApiServiceObservabilityResponse;
+use mail_core_api::services::observability::ApiServiceObservabilityResponse;
 
 use crate::metric;
 
@@ -31,7 +31,7 @@ metric! {
 #[cfg(test)]
 mod tests {
     use crate::into_metrics_element;
-    use proton_core_api::services::proton::prelude::{
+    use mail_core_api::services::proton::prelude::{
         PostMetricsRequestData, PostMetricsRequestElement,
     };
 

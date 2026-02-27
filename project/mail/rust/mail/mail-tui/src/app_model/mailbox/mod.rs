@@ -15,20 +15,20 @@ use crate::messages::Messages;
 use anyhow::Context;
 use chrono::{DateTime, Local};
 use composer::recipient_list::TuiRecipientList;
-use messages::BlockOrUnblock;
-pub use model::MailboxModel;
-use proton_core_common::datatypes::{LocalIdMarker, LocalLabelId, Refresh, UnixTimestamp};
-use proton_crypto_inbox::lock_icon::UiLock;
-use proton_mail_api::proton_core_api::services::proton::{AddressId, PrivateEmail};
-use proton_mail_common::datatypes::{
+use mail_api::mail_core_api::services::proton::{AddressId, PrivateEmail};
+use mail_common::datatypes::{
     ContextualConversation, LocalAttachmentId, LocalConversationId, LocalMessageId,
 };
-use proton_mail_common::decrypted_message::PrivacyLockBuilder;
-use proton_mail_common::draft::RecipientGroupId;
-use proton_mail_common::draft::attachments::DraftAttachment;
-use proton_mail_common::draft::recipients::{Recipient, RecipientList};
-use proton_mail_common::models::{Attachment, LabelWithCounters, Message as MailMessage};
-use proton_mail_common::{MailUserContext, Mailbox, RsvpEvent};
+use mail_common::decrypted_message::PrivacyLockBuilder;
+use mail_common::draft::RecipientGroupId;
+use mail_common::draft::attachments::DraftAttachment;
+use mail_common::draft::recipients::{Recipient, RecipientList};
+use mail_common::models::{Attachment, LabelWithCounters, Message as MailMessage};
+use mail_common::{MailUserContext, Mailbox, RsvpEvent};
+use mail_core_common::datatypes::{LocalIdMarker, LocalLabelId, Refresh, UnixTimestamp};
+use mail_crypto_inbox::lock_icon::UiLock;
+use messages::BlockOrUnblock;
+pub use model::MailboxModel;
 use search::{Search, SearchStatusBar};
 use secrecy::SecretString;
 use std::path::PathBuf;

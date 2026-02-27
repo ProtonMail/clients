@@ -1,4 +1,4 @@
-use proton_network_monitor_service::{OsNetworkStatus, RequestNetworkStatus};
+use mail_network_monitor_service::{OsNetworkStatus, RequestNetworkStatus};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ConnectionStatus {

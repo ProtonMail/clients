@@ -1,5 +1,5 @@
 [package]
-name = "muon"
+name = "mail-muon"
 version = "1.7.1"
 
 edition = "2021"
@@ -178,7 +178,7 @@ serde = { version = "1.0", features = ["derive"] }
 
 [dev-dependencies]
 env_logger = "0.11"
-muon = { path = ".", features = ["testing", "unsealed"] }
+mail-muon = { path = ".", features = ["testing", "unsealed"] }
 anyhow = "1.0"
 test-case = "3"
 tokio-test = "0.4.4"

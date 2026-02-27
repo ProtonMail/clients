@@ -1,7 +1,7 @@
 use jni::objects::{JClass, JObject};
 
 /// Initialize the rustls-platform-verifier library.
-#[deprecated = "unsafe and error prone: prefer `muon::tls::init_external`"]
+#[deprecated = "unsafe and error prone: prefer `mail_muon::tls::init_external`"]
 pub fn java_init(env: &mut JNIEnv, _: JClass, context: JObject) -> sys::jboolean {
     match rustls_platform_verifier::android::init_hosted(env, context) {
         Ok(()) => {

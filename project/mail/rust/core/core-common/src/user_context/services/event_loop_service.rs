@@ -2,7 +2,7 @@ use crate::event_loop::EventLoopActionIds;
 use core_event_loop::store::EventStore;
 use core_event_loop::v6::{EventSource, EventSubscriber, EventSubscriberId};
 use core_event_loop::{EventLoopError, EventProvider, v6};
-use proton_task_service::TaskService;
+use mail_task_service::TaskService;
 use std::sync::Arc;
 use tokio::sync::{Mutex, mpsc, oneshot};
 use tokio_util::sync::CancellationToken;

@@ -259,8 +259,8 @@ mod tests {
         test_utils::test_context::MailTestContext,
     };
     use derive_more::Debug;
-    use proton_core_common::datatypes::LocalLabelId;
-    use proton_mail_common_derive::ScrollerEq;
+    use mail_common_derive::ScrollerEq;
+    use mail_core_common::datatypes::LocalLabelId;
 
     #[derive(Clone, Copy, Debug, PartialEq, ScrollerEq)]
     struct FakeItem {

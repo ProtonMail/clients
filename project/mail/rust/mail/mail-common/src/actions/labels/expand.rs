@@ -1,21 +1,21 @@
 use crate::datatypes::RollbackItemType;
 use crate::models::RollbackItem;
 use crate::{AppError, actions::MailActionError};
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
 };
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::services::proton::LabelId;
-use proton_core_api::session::Session;
-use proton_core_common::actions::dependency_builder::{
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_core_api::services::proton::LabelId;
+use mail_core_api::session::Session;
+use mail_core_common::actions::dependency_builder::{
     ActionDependencyKeysBuilder, LocalIdActionDepExt,
 };
-use proton_core_common::datatypes::LocalLabelId;
-use proton_core_common::models::Label;
+use mail_core_common::datatypes::LocalLabelId;
+use mail_core_common::models::Label;
+use mail_stash::UserDb;
+use mail_stash::orm::Model;
+use mail_stash::stash::Bond;
 use serde::{Deserialize, Serialize};
-use stash::UserDb;
-use stash::orm::Model;
-use stash::stash::Bond;
 use tracing::{debug, info};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

@@ -1,8 +1,8 @@
 use crate::datatypes::LocalMessageId;
 use crate::models::DraftMetadata;
 use crate::{MailContext, MailContextError};
-use proton_core_api::services::proton::UserId;
-use proton_core_common::CoreSessionState;
+use mail_core_api::services::proton::UserId;
+use mail_core_common::CoreSessionState;
 
 use std::sync::Arc;
 

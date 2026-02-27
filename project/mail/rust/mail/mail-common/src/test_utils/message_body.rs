@@ -1,32 +1,32 @@
 use crate::datatypes::SystemLabelId;
 use crate::test_utils::init::Params as TestParams;
-use proton_core_api::auth::UserKeySecret;
-use proton_core_api::services::proton::{
+use mail_api::services::proton::common::{ConversationId, MessageId};
+use mail_api::services::proton::response_data::{
+    MailSettings as ApiMailSettings, Message as ApiMessage, MessageBody as ApiMessageBody,
+    MessageFlags as ApiMessageFlags, MessageMetadata as ApiMessageMetadata,
+    MessageSender as ApiMessageSender, MimeType as ApiMimeType, ViewMode as ApiViewMode,
+};
+use mail_core_api::auth::UserKeySecret;
+use mail_core_api::services::proton::{
     Address as ApiAddress, AddressFlags as ApiAddressFlags,
     AddressSignedKeyList as ApiAddressSignedKeyList, AddressStatus as ApiAddressStatus,
     AddressType as ApiAddressType, DelinquentState, Flags as ApiFlags,
     ProductUsedSpace as ApiProductUsedSpace, Role as ApiRole, User as ApiUser,
     UserMnemonicStatus as ApiUserMnemonicStatus, UserType as ApiUserType,
 };
-use proton_core_api::services::proton::{AddressId, LabelId, UserId};
-use proton_core_common::models::PaidSubscription;
+use mail_core_api::services::proton::{AddressId, LabelId, UserId};
+use mail_core_common::models::PaidSubscription;
+use mail_crypto_inbox::proton_crypto::crypto::KeyGeneratorAlgorithm;
+use mail_crypto_inbox::proton_crypto::{new_pgp_provider, new_srp_provider};
+use mail_crypto_inbox::proton_crypto_account::keys::{
+    AddressKeys as ApiAddressKeys, KeyFlag, KeyId, LockedKey, UserKeys as ApiUserKeys,
+};
+use mail_crypto_inbox::proton_crypto_account::salts::{Salt, Salts};
 use proton_crypto_account::keys::{
     ArmoredPrivateKey, EncryptedKeyToken, KeyTokenSignature, LocalAddressKey, LocalSignedKeyList,
     LocalUserKey, UnlockedAddressKeys,
 };
 use proton_crypto_account::salts::KeySalt;
-use proton_crypto_inbox::proton_crypto::crypto::KeyGeneratorAlgorithm;
-use proton_crypto_inbox::proton_crypto::{new_pgp_provider, new_srp_provider};
-use proton_crypto_inbox::proton_crypto_account::keys::{
-    AddressKeys as ApiAddressKeys, KeyFlag, KeyId, LockedKey, UserKeys as ApiUserKeys,
-};
-use proton_crypto_inbox::proton_crypto_account::salts::{Salt, Salts};
-use proton_mail_api::services::proton::common::{ConversationId, MessageId};
-use proton_mail_api::services::proton::response_data::{
-    MailSettings as ApiMailSettings, Message as ApiMessage, MessageBody as ApiMessageBody,
-    MessageFlags as ApiMessageFlags, MessageMetadata as ApiMessageMetadata,
-    MessageSender as ApiMessageSender, MimeType as ApiMimeType, ViewMode as ApiViewMode,
-};
 use std::collections::HashMap;
 use std::iter;
 

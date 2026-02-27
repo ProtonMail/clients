@@ -9,8 +9,8 @@ use crate::datatypes::{ContextualConversation, LocalConversationId, LocalMessage
 use crate::models::Message;
 use crate::traits::ScrollerEq;
 use crate::{MailContextError, MailUserContext};
-use proton_core_common::datatypes::LocalLabelId;
-use stash::orm::Model;
+use mail_core_common::datatypes::LocalLabelId;
+use mail_stash::orm::Model;
 use std::hash::Hash;
 use std::{fmt::Debug, future::Future};
 use tokio::task::JoinHandle;

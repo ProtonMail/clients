@@ -1,5 +1,5 @@
 [package]
-name = "uniffi-runtime"
+name = "mail-uniffi-runtime"
 version = "0.1.0"
 rust-version.workspace = true
 license.workspace = true

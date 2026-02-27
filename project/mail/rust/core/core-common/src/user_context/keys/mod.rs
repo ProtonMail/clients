@@ -11,22 +11,22 @@ use crate::{
 };
 use crate::{CoreContextResult, UserContext};
 use ical::{VcardParser, parser::ParserError};
+use mail_core_api::auth::UserKeySecret;
+use mail_core_api::services::proton::PrivateEmailRef;
+use mail_core_api::{services::proton::AddressId, session::Session};
+use mail_stash::{UserDb, stash::RunTransaction};
+use mail_stash::{
+    orm::Model,
+    params,
+    stash::{StashError, Tether},
+};
+use mail_vcard::{VCardError, vcard::VCard};
 pub use manager::*;
-use proton_core_api::auth::UserKeySecret;
-use proton_core_api::services::proton::PrivateEmailRef;
-use proton_core_api::{services::proton::AddressId, session::Session};
 use proton_crypto_account::{
     contacts::{ContactCardType, DecryptableVerifiableCard},
     errors::CardCryptoError,
     keys::{PinnedPublicKeys, PublicAddressKeys, UnlockedAddressKeys, UnlockedUserKeys},
     proton_crypto::{CryptoError, crypto::PGPProviderSync},
-};
-use proton_vcard::{VCardError, vcard::VCard};
-use stash::{UserDb, stash::RunTransaction};
-use stash::{
-    orm::Model,
-    params,
-    stash::{StashError, Tether},
 };
 use thiserror::Error;
 use tracing::{debug, error};

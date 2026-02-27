@@ -1,37 +1,37 @@
 use itertools::Itertools as _;
-use proton_core_api::services::proton::{
-    Address as ApiAddress, DelinquentState, Flags as ApiFlags, Label as ApiLabel,
-    ProductUsedSpace as ApiProductUsedSpace, Role as ApiRole, User as ApiUser,
-    UserMnemonicStatus as ApiUserMnemonicStatus, UserType as ApiUserType,
-};
-use proton_core_api::services::proton::{AddressId, LabelId, LabelType as ApiLabelType, UserId};
-use proton_core_common::datatypes::SystemLabel;
-use proton_core_common::models::{
-    Address, Label, ModelExtension as _, ModelIdExtension as _, PaidSubscription,
-};
-use proton_core_common::test_utils::addresses::ApiAddressTestUtils;
-use proton_crypto_account::keys::{ArmoredPrivateKey, KeyId, LockedKey, UserKeys as ApiUserKeys};
-use proton_mail_api::services::proton::common::{ConversationId, MessageId};
-use proton_mail_api::services::proton::prelude::ShowMoved;
-use proton_mail_api::services::proton::response_data::{
+use mail_api::services::proton::common::{ConversationId, MessageId};
+use mail_api::services::proton::prelude::ShowMoved;
+use mail_api::services::proton::response_data::{
     Conversation as ApiConversation, ConversationCount as ApiConversationCount,
     MailSettings as ApiMailSettings, MailSettings, Message as ApiMessage,
     MessageBody as ApiMessageBody, MessageCount as ApiMessageCount,
     MessageFlags as ApiMessageFlags, MessageMetadata as ApiMessageMetadata,
     MimeType as ApiMimeType, ViewMode as ApiViewMode,
 };
-use proton_mail_common::datatypes::SystemLabelId;
-use proton_mail_common::models::{
+use mail_common::datatypes::SystemLabelId;
+use mail_common::models::{
     Conversation, ConversationCounter, ConversationLabel, Message, MessageCounter,
 };
-use proton_mail_common::test_utils::conversations::ApiConversationTestUtils;
-use proton_mail_common::test_utils::init::Params as TestParams;
-use proton_mail_common::test_utils::scroller::StoreLabeledModelMap as _;
-use proton_mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
-use proton_mail_common::{Mailbox, conv_id, conversation, message, msg_id};
-use stash::orm::Model;
-use stash::params;
-use stash::stash::StashError;
+use mail_common::test_utils::conversations::ApiConversationTestUtils;
+use mail_common::test_utils::init::Params as TestParams;
+use mail_common::test_utils::scroller::StoreLabeledModelMap as _;
+use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
+use mail_common::{Mailbox, conv_id, conversation, message, msg_id};
+use mail_core_api::services::proton::{
+    Address as ApiAddress, DelinquentState, Flags as ApiFlags, Label as ApiLabel,
+    ProductUsedSpace as ApiProductUsedSpace, Role as ApiRole, User as ApiUser,
+    UserMnemonicStatus as ApiUserMnemonicStatus, UserType as ApiUserType,
+};
+use mail_core_api::services::proton::{AddressId, LabelId, LabelType as ApiLabelType, UserId};
+use mail_core_common::datatypes::SystemLabel;
+use mail_core_common::models::{
+    Address, Label, ModelExtension as _, ModelIdExtension as _, PaidSubscription,
+};
+use mail_core_common::test_utils::addresses::ApiAddressTestUtils;
+use mail_stash::orm::Model;
+use mail_stash::params;
+use mail_stash::stash::StashError;
+use proton_crypto_account::keys::{ArmoredPrivateKey, KeyId, LockedKey, UserKeys as ApiUserKeys};
 use std::collections::HashMap;
 use velcro::hash_map;
 
@@ -1365,10 +1365,10 @@ async fn move_out_of_sent_drafts_with_keep_moved(label_id: LabelId, show_moved: 
 
 mod rebase_messages {
     use super::*;
+    use mail_action_queue::action::ActionGroup;
+    use mail_action_queue::rebase::RebaseChangeSet;
+    use mail_common::MailUserContext;
     use pretty_assertions::{assert_eq, assert_ne};
-    use proton_action_queue::action::ActionGroup;
-    use proton_action_queue::rebase::RebaseChangeSet;
-    use proton_mail_common::MailUserContext;
     use std::sync::Arc;
 
     fn folder_label_id() -> LabelId {
@@ -1851,11 +1851,11 @@ mod rebase_messages {
 
 mod rebase_conversations {
     use super::*;
+    use mail_action_queue::action::ActionGroup;
+    use mail_action_queue::rebase::RebaseChangeSet;
+    use mail_common::MailUserContext;
+    use mail_common::datatypes::ConversationViewOptions;
     use pretty_assertions::{assert_eq, assert_ne};
-    use proton_action_queue::action::ActionGroup;
-    use proton_action_queue::rebase::RebaseChangeSet;
-    use proton_mail_common::MailUserContext;
-    use proton_mail_common::datatypes::ConversationViewOptions;
     use std::sync::Arc;
 
     fn folder_label_id() -> LabelId {

@@ -1,7 +1,7 @@
-use proton_core_common::datatypes::{LocalLabelId, SystemLabel};
-use proton_core_common::models::{AppProtection, AppSettings, PinProtection};
-use proton_mail_common::test_utils::init::Params as TestParams;
-use proton_mail_common::test_utils::test_context::MailTestContext;
+use mail_common::test_utils::init::Params as TestParams;
+use mail_common::test_utils::test_context::MailTestContext;
+use mail_core_common::datatypes::{LocalLabelId, SystemLabel};
+use mail_core_common::models::{AppProtection, AppSettings, PinProtection};
 
 const CACHED_FILE_NAME: &str = "my_file.txt";
 

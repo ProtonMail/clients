@@ -1,13 +1,13 @@
 use std::sync::{Arc, Mutex};
 
-use proton_core_api::services::proton::{SessionId, UserId};
-use proton_core_common::models::ModelExtension;
-use proton_core_common::test_utils::test_context::TestContext;
+use mail_core_api::services::proton::{SessionId, UserId};
+use mail_core_common::models::ModelExtension;
+use mail_core_common::test_utils::test_context::TestContext;
 use serde::{Deserialize, Serialize};
 use tokio::sync::watch;
 
 // To break cyclic dependency
-use proton_core_common::{
+use mail_core_common::{
     datatypes::{DeviceEnvironment, RegisteredDevice},
     device_registration::{RegisteredDeviceTaskState, registered_device_task_step},
 };
@@ -42,7 +42,7 @@ async fn initial_registration() {
         &ctx,
         PartialTestRegisterDeviceRequest {
             device_token: "ABCD".to_string(),
-            environment: proton_core_api::services::proton::DeviceEnvironment::Google,
+            environment: mail_core_api::services::proton::DeviceEnvironment::Google,
             ping_notification_status: None,
             push_notification_status: None,
         },
@@ -92,7 +92,7 @@ async fn initial_registration_when_device_key_already_exist_in_keychain() {
         &ctx,
         PartialTestRegisterDeviceRequest {
             device_token: "ABCD".to_string(),
-            environment: proton_core_api::services::proton::DeviceEnvironment::Google,
+            environment: mail_core_api::services::proton::DeviceEnvironment::Google,
             ping_notification_status: None,
             push_notification_status: None,
         },
@@ -137,12 +137,12 @@ async fn skip_registration_when_session_rotated_but_old_context_still_alive() {
     // Rotate/replace the session row in the DB to a new session_id (same user).
     // This mimics scenarios like re-auth / session replacement while in-memory context still exists.
     let core_ctx = ctx.context();
-    let user_id = UserId::from(proton_core_common::test_utils::account::TEST_USER_ID);
+    let user_id = UserId::from(mail_core_common::test_utils::account::TEST_USER_ID);
     let old_session_id = SessionId::from("TEST_UID");
     let new_session_id = SessionId::from("NEW_UID");
 
     let db_key = core_ctx.get_encryption_key().unwrap();
-    let tokens = proton_core_api::auth::Tokens::access(
+    let tokens = mail_core_api::auth::Tokens::access(
         "NEWACCESSTOKEN",
         "NEWREFRESHTOKEN",
         Vec::<&str>::new(),
@@ -151,13 +151,13 @@ async fn skip_registration_when_session_rotated_but_old_context_still_alive() {
     let mut tether = core_ctx.account_stash().connection().await.unwrap();
     tether
         .tx(async |tx| {
-            let _ = proton_core_common::db::account::CoreSession::delete_by_id(
+            let _ = mail_core_common::db::account::CoreSession::delete_by_id(
                 old_session_id.clone(),
                 tx,
             )
             .await?;
 
-            let new_session = proton_core_common::db::account::CoreSession::new(
+            let new_session = mail_core_common::db::account::CoreSession::new(
                 user_id.clone(),
                 new_session_id.clone(),
                 &tokens,
@@ -166,7 +166,7 @@ async fn skip_registration_when_session_rotated_but_old_context_still_alive() {
             .unwrap();
 
             new_session.with_insert(tx).await?;
-            Ok::<_, stash::stash::StashError>(())
+            Ok::<_, mail_stash::stash::StashError>(())
         })
         .await
         .unwrap();
@@ -222,7 +222,7 @@ async fn test_device_token_changed() {
         &ctx,
         PartialTestRegisterDeviceRequest {
             device_token: "ABCD".to_string(),
-            environment: proton_core_api::services::proton::DeviceEnvironment::Google,
+            environment: mail_core_api::services::proton::DeviceEnvironment::Google,
             ping_notification_status: None,
             push_notification_status: None,
         },
@@ -260,7 +260,7 @@ async fn test_device_token_changed() {
         &ctx,
         PartialTestRegisterDeviceRequest {
             device_token: "EFGH".to_string(),
-            environment: proton_core_api::services::proton::DeviceEnvironment::Google,
+            environment: mail_core_api::services::proton::DeviceEnvironment::Google,
             ping_notification_status: None,
             push_notification_status: None,
         },
@@ -309,7 +309,7 @@ async fn register_more_than_one_session() {
         &ctx,
         PartialTestRegisterDeviceRequest {
             device_token: "ABCD".to_string(),
-            environment: proton_core_api::services::proton::DeviceEnvironment::Google,
+            environment: mail_core_api::services::proton::DeviceEnvironment::Google,
             ping_notification_status: None,
             push_notification_status: None,
         },
@@ -359,7 +359,7 @@ async fn register_new_session() {
         &ctx,
         PartialTestRegisterDeviceRequest {
             device_token: "ABCD".to_string(),
-            environment: proton_core_api::services::proton::DeviceEnvironment::Google,
+            environment: mail_core_api::services::proton::DeviceEnvironment::Google,
             ping_notification_status: None,
             push_notification_status: None,
         },
@@ -391,7 +391,7 @@ async fn register_new_session() {
         &ctx,
         PartialTestRegisterDeviceRequest {
             device_token: "ABCD".to_string(),
-            environment: proton_core_api::services::proton::DeviceEnvironment::Google,
+            environment: mail_core_api::services::proton::DeviceEnvironment::Google,
             ping_notification_status: None,
             push_notification_status: None,
         },
@@ -457,7 +457,7 @@ pub struct PartialTestRegisterDeviceRequest {
     /// Device token
     pub device_token: String,
     /// Environment to which we register
-    pub environment: proton_core_api::services::proton::DeviceEnvironment,
+    pub environment: mail_core_api::services::proton::DeviceEnvironment,
     /// TODO: Document this field
     pub ping_notification_status: Option<i32>,
     /// TODO: Document this field

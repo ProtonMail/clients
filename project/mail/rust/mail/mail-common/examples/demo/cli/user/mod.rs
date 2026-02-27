@@ -1,5 +1,5 @@
 use anyhow::Result;
-use proton_mail_common::MailContext;
+use mail_common::MailContext;
 use std::sync::Arc;
 
 mod addresses;

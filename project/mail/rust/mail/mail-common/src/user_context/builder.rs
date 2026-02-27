@@ -1,7 +1,7 @@
 use crate::actions::register_actions;
 
 use crate::{MailContext, MailContextResult};
-use proton_core_common::UserContext;
+use mail_core_common::UserContext;
 
 use std::any::{Any, TypeId};
 use std::collections::HashMap;

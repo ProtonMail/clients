@@ -4,18 +4,18 @@ use crate::models::{Conversation, DeletedItem, Message};
 use crate::test_utils::db::new_test_connection_file;
 use crate::test_utils::utils::create_address;
 use crate::{conversation, message};
-use proton_core_common::datatypes::UnixTimestamp;
-use proton_core_common::event_loop::events::Action;
-use proton_core_common::models::ModelExtension;
-use proton_core_common::models::ModelIdExtension;
-use stash::orm::Model;
-use stash::stash::StashError;
+use mail_core_common::datatypes::UnixTimestamp;
+use mail_core_common::event_loop::events::Action;
+use mail_core_common::models::ModelExtension;
+use mail_core_common::models::ModelIdExtension;
+use mail_stash::orm::Model;
+use mail_stash::stash::StashError;
 use test_case::test_case;
 
 #[tokio::test]
 async fn test_deleted_item_save() {
-    let (stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = stash.connection().await.unwrap();
+    let (mail_stash, _tempdir) = new_test_connection_file().await;
+    let mut tether = mail_stash.connection().await.unwrap();
 
     tether
         .tx::<_, _, StashError>(async |tx| {
@@ -43,8 +43,8 @@ async fn test_deleted_item_save() {
 
 #[tokio::test]
 async fn test_deleted_item_save_duplicate() {
-    let (stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = stash.connection().await.unwrap();
+    let (mail_stash, _tempdir) = new_test_connection_file().await;
+    let mut tether = mail_stash.connection().await.unwrap();
 
     tether
         .tx::<_, _, StashError>(async |tx| {
@@ -75,8 +75,8 @@ async fn test_find_deleted_by_remote_ids(
     deleted_ids: Vec<&str>,
     expected_found: Vec<&str>,
 ) {
-    let (stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = stash.connection().await.unwrap();
+    let (mail_stash, _tempdir) = new_test_connection_file().await;
+    let mut tether = mail_stash.connection().await.unwrap();
 
     tether
         .tx::<_, _, StashError>(async |tx| {
@@ -103,8 +103,8 @@ async fn test_find_deleted_by_remote_ids(
 
 #[tokio::test]
 async fn test_find_deleted_by_remote_ids_different_types() {
-    let (stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = stash.connection().await.unwrap();
+    let (mail_stash, _tempdir) = new_test_connection_file().await;
+    let mut tether = mail_stash.connection().await.unwrap();
 
     tether
         .tx::<_, _, StashError>(async |tx| {
@@ -153,8 +153,8 @@ async fn test_find_deleted_by_remote_ids_different_types() {
 
 #[tokio::test]
 async fn test_verify_and_cleanup_removes_stale_items() {
-    let (stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = stash.connection().await.unwrap();
+    let (mail_stash, _tempdir) = new_test_connection_file().await;
+    let mut tether = mail_stash.connection().await.unwrap();
 
     let now = UnixTimestamp::now();
     let old_timestamp = now.saturating_sub(90000); // Older than 1 day
@@ -190,8 +190,8 @@ async fn test_verify_and_cleanup_removes_stale_items() {
 
 #[tokio::test]
 async fn test_verify_and_cleanup_removes_re_added_messages() {
-    let (stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = stash.connection().await.unwrap();
+    let (mail_stash, _tempdir) = new_test_connection_file().await;
+    let mut tether = mail_stash.connection().await.unwrap();
     let address = create_address(&mut tether).await;
 
     tether
@@ -255,8 +255,8 @@ async fn test_verify_and_cleanup_removes_re_added_messages() {
 
 #[tokio::test]
 async fn test_verify_and_cleanup_removes_re_added_conversations() {
-    let (stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = stash.connection().await.unwrap();
+    let (mail_stash, _tempdir) = new_test_connection_file().await;
+    let mut tether = mail_stash.connection().await.unwrap();
 
     tether
         .tx::<_, _, StashError>(async |tx| {
@@ -313,8 +313,8 @@ async fn test_verify_and_cleanup_removes_re_added_conversations() {
 
 #[tokio::test]
 async fn test_verify_and_cleanup_keeps_valid_tombstones() {
-    let (stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = stash.connection().await.unwrap();
+    let (mail_stash, _tempdir) = new_test_connection_file().await;
+    let mut tether = mail_stash.connection().await.unwrap();
 
     tether
         .tx::<_, _, StashError>(async |tx| {
@@ -345,8 +345,8 @@ async fn test_verify_and_cleanup_keeps_valid_tombstones() {
 
 #[tokio::test]
 async fn test_verify_and_cleanup_mixed_scenario() {
-    let (stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = stash.connection().await.unwrap();
+    let (mail_stash, _tempdir) = new_test_connection_file().await;
+    let mut tether = mail_stash.connection().await.unwrap();
 
     let now = UnixTimestamp::now();
     let old_timestamp = now.saturating_sub(90000);
@@ -443,8 +443,8 @@ async fn test_verify_and_cleanup_mixed_scenario() {
 
 #[tokio::test]
 async fn test_conversation_delete_tracks_all_messages() {
-    let (stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = stash.connection().await.unwrap();
+    let (mail_stash, _tempdir) = new_test_connection_file().await;
+    let mut tether = mail_stash.connection().await.unwrap();
 
     let address = create_address(&mut tether).await;
 
@@ -520,8 +520,8 @@ async fn test_conversation_delete_tracks_all_messages() {
 
 #[tokio::test]
 async fn test_conversation_delete_skips_null_remote_id_messages() {
-    let (stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = stash.connection().await.unwrap();
+    let (mail_stash, _tempdir) = new_test_connection_file().await;
+    let mut tether = mail_stash.connection().await.unwrap();
 
     let address = create_address(&mut tether).await;
 

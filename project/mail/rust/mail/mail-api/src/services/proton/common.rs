@@ -7,7 +7,7 @@
 //! functionality.
 //!
 
-use proton_core_api::declare_proton_id;
+use mail_core_api::declare_proton_id;
 
 declare_proton_id! {
     pub AttachmentId

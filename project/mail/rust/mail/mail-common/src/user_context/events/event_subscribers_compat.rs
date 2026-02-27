@@ -3,7 +3,7 @@
 use crate::events::event_source::MailEventSourceV5;
 use core_event_loop::v6::{EventSource, EventSubscriber};
 use core_event_loop::{EventSubscriberResult, RefreshFlag};
-use proton_core_common::event_loop::event_source::CoreEventSource;
+use mail_core_common::event_loop::event_source::CoreEventSource;
 
 pub struct MailEventV5SubscriberCompat<T: EventSubscriber<CoreEventSource>>(pub T);
 #[async_trait::async_trait]

@@ -3,17 +3,17 @@ use crate::models::{
 };
 use crate::{MailContextError, MailContextResult, MailUserContext, NewMailUserContextOptions};
 use futures::try_join;
-use proton_core_common::datatypes::{InitializationKey, InitializedComponentState};
-use proton_core_common::models::{
+use mail_core_common::datatypes::{InitializationKey, InitializedComponentState};
+use mail_core_common::models::{
     Address, Contact, DependencyInitializationError, InitializationError, InitializationWatcher,
     InitializedComponent, User,
 };
 
 use core_event_loop::EventLoopError;
-use proton_core_common::services::{EventLoopService, InitializationService};
-use proton_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
-use proton_task_service::TaskService;
-use stash::params;
+use mail_core_common::services::{EventLoopService, InitializationService};
+use mail_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
+use mail_stash::params;
+use mail_task_service::TaskService;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::task::JoinHandle;
@@ -150,13 +150,13 @@ async fn initialize_event_loop(
     watcher: Arc<InitializationWatcher>,
     ctx: &MailUserContext,
 ) -> Result<(), InitializationError<EventLoopError>> {
-    let stash = ctx.user_stash();
+    let mail_stash = ctx.user_stash();
 
     InitializedComponent::initialize(
         watcher,
         EVENT_INIT_KEY,
         &[],
-        stash.connection().await?,
+        mail_stash.connection().await?,
         async || {
             // This is a little bit of a hack. The way of how this
             // event loop initialization is currently written,

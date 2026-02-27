@@ -1,6 +1,6 @@
 use crate::cli::ctx::MailContextExt;
 use anyhow::Result;
-use proton_mail_common::{MailContext, MailUserContext};
+use mail_common::{MailContext, MailUserContext};
 use std::sync::Arc;
 
 mod resources;

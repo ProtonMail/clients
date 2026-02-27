@@ -1,14 +1,14 @@
 use super::common::{DefaultError, new_factory};
 use super::common::{new_queue_with_stash, new_stash};
-use proton_action_queue::action;
-use proton_action_queue::action::{
+use mail_action_queue::action;
+use mail_action_queue::action::{
     Action, ActionId, DefaultVersionConverter, FactoryResult, Handler, Type, VersionConverter,
     WriterGuard,
 };
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_action_queue::tests::common::TestDb;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_action_queue::tests::common::TestDb;
+use mail_stash::stash::Bond;
 use serde::{Deserialize, Serialize};
-use stash::stash::Bond;
 
 const STARTING_VALUE: u32 = 30;
 const END_VALUE: &str = "foo=30";

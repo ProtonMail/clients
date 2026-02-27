@@ -1,12 +1,12 @@
 use core::str;
 
 use base64::{Engine as _, prelude::BASE64_STANDARD as BASE_64};
-use proton_crypto_inbox::message::{GettablePGPMessage, SessionKeyAndDataPacketsExtractable};
-use proton_crypto_inbox::proton_crypto::crypto::{
+use mail_crypto_inbox::message::{GettablePGPMessage, SessionKeyAndDataPacketsExtractable};
+use mail_crypto_inbox::proton_crypto::crypto::{
     DataEncoding, Decryptor, DecryptorSync, Encryptor, EncryptorSync, PGPProviderSync,
     SessionKeyAlgorithm, VerifiedData,
 };
-use proton_crypto_inbox::proton_crypto::new_pgp_provider;
+use mail_crypto_inbox::proton_crypto::new_pgp_provider;
 
 const PRIVATE_KEY: &str = "-----BEGIN PGP PRIVATE KEY BLOCK-----
 

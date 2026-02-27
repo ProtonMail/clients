@@ -18,15 +18,15 @@
 //! # Example
 //!
 //! ```ignore
-//! use proton_mail_search::{MailSearchService, SearchIndexWorker, MessageDataProvider};
-//! use proton_task_service::TaskService;
+//! use mail_search::{MailSearchService, SearchIndexWorker, MessageDataProvider};
+//! use mail_task_service::TaskService;
 //!
 //! // Create service with database connection and task service
 //! let task_service = TaskService::new(tokio::runtime::Handle::current())?;
-//! let service = MailSearchService::new(stash, std::sync::Arc::new(task_service)).await?;
+//! let service = MailSearchService::new(mail_stash, std::sync::Arc::new(task_service)).await?;
 //!
 //! // Create worker with message data provider
-//! let worker = SearchIndexWorker::new(stash, service.clone(), data_provider);
+//! let worker = SearchIndexWorker::new(mail_stash, service.clone(), data_provider);
 //!
 //! // Spawn worker in background
 //! tokio::spawn(async move { worker.run().await });
@@ -125,7 +125,7 @@ mod tests {
     async fn test_foundation_engine_index_and_search_body() {
         let storage = InMemoryBlobStorage::new();
         let task_service = std::sync::Arc::new(
-            proton_task_service::TaskService::new(tokio::runtime::Handle::current())
+            mail_task_service::TaskService::new(tokio::runtime::Handle::current())
                 .expect("Failed to create TaskService"),
         );
         let mut engine = FoundationSearchEngine::new(storage.clone(), task_service);
@@ -160,7 +160,7 @@ mod tests {
             HashMap<
                 LocalMessageId,
                 (
-                    proton_mail_api::services::proton::common::MessageId,
+                    mail_api::services::proton::common::MessageId,
                     String,
                     MessageMetadata,
                 ),
@@ -182,7 +182,7 @@ mod tests {
         fn add_message(
             &self,
             local_id: LocalMessageId,
-            remote_id: proton_mail_api::services::proton::common::MessageId,
+            remote_id: mail_api::services::proton::common::MessageId,
             body: String,
             metadata: MessageMetadata,
         ) {
@@ -221,8 +221,7 @@ mod tests {
         async fn get_remote_id(
             &self,
             message_id: LocalMessageId,
-        ) -> Result<Option<proton_mail_api::services::proton::common::MessageId>, Self::Error>
-        {
+        ) -> Result<Option<mail_api::services::proton::common::MessageId>, Self::Error> {
             let messages = self.messages.read().unwrap();
             Ok(messages
                 .get(&message_id)
@@ -260,19 +259,19 @@ mod tests {
     /// - Intent cleanup (content hash saved, intents deleted)
     #[tokio::test]
     async fn test_full_indexing_flow_with_intent_system() {
-        use proton_mail_api::services::proton::common::MessageId;
-        use stash::stash::{Stash, StashConfiguration, StashError as SE};
+        use mail_api::services::proton::common::MessageId;
+        use mail_stash::stash::{Stash, StashConfiguration, StashError as SE};
 
         // 1. Set up Stash with migrations
-        let stash = Stash::new(StashConfiguration::test()).unwrap();
-        crate::migrations::run(&stash).await.unwrap();
+        let mail_stash = Stash::new(StashConfiguration::test()).unwrap();
+        crate::migrations::run(&mail_stash).await.unwrap();
 
         // 2. Create MailSearchService
         let task_service = std::sync::Arc::new(
-            proton_task_service::TaskService::new(tokio::runtime::Handle::current())
+            mail_task_service::TaskService::new(tokio::runtime::Handle::current())
                 .expect("Failed to create TaskService"),
         );
-        let search_service = MailSearchService::new(stash.clone(), task_service)
+        let search_service = MailSearchService::new(mail_stash.clone(), task_service)
             .await
             .unwrap();
 
@@ -304,7 +303,7 @@ mod tests {
         }
 
         // 4. Queue intents in a transaction (simulating MessageBody::store)
-        let mut tether = stash.connection().await.unwrap();
+        let mut tether = mail_stash.connection().await.unwrap();
         tether
             .tx::<_, (), SE>(async |bond| {
                 for &local_id in &message_ids {
@@ -316,7 +315,7 @@ mod tests {
             .unwrap();
 
         // 5. Verify intents were created
-        let tether = stash.connection().await.unwrap();
+        let tether = mail_stash.connection().await.unwrap();
         let intents = SearchIndexIntent::get_pending_batch(&tether, 10)
             .await
             .unwrap();
@@ -325,11 +324,11 @@ mod tests {
         // 6. Create worker and process batch through the full worker flow
         // This tests: intent system → worker → prepare_message_for_indexing →
         // batch indexing → spawn_blocking → channel-based I/O → atomic blob saves
-        let watcher_handle = crate::watcher::SearchIndexIntentWatcher::watch(&stash)
+        let watcher_handle = crate::watcher::SearchIndexIntentWatcher::watch(&mail_stash)
             .await
             .unwrap();
         let worker = SearchIndexWorker::new(
-            stash.clone(),
+            mail_stash.clone(),
             search_service.clone(),
             data_provider,
             watcher_handle,
@@ -341,7 +340,7 @@ mod tests {
         assert!(processed, "Worker should have processed the batch");
 
         // 7. Verify intents were deleted (worker deletes them after successful indexing)
-        let tether = stash.connection().await.unwrap();
+        let tether = mail_stash.connection().await.unwrap();
         let remaining_intents = SearchIndexIntent::get_pending_batch(&tether, 10)
             .await
             .unwrap();
@@ -392,7 +391,7 @@ mod tests {
     async fn test_foundation_engine_stats() {
         let storage = InMemoryBlobStorage::new();
         let task_service = std::sync::Arc::new(
-            proton_task_service::TaskService::new(tokio::runtime::Handle::current())
+            mail_task_service::TaskService::new(tokio::runtime::Handle::current())
                 .expect("Failed to create TaskService"),
         );
         let engine = FoundationSearchEngine::new(storage, task_service);
@@ -406,7 +405,7 @@ mod tests {
     async fn test_foundation_engine_cleanup_empty() {
         let storage = InMemoryBlobStorage::new();
         let task_service = std::sync::Arc::new(
-            proton_task_service::TaskService::new(tokio::runtime::Handle::current())
+            mail_task_service::TaskService::new(tokio::runtime::Handle::current())
                 .expect("Failed to create TaskService"),
         );
         let mut engine = FoundationSearchEngine::new(storage, task_service);
@@ -421,7 +420,7 @@ mod tests {
     async fn test_foundation_engine_remove_nonexistent() {
         let storage = InMemoryBlobStorage::new();
         let task_service = std::sync::Arc::new(
-            proton_task_service::TaskService::new(tokio::runtime::Handle::current())
+            mail_task_service::TaskService::new(tokio::runtime::Handle::current())
                 .expect("Failed to create TaskService"),
         );
         let mut engine = FoundationSearchEngine::new(storage, task_service);

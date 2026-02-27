@@ -1,14 +1,14 @@
 use crate::MailUserContext;
 use core_event_loop::MAX_ERROR_RETRIES;
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionId, DefaultVersionConverter, Handler, Priority, Type, WriterGuard,
 };
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_common::actions::event_poll::ActionEventLoopError;
-use proton_core_common::datatypes::Refresh;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_core_common::actions::event_poll::ActionEventLoopError;
+use mail_core_common::datatypes::Refresh;
+use mail_stash::UserDb;
+use mail_stash::stash::Bond;
 use serde::{Deserialize, Serialize};
-use stash::UserDb;
-use stash::stash::Bond;
 use std::sync::Weak;
 
 /// Action which runs whole refresh simulating Subscriber::on_refresh for Resync of eventloop.

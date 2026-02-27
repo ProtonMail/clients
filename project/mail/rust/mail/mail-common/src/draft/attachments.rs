@@ -7,13 +7,13 @@ use crate::models::{
     DraftMetadata, MetadataId,
 };
 use crate::{MailContextError, MailContextResult, MailUserContext};
-use proton_core_api::services::proton::AddressId;
-use proton_crypto_inbox::attachment::{DecryptableAttachment, KeyPackets};
-use proton_crypto_inbox::proton_crypto::crypto::AsPublicKeyRef;
-use proton_crypto_inbox::proton_crypto::new_pgp_provider;
-use proton_mail_api::services::proton::prelude::DraftAttachmentKeyPackets;
-use stash::orm::Model;
-use stash::stash::{StashError, Tether};
+use mail_api::services::proton::prelude::DraftAttachmentKeyPackets;
+use mail_core_api::services::proton::AddressId;
+use mail_crypto_inbox::attachment::{DecryptableAttachment, KeyPackets};
+use mail_crypto_inbox::proton_crypto::crypto::AsPublicKeyRef;
+use mail_crypto_inbox::proton_crypto::new_pgp_provider;
+use mail_stash::orm::Model;
+use mail_stash::stash::{StashError, Tether};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
@@ -386,14 +386,14 @@ pub async fn build_attachment_key_packets(
 mod tests {
     use super::*;
     use crate::models::DraftMetadata;
-    use proton_mail_common::test_utils::db::new_test_connection_file;
+    use mail_common::test_utils::db::new_test_connection_file;
 
     #[tokio::test]
     async fn background_cleaner() {
-        let (stash, _db_dir) = new_test_connection_file().await;
+        let (mail_stash, _db_dir) = new_test_connection_file().await;
         let tmpdir = tempfile::tempdir().unwrap();
 
-        let mut tether = stash.connection().await.unwrap();
+        let mut tether = mail_stash.connection().await.unwrap();
         let db_metadata = tether
             .tx(async |tx| DraftMetadata::empty(tx).await)
             .await

@@ -12,21 +12,21 @@ use crate::mail::mail_scroller::{
 use crate::mail::{MailUserSession, Mailbox};
 use crate::{LiveQueryCallback, WatchHandle, declare_live_query_tagger, uniffi_async};
 use itertools::Itertools;
-use proton_core_common::datatypes::{SystemLabel, WeekStart as RealWeekStart};
-use proton_core_common::models::Label as RealLabel;
-use proton_core_common::utils::MapVec;
-use proton_mail_common::MailScroller;
-use proton_mail_common::Unexpected;
-use proton_mail_common::datatypes::{
+use mail_common::MailScroller;
+use mail_common::Unexpected;
+use mail_common::datatypes::{
     ContextualConversation, ContextualConversationAndMessages, ConversationViewOptions,
     LocalConversationId, MobileAction as RealMobileAction,
     OpenConversationOrigin as RealOpenConversationOrigin,
 };
-use proton_mail_common::models::Conversation as RealConversation;
-use proton_mail_common::{
+use mail_common::models::Conversation as RealConversation;
+use mail_common::{
     ActionErrorReason as RealActionErrorReason, ProtonMailError as RealProtonMailError,
 };
-use stash::orm::Model;
+use mail_core_common::datatypes::{SystemLabel, WeekStart as RealWeekStart};
+use mail_core_common::models::Label as RealLabel;
+use mail_core_common::utils::MapVec;
+use mail_stash::orm::Model;
 use std::sync::Arc;
 
 #[uniffi_export]
@@ -58,9 +58,9 @@ pub async fn available_label_as_actions_for_conversations(
     mailbox: Arc<Mailbox>,
     ids: Vec<Id>,
 ) -> Result<Vec<LabelAsAction>, ActionError> {
-    let stash = mailbox.stash()?;
+    let mail_stash = mailbox.mail_stash()?;
     uniffi_async(async move {
-        let tether = stash.connection().await?;
+        let tether = mail_stash.connection().await?;
         let actions = RealConversation::available_label_as_actions(ids.map_vec(), &tether)
             .await?
             .map_vec();
@@ -76,10 +76,10 @@ pub async fn available_move_to_actions_for_conversations(
     mailbox: Arc<Mailbox>,
     ids: Vec<Id>,
 ) -> Result<Vec<MoveAction>, ActionError> {
-    let stash = mailbox.stash()?;
+    let mail_stash = mailbox.mail_stash()?;
     uniffi_async(async move {
         let view = mailbox.mbox().label_id();
-        let tether = stash.connection().await?;
+        let tether = mail_stash.connection().await?;
         let view = RealLabel::load(view, &tether)
             .await?
             .ok_or_else(|| RealProtonMailError::reason(RealActionErrorReason::UnknownLabel))?;
@@ -102,9 +102,9 @@ pub async fn available_snooze_actions_for_conversation(
     ids: Vec<Id>,
 ) -> Result<SnoozeActions, SnoozeError> {
     let ctx = session.ctx()?;
-    let stash = session.user_stash()?;
+    let mail_stash = session.user_stash()?;
     uniffi_async(async move {
-        let tether = stash.connection().await?;
+        let tether = mail_stash.connection().await?;
         let user = ctx.user().await?;
         let settings = ctx.user_settings().await?;
         let week_start = match settings.week_start {
@@ -174,9 +174,9 @@ pub async fn all_available_list_actions_for_conversations(
     mailbox: Arc<Mailbox>,
     conversation_ids: Vec<Id>,
 ) -> Result<AllListActions, ActionError> {
-    let stash = mailbox.stash()?;
+    let mail_stash = mailbox.mail_stash()?;
     uniffi_async(async move {
-        let tether = stash.connection().await?;
+        let tether = mail_stash.connection().await?;
         let actions = ContextualConversation::all_available_list_actions_for_conversations(
             mailbox.label_id().into(),
             conversation_ids.map_vec(),
@@ -196,10 +196,10 @@ pub async fn all_available_conversation_actions_for_action_sheet(
     mailbox: Arc<Mailbox>,
     conversation_id: Id,
 ) -> Result<ConversationActionSheet, ActionError> {
-    let stash = mailbox.stash()?;
+    let mail_stash = mailbox.mail_stash()?;
     let current_label_id = mailbox.label_id();
     uniffi_async(async move {
-        let tether = stash.connection().await?;
+        let tether = mail_stash.connection().await?;
         let action_sheet =
             ContextualConversation::all_available_conversation_actions_for_action_sheet(
                 current_label_id.into(),
@@ -218,10 +218,10 @@ pub async fn all_available_conversation_actions_for_conversation(
     mailbox: Arc<Mailbox>,
     conversation_id: Id,
 ) -> Result<AllConversationActions, ActionError> {
-    let stash = mailbox.stash()?;
+    let mail_stash = mailbox.mail_stash()?;
     let current_label_id = mailbox.label_id();
     uniffi_async(async move {
-        let tether = stash.connection().await?;
+        let tether = mail_stash.connection().await?;
         let all_actions =
             ContextualConversation::all_available_conversation_actions_for_conversation(
                 current_label_id.into(),
@@ -241,7 +241,7 @@ pub async fn conversation(
     id: Id,
     show_all: bool,
 ) -> Result<Option<ConversationAndMessages>, ActionError> {
-    let stash = mailbox.stash()?;
+    let mail_stash = mailbox.mail_stash()?;
     let session = mailbox.session()?;
     let ctx = mailbox
         .ctx()
@@ -249,7 +249,7 @@ pub async fn conversation(
 
     uniffi_async(async move {
         let trash_label_id = SystemLabel::Trash
-            .local_id(&stash.connection().await?)
+            .local_id(&mail_stash.connection().await?)
             .await?
             .expect("Trash label ID should be present");
         let view_options = if show_all {
@@ -267,7 +267,7 @@ pub async fn conversation(
                 LocalConversationId::from(id),
                 mailbox.mbox().label_id(),
                 view_options,
-                &stash,
+                &mail_stash,
                 &session,
                 ctx.action_queue(),
             )
@@ -468,9 +468,9 @@ pub async fn watch_conversation(
     let label_id = mailbox.label_id();
 
     uniffi_async(async move {
-        let stash = ctx.user_stash();
+        let mail_stash = ctx.user_stash();
         let trash_label_id = SystemLabel::Trash
-            .local_id(&stash.connection().await?)
+            .local_id(&mail_stash.connection().await?)
             .await?
             .expect("Trash label ID should be present");
         let view_options = if show_all {
@@ -492,7 +492,7 @@ pub async fn watch_conversation(
             return Ok(None);
         };
 
-        let receiver = ContextualConversation::watch(&stash).await?;
+        let receiver = ContextualConversation::watch(&mail_stash).await?;
         let watcher = WatchConversationMarker::watch_channel(&*ctx, receiver, callback);
 
         Result::<_, RealProtonMailError>::Ok(Some(WatchedConversation {
@@ -564,7 +564,7 @@ pub async fn update_mobile_conversation_toolbar_actions(
     let ctx = session.ctx()?;
 
     uniffi_async(async move {
-        proton_mail_common::models::MailSettings::action_update_conversation_toolbar(
+        mail_common::models::MailSettings::action_update_conversation_toolbar(
             ctx.action_queue(),
             actions.map_vec(),
             false,

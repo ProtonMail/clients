@@ -1,9 +1,9 @@
 use std::{borrow::Borrow, sync::Arc};
 
 use crate::core::datatypes::AccountDetails;
-use proton_core_api::services::proton::SessionId;
-use proton_core_common::{CoreAccountState, CoreSessionState};
-use proton_core_common::{
+use mail_core_api::services::proton::SessionId;
+use mail_core_common::{CoreAccountState, CoreSessionState};
+use mail_core_common::{
     datatypes::{PasswordMode, TfaStatus},
     db::account::{CoreAccount, CoreSession},
 };

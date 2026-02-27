@@ -1,6 +1,6 @@
-use muon::client::{Builder, Fingerprint};
-use muon::test::store::TestStore;
-use muon::{App, Client};
+use mail_muon::client::{Builder, Fingerprint};
+use mail_muon::test::store::TestStore;
+use mail_muon::{App, Client};
 use serde_json::json;
 
 const USER: &str = "plus";

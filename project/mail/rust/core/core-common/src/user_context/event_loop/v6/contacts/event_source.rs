@@ -6,12 +6,10 @@ use futures::StreamExt;
 use futures::future::BoxFuture;
 use futures::stream::FuturesUnordered;
 use itertools::Itertools;
-use proton_core_api::consts::General;
-use proton_core_api::service::ApiServiceError;
-use proton_core_api::services::proton::{
-    Action, ContactId, ContactRootEventV6, LabelId, ProtonCore,
-};
-use proton_core_api::session::Session;
+use mail_core_api::consts::General;
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::{Action, ContactId, ContactRootEventV6, LabelId, ProtonCore};
+use mail_core_api::session::Session;
 use std::collections::HashMap;
 use tracing::{debug, error};
 

@@ -1,20 +1,10 @@
 use super::attachment::{testdata_attachment_metadata, testdata_attachment_metadata_complete};
 use crate::test_utils::test_context::MailTestContext;
-use proton_core_api::services::proton::GetKeysAllResponse;
-use proton_core_api::services::proton::{
-    Address as ApiAddress, AddressFlags, AddressSignedKeyList, AddressStatus as ApiAddressStatus,
-    AddressType as ApiAddressType, ContactBasic as ApiContactBasic,
-    ContactEmail as ApiContactEmail, Label as ApiLabel, User as ApiUser,
-    UserSettings as ApiUserSettings,
-};
-use proton_core_api::services::proton::{AddressId, EventId, LabelId, LabelType as ApiLabelType};
-use proton_mail_api::services::proton::common::{ConversationId, MessageId};
-use proton_mail_api::services::proton::prelude::{GetIncomingDefaultResponse, RunningTasks};
-use proton_mail_api::services::proton::request_data::{
-    PutMobileSettings, PutNextMessageOnMoveRequest,
-};
-use proton_mail_api::services::proton::response_data::MessageMetadata;
-use proton_mail_api::services::proton::response_data::{
+use mail_api::services::proton::common::{ConversationId, MessageId};
+use mail_api::services::proton::prelude::{GetIncomingDefaultResponse, RunningTasks};
+use mail_api::services::proton::request_data::{PutMobileSettings, PutNextMessageOnMoveRequest};
+use mail_api::services::proton::response_data::MessageMetadata;
+use mail_api::services::proton::response_data::{
     AlmostAllMail, Attachment as ApiAttachment, ComposerDirection, ComposerMode,
     Conversation as ApiConversation, ConversationCount as ApiConversationCount,
     ConversationLabel as ApiConversationLabel, IncomingDefault, MailSettings as ApiMailSettings,
@@ -22,19 +12,27 @@ use proton_mail_api::services::proton::response_data::{
     MessageSender as ApiMessageSender, MimeType, PgpScheme, PmSignature, ShowImages, ShowMoved,
     SwipeAction, ViewLayout, ViewMode,
 };
+use mail_core_api::services::proton::GetKeysAllResponse;
+use mail_core_api::services::proton::{
+    Address as ApiAddress, AddressFlags, AddressSignedKeyList, AddressStatus as ApiAddressStatus,
+    AddressType as ApiAddressType, ContactBasic as ApiContactBasic,
+    ContactEmail as ApiContactEmail, Label as ApiLabel, User as ApiUser,
+    UserSettings as ApiUserSettings,
+};
+use mail_core_api::services::proton::{AddressId, EventId, LabelId, LabelType as ApiLabelType};
 
 use crate::datatypes::SystemLabelId;
-use proton_core_common::datatypes::ALL_LABEL_TYPES;
-use proton_core_common::test_utils::account::{
+use mail_api::services::proton::responses::{
+    GetConversationResponse, GetConversationsCountResponse, GetConversationsResponse,
+    GetMailSettingsResponse, GetMessagesCountResponse, GetMessagesResponse,
+};
+use mail_core_common::datatypes::ALL_LABEL_TYPES;
+use mail_core_common::test_utils::account::{
     TEST_ADDRESS_ID, TEST_ADDRESS_KEY_SIGNATURE, TEST_USER_MAIL,
     testdata_address_keys_for_user_address,
 };
-use proton_core_common::test_utils::addresses_public::{
+use mail_core_common::test_utils::addresses_public::{
     TEST_OTHER_USER_EMAIL, testdata_address_keys_other_user,
-};
-use proton_mail_api::services::proton::responses::{
-    GetConversationResponse, GetConversationsCountResponse, GetConversationsResponse,
-    GetMailSettingsResponse, GetMessagesCountResponse, GetMessagesResponse,
 };
 use std::collections::{BTreeMap, HashMap};
 use std::sync::LazyLock;

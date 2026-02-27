@@ -1,5 +1,5 @@
-use proton_mail_common::actions::messages::UnsubscribeNewsletter;
-use proton_mail_common::datatypes::ParsedHeaders;
+use mail_common::actions::messages::UnsubscribeNewsletter;
+use mail_common::datatypes::ParsedHeaders;
 use serde_json::Value;
 use std::collections::HashMap;
 

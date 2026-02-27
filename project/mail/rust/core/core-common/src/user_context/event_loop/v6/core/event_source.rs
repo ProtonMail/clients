@@ -4,9 +4,9 @@ use core_event_loop::v6::EventSource;
 use futures::StreamExt;
 use futures::future::BoxFuture;
 use futures::stream::FuturesUnordered;
-use proton_core_api::service::ApiServiceError;
-use proton_core_api::services::proton::{Action, AddressId, CoreEventV6, ProtonCore, User};
-use proton_core_api::session::Session;
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::{Action, AddressId, CoreEventV6, ProtonCore, User};
+use mail_core_api::session::Session;
 use std::collections::HashMap;
 use tracing::error;
 

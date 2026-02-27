@@ -1,12 +1,8 @@
-use proton_core_common::datatypes::{
-    DateFormat, Density, LogAuth, NotificationSettings, WeekStart,
-};
-use proton_core_common::models::UserSettings;
-use proton_core_common::test_utils::test_context::TestContext;
-use proton_issue_reporter_service::{
-    IssueLevel, IssueReportKeys, IssueReporter, UserIssueReporter,
-};
-use stash::orm::Model;
+use mail_core_common::datatypes::{DateFormat, Density, LogAuth, NotificationSettings, WeekStart};
+use mail_core_common::models::UserSettings;
+use mail_core_common::test_utils::test_context::TestContext;
+use mail_issue_reporter_service::{IssueLevel, IssueReportKeys, IssueReporter, UserIssueReporter};
+use mail_stash::orm::Model;
 use std::sync::Arc;
 
 #[tokio::test]
@@ -42,7 +38,7 @@ async fn issues_not_report_if_telemetry_disabled() {
     };
 
     user_ctx
-        .stash()
+        .mail_stash()
         .connection()
         .await
         .unwrap()

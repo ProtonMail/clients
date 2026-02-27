@@ -12,19 +12,19 @@ use crate::datatypes::{
 use crate::event_loop::events::Action;
 use crate::models::ModelIdExtension;
 use itertools::Itertools;
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::service::ApiServiceError;
-use proton_core_api::services::proton::Label as ApiLabel;
-use proton_core_api::services::proton::LabelId;
-use proton_core_api::services::proton::PatchLabelRequest;
-use proton_core_api::services::proton::ProtonCore;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::Label as ApiLabel;
+use mail_core_api::services::proton::LabelId;
+use mail_core_api::services::proton::PatchLabelRequest;
+use mail_core_api::services::proton::ProtonCore;
+use mail_stash::exports::{Connection, Transaction};
+use mail_stash::macros::Model;
+use mail_stash::orm::{Model, ModelHooks};
+use mail_stash::stash::{Bond, Stash, StashError, StashResult, Tether, WatcherHandle};
+use mail_stash::utils::{MapToSql as _, placeholders};
+use mail_stash::{UserDb, params};
 use sqlite_watcher::watcher::TableObserver;
-use stash::exports::{Connection, Transaction};
-use stash::macros::Model;
-use stash::orm::{Model, ModelHooks};
-use stash::stash::{Bond, Stash, StashError, StashResult, Tether, WatcherHandle};
-use stash::utils::{MapToSql as _, placeholders};
-use stash::{UserDb, params};
 use std::collections::{BTreeMap, BTreeSet};
 use thiserror::Error;
 use topological_sort::TopologicalSort;
@@ -280,8 +280,8 @@ impl Label {
     }
 
     #[instrument(skip_all)]
-    pub async fn watch(stash: &Stash<UserDb>) -> Result<WatcherHandle, StashError> {
-        stash
+    pub async fn watch(mail_stash: &Stash<UserDb>) -> Result<WatcherHandle, StashError> {
+        mail_stash
             .subscribe_to(|sender| Box::new(LabelWatcher { sender }))
             .await
     }
@@ -391,7 +391,7 @@ impl ModelHooks for Label {
         Ok(())
     }
 
-    fn before_save(&mut self, tx: &Transaction<'_>) -> stash::stash::StashResult<()> {
+    fn before_save(&mut self, tx: &Transaction<'_>) -> mail_stash::stash::StashResult<()> {
         if let Some(remote_id) = &self.remote_id
             && let Some(label) = Label::find_first_sync("WHERE remote_id=?", (remote_id,), tx)?
         {

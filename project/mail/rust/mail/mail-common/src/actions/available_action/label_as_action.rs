@@ -3,7 +3,7 @@
 mod tests;
 
 use itertools::Itertools;
-use proton_core_common::{
+use mail_core_common::{
     datatypes::{LabelColor, LabelType, LocalLabelId},
     models::Label,
 };

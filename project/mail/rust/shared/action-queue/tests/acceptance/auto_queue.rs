@@ -1,16 +1,16 @@
 use super::common::DefaultError;
 use super::common::new_queue_typed;
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard, WriterGuardError,
 };
-use proton_action_queue::queue::{
+use mail_action_queue::queue::{
     ActionRequeueReason, BroadcastMessage, NoopOnlineStatusWaiter, OnlineStatusWaiter,
     QueuedActionState, TokioTaskSpawner,
 };
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_action_queue::tests::common::TestDb;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_action_queue::tests::common::TestDb;
+use mail_stash::stash::Bond;
 use serde::{Deserialize, Serialize};
-use stash::stash::Bond;
 use std::time::Duration;
 use tokio::time::sleep;
 

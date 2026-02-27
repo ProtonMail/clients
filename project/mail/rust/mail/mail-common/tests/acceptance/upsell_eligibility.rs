@@ -1,18 +1,18 @@
-use proton_core_api::services::proton::User as ApiUser;
-use proton_core_api::services::proton::{
+use mail_common::MailUserContext;
+use mail_common::test_utils::init::Params as TestParams;
+use mail_common::test_utils::test_context::MailTestContext;
+use mail_core_api::services::proton::User as ApiUser;
+use mail_core_api::services::proton::{
     GetLegacyFeaturesResponse, GetUnleashFeaturesResponse, UnleashToggle, UnleashToggleVariant,
 };
-use proton_core_common::datatypes::{
+use mail_core_common::datatypes::{
     BlackFridayWave, NotificationSettings, UpsellEligibility, UpsellType,
 };
-use proton_core_common::models::{DelinquentState, ModelExtension, Role};
-use proton_core_common::models::{PaidSubscription, User};
-use proton_core_common::test_utils::users::DEFAULT_USER;
-use proton_mail_common::MailUserContext;
-use proton_mail_common::test_utils::init::Params as TestParams;
-use proton_mail_common::test_utils::test_context::MailTestContext;
-use stash::orm::Model;
-use stash::stash::{Bond, StashError};
+use mail_core_common::models::{DelinquentState, ModelExtension, Role};
+use mail_core_common::models::{PaidSubscription, User};
+use mail_core_common::test_utils::users::DEFAULT_USER;
+use mail_stash::orm::Model;
+use mail_stash::stash::{Bond, StashError};
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, ResponseTemplate};
 
@@ -287,7 +287,7 @@ async fn save_news(
     tx: &Bond<'_>,
 ) -> Result<(), StashError> {
     let mut settings =
-        proton_core_common::models::UserSettings::find_by_id(ctx.user_id().clone(), tx)
+        mail_core_common::models::UserSettings::find_by_id(ctx.user_id().clone(), tx)
             .await?
             .unwrap();
     settings.news = news;

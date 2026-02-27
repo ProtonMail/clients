@@ -1,4 +1,4 @@
-use proton_action_queue::action::{ActionDependencyKey, ActionDependencyKeys};
+use mail_action_queue::action::{ActionDependencyKey, ActionDependencyKeys};
 use std::fmt::Debug;
 
 /// Helper utility to build action dependency chains.

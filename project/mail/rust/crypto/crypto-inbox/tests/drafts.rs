@@ -1,4 +1,4 @@
-use proton_crypto_inbox::{
+use mail_crypto_inbox::{
     message::{DecryptableMessage, EncryptableDraft, GettablePGPMessage},
     proton_crypto::crypto::{AccessKeyInfo, DataEncoding, PGPProviderSync},
 };
@@ -9,7 +9,7 @@ use common::{
     create_account_unlocked_address_keys_v6,
 };
 
-use proton_crypto_inbox::proton_crypto::new_pgp_provider;
+use mail_crypto_inbox::proton_crypto::new_pgp_provider;
 
 const PRIVATE_KEY: &str = "-----BEGIN PGP PRIVATE KEY BLOCK-----
 

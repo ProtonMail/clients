@@ -6,12 +6,12 @@ use std::{collections::HashSet, sync::Arc};
 
 use futures::StreamExt;
 use itertools::Itertools;
-use proton_core_api::{
+use mail_core_api::{
     service::ApiServiceError,
     services::proton::{ProtonCore, SessionId, prelude::RegisterDeviceRequest},
 };
-use stash::AccountDb;
-use stash::{
+use mail_stash::AccountDb;
+use mail_stash::{
     exports::ToSql,
     orm::Model,
     stash::{StashError, Tether, WatcherHandle},
@@ -235,7 +235,7 @@ async fn get_unregistered_sessions(
     CoreSession::find(
         format!(
             "WHERE remote_id NOT IN ({})",
-            stash::utils::placeholders_n(params.len())
+            mail_stash::utils::placeholders_n(params.len())
         ),
         params,
         tether,

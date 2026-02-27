@@ -1,4 +1,4 @@
-use proton_action_queue::action::ActionDependencyKey;
+use mail_action_queue::action::ActionDependencyKey;
 
 pub mod block;
 pub mod unblock;

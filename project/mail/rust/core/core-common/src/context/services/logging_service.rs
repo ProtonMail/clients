@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use proton_log_service::LogService;
+use mail_log_service::LogService;
 
 use crate::CoreContextError;
 

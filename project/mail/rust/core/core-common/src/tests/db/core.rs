@@ -5,10 +5,10 @@ use crate::datatypes::{
 };
 use crate::models::{DelinquentState, PaidSubscription, Role, User, UserSettings};
 use crate::tests::common::new_core_test_connection;
-use proton_core_api::services::proton::UserId;
+use mail_core_api::services::proton::UserId;
+use mail_stash::orm::Model;
+use mail_stash::stash::StashError;
 use proton_crypto_account::keys::{ArmoredPrivateKey, KeyId, LockedKey, UserKeys as RealUserKeys};
-use stash::orm::Model;
-use stash::stash::StashError;
 
 #[tokio::test]
 async fn test_core_store_and_load_user() {

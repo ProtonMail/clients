@@ -1,6 +1,6 @@
 use std::collections::BTreeSet;
 
-use proton_core_common::datatypes::UnixTimestamp;
+use mail_core_common::datatypes::UnixTimestamp;
 
 #[derive(Clone, Debug)]
 pub struct TrackerInfo {

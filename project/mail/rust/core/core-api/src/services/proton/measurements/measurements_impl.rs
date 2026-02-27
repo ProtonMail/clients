@@ -1,4 +1,4 @@
-use muon::{POST, ProtonRequest, ProtonResponse, common::Sender, http::HttpReqExt};
+use mail_muon::{POST, ProtonRequest, ProtonResponse, common::Sender, http::HttpReqExt};
 
 use crate::service::ApiServiceResult;
 

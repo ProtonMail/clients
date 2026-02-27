@@ -9,11 +9,11 @@ use crate::{
 };
 use futures::future::try_join_all;
 use itertools::Itertools;
-use proton_core_common::datatypes::DeviceContact as RealDeviceContact;
-use proton_core_common::models::{AppSettings, Contact as RealContact};
-use proton_core_common::utils::MapVec as _;
-use proton_mail_common::ProtonMailError as RealProtonMailError;
-use proton_mail_common::{MailContextError, MailUserContext};
+use mail_common::ProtonMailError as RealProtonMailError;
+use mail_common::{MailContextError, MailUserContext};
+use mail_core_common::datatypes::DeviceContact as RealDeviceContact;
+use mail_core_common::models::{AppSettings, Contact as RealContact};
+use mail_core_common::utils::MapVec as _;
 use std::{
     sync::{
         Arc,
@@ -27,9 +27,9 @@ use tokio::{task, time::interval};
 pub async fn contact_list(
     session: Arc<MailUserSession>,
 ) -> Result<Vec<GroupedContacts>, ActionError> {
-    let stash = session.user_stash()?;
+    let mail_stash = session.user_stash()?;
     uniffi_async(async move {
-        let tether = stash.connection().await?;
+        let tether = mail_stash.connection().await?;
         Ok::<_, RealProtonMailError>(
             RealContact::contact_list(&tether)
                 .await?
@@ -48,9 +48,9 @@ pub async fn contact_group_by_id(
     session: Arc<MailUserSession>,
     id: Id,
 ) -> Result<ContactGroupItem, ActionError> {
-    let stash = session.user_stash()?;
+    let mail_stash = session.user_stash()?;
     uniffi_async(async move {
-        let tether = stash.connection().await?;
+        let tether = mail_stash.connection().await?;
         Ok::<_, RealProtonMailError>(
             RealContact::contact_group_by_id(&tether, id.into())
                 .await?

@@ -2,9 +2,9 @@ use crate::cli::ctx::MailContextExt;
 use crate::cli::read;
 use anyhow::Result;
 use futures::TryFutureExt;
-use proton_account_api::login::state::want_qr_confirmation::process_target_device_qr_code;
-use proton_mail_common::MailContext;
-use proton_observability::PreLoginMetricRecorder;
+use mail_account_api::login::state::want_qr_confirmation::process_target_device_qr_code;
+use mail_common::MailContext;
+use mail_observability::PreLoginMetricRecorder;
 use std::sync::Arc;
 use std::time::Duration;
 

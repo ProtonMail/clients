@@ -6,16 +6,16 @@ use jiff::{
     Zoned,
     civil::{Date, Weekday},
 };
-use proton_calendar_api_v1::{
+use mail_calendar_api_v1::{
     CalendarAttendeeId, CalendarAttendeeStatus, CalendarAttendeeToken, CalendarBootstrap,
     CalendarColor, CalendarEvent, CalendarEventId, CalendarEventRecurrenceId, CalendarEventUid,
     CalendarId,
 };
-use proton_core_api::{service::ApiServiceError, services::proton::AddressId, session::Session};
+use mail_core_api::{service::ApiServiceError, services::proton::AddressId, session::Session};
+use mail_crypto_calendar::Error as CryptoError;
+use mail_ical::{self as ical};
 use proton_crypto::crypto::PGPProviderSync;
 use proton_crypto_account::keys::UnlockedAddressKeys;
-use proton_crypto_calendar::Error as CryptoError;
-use proton_ical::{self as ical};
 use serde_json::Value as JsonValue;
 use std::{collections::HashMap, error::Error, fmt, num::NonZeroU32};
 use thiserror::Error;

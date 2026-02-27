@@ -3738,12 +3738,661 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c41e0c4fef86961ac6d6f8a82609f55f31b05e4fce149ac5710e439df7619ba4"
 
 [[package]]
+name = "mail-account-api"
+version = "0.1.0"
+dependencies = [
+ "aes-gcm",
+ "async-trait",
+ "base64",
+ "derive_more 2.0.1",
+ "futures",
+ "itertools 0.13.0",
+ "mail-core-api",
+ "mail-core-common",
+ "mail-issue-reporter-service",
+ "mail-log-service",
+ "mail-muon",
+ "mail-observability",
+ "mail-task-service",
+ "proton-crypto-account",
+ "proton-crypto-subtle",
+ "regex",
+ "secrecy",
+ "serde",
+ "serde-aux",
+ "serde_json",
+ "serde_qs",
+ "serde_repr",
+ "serde_with",
+ "tempfile",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "zeroize",
+]
+
+[[package]]
+name = "mail-account-common"
+version = "0.1.0"
+dependencies = [
+ "fancy-regex",
+ "mail-account-api",
+ "mail-muon",
+ "secrecy",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "mail-account-uniffi"
+version = "0.1.0"
+dependencies = [
+ "futures",
+ "itertools 0.13.0",
+ "mail-account-api",
+ "mail-account-common",
+ "mail-core-api",
+ "mail-core-common",
+ "mail-muon",
+ "mail-observability",
+ "mail-uniffi-common",
+ "mail-uniffi-macros",
+ "mail-uniffi-runtime",
+ "secrecy",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+ "uniffi",
+]
+
+[[package]]
+name = "mail-action-queue"
+version = "0.7.29"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "bitflags 2.9.4",
+ "chrono",
+ "clap",
+ "derive_more 2.0.1",
+ "futures",
+ "include_dir",
+ "indoc",
+ "mail-action-queue",
+ "mail-sqlite3",
+ "mail-stash",
+ "parking_lot",
+ "pretty_assertions",
+ "rmp-serde",
+ "serde",
+ "tempfile",
+ "thiserror 1.0.69",
+ "tokio",
+ "topological-sort",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
+name = "mail-api"
+version = "0.5.0"
+dependencies = [
+ "bitflags 2.9.4",
+ "bytes",
+ "indexmap 2.11.0",
+ "insta",
+ "mail-account-api",
+ "mail-api",
+ "mail-api-utils",
+ "mail-core-api",
+ "mail-core-common",
+ "mail-crypto-inbox",
+ "mail-issue-reporter-service",
+ "mail-log-service",
+ "mail-muon",
+ "mail-stash",
+ "mail-task-service",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "serde_with",
+ "smart-default",
+ "tempfile",
+ "test-case",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "wiremock",
+]
+
+[[package]]
+name = "mail-api-utils"
+version = "0.1.0"
+
+[[package]]
 name = "mail-builder"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5666db60ccc742381c715c8daf303e60d266f1d1c8b123ab3fe78b590edaf564"
 dependencies = [
  "gethostname",
+]
+
+[[package]]
+name = "mail-calendar-api-v1"
+version = "0.1.0"
+dependencies = [
+ "function_name",
+ "indoc",
+ "jiff",
+ "mail-core-api",
+ "mail-muon",
+ "mail-stash",
+ "pretty_assertions",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "serde_with",
+ "test-case",
+ "wiremock",
+]
+
+[[package]]
+name = "mail-calendar-common"
+version = "0.1.0"
+dependencies = [
+ "derive_more 2.0.1",
+ "indoc",
+ "itertools 0.13.0",
+ "jiff",
+ "mail-calendar-api-v1",
+ "mail-canonical-email",
+ "mail-core-api",
+ "mail-core-common",
+ "mail-crypto-calendar",
+ "mail-ical",
+ "mail-network-monitor-service",
+ "pretty_assertions",
+ "proton-crypto",
+ "proton-crypto-account",
+ "serde_json",
+ "test-case",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "mail-canonical-email"
+version = "0.1.0"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "mail-common"
+version = "0.8.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "bitflags 2.9.4",
+ "bytes",
+ "cfg-if",
+ "chrono",
+ "clap",
+ "color-backtrace",
+ "core-event-loop",
+ "criterion 0.7.0",
+ "derivative",
+ "derive_more 2.0.1",
+ "email_address",
+ "file-format",
+ "flume 0.11.1",
+ "function_name",
+ "futures",
+ "include_dir",
+ "indoc",
+ "insta",
+ "itertools 0.13.0",
+ "jiff",
+ "mail-account-api",
+ "mail-action-queue",
+ "mail-api",
+ "mail-calendar-api-v1",
+ "mail-calendar-common",
+ "mail-canonical-email",
+ "mail-common",
+ "mail-common-derive",
+ "mail-core-api",
+ "mail-core-common",
+ "mail-crypto-calendar",
+ "mail-crypto-inbox",
+ "mail-html-transformer",
+ "mail-ical",
+ "mail-issue-reporter-service",
+ "mail-log-service",
+ "mail-mailto",
+ "mail-network-monitor-service",
+ "mail-observability",
+ "mail-search",
+ "mail-sqlite3",
+ "mail-stash",
+ "mail-task-service",
+ "mime",
+ "non-empty-string",
+ "parking_lot",
+ "pprof",
+ "pretty_assertions",
+ "proton-crypto-account",
+ "proton-foundation-search",
+ "regex",
+ "reqwest",
+ "secrecy",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "smart-default",
+ "sqlite-watcher",
+ "tempfile",
+ "test-case",
+ "thiserror 1.0.69",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "tracing-subscriber",
+ "typed-builder",
+ "url",
+ "uuid",
+ "velcro",
+ "wiremock",
+ "wiremock-multipart",
+]
+
+[[package]]
+name = "mail-common-derive"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.106",
+]
+
+[[package]]
+name = "mail-core-api"
+version = "0.8.1"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "bitflags 2.9.4",
+ "bytes",
+ "chrono",
+ "cookie",
+ "derive_more 2.0.1",
+ "futures",
+ "insta",
+ "mail-api-utils",
+ "mail-core-api",
+ "mail-muon",
+ "mail-network-monitor-service",
+ "mail-stash",
+ "mail-task-service",
+ "parking_lot",
+ "proton-crypto-account",
+ "serde",
+ "serde-aux",
+ "serde_json",
+ "serde_qs",
+ "serde_repr",
+ "serde_with",
+ "smart-default",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+ "url",
+]
+
+[[package]]
+name = "mail-core-common"
+version = "0.9.0"
+dependencies = [
+ "aes-gcm",
+ "anyhow",
+ "async-trait",
+ "async_zip",
+ "base64",
+ "bitflags 2.9.4",
+ "bytes",
+ "chrono",
+ "core-event-loop",
+ "derive_more 2.0.1",
+ "email_address",
+ "flume 0.11.1",
+ "function_name",
+ "futures",
+ "hex",
+ "ical",
+ "include_dir",
+ "indexmap 2.11.0",
+ "indoc",
+ "insta",
+ "itertools 0.13.0",
+ "jiff",
+ "mail-action-queue",
+ "mail-api-utils",
+ "mail-core-api",
+ "mail-core-common",
+ "mail-crypto-notifications",
+ "mail-crypto-pin-hash",
+ "mail-event-service",
+ "mail-issue-reporter-service",
+ "mail-log-service",
+ "mail-network-monitor-service",
+ "mail-observability",
+ "mail-sqlite3",
+ "mail-stash",
+ "mail-task-service",
+ "mail-vcard",
+ "parking_lot",
+ "pretty_assertions",
+ "proton-crypto",
+ "proton-crypto-account",
+ "rand 0.8.5",
+ "secrecy",
+ "serde",
+ "serde_json",
+ "sha2",
+ "smart-default",
+ "sqlite-watcher",
+ "tempfile",
+ "test-case",
+ "thiserror 1.0.69",
+ "tokio",
+ "tokio-util",
+ "topological-sort",
+ "tracing",
+ "tracing-subscriber",
+ "unicode-segmentation",
+ "url",
+ "walkdir",
+ "wiremock",
+ "zeroize",
+]
+
+[[package]]
+name = "mail-crypto-calendar"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "derive_more 2.0.1",
+ "indoc",
+ "mail-calendar-api-v1",
+ "pretty_assertions",
+ "proton-crypto",
+ "proton-crypto-account",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "thiserror 1.0.69",
+ "zeroize",
+]
+
+[[package]]
+name = "mail-crypto-inbox"
+version = "0.9.0"
+dependencies = [
+ "base64",
+ "mail-crypto-inbox-mime",
+ "proton-crypto-account",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "thiserror 1.0.69",
+ "zeroize",
+]
+
+[[package]]
+name = "mail-crypto-inbox-mime"
+version = "0.4.1"
+dependencies = [
+ "hex",
+ "mail-builder",
+ "mail-parser",
+ "proton-crypto",
+ "rand 0.8.5",
+ "serde",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "mail-crypto-notifications"
+version = "0.1.0"
+dependencies = [
+ "proton-crypto-account",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "mail-crypto-pin-hash"
+version = "0.1.0"
+dependencies = [
+ "argon2",
+ "thiserror 1.0.69",
+ "zeroize",
+]
+
+[[package]]
+name = "mail-event-service"
+version = "0.1.0"
+dependencies = [
+ "parking_lot",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "mail-html-transformer"
+version = "0.2.3"
+dependencies = [
+ "criterion 0.7.0",
+ "email_address",
+ "html2text",
+ "html5ever 0.26.0",
+ "indoc",
+ "insta",
+ "itertools 0.13.0",
+ "kuchikiki",
+ "lightningcss",
+ "pprof",
+ "pretty_assertions",
+ "regex",
+ "test-case",
+ "thiserror 1.0.69",
+ "tracing",
+ "url",
+ "velcro",
+]
+
+[[package]]
+name = "mail-html-transformer-fuzz"
+version = "0.0.0"
+dependencies = [
+ "libfuzzer-sys",
+ "mail-html-transformer",
+]
+
+[[package]]
+name = "mail-ical"
+version = "0.1.4"
+dependencies = [
+ "criterion 0.7.0",
+ "email_address",
+ "ext-php-rs",
+ "indoc",
+ "insta",
+ "itertools 0.13.0",
+ "jiff",
+ "mail-ical-tz",
+ "pretty_assertions",
+ "strum",
+ "test-case",
+ "thiserror 1.0.69",
+ "tynm",
+ "utf8-width",
+]
+
+[[package]]
+name = "mail-ical-cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "mail-ical",
+]
+
+[[package]]
+name = "mail-ical-fuzz"
+version = "0.0.0"
+dependencies = [
+ "libfuzzer-sys",
+ "mail-ical",
+]
+
+[[package]]
+name = "mail-ical-tz"
+version = "0.1.0"
+dependencies = [
+ "quick-xml 0.38.3",
+ "serde",
+ "test-case",
+]
+
+[[package]]
+name = "mail-issue-reporter-service"
+version = "0.1.0"
+dependencies = [
+ "tracing",
+]
+
+[[package]]
+name = "mail-issue-reporter-service-uniffi"
+version = "0.1.0"
+dependencies = [
+ "mail-issue-reporter-service",
+ "uniffi",
+]
+
+[[package]]
+name = "mail-log-service"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "parking_lot",
+ "tempfile",
+ "tracing",
+ "tracing-appender",
+ "tracing-subscriber",
+ "typed-builder",
+]
+
+[[package]]
+name = "mail-mailto"
+version = "0.1.0"
+dependencies = [
+ "email_address",
+ "percent-encoding",
+ "test-case",
+ "thiserror 1.0.69",
+ "url",
+]
+
+[[package]]
+name = "mail-muon"
+version = "1.7.1"
+dependencies = [
+ "anyhow",
+ "async-channel",
+ "async-executor",
+ "async-io",
+ "async-lock",
+ "async-net",
+ "async-trait",
+ "bindgen 0.69.5",
+ "bytes",
+ "camino",
+ "cfg-if",
+ "common-multipart-rfc7578",
+ "ctor",
+ "data-encoding",
+ "derive_more 1.0.0",
+ "futures",
+ "futures-rustls",
+ "futures-timer",
+ "getrandom 0.2.16",
+ "h2",
+ "hickory-client",
+ "hickory-proto",
+ "http",
+ "http-body",
+ "hyper",
+ "itertools 0.13.0",
+ "jni",
+ "lazy_static",
+ "muon-proc",
+ "num",
+ "num_cpus",
+ "pin-project",
+ "proton-srp",
+ "rand 0.8.5",
+ "reqwest",
+ "rustls-native-certs 0.7.3",
+ "rustls-platform-verifier",
+ "semver",
+ "serde",
+ "serde_json",
+ "serde_qs",
+ "serde_repr",
+ "sha2",
+ "thiserror 1.0.69",
+ "tokio",
+ "tokio-rustls 0.25.0",
+ "tracing",
+ "url",
+ "x509-parser",
+]
+
+[[package]]
+name = "mail-network-monitor-service"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "futures",
+ "mail-muon",
+ "mail-task-service",
+ "mockall",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "mail-observability"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "mail-core-api",
+ "parking_lot",
+ "serde",
+ "serde_json",
+ "tracing",
 ]
 
 [[package]]
@@ -3754,6 +4403,252 @@ checksum = "187a2b93c4c8c32f552ee06c2d99915e575de2fc7e04b07891c9edfee5b8edd6"
 dependencies = [
  "encoding_rs",
  "hashify",
+]
+
+[[package]]
+name = "mail-search"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "flume 0.11.1",
+ "hex",
+ "include_dir",
+ "mail-api",
+ "mail-html-transformer",
+ "mail-sqlite3",
+ "mail-stash",
+ "mail-task-service",
+ "proton-foundation-search",
+ "sha2",
+ "sqlite-watcher",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "mail-sqlite3"
+version = "0.7.15"
+dependencies = [
+ "async-trait",
+ "fixedbitset",
+ "flume 0.11.1",
+ "futures",
+ "include_dir",
+ "itertools 0.13.0",
+ "mail-stash",
+ "notify",
+ "parking_lot",
+ "rand 0.8.5",
+ "rusqlite",
+ "serde",
+ "slotmap",
+ "sqlite-watcher",
+ "tempfile",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "mail-stash"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "derivative",
+ "flume 0.11.1",
+ "futures",
+ "indoc",
+ "itertools 0.13.0",
+ "mail-stash-macros",
+ "mail-task-service",
+ "parking_lot",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "sqlite-watcher",
+ "tempfile",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "mail-stash-macros"
+version = "0.2.0"
+dependencies = [
+ "itertools 0.13.0",
+ "mail-stash",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "syn 2.0.106",
+ "uuid",
+]
+
+[[package]]
+name = "mail-task-service"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "futures",
+ "mail-muon",
+ "parking_lot",
+ "pin-project",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "tracing-test",
+]
+
+[[package]]
+name = "mail-tui"
+version = "0.4.1"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "clap",
+ "copypasta",
+ "crossterm",
+ "dirs",
+ "flume 0.11.1",
+ "futures",
+ "itertools 0.13.0",
+ "keyring",
+ "log",
+ "mail-account-api",
+ "mail-action-queue",
+ "mail-api",
+ "mail-calendar-api-v1",
+ "mail-calendar-common",
+ "mail-common",
+ "mail-core-common",
+ "mail-crypto-inbox",
+ "mail-html-transformer",
+ "mail-issue-reporter-service",
+ "mail-log-service",
+ "mail-network-monitor-service",
+ "mail-stash",
+ "qrcode",
+ "ratatui",
+ "ratatui-explorer",
+ "secrecy",
+ "sqlite-watcher",
+ "throbber-widgets-tui",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "tracing-appender",
+ "tracing-subscriber",
+ "tui-input",
+ "tui-logger",
+ "tui-textarea",
+ "zeroizing-alloc",
+]
+
+[[package]]
+name = "mail-uniffi"
+version = "0.163.4"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "core-event-loop",
+ "derive_more 2.0.1",
+ "flume 0.11.1",
+ "futures",
+ "itertools 0.13.0",
+ "mail-account-api",
+ "mail-account-uniffi",
+ "mail-action-queue",
+ "mail-api",
+ "mail-calendar-api-v1",
+ "mail-calendar-common",
+ "mail-common",
+ "mail-core-api",
+ "mail-core-common",
+ "mail-crypto-inbox",
+ "mail-ical",
+ "mail-issue-reporter-service-uniffi",
+ "mail-log-service",
+ "mail-mailto",
+ "mail-muon",
+ "mail-network-monitor-service",
+ "mail-observability",
+ "mail-stash",
+ "mail-task-service",
+ "mail-uniffi-common",
+ "mail-uniffi-macros",
+ "mail-uniffi-runtime",
+ "mail-vcard",
+ "non-empty-string",
+ "parking_lot",
+ "proton-crypto-account",
+ "secrecy",
+ "serde",
+ "serde_json",
+ "smart-default",
+ "sqlite-watcher",
+ "thiserror 1.0.69",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "tracing-subscriber",
+ "uniffi",
+ "url",
+ "zeroizing-alloc",
+]
+
+[[package]]
+name = "mail-uniffi-bindgen"
+version = "0.1.1"
+dependencies = [
+ "uniffi",
+]
+
+[[package]]
+name = "mail-uniffi-common"
+version = "0.1.0"
+dependencies = [
+ "mail-core-api",
+ "mail-uniffi-macros",
+ "uniffi",
+]
+
+[[package]]
+name = "mail-uniffi-macros"
+version = "0.1.0"
+dependencies = [
+ "cruet",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.106",
+ "uniffi",
+]
+
+[[package]]
+name = "mail-uniffi-runtime"
+version = "0.1.0"
+dependencies = [
+ "jni",
+ "tokio",
+]
+
+[[package]]
+name = "mail-vcard"
+version = "0.2.1"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "ical",
+ "itertools 0.13.0",
+ "paste",
+ "regex",
+ "thiserror 1.0.69",
+ "tracing",
+ "url",
 ]
 
 [[package]]
@@ -3921,61 +4816,6 @@ checksum = "ddd32fa8935aeadb8a8a6b6b351e40225570a37c43de67690383d87ef170cd08"
 dependencies = [
  "num-traits",
  "pxfm",
-]
-
-[[package]]
-name = "muon"
-version = "1.7.1"
-dependencies = [
- "anyhow",
- "async-channel",
- "async-executor",
- "async-io",
- "async-lock",
- "async-net",
- "async-trait",
- "bindgen 0.69.5",
- "bytes",
- "camino",
- "cfg-if",
- "common-multipart-rfc7578",
- "ctor",
- "data-encoding",
- "derive_more 1.0.0",
- "futures",
- "futures-rustls",
- "futures-timer",
- "getrandom 0.2.16",
- "h2",
- "hickory-client",
- "hickory-proto",
- "http",
- "http-body",
- "hyper",
- "itertools 0.13.0",
- "jni",
- "lazy_static",
- "muon-proc",
- "num",
- "num_cpus",
- "pin-project",
- "proton-srp",
- "rand 0.8.5",
- "reqwest",
- "rustls-native-certs 0.7.3",
- "rustls-platform-verifier",
- "semver",
- "serde",
- "serde_json",
- "serde_qs",
- "serde_repr",
- "sha2",
- "thiserror 1.0.69",
- "tokio",
- "tokio-rustls 0.25.0",
- "tracing",
- "url",
- "x509-parser",
 ]
 
 [[package]]
@@ -5137,263 +5977,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "proton-account-api"
-version = "0.1.0"
-dependencies = [
- "aes-gcm",
- "async-trait",
- "base64",
- "derive_more 2.0.1",
- "futures",
- "itertools 0.13.0",
- "muon",
- "proton-core-api",
- "proton-core-common",
- "proton-crypto-account",
- "proton-crypto-subtle",
- "proton-issue-reporter-service",
- "proton-log-service",
- "proton-observability",
- "proton-task-service",
- "regex",
- "secrecy",
- "serde",
- "serde-aux",
- "serde_json",
- "serde_qs",
- "serde_repr",
- "serde_with",
- "tempfile",
- "thiserror 1.0.69",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "zeroize",
-]
-
-[[package]]
-name = "proton-account-common"
-version = "0.1.0"
-dependencies = [
- "fancy-regex",
- "muon",
- "proton-account-api",
- "secrecy",
- "thiserror 1.0.69",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "proton-account-uniffi"
-version = "0.1.0"
-dependencies = [
- "futures",
- "itertools 0.13.0",
- "muon",
- "proton-account-api",
- "proton-account-common",
- "proton-core-api",
- "proton-core-common",
- "proton-observability",
- "secrecy",
- "serde",
- "serde_json",
- "thiserror 1.0.69",
- "tokio",
- "tracing",
- "uniffi",
- "uniffi-common",
- "uniffi-macros",
- "uniffi-runtime",
-]
-
-[[package]]
-name = "proton-action-queue"
-version = "0.7.29"
-dependencies = [
- "anyhow",
- "async-trait",
- "bitflags 2.9.4",
- "chrono",
- "clap",
- "derive_more 2.0.1",
- "futures",
- "include_dir",
- "indoc",
- "parking_lot",
- "pretty_assertions",
- "proton-action-queue",
- "proton-sqlite3",
- "rmp-serde",
- "serde",
- "stash",
- "tempfile",
- "thiserror 1.0.69",
- "tokio",
- "topological-sort",
- "tracing",
- "tracing-subscriber",
- "uuid",
-]
-
-[[package]]
-name = "proton-api-utils"
-version = "0.1.0"
-
-[[package]]
-name = "proton-calendar-api-v1"
-version = "0.1.0"
-dependencies = [
- "function_name",
- "indoc",
- "jiff",
- "muon",
- "pretty_assertions",
- "proton-core-api",
- "serde",
- "serde_json",
- "serde_repr",
- "serde_with",
- "stash",
- "test-case",
- "wiremock",
-]
-
-[[package]]
-name = "proton-calendar-common"
-version = "0.1.0"
-dependencies = [
- "derive_more 2.0.1",
- "indoc",
- "itertools 0.13.0",
- "jiff",
- "pretty_assertions",
- "proton-calendar-api-v1",
- "proton-canonical-email",
- "proton-core-api",
- "proton-core-common",
- "proton-crypto",
- "proton-crypto-account",
- "proton-crypto-calendar",
- "proton-ical",
- "proton-network-monitor-service",
- "serde_json",
- "test-case",
- "thiserror 1.0.69",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "proton-canonical-email"
-version = "0.1.0"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "proton-core-api"
-version = "0.8.1"
-dependencies = [
- "anyhow",
- "async-trait",
- "bitflags 2.9.4",
- "bytes",
- "chrono",
- "cookie",
- "derive_more 2.0.1",
- "futures",
- "insta",
- "muon",
- "parking_lot",
- "proton-api-utils",
- "proton-core-api",
- "proton-crypto-account",
- "proton-network-monitor-service",
- "proton-task-service",
- "serde",
- "serde-aux",
- "serde_json",
- "serde_qs",
- "serde_repr",
- "serde_with",
- "smart-default",
- "stash",
- "thiserror 1.0.69",
- "tokio",
- "tracing",
- "url",
-]
-
-[[package]]
-name = "proton-core-common"
-version = "0.9.0"
-dependencies = [
- "aes-gcm",
- "anyhow",
- "async-trait",
- "async_zip",
- "base64",
- "bitflags 2.9.4",
- "bytes",
- "chrono",
- "core-event-loop",
- "derive_more 2.0.1",
- "email_address",
- "flume 0.11.1",
- "function_name",
- "futures",
- "hex",
- "ical",
- "include_dir",
- "indexmap 2.11.0",
- "indoc",
- "insta",
- "itertools 0.13.0",
- "jiff",
- "parking_lot",
- "pretty_assertions",
- "proton-action-queue",
- "proton-api-utils",
- "proton-core-api",
- "proton-core-common",
- "proton-crypto",
- "proton-crypto-account",
- "proton-crypto-notifications",
- "proton-crypto-pin-hash",
- "proton-event-service",
- "proton-issue-reporter-service",
- "proton-log-service",
- "proton-network-monitor-service",
- "proton-observability",
- "proton-sqlite3",
- "proton-task-service",
- "proton-vcard",
- "rand 0.8.5",
- "secrecy",
- "serde",
- "serde_json",
- "sha2",
- "smart-default",
- "sqlite-watcher",
- "stash",
- "tempfile",
- "test-case",
- "thiserror 1.0.69",
- "tokio",
- "tokio-util",
- "topological-sort",
- "tracing",
- "tracing-subscriber",
- "unicode-segmentation",
- "url",
- "walkdir",
- "wiremock",
- "zeroize",
-]
-
-[[package]]
 name = "proton-crypto"
 version = "0.7.1"
 source = "git+https://github.com/ProtonMail/proton-crypto-rs.git?rev=33d22de54c578408108f580d6cafae06f656da9a#33d22de54c578408108f580d6cafae06f656da9a"
@@ -5428,70 +6011,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "proton-crypto-calendar"
-version = "0.1.0"
-dependencies = [
- "base64",
- "derive_more 2.0.1",
- "indoc",
- "pretty_assertions",
- "proton-calendar-api-v1",
- "proton-crypto",
- "proton-crypto-account",
- "serde",
- "serde_json",
- "serde_repr",
- "thiserror 1.0.69",
- "zeroize",
-]
-
-[[package]]
-name = "proton-crypto-inbox"
-version = "0.9.0"
-dependencies = [
- "base64",
- "proton-crypto-account",
- "proton-crypto-inbox-mime",
- "serde",
- "serde_json",
- "serde_repr",
- "thiserror 1.0.69",
- "zeroize",
-]
-
-[[package]]
-name = "proton-crypto-inbox-mime"
-version = "0.4.1"
-dependencies = [
- "hex",
- "mail-builder",
- "mail-parser",
- "proton-crypto",
- "rand 0.8.5",
- "serde",
- "thiserror 1.0.69",
-]
-
-[[package]]
-name = "proton-crypto-notifications"
-version = "0.1.0"
-dependencies = [
- "proton-crypto-account",
- "serde",
- "serde_json",
- "thiserror 1.0.69",
-]
-
-[[package]]
-name = "proton-crypto-pin-hash"
-version = "0.1.0"
-dependencies = [
- "argon2",
- "thiserror 1.0.69",
- "zeroize",
-]
-
-[[package]]
 name = "proton-crypto-subtle"
 version = "0.1.0"
 source = "sparse+https://rust-registry.proton.me/index/"
@@ -5502,15 +6021,6 @@ dependencies = [
  "rand 0.8.5",
  "thiserror 1.0.69",
  "zeroize",
-]
-
-[[package]]
-name = "proton-event-service"
-version = "0.1.0"
-dependencies = [
- "parking_lot",
- "tokio",
- "tracing",
 ]
 
 [[package]]
@@ -5536,415 +6046,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "proton-ical"
-version = "0.1.4"
-dependencies = [
- "criterion 0.7.0",
- "email_address",
- "ext-php-rs",
- "indoc",
- "insta",
- "itertools 0.13.0",
- "jiff",
- "pretty_assertions",
- "proton-ical-tz",
- "strum",
- "test-case",
- "thiserror 1.0.69",
- "tynm",
- "utf8-width",
-]
-
-[[package]]
-name = "proton-ical-cli"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "proton-ical",
-]
-
-[[package]]
-name = "proton-ical-fuzz"
-version = "0.0.0"
-dependencies = [
- "libfuzzer-sys",
- "proton-ical",
-]
-
-[[package]]
-name = "proton-ical-tz"
-version = "0.1.0"
-dependencies = [
- "quick-xml 0.38.3",
- "serde",
- "test-case",
-]
-
-[[package]]
-name = "proton-issue-reporter-service"
-version = "0.1.0"
-dependencies = [
- "tracing",
-]
-
-[[package]]
-name = "proton-issue-reporter-service-uniffi"
-version = "0.1.0"
-dependencies = [
- "proton-issue-reporter-service",
- "uniffi",
-]
-
-[[package]]
-name = "proton-log-service"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "parking_lot",
- "tempfile",
- "tracing",
- "tracing-appender",
- "tracing-subscriber",
- "typed-builder",
-]
-
-[[package]]
-name = "proton-mail-api"
-version = "0.5.0"
-dependencies = [
- "bitflags 2.9.4",
- "bytes",
- "indexmap 2.11.0",
- "insta",
- "muon",
- "proton-account-api",
- "proton-api-utils",
- "proton-core-api",
- "proton-core-common",
- "proton-crypto-inbox",
- "proton-issue-reporter-service",
- "proton-log-service",
- "proton-mail-api",
- "proton-task-service",
- "reqwest",
- "serde",
- "serde_json",
- "serde_repr",
- "serde_with",
- "smart-default",
- "stash",
- "tempfile",
- "test-case",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "wiremock",
-]
-
-[[package]]
-name = "proton-mail-common"
-version = "0.8.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "bitflags 2.9.4",
- "bytes",
- "cfg-if",
- "chrono",
- "clap",
- "color-backtrace",
- "core-event-loop",
- "criterion 0.7.0",
- "derivative",
- "derive_more 2.0.1",
- "email_address",
- "file-format",
- "flume 0.11.1",
- "function_name",
- "futures",
- "include_dir",
- "indoc",
- "insta",
- "itertools 0.13.0",
- "jiff",
- "mime",
- "non-empty-string",
- "parking_lot",
- "pprof",
- "pretty_assertions",
- "proton-account-api",
- "proton-action-queue",
- "proton-calendar-api-v1",
- "proton-calendar-common",
- "proton-canonical-email",
- "proton-core-api",
- "proton-core-common",
- "proton-crypto-account",
- "proton-crypto-calendar",
- "proton-crypto-inbox",
- "proton-foundation-search",
- "proton-ical",
- "proton-issue-reporter-service",
- "proton-log-service",
- "proton-mail-api",
- "proton-mail-common",
- "proton-mail-common-derive",
- "proton-mail-html-transformer",
- "proton-mail-search",
- "proton-mailto",
- "proton-network-monitor-service",
- "proton-observability",
- "proton-sqlite3",
- "proton-task-service",
- "regex",
- "reqwest",
- "secrecy",
- "serde",
- "serde_json",
- "serde_with",
- "smart-default",
- "sqlite-watcher",
- "stash",
- "tempfile",
- "test-case",
- "thiserror 1.0.69",
- "tokio",
- "tokio-util",
- "tracing",
- "tracing-subscriber",
- "typed-builder",
- "url",
- "uuid",
- "velcro",
- "wiremock",
- "wiremock-multipart",
-]
-
-[[package]]
-name = "proton-mail-common-derive"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.106",
-]
-
-[[package]]
-name = "proton-mail-html-transformer"
-version = "0.2.3"
-dependencies = [
- "criterion 0.7.0",
- "email_address",
- "html2text",
- "html5ever 0.26.0",
- "indoc",
- "insta",
- "itertools 0.13.0",
- "kuchikiki",
- "lightningcss",
- "pprof",
- "pretty_assertions",
- "regex",
- "test-case",
- "thiserror 1.0.69",
- "tracing",
- "url",
- "velcro",
-]
-
-[[package]]
-name = "proton-mail-html-transformer-fuzz"
-version = "0.0.0"
-dependencies = [
- "libfuzzer-sys",
- "proton-mail-html-transformer",
-]
-
-[[package]]
-name = "proton-mail-search"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "chrono",
- "flume 0.11.1",
- "hex",
- "include_dir",
- "proton-foundation-search",
- "proton-mail-api",
- "proton-mail-html-transformer",
- "proton-sqlite3",
- "proton-task-service",
- "sha2",
- "sqlite-watcher",
- "stash",
- "thiserror 1.0.69",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "proton-mail-tui"
-version = "0.4.1"
-dependencies = [
- "anyhow",
- "chrono",
- "clap",
- "copypasta",
- "crossterm",
- "dirs",
- "flume 0.11.1",
- "futures",
- "itertools 0.13.0",
- "keyring",
- "log",
- "proton-account-api",
- "proton-action-queue",
- "proton-calendar-api-v1",
- "proton-calendar-common",
- "proton-core-common",
- "proton-crypto-inbox",
- "proton-issue-reporter-service",
- "proton-log-service",
- "proton-mail-api",
- "proton-mail-common",
- "proton-mail-html-transformer",
- "proton-network-monitor-service",
- "qrcode",
- "ratatui",
- "ratatui-explorer",
- "secrecy",
- "sqlite-watcher",
- "stash",
- "throbber-widgets-tui",
- "tokio",
- "tokio-util",
- "tracing",
- "tracing-appender",
- "tracing-subscriber",
- "tui-input",
- "tui-logger",
- "tui-textarea",
- "zeroizing-alloc",
-]
-
-[[package]]
-name = "proton-mail-uniffi"
-version = "0.163.4"
-dependencies = [
- "anyhow",
- "async-trait",
- "chrono",
- "core-event-loop",
- "derive_more 2.0.1",
- "flume 0.11.1",
- "futures",
- "itertools 0.13.0",
- "muon",
- "non-empty-string",
- "parking_lot",
- "proton-account-api",
- "proton-account-uniffi",
- "proton-action-queue",
- "proton-calendar-api-v1",
- "proton-calendar-common",
- "proton-core-api",
- "proton-core-common",
- "proton-crypto-account",
- "proton-crypto-inbox",
- "proton-ical",
- "proton-issue-reporter-service-uniffi",
- "proton-log-service",
- "proton-mail-api",
- "proton-mail-common",
- "proton-mailto",
- "proton-network-monitor-service",
- "proton-observability",
- "proton-task-service",
- "proton-vcard",
- "secrecy",
- "serde",
- "serde_json",
- "smart-default",
- "sqlite-watcher",
- "stash",
- "thiserror 1.0.69",
- "tokio",
- "tokio-util",
- "tracing",
- "tracing-subscriber",
- "uniffi",
- "uniffi-common",
- "uniffi-macros",
- "uniffi-runtime",
- "url",
- "zeroizing-alloc",
-]
-
-[[package]]
-name = "proton-mailto"
-version = "0.1.0"
-dependencies = [
- "email_address",
- "percent-encoding",
- "test-case",
- "thiserror 1.0.69",
- "url",
-]
-
-[[package]]
-name = "proton-network-monitor-service"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "futures",
- "mockall",
- "muon",
- "proton-task-service",
- "thiserror 1.0.69",
- "tokio",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "proton-observability"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "parking_lot",
- "proton-core-api",
- "serde",
- "serde_json",
- "tracing",
-]
-
-[[package]]
-name = "proton-sqlite3"
-version = "0.7.15"
-dependencies = [
- "async-trait",
- "fixedbitset",
- "flume 0.11.1",
- "futures",
- "include_dir",
- "itertools 0.13.0",
- "notify",
- "parking_lot",
- "rand 0.8.5",
- "rusqlite",
- "serde",
- "slotmap",
- "sqlite-watcher",
- "stash",
- "tempfile",
- "thiserror 1.0.69",
- "tokio",
- "tracing",
-]
-
-[[package]]
 name = "proton-srp"
 version = "0.7.1"
 source = "git+https://github.com/ProtonMail/proton-crypto-rs.git?rev=33d22de54c578408108f580d6cafae06f656da9a#33d22de54c578408108f580d6cafae06f656da9a"
@@ -5957,36 +6058,6 @@ dependencies = [
  "sha2",
  "thiserror 1.0.69",
  "zeroize",
-]
-
-[[package]]
-name = "proton-task-service"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "futures",
- "muon",
- "parking_lot",
- "pin-project",
- "tokio",
- "tokio-util",
- "tracing",
- "tracing-test",
-]
-
-[[package]]
-name = "proton-vcard"
-version = "0.2.1"
-dependencies = [
- "anyhow",
- "chrono",
- "ical",
- "itertools 0.13.0",
- "paste",
- "regex",
- "thiserror 1.0.69",
- "tracing",
- "url",
 ]
 
 [[package]]
@@ -7338,42 +7409,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 
 [[package]]
-name = "stash"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "derivative",
- "flume 0.11.1",
- "futures",
- "indoc",
- "itertools 0.13.0",
- "parking_lot",
- "proton-task-service",
- "rusqlite",
- "serde",
- "serde_json",
- "sqlite-watcher",
- "stash-macros",
- "tempfile",
- "thiserror 1.0.69",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "stash-macros"
-version = "0.2.0"
-dependencies = [
- "itertools 0.13.0",
- "proc-macro2",
- "quote",
- "serde",
- "stash",
- "syn 2.0.106",
- "uuid",
-]
-
-[[package]]
 name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8242,41 +8277,6 @@ dependencies = [
  "uniffi_core",
  "uniffi_macros",
  "uniffi_pipeline",
-]
-
-[[package]]
-name = "uniffi-bindgen"
-version = "0.1.1"
-dependencies = [
- "uniffi",
-]
-
-[[package]]
-name = "uniffi-common"
-version = "0.1.0"
-dependencies = [
- "proton-core-api",
- "uniffi",
- "uniffi-macros",
-]
-
-[[package]]
-name = "uniffi-macros"
-version = "0.1.0"
-dependencies = [
- "cruet",
- "proc-macro2",
- "quote",
- "syn 2.0.106",
- "uniffi",
-]
-
-[[package]]
-name = "uniffi-runtime"
-version = "0.1.0"
-dependencies = [
- "jni",
- "tokio",
 ]
 
 [[package]]

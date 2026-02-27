@@ -1,6 +1,6 @@
 use crate::atlas::new_client;
 use anyhow::Result;
-use muon::GET;
+use mail_muon::GET;
 
 #[tokio::test]
 async fn test_ping() -> Result<()> {

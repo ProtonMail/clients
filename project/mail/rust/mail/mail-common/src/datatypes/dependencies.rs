@@ -3,14 +3,14 @@ use crate::datatypes::{ConversationLabelsCount, MessageLabelsCount};
 use crate::models::{Conversation, Message};
 use anyhow::Context;
 use itertools::Itertools;
-use proton_core_api::services::proton::{AddressId, LabelId, ProtonCore};
-use proton_core_api::session::Session;
-use proton_core_common::models::{Address, Label, ModelIdExtension};
-use proton_mail_api::services::proton::response_data::{
+use mail_api::services::proton::response_data::{
     Conversation as ApiConversation, MessageMetadata as ApiMessageMetadata,
 };
-use stash::orm::Model;
-use stash::stash::{RunTransaction, StashError, Tether};
+use mail_core_api::services::proton::{AddressId, LabelId, ProtonCore};
+use mail_core_api::session::Session;
+use mail_core_common::models::{Address, Label, ModelIdExtension};
+use mail_stash::orm::Model;
+use mail_stash::stash::{RunTransaction, StashError, Tether};
 use std::collections::HashSet;
 use tracing::info;
 
@@ -79,7 +79,7 @@ impl DependencyFetcher {
 
     pub async fn check_label(
         &mut self,
-        label: &proton_core_api::services::proton::Label,
+        label: &mail_core_api::services::proton::Label,
         tether: &Tether,
     ) -> Result<(), StashError> {
         if let Some(parent_id) = &label.parent_id {

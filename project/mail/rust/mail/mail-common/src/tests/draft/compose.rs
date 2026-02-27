@@ -14,12 +14,12 @@ use crate::draft::draft_v1::Draft;
 use crate::draft::recipients::{MaybeEmptyString, NullContactGroupResolver};
 use crate::models::{Attachment, MessageBodyMetadata, MessageReplyTo};
 use insta::assert_snapshot;
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::datatypes::AddressFlags;
-use proton_core_common::datatypes::{AddressStatus, AddressType, LocalAddressId};
-use proton_core_common::datatypes::{UserMnemonicStatus, UserType};
-use proton_core_common::models::{PaidSubscription, User};
-use proton_mail_api::services::proton::prelude::ConversationId;
+use mail_api::services::proton::prelude::ConversationId;
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::datatypes::AddressFlags;
+use mail_core_common::datatypes::{AddressStatus, AddressType, LocalAddressId};
+use mail_core_common::datatypes::{UserMnemonicStatus, UserType};
+use mail_core_common::models::{PaidSubscription, User};
 use std::str::FromStr;
 use test_case::test_case;
 
@@ -1212,11 +1212,11 @@ fn test_sanitize_pasted_plain_content_with_newlines() {
 #[test]
 fn test_sanitize_html_content_with_styles_no() {
     let html = r#"<p style="color:red;" bgcolor="blue">Content</p>"#;
-    let mut transformer = proton_mail_html_transformer::Transformer::new(html);
+    let mut transformer = mail_html_transformer::Transformer::new(html);
 
     crate::draft::compose::sanitize_html_content(
         &mut transformer,
-        proton_mail_html_transformer::sanitizer::StripStyleSheets::No,
+        mail_html_transformer::sanitizer::StripStyleSheets::No,
     );
     let result = transformer.to_string();
 
@@ -1226,11 +1226,11 @@ fn test_sanitize_html_content_with_styles_no() {
 #[test]
 fn test_sanitize_html_content_with_styles_yes() {
     let html = r#"<p style="color:red;" bgcolor="blue">Content</p>"#;
-    let mut transformer = proton_mail_html_transformer::Transformer::new(html);
+    let mut transformer = mail_html_transformer::Transformer::new(html);
 
     crate::draft::compose::sanitize_html_content(
         &mut transformer,
-        proton_mail_html_transformer::sanitizer::StripStyleSheets::Yes,
+        mail_html_transformer::sanitizer::StripStyleSheets::Yes,
     );
     let result = transformer.to_string();
 

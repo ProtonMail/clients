@@ -1,14 +1,14 @@
-use proton_core_api::services::proton::ContactId;
-use proton_core_api::services::proton::{
+use mail_common::test_utils::init::Params as TestParams;
+use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
+use mail_core_api::services::proton::ContactId;
+use mail_core_api::services::proton::{
     ContactBasic as ApiContactBasic, ContactEmail as ApiContactEmail, ContactSendingPreferences,
 };
-use proton_core_common::datatypes::{
+use mail_core_common::datatypes::{
     AvatarInformation, ContactEmailItem, ContactItem, ContactItemType, GroupedContacts,
 };
-use proton_core_common::models::{Contact, ModelIdExtension};
-use proton_mail_common::test_utils::init::Params as TestParams;
-use proton_mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
-use stash::orm::Model;
+use mail_core_common::models::{Contact, ModelIdExtension};
+use mail_stash::orm::Model;
 
 #[tokio::test]
 async fn contact_list() {

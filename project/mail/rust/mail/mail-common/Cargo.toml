@@ -1,5 +1,5 @@
 [package]
-name = "proton-mail-common"
+name = "mail-common"
 version = "0.8.0"
 edition.workspace = true
 rust-version.workspace = true
@@ -15,26 +15,26 @@ test-utils = [
   "dep:tracing-subscriber",
   "dep:velcro",
   "dep:wiremock-multipart",
-  "proton-core-common/test-utils",
+  "mail-core-common/test-utils",
 ]
 
 sql = [
-  "proton-core-api/sql",
-  "proton-mail-api/sql",
-  "proton-core-api/mocks",
-  "proton-mail-api/mocks",
+  "mail-core-api/sql",
+  "mail-api/sql",
+  "mail-core-api/mocks",
+  "mail-api/mocks",
 ]
 proton_mail_error_log = []
-events-v6 = ["proton-core-common/events-v6"]
+events-v6 = ["mail-core-common/events-v6"]
 # Foundation Search: Local body text search indexing
 # When enabled, message bodies are indexed locally for offline full-text search.
-foundation_search = ["dep:proton-foundation-search", "dep:proton-mail-search"]
+foundation_search = ["dep:proton-foundation-search", "dep:mail-search"]
 
 [dependencies]
 anyhow = { workspace = true }
 async-trait = { workspace = true }
-proton-log-service = { workspace = true }
-proton-observability = { workspace = true }
+mail-log-service = { workspace = true }
+mail-observability = { workspace = true }
 bitflags = { workspace = true }
 bytes = { workspace = true }
 cfg-if = { workspace = true }
@@ -52,31 +52,31 @@ itertools = { workspace = true }
 jiff = { workspace = true }
 mime = { workspace = true }
 parking_lot = { workspace = true }
-proton-action-queue = { workspace = true }
-proton-account-api = { workspace = true }
-proton-calendar-api-v1 = { workspace = true }
-proton-calendar-common = { workspace = true }
-proton-core-api = { workspace = true, features = ["sql"] }
-proton-mail-api = { workspace = true, features = ["sql"] }
-proton-canonical-email = { workspace = true }
-proton-core-common = { workspace = true }
+mail-action-queue = { workspace = true }
+mail-account-api = { workspace = true }
+mail-calendar-api-v1 = { workspace = true }
+mail-calendar-common = { workspace = true }
+mail-core-api = { workspace = true, features = ["sql"] }
+mail-api = { workspace = true, features = ["sql"] }
+mail-canonical-email = { workspace = true }
+mail-core-common = { workspace = true }
 proton-crypto-account = { workspace = true }
-proton-crypto-inbox = { workspace = true }
+mail-crypto-inbox = { workspace = true }
 core-event-loop = { workspace = true }
 proton-foundation-search = { workspace = true, optional = true }
-proton-mail-search = { workspace = true, optional = true }
-proton-mail-html-transformer = { workspace = true }
-proton-sqlite3 = { workspace = true }
-proton-task-service = { workspace = true }
-proton-mail-common-derive = { workspace = true }
-proton-mailto = { workspace = true }
+mail-search = { workspace = true, optional = true }
+mail-html-transformer = { workspace = true }
+mail-sqlite3 = { workspace = true }
+mail-task-service = { workspace = true }
+mail-common-derive = { workspace = true }
+mail-mailto = { workspace = true }
 regex = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serde_with = { workspace = true }
 secrecy = { workspace = true }
 smart-default = { workspace = true }
-stash = { workspace = true }
+mail-stash = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
 tokio-util = { workspace = true }
@@ -86,7 +86,7 @@ url = { workspace = true }
 uuid = { workspace = true }
 sqlite-watcher = { workspace = true }
 reqwest = { workspace = true }
-proton-issue-reporter-service = { workspace = true }
+mail-issue-reporter-service = { workspace = true }
 
 # test-util option deps
 function_name = { workspace = true, optional = true }
@@ -95,18 +95,18 @@ wiremock = { workspace = true, optional = true }
 tracing-subscriber = { workspace = true, optional = true }
 velcro = { workspace = true, optional = true }
 wiremock-multipart = { workspace = true, optional = true }
-proton-network-monitor-service = { workspace = true }
+mail-network-monitor-service = { workspace = true }
 
 [dev-dependencies]
 clap = { workspace = true }
 color-backtrace = { workspace = true }
 insta = { workspace = true }
 pretty_assertions = { workspace = true }
-proton-calendar-api-v1 = { workspace = true, features = ["test-utils"] }
-proton-core-api = { workspace = true }
-proton-crypto-calendar = { workspace = true }
-proton-ical = { workspace = true }
-proton-mail-api = { workspace = true }
+mail-calendar-api-v1 = { workspace = true, features = ["test-utils"] }
+mail-core-api = { workspace = true }
+mail-crypto-calendar = { workspace = true }
+mail-ical = { workspace = true }
+mail-api = { workspace = true }
 secrecy = { workspace = true }
 serde_with = { workspace = true }
 test-case = { workspace = true }
@@ -116,7 +116,7 @@ function_name = { workspace = true }
 tempfile = { workspace = true }
 velcro = { workspace = true }
 wiremock = { workspace = true }
-proton-mail-common = { path = ".", features = ["test-utils"] }
+mail-common = { path = ".", features = ["test-utils"] }
 criterion = { workspace = true }
 pprof = { workspace = true }
 

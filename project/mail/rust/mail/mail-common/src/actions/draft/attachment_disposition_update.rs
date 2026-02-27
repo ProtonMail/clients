@@ -7,20 +7,20 @@ use crate::models::{
     Attachment, DraftAttachmentMetadata, DraftAttachmentUploadState, DraftMetadata,
     DraftSendResultOrigin, MetadataId,
 };
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionGroup, ActionId, DefaultVersionConverter, Handler, Priority, Type, WriterGuard,
 };
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::consts::{General, Mail};
-use proton_core_api::service::ApiServiceError;
-use proton_core_api::session::Session;
-use proton_core_common::models::ModelExtension;
-use proton_mail_api::services::proton::ProtonMail;
-use proton_mail_api::services::proton::request_data::NewAttachmentDisposition;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_api::services::proton::ProtonMail;
+use mail_api::services::proton::request_data::NewAttachmentDisposition;
+use mail_core_api::consts::{General, Mail};
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::session::Session;
+use mail_core_common::models::ModelExtension;
+use mail_stash::UserDb;
+use mail_stash::orm::Model;
+use mail_stash::stash::Bond;
 use serde::{Deserialize, Serialize};
-use stash::UserDb;
-use stash::orm::Model;
-use stash::stash::Bond;
 
 #[derive(Serialize, Deserialize)]
 pub struct AttachmentDispositionUpdate {

@@ -1,20 +1,20 @@
 use itertools::Itertools;
-use proton_core_api::services::proton::{AddressId, LabelId};
-use proton_core_common::models::{Label, ModelExtension, ModelIdExtension};
-use proton_core_common::test_utils::account::TEST_ADDRESS_ID;
-use proton_mail_api::services::proton::common::ConversationId;
-use proton_mail_api::services::proton::prelude::MessageId;
-use proton_mail_api::services::proton::response_data::Conversation as ApiConversation;
-use proton_mail_api::services::proton::response_data::ConversationLabel as ApiConversationLabel;
-use proton_mail_api::services::proton::response_data::MessageMetadata as ApiMessageMetadata;
-use proton_mail_common::Mailbox;
-use proton_mail_common::datatypes::SystemLabelId;
-use proton_mail_common::models::ConversationCounter;
-use proton_mail_common::models::{Conversation, Message};
-use proton_mail_common::test_utils::init::Params;
-use proton_mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
-use stash::orm::Model;
-use stash::params;
+use mail_api::services::proton::common::ConversationId;
+use mail_api::services::proton::prelude::MessageId;
+use mail_api::services::proton::response_data::Conversation as ApiConversation;
+use mail_api::services::proton::response_data::ConversationLabel as ApiConversationLabel;
+use mail_api::services::proton::response_data::MessageMetadata as ApiMessageMetadata;
+use mail_common::Mailbox;
+use mail_common::datatypes::SystemLabelId;
+use mail_common::models::ConversationCounter;
+use mail_common::models::{Conversation, Message};
+use mail_common::test_utils::init::Params;
+use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
+use mail_core_api::services::proton::{AddressId, LabelId};
+use mail_core_common::models::{Label, ModelExtension, ModelIdExtension};
+use mail_core_common::test_utils::account::TEST_ADDRESS_ID;
+use mail_stash::orm::Model;
+use mail_stash::params;
 use std::sync::LazyLock;
 use test_case::test_case;
 
@@ -322,19 +322,19 @@ fn test_message(conversation: &TestCase) -> ApiMessageMetadata {
 
 mod rebase {
     use super::*;
+    use mail_action_queue::action::ActionGroup;
+    use mail_action_queue::rebase::RebaseChangeSet;
+    use mail_api::services::proton::common::ConversationId;
+    use mail_api::services::proton::prelude::{ConversationEvent, MailEvent, MessageEvent};
+    use mail_api::services::proton::response_data::MessageFlags;
+    use mail_common::MailUserContext;
+    use mail_common::datatypes::ConversationViewOptions;
+    use mail_common::models::ConversationLabel;
+    use mail_core_api::services::proton::{Action, AddressId, EventId};
+    use mail_core_common::models::{Address, ModelExtension};
+    use mail_core_common::test_utils::account::TEST_ADDRESS_ID;
+    use mail_stash::stash::StashError;
     use pretty_assertions::{assert_eq, assert_ne};
-    use proton_action_queue::action::ActionGroup;
-    use proton_action_queue::rebase::RebaseChangeSet;
-    use proton_core_api::services::proton::{Action, AddressId, EventId};
-    use proton_core_common::models::{Address, ModelExtension};
-    use proton_core_common::test_utils::account::TEST_ADDRESS_ID;
-    use proton_mail_api::services::proton::common::ConversationId;
-    use proton_mail_api::services::proton::prelude::{ConversationEvent, MailEvent, MessageEvent};
-    use proton_mail_api::services::proton::response_data::MessageFlags;
-    use proton_mail_common::MailUserContext;
-    use proton_mail_common::datatypes::ConversationViewOptions;
-    use proton_mail_common::models::ConversationLabel;
-    use stash::stash::StashError;
     use std::sync::Arc;
 
     async fn setup_with_mocks(

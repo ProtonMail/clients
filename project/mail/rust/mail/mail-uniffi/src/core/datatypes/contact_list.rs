@@ -2,14 +2,14 @@ use crate::core::datatypes::UnixTimestamp;
 use crate::{UniffiEnum, UniffiRecord};
 use crate::{core::datatypes::AvatarInformation, core::datatypes::Id};
 use itertools::Itertools;
-use proton_core_common::datatypes::{
+use mail_core_common::datatypes::{
     ContactEmailItem as RealContactEmailItem, ContactGroupItem as RealContactGroupItem,
     ContactItem as RealContactItem, ContactItemType as RealContactItemType,
     ContactSuggestion as RealContactSuggestion, ContactSuggestionKind as RealContactSuggestionKind,
     ContactSuggestions as RealContactSuggestions, DeviceContact as RealDeviceContact,
     DeviceContactSuggestion as RealDeviceContactSuggestion, GroupedContacts as RealGroupedContacts,
 };
-use proton_core_common::utils::MapVec as _;
+use mail_core_common::utils::MapVec as _;
 
 /// This is the main data structure that is used to represent the group of contacts.
 #[derive(Clone, Debug, Eq, PartialEq, UniffiRecord)]

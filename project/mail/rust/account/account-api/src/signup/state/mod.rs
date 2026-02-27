@@ -8,9 +8,9 @@ use crate::signup::{Behavior, ChallengeInfo};
 use crate::{prelude::User, signup::SignupError};
 use complete::Complete;
 use derive_more::{Display, From, TryInto};
-use muon::Client;
-use proton_core_api::store::DynStore;
-use proton_core_common::post_login_check::PostLoginValidator;
+use mail_core_api::store::DynStore;
+use mail_core_common::post_login_check::PostLoginValidator;
+use mail_muon::Client;
 
 mod complete;
 mod want_create;

@@ -1,12 +1,12 @@
 use anyhow::Result;
-use muon::deps::itertools::Itertools;
-use muon::test::server::Server;
-use muon::util::{IntoIterExt, ProtonRequestExt};
-use muon::{App, GET};
+use mail_muon::deps::itertools::Itertools;
+use mail_muon::test::server::Server;
+use mail_muon::util::{IntoIterExt, ProtonRequestExt};
+use mail_muon::{App, GET};
 use std::io::Cursor;
 use std::sync::Arc;
 
-#[muon::test]
+#[mail_muon::test]
 async fn test_header_app_version(s: Arc<Server>) -> Result<()> {
     let r = s.new_recorder();
 
@@ -29,7 +29,7 @@ async fn test_header_app_version(s: Arc<Server>) -> Result<()> {
     Ok(())
 }
 
-#[muon::test]
+#[mail_muon::test]
 async fn test_header_user_agent(s: Arc<Server>) -> Result<()> {
     let r = s.new_recorder();
 
@@ -52,7 +52,7 @@ async fn test_header_user_agent(s: Arc<Server>) -> Result<()> {
     Ok(())
 }
 
-#[muon::test]
+#[mail_muon::test]
 async fn test_header_duplicates(s: Arc<Server>) -> Result<()> {
     let r = s.new_recorder();
     let c = s.client();
@@ -75,7 +75,7 @@ async fn test_header_duplicates(s: Arc<Server>) -> Result<()> {
     Ok(())
 }
 
-#[muon::test]
+#[mail_muon::test]
 async fn test_query(s: Arc<Server>) -> Result<()> {
     let r = s.new_recorder();
     let c = s.client();
@@ -105,7 +105,7 @@ async fn test_query(s: Arc<Server>) -> Result<()> {
     Ok(())
 }
 
-#[muon::test]
+#[mail_muon::test]
 async fn test_multipart_request(s: Arc<Server>) -> Result<()> {
     use common_multipart_rfc7578::client::multipart::{self, BoundaryGenerator};
 

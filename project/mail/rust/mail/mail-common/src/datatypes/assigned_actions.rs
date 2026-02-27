@@ -4,8 +4,8 @@ mod tests;
 
 use super::SwipeAction;
 use crate::{AppError, models::MailSettings};
-use proton_core_common::datatypes::{LocalLabelId, SystemLabel};
-use stash::stash::Tether;
+use mail_core_common::datatypes::{LocalLabelId, SystemLabel};
+use mail_stash::stash::Tether;
 
 #[derive(Clone, Debug)]
 pub struct AssignedSwipeActions {

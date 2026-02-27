@@ -1,13 +1,13 @@
 use crate::errors::{OtherErrorReason, ProtonError, VoidActionResult};
 use crate::mail::MailSession;
 use crate::{core::datatypes::DeviceEnvironment, errors::ActionError};
-use proton_core_common::datatypes::RegisteredDevice as RealRegisteredDevice;
-use proton_core_common::device_registration::spawn_registered_device_task;
-use proton_mail_common::ProtonMailError as RealProtonMailError;
+use mail_common::ProtonMailError as RealProtonMailError;
+use mail_core_common::datatypes::RegisteredDevice as RealRegisteredDevice;
+use mail_core_common::device_registration::spawn_registered_device_task;
+use mail_uniffi_runtime::async_runtime;
 use std::sync::Arc;
 use tokio::sync::watch;
 use tokio::task::JoinHandle;
-use uniffi_runtime::async_runtime;
 
 #[derive(Clone, Debug, uniffi::Record)]
 pub struct RegisteredDevice {

@@ -1,9 +1,9 @@
 use fancy_regex::Regex;
-use muon::http::DynHttpSender;
-use proton_account_api::{
+use mail_account_api::{
     AccountApi, ApiError,
     prelude::{PasswordPolicyResponse, PasswordPolicyState},
 };
+use mail_muon::http::DynHttpSender;
 use secrecy::{ExposeSecret, SecretString};
 use thiserror::Error;
 use tracing::info;

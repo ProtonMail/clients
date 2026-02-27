@@ -9,22 +9,22 @@ use crate::models::Message;
 use crate::models::MessageBodyMetadata;
 use crate::models::{Attachment, MailSettings};
 use anyhow::Context;
-use proton_calendar_common as cal;
-use proton_core_api::services::proton::{PrivateEmailRef, PrivateString};
+use mail_api::services::proton::ProtonMail;
+use mail_api::services::proton::common::MessageId;
+use mail_api::services::proton::prelude::{
+    DirectAttachment, DirectParams, DraftAction, DraftRecipient, DraftSender, Package,
+};
+use mail_calendar_common as cal;
+use mail_core_api::services::proton::{PrivateEmailRef, PrivateString};
+use mail_crypto_inbox::attachment::{EncryptableAttachment, EncryptedAttachment};
+use mail_crypto_inbox::keys::ComposerPreference;
+use mail_crypto_inbox::message::EncryptableDraft;
+use mail_crypto_inbox::proton_crypto::crypto::PGPProviderSync;
+use mail_stash::orm::Model as _;
+use mail_stash::stash::Tether;
 use proton_crypto_account::keys::EmailMimeType;
 use proton_crypto_account::keys::PrimaryUnlockedAddressKey;
 use proton_crypto_account::keys::UnlockedAddressKeys;
-use proton_crypto_inbox::attachment::{EncryptableAttachment, EncryptedAttachment};
-use proton_crypto_inbox::keys::ComposerPreference;
-use proton_crypto_inbox::message::EncryptableDraft;
-use proton_crypto_inbox::proton_crypto::crypto::PGPProviderSync;
-use proton_mail_api::services::proton::ProtonMail;
-use proton_mail_api::services::proton::common::MessageId;
-use proton_mail_api::services::proton::prelude::{
-    DirectAttachment, DirectParams, DraftAction, DraftRecipient, DraftSender, Package,
-};
-use stash::orm::Model as _;
-use stash::stash::Tether;
 use std::slice;
 use tracing::debug;
 use tracing::error;

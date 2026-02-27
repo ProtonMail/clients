@@ -1,14 +1,14 @@
 use crate::datatypes::ConversationLabelsCount;
 use crate::datatypes::MessageLabelsCount;
 use crate::models::LabelWithCounters;
+use mail_common::test_utils::db::new_test_connection;
+use mail_core_api::services::proton::Label as ApiLabel;
+use mail_core_api::services::proton::LabelId;
+use mail_core_api::services::proton::LabelType as ApiLabelType;
+use mail_core_common::models::Label;
+use mail_stash::orm::Model;
+use mail_stash::stash::StashError;
 use pretty_assertions::assert_eq;
-use proton_core_api::services::proton::Label as ApiLabel;
-use proton_core_api::services::proton::LabelId;
-use proton_core_api::services::proton::LabelType as ApiLabelType;
-use proton_core_common::models::Label;
-use proton_mail_common::test_utils::db::new_test_connection;
-use stash::orm::Model;
-use stash::stash::StashError;
 
 #[tokio::test]
 async fn label_with_counters() {

@@ -1,4 +1,4 @@
-use proton_core_common::datatypes::{
+use mail_core_common::datatypes::{
     MeasurementEventType as CoreMeasurementEventType, MeasurementValue as CoreMeasurementValue,
 };
 

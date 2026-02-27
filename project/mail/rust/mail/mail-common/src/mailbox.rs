@@ -5,13 +5,13 @@ use crate::datatypes::{MessageRecipientDisplayMode, ViewMode};
 use crate::models::{ConversationCounter, MailLabel, MessageCounter};
 use crate::{AppError, MailContextResult};
 pub use attachments::DecryptedAttachment;
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::datatypes::LocalLabelId;
+use mail_core_common::models::{Label, ModelExtension as _, ModelIdExtension as _};
+use mail_stash::UserDb;
+use mail_stash::orm::Model;
+use mail_stash::stash::{Stash, Tether, WatcherHandle};
 use parking_lot::RwLock;
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::datatypes::LocalLabelId;
-use proton_core_common::models::{Label, ModelExtension as _, ModelIdExtension as _};
-use stash::UserDb;
-use stash::orm::Model;
-use stash::stash::{Stash, Tether, WatcherHandle};
 use std::sync::Arc;
 use tracing::{debug, instrument};
 
@@ -127,11 +127,11 @@ impl Mailbox {
     ///
     pub async fn watch_unread_count(
         &self,
-        stash: &Stash<UserDb>,
+        mail_stash: &Stash<UserDb>,
     ) -> MailContextResult<WatcherHandle> {
         let watcher = match self.view_mode() {
-            ViewMode::Conversations => ConversationCounter::watch(stash).await?,
-            ViewMode::Messages => MessageCounter::watch(stash).await?,
+            ViewMode::Conversations => ConversationCounter::watch(mail_stash).await?,
+            ViewMode::Messages => MessageCounter::watch(mail_stash).await?,
         };
 
         Ok(watcher)
@@ -151,7 +151,7 @@ mod test_utils {
     use crate::MailContextError;
     use crate::models::{Conversation, MailboxLabels, Message};
     use futures::TryFutureExt;
-    use proton_core_api::session::Session;
+    use mail_core_api::session::Session;
     use tracing::error;
 
     impl Mailbox {

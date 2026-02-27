@@ -1,10 +1,10 @@
 use anyhow::Result;
-use muon::test::server::{Server, HTTPS};
-use muon::tls::{RustlsTls, TokioTls};
-use muon::GET;
+use mail_muon::test::server::{Server, HTTPS};
+use mail_muon::tls::{RustlsTls, TokioTls};
+use mail_muon::GET;
 use std::sync::Arc;
 
-#[muon::test(scheme(HTTPS))]
+#[mail_muon::test(scheme(HTTPS))]
 async fn test_tls_rustls(s: Arc<Server>) -> Result<()> {
     let c = s.builder().tls(RustlsTls).build()?;
 
@@ -13,7 +13,7 @@ async fn test_tls_rustls(s: Arc<Server>) -> Result<()> {
     Ok(())
 }
 
-#[muon::test(scheme(HTTPS))]
+#[mail_muon::test(scheme(HTTPS))]
 #[ignore = "self-signed certificate"]
 async fn test_tls_tokio(s: Arc<Server>) -> Result<()> {
     let c = s.builder().tls(TokioTls).build()?;

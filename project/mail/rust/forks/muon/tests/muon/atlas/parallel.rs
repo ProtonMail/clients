@@ -1,8 +1,8 @@
 use crate::atlas::{new_builder, PASS, USER};
 use anyhow::{bail, Ok, Result};
 use futures::future;
-use muon::client::flow::LoginFlow;
-use muon::{Client, GET};
+use mail_muon::client::flow::LoginFlow;
+use mail_muon::{Client, GET};
 use serde_json::Value;
 
 #[tokio::test]

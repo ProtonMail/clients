@@ -6,18 +6,18 @@ use futures::StreamExt;
 use futures::future::BoxFuture;
 use futures::stream::FuturesUnordered;
 use itertools::Itertools;
-use proton_core_api::service::ApiServiceError;
-use proton_core_api::services::proton::{Action, LabelId, ProtonCore};
-use proton_core_api::session::Session;
-use proton_core_common::event_loop::v6::CoreEventSourceV6;
-use proton_core_common::models::Label;
-use proton_mail_api::services::proton::ProtonMail;
-use proton_mail_api::services::proton::common::{ConversationId, MessageId};
-use proton_mail_api::services::proton::prelude::{
+use mail_api::services::proton::ProtonMail;
+use mail_api::services::proton::common::{ConversationId, MessageId};
+use mail_api::services::proton::prelude::{
     ConversationCount, GetConversationsOptions, MailEventV6, MessageCount, MessageMetadata,
 };
-use proton_mail_api::services::proton::requests::GetMessagesOptions;
-use stash::stash::Tether;
+use mail_api::services::proton::requests::GetMessagesOptions;
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::{Action, LabelId, ProtonCore};
+use mail_core_api::session::Session;
+use mail_core_common::event_loop::v6::CoreEventSourceV6;
+use mail_core_common::models::Label;
+use mail_stash::stash::Tether;
 use std::collections::HashMap;
 use tracing::error;
 

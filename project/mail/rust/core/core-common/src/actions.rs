@@ -4,10 +4,10 @@ pub mod event_poll;
 pub mod user_feature_flags;
 
 use crate::{Origin, UserContext};
-use proton_action_queue::action::{Action, FactoryError, Handler};
-use proton_action_queue::queue::Queue;
-use proton_core_api::session::Session;
-use stash::UserDb;
+use mail_action_queue::action::{Action, FactoryError, Handler};
+use mail_action_queue::queue::Queue;
+use mail_core_api::session::Session;
+use mail_stash::UserDb;
 use std::sync::Weak;
 
 pub(crate) fn register_actions(

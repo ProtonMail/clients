@@ -1,6 +1,6 @@
 use anyhow::Result;
-use proton_core_api::services::proton::ProtonPayments;
-use proton_mail_common::MailUserContext;
+use mail_common::MailUserContext;
+use mail_core_api::services::proton::ProtonPayments;
 use std::sync::Arc;
 
 /// Display the active subscription for the given user.

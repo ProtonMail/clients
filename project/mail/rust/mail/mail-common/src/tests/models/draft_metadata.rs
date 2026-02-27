@@ -1,14 +1,14 @@
-use crate as proton_mail_common;
+use crate as mail_common;
 use crate::models::DraftMetadata;
-use proton_action_queue::action::ActionDependencyKeys;
-use proton_action_queue::db::StoredAction;
-use proton_core_common::actions::event_poll::EventPoll;
-use proton_core_common::models::ModelExtension;
-use proton_mail_common::test_utils::db::new_test_connection;
-use proton_mail_common::test_utils::utils::create_address;
-use proton_mail_common::{conv_id, conversation, message, msg_id};
-use stash::orm::Model;
-use stash::stash::StashError;
+use mail_action_queue::action::ActionDependencyKeys;
+use mail_action_queue::db::StoredAction;
+use mail_common::test_utils::db::new_test_connection;
+use mail_common::test_utils::utils::create_address;
+use mail_common::{conv_id, conversation, message, msg_id};
+use mail_core_common::actions::event_poll::EventPoll;
+use mail_core_common::models::ModelExtension;
+use mail_stash::orm::Model;
+use mail_stash::stash::StashError;
 
 #[tokio::test]
 async fn test_messages_with_pending_send() {

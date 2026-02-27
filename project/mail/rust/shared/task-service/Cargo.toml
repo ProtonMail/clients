@@ -1,5 +1,5 @@
 [package]
-name = "proton-task-service"
+name = "mail-task-service"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
@@ -12,7 +12,7 @@ pin-project = { workspace = true }
 tokio-util = { workspace = true }
 tracing = { workspace = true }
 parking_lot = { workspace = true }
-muon = { workspace = true }
+mail-muon = { workspace = true }
 futures = { workspace = true }
 
 [dev-dependencies]

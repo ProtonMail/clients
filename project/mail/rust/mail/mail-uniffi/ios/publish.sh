@@ -4,14 +4,14 @@ set -eo pipefail
 
 # Read the Rust crate version
 
-CRATE_VERSION=$(cargo metadata --locked --format-version 1 --no-deps | jq '.packages[] | select(.name == "proton-mail-uniffi") | .version' | jq -r)
+CRATE_VERSION=$(cargo metadata --locked --format-version 1 --no-deps | jq '.packages[] | select(.name == "mail-uniffi") | .version' | jq -r)
 echo $CRATE_VERSION
 
 cd ./tmp/ios-framework/
 
 # Compress the folder to upload
 
-FILE_TO_PUBLISH="proton-mail-uniffi-"$CRATE_VERSION".tar.gz"
+FILE_TO_PUBLISH="mail-uniffi-"$CRATE_VERSION".tar.gz"
 FILE_TO_PUBLISH_WITH_PATH="/tmp/$FILE_TO_PUBLISH"
 tar czf $FILE_TO_PUBLISH_WITH_PATH $CRATE_VERSION
 

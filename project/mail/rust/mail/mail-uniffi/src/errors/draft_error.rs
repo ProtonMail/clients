@@ -6,9 +6,9 @@ use super::{
 };
 use crate::UniffiEnum;
 use derive_more::From;
-use proton_mail_common::MailErrorReason as RealMailErrorReason;
-use proton_mail_common::ProtonMailError as RealProtonMailError;
-use proton_mail_common::{
+use mail_common::MailErrorReason as RealMailErrorReason;
+use mail_common::ProtonMailError as RealProtonMailError;
+use mail_common::{
     DraftAttachmentUploadErrorReason as RealDraftAttachmentErrorReason, MailErrorReason,
 };
 

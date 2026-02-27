@@ -1,6 +1,6 @@
 //! Uniffi bindings for the proton-issue-reporter-service
 
-use proton_issue_reporter_service::{
+use mail_issue_reporter_service::{
     IssueLevel as RealIssueLevel, IssueReportKeys, IssueReporter as RealIssueReporter,
     UserIssueReporter as RealUserIssueReporter,
 };

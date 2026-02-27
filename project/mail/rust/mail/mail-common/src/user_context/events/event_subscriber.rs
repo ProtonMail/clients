@@ -11,15 +11,15 @@ use crate::{AppError, MailContextError, MailUserContext};
 use anyhow::Context;
 use async_trait::async_trait;
 use core_event_loop::RefreshFlag;
-use proton_action_queue::action::ActionGroup;
-use proton_action_queue::queue::{ActionError as QueueActionError, QueuedActionOutput};
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::service::ApiServiceError;
-use proton_core_common::datatypes::{Refresh, SystemLabel};
-use proton_core_common::models::LabelError;
-use proton_core_common::services::event_loop_service::EventManagerContext;
-use stash::UserDb;
-use stash::orm::Model;
+use mail_action_queue::action::ActionGroup;
+use mail_action_queue::queue::{ActionError as QueueActionError, QueuedActionOutput};
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_core_api::service::ApiServiceError;
+use mail_core_common::datatypes::{Refresh, SystemLabel};
+use mail_core_common::models::LabelError;
+use mail_core_common::services::event_loop_service::EventManagerContext;
+use mail_stash::UserDb;
+use mail_stash::orm::Model;
 use std::sync::{Arc, Weak};
 use tracing::{debug, error, info, warn};
 // Import common macros from core
@@ -30,9 +30,9 @@ use crate::user_context::events::event_source::MailEventSourceV5;
 use core_event_loop::v6::{
     EventSource, EventSubscriber, EventSubscriberError, EventSubscriberResult,
 };
-use proton_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
-use proton_mail_api::services::proton::prelude::MailEventV5;
-use stash::stash::{StashError, Tether};
+use mail_api::services::proton::prelude::MailEventV5;
+use mail_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
+use mail_stash::stash::{StashError, Tether};
 
 pub struct MailEventV5Subscriber(Weak<MailUserContext>);
 
@@ -176,7 +176,7 @@ impl EventSubscriber<EventManagerContext, MailEventSourceV5> for MailEventV5Subs
             // TODO: to be replaced with fetching of elements from API.
             let mut event: MailEvent = event.clone().into();
 
-            let mut tether = ctx.user_context.stash().connection().await?;
+            let mut tether = ctx.user_context.mail_stash().connection().await?;
             let mut data = PostEventSyncData::default();
 
             // Check for missing dependencies. Sometimes when lot of messages/conversations get moved

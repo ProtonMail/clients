@@ -1,5 +1,5 @@
-use proton_core_api::auth::UserKeySecret;
-use proton_core_api::services::proton::{
+use mail_core_api::auth::UserKeySecret;
+use mail_core_api::services::proton::{
     Address as ApiAddress, AddressFlags, AddressId, AddressSignedKeyList,
     AddressStatus as ApiAddressStatus, AddressType as ApiAddressType,
 };

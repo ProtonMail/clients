@@ -1,4 +1,4 @@
-use proton_account_api::shared::challenge::Behavior;
+use mail_account_api::shared::challenge::Behavior;
 
 /// User activity during text input.
 #[derive(uniffi::Record, Clone)]

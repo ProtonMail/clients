@@ -22,33 +22,35 @@ use futures::future::try_join_all;
 use futures::try_join;
 use ical::VcardParser;
 use itertools::Itertools;
-use proton_action_queue::queue::{ActionError, Queue, QueuedActionOutput};
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::SYNC_CONTACT_PAGE_SIZE;
-use proton_core_api::consts::General;
-use proton_core_api::service::ApiServiceError;
-use proton_core_api::services::proton::ProtonCore;
-use proton_core_api::services::proton::{
+use mail_action_queue::queue::{ActionError, Queue, QueuedActionOutput};
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_core_api::SYNC_CONTACT_PAGE_SIZE;
+use mail_core_api::consts::General;
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::ProtonCore;
+use mail_core_api::services::proton::{
     ContactBasic as ApiContactBasic, ContactEmail as ApiContactEmail, ContactFull as ApiContactFull,
 };
-use proton_core_api::services::proton::{ContactId, GetContactsResponse};
-use proton_core_api::services::proton::{ContactUID, GetContactsEmailsResponse};
-use proton_core_api::services::proton::{GetContactsEmailsOptions, GetContactsOptions};
-use proton_core_api::session::Session;
+use mail_core_api::services::proton::{ContactId, GetContactsResponse};
+use mail_core_api::services::proton::{ContactUID, GetContactsEmailsResponse};
+use mail_core_api::services::proton::{GetContactsEmailsOptions, GetContactsOptions};
+use mail_core_api::session::Session;
+use mail_sqlite3::rusqlite::Connection;
+use mail_stash::UserDb;
+use mail_stash::exports::Transaction;
+use mail_stash::macros::Model;
+use mail_stash::orm::{DbRecord, Model, ModelHooks};
+use mail_stash::params;
+use mail_stash::rusqlite::params_from_iter;
+use mail_stash::stash::{
+    Bond, RunTransaction, Stash, StashError, StashResult, Tether, WatcherHandle,
+};
+use mail_stash::utils::placeholders;
+use mail_vcard::vcard::{PropertyUid, VCard};
 use proton_crypto::crypto::PGPProviderSync;
 use proton_crypto_account::contacts::DecryptableVerifiableCard as _;
 use proton_crypto_account::keys::UnlockedUserKeys;
-use proton_sqlite3::rusqlite::Connection;
-use proton_vcard::vcard::{PropertyUid, VCard};
 use sqlite_watcher::watcher::TableObserver;
-use stash::UserDb;
-use stash::exports::Transaction;
-use stash::macros::Model;
-use stash::orm::{DbRecord, Model, ModelHooks};
-use stash::params;
-use stash::rusqlite::params_from_iter;
-use stash::stash::{Bond, RunTransaction, Stash, StashError, StashResult, Tether, WatcherHandle};
-use stash::utils::placeholders;
 use tracing::{debug, error, info};
 
 #[derive(Clone, Debug, Eq, Model, PartialEq)]
@@ -298,13 +300,13 @@ impl Contact {
     pub async fn initialize(
         watcher: Arc<InitializationWatcher>,
         api: &Session,
-        stash: &Stash<UserDb>,
+        mail_stash: &Stash<UserDb>,
     ) -> Result<(), InitializationError<CoreContextError>> {
         InitializedComponent::initialize(
             watcher,
             Self::INIT_KEY,
             &[Label::INIT_KEY],
-            stash.connection().await?,
+            mail_stash.connection().await?,
             async move || Ok(Self::sync(api).await?),
             |tx, res| {
                 res.store(tx)?;
@@ -535,11 +537,11 @@ impl Contact {
     }
 
     pub async fn watch_contact_list(
-        stash: &Stash<UserDb>,
+        mail_stash: &Stash<UserDb>,
     ) -> Result<(Vec<GroupedContacts>, WatcherHandle), StashError> {
-        let tether = stash.connection().await?;
+        let tether = mail_stash.connection().await?;
         let contacts = Contact::contact_list(&tether).await?;
-        let handle = stash
+        let handle = mail_stash
             .subscribe_to(|sender| Box::new(ContactListWatcher { sender }))
             .await?;
         Ok((contacts, handle))
@@ -597,7 +599,7 @@ impl Contact {
 }
 
 impl ModelHooks for Contact {
-    fn before_save(&mut self, tx: &Transaction<'_>) -> stash::stash::StashResult<()> {
+    fn before_save(&mut self, tx: &Transaction<'_>) -> mail_stash::stash::StashResult<()> {
         // WARN: For performance reasons this will NOT be called in the initial sync. See `SyncedContacts::store`
         // Any extra logic here should be copied there.
         if let Some(remote_id) = &self.remote_id {

@@ -18,25 +18,25 @@ use crate::models::{
 use crate::search::MailSearchService;
 use crate::{AppError, MailContextError, MailUserContext, draft};
 use chrono::{DateTime, Local};
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionGroup, ActionId, FactoryError, FactoryResult, Handler, Priority, Type,
     VersionConverter, VersionConverterError, WriterGuard, WriterGuardError, deserialize,
 };
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::consts::Mail;
-use proton_core_api::service::ApiServiceError;
-use proton_core_api::services::proton::PrivateEmail;
-use proton_core_api::services::proton::prelude::AddressId;
-use proton_core_common::datatypes::UnixTimestamp;
-use proton_core_common::models::ModelExtension;
-use proton_crypto_inbox::keys::ComposerPreference;
-use proton_crypto_inbox::proton_crypto::new_pgp_provider;
-use proton_mail_api::services::proton::ProtonMail;
-use proton_mail_api::services::proton::common::MessageId;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_api::services::proton::ProtonMail;
+use mail_api::services::proton::common::MessageId;
+use mail_core_api::consts::Mail;
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::PrivateEmail;
+use mail_core_api::services::proton::prelude::AddressId;
+use mail_core_common::datatypes::UnixTimestamp;
+use mail_core_common::models::ModelExtension;
+use mail_crypto_inbox::keys::ComposerPreference;
+use mail_crypto_inbox::proton_crypto::new_pgp_provider;
+use mail_stash::UserDb;
+use mail_stash::orm::Model;
+use mail_stash::stash::{Bond, StashError};
 use serde::{Deserialize, Serialize};
-use stash::UserDb;
-use stash::orm::Model;
-use stash::stash::{Bond, StashError};
 use std::collections::HashSet;
 use std::sync::Weak;
 use std::time::Duration;

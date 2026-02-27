@@ -1,5 +1,5 @@
 use futures::FutureExt;
-use proton_core_common::device as device_info;
+use mail_core_common::device as device_info;
 use std::{ops::Deref, sync::Arc};
 
 pub type DynDeviceInfoProvider = Arc<dyn DeviceInfoProvider>;

@@ -142,16 +142,18 @@ pub use params;
 #[macro_export]
 macro_rules! sql_using_serde {
     ($t:ty) => {
-        impl stash::exports::ToSql for $t {
-            fn to_sql(&self) -> Result<stash::exports::ToSqlOutput, stash::exports::SqliteError> {
-                stash::utils::to_sql_using_serialize(self)
+        impl mail_stash::exports::ToSql for $t {
+            fn to_sql(
+                &self,
+            ) -> Result<mail_stash::exports::ToSqlOutput, mail_stash::exports::SqliteError> {
+                mail_stash::utils::to_sql_using_serialize(self)
             }
         }
-        impl stash::exports::FromSql for $t {
+        impl mail_stash::exports::FromSql for $t {
             fn column_result(
-                value: stash::exports::ValueRef,
-            ) -> stash::exports::FromSqlResult<Self> {
-                stash::utils::from_sql_using_deserialize(value)
+                value: mail_stash::exports::ValueRef,
+            ) -> mail_stash::exports::FromSqlResult<Self> {
+                mail_stash::utils::from_sql_using_deserialize(value)
             }
         }
     };

@@ -1,10 +1,10 @@
-use smart_default::SmartDefault;
-use stash::{
+use mail_stash::{
     AccountDb,
     macros::Model,
     orm::Model,
     stash::{Bond, StashError, Tether},
 };
+use smart_default::SmartDefault;
 
 use crate::datatypes::UnixTimestamp;
 use crate::models::ModelExtension;

@@ -6,14 +6,14 @@ use crate::queue::{
 use crate::rebase::RebaseChangeSet;
 use anyhow::Context;
 use derive_more::derive::TryFrom;
-use serde::de::DeserializeOwned;
-use serde::{Deserialize, Serialize};
-use stash::exports::{
+use mail_stash::exports::{
     FromSql, FromSqlError, FromSqlResult, SqliteError, ToSql, ToSqlOutput, Transaction, Value,
     ValueRef,
 };
-use stash::sql_using_serde;
-use stash::stash::{Bond, RunTransaction, StashError, Tether};
+use mail_stash::sql_using_serde;
+use mail_stash::stash::{Bond, RunTransaction, StashError, Tether};
+use serde::de::DeserializeOwned;
+use serde::{Deserialize, Serialize};
 use std::any::Any;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
@@ -132,7 +132,7 @@ impl FromSql for Priority {
 ///
 /// This will be called if we encounter a queued action which was created with an older
 /// version of the implementation.
-pub trait VersionConverter<Db: stash::marker::DatabaseMarker> {
+pub trait VersionConverter<Db: mail_stash::marker::DatabaseMarker> {
     /// Output of the conversion.
     type Output: Action<Db>;
     /// Convert the serialized action from the `old_version` to the `new_version`.
@@ -152,7 +152,7 @@ pub struct DefaultVersionConverter<T>(PhantomData<T>);
 impl<T, Db> VersionConverter<Db> for DefaultVersionConverter<T>
 where
     T: Action<Db>,
-    Db: stash::marker::DatabaseMarker,
+    Db: mail_stash::marker::DatabaseMarker,
 {
     type Output = T;
 
@@ -250,7 +250,7 @@ pub struct ActionDependencyKeys {
 /// Its is recommended to assign this trait to the part of the action which contains the
 /// data required for it to operate on. Execution of the action is defined by the [`Handler`] trait.
 ///
-pub trait Action<Db: stash::marker::DatabaseMarker>:
+pub trait Action<Db: mail_stash::marker::DatabaseMarker>:
     Serialize + DeserializeOwned + 'static + Send
 {
     const TYPE: Type;
@@ -316,12 +316,12 @@ pub type LocalOutput<Db, T: Action<Db>> = Result<QueuedActionOutput<T, Db>, Acti
 ///
 /// Database read queries can be made over this type as it implements `Deref<Target=Tether>`.
 /// For writes use the [`transaction()`] method.
-pub struct WriterGuard<'t, Db: stash::marker::DatabaseMarker> {
+pub struct WriterGuard<'t, Db: mail_stash::marker::DatabaseMarker> {
     tether: &'t mut Tether<Db>,
     execution_guard: &'t ExecutionGuard,
 }
 
-impl<'t, Db: stash::marker::DatabaseMarker> WriterGuard<'t, Db> {
+impl<'t, Db: mail_stash::marker::DatabaseMarker> WriterGuard<'t, Db> {
     pub(crate) fn new(tether: &'t mut Tether<Db>, execution_guard: &'t ExecutionGuard) -> Self {
         Self {
             tether,
@@ -344,7 +344,7 @@ impl<'t, Db: stash::marker::DatabaseMarker> WriterGuard<'t, Db> {
     }
 }
 
-impl<Db: stash::marker::DatabaseMarker> RunTransaction<Db> for WriterGuard<'_, Db> {
+impl<Db: mail_stash::marker::DatabaseMarker> RunTransaction<Db> for WriterGuard<'_, Db> {
     fn tether(&self) -> &Tether<Db> {
         self.tether
     }
@@ -364,7 +364,7 @@ impl<Db: stash::marker::DatabaseMarker> RunTransaction<Db> for WriterGuard<'_, D
 
     async fn run_tx_sync<T, F>(&mut self, closure: F) -> anyhow::Result<T>
     where
-        F: FnOnce(&Transaction<'_>) -> stash::stash::StashResult<T> + Send + 'static,
+        F: FnOnce(&Transaction<'_>) -> mail_stash::stash::StashResult<T> + Send + 'static,
         T: Send + 'static,
     {
         self.tether
@@ -385,7 +385,7 @@ pub enum WriterGuardError {
 /// Defines how an action behaves.
 ///
 /// To define the data on which an action operates see the [`Action`] trait.
-pub trait Handler<Db: stash::marker::DatabaseMarker>: Send + Sync {
+pub trait Handler<Db: mail_stash::marker::DatabaseMarker>: Send + Sync {
     type Action: Action<Db>;
 
     /// Apply the `action` to the local database using the given `tx` transaction.
@@ -754,11 +754,11 @@ pub(crate) type DecodedAction<Db> = (Box<dyn ErasedQueuedAction<Db>>, Arc<Queued
 /// When action are stored on the queue, their state is serialized into the database. In order to
 /// be able to decode an execute those actions they need to be registered with a factory instance.
 ///
-pub struct Factory<Db: stash::marker::DatabaseMarker> {
+pub struct Factory<Db: mail_stash::marker::DatabaseMarker> {
     actions: HashMap<String, ActionFactory<Db>>,
 }
 
-impl<Db: stash::marker::DatabaseMarker> Default for Factory<Db> {
+impl<Db: mail_stash::marker::DatabaseMarker> Default for Factory<Db> {
     fn default() -> Self {
         Self {
             actions: HashMap::new(),
@@ -766,7 +766,7 @@ impl<Db: stash::marker::DatabaseMarker> Default for Factory<Db> {
     }
 }
 
-impl<Db: stash::marker::DatabaseMarker> Factory<Db> {
+impl<Db: mail_stash::marker::DatabaseMarker> Factory<Db> {
     #[must_use]
     pub fn new() -> Self {
         Self::default()
@@ -861,7 +861,7 @@ impl<Db: stash::marker::DatabaseMarker> Factory<Db> {
     }
 }
 
-struct ActionFactory<Db: stash::marker::DatabaseMarker> {
+struct ActionFactory<Db: mail_stash::marker::DatabaseMarker> {
     decoder: Box<dyn Fn(StoredAction<Db>) -> FactoryResult<DecodedAction<Db>> + Send + Sync>,
     handler: Arc<dyn Any + Send + Sync + 'static>,
 }
@@ -887,7 +887,7 @@ impl From<WriterGuardError> for NoopError {
     }
 }
 
-pub(crate) fn serialize<T: Action<Db>, Db: stash::marker::DatabaseMarker>(
+pub(crate) fn serialize<T: Action<Db>, Db: mail_stash::marker::DatabaseMarker>(
     action: &T,
 ) -> Result<Vec<u8>, rmp_serde::encode::Error> {
     rmp_serde::to_vec(action)

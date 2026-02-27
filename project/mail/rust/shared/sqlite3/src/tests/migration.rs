@@ -1,14 +1,14 @@
 use super::*;
 use file::embedded_migrations;
 use include_dir::{Dir, include_dir};
-use stash::{UserDb, stash::Stash};
+use mail_stash::{UserDb, stash::Stash};
 
 #[tokio::test]
 async fn test_migration() {
     const TABLE: &str = "test_table_version";
 
-    let stash: Stash<UserDb> = Stash::new(None).expect("failed to create stash");
-    let mut tether = stash.connection().await.unwrap();
+    let mail_stash: Stash<UserDb> = Stash::new(None).expect("failed to create mail_stash");
+    let mut tether = mail_stash.connection().await.unwrap();
 
     Migrator::new(TABLE, vec![Box::new(M1)])
         .migrate(&mut tether)
@@ -32,8 +32,8 @@ async fn test_migration() {
 async fn test_verification() {
     const TABLE: &str = "test_table_version";
 
-    let stash: Stash<UserDb> = Stash::new(None).expect("failed to create stash");
-    let mut tether = stash.connection().await.unwrap();
+    let mail_stash: Stash<UserDb> = Stash::new(None).expect("failed to create mail_stash");
+    let mut tether = mail_stash.connection().await.unwrap();
 
     // ---
 
@@ -71,8 +71,8 @@ async fn test_migration_with_different_table_ids() {
     const TABLE_1: &str = "test_table_version_foo";
     const TABLE_2: &str = "test_table_version_bar";
 
-    let stash: Stash<UserDb> = Stash::new(None).expect("failed to create stash");
-    let mut tether = stash.connection().await.unwrap();
+    let mail_stash: Stash<UserDb> = Stash::new(None).expect("failed to create mail_stash");
+    let mut tether = mail_stash.connection().await.unwrap();
 
     Migrator::new(TABLE_1, vec![Box::new(M1)])
         .migrate(&mut tether)
@@ -99,8 +99,8 @@ async fn test_file_migrations() {
     const TABLE: &str = "test_table_version";
     const MIGRATIONS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/tests/migrations");
 
-    let stash: Stash<UserDb> = Stash::new(None).expect("failed to create stash");
-    let mut tether = stash.connection().await.unwrap();
+    let mail_stash: Stash<UserDb> = Stash::new(None).expect("failed to create mail_stash");
+    let mut tether = mail_stash.connection().await.unwrap();
 
     let version = Migrator::new(TABLE, embedded_migrations(&MIGRATIONS))
         .migrate(&mut tether)
@@ -122,8 +122,8 @@ async fn test_mixing_code_and_file_migrations() {
         migrations
     };
 
-    let stash: Stash<UserDb> = Stash::new(None).expect("failed to create stash");
-    let mut tether = stash.connection().await.unwrap();
+    let mail_stash: Stash<UserDb> = Stash::new(None).expect("failed to create mail_stash");
+    let mut tether = mail_stash.connection().await.unwrap();
 
     let version = Migrator::new(TABLE, migrations)
         .migrate(&mut tether)

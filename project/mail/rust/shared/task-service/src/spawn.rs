@@ -74,7 +74,7 @@ impl DynSpawner for SpawnerRef {
     }
 }
 
-impl muon::rt::Spawner for SpawnerRef {
+impl mail_muon::rt::Spawner for SpawnerRef {
     fn spawn(&self, fut: BoxFuture<'static, ()>) {
         self.spawn_boxed_task(fut);
     }

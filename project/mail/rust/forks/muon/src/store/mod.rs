@@ -3,7 +3,7 @@
 //! This module defines the types required to implement a persistent session
 //! store that may or may not be used in a Muon client. A persistent store
 //! allows to store in a persistent memory (e.g., a database, a file) the user
-//! [`muon::client::Auth`](`crate::client::Auth`) session information.
+//! [`mail_muon::client::Auth`](`crate::client::Auth`) session information.
 //! It is useful for someone that wants to provide SSO capability to his
 //! application. However, it *MUST NOT* be used as an IPC mechanism nor a
 //! Session synchronization point.
@@ -26,9 +26,9 @@
 //! ### Example without error handling
 //!
 //! ```
-//! use muon::store::{Store, StoreError};
-//! use muon::env::EnvId;
-//! use muon::client::Auth;
+//! use mail_muon::store::{Store, StoreError};
+//! use mail_muon::env::EnvId;
+//! use mail_muon::client::Auth;
 //! /// A dummy in memory persistent storage
 //! #[derive(Debug)]
 //! pub struct MyAtlasPersistentStorage(EnvId, Auth);
@@ -60,9 +60,9 @@
 //! ### Example with error handling
 //!
 //! ```
-//! use muon::store::{Store, StoreError};
-//! use muon::env::EnvId;
-//! use muon::client::Auth;
+//! use mail_muon::store::{Store, StoreError};
+//! use mail_muon::env::EnvId;
+//! use mail_muon::client::Auth;
 //! # impl From<std::io::Error> for FallibleFileStoreErrors {
 //! #     fn from(value: std::io::Error) -> Self {
 //! #         match value.kind() {

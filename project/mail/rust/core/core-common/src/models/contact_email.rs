@@ -3,12 +3,12 @@ use crate::datatypes::{
     UnixTimestamp,
 };
 use crate::models::{Contact, Label, ModelIdExtension};
-use proton_core_api::services::proton::{ContactEmail as ApiContactEmail, PrivateEmail};
-use proton_core_api::services::proton::{ContactEmailId, ContactId, LabelId};
-use stash::macros::Model;
-use stash::orm::{Model, ModelHooks};
-use stash::stash::{StashError, Tether};
-use stash::{UserDb, params};
+use mail_core_api::services::proton::{ContactEmail as ApiContactEmail, PrivateEmail};
+use mail_core_api::services::proton::{ContactEmailId, ContactId, LabelId};
+use mail_stash::macros::Model;
+use mail_stash::orm::{Model, ModelHooks};
+use mail_stash::stash::{StashError, Tether};
+use mail_stash::{UserDb, params};
 
 /// Represents a contact's email.
 ///
@@ -158,8 +158,8 @@ impl ContactEmail {
 impl ModelHooks for ContactEmail {
     fn before_save(
         &mut self,
-        tx: &stash::exports::Transaction<'_>,
-    ) -> stash::stash::StashResult<()> {
+        tx: &mail_stash::exports::Transaction<'_>,
+    ) -> mail_stash::stash::StashResult<()> {
         // WARN: For perfomance reasons this will NOT be called in the initial sync. See `SyncedContacts::store`
         // Any extra logic here should be copied there.
         if let Some(remote_id) = &self.remote_id

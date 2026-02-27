@@ -1,17 +1,17 @@
 use crate::cli::APP_NAME;
 use anyhow::Result;
-use proton_account_api::login::LoginFlow;
-use proton_core_api::services::proton::muon::util::DurationExt;
-use proton_core_api::verification::ChallengeNotifier;
-use proton_core_common::datatypes::ApiConfig;
-use proton_core_common::db::account::CoreAccount;
-use proton_core_common::event_loop::EventPollMode;
-use proton_core_common::os::KeyChain;
+use mail_account_api::login::LoginFlow;
+use mail_core_api::services::proton::mail_muon::util::DurationExt;
+use mail_core_api::verification::ChallengeNotifier;
+use mail_core_common::datatypes::ApiConfig;
+use mail_core_common::db::account::CoreAccount;
+use mail_core_common::event_loop::EventPollMode;
+use mail_core_common::os::KeyChain;
 
-use proton_core_common::{CoreAccountState, Origin};
-use proton_issue_reporter_service::NoopIssueReporter;
-use proton_log_service::{Config as LogConfig, LogService};
-use proton_mail_common::{MailContext, MailUserContext, NewMailUserContextOptions};
+use mail_common::{MailContext, MailUserContext, NewMailUserContextOptions};
+use mail_core_common::{CoreAccountState, Origin};
+use mail_issue_reporter_service::NoopIssueReporter;
+use mail_log_service::{Config as LogConfig, LogService};
 use std::path::Path;
 use std::sync::Arc;
 use tokio::runtime;

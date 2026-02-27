@@ -1,10 +1,10 @@
 use crate::models::LabelError;
-use proton_action_queue::{
+use mail_action_queue::{
     action::{self, WriterGuardError},
     queue::ActionRequeueReason,
 };
-use proton_core_api::service::ApiServiceError;
-use stash::stash::StashError;
+use mail_core_api::service::ApiServiceError;
+use mail_stash::stash::StashError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum CoreActionError {

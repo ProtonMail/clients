@@ -15,26 +15,26 @@ use crate::signup::state::complete::Complete;
 use crate::{AccountApi, ApiError};
 use derive_more::Display;
 use futures::TryFutureExt;
-use muon::Client;
+use mail_core_api::auth::UserKeySecret;
+use mail_core_api::services::observability::ApiServiceObservabilityResponse;
+use mail_core_api::services::proton::SessionId;
+use mail_core_api::store::AuthInfo;
+use mail_core_api::store::DynStore;
+use mail_core_api::store::TfaMode;
+use mail_core_api::store::UserData;
+use mail_core_common::post_login_check::PostLoginValidator;
+use mail_core_common::post_login_check::UserCheckResult;
+use mail_core_common::post_login_check::UserCheckStatus;
+use mail_muon::Client;
 #[allow(deprecated)]
-use muon::client::flow::LoginExtraInfo;
-use muon::client::flow::LoginFlow;
-use proton_core_api::auth::UserKeySecret;
-use proton_core_api::services::observability::ApiServiceObservabilityResponse;
-use proton_core_api::services::proton::SessionId;
-use proton_core_api::store::AuthInfo;
-use proton_core_api::store::DynStore;
-use proton_core_api::store::TfaMode;
-use proton_core_api::store::UserData;
-use proton_core_common::post_login_check::PostLoginValidator;
-use proton_core_common::post_login_check::UserCheckResult;
-use proton_core_common::post_login_check::UserCheckStatus;
+use mail_muon::client::flow::LoginExtraInfo;
+use mail_muon::client::flow::LoginFlow;
+use mail_observability::PreLoginMetricRecorder;
+use mail_observability::metric;
 use proton_crypto_account::proton_crypto::crypto::PGPProviderSync;
 use proton_crypto_account::proton_crypto::srp::SRPProvider;
 use proton_crypto_account::proton_crypto::{new_pgp_provider, new_srp_provider};
 use proton_crypto_account::salts::KeySecret;
-use proton_observability::PreLoginMetricRecorder;
-use proton_observability::metric;
 use serde::{Deserialize, Serialize};
 
 /// Represents the state where the user can provide recovery information.
@@ -323,10 +323,10 @@ impl UserStatus {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use proton_core_api::services::proton::prelude::{
+    use mail_core_api::services::proton::prelude::{
         PostMetricsRequestData, PostMetricsRequestElement,
     };
-    use proton_observability::into_metrics_element;
+    use mail_observability::into_metrics_element;
     use serde_json::{self, json};
 
     fn assert_serialization_deserialization(

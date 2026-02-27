@@ -1,7 +1,7 @@
 use std::io::{self, Write};
 
 use base64::Engine;
-use proton_crypto_inbox::{
+use mail_crypto_inbox::{
     attachment::{
         AttachmentEncryptedSignature, AttachmentSignature, DecryptableAttachment,
         EncryptableAttachment, EncryptedAttachmentMetadata, KeyPackets, encrypt_and_sign_to_writer,
@@ -191,7 +191,7 @@ fn test_attachment_encrypt_decrypt_encrypted_signature_stream() {
 
 #[test]
 fn test_attachment_re_encrypt() {
-    let pgp = proton_crypto_inbox::proton_crypto::new_pgp_provider();
+    let pgp = mail_crypto_inbox::proton_crypto::new_pgp_provider();
 
     let address_keys = create_account_unlocked_address_keys(&pgp, TEST_DECRYPTION_KEY, "password");
     let primary_address_key = address_keys.primary_for_mail().expect("No primary key");
@@ -254,7 +254,7 @@ fn test_attachment_re_encrypt() {
 
 #[test]
 fn test_attachment_re_encrypt_password() {
-    let pgp = proton_crypto_inbox::proton_crypto::new_pgp_provider();
+    let pgp = mail_crypto_inbox::proton_crypto::new_pgp_provider();
 
     let address_keys = create_account_unlocked_address_keys(&pgp, TEST_DECRYPTION_KEY, "password");
     let primary_address_key = address_keys.primary_for_mail().expect("No primary key");
@@ -288,7 +288,7 @@ fn test_attachment_re_encrypt_password() {
 
 #[test]
 fn test_attachment_encrypt_decrypt_v6() {
-    let pgp = proton_crypto_inbox::proton_crypto::new_pgp_provider();
+    let pgp = mail_crypto_inbox::proton_crypto::new_pgp_provider();
 
     let address_keys = create_account_unlocked_address_keys_v6(
         &pgp,
@@ -324,7 +324,7 @@ fn test_attachment_encrypt_decrypt_v6() {
 }
 
 fn test_attachment_encrypt_decrypt_helper(enc_sig: bool) {
-    let pgp = proton_crypto_inbox::proton_crypto::new_pgp_provider();
+    let pgp = mail_crypto_inbox::proton_crypto::new_pgp_provider();
 
     let address_keys = create_account_unlocked_address_keys(&pgp, TEST_DECRYPTION_KEY, "password");
     let primary_address_key = address_keys.primary_for_mail().expect("No primary key");
@@ -362,7 +362,7 @@ fn test_attachment_encrypt_decrypt_helper(enc_sig: bool) {
 }
 
 fn test_attachment_encrypt_decrypt_stream_helper(enc_sig: bool) {
-    let pgp = proton_crypto_inbox::proton_crypto::new_pgp_provider();
+    let pgp = mail_crypto_inbox::proton_crypto::new_pgp_provider();
 
     let address_keys = create_account_unlocked_address_keys(&pgp, TEST_DECRYPTION_KEY, "password");
     let primary_address_key = address_keys.primary_for_mail().expect("No primary key");
@@ -405,7 +405,7 @@ fn test_attachment_encrypt_decrypt_stream_helper(enc_sig: bool) {
 }
 
 fn test_attachment_decrypt_helper(attachment_metadata: &impl DecryptableAttachment) {
-    let pgp = proton_crypto_inbox::proton_crypto::new_pgp_provider();
+    let pgp = mail_crypto_inbox::proton_crypto::new_pgp_provider();
 
     let decryption_keys = get_test_address_keys(&pgp);
     let verification_keys = get_test_public_address_keys(&pgp);
@@ -425,7 +425,7 @@ fn test_attachment_decrypt_helper(attachment_metadata: &impl DecryptableAttachme
 }
 
 fn test_attachment_decrypt_stream_helper(attachment_metadata: &impl DecryptableAttachment) {
-    let pgp = proton_crypto_inbox::proton_crypto::new_pgp_provider();
+    let pgp = mail_crypto_inbox::proton_crypto::new_pgp_provider();
 
     let decryption_keys = get_test_address_keys(&pgp);
     let verification_keys = get_test_public_address_keys(&pgp);

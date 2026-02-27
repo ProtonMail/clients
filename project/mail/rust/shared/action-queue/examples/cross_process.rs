@@ -22,16 +22,16 @@
 #![allow(clippy::print_stdout)]
 
 use clap::{Parser, Subcommand};
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionGroup, ActionId, DefaultVersionConverter, Handler, NoopError, Type, WriterGuard,
 };
-use proton_action_queue::queue::{
+use mail_action_queue::queue::{
     NoopOnlineStatusWaiterBuilder, Queue, QueueAutoExecutorPool, TokioTaskSpawner,
 };
-use proton_action_queue::rebase::RebaseChangeSet;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_stash::marker::DatabaseMarker;
+use mail_stash::stash::{Bond, StashConfiguration};
 use serde::{Deserialize, Serialize};
-use stash::marker::DatabaseMarker;
-use stash::stash::{Bond, StashConfiguration};
 use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -212,12 +212,12 @@ fn spawn_process(
 }
 
 async fn new_queue(directory: &Path) -> Queue<TestDb> {
-    let stash = stash::stash::Stash::new(StashConfiguration::test_with_path(
+    let mail_stash = mail_stash::stash::Stash::new(StashConfiguration::test_with_path(
         &directory.join("sqlite.db"),
     ))
     .unwrap();
 
-    let queue = Queue::new(stash).await.unwrap();
+    let queue = Queue::new(mail_stash).await.unwrap();
 
     queue.register::<TestAction>(TestHandler).unwrap();
     queue

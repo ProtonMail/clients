@@ -16,21 +16,21 @@ use crate::{
     watch_table,
 };
 use futures::TryFutureExt;
-use muon::common::IntoDyn;
-use proton_account_api::login::state::want_qr_confirmation::process_target_device_qr_code;
-use proton_account_uniffi::login::ProcessTargetDeviceQrError;
-use proton_account_uniffi::password::PasswordFlow;
-use proton_account_uniffi::password_validator::PasswordValidatorService;
-use proton_core_api::services::proton::ProtonAuth;
-use proton_core_common::UserContext;
-use proton_core_common::actions::user_feature_flags::OverrideFlag;
-use proton_core_common::services::{MeasurementService, PaymentsService};
-use proton_mail_common::ProtonMailError as RealProtonMailError;
-use proton_mail_common::models::Attachment;
-use proton_mail_common::{MailContextError, MailUserContext};
-use proton_observability::PreLoginMetricRecorder;
-use stash::UserDb;
-use stash::stash::{Stash, WatcherHandle};
+use mail_account_api::login::state::want_qr_confirmation::process_target_device_qr_code;
+use mail_account_uniffi::login::ProcessTargetDeviceQrError;
+use mail_account_uniffi::password::PasswordFlow;
+use mail_account_uniffi::password_validator::PasswordValidatorService;
+use mail_common::ProtonMailError as RealProtonMailError;
+use mail_common::models::Attachment;
+use mail_common::{MailContextError, MailUserContext};
+use mail_core_api::services::proton::ProtonAuth;
+use mail_core_common::UserContext;
+use mail_core_common::actions::user_feature_flags::OverrideFlag;
+use mail_core_common::services::{MeasurementService, PaymentsService};
+use mail_muon::common::IntoDyn;
+use mail_observability::PreLoginMetricRecorder;
+use mail_stash::UserDb;
+use mail_stash::stash::{Stash, WatcherHandle};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio_util::sync::CancellationToken;
@@ -692,10 +692,10 @@ impl MailUserSession {
     }
 }
 
-impl TryFrom<proton_mail_common::DecryptedAttachment> for DecryptedAttachment {
+impl TryFrom<mail_common::DecryptedAttachment> for DecryptedAttachment {
     type Error = anyhow::Error;
 
-    fn try_from(value: proton_mail_common::DecryptedAttachment) -> Result<Self, Self::Error> {
+    fn try_from(value: mail_common::DecryptedAttachment) -> Result<Self, Self::Error> {
         let data_path = value
             .data_path
             .into_os_string()

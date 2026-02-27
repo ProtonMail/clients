@@ -1,12 +1,12 @@
 use super::LabelAsAction;
-use proton_core_common::models::Label;
-use proton_mail_common::label;
+use mail_common::label;
+use mail_core_common::models::Label;
 use test_case::test_case;
 
 /// Macro wrapping u64 into Option<LocalId> for easier model definition.
 macro_rules! lid {
     ($id:expr) => {{
-        use proton_core_common::datatypes::LocalLabelId;
+        use mail_core_common::datatypes::LocalLabelId;
         Some(LocalLabelId::from($id))
     }};
 }

@@ -1,6 +1,6 @@
 use core_event_loop::v6::EventSource;
-use proton_core_common::event_loop::v6::CoreEventCache;
-use proton_mail_api::services::proton::prelude::MailEventV5;
+use mail_api::services::proton::prelude::MailEventV5;
+use mail_core_common::event_loop::v6::CoreEventCache;
 
 pub struct MailEventSourceV5;
 

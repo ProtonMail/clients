@@ -15,29 +15,27 @@ use crate::mail::state::MailUserContextMap;
 use crate::version::rust_sdk_version;
 use crate::{AsyncLiveQueryCallback, declare_live_query_tagger};
 use crate::{LiveQueryCallback, WatchHandle, async_runtime, async_runtime_slim, uniffi_async};
-use proton_core_common::services::{MeasurementService, SessionObserverService};
+use mail_core_common::services::{MeasurementService, SessionObserverService};
 
 use chrono::Local;
 use futures::TryFutureExt;
-use proton_account_uniffi::login::LoginFlow;
-use proton_account_uniffi::signup::SignupFlow;
-use proton_core_common::db::account::SessionEncryptionKey;
-use proton_core_common::event_loop::EventPollMode;
-use proton_core_common::models::{AppSettings as RealAppSettings, PinProtection};
-use proton_core_common::os::KeyChainExt;
-use proton_core_common::pin_code::PinCode;
-use proton_core_common::{CoreContextError, OnSessionDeletedResponse, Origin as RealOrigin};
-use proton_issue_reporter_service_uniffi::{IssueReporter, IssueReporterWrapper};
-use proton_log_service::LogService;
-use proton_mail_common::{
-    ContextErrorReason, MailErrorReason, ProtonMailError as RealProtonMailError,
-};
-use proton_mail_common::{MailContext, MailContextError};
-use proton_mail_common::{NewMailUserContextOptions, Unexpected};
-use proton_network_monitor_service::OsNetworkStatus as RealOsNetworkStatus;
-use stash::AccountDb;
-use stash::orm::Model;
-use stash::stash::{Stash, WatcherHandle};
+use mail_account_uniffi::login::LoginFlow;
+use mail_account_uniffi::signup::SignupFlow;
+use mail_common::{ContextErrorReason, MailErrorReason, ProtonMailError as RealProtonMailError};
+use mail_common::{MailContext, MailContextError};
+use mail_common::{NewMailUserContextOptions, Unexpected};
+use mail_core_common::db::account::SessionEncryptionKey;
+use mail_core_common::event_loop::EventPollMode;
+use mail_core_common::models::{AppSettings as RealAppSettings, PinProtection};
+use mail_core_common::os::KeyChainExt;
+use mail_core_common::pin_code::PinCode;
+use mail_core_common::{CoreContextError, OnSessionDeletedResponse, Origin as RealOrigin};
+use mail_issue_reporter_service_uniffi::{IssueReporter, IssueReporterWrapper};
+use mail_log_service::LogService;
+use mail_network_monitor_service::OsNetworkStatus as RealOsNetworkStatus;
+use mail_stash::AccountDb;
+use mail_stash::orm::Model;
+use mail_stash::stash::{Stash, WatcherHandle};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -139,7 +137,7 @@ async fn create_mail_session_inner(
     std::fs::create_dir_all(&log_path)?;
 
     let log_service = LogService::new(
-        proton_log_service::Config::builder()
+        mail_log_service::Config::builder()
             .name("proton-mail-uniffi".into())
             .header(|| {
                 format!(
@@ -220,7 +218,7 @@ async fn create_mail_session_inner(
         device_info_provider,
         log_service,
         poll,
-        proton_network_monitor_service::Config::default(),
+        mail_network_monitor_service::Config::default(),
         IssueReporterWrapper::new(issue_reporter),
     )
     .await?;

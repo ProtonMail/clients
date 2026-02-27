@@ -1,5 +1,5 @@
 [package]
-name = "proton-mail-html-transformer"
+name = "mail-html-transformer"
 version = "0.2.3"
 edition.workspace = true
 rust-version.workspace = true

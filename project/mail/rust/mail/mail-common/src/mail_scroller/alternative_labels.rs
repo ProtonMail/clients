@@ -1,10 +1,10 @@
 use crate::{MailContextError, datatypes::SystemLabelId};
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::{
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::{
     datatypes::{LocalLabelId, SystemLabel},
     models::{Label, ModelIdExtension},
 };
-use stash::stash::Tether;
+use mail_stash::stash::Tether;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct AlternativeLabels {

@@ -19,13 +19,13 @@ use crate::models::{
     DraftSendResultOrigin,
 };
 use crate::{AppError, MailContextError};
-use proton_action_queue::action::{ActionGroup, WriterGuard, WriterGuardError};
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::datatypes::LocalLabelId;
-use proton_core_common::models::{Label, ModelExtension, ModelIdExtension};
-use stash::UserDb;
-use stash::orm::Model;
-use stash::stash::Tether;
+use mail_action_queue::action::{ActionGroup, WriterGuard, WriterGuardError};
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::datatypes::LocalLabelId;
+use mail_core_common::models::{Label, ModelExtension, ModelIdExtension};
+use mail_stash::UserDb;
+use mail_stash::orm::Model;
+use mail_stash::stash::Tether;
 use tracing::error;
 
 pub const SEND_ACTION_GROUP: ActionGroup = ActionGroup::new("MAIL_SEND");

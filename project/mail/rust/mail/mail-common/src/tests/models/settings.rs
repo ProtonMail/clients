@@ -1,6 +1,6 @@
 use super::*;
+use mail_common::test_utils::db::new_test_connection;
 use pretty_assertions::assert_eq;
-use proton_mail_common::test_utils::db::new_test_connection;
 
 #[tokio::test]
 async fn test_mail_settings_store_read() {

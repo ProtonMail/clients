@@ -1,13 +1,13 @@
 use super::common::{DefaultError, TestWriteExtension};
 use super::common::{new_factory, new_queue};
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionId, DefaultVersionConverter, Handler, MetadataBuilder, Type, WriterGuard,
 };
-use proton_action_queue::db::{DependencyType, ExecutionGuard, StoredAction};
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_action_queue::tests::common::TestDb;
+use mail_action_queue::db::{DependencyType, ExecutionGuard, StoredAction};
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_action_queue::tests::common::TestDb;
+use mail_stash::stash::Bond;
 use serde::{Deserialize, Serialize};
-use stash::stash::Bond;
 
 #[tokio::test]
 async fn replace_updates_local_state() {
@@ -92,7 +92,7 @@ async fn replace_updates_queues_if_action_is_executing() {
         .unwrap();
 
     // simulate action executing
-    let mut tether = queue.stash().connection().await.unwrap();
+    let mut tether = queue.mail_stash().connection().await.unwrap();
     tether
         .tx(async |tx| ExecutionGuard::acquire(queued_output.id, "TEST", tx).await)
         .await

@@ -6,12 +6,12 @@ use crate::datatypes::SearchOptions;
 use crate::datatypes::labels::{ScrollOrderDir, ScrollOrderField};
 use crate::{AppError, MailContextError, MailUserContext, datatypes::ReadFilter};
 use anyhow::anyhow;
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::{
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::{
     datatypes::LocalLabelId,
     models::{Label, ModelExtension},
 };
-use stash::stash::Tether;
+use mail_stash::stash::Tether;
 use tracing::{debug, info, instrument, warn};
 
 #[derive(Debug)]

@@ -2,10 +2,10 @@ use std::io::Cursor;
 use std::time::Duration;
 
 use bytes::Bytes;
-use muon::common::{RetryPolicy, Sender};
-use muon::util::ProtonRequestExt;
-use muon::{DELETE, GET, PATCH, POST, PUT};
-use muon::{ProtonRequest, ProtonResponse, serde_to_query};
+use mail_muon::common::{RetryPolicy, Sender};
+use mail_muon::util::ProtonRequestExt;
+use mail_muon::{DELETE, GET, PATCH, POST, PUT};
+use mail_muon::{ProtonRequest, ProtonResponse, serde_to_query};
 use proton_crypto_account::keys::APIPublicAddressKeys;
 use serde_json::json;
 

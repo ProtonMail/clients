@@ -1,13 +1,13 @@
-use proton_account_api::login::SaltError;
-use proton_action_queue::action::FactoryError;
-use proton_action_queue::queue::{Error as QueueError, QueuedError};
-use proton_core_api::store::StoreError;
-use proton_core_common::KeyHandlingError;
-use proton_core_common::os::KeyChainError;
-use proton_crypto_inbox::attachment::AttachmentDecryptionError;
-use proton_crypto_inbox::message::MessageError;
-use proton_sqlite3::MigratorError;
-use stash::stash::StashError;
+use mail_account_api::login::SaltError;
+use mail_action_queue::action::FactoryError;
+use mail_action_queue::queue::{Error as QueueError, QueuedError};
+use mail_core_api::store::StoreError;
+use mail_core_common::KeyHandlingError;
+use mail_core_common::os::KeyChainError;
+use mail_crypto_inbox::attachment::AttachmentDecryptionError;
+use mail_crypto_inbox::message::MessageError;
+use mail_sqlite3::MigratorError;
+use mail_stash::stash::StashError;
 use std::io::{Error as IOError, ErrorKind};
 use tokio::task::JoinError;
 

@@ -5,7 +5,7 @@
 //! # Example
 //!
 //! ```
-//! use proton_event_service::{Event, EventService};
+//! use mail_event_service::{Event, EventService};
 //!
 //! #[derive(Debug, Clone, Eq, PartialEq,Copy)]
 //! enum FooEvent {

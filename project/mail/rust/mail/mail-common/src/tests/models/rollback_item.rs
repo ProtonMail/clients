@@ -1,21 +1,21 @@
 use super::*;
-use crate as proton_mail_common;
+use crate as mail_common;
 use crate::datatypes::LocalConversationId;
-use proton_core_api::services::proton::GetLabelsByIdsOptions;
-use proton_core_api::services::proton::GetLabelsResponse;
-use proton_core_api::session::{Config, EnvId, Session};
-use proton_core_common::models::ModelExtension;
-use proton_core_common::models::ModelIdExtension;
-use proton_core_common::test_utils::test_context::MockApiEnv;
-use proton_core_common::test_utils::utils::mock_auth_endpoints;
-use proton_mail_api::services::proton::common::ConversationId;
-use proton_mail_api::services::proton::prelude::RunningTasks;
-use proton_mail_api::services::proton::responses::GetMessagesResponse;
-use proton_mail_common::test_utils::db::new_test_connection_file;
-use proton_mail_common::{
+use mail_api::services::proton::common::ConversationId;
+use mail_api::services::proton::prelude::RunningTasks;
+use mail_api::services::proton::responses::GetMessagesResponse;
+use mail_common::test_utils::db::new_test_connection_file;
+use mail_common::{
     api_conversation, api_label, api_message_meta, conversation, label, message,
     test_utils::utils::create_address,
 };
+use mail_core_api::services::proton::GetLabelsByIdsOptions;
+use mail_core_api::services::proton::GetLabelsResponse;
+use mail_core_api::session::{Config, EnvId, Session};
+use mail_core_common::models::ModelExtension;
+use mail_core_common::models::ModelIdExtension;
+use mail_core_common::test_utils::test_context::MockApiEnv;
+use mail_core_common::test_utils::utils::mock_auth_endpoints;
 use serde_json::json;
 use test_case::test_case;
 use wiremock::{
@@ -104,9 +104,9 @@ async fn test_store_and_delete_remote_items(
     mut expected: Option<Vec<RollbackItem>>,
 ) {
     // * RollbackItem is correctly stored *
-    let (stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = stash.connection().await.unwrap();
-    let queue = Queue::new(stash.clone()).await.unwrap();
+    let (mail_stash, _tempdir) = new_test_connection_file().await;
+    let mut tether = mail_stash.connection().await.unwrap();
+    let queue = Queue::new(mail_stash.clone()).await.unwrap();
     tether
         .tx::<_, _, StashError>(async |tx| {
             if let Some(items) = &mut expected {
@@ -136,7 +136,7 @@ async fn test_store_and_delete_remote_items(
 
     let (_mock, api) = start_server(&tether, BATCH_SIZE).await;
 
-    let mut tether = stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection().await.unwrap();
     RollbackItem::sync_all(&api, &mut tether, BATCH_SIZE, &queue)
         .await
         .unwrap();
@@ -146,7 +146,7 @@ async fn test_store_and_delete_remote_items(
 
     assert_eq!(actual.len(), 0);
 
-    // * RollbackItems with no limit for empty stash *
+    // * RollbackItems with no limit for empty mail_stash *
     RollbackItem::sync_all(&api, &mut tether, None, &queue)
         .await
         .unwrap();
@@ -382,9 +382,9 @@ async fn mock_label(mock_server: &MockServer, items: Vec<RollbackItem>) {
 
 #[tokio::test]
 async fn test_rollback_skips_nonexistent_conversation() {
-    let (stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = stash.connection().await.unwrap();
-    let queue = Queue::new(stash.clone()).await.unwrap();
+    let (mail_stash, _tempdir) = new_test_connection_file().await;
+    let mut tether = mail_stash.connection().await.unwrap();
+    let queue = Queue::new(mail_stash.clone()).await.unwrap();
 
     let existing_conv_id = "existing_conv_123";
     let deleted_conv_id = "deleted_conv_456";
@@ -473,11 +473,11 @@ async fn test_rollback_skips_nonexistent_conversation() {
 
 #[tokio::test]
 async fn test_label_rollback_with_parent_dependencies() {
-    use proton_core_api::services::proton::LabelType;
+    use mail_core_api::services::proton::LabelType;
 
-    let (stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = stash.connection().await.unwrap();
-    let queue = Queue::new(stash.clone()).await.unwrap();
+    let (mail_stash, _tempdir) = new_test_connection_file().await;
+    let mut tether = mail_stash.connection().await.unwrap();
+    let queue = Queue::new(mail_stash.clone()).await.unwrap();
 
     // Set up a label hierarchy: grandparent -> parent -> child
     let grandparent_id = "grandparent_123";
@@ -632,11 +632,11 @@ async fn test_label_rollback_with_parent_dependencies() {
 
 #[tokio::test]
 async fn test_label_rollback_with_circular_parent_reference() {
-    use proton_core_api::services::proton::LabelType;
+    use mail_core_api::services::proton::LabelType;
 
-    let (stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = stash.connection().await.unwrap();
-    let queue = Queue::new(stash.clone()).await.unwrap();
+    let (mail_stash, _tempdir) = new_test_connection_file().await;
+    let mut tether = mail_stash.connection().await.unwrap();
+    let queue = Queue::new(mail_stash.clone()).await.unwrap();
 
     // Set up labels where child's parent is also being rolled back (circular reference)
     let parent_id = "parent_123";

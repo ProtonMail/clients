@@ -1,11 +1,11 @@
 use crate::{RsvpError, RsvpKeys, RsvpResult};
-use proton_calendar_api_v1::{CalendarBootstrap, CalendarEvent, CalendarEventPayload};
-use proton_crypto::crypto::PGPProviderSync;
-use proton_crypto_account::keys::UnlockedAddressKeys;
-use proton_crypto_calendar::{
+use mail_calendar_api_v1::{CalendarBootstrap, CalendarEvent, CalendarEventPayload};
+use mail_crypto_calendar::{
     CalendarEventDecryptor, EncryptedIcsRef, KeyPackets, LockedCalendarKey, Result as CryptoResult,
 };
-use proton_ical as ical;
+use mail_ical as ical;
+use proton_crypto::crypto::PGPProviderSync;
+use proton_crypto_account::keys::UnlockedAddressKeys;
 use std::borrow::Cow;
 use tracing::{debug, instrument, trace};
 

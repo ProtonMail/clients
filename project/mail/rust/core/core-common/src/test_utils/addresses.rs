@@ -1,11 +1,11 @@
 use crate::test_utils::test_context::TestContext;
-use proton_core_api::services::proton::AddressFlags;
-use proton_core_api::services::proton::AddressId;
-use proton_core_api::services::proton::AddressSignedKeyList as ApiAddressSignedKeyList;
-use proton_core_api::services::proton::{
+use mail_core_api::services::proton::AddressFlags;
+use mail_core_api::services::proton::AddressId;
+use mail_core_api::services::proton::AddressSignedKeyList as ApiAddressSignedKeyList;
+use mail_core_api::services::proton::{
     Address as ApiAddress, AddressStatus as ApiAddressStatus, AddressType as ApiAddressType,
 };
-use proton_core_api::services::proton::{GetAddressResponse, GetAddressesResponse};
+use mail_core_api::services::proton::{GetAddressResponse, GetAddressesResponse};
 use proton_crypto_account::keys::{
     AddressKeys as ApiAddressKeys, ArmoredPrivateKey, EncryptedKeyToken, KeyFlag, KeyId,
     KeyTokenSignature, LockedKey,

@@ -1,11 +1,11 @@
 use crate::AppError;
 use crate::models::{ConversationCounter, MessageCounter};
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::datatypes::LabelType;
-use proton_core_common::event_loop::events::{Action, LabelEvent};
-use proton_core_common::models::{Label, ModelIdExtension};
-use stash::orm::Model;
-use stash::stash::Bond;
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::datatypes::LabelType;
+use mail_core_common::event_loop::events::{Action, LabelEvent};
+use mail_core_common::models::{Label, ModelIdExtension};
+use mail_stash::orm::Model;
+use mail_stash::stash::Bond;
 
 pub async fn handle_counters_label_events(
     tx: &Bond<'_>,

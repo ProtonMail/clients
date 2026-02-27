@@ -61,11 +61,11 @@ pub enum MbpMode {
     Two = 2,
 }
 
-impl From<muon::client::PasswordMode> for MbpMode {
-    fn from(mode: muon::client::PasswordMode) -> Self {
+impl From<mail_muon::client::PasswordMode> for MbpMode {
+    fn from(mode: mail_muon::client::PasswordMode) -> Self {
         match mode {
-            muon::client::PasswordMode::One => Self::One,
-            muon::client::PasswordMode::Two => Self::Two,
+            mail_muon::client::PasswordMode::One => Self::One,
+            mail_muon::client::PasswordMode::Two => Self::Two,
         }
     }
 }

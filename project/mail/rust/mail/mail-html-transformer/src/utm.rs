@@ -68,7 +68,7 @@ pub fn strip(document: NodeRef) -> BTreeSet<StrippedUTM> {
 ///
 /// ```
 /// use url::Url;
-/// use proton_mail_html_transformer::utm::strip_from_url;
+/// use mail_html_transformer::utm::strip_from_url;
 ///
 /// if let Ok(url) = Url::parse("https://example.com/?utm_source=example") {
 ///     let new_url  = strip_from_url(url);

@@ -1,5 +1,5 @@
 use derive_more::TryFrom;
-use stash::exports::{
+use mail_stash::exports::{
     FromSql, FromSqlError, FromSqlResult, SqliteError, ToSql, ToSqlOutput, Value, ValueRef,
 };
 

@@ -1,7 +1,7 @@
+use mail_crypto_inbox_mime::Disposition;
+use mail_crypto_inbox_mime::{MimeProcessor, ProcessMime};
 use proton_crypto::crypto::*;
 use proton_crypto::new_pgp_provider;
-use proton_crypto_inbox_mime::Disposition;
-use proton_crypto_inbox_mime::{MimeProcessor, ProcessMime};
 
 const TEST_GO_MIME_ENCRYPTED: &str = "-----BEGIN PGP MESSAGE-----
 Version: ProtonMail

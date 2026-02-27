@@ -2,10 +2,10 @@ use crate::datatypes::{
     DateFormat, Density, Email, HighSecurity, LogAuth, NotificationSettings, Password, Phone,
     Referral, SettingsFlags, TimeFormat, TwoFa, WeekStart,
 };
-use proton_core_api::services::proton::UserId;
-use proton_core_api::services::proton::UserSettings as ApiUserSettings;
-use stash::UserDb;
-use stash::macros::Model;
+use mail_core_api::services::proton::UserId;
+use mail_core_api::services::proton::UserSettings as ApiUserSettings;
+use mail_stash::UserDb;
+use mail_stash::macros::Model;
 
 #[derive(Clone, Debug, Eq, Model, PartialEq)]
 #[TableName("user_settings")]

@@ -1,7 +1,7 @@
 use crate::cli::ctx::MailContextExt;
 use anyhow::Result;
 use futures::TryFutureExt;
-use proton_mail_common::MailContext;
+use mail_common::MailContext;
 use std::sync::Arc;
 
 /// Switch the active account.

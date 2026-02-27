@@ -12,7 +12,7 @@ pub use self::response_data::*;
 pub use self::responses::*;
 use crate::service::ApiServiceResult;
 use bytes::Bytes;
-use muon::common::RetryPolicy;
+use mail_muon::common::RetryPolicy;
 use proton_crypto_account::keys::APIPublicAddressKeys;
 use std::future::Future;
 use std::time::Duration;

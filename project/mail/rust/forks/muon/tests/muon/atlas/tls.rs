@@ -1,7 +1,7 @@
 use crate::atlas::new_builder;
 use anyhow::Result;
-use muon::tls::{RustlsTls, TokioTls};
-use muon::GET;
+use mail_muon::tls::{RustlsTls, TokioTls};
+use mail_muon::GET;
 
 #[tokio::test]
 async fn test_tls_rustls() -> Result<()> {

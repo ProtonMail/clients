@@ -1,5 +1,5 @@
-use stash::params;
-use stash::stash::{Bond, Stash, Tether};
+use mail_stash::params;
+use mail_stash::stash::{Bond, Stash, Tether};
 use std::thread::spawn;
 use std::time::Duration;
 use tokio::spawn as async_spawn;
@@ -58,14 +58,14 @@ async fn query_tx(tx: &Bond<'_>, value: &str) -> Vec<String> {
 
 #[cfg(test)]
 mod concurrency_basic_sync {
-    use stash::{UserDb, stash::Stash};
+    use mail_stash::{UserDb, stash::Stash};
 
     #[tokio::test]
     async fn basic_query_without_transactions() {
         let db_dir = tempfile::tempdir().unwrap();
-        let stash: Stash<UserDb> =
+        let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
-        let conn = stash.connection().await.unwrap();
+        let conn = mail_stash.connection().await.unwrap();
 
         // Create a table
         conn.execute(r#"CREATE TABLE test_kv (value TEXT NOT NULL)"#, vec![])
@@ -90,9 +90,9 @@ mod concurrency_basic_sync {
     #[tokio::test]
     async fn basic_query_with_transactions() {
         let db_dir = tempfile::tempdir().unwrap();
-        let stash: Stash<UserDb> =
+        let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
-        let mut conn = stash.connection().await.unwrap();
+        let mut conn = mail_stash.connection().await.unwrap();
         let result = conn
             .tx(async |tx| {
                 // Create a table
@@ -122,10 +122,10 @@ mod concurrency_basic_sync {
     #[tokio::test(flavor = "multi_thread")]
     async fn basic_query_with_transaction_closure_spawnd() {
         let db_dir = tempfile::tempdir().unwrap();
-        let stash: Stash<UserDb> =
+        let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
         let result = tokio::spawn(async move {
-            let mut conn = stash.connection().await.unwrap();
+            let mut conn = mail_stash.connection().await.unwrap();
             conn.tx(async |tx| {
                 // Create a table
                 tx.execute(r#"CREATE TABLE test_kv (value TEXT NOT NULL)"#, vec![])
@@ -158,14 +158,14 @@ mod concurrency_basic_sync {
 #[cfg(test)]
 mod concurrency_async_functions {
     use super::*;
-    use stash::{UserDb, stash::StashError};
+    use mail_stash::{UserDb, stash::StashError};
 
     #[tokio::test]
     async fn basic_query_without_transactions() {
         let db_dir = tempfile::tempdir().unwrap();
-        let stash: Stash<UserDb> =
+        let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
-        let conn = stash.connection().await.unwrap();
+        let conn = mail_stash.connection().await.unwrap();
 
         create_table(&conn).await;
         insert(&conn, "test").await;
@@ -178,9 +178,9 @@ mod concurrency_async_functions {
     #[tokio::test]
     async fn basic_query_with_transactions() {
         let db_dir = tempfile::tempdir().unwrap();
-        let stash: Stash<UserDb> =
+        let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
-        let mut conn = stash.connection().await.unwrap();
+        let mut conn = mail_stash.connection().await.unwrap();
 
         let result = conn
             .tx::<_, _, StashError>(async |tx| {
@@ -199,14 +199,14 @@ mod concurrency_async_functions {
 #[cfg(test)]
 mod concurrency_async_threads {
     use super::*;
-    use stash::{UserDb, stash::StashError};
+    use mail_stash::{UserDb, stash::StashError};
 
     #[tokio::test]
     async fn basic_query_without_transactions() {
         let db_dir = tempfile::tempdir().unwrap();
-        let stash: Stash<UserDb> =
+        let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
-        let conn = stash.connection().await.unwrap();
+        let conn = mail_stash.connection().await.unwrap();
 
         let result = async_spawn(async move {
             create_table(&conn).await;
@@ -223,11 +223,11 @@ mod concurrency_async_threads {
     #[tokio::test]
     async fn basic_query_with_transactions() {
         let db_dir = tempfile::tempdir().unwrap();
-        let stash: Stash<UserDb> =
+        let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
 
         let result = async_spawn(async move {
-            let mut conn = stash.connection().await.unwrap();
+            let mut conn = mail_stash.connection().await.unwrap();
             conn.tx::<_, _, StashError>(async |tx| {
                 create_table_tx(tx).await;
                 insert_tx(tx, "test").await;
@@ -246,11 +246,11 @@ mod concurrency_async_threads {
     #[tokio::test]
     async fn basic_query_with_two_simultaneous_transactions() {
         let db_dir = tempfile::tempdir().unwrap();
-        let stash: Stash<UserDb> =
+        let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
-        let stash1 = stash.clone();
-        let stash2 = stash.clone();
-        let conn = stash.connection().await.unwrap();
+        let stash1 = mail_stash.clone();
+        let stash2 = mail_stash.clone();
+        let conn = mail_stash.connection().await.unwrap();
 
         create_table(&conn).await;
 
@@ -301,17 +301,17 @@ mod concurrency_async_threads {
 #[cfg(test)]
 mod concurrency_std_threads {
     use super::*;
-    use stash::{UserDb, stash::StashError};
+    use mail_stash::{UserDb, stash::StashError};
     use tokio::runtime::Runtime;
 
     #[tokio::test]
     async fn basic_query_with_two_simultaneous_transactions() {
         let db_dir = tempfile::tempdir().unwrap();
-        let stash: Stash<UserDb> =
+        let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
-        let stash1 = stash.clone();
-        let stash2 = stash.clone();
-        let conn = stash.connection().await.unwrap();
+        let stash1 = mail_stash.clone();
+        let stash2 = mail_stash.clone();
+        let conn = mail_stash.connection().await.unwrap();
 
         create_table(&conn).await;
 
@@ -368,24 +368,24 @@ mod concurrency_std_threads {
 #[cfg(test)]
 mod concurrency_mixed {
     use super::*;
-    use stash::{UserDb, stash::StashError};
+    use mail_stash::{UserDb, stash::StashError};
     use tokio::runtime::Runtime;
 
     #[tokio::test]
     async fn basic_query_with_multiple_mixed_simultaneous_approaches() {
         let db_dir = tempfile::tempdir().unwrap();
-        let stash: Stash<UserDb> =
+        let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
-        let conn = stash.connection().await.unwrap();
-        let stash1 = stash.clone();
-        let stash2 = stash.clone();
-        let stash3 = stash.clone();
-        let stash4 = stash.clone();
-        let stash5 = stash.clone();
-        let stash6 = stash.clone();
-        let stash7 = stash.clone();
-        let stash8 = stash.clone();
-        let stash9 = stash.clone();
+        let conn = mail_stash.connection().await.unwrap();
+        let stash1 = mail_stash.clone();
+        let stash2 = mail_stash.clone();
+        let stash3 = mail_stash.clone();
+        let stash4 = mail_stash.clone();
+        let stash5 = mail_stash.clone();
+        let stash6 = mail_stash.clone();
+        let stash7 = mail_stash.clone();
+        let stash8 = mail_stash.clone();
+        let stash9 = mail_stash.clone();
 
         create_table(&conn).await;
 
@@ -522,14 +522,14 @@ mod concurrency_mixed {
 
 mod orm_tests {
     use crate::params;
-    use rusqlite::{Connection, Transaction};
-    use stash::{
+    use mail_stash::{
         UserDb,
         orm::{Model, ModelHooks},
         stash::{Stash, StashError},
         utils::ConnectionExt,
     };
-    use stash_macros::Model;
+    use mail_stash_macros::Model;
+    use rusqlite::{Connection, Transaction};
 
     #[derive(Clone, Debug, Eq, Model, PartialEq)]
     #[TableName("my_model")]
@@ -588,8 +588,8 @@ mod orm_tests {
 
     #[tokio::test]
     async fn test_orm() -> anyhow::Result<()> {
-        let stash = Stash::new(None)?;
-        let mut tether = stash.connection().await?;
+        let mail_stash = Stash::new(None)?;
+        let mut tether = mail_stash.connection().await?;
 
         tether
             .tx::<_, _, StashError>(async |tx| {
@@ -653,16 +653,16 @@ mod orm_tests {
 }
 
 mod interrupt {
-    use stash::UserDb;
+    use mail_stash::UserDb;
 
     use super::*;
 
     #[tokio::test]
     async fn transactions_are_interrupted() -> anyhow::Result<()> {
         let db_dir = tempfile::tempdir().unwrap();
-        let stash: Stash<UserDb> =
+        let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
-        let mut conn = stash.connection().await?;
+        let mut conn = mail_stash.connection().await?;
         let (sender, receiver) = tokio::sync::oneshot::channel::<()>();
         let (sender_interrupt, receiver_interrupt) = tokio::sync::oneshot::channel::<()>();
         let join_handle = tokio::spawn(async move {
@@ -676,7 +676,7 @@ mod interrupt {
         });
 
         receiver.await?;
-        stash.interrupt();
+        mail_stash.interrupt();
         sender_interrupt.send(()).unwrap();
 
         let err = join_handle.await?.unwrap_err();
@@ -688,11 +688,11 @@ mod interrupt {
     #[tokio::test]
     async fn new_transactions_wait_until_resume() -> anyhow::Result<()> {
         let db_dir = tempfile::tempdir().unwrap();
-        let stash: Stash<UserDb> =
+        let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
-        stash.interrupt();
-        let mut conn = stash.connection().await?;
-        let stash_cloned = stash.clone();
+        mail_stash.interrupt();
+        let mut conn = mail_stash.connection().await?;
+        let stash_cloned = mail_stash.clone();
         let (sender, receiver) = tokio::sync::oneshot::channel::<()>();
         tokio::spawn(async move {
             sender.send(()).unwrap();

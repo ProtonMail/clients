@@ -1,8 +1,8 @@
 use crate::actions::MailActionError;
 use crate::{MailContextResult, MailUserContext};
-use proton_action_queue::action::Action;
-use proton_action_queue::queue::QueuedActionOutput;
-use stash::UserDb;
+use mail_action_queue::action::Action;
+use mail_action_queue::queue::QueuedActionOutput;
+use mail_stash::UserDb;
 
 impl MailUserContext {
     pub async fn queue_action<T>(

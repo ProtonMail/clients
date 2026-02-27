@@ -1,4 +1,4 @@
-/// An extension trait for [`muon::ProtonResponse`].
+/// An extension trait for [`mail_muon::ProtonResponse`].
 ///
 /// This trait is a general-purpose collection of utility methods for working with
 /// responses from the Proton service.
@@ -11,7 +11,7 @@ pub trait ProtonResponseExt {
     fn inspect_body(self, f: impl FnOnce(&[u8])) -> Self;
 }
 
-impl ProtonResponseExt for muon::ProtonResponse {
+impl ProtonResponseExt for mail_muon::ProtonResponse {
     fn inspect_body(self, f: impl FnOnce(&[u8])) -> Self {
         f(self.body());
 

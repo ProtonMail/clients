@@ -2,17 +2,17 @@ use crate::AppError;
 use crate::actions::messages::Move;
 use crate::actions::{LabelAsData, MailActionError};
 use crate::models::{Message, MessageCounter};
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionDependencyKeys, ActionId, FactoryResult, Handler, Metadata, Type,
     VersionConverter, WriterGuard,
 };
-use proton_action_queue::queue::Queue;
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::session::Session;
+use mail_action_queue::queue::Queue;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_core_api::session::Session;
+use mail_stash::UserDb;
+use mail_stash::orm::Model;
+use mail_stash::stash::{Bond, Tether};
 use serde::{Deserialize, Serialize};
-use stash::UserDb;
-use stash::orm::Model;
-use stash::stash::{Bond, Tether};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct LabelAs(pub LabelAsData<Message>);

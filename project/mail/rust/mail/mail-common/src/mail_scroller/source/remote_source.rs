@@ -11,8 +11,8 @@ use crate::{
     datatypes::{ReadFilter, labels::ScrollOrderField},
     models::ScrollData,
 };
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::datatypes::LocalLabelId;
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::datatypes::LocalLabelId;
 
 pub trait RemoteSource: ScrollData + Send + Sync {
     #[allow(clippy::too_many_arguments)]

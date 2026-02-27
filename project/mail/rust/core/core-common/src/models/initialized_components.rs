@@ -3,12 +3,12 @@ use std::time::Instant;
 
 use crate::models::ModelExtension;
 use itertools::Itertools;
+use mail_stash::UserDb;
+use mail_stash::exports::Transaction;
+use mail_stash::macros::Model;
+use mail_stash::orm::Model;
+use mail_stash::stash::{Bond, Stash, StashError, Tether, WatcherHandle};
 use sqlite_watcher::watcher::TableObserver;
-use stash::UserDb;
-use stash::exports::Transaction;
-use stash::macros::Model;
-use stash::orm::Model;
-use stash::stash::{Bond, Stash, StashError, Tether, WatcherHandle};
 use tracing::{debug, info, trace};
 
 use crate::datatypes::{InitializationKey, InitializedComponentState};
@@ -332,8 +332,8 @@ impl std::ops::DerefMut for InitializationWatcherHandle {
 }
 
 impl InitializationWatcher {
-    pub async fn new(stash: &Stash<UserDb>) -> Result<Arc<Self>, StashError> {
-        let handle = stash
+    pub async fn new(mail_stash: &Stash<UserDb>) -> Result<Arc<Self>, StashError> {
+        let handle = mail_stash
             .subscribe_to(|sender| Box::new(InitializedDependenciesTableWatcher { sender }))
             .await?;
         let (tx, _rx) = tokio::sync::broadcast::channel(1);

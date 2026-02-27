@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use proton_crypto_inbox::{
+use mail_crypto_inbox::{
     keys::{InboxVerificationPreferences, KeyOwnership, PackageCryptoType, SendPreferences},
     lock_icon::{
         LockColor, LockIcon, LockTooltip, MailVerificationStatus, UiLock, XPmContentEncryption,

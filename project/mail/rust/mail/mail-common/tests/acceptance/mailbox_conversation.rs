@@ -1,17 +1,15 @@
-use proton_core_api::services::proton::Label as ApiLabel;
-use proton_core_api::services::proton::{LabelId, LabelType as ApiLabelType};
-use proton_core_common::models::ModelExtension;
-use proton_mail_api::services::proton::common::MessageId;
-use proton_mail_api::services::proton::response_data::ConversationLabel as ApiConversationLabel;
-use proton_mail_api::services::proton::response_data::MessageMetadata as ApiMessageMetadata;
-use proton_mail_common::Mailbox;
-use proton_mail_common::datatypes::{
-    ContextualConversation, ConversationViewOptions, SystemLabelId,
-};
-use proton_mail_common::models::Conversation;
-use proton_mail_common::test_utils::init::Params as TestParams;
-use proton_mail_common::test_utils::test_context::MailTestContext;
-use stash::orm::Model;
+use mail_api::services::proton::common::MessageId;
+use mail_api::services::proton::response_data::ConversationLabel as ApiConversationLabel;
+use mail_api::services::proton::response_data::MessageMetadata as ApiMessageMetadata;
+use mail_common::Mailbox;
+use mail_common::datatypes::{ContextualConversation, ConversationViewOptions, SystemLabelId};
+use mail_common::models::Conversation;
+use mail_common::test_utils::init::Params as TestParams;
+use mail_common::test_utils::test_context::MailTestContext;
+use mail_core_api::services::proton::Label as ApiLabel;
+use mail_core_api::services::proton::{LabelId, LabelType as ApiLabelType};
+use mail_core_common::models::ModelExtension;
+use mail_stash::orm::Model;
 
 #[tokio::test]
 async fn test_new_mailbox_sync_conversations() {

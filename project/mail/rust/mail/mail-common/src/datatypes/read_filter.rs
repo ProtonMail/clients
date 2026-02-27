@@ -1,5 +1,7 @@
 use derive_more::derive::TryFrom;
-use stash::exports::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, Value, ValueRef};
+use mail_stash::exports::{
+    FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, Value, ValueRef,
+};
 
 #[derive(Debug, Default, Clone, PartialEq, Hash, Eq, Copy, TryFrom)]
 #[try_from(repr)]
@@ -37,7 +39,7 @@ impl From<ReadFilter> for Option<bool> {
 }
 
 impl ToSql for ReadFilter {
-    fn to_sql(&self) -> proton_sqlite3::rusqlite::Result<ToSqlOutput<'_>> {
+    fn to_sql(&self) -> mail_sqlite3::rusqlite::Result<ToSqlOutput<'_>> {
         Ok(ToSqlOutput::Owned(Value::Integer(*self as i64)))
     }
 }

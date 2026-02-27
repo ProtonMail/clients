@@ -141,19 +141,19 @@
 //! crates that are the subject of the translations.*
 //!
 
-use proton_core_common::watch_handle::WatchHandle as RealWatchHandle;
-use proton_mail_common::datatypes::SearchOptions as RealSearchOptions;
-use proton_task_service::Spawner;
+use mail_common::datatypes::SearchOptions as RealSearchOptions;
+use mail_core_common::watch_handle::WatchHandle as RealWatchHandle;
+use mail_task_service::Spawner;
+use mail_uniffi_runtime::{async_runtime, async_runtime_slim, uniffi_async};
 use sqlite_watcher::watcher::DropRemoveTableObserverHandle;
 use std::sync::Arc;
 use tokio::task::JoinHandle;
-use uniffi_runtime::{async_runtime, async_runtime_slim, uniffi_async};
 
 // Reexport renamed items from the `uniffi` crate.
 pub use uniffi::{Enum as UniffiEnum, Record as UniffiRecord};
 
 #[macro_use]
-extern crate uniffi_macros;
+extern crate mail_uniffi_macros;
 
 #[macro_use]
 pub mod errors;
@@ -276,11 +276,11 @@ macro_rules! declare_live_query_tagger {
             #[must_use]
             #[allow(dead_code)]
             pub fn watch_channel_async(
-                ctx: &impl ::proton_task_service::Spawner,
-                handle: ::stash::stash::WatcherHandle,
+                ctx: &impl ::mail_task_service::Spawner,
+                handle: ::mail_stash::stash::WatcherHandle,
                 callback: Arc<dyn $crate::AsyncLiveQueryCallback>,
             ) -> Arc<$crate::WatchHandle> {
-                let ::stash::stash::WatcherHandle {
+                let ::mail_stash::stash::WatcherHandle {
                     receiver, handle, ..
                 } = handle;
 
@@ -296,8 +296,8 @@ macro_rules! declare_live_query_tagger {
             #[must_use]
             #[allow(dead_code)]
             pub fn watch_channel(
-                ctx: &impl ::proton_task_service::Spawner,
-                handle: ::stash::stash::WatcherHandle,
+                ctx: &impl ::mail_task_service::Spawner,
+                handle: ::mail_stash::stash::WatcherHandle,
                 callback: Box<dyn $crate::LiveQueryCallback>,
             ) -> Arc<$crate::WatchHandle> {
                 let task_handle = $crate::watch_channel_inner(ctx, handle.receiver, move || {

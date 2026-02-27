@@ -7,8 +7,8 @@
 use std::path::Path;
 
 use include_dir::Dir;
-use stash::marker::DatabaseMarker;
-use stash::stash::Bond;
+use mail_stash::marker::DatabaseMarker;
+use mail_stash::stash::Bond;
 
 use crate::Migration;
 
@@ -31,7 +31,7 @@ impl<Db: DatabaseMarker> Migration<Db> for EmbeddedFileMigration {
         self.path.to_str().unwrap_or("000_unknown.sql")
     }
 
-    async fn migrate(&self, tx: &Bond<'_, Db>) -> Result<(), stash::stash::StashError> {
+    async fn migrate(&self, tx: &Bond<'_, Db>) -> Result<(), mail_stash::stash::StashError> {
         let statements = self.migration_content.trim();
 
         tx.batch(statements).await?;

@@ -16,7 +16,7 @@ pub use data_provider::StashMessageDataProvider;
 pub use search_results::{LocalSearchResult, SearchMatchPosition, search_local_with_keywords};
 
 // Re-export from proton-mail-search crate for convenience
-pub use proton_mail_search::{
+pub use mail_search::{
     BlobStorage, CleanupResult, FoundEntry, FoundationSearchEngine, IndexResult, IndexStats,
     LocalMessageId, MailSearchService, MessageDataProvider, SearchError, SearchIndexIntent,
     SearchIndexWorker, SearchOperation, SearchServiceError, SearchStats, StashBlobStorage,

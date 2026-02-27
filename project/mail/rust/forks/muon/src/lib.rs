@@ -4,19 +4,19 @@
 //!
 //! ## Usage
 //!
-//! The `muon` crate is published to the internal Proton registry. Configure
-//! cargo to use the Proton registry and add `muon` to your project.
+//! The `mail_muon` crate is published to the internal Proton registry. Configure
+//! cargo to use the Proton registry and add `mail_muon` to your project.
 //!
 //! ## Create a client
 //!
 //! A client needs at least an [`App`] and something implementing a
-//! [`store::Store`] (see [`muon::store`](`crate::store`) for more information)
+//! [`store::Store`] (see [`mail_muon::store`](`crate::store`) for more information)
 //!
 //! ### Example
 //! ```
-//! # use muon::doc::*;
-//! use muon::client::Auth;
-//! use muon::{App, Client, GET};
+//! # use mail_muon::doc::*;
+//! use mail_muon::client::Auth;
+//! use mail_muon::{App, Client, GET};
 //! # tokio_test::block_on(async {
 //! let store = MyPersistenceStorage::prod();
 //! let app = App::new("windows-vpn@4.1.0")?;
@@ -64,7 +64,7 @@ pub use http::{
 
 pub mod store;
 
-/// Module containing the optional utils provided by muon
+/// Module containing the optional utils provided by mail_muon
 #[cfg(feature = "util")]
 pub mod util;
 

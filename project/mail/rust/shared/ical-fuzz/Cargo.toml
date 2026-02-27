@@ -1,5 +1,5 @@
 [package]
-name = "proton-ical-fuzz"
+name = "mail-ical-fuzz"
 version = "0.0.0"
 edition.workspace = true
 rust-version.workspace = true
@@ -10,7 +10,7 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = { workspace = true }
-proton-ical = { workspace = true }
+mail-ical = { workspace = true }
 
 [[bin]]
 name = "main"

@@ -1,7 +1,7 @@
 use crate::atlas::new_client;
 use anyhow::Result;
-use muon::util::{DurationExt, ProtonRequestExt};
-use muon::GET;
+use mail_muon::util::{DurationExt, ProtonRequestExt};
+use mail_muon::GET;
 
 #[tokio::test]
 async fn test_timeout_request_total() -> Result<()> {

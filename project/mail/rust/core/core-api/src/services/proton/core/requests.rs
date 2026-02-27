@@ -22,7 +22,7 @@
 
 use crate::MAX_PAGE_ELEMENT_COUNT;
 use crate::services::proton::prelude::*;
-use proton_api_utils::PaginateOptions;
+use mail_api_utils::PaginateOptions;
 use serde::Serialize;
 use serde_with::{BoolFromInt, StringWithSeparator, formats::CommaSeparator, serde_as};
 use smart_default::SmartDefault;

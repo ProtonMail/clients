@@ -1,5 +1,5 @@
 [package]
-name = "proton-account-api"
+name = "mail-account-api"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
@@ -10,11 +10,11 @@ license.workspace = true
 # proton deps
 proton-crypto-account = { workspace = true }
 proton-crypto-subtle = { workspace = true }
-proton-core-api = { workspace = true }
-proton-core-common = { workspace = true }
-proton-observability = { workspace = true }
-proton-task-service = { workspace = true }
-muon = { workspace = true }
+mail-core-api = { workspace = true }
+mail-core-common = { workspace = true }
+mail-observability = { workspace = true }
+mail-task-service = { workspace = true }
+mail-muon = { workspace = true }
 
 # crates.io dependencies
 aes-gcm = { workspace = true }
@@ -43,8 +43,8 @@ workspace = true
 tokio = { workspace = true }
 tracing-subscriber = { workspace = true }
 tempfile = { workspace = true }
-proton-log-service = { workspace = true }
-proton-issue-reporter-service = { workspace = true }
+mail-log-service = { workspace = true }
+mail-issue-reporter-service = { workspace = true }
 
 [[example]]
 name = "user_id"

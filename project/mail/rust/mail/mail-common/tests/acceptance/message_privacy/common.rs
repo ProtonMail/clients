@@ -1,23 +1,21 @@
-use proton_core_api::services::proton::AddressId;
-use proton_crypto_account::keys::{LocalAddressKey, LocalUserKey, UnlockedAddressKeys};
-use proton_crypto_inbox::message::EncryptableDraft;
-use proton_crypto_inbox::proton_crypto::crypto::PGPProviderSync;
-use proton_crypto_inbox::proton_crypto::new_pgp_provider;
-use proton_mail_api::services::proton::common::{ConversationId, MessageId};
-use proton_mail_api::services::proton::response_data::{
+use mail_api::services::proton::common::{ConversationId, MessageId};
+use mail_api::services::proton::response_data::{
     MailSettings as ApiMailSettings, Message as ApiMessage, MessageBody as ApiMessageBody,
     MessageFlags as ApiMessageFlags, MessageMetadata as ApiMessageMetadata,
     MessageSender as ApiMessageSender, MimeType as ApiMimeType, ViewMode as ApiViewMode,
 };
-use proton_mail_common::datatypes::{
-    LocalMessageId, PrivacyInfoStatus, StrippedUTMInfo, TrackerInfo,
-};
-use proton_mail_common::test_utils::init::Params;
-use proton_mail_common::test_utils::message_body::{
+use mail_common::datatypes::{LocalMessageId, PrivacyInfoStatus, StrippedUTMInfo, TrackerInfo};
+use mail_common::test_utils::init::Params;
+use mail_common::test_utils::message_body::{
     TEST_USER_ADDRESS_ID, message_body_test_addresses, message_body_test_user_info,
     message_body_test_user_secret,
 };
-use proton_mail_common::{PrivacyWatchData, TrackerService};
+use mail_common::{PrivacyWatchData, TrackerService};
+use mail_core_api::services::proton::AddressId;
+use mail_crypto_inbox::message::EncryptableDraft;
+use mail_crypto_inbox::proton_crypto::crypto::PGPProviderSync;
+use mail_crypto_inbox::proton_crypto::new_pgp_provider;
+use proton_crypto_account::keys::{LocalAddressKey, LocalUserKey, UnlockedAddressKeys};
 use std::collections::HashMap;
 use std::time::Duration;
 use tokio::time::sleep;
@@ -76,7 +74,7 @@ pub async fn get_or_wait_for_privacy_data(
 }
 
 pub fn test_params() -> Params {
-    use proton_core_common::datatypes::ImageProxy;
+    use mail_core_common::datatypes::ImageProxy;
     Params {
         user_info: Some(message_body_test_user_info()),
         addresses: message_body_test_addresses(),

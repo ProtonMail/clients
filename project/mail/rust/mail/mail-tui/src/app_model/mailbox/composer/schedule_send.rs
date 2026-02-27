@@ -6,7 +6,7 @@ use crate::widgets::utils::parse_date_time;
 use crate::widgets::{TextInput, TextInputState};
 use chrono::Local;
 use crossterm::event::{Event, KeyCode, KeyEvent};
-use proton_mail_common::draft::ScheduleSendOptions;
+use mail_common::draft::ScheduleSendOptions;
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::prelude::Margin;

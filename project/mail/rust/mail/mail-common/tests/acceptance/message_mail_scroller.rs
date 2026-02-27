@@ -1,25 +1,20 @@
 use itertools::Itertools;
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::{
-    datatypes::SystemLabel,
-    models::{Address, Label, ModelIdExtension},
-};
-use proton_mail_api::services::proton::{
+use mail_api::services::proton::{
     common::MessageId,
     prelude::{GetMessagesResponse, RunningTasks},
     response_data::MessageMetadata as ApiMessageMetadata,
 };
-use proton_mail_common::{api_message_meta, datatypes::labels::ScrollOrderField};
-use proton_mail_common::{conv_id, message, msg_id};
-use proton_mail_common::{
+use mail_common::{api_message_meta, datatypes::labels::ScrollOrderField};
+use mail_common::{conv_id, message, msg_id};
+use mail_common::{
     datatypes::ReadFilter,
     models::{Conversation, Message, MessageCounter, MessageScrollData},
 };
-use proton_mail_common::{
+use mail_common::{
     datatypes::SystemLabelId,
     test_utils::{init::Params as TestParams, test_context::MailTestContext},
 };
-use proton_mail_common::{
+use mail_common::{
     models::LabelExt,
     test_utils::{
         scroller::{
@@ -28,12 +23,17 @@ use proton_mail_common::{
         test_context::MailUserContextTestExtension,
     },
 };
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::{
+    datatypes::SystemLabel,
+    models::{Address, Label, ModelIdExtension},
+};
 use velcro::hash_map;
 
-use proton_mail_common::datatypes::labels::ScrollOrderDir;
-use stash::orm::Model;
-use stash::params;
-use stash::stash::StashError;
+use mail_common::datatypes::labels::ScrollOrderDir;
+use mail_stash::orm::Model;
+use mail_stash::params;
+use mail_stash::stash::StashError;
 use std::{collections::HashMap, vec};
 use wiremock::{
     Mock, ResponseTemplate, Times,

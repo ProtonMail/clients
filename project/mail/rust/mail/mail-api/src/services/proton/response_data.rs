@@ -24,12 +24,12 @@
 //!
 
 use crate::services::proton::common::{AttachmentId, ConversationId, ExternalId, MessageId};
-use proton_core_api::services::proton::common::ApiErrorInfo;
-use proton_core_api::services::proton::{
+use mail_core_api::services::proton::common::ApiErrorInfo;
+use mail_core_api::services::proton::{
     Action, CoreEvent, EventId, LabelEvent, PrivateEmail, PrivateString, UserId,
 };
-use proton_core_api::services::proton::{AddressId, LabelId};
-use proton_crypto_inbox::attachment::{
+use mail_core_api::services::proton::{AddressId, LabelId};
+use mail_crypto_inbox::attachment::{
     AttachmentEncryptedSignature, AttachmentSignature, KeyPackets,
 };
 use serde::Deserialize;

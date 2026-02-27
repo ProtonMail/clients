@@ -1,11 +1,11 @@
 use crate::mail::datatypes::MovableSystemFolderAction;
 use crate::{UniffiEnum, UniffiRecord};
-use proton_core_common::utils::MapVec as _;
-use proton_mail_common::actions::{
+use mail_common::actions::{
     AllConversationActions as RealAllConversationActions,
     ConversationAction as RealConversationAction,
     ConversationActionSheet as RealConversationActionSheet,
 };
+use mail_core_common::utils::MapVec as _;
 
 /// All actions on conversation selection.
 #[derive(Debug, Clone, PartialEq, UniffiRecord)]

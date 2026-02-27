@@ -29,19 +29,19 @@ pub use marker::{AccountDb, UserDb};
 
 /// Re-exported proc macros.
 ///
-/// This module re-exports the proc macros defined in the `stash-macros` crate.
+/// This module re-exports the proc macros defined in the `mail_stash-macros` crate.
 /// It is here for convenience, so that users of the macros do not need to
-/// import them from the `stash-macros` crate directly.
+/// import them from the `mail_stash-macros` crate directly.
 ///
 pub mod macros {
-    pub use stash_macros::DbRecord;
-    pub use stash_macros::Model;
+    pub use mail_stash_macros::DbRecord;
+    pub use mail_stash_macros::Model;
 }
 
 /// Re-exported external types.
 ///
 /// This module re-exports types from external crates that are used in the
-/// `stash` crate. This is done to make it easier for users of the `stash`
+/// `mail_stash` crate. This is done to make it easier for users of the `mail_stash`
 /// crate to access these types without needing to import them from the
 /// external crates directly.
 ///

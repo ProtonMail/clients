@@ -33,14 +33,14 @@
 //! The following types are excluded from export via UniFFI, as they do not need
 //! to be used outside of the Rust internals:
 //!
-//!   - [`AddressKeys`](proton_core_common::datatypes::AddressKeys)
-//!   - [`UserKeys`](proton_core_common::datatypes::UserKeys)
+//!   - [`AddressKeys`](mail_core_common::datatypes::AddressKeys)
+//!   - [`UserKeys`](mail_core_common::datatypes::UserKeys)
 //!
 //! The following fields are excluded from represented types (in addition to
 //! internal database fields):
 //!
-//!   - [`Address::keys`](proton_core_common::datatypes::Address::keys)
-//!   - [`User::keys`](proton_core_common::datatypes::User::keys)
+//!   - [`Address::keys`](mail_core_common::datatypes::Address::keys)
+//!   - [`User::keys`](mail_core_common::datatypes::User::keys)
 //!
 
 mod account_details;
@@ -63,16 +63,17 @@ pub use self::contact_list::*;
 pub use self::issue_report::*;
 pub use self::timestamp::*;
 use itertools::Itertools;
-use muon::common::IntoDyn;
-use muon::common::ParseEndpointErr;
-use muon::env::EnvId;
-use proton_core_api::session::EnvIdExt;
-use proton_mail_api::services::proton::common::MessageId;
-use stash::orm::Model;
+use mail_api::services::proton::common::MessageId;
+use mail_core_api::session::EnvIdExt;
+use mail_muon::common::IntoDyn;
+use mail_muon::common::ParseEndpointErr;
+use mail_muon::env::EnvId;
+use mail_stash::orm::Model;
 use tracing::error;
 
 use core::fmt;
-use proton_core_api::services::proton::{
+use mail_common::datatypes::{LocalAttachmentId, LocalConversationId, LocalMessageId};
+use mail_core_api::services::proton::{
     AppleRecurringReceiptDetails as RealAppleRecurringReceiptDetails,
     GetPaymentsPlansOptions as RealGetPaymentsPlansOptions,
     GoogleRecurringReceiptDetails as RealGoogleRecurringReceiptDetails, Location as RealLocation,
@@ -88,7 +89,7 @@ use proton_core_api::services::proton::{
     PlanVendor as RealPlanVendor, PlanVendorName as RealPlanVendorName,
     Subscription as RealSubscription, SubscriptionId,
 };
-use proton_core_common::datatypes::{
+use mail_core_common::datatypes::{
     AddressSignedKeyList as RealAddressSignedKeyList, AddressStatus as RealAddressStatus,
     AddressType as RealAddressType, ApiConfig as RealApiConfig, AppDetails as RealAppDetails,
     BlackFridayWave as RealBlackFridayWave,
@@ -103,12 +104,11 @@ use proton_core_common::datatypes::{
     UserMnemonicStatus as RealUserMnemonicStatus, UserType as RealUserType,
     WeekStart as RealWeekStart,
 };
-use proton_core_common::models::{
+use mail_core_common::models::{
     Address as RealAddress, ContactCard as RealContactCard, Role as RealRole, User as RealUser,
     UserSettings as RealUserSettings,
 };
 use proton_crypto_account::contacts::ContactCardType as RealCardType;
-use proton_mail_common::datatypes::{LocalAttachmentId, LocalConversationId, LocalMessageId};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::ops::Deref;

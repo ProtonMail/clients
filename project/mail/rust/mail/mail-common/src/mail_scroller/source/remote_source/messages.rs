@@ -12,19 +12,19 @@ use crate::{
 };
 use anyhow::anyhow;
 use itertools::Itertools;
-use proton_action_queue::action::ActionGroup;
-use proton_action_queue::queue::Queue;
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::{services::proton::LabelId, session::Session};
-use proton_core_common::datatypes::{LocalLabelId, UnixTimestamp};
-use proton_core_common::models::Label;
-use proton_core_common::models::ModelExtension;
-use proton_mail_api::services::proton::{
+use mail_action_queue::action::ActionGroup;
+use mail_action_queue::queue::Queue;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_api::services::proton::{
     ProtonMail, common::MessageId, prelude::GetMessagesOptions, prelude::GetMessagesResponse,
     response_data::MessageMetadata as ApiMessageMetadata,
 };
-use stash::UserDb;
-use stash::stash::{Bond, Tether};
+use mail_core_api::{services::proton::LabelId, session::Session};
+use mail_core_common::datatypes::{LocalLabelId, UnixTimestamp};
+use mail_core_common::models::Label;
+use mail_core_common::models::ModelExtension;
+use mail_stash::UserDb;
+use mail_stash::stash::{Bond, Tether};
 use std::ops::ControlFlow;
 use tracing::{debug, error, info, instrument};
 

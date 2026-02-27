@@ -6,18 +6,18 @@ use crate::models::{
     Attachment, AttachmentType, DraftAttachmentMetadata, DraftAttachmentOwnership, DraftMetadata,
     MetadataId,
 };
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionGroup, ActionId, DefaultVersionConverter, Handler, Priority, Type, WriterGuard,
 };
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::session::Session;
-use proton_core_common::models::ModelExtension;
-use proton_mail_api::services::proton::ProtonMail;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_api::services::proton::ProtonMail;
+use mail_core_api::session::Session;
+use mail_core_common::models::ModelExtension;
+use mail_stash::orm::Model as _;
+use mail_stash::stash::{Bond, Tether};
+use mail_stash::{UserDb, params};
 use serde::Deserialize;
 use serde_with::serde_derive::Serialize;
-use stash::orm::Model as _;
-use stash::stash::{Bond, Tether};
-use stash::{UserDb, params};
 use tracing::{debug, error, info};
 
 #[derive(Serialize, Deserialize)]

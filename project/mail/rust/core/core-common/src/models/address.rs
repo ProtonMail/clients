@@ -6,14 +6,14 @@ use crate::datatypes::{
 use crate::event_loop::events::Action;
 use crate::models::ModelIdExtension;
 use crate::{CoreContextError, CoreContextResult};
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::services::proton::{Address as ApiAddress, AddressId, ProtonCore};
-use stash::exports::Transaction;
-use stash::macros::Model;
-use stash::orm::{DbRecord, Model, ModelHooks};
-use stash::rusqlite::params_from_iter;
-use stash::stash::{Bond, Stash, StashError, StashResult, Tether};
-use stash::{UserDb, params};
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_core_api::services::proton::{Address as ApiAddress, AddressId, ProtonCore};
+use mail_stash::exports::Transaction;
+use mail_stash::macros::Model;
+use mail_stash::orm::{DbRecord, Model, ModelHooks};
+use mail_stash::rusqlite::params_from_iter;
+use mail_stash::stash::{Bond, Stash, StashError, StashResult, Tether};
+use mail_stash::{UserDb, params};
 use std::sync::Arc;
 use tracing::{error, warn};
 
@@ -105,7 +105,7 @@ impl Address {
     pub async fn initialize<API>(
         watcher: Arc<InitializationWatcher>,
         api: &API,
-        stash: &Stash<UserDb>,
+        mail_stash: &Stash<UserDb>,
     ) -> Result<(), InitializationError<CoreContextError>>
     where
         API: ProtonCore,
@@ -114,7 +114,7 @@ impl Address {
             watcher,
             Self::INIT_KEY,
             &[],
-            stash.connection().await?,
+            mail_stash.connection().await?,
             async || Self::sync(api).await,
             |tx, res| {
                 res.store(tx)?;

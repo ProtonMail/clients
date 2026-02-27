@@ -4,8 +4,8 @@
 //! (`SQLite`) for persisting search index blobs.
 
 use async_trait::async_trait;
-use stash::UserDb;
-use stash::stash::Stash;
+use mail_stash::UserDb;
+use mail_stash::stash::Stash;
 use tracing::debug;
 
 use crate::error::SearchError;
@@ -16,20 +16,20 @@ use crate::traits::BlobStorage;
 /// Stores search index blobs in `SQLite` via the Stash connection pool.
 #[derive(Clone)]
 pub struct StashBlobStorage {
-    stash: Stash<UserDb>,
+    mail_stash: Stash<UserDb>,
 }
 
 impl StashBlobStorage {
     /// Create a new Stash-based blob storage
     #[must_use]
-    pub fn new(stash: Stash<UserDb>) -> Self {
-        Self { stash }
+    pub fn new(mail_stash: Stash<UserDb>) -> Self {
+        Self { mail_stash }
     }
 
     /// Get a reference to the underlying Stash instance
     #[must_use]
-    pub fn stash(&self) -> &Stash<UserDb> {
-        &self.stash
+    pub fn mail_stash(&self) -> &Stash<UserDb> {
+        &self.mail_stash
     }
 
     /// Save multiple blobs atomically in a single transaction
@@ -40,15 +40,15 @@ impl StashBlobStorage {
         &self,
         blobs: Vec<(String, Vec<u8>)>,
     ) -> Result<(), SearchError> {
-        use stash::params;
-        use stash::stash::StashError as SE;
+        use mail_stash::params;
+        use mail_stash::stash::StashError as SE;
 
         if blobs.is_empty() {
             return Ok(());
         }
 
         let mut tether = self
-            .stash
+            .mail_stash
             .connection()
             .await
             .map_err(|e| SearchError::BlobStorage(format!("Failed to get connection: {e}")))?;
@@ -80,14 +80,14 @@ impl BlobStorage for StashBlobStorage {
     async fn load(&self, name: &str) -> Result<Option<Vec<u8>>, SearchError> {
         let name_owned = name.to_owned();
         let tether = self
-            .stash
+            .mail_stash
             .connection()
             .await
             .map_err(|e| SearchError::BlobStorage(format!("Failed to get connection: {e}")))?;
 
         let blob = tether
             .sync_query(move |conn| {
-                use stash::rusqlite::OptionalExtension;
+                use mail_stash::rusqlite::OptionalExtension;
                 conn.query_row(
                     "SELECT blob_data FROM search_index_blobs WHERE blob_name = ?1",
                     [&name_owned],
@@ -95,7 +95,7 @@ impl BlobStorage for StashBlobStorage {
                 )
                 .optional()
                 .map_err(|e| {
-                    stash::stash::StashError::Custom(anyhow::anyhow!(
+                    mail_stash::stash::StashError::Custom(anyhow::anyhow!(
                         "Failed to load blob '{}': {}",
                         name_owned,
                         e
@@ -114,8 +114,8 @@ impl BlobStorage for StashBlobStorage {
     }
 
     async fn save(&self, name: &str, data: &[u8]) -> Result<(), SearchError> {
-        use stash::params;
-        use stash::stash::StashError as SE;
+        use mail_stash::params;
+        use mail_stash::stash::StashError as SE;
 
         let data_len = data.len();
         let name_owned = name.to_owned();
@@ -123,7 +123,7 @@ impl BlobStorage for StashBlobStorage {
         let timestamp = chrono::Utc::now().timestamp();
 
         let mut tether = self
-            .stash
+            .mail_stash
             .connection()
             .await
             .map_err(|e| SearchError::BlobStorage(format!("Failed to get connection: {e}")))?;
@@ -146,13 +146,13 @@ impl BlobStorage for StashBlobStorage {
     }
 
     async fn delete(&self, name: &str) -> Result<bool, SearchError> {
-        use stash::params;
-        use stash::stash::StashError as SE;
+        use mail_stash::params;
+        use mail_stash::stash::StashError as SE;
 
         let name_owned = name.to_owned();
 
         let mut tether = self
-            .stash
+            .mail_stash
             .connection()
             .await
             .map_err(|e| SearchError::BlobStorage(format!("Failed to get connection: {e}")))?;
@@ -178,10 +178,10 @@ impl BlobStorage for StashBlobStorage {
     }
 
     async fn clear_all(&self) -> Result<(), SearchError> {
-        use stash::stash::StashError as SE;
+        use mail_stash::stash::StashError as SE;
 
         let mut tether = self
-            .stash
+            .mail_stash
             .connection()
             .await
             .map_err(|e| SearchError::BlobStorage(format!("Failed to get connection: {e}")))?;

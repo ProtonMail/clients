@@ -3,17 +3,17 @@ use crate::datatypes::{LocalMessageId, MessageFlags, MimeType};
 use crate::models::Message;
 use crate::{AppError, MailUserContext};
 use anyhow::Context as _;
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionDependencyKeys, DefaultVersionConverter, Type, WriterGuard,
 };
-use proton_action_queue::action::{ActionId, Handler};
-use proton_action_queue::rebase::{RebaseChangeSet, RebaseKey};
-use proton_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;
-use proton_core_common::models::ModelIdExtension;
-use proton_mail_api::services::proton::ProtonMail;
+use mail_action_queue::action::{ActionId, Handler};
+use mail_action_queue::rebase::{RebaseChangeSet, RebaseKey};
+use mail_api::services::proton::ProtonMail;
+use mail_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;
+use mail_core_common::models::ModelIdExtension;
+use mail_stash::UserDb;
+use mail_stash::stash::Bond;
 use serde::{Deserialize, Serialize};
-use stash::UserDb;
-use stash::stash::Bond;
 use std::sync::Weak;
 use tracing::info;
 

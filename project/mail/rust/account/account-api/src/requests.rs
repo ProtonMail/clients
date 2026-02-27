@@ -1,5 +1,5 @@
 use crate::shared::challenge::ChallengePayload;
-use muon::rest::auth::v4::fido2;
+use mail_muon::rest::auth::v4::fido2;
 use proton_crypto_account::keys::{LocalAddressKey, LocalSignedKeyList};
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
@@ -424,7 +424,7 @@ mod tests {
     use crate::shared::challenge::{Behavior, ChallengeInfo};
 
     use super::*;
-    use proton_core_common::device::DeviceInfo;
+    use mail_core_common::device::DeviceInfo;
     use serde_json;
 
     #[test]

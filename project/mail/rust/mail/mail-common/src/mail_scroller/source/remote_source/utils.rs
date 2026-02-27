@@ -1,11 +1,11 @@
 use crate::{MailContextError, models::LabelExt};
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::{
+use mail_api::services::proton::prelude::RunningTasks;
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::{
     datatypes::LocalLabelId,
     models::{Label, ModelExtension},
 };
-use proton_mail_api::services::proton::prelude::RunningTasks;
-use stash::stash::Tether;
+use mail_stash::stash::Tether;
 use std::ops::ControlFlow;
 use tracing::{info, instrument};
 

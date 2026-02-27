@@ -7,7 +7,7 @@
 use crate::actions::MovableSystemFolderAction;
 use crate::datatypes::SystemLabelId;
 use crate::decrypted_message::ThemeOpts;
-use proton_core_api::services::proton::LabelId;
+use mail_core_api::services::proton::LabelId;
 
 /// Common actions shared between ListAction and MessageAction
 #[derive(Debug, Clone, PartialEq)]

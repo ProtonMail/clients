@@ -4,22 +4,22 @@ use crate::models::Message;
 use crate::{
     MailContextResult, MailUserContext, datatypes::mail_notifications::PushNotificationQuickAction,
 };
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionId, Handler, Priority, Type, VersionConverter, VersionConverterError,
     WriterGuard, deserialize,
 };
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::exports::RetryPolicy;
-use proton_core_api::session::Session;
-use proton_core_common::datatypes::SystemLabel;
-use proton_core_common::db::account::CoreSession;
-use proton_core_common::models::{LabelError, ModelIdExtension};
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_core_api::exports::RetryPolicy;
+use mail_core_api::session::Session;
+use mail_core_common::datatypes::SystemLabel;
+use mail_core_common::db::account::CoreSession;
+use mail_core_common::models::{LabelError, ModelIdExtension};
 
-use proton_mail_api::services::proton::ProtonMail;
-use proton_mail_api::services::proton::common::MessageId;
+use mail_api::services::proton::ProtonMail;
+use mail_api::services::proton::common::MessageId;
+use mail_stash::UserDb;
+use mail_stash::stash::{Bond, Tether};
 use serde::{Deserialize, Serialize};
-use stash::UserDb;
-use stash::stash::{Bond, Tether};
 use std::sync::Arc;
 use std::time::Duration;
 use tracing::{debug, info, instrument, warn};
@@ -204,7 +204,7 @@ impl VersionConverter<UserDb> for PushNotificationActionConverter {
         old_version: u32,
         current_version: u32,
         data: &[u8],
-    ) -> proton_action_queue::action::FactoryResult<Self::Output> {
+    ) -> mail_action_queue::action::FactoryResult<Self::Output> {
         if !(old_version <= 1 && current_version == 1) {
             return Err(VersionConverterError::InvalidVersion(current_version).into());
         }

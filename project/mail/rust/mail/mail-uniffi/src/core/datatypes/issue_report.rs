@@ -1,5 +1,5 @@
 use crate::{UniffiEnum, UniffiRecord};
-use proton_core_common::datatypes::{ClientType as RealClientType, IssueReport as RealIssueReport};
+use mail_core_common::datatypes::{ClientType as RealClientType, IssueReport as RealIssueReport};
 use std::path::PathBuf;
 
 /// Representation of User's Report of an issue.

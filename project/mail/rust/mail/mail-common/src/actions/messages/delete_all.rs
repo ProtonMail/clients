@@ -3,19 +3,19 @@ use crate::actions::MailActionError;
 use crate::datatypes::LocalMessageId;
 use crate::models::{ConversationCounter, LabelExt, Message, MessageCounter};
 use anyhow::anyhow;
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
 };
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::session::Session;
-use proton_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;
-use proton_core_common::datatypes::LocalLabelId;
-use proton_core_common::models::{Label, LabelError, ModelExtension};
-use proton_mail_api::services::proton::ProtonMail as _;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_api::services::proton::ProtonMail as _;
+use mail_core_api::session::Session;
+use mail_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;
+use mail_core_common::datatypes::LocalLabelId;
+use mail_core_common::models::{Label, LabelError, ModelExtension};
+use mail_stash::UserDb;
+use mail_stash::orm::Model;
+use mail_stash::stash::{Bond, Tether};
 use serde::{Deserialize, Serialize};
-use stash::UserDb;
-use stash::orm::Model;
-use stash::stash::{Bond, Tether};
 use std::mem;
 use std::sync::Weak;
 use tracing::{info, instrument, warn};

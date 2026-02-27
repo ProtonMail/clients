@@ -1,6 +1,6 @@
 use crate::core::datatypes::Id;
 use crate::mail::datatypes::{LabelColor, LabelDescription};
-use proton_mail_common::datatypes::labels::custom_folder::CustomFolder as RealCustomFolder;
+use mail_common::datatypes::labels::custom_folder::CustomFolder as RealCustomFolder;
 use uniffi::Record as UniffiRecord;
 
 /// Contextual representation of a `Label` when it is opened for display.

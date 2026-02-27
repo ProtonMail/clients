@@ -1,11 +1,11 @@
 use crate::UserContext;
 use crate::actions::register_actions;
 
-use proton_action_queue::queue::Queue;
-use proton_core_api::services::proton::{SessionId, UserId};
-use proton_core_api::session::Session;
-use stash::UserDb;
-use stash::stash::Stash;
+use mail_action_queue::queue::Queue;
+use mail_core_api::services::proton::{SessionId, UserId};
+use mail_core_api::session::Session;
+use mail_stash::UserDb;
+use mail_stash::stash::Stash;
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
 use std::path::PathBuf;

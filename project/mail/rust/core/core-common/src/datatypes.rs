@@ -5,7 +5,7 @@
 //! module, where they represent child data structures for the models' fields.
 //! The models themselves should not be placed in this module.
 //!
-//! All data types used by [`Model`](stash::macros::Model) fields need to be
+//! All data types used by [`Model`](mail_stash::macros::Model) fields need to be
 //! convertible to and from database-compatible format using [`ToSql`] and
 //! [`FromSql`]. They do not generally need to be serializable or
 //! deserializable, as they are not used for network communication or any other
@@ -67,8 +67,8 @@ use derive_more::Into;
 use derive_more::derive::TryFrom;
 use itertools::Itertools;
 use jiff::civil::Weekday;
-use proton_core_api::services::proton::muon::rt::DynResolver;
-use proton_core_api::services::proton::{
+use mail_core_api::services::proton::mail_muon::rt::DynResolver;
+use mail_core_api::services::proton::{
     AddressFlags as ApiAddressFlags, AddressSignedKeyList as ApiAddressSignedKeyList,
     AddressStatus as ApiAddressStatus, AddressType as ApiAddressType,
     ContactSendingPreferences as ApiContactSendingPreferences, DateFormat as ApiDateFormat,
@@ -80,21 +80,21 @@ use proton_core_api::services::proton::{
     TwoFa as ApiTwoFa, UserMnemonicStatus as ApiUserMnemonicStatus, UserType as ApiUserType,
     WeekStart as ApiWeekStart,
 };
-use proton_core_api::services::proton::{
+use mail_core_api::services::proton::{
     AddressId, ContactEmailId, ContactId, DeviceEnvironment as ApiDeviceEnvironment, LabelId,
     LabelType as ApiLabelType, LightOrDarkMode as ApiLightOrDarkMode,
 };
-use proton_core_api::session::{Config as RealApiConfig, EnvId};
-use proton_core_api::store::{MbpMode, TfaMode};
+use mail_core_api::session::{Config as RealApiConfig, EnvId};
+use mail_core_api::store::{MbpMode, TfaMode};
+use mail_sqlite3::rusqlite::Error as SqlError;
+use mail_stash::exports::{
+    FromSql, FromSqlError, FromSqlResult, SqliteError, ToSql, ToSqlOutput, Value, ValueRef,
+};
+use mail_stash::utils::sql_using_serde;
 use proton_crypto_account::keys::{AddressKeys as RealAddressKeys, UserKeys as RealUserKeys};
-use proton_sqlite3::rusqlite::Error as SqlError;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use smart_default::SmartDefault;
-use stash::exports::{
-    FromSql, FromSqlError, FromSqlResult, SqliteError, ToSql, ToSqlOutput, Value, ValueRef,
-};
-use stash::utils::sql_using_serde;
 use std::fmt::{self, Debug, Display, Formatter};
 use std::ops::Deref;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -949,7 +949,7 @@ impl FromSql for InitializedComponentState {
 }
 
 impl ToSql for InitializedComponentState {
-    fn to_sql(&self) -> proton_sqlite3::rusqlite::Result<ToSqlOutput<'_>> {
+    fn to_sql(&self) -> mail_sqlite3::rusqlite::Result<ToSqlOutput<'_>> {
         Ok(ToSqlOutput::Owned(Value::Integer(*self as i64)))
     }
 }
@@ -1053,7 +1053,7 @@ pub struct AppDetails {
     pub version: String,
 }
 
-/// Note, this is almost identical to [`proton_core_api::session::Config`], however instead of storing
+/// Note, this is almost identical to [`mail_core_api::session::Config`], however instead of storing
 /// concatenated `app_version`, it keeps [`AppDetails`] instead.
 #[derive(Clone)]
 pub struct ApiConfig {
@@ -1080,7 +1080,7 @@ impl From<ApiConfig> for RealApiConfig {
             version,
         } = config.app_details;
         Self {
-            app_version: proton_core_api::session::format_api_app_version(
+            app_version: mail_core_api::session::format_api_app_version(
                 &platform, &product, &version,
             ),
             user_agent: config.user_agent,
@@ -1262,8 +1262,8 @@ pub trait LocalIdMarker: Sized {
 /// # Example
 ///
 /// ```
-/// use proton_core_api::declare_proton_id;
-/// use proton_core_common::declare_local_id;
+/// use mail_core_api::declare_proton_id;
+/// use mail_core_common::declare_local_id;
 ///
 /// declare_proton_id!(pub MyProtonId);
 /// declare_local_id!(pub MyLocalProtonId => MyProtonId);
@@ -1305,14 +1305,14 @@ macro_rules! declare_local_id {
             }
         }
 
-        impl ::stash::exports::FromSql for $name {
-            fn column_result(value: ::stash::exports::ValueRef<'_>) -> ::stash::exports::FromSqlResult<Self> {
+        impl ::mail_stash::exports::FromSql for $name {
+            fn column_result(value: ::mail_stash::exports::ValueRef<'_>) -> ::mail_stash::exports::FromSqlResult<Self> {
                 u64::column_result(value).map($name)
             }
         }
 
-        impl ::stash::exports::ToSql for $name {
-            fn to_sql(&self) -> Result<::stash::exports::ToSqlOutput<'_>, ::stash::exports::SqliteError> {
+        impl ::mail_stash::exports::ToSql for $name {
+            fn to_sql(&self) -> Result<::mail_stash::exports::ToSqlOutput<'_>, ::mail_stash::exports::SqliteError> {
                 self.0.to_sql()
             }
         }
@@ -1322,22 +1322,22 @@ macro_rules! declare_local_id {
         }
 
         impl $crate::actions::dependency_builder::LocalIdActionDepExt for $name {
-            fn to_dependency_key(&self) -> ::proton_action_queue::action::ActionDependencyKey {
-                ::proton_action_queue::action::ActionDependencyKey::from(format!("dep-{}-{}",stringify!($name), self.0))
+            fn to_dependency_key(&self) -> ::mail_action_queue::action::ActionDependencyKey {
+                ::mail_action_queue::action::ActionDependencyKey::from(format!("dep-{}-{}",stringify!($name), self.0))
             }
 
-            fn to_create_dependency_key(&self) -> ::proton_action_queue::action::ActionDependencyKey {
-                ::proton_action_queue::action::ActionDependencyKey::from(format!("create-{}-{}",stringify!($name), self.0))
+            fn to_create_dependency_key(&self) -> ::mail_action_queue::action::ActionDependencyKey {
+                ::mail_action_queue::action::ActionDependencyKey::from(format!("create-{}-{}",stringify!($name), self.0))
             }
 
-            fn to_custom_dependency_key(&self, prefix:&str) -> ::proton_action_queue::action::ActionDependencyKey {
-                ::proton_action_queue::action::ActionDependencyKey::from(format!("{prefix}-{}-{}",stringify!($name), self.0))
+            fn to_custom_dependency_key(&self, prefix:&str) -> ::mail_action_queue::action::ActionDependencyKey {
+                ::mail_action_queue::action::ActionDependencyKey::from(format!("{prefix}-{}-{}",stringify!($name), self.0))
             }
         }
 
-        impl From<$name> for ::proton_action_queue::rebase::RebaseKey {
+        impl From<$name> for ::mail_action_queue::rebase::RebaseKey {
             fn from(id: $name) -> Self {
-                ::proton_action_queue::rebase::RebaseKey::from(format!("{}-{}", stringify!($name), id.0))
+                ::mail_action_queue::rebase::RebaseKey::from(format!("{}-{}", stringify!($name), id.0))
             }
         }
     };

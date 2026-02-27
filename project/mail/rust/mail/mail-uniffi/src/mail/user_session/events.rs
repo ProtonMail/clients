@@ -3,12 +3,12 @@ use crate::errors::{EventError, EventErrorReason, ProtonError, VoidEventResult};
 use crate::mail::MailUserSession;
 use crate::uniffi_async;
 use core_event_loop::EventLoopError;
-use proton_action_queue::observers::{ActionFailureObserver, ActionFailureReason};
-use proton_action_queue::queue::{ActionError, AsActionError};
-use proton_core_common::actions::event_poll::{ActionEventLoopError, EventPoll};
-use proton_mail_common::ProtonMailError as RealProtonMailError;
-use proton_mail_common::Unexpected;
-use stash::UserDb;
+use mail_action_queue::observers::{ActionFailureObserver, ActionFailureReason};
+use mail_action_queue::queue::{ActionError, AsActionError};
+use mail_common::ProtonMailError as RealProtonMailError;
+use mail_common::Unexpected;
+use mail_core_common::actions::event_poll::{ActionEventLoopError, EventPoll};
+use mail_stash::UserDb;
 use std::sync::Arc;
 use tokio::task::AbortHandle;
 

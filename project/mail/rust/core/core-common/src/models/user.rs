@@ -6,20 +6,22 @@ use crate::datatypes::{
     UserType,
 };
 use derive_more::TryFrom;
-use proton_core_api::service::ApiServiceError;
-use proton_core_api::services::proton::User as ApiUser;
-use proton_core_api::services::proton::UserId;
-use proton_core_api::services::proton::{
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::User as ApiUser;
+use mail_core_api::services::proton::UserId;
+use mail_core_api::services::proton::{
     DelinquentState as ApiDelinquentState, ProtonCore, Role as ApiRole,
 };
+use mail_stash::UserDb;
+use mail_stash::exports::{
+    FromSql, FromSqlError, SqliteError, ToSql, ToSqlOutput, Transaction, Value,
+};
+use mail_stash::macros::Model;
+use mail_stash::orm::Model;
+use mail_stash::stash::Stash;
+use mail_stash::stash::StashError;
 use serde::{Deserialize, Serialize};
 use smart_default::SmartDefault;
-use stash::UserDb;
-use stash::exports::{FromSql, FromSqlError, SqliteError, ToSql, ToSqlOutput, Transaction, Value};
-use stash::macros::Model;
-use stash::orm::Model;
-use stash::stash::Stash;
-use stash::stash::StashError;
 
 use super::{InitializationError, InitializationWatcher, InitializedComponent, UserSettings};
 
@@ -144,7 +146,7 @@ impl User {
     pub async fn initialize_with_settings<API>(
         watcher: Arc<InitializationWatcher>,
         api: &API,
-        stash: &Stash<UserDb>,
+        mail_stash: &Stash<UserDb>,
     ) -> Result<(), InitializationError<CoreContextError>>
     where
         API: ProtonCore,
@@ -153,7 +155,7 @@ impl User {
             watcher,
             Self::INIT_KEY,
             &[],
-            stash.connection().await?,
+            mail_stash.connection().await?,
             async move || Ok(Self::sync_user_and_settings(api).await?),
             |tx, res| {
                 res.store(tx)?;
@@ -207,7 +209,9 @@ impl SyncedUserSettings {
 pub struct PaidSubscription(pub u32);
 
 impl FromSql for PaidSubscription {
-    fn column_result(value: stash::exports::ValueRef<'_>) -> stash::exports::FromSqlResult<Self> {
+    fn column_result(
+        value: mail_stash::exports::ValueRef<'_>,
+    ) -> mail_stash::exports::FromSqlResult<Self> {
         let val = u32::column_result(value)?;
         Ok(Self(val))
     }
@@ -266,7 +270,9 @@ impl From<ApiRole> for Role {
 }
 
 impl FromSql for Role {
-    fn column_result(value: stash::exports::ValueRef<'_>) -> stash::exports::FromSqlResult<Self> {
+    fn column_result(
+        value: mail_stash::exports::ValueRef<'_>,
+    ) -> mail_stash::exports::FromSqlResult<Self> {
         let val = u32::column_result(value)?;
         Ok(Self::try_from(val).unwrap_or(Role::Unknown(val)))
     }
@@ -308,7 +314,9 @@ impl From<ApiDelinquentState> for DelinquentState {
 }
 
 impl FromSql for DelinquentState {
-    fn column_result(value: stash::exports::ValueRef<'_>) -> stash::exports::FromSqlResult<Self> {
+    fn column_result(
+        value: mail_stash::exports::ValueRef<'_>,
+    ) -> mail_stash::exports::FromSqlResult<Self> {
         let val = u32::column_result(value)?;
         Self::try_from(val).map_err(|_| FromSqlError::OutOfRange(i64::from(val)))
     }

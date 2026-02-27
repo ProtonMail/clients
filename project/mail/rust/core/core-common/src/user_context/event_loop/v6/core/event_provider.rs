@@ -5,7 +5,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use core_event_loop::{EventProvider, EventProviderError, EventProviderResult, RawEvent};
-use proton_core_api::services::proton::ProtonCore;
+use mail_core_api::services::proton::ProtonCore;
 
 #[async_trait]
 impl EventProvider<EventManagerContext> for CoreEventLoopV6Context {

@@ -2,7 +2,7 @@ use crate::{
     CalendarAttendeeId, CalendarAttendeeToken, CalendarColor, CalendarEventId, CalendarId,
     CalendarKeyId, CalendarMemberId, CalendarNotification,
 };
-use proton_core_api::services::proton::AddressId;
+use mail_core_api::services::proton::AddressId;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use serde_with::{BoolFromInt, serde_as};

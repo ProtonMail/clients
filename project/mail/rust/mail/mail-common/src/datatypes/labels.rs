@@ -1,16 +1,16 @@
 use crate::AppError;
 use crate::datatypes::{LabelColor, SystemLabelId, ViewMode};
 use crate::models::{ConversationCounter, MailLabel, MailSettings, MessageCounter};
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::datatypes::{LocalLabelId, SystemLabel};
-use proton_core_common::models::{Label, ModelExtension, ModelIdExtension};
-use proton_mail_api::services::proton::prelude::MessageMetadataSortMode;
-use proton_sqlite3::rusqlite::types::{
+use mail_api::services::proton::prelude::MessageMetadataSortMode;
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::datatypes::{LocalLabelId, SystemLabel};
+use mail_core_common::models::{Label, ModelExtension, ModelIdExtension};
+use mail_sqlite3::rusqlite::types::{
     FromSql, FromSqlError, FromSqlResult, ToSqlOutput, Value, ValueRef,
 };
-use proton_sqlite3::rusqlite::{Error as SqliteError, ToSql};
-use stash::orm::Model;
-use stash::stash::{StashError, Tether};
+use mail_sqlite3::rusqlite::{Error as SqliteError, ToSql};
+use mail_stash::orm::Model;
+use mail_stash::stash::{StashError, Tether};
 
 pub mod custom_folder;
 pub mod custom_labels;

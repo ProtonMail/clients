@@ -2,11 +2,11 @@ use crate::datatypes::{
     MobileAction, MobileSetting, MobileSettings, MovableSystemFolder, SystemLabelId,
 };
 use crate::models::{Conversation, MailSettings, Message};
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::models::{Label, ModelIdExtension};
-use proton_mail_common::test_utils::db::new_test_connection;
-use proton_mail_common::test_utils::utils::create_address;
-use stash::orm::Model;
+use mail_common::test_utils::db::new_test_connection;
+use mail_common::test_utils::utils::create_address;
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::models::{Label, ModelIdExtension};
+use mail_stash::orm::Model;
 use std::sync::LazyLock;
 
 // Import shared test infrastructure
@@ -15,7 +15,7 @@ use crate::test_utils::toolbar_actions::{TestActions, TestCase, create_default_l
 mod message {
     use super::*;
     use crate::datatypes::MovableSystemFolder;
-    use stash::stash::StashError;
+    use mail_stash::stash::StashError;
     use test_case::test_case;
 
     static DEFAULT_CASE: LazyLock<TestCase<Vec<Message>>> = LazyLock::new(|| TestCase {
@@ -323,8 +323,8 @@ mod message {
     #[tokio::test]
     async fn bottom_bar_actions(test_case: &TestCase<Vec<Message>>) {
         // Setup
-        let stash = new_test_connection().await;
-        let mut tether = stash.connection().await.unwrap();
+        let mail_stash = new_test_connection().await;
+        let mut tether = mail_stash.connection().await.unwrap();
         let address = create_address(&mut tether).await;
         let mut settings = MailSettings::get_or_default(&tether).await;
         settings.mobile_settings = Some(MobileSettings {
@@ -375,7 +375,7 @@ mod conversation {
     use super::*;
     use crate::datatypes::ContextualConversation;
     use crate::models::ConversationLabel;
-    use stash::stash::StashError;
+    use mail_stash::stash::StashError;
     use test_case::test_case;
 
     static INBOX_LABEL_READ: LazyLock<ConversationLabel> = LazyLock::new(|| ConversationLabel {
@@ -805,8 +805,8 @@ mod conversation {
     #[tokio::test]
     async fn bottom_bar_actions(test_case: &TestCase<Vec<Conversation>>) {
         // Setup
-        let stash = new_test_connection().await;
-        let mut tether = stash.connection().await.unwrap();
+        let mail_stash = new_test_connection().await;
+        let mut tether = mail_stash.connection().await.unwrap();
 
         let mut settings = MailSettings::get_or_default(&tether).await;
         settings.mobile_settings = Some(MobileSettings {

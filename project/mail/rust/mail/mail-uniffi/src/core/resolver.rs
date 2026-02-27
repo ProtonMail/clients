@@ -1,10 +1,10 @@
 use std::net::IpAddr as StdIpAddr;
 use std::sync::Arc;
 
-use muon::Result as MuonResult;
-use muon::common::{Addr, Host, Name};
-use muon::rt::{ResolveRes as MuonResolveRes, Resolver as MuonResolver};
-use muon::util::IntoIterExt;
+use mail_muon::Result as MuonResult;
+use mail_muon::common::{Addr, Host, Name};
+use mail_muon::rt::{ResolveRes as MuonResolveRes, Resolver as MuonResolver};
+use mail_muon::util::IntoIterExt;
 
 #[derive(uniffi::Enum)]
 pub enum IpAddr {
@@ -54,7 +54,7 @@ impl ResolverImpl {
             Ok(None) => return Ok(MuonResolveRes::None),
             Ok(Some(addrs)) => addrs,
             Err(e) => {
-                return Err(muon::Error::other(Box::new(e)));
+                return Err(mail_muon::Error::other(Box::new(e)));
             }
         };
 

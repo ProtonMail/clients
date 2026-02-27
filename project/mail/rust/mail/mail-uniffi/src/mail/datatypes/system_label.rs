@@ -1,13 +1,13 @@
 use crate::core::datatypes::Id;
 use crate::errors::ProtonError;
 use crate::mail::MailUserSession;
-use proton_core_common::datatypes::SystemLabel as RealSystemLabel;
-use proton_core_common::models::Label as RealLabel;
-use proton_mail_common::ProtonMailError as RealProtonMailError;
-use stash::orm::Model;
+use mail_common::ProtonMailError as RealProtonMailError;
+use mail_core_common::datatypes::SystemLabel as RealSystemLabel;
+use mail_core_common::models::Label as RealLabel;
+use mail_stash::orm::Model;
+use mail_uniffi_runtime::uniffi_async;
 use std::sync::Arc;
 use uniffi::Enum as UniffiEnum;
-use uniffi_runtime::uniffi_async;
 
 /// This enum represents the system labels that are available in ProtonMail.
 /// Their values corresponds to the remote ids of the labels in the core API database.

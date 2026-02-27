@@ -3,9 +3,9 @@ use crate::app_model::Popup;
 use crate::messages::Messages;
 use crate::widgets::utils::ScrollableState;
 use crate::widgets::{ScrollableList, ScrollableListState, TextInput, TextInputState};
-use proton_core_common::actions::user_feature_flags::OverrideFlag;
-use proton_core_common::models::{ModelExtension, UserFeatureFlag};
-use proton_mail_common::MailUserContext;
+use mail_common::MailUserContext;
+use mail_core_common::actions::user_feature_flags::OverrideFlag;
+use mail_core_common::models::{ModelExtension, UserFeatureFlag};
 use ratatui::Frame;
 use ratatui::crossterm::event::{Event, KeyCode, KeyModifiers};
 use ratatui::layout::{Constraint, Layout, Rect};
@@ -49,7 +49,7 @@ impl UserFeatureFlagsPopup {
                 Err(e) => {
                     return Command::message(Messages::DisplayError(
                         Some("Feature Flags".to_owned()),
-                        anyhow::anyhow!("Failed to connect to stash: {}", e),
+                        anyhow::anyhow!("Failed to connect to mail_stash: {}", e),
                     ));
                 }
             };

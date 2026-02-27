@@ -3,17 +3,17 @@ use crate::services::Service;
 use crate::{Context, CoreContextError};
 use anyhow::anyhow;
 use async_trait::async_trait;
-use parking_lot::RwLock;
-use proton_action_queue::queue::{OnlineStatusWaiter, OnlineStatusWaiterBuilder};
-use proton_core_api::connection_status::ConnectionStatus;
-use proton_core_api::exports::RetryPolicy;
-use proton_core_api::services::proton::ProtonCore;
-use proton_core_api::session::Session;
-use proton_network_monitor_service::{
+use mail_action_queue::queue::{OnlineStatusWaiter, OnlineStatusWaiterBuilder};
+use mail_core_api::connection_status::ConnectionStatus;
+use mail_core_api::exports::RetryPolicy;
+use mail_core_api::services::proton::ProtonCore;
+use mail_core_api::session::Session;
+use mail_network_monitor_service::{
     Config, ConnectionMonitor, NetworkMonitorService as ProtonNetworkMonitorService,
     NetworkStatusObserver, OnlineTester, OsNetworkStatus, OsNetworkStatusObserver,
     RequestNetworkStatus,
 };
+use parking_lot::RwLock;
 use std::sync::{Arc, Weak};
 use std::time::Duration;
 

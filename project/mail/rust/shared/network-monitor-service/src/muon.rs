@@ -1,10 +1,10 @@
 use crate::{ConnectionMonitor, RequestNetworkStatus};
-use muon::common::{BoxFut, Sender, SenderLayer, Timeout};
-use muon::{ProtonRequest, ProtonResponse};
+use mail_muon::common::{BoxFut, Sender, SenderLayer, Timeout};
+use mail_muon::{ProtonRequest, ProtonResponse};
 use std::error::Error;
 
 impl ConnectionMonitor {
-    async fn on_send<S>(&self, inner: &S, req: ProtonRequest) -> muon::Result<ProtonResponse>
+    async fn on_send<S>(&self, inner: &S, req: ProtonRequest) -> mail_muon::Result<ProtonResponse>
     where
         S: Sender<ProtonRequest, ProtonResponse> + ?Sized,
     {
@@ -13,7 +13,7 @@ impl ConnectionMonitor {
         r
     }
 
-    pub fn inspect_result(&self, result: &muon::Result<ProtonResponse>) {
+    pub fn inspect_result(&self, result: &mail_muon::Result<ProtonResponse>) {
         match result {
             Ok(resp) => {
                 self.on_recv_ok(resp);
@@ -25,15 +25,15 @@ impl ConnectionMonitor {
         }
     }
 
-    fn on_recv_err(&self, error: &muon::Error) {
-        use muon::error::ErrorKind;
+    fn on_recv_err(&self, error: &mail_muon::Error) {
+        use mail_muon::error::ErrorKind;
 
         match error.kind() {
             ErrorKind::Tls | ErrorKind::Resolve | ErrorKind::Dial => {
                 self.update_request_status(RequestNetworkStatus::Offline);
             }
             ErrorKind::Send => {
-                // We want to ignore muon's built in max time limit from the network detection
+                // We want to ignore mail_muon's built in max time limit from the network detection
                 // logic since this can also be caused by long server response or slow network. This
                 // in turn does not mean that there is no network.
                 #[allow(clippy::redundant_closure_for_method_calls)] // false positive
@@ -63,7 +63,7 @@ impl SenderLayer<ProtonRequest, ProtonResponse> for ConnectionMonitor {
         &'a self,
         inner: &'a dyn Sender<ProtonRequest, ProtonResponse>,
         req: ProtonRequest,
-    ) -> BoxFut<'a, muon::Result<ProtonResponse>> {
+    ) -> BoxFut<'a, mail_muon::Result<ProtonResponse>> {
         Box::pin(self.on_send(inner, req))
     }
 }

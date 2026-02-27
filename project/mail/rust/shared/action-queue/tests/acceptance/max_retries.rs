@@ -1,14 +1,14 @@
 use super::common::{new_factory, new_queue};
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
 };
-use proton_action_queue::queue::{
+use mail_action_queue::queue::{
     ActionRequeueReason, NoopOnlineStatusWaiter, QueueAutoTerminationPolicy, QueuedActionState,
     QueuedError, TokioTaskSpawner,
 };
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_action_queue::tests::common::{DefaultError, TestDb};
-use stash::stash::Bond;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_action_queue::tests::common::{DefaultError, TestDb};
+use mail_stash::stash::Bond;
 
 #[tokio::test]
 async fn execute_action_with_max_retries_on_network_failure() {

@@ -98,5 +98,5 @@ impl From<VerificationResult> for SignatureVerificationResult {
 #[uniffi::export]
 #[must_use]
 pub fn generate_csp_nonce() -> String {
-    proton_core_common::utils::generate_csp_nonce()
+    mail_core_common::utils::generate_csp_nonce()
 }

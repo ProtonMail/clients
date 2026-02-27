@@ -4,14 +4,14 @@ use crate::shared::SecureString;
 use crate::shared::challenge::get_auth_info;
 use derive_more::From;
 use futures::TryFutureExt;
-use muon::client::flow::{AuthFlow, LoginTwoFactorFlow};
-use muon::common::Sender;
-use muon::rest::auth::v4::fido2;
-use muon::{Client, ProtonRequest, ProtonResponse};
-use proton_core_api::service::ApiServiceError;
-use proton_core_api::services::proton::{SessionId, UserId};
-use proton_core_common::post_login_check::PostLoginValidator;
-use proton_observability::metrics;
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::{SessionId, UserId};
+use mail_core_common::post_login_check::PostLoginValidator;
+use mail_muon::client::flow::{AuthFlow, LoginTwoFactorFlow};
+use mail_muon::common::Sender;
+use mail_muon::rest::auth::v4::fido2;
+use mail_muon::{Client, ProtonRequest, ProtonResponse};
+use mail_observability::metrics;
 use tracing::info;
 
 /// Represents the login flow state where the user must provide their two-factor authentication code.

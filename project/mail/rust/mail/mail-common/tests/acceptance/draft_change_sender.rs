@@ -1,20 +1,20 @@
 use super::drafts_common::*;
-use proton_core_api::services::proton::{AddressId, UserId};
-use proton_core_common::models::{Address, ModelIdExtension};
-use proton_mail_api::services::proton::common::{ConversationId, MessageId};
-use proton_mail_api::services::proton::prelude::MimeType;
-use proton_mail_common::actions::draft::AttachmentRemove;
-use proton_mail_common::datatypes::{MessageFlags, ParsedHeaders};
-use proton_mail_common::draft::{Draft, ReplyMode};
-use proton_mail_common::models::{
+use mail_api::services::proton::common::{ConversationId, MessageId};
+use mail_api::services::proton::prelude::MimeType;
+use mail_common::actions::draft::AttachmentRemove;
+use mail_common::datatypes::{MessageFlags, ParsedHeaders};
+use mail_common::draft::{Draft, ReplyMode};
+use mail_common::models::{
     DraftAttachmentMetadata, DraftAttachmentUploadState, Message, MessageBodyMetadata,
     RawMessageBody,
 };
-use proton_mail_common::test_utils::message_body::{
+use mail_common::test_utils::message_body::{
     TEST_USER_ID, generate_new_api_address, message_body_test_user_secret,
 };
-use proton_mail_common::test_utils::test_context::MailTestContext;
-use stash::orm::Model;
+use mail_common::test_utils::test_context::MailTestContext;
+use mail_core_api::services::proton::{AddressId, UserId};
+use mail_core_common::models::{Address, ModelIdExtension};
+use mail_stash::orm::Model;
 use std::collections::HashMap;
 
 #[tokio::test]

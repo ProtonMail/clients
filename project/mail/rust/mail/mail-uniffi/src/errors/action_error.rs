@@ -1,9 +1,9 @@
 use super::{ActionErrorReason, ProtonError};
 use crate::UniffiEnum;
 use derive_more::From;
-use proton_mail_common::MailContextError;
-use proton_mail_common::MailErrorReason as RealMailErrorReason;
-use proton_mail_common::ProtonMailError as RealProtonMailError;
+use mail_common::MailContextError;
+use mail_common::MailErrorReason as RealMailErrorReason;
+use mail_common::ProtonMailError as RealProtonMailError;
 
 #[derive(Debug, From, UniffiEnum)]
 pub enum ActionError {

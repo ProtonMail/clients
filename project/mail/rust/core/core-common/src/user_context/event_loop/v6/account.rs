@@ -7,11 +7,11 @@ use anyhow::anyhow;
 use async_trait::async_trait;
 use core_event_loop::v6::{EventSource, EventSubscriber};
 use core_event_loop::{EventSubscriberError, EventSubscriberResult, RefreshFlag};
-use proton_core_api::services::proton::User;
-use proton_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
-use stash::AccountDb;
-use stash::orm::Model;
-use stash::stash::{Bond, StashError};
+use mail_core_api::services::proton::User;
+use mail_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
+use mail_stash::AccountDb;
+use mail_stash::orm::Model;
+use mail_stash::stash::{Bond, StashError};
 use std::sync::Weak;
 use tracing::{debug, warn};
 

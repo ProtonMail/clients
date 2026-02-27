@@ -2,12 +2,12 @@ use crate::atlas::{new_atlas_store, new_client, PASS, USER};
 use anyhow::{bail, Result};
 use derive_more::Error;
 use futures::prelude::*;
-use muon::client::flow::LoginFlow;
-use muon::client::middleware::AuthErr;
-use muon::client::{Auth, Tokens};
-use muon::common::EnvProxy;
-use muon::store::Store;
-use muon::{App, Client, GET};
+use mail_muon::client::flow::LoginFlow;
+use mail_muon::client::middleware::AuthErr;
+use mail_muon::client::{Auth, Tokens};
+use mail_muon::common::EnvProxy;
+use mail_muon::store::Store;
+use mail_muon::{App, Client, GET};
 
 #[tokio::test]
 async fn test_error_code() -> Result<()> {

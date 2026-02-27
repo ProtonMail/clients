@@ -1,8 +1,8 @@
 use futures::future::try_join_all;
 use itertools::Itertools;
-use proton_core_api::service::ApiServiceError;
-use proton_core_api::services::proton::ProtonIdMarker;
-use proton_mail_api::services::proton::response_data::OperationResult;
+use mail_api::services::proton::response_data::OperationResult;
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::ProtonIdMarker;
 use std::future::Future;
 
 /// Repeatedly calls `endpoint` in batches of `limit` in parallel.

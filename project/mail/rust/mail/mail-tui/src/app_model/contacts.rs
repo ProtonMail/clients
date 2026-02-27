@@ -2,7 +2,8 @@ use anyhow::anyhow;
 use crossterm::event::{Event, KeyCode, KeyModifiers};
 use futures::FutureExt;
 use itertools::Itertools;
-use proton_core_common::{
+use mail_common::MailUserContext;
+use mail_core_common::{
     datatypes::{
         ContactGroupItem, ContactItem, ContactItemType, GroupedContacts, LocalContactId,
         contact_details::{
@@ -12,7 +13,7 @@ use proton_core_common::{
     },
     models::{Contact, ContactListWatcher},
 };
-use proton_mail_common::MailUserContext;
+use mail_stash::stash::Tether;
 use ratatui::{
     Frame,
     layout::{Constraint, Flex, Layout, Margin},
@@ -21,7 +22,6 @@ use ratatui::{
     text::{Line, Span, Text},
     widgets::{Block, Borders, Cell, List, ListItem, Row, Table},
 };
-use stash::stash::Tether;
 use std::fmt::Write as _;
 use std::sync::Arc;
 use tracing::error;
@@ -368,7 +368,7 @@ impl ContactsModel {
         Command::task(async move {
             let ctx = ctx.user_context();
             match async {
-                let mut tether = ctx.stash().connection().await?;
+                let mut tether = ctx.mail_stash().connection().await?;
                 InspectableContactDetails::get_from_contact(ctx, contact_id, &mut tether).await
             }
             .await
@@ -427,8 +427,9 @@ impl ContactsModel {
     fn init_watch(
         ctx: Arc<MailUserContext>,
     ) -> anyhow::Result<(TuiWatchHandle, Command<Messages>)> {
-        let stash = ctx.user_stash();
-        let handle = stash.subscribe_to_sync(|sender| Box::new(ContactListWatcher::new(sender)))?;
+        let mail_stash = ctx.user_stash();
+        let handle =
+            mail_stash.subscribe_to_sync(|sender| Box::new(ContactListWatcher::new(sender)))?;
         let (watcher, background_command) =
             TuiWatchHandle::from_watcher_handle(handle, move || {
                 let ctx = ctx.clone();
@@ -517,7 +518,7 @@ impl AppStateHandler for ContactsModel {
 
     fn update(
         &mut self,
-        _ctx: &Arc<proton_mail_common::MailContext>,
+        _ctx: &Arc<mail_common::MailContext>,
         message: Messages,
     ) -> Command<Messages> {
         let Messages::Contacts(message) = message else {

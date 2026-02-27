@@ -6,20 +6,20 @@ use crate::os::{KeyChain, KeyChainExt};
 use anyhow::{Context, bail};
 use async_trait::async_trait;
 use futures::TryFutureExt;
-use proton_core_api::auth::{Auth, Tokens, UserKeySecret};
-use proton_core_api::services::proton::{SessionId, UserId};
-use proton_core_api::store::{AuthInfo, Store, StoreError, UserData};
+use mail_core_api::auth::{Auth, Tokens, UserKeySecret};
+use mail_core_api::services::proton::{SessionId, UserId};
+use mail_core_api::store::{AuthInfo, Store, StoreError, UserData};
+use mail_stash::AccountDb;
+use mail_stash::orm::Model;
+use mail_stash::stash::Stash;
 use secrecy::{ExposeSecret, SecretString, SecretVec};
-use stash::AccountDb;
-use stash::orm::Model;
-use stash::stash::Stash;
 use std::ops::Deref;
 use std::sync::Arc;
 use tracing::{error, info, warn};
 
 /// Auth store implementation which records the data in the session database.
 pub struct AuthStore {
-    stash: Stash<AccountDb>,
+    mail_stash: Stash<AccountDb>,
     key_chain: Arc<dyn KeyChain>,
     user_id: Option<UserId>,
     session_id: Option<SessionId>,
@@ -28,7 +28,7 @@ pub struct AuthStore {
 
 impl AuthStore {
     pub fn new(
-        stash: Stash<AccountDb>,
+        mail_stash: Stash<AccountDb>,
         key_chain: Arc<dyn KeyChain>,
         user_id: Option<UserId>,
         session_id: Option<SessionId>,
@@ -37,7 +37,7 @@ impl AuthStore {
             key_chain,
             user_id,
             session_id,
-            stash,
+            mail_stash,
             name_or_addr: None,
         }
     }
@@ -54,7 +54,7 @@ impl AuthStore {
 
     async fn try_get_auth(&self) -> Result<Auth, StoreError> {
         let key = self.encryption_key()?;
-        let tether = self.stash.connection().await?;
+        let tether = self.mail_stash.connection().await?;
 
         let Some(account) = (if let Some(id) = &self.user_id {
             CoreAccount::find_by_id(id.to_owned(), &tether).await?
@@ -85,7 +85,7 @@ impl AuthStore {
 
     async fn try_expose_key_secret(&self) -> Result<Option<UserKeySecret>, StoreError> {
         let key = self.encryption_key()?;
-        let tether = self.stash.connection().await?;
+        let tether = self.mail_stash.connection().await?;
 
         let Some(session_id) = self.session_id.clone() else {
             return Ok(None);
@@ -148,7 +148,7 @@ impl Store for AuthStore {
         let key = self.encryption_key()?;
 
         // We write twice, so do it in a transaction.
-        self.stash
+        self.mail_stash
             .connection()
             .await?
             .tx(async |tx| {
@@ -209,7 +209,7 @@ impl Store for AuthStore {
         let tfa_mode = info.tfa_mode.into();
 
         // We write twice, so do it in a transaction.
-        self.stash
+        self.mail_stash
             .connection()
             .await?
             .tx(async |tx| {
@@ -254,7 +254,7 @@ impl Store for AuthStore {
     async fn set_pass(&mut self, pass: &str) -> Result<(), StoreError> {
         info!("setting pass in store");
 
-        self.stash
+        self.mail_stash
             .connection()
             .await?
             .tx(async |tx| {
@@ -278,7 +278,7 @@ impl Store for AuthStore {
     async fn clear_pass(&mut self) -> Result<(), StoreError> {
         info!("clearing pass in store");
 
-        self.stash
+        self.mail_stash
             .connection()
             .await?
             .tx(async |tx| {
@@ -300,7 +300,7 @@ impl Store for AuthStore {
     async fn set_temp_pass(&mut self, value: bool) -> Result<(), StoreError> {
         info!("setting temp pass in store");
 
-        self.stash
+        self.mail_stash
             .connection()
             .await?
             .tx(async |tx| {
@@ -324,7 +324,7 @@ impl Store for AuthStore {
 
         let key = self.encryption_key()?;
 
-        self.stash
+        self.mail_stash
             .connection()
             .await?
             .tx(async |tx| {
@@ -365,7 +365,7 @@ impl Store for AuthStore {
         let key = self.encryption_key()?;
 
         // We write twice, so do it in a transaction.
-        let mut tether = self.stash.connection().await?;
+        let mut tether = self.mail_stash.connection().await?;
         tether
             .tx(async |tx| {
                 let Some(user_id) = self.user_id.clone() else {
@@ -396,7 +396,7 @@ impl Store for AuthStore {
 
         // Clear the session if it exists.
         if let Some(id) = &self.session_id {
-            self.stash
+            self.mail_stash
                 .connection()
                 .await?
                 .tx(async |tx| CoreSession::delete_by_id(id.to_owned(), tx).await)
@@ -417,7 +417,7 @@ impl Store for AuthStore {
 
         // Clear the account if it exists.
         if let Some(id) = &self.user_id {
-            self.stash
+            self.mail_stash
                 .connection()
                 .await?
                 .tx(async |tx| CoreAccount::delete_by_id(id.to_owned(), tx).await)
@@ -433,7 +433,7 @@ impl Store for AuthStore {
     async fn get_session_id(&self, user_id: &UserId) -> Result<Option<SessionId>, StoreError> {
         info!("getting user auth UID from store");
 
-        let tether = self.stash.connection().await?;
+        let tether = self.mail_stash.connection().await?;
         let sessions = CoreSession::find_by_user_id(user_id.to_owned(), &tether).await?;
         let session_id = sessions.into_iter().next().map(|s| s.remote_id);
 

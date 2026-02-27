@@ -3,14 +3,14 @@ use crate::acceptance::message_privacy::common::{
 };
 
 use super::common::{create_message_with_html_body, test_params};
-use proton_core_api::services::proton::{LabelId, UserId};
-use proton_mail_common::datatypes::{SystemLabelId, UTMLink};
-use proton_mail_common::decrypted_message::TransformOpts;
-use proton_mail_common::models::{Message, MessageUtmLinkUrl};
-use proton_mail_common::test_utils::message_body::{TEST_USER_ID, message_body_test_user_secret};
-use proton_mail_common::test_utils::test_context::MailTestContext;
-use proton_mail_common::{Mailbox, TrackerService};
-use stash::orm::Model;
+use mail_common::datatypes::{SystemLabelId, UTMLink};
+use mail_common::decrypted_message::TransformOpts;
+use mail_common::models::{Message, MessageUtmLinkUrl};
+use mail_common::test_utils::message_body::{TEST_USER_ID, message_body_test_user_secret};
+use mail_common::test_utils::test_context::MailTestContext;
+use mail_common::{Mailbox, TrackerService};
+use mail_core_api::services::proton::{LabelId, UserId};
+use mail_stash::orm::Model;
 use velcro::btree_set;
 
 #[tokio::test]

@@ -1,11 +1,11 @@
 use crate::Mailbox;
-use proton_core_common::models::Label;
-use stash::orm::Model;
-use stash::stash::Tether;
+use mail_core_common::models::Label;
+use mail_stash::orm::Model;
+use mail_stash::stash::Tether;
 
 #[allow(async_fn_in_trait)]
 pub trait MailboxTestUtils {
-    async fn get_local_label(&self, stash: &Tether) -> Label;
+    async fn get_local_label(&self, mail_stash: &Tether) -> Label;
 }
 
 impl MailboxTestUtils for Mailbox {

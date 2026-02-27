@@ -6,18 +6,18 @@ use crate::datatypes::LocalConversationId;
 use crate::datatypes::RollbackItemType;
 use crate::models::{Conversation, Message};
 use anyhow::Context;
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
 };
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::consts::General;
-use proton_core_api::session::Session;
-use proton_core_common::datatypes::LocalLabelId;
-use proton_core_common::models::ModelIdExtension;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_core_api::consts::General;
+use mail_core_api::session::Session;
+use mail_core_common::datatypes::LocalLabelId;
+use mail_core_common::models::ModelIdExtension;
+use mail_stash::UserDb;
+use mail_stash::exports::Transaction;
+use mail_stash::stash::{Bond, RunTransaction};
 use serde::{Deserialize, Serialize};
-use stash::UserDb;
-use stash::exports::Transaction;
-use stash::stash::{Bond, RunTransaction};
 use tracing::error;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

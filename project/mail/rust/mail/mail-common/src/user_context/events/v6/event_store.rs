@@ -1,9 +1,9 @@
 use crate::events::v6::MailEventLoopV6Context;
 use async_trait::async_trait;
 use core_event_loop::store::EventStore;
-use proton_core_common::event_loop::event_store;
-use proton_core_common::event_loop::event_store::MAIL_EVENT_TYPE_ID;
-use proton_core_common::services::event_loop_service::EventManagerContext;
+use mail_core_common::event_loop::event_store;
+use mail_core_common::event_loop::event_store::MAIL_EVENT_TYPE_ID;
+use mail_core_common::services::event_loop_service::EventManagerContext;
 
 #[async_trait]
 impl EventStore<EventManagerContext> for MailEventLoopV6Context {

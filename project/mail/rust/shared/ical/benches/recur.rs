@@ -1,6 +1,6 @@
 use criterion::{Criterion, criterion_group, criterion_main};
-use proton_ical::RecurIterator;
-use proton_ical::utils::{dt, recur};
+use mail_ical::RecurIterator;
+use mail_ical::utils::{dt, recur};
 use std::hint::black_box;
 
 fn target(recur_s: &str, start_s: &str) -> RecurIterator {

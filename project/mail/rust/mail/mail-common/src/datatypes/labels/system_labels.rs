@@ -1,10 +1,10 @@
 use crate::AppError;
 use crate::datatypes::LabelDescription;
 use crate::datatypes::labels::messages_counts;
-use proton_core_common::datatypes::LocalLabelId;
-use proton_core_common::models::Label;
-use stash::orm::Model;
-use stash::stash::Tether;
+use mail_core_common::datatypes::LocalLabelId;
+use mail_core_common::models::Label;
+use mail_stash::orm::Model;
+use mail_stash::stash::Tether;
 
 pub struct SystemLabel {
     pub local_id: LocalLabelId,

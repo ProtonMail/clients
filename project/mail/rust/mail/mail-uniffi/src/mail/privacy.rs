@@ -4,12 +4,12 @@ use crate::errors::{ProtonError, UserSessionError};
 use crate::mail::datatypes::PrivacyInfo;
 use crate::mail::user_session::MailUserSession;
 use crate::uniffi_async;
-use proton_mail_common::{MailContextError, ProtonMailError as RealProtonMailError};
-use proton_mail_common::{MailUserContext, TrackerService};
-use stash::stash::WatcherHandle;
+use mail_common::{MailContextError, ProtonMailError as RealProtonMailError};
+use mail_common::{MailUserContext, TrackerService};
+use mail_stash::stash::WatcherHandle;
+use mail_uniffi_runtime::async_runtime;
 use std::sync::{Arc, Weak};
 use tokio_util::sync::CancellationToken;
-use uniffi_runtime::async_runtime;
 
 #[uniffi_export]
 pub async fn get_privacy_info_for_message(
@@ -55,7 +55,7 @@ pub async fn watch_privacy_info_stream(
 
 #[derive(uniffi::Object)]
 pub struct WatchPrivacyInfoStream {
-    message_id: proton_mail_common::datatypes::LocalMessageId,
+    message_id: mail_common::datatypes::LocalMessageId,
     initial_info: PrivacyInfo,
     handle: WatcherHandle,
     token: CancellationToken,

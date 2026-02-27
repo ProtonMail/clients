@@ -2,8 +2,8 @@ use crate::datatypes::LocalAttachmentId;
 use crate::models::{
     DraftAttachmentMetadata, DraftAttachmentUploadState, DraftSendResult, MetadataId,
 };
-use stash::UserDb;
-use stash::stash::{Stash, StashError, Tether, WatcherHandle};
+use mail_stash::UserDb;
+use mail_stash::stash::{Stash, StashError, Tether, WatcherHandle};
 use std::collections::HashSet;
 
 #[cfg(test)]
@@ -16,7 +16,7 @@ mod tests;
 /// after its creation.
 pub struct DraftSendResultWatcher {
     watcher_handle: WatcherHandle,
-    stash: Stash<UserDb>,
+    mail_stash: Stash<UserDb>,
     unseen: HashSet<DraftSendResult>,
     mode: DraftSendResultWatcherMode,
 }
@@ -30,20 +30,20 @@ pub enum DraftSendResultWatcherMode {
 }
 
 impl DraftSendResultWatcher {
-    /// Create a new instance with the given `stash` db pool.
+    /// Create a new instance with the given `mail_stash` db pool.
     pub async fn new(
-        stash: Stash<UserDb>,
+        mail_stash: Stash<UserDb>,
         mode: DraftSendResultWatcherMode,
     ) -> Result<Self, StashError> {
-        let conn = stash.connection().await?;
+        let conn = mail_stash.connection().await?;
 
         let all_unseen = Self::load_send_results(mode, &conn).await?;
 
-        let handle = DraftSendResult::watch(&stash).await?;
+        let handle = DraftSendResult::watch(&mail_stash).await?;
 
         Ok(Self {
             watcher_handle: handle,
-            stash,
+            mail_stash,
             unseen: HashSet::from_iter(all_unseen),
             mode,
         })
@@ -59,7 +59,7 @@ impl DraftSendResultWatcher {
                 .map_err(|_| StashError::WatcherError("Connection Lost".to_owned()))?;
 
             let mut all_unseen =
-                Self::load_send_results(self.mode, &self.stash.connection().await?).await?;
+                Self::load_send_results(self.mode, &self.mail_stash.connection().await?).await?;
 
             if all_unseen.is_empty() {
                 continue;
@@ -98,23 +98,26 @@ impl DraftSendResultWatcher {
 /// Observe attachment state for a given draft.
 pub struct DraftAttachmentObserver {
     id: MetadataId,
-    stash: Stash<UserDb>,
+    mail_stash: Stash<UserDb>,
     current: HashSet<DraftAttachmentMetadataObserverState>,
     watcher_handle: WatcherHandle,
 }
 
 impl DraftAttachmentObserver {
     /// Create new instance for the given `metadata_id`.
-    pub async fn new(metadata_id: MetadataId, stash: Stash<UserDb>) -> Result<Self, StashError> {
-        let conn = stash.connection().await?;
+    pub async fn new(
+        metadata_id: MetadataId,
+        mail_stash: Stash<UserDb>,
+    ) -> Result<Self, StashError> {
+        let conn = mail_stash.connection().await?;
 
         let current = DraftAttachmentMetadata::find_by_metadata_id(metadata_id, &conn).await?;
 
-        let handle = DraftAttachmentMetadata::watch(&stash).await?;
+        let handle = DraftAttachmentMetadata::watch(&mail_stash).await?;
 
         Ok(Self {
             id: metadata_id,
-            stash,
+            mail_stash,
             current: HashSet::from_iter(
                 current
                     .into_iter()
@@ -133,7 +136,7 @@ impl DraftAttachmentObserver {
                 .await
                 .map_err(|_| StashError::WatcherError("Connection Lost".to_owned()))?;
 
-            let conn = self.stash.connection().await?;
+            let conn = self.mail_stash.connection().await?;
             let current = DraftAttachmentMetadata::find_by_metadata_id(self.id, &conn).await?;
             let new_state_set = HashSet::from_iter(
                 current

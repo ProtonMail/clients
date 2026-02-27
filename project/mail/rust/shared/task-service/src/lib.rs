@@ -15,7 +15,7 @@
 //! To pause and resume execution of futures, simply call the respective methods on the service.
 //!
 //! ```no_run
-//! use proton_task_service::TaskService;
+//! use mail_task_service::TaskService;
 //! use tokio::runtime::Handle;
 //! # async fn foo() {
 //!     let service = TaskService::new(Handle::current()).unwrap();
@@ -39,7 +39,7 @@
 //! the parent future is paused.
 //!
 //! ```no_run
-//! use proton_task_service::{IntoNonPausableFuture, TaskService};
+//! use mail_task_service::{IntoNonPausableFuture, TaskService};
 //! use tokio::runtime::Handle;
 //! # async fn foo() {
 //!     let service = TaskService::new(Handle::current()).unwrap();

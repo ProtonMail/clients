@@ -2,14 +2,14 @@ use super::*;
 use crate::models::Label;
 use crate::models::ModelExtension as _;
 use crate::tests::common::new_core_test_connection;
+use mail_core_api::services::proton::Label as ApiLabel;
+use mail_core_api::services::proton::LabelId;
+use mail_core_api::services::proton::LabelType as ApiLabelType;
+use mail_core_common::test_utils::utils::random_string;
+use mail_stash::orm::Model;
+use mail_stash::params;
+use mail_stash::stash::Tether;
 use pretty_assertions::assert_eq;
-use proton_core_api::services::proton::Label as ApiLabel;
-use proton_core_api::services::proton::LabelId;
-use proton_core_api::services::proton::LabelType as ApiLabelType;
-use proton_core_common::test_utils::utils::random_string;
-use stash::orm::Model;
-use stash::params;
-use stash::stash::Tether;
 
 #[tokio::test]
 async fn test_remote_label_add() {
@@ -386,8 +386,8 @@ async fn compare_db_label(tx: &Tether, id: LocalLabelId, f: impl FnOnce(&Label))
 
 #[tokio::test]
 async fn test_watch_label() {
-    let stash = new_core_test_connection().await;
-    let mut tether = stash.connection().await.unwrap();
+    let mail_stash = new_core_test_connection().await;
+    let mut tether = mail_stash.connection().await.unwrap();
     let mut label = tether
         .tx::<_, _, StashError>(async |tx| {
             let mut label: Label = ApiLabel {
@@ -412,7 +412,7 @@ async fn test_watch_label() {
         .unwrap();
 
     let db_label = Label::load(label.id(), &tether).await.unwrap().unwrap();
-    let handle = Label::watch(&stash).await.unwrap();
+    let handle = Label::watch(&mail_stash).await.unwrap();
     let watcher = &handle.receiver;
 
     assert_eq!(db_label, label);

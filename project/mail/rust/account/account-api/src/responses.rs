@@ -1,4 +1,4 @@
-use proton_core_api::services::proton::{
+use mail_core_api::services::proton::{
     DelinquentState as CoreDelinquentState, Flags as CoreFlags,
     ProductUsedSpace as CoreProductUsedSpace, UserId, UserMnemonicStatus as CoreUserMnemonicStatus,
     UserType as CoreUserType,
@@ -473,7 +473,7 @@ pub struct User {
     pub user_type: UserType,
 }
 
-impl From<User> for proton_core_api::services::proton::User {
+impl From<User> for mail_core_api::services::proton::User {
     fn from(val: User) -> Self {
         Self {
             id: val.id,

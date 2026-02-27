@@ -2,19 +2,19 @@ use crate::MailUserContext;
 use crate::datatypes::MessageRecipient;
 use crate::models::{DraftMetadata, MailSettings, MessageReplyTo, MetadataId};
 use email_address::EmailAddress;
+use mail_core_api::consts::CoreBundle;
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::{PrivateEmail, PrivateEmailRef, PrivateString};
+use mail_core_common::models::ContactEmail;
+use mail_core_common::{CoreContextError, PublicAddressKeyFetchPolicy};
+use mail_crypto_inbox::keys::ComposerPreference;
+use mail_crypto_inbox::lock_icon::UiLock;
+use mail_crypto_inbox::proton_crypto::new_pgp_provider;
+use mail_stash::orm::Model;
+use mail_stash::stash::Tether;
 use non_empty_string::NonEmptyString;
-use proton_core_api::consts::CoreBundle;
-use proton_core_api::service::ApiServiceError;
-use proton_core_api::services::proton::{PrivateEmail, PrivateEmailRef, PrivateString};
-use proton_core_common::models::ContactEmail;
-use proton_core_common::{CoreContextError, PublicAddressKeyFetchPolicy};
 use proton_crypto_account::keys::{EmailMimeType, RecipientType};
-use proton_crypto_inbox::keys::ComposerPreference;
-use proton_crypto_inbox::lock_icon::UiLock;
-use proton_crypto_inbox::proton_crypto::new_pgp_provider;
 use serde::{Deserialize, Serialize};
-use stash::orm::Model;
-use stash::stash::Tether;
 use std::collections::HashSet;
 use std::future::Future;
 use std::str::FromStr;
@@ -358,7 +358,7 @@ impl RecipientList {
             return Err(RecipientError::DuplicateAddress(entry.email));
         }
 
-        let state = if proton_core_common::validation::is_valid_email_address(&entry.email) {
+        let state = if mail_core_common::validation::is_valid_email_address(&entry.email) {
             state
         } else {
             ValidationState::InvalidEmail
@@ -433,8 +433,7 @@ impl RecipientList {
                 continue;
             }
 
-            let state = if proton_core_common::validation::is_valid_email_address(&recipient.email)
-            {
+            let state = if mail_core_common::validation::is_valid_email_address(&recipient.email) {
                 state
             } else {
                 ValidationState::InvalidEmail
@@ -1101,7 +1100,7 @@ async fn calculate_privacy_lock(
             email,
             mail_settings.crypto_mail_settings(),
             composer_preference,
-            proton_core_common::AddressKeysContactFetchPolicy::AllowCachedFallback,
+            mail_core_common::AddressKeysContactFetchPolicy::AllowCachedFallback,
         )
         .await
     {

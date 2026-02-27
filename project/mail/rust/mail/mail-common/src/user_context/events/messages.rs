@@ -1,9 +1,9 @@
 use crate::models::Message;
 use crate::user_context::events::event_model::MessageEvent;
 use crate::{AppError, user_context::events::event_subscriber::PostEventSyncData};
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::services::proton::LabelId;
-use stash::stash::Bond;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_core_api::services::proton::LabelId;
+use mail_stash::stash::Bond;
 use std::collections::HashSet;
 
 pub async fn handle_message_events(

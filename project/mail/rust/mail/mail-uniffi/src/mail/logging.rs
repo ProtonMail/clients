@@ -1,4 +1,4 @@
-use proton_log_service::LogService;
+use mail_log_service::LogService;
 use std::backtrace::Backtrace;
 use std::panic::{set_hook, take_hook};
 use tracing::error;
@@ -71,18 +71,18 @@ pub fn app_tracing_env_filter_default() -> EnvFilter {
         .parse(format!(
             "info,\
             {},\
-            proton_mail_uniffi=debug,\
-            proton_sqlite3=debug,\
-            proton_calendar_common=debug,\
-            proton_core_common=debug,\
-            proton_mail_common=debug,\
+            mail_uniffi=debug,\
+            mail_sqlite3=debug,\
+            mail_calendar_common=debug,\
+            mail_core_common=debug,\
+            mail_common=debug,\
             core_event_loop=debug,\
-            proton_core_api=debug,\
-            proton_action_queue=trace,\
-            proton_mail_api=debug,\
-            proton_network_monitor_service=debug,\
-            stash={}",
-            "muon=error",
+            mail_core_api=debug,\
+            mail_action_queue=trace,\
+            mail_api=debug,\
+            mail_network_monitor_service=debug,\
+            mail_stash={}",
+            "mail_muon=error",
             if std::env::var("STASH_SQL_DEBUG").is_ok() {
                 "trace"
             } else {
@@ -97,19 +97,19 @@ pub fn app_tracing_env_filter_trace() -> EnvFilter {
         .with_default_directive(LevelFilter::TRACE.into())
         .parse(format!(
             "info,\
-            muon=trace,\
+            mail_muon=trace,\
             muon_impl=trace,\
-            proton_mail_uniffi=trace,\
-            proton_sqlite3=trace,\
-            proton_calendar_common=trace,\
-            proton_core_common=trace,\
-            proton_mail_common=trace,\
+            mail_uniffi=trace,\
+            mail_sqlite3=trace,\
+            mail_calendar_common=trace,\
+            mail_core_common=trace,\
+            mail_common=trace,\
             core_event_loop=trace,\
-            proton_core_api=trace,\
-            proton_action_queue=trace,\
-            proton_network_monitor_service=debug,\
-            proton_mail_api=trace,\
-            stash={}",
+            mail_core_api=trace,\
+            mail_action_queue=trace,\
+            mail_network_monitor_service=debug,\
+            mail_api=trace,\
+            mail_stash={}",
             if std::env::var("STASH_SQL_DEBUG").is_ok() {
                 "trace"
             } else {

@@ -6,27 +6,27 @@ mod rsvp {
 use indoc::indoc;
 use jiff::tz::TimeZone;
 use jiff::{Timestamp, Zoned};
-use proton_calendar_api_v1::{
+use mail_calendar_api_v1::{
     CalendarAttendee, CalendarAttendeeStatus, CalendarBootstrap, CalendarEvent,
     CalendarEventPayload, CalendarEventPayloadType, CalendarId, CalendarKey, CalendarKeyFlags,
     CalendarMember, CalendarMemberPassphrase, CalendarPassphrase,
 };
-use proton_calendar_common::{
+use mail_calendar_common::{
     RsvpAttendee, RsvpCache, RsvpCalendar, RsvpContacts, RsvpEvent, RsvpEventId, RsvpFetchApiError,
     RsvpIntent, RsvpKeys, RsvpOccurrence, RsvpOrganizer, RsvpProgress, RsvpRecency, RsvpRelation,
 };
-use proton_core_api::services::proton::AddressId;
-use proton_core_api::session::{Config, Session};
-use proton_core_common::test_utils::test_context::{MockApiEnv, TestContext};
+use mail_core_api::services::proton::AddressId;
+use mail_core_api::session::{Config, Session};
+use mail_core_common::test_utils::test_context::{MockApiEnv, TestContext};
+use mail_crypto_calendar::{CalendarEventEncryptor, KeyPacket, UnlockedCalendarKey};
+use mail_ical as ical;
+use mail_network_monitor_service::ConnectionMonitor;
 use proton_crypto::crypto::{DataEncoding, KeyGeneratorAlgorithm, PGPProviderSync};
 use proton_crypto::{new_pgp_provider, new_srp_provider};
 use proton_crypto_account::keys::{
     KeyFlag, KeyId, LocalAddressKey, LocalUserKey, UnlockedAddressKey, UnlockedAddressKeys,
 };
 use proton_crypto_account::salts::KeySalt;
-use proton_crypto_calendar::{CalendarEventEncryptor, KeyPacket, UnlockedCalendarKey};
-use proton_ical as ical;
-use proton_network_monitor_service::ConnectionMonitor;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::io;

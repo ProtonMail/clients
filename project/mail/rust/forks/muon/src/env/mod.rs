@@ -10,8 +10,8 @@
 //! ### Examples (atlas)
 //! ```
 //! # tokio_test::block_on(async {
-//! use muon::env::EnvId;
-//! use muon::{App, Client, GET};
+//! use mail_muon::env::EnvId;
+//! use mail_muon::{App, Client, GET};
 //! let app = App::new("windows-vpn@1.0.0")?;
 //! let atlas = EnvId::new_atlas();
 //! let client = Client::new(app, atlas)?;

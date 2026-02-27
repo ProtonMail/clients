@@ -1,5 +1,5 @@
 use crate::datatypes::LocalMessageId;
-use stash::{UserDb, macros::Model};
+use mail_stash::{UserDb, macros::Model};
 
 #[derive(Clone, Debug, Eq, PartialEq, Model)]
 #[TableName("message_utm_links")]

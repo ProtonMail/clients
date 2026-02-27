@@ -1,20 +1,18 @@
 use chrono::{DateTime, Duration, Local};
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::datatypes::{LocalLabelId, SystemLabel, UnixTimestamp};
-use proton_core_common::models::{Label, ModelExtension, ModelIdExtension};
-use proton_mail_common::actions::ConversationOrMessage;
-use proton_mail_common::actions::conversations::Snooze;
-use proton_mail_common::datatypes::{MessageFlags, SystemLabelId};
-use proton_mail_common::models::{Conversation, ConversationCounter, ConversationLabel, Message};
-use proton_mail_common::test_utils::init::Params as TestParams;
-use proton_mail_common::test_utils::scroller::StoreLabeledModelMap as _;
-use proton_mail_common::test_utils::test_context::{
-    MailTestContext, MailUserContextTestExtension as _,
-};
-use proton_mail_common::test_utils::utils::create_address;
-use proton_mail_common::{conv_id, conversation, message, msg_id};
-use stash::orm::Model;
-use stash::stash::{StashError, Tether};
+use mail_common::actions::ConversationOrMessage;
+use mail_common::actions::conversations::Snooze;
+use mail_common::datatypes::{MessageFlags, SystemLabelId};
+use mail_common::models::{Conversation, ConversationCounter, ConversationLabel, Message};
+use mail_common::test_utils::init::Params as TestParams;
+use mail_common::test_utils::scroller::StoreLabeledModelMap as _;
+use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension as _};
+use mail_common::test_utils::utils::create_address;
+use mail_common::{conv_id, conversation, message, msg_id};
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::datatypes::{LocalLabelId, SystemLabel, UnixTimestamp};
+use mail_core_common::models::{Label, ModelExtension, ModelIdExtension};
+use mail_stash::orm::Model;
+use mail_stash::stash::{StashError, Tether};
 use velcro::hash_map;
 
 struct TestData {
@@ -335,7 +333,7 @@ async fn action_unsnooze_conversation_from_snoozed_to_inbox() {
     assert_eq!(snoozed_label.context_snooze_time, snooze_timestamp);
 
     // Action: Unsnooze the conversation using the Unsnooze action
-    let unsnooze_action = proton_mail_common::actions::conversations::Unsnooze::new(
+    let unsnooze_action = mail_common::actions::conversations::Unsnooze::new(
         snoozed.id(),
         vec![conv.local_id.unwrap()],
     );
@@ -407,7 +405,7 @@ async fn action_unsnooze_with_empty_input_fails() {
     let snoozed = SystemLabel::Snoozed.load(&tether).await.unwrap().unwrap();
 
     // Action: Try to unsnooze with empty conversation list
-    let unsnooze_action = proton_mail_common::actions::conversations::Unsnooze::new(
+    let unsnooze_action = mail_common::actions::conversations::Unsnooze::new(
         snoozed.id(),
         vec![], // Empty list should cause MailActionError::NoInput
     );
@@ -491,8 +489,8 @@ async fn snooze_and_unsnooze_are_perfect_counterparts() {
 
 mod rebase {
     use super::*;
-    use proton_action_queue::action::ActionGroup;
-    use proton_action_queue::rebase::RebaseChangeSet;
+    use mail_action_queue::action::ActionGroup;
+    use mail_action_queue::rebase::RebaseChangeSet;
 
     #[tokio::test]
     async fn unsnooze_rebase_updates_revert_time() {

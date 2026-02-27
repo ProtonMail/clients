@@ -1,4 +1,4 @@
-use proton_core_api::services::proton::{EventId, GetEventsLatestResponse};
+use mail_core_api::services::proton::{EventId, GetEventsLatestResponse};
 use wiremock::{
     Mock, ResponseTemplate,
     matchers::{method, path},

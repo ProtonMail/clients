@@ -1,4 +1,4 @@
-use proton_observability::{PreLoginMetricRecorder, metric};
+use mail_observability::{PreLoginMetricRecorder, metric};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, uniffi::Enum)]
@@ -26,10 +26,10 @@ pub fn record_change_password_screen_view(screen_id: ChangePasswordScreenId) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use proton_core_api::services::proton::prelude::{
+    use mail_core_api::services::proton::prelude::{
         PostMetricsRequestData, PostMetricsRequestElement,
     };
-    use proton_observability::into_metrics_element;
+    use mail_observability::into_metrics_element;
     use serde_json::{self, json};
 
     #[test]

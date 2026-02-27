@@ -3,8 +3,8 @@ use crate::{
     datatypes::LabelType::{self, *},
     datatypes::SystemLabelId,
 };
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::models::Label;
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::models::Label;
 use test_case::test_case;
 
 #[test_case(&[] => None; "TEST1 - empty")]

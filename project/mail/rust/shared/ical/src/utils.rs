@@ -8,7 +8,7 @@ use super::*;
 /// # Example
 ///
 /// ```
-/// # use proton_ical::ics;
+/// # use mail_ical::ics;
 /// #
 /// ics! {"
 ///     BEGIN:VEVENT

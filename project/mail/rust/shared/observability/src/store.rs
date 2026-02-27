@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use proton_core_api::services::proton::prelude::PostMetricsRequestElement;
+use mail_core_api::services::proton::prelude::PostMetricsRequestElement;
 
 const DEFAULT_STORE_CAPACITY: usize = 512;
 
@@ -52,7 +52,7 @@ impl Default for InMemoryMetricStore {
 mod tests {
     use serde_json::json;
 
-    use proton_core_api::services::proton::prelude::PostMetricsRequestData;
+    use mail_core_api::services::proton::prelude::PostMetricsRequestData;
 
     use super::*;
 

@@ -5,13 +5,13 @@ use crate::db::account::{
 };
 use crate::db::migrations::migrate_account_db;
 use crate::models::ModelExtension;
-use proton_core_api::auth::{Tokens, UserKeySecret};
-use proton_core_api::services::proton::{SessionId, UserId};
+use mail_core_api::auth::{Tokens, UserKeySecret};
+use mail_core_api::services::proton::{SessionId, UserId};
+use mail_stash::AccountDb;
+use mail_stash::orm::Model;
+use mail_stash::params;
+use mail_stash::stash::{Stash, StashConfiguration, StashError, Tether};
 use secrecy::{ExposeSecret, SecretString};
-use stash::AccountDb;
-use stash::orm::Model;
-use stash::params;
-use stash::stash::{Stash, StashConfiguration, StashError, Tether};
 use std::time::Duration;
 use tracing::subscriber::set_global_default;
 use tracing_subscriber::fmt::layer;
@@ -27,11 +27,11 @@ async fn new_test_connection() -> Stash<AccountDb> {
             .with(layer().with_test_writer()),
     );
 
-    let stash = Stash::<AccountDb>::new(StashConfiguration::test()).unwrap();
+    let mail_stash = Stash::<AccountDb>::new(StashConfiguration::test()).unwrap();
 
-    migrate_account_db(&stash).await.unwrap();
+    migrate_account_db(&mail_stash).await.unwrap();
 
-    stash
+    mail_stash
 }
 
 async fn new_test_account(tether: &mut Tether<AccountDb>) -> Result<CoreAccount> {
@@ -243,8 +243,8 @@ async fn multiple_sessions_per_account_is_an_error() {
 #[allow(clippy::match_wildcard_for_single_variants)] // We only care about one variant per check.
 async fn test_session_observer() {
     let key = SessionEncryptionKey::random();
-    let stash = new_test_connection().await;
-    let mut tether = stash.connection().await.unwrap();
+    let mail_stash = new_test_connection().await;
+    let mut tether = mail_stash.connection().await.unwrap();
 
     let user_id1 = UserId::from("user-1");
     let user_id2 = UserId::from("user-2");
@@ -261,7 +261,7 @@ async fn test_session_observer() {
         .await
         .unwrap();
 
-    let mut observer = CoreSessionObserver::new(stash.clone()).await.unwrap();
+    let mut observer = CoreSessionObserver::new(mail_stash.clone()).await.unwrap();
 
     let session_id1 = SessionId::from("remote_id");
     let session_id2 = SessionId::from("remote_id2");

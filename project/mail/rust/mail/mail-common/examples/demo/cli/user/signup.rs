@@ -1,9 +1,9 @@
 use crate::cli::read;
 use anyhow::Result;
-use proton_account_api::shared::challenge::Behavior;
-use proton_account_api::signup::state::StateKind;
-use proton_account_api::signup::{SignupError, SignupFlow};
-use proton_mail_common::MailContext;
+use mail_account_api::shared::challenge::Behavior;
+use mail_account_api::signup::state::StateKind;
+use mail_account_api::signup::{SignupError, SignupFlow};
+use mail_common::MailContext;
 use std::sync::Arc;
 
 /// Signup for an account.

@@ -1,24 +1,24 @@
 use std::sync::Arc;
 
 use core_event_loop::EventLoopError;
-use proton_action_queue::queue::{ActionError, AsActionError, QueuedError};
-use proton_core_api::services::proton::common::ApiErrorInfo;
-use proton_core_common::actions::event_poll::ActionEventLoopError;
-use proton_core_common::datatypes::{Refresh, SystemLabel};
-use proton_core_common::models::{ModelExtension, ModelIdExtension};
-use proton_core_common::test_utils::account::test_api_address;
-use proton_core_common::test_utils::addresses::MY_ADDRESS_ID;
-use proton_mail_api::services::proton::prelude::ViewMode;
-use proton_mail_common::actions::refresh::ActionRefresh;
-use proton_mail_common::models::{Conversation, DraftMetadata, Message};
-use proton_mail_common::test_utils::init::{DEFAULT_MAIL_SETTINGS, Params as TestParams};
-use proton_mail_common::test_utils::scroller::{
+use mail_action_queue::queue::{ActionError, AsActionError, QueuedError};
+use mail_api::services::proton::prelude::ViewMode;
+use mail_common::actions::refresh::ActionRefresh;
+use mail_common::models::{Conversation, DraftMetadata, Message};
+use mail_common::test_utils::init::{DEFAULT_MAIL_SETTINGS, Params as TestParams};
+use mail_common::test_utils::scroller::{
     StoreLabeledModelMap, UNIQUE_CONV_ID, create_single_message, test_conversations, test_messages,
 };
-use proton_mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
-use proton_mail_common::{MailUserContext, api_conversation, api_message_meta};
-use stash::UserDb;
-use stash::orm::Model;
+use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
+use mail_common::{MailUserContext, api_conversation, api_message_meta};
+use mail_core_api::services::proton::common::ApiErrorInfo;
+use mail_core_common::actions::event_poll::ActionEventLoopError;
+use mail_core_common::datatypes::{Refresh, SystemLabel};
+use mail_core_common::models::{ModelExtension, ModelIdExtension};
+use mail_core_common::test_utils::account::test_api_address;
+use mail_core_common::test_utils::addresses::MY_ADDRESS_ID;
+use mail_stash::UserDb;
+use mail_stash::orm::Model;
 use velcro::hash_map;
 use wiremock::matchers::{method, path, query_param};
 use wiremock::{Mock, ResponseTemplate, Times};

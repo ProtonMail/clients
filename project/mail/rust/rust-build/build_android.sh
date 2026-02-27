@@ -29,7 +29,7 @@ cargo ndk -t "armeabi-v7a" -t "arm64-v8a" -t "x86_64" build --profile $PROFILE -
 # Generate bindings
 cargo run \
     --release \
-    -p uniffi-bindgen generate \
+    -p mail-uniffi-bindgen generate \
     --library target/aarch64-linux-android/$PROFILE/${LIB_NAME} \
     --language kotlin \
     --config ${CONFIG_PATH} \

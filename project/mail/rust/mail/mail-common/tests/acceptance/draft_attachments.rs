@@ -2,41 +2,41 @@ use super::drafts_common::{
     draft_message, draft_test_params, draft_test_params_with_mime_type,
     expected_create_draft_params, expected_create_reply_draft_params,
 };
-use proton_action_queue::queue::{ActionError, AsActionError, QueuedError};
-use proton_core_api::consts::{General, Mail};
-use proton_core_api::services::proton::UserId;
-use proton_core_api::services::proton::common::ApiErrorInfo;
-use proton_core_common::models::ModelExtension;
-use proton_crypto_inbox::attachment::{
-    BinaryAttachmentEncryptedSignature, BinaryAttachmentSignature, KeyPackets,
-};
-use proton_mail_api::services::proton::common::MessageId;
-use proton_mail_api::services::proton::prelude::{
+use mail_action_queue::queue::{ActionError, AsActionError, QueuedError};
+use mail_api::services::proton::common::MessageId;
+use mail_api::services::proton::prelude::{
     AttachmentId, ContentDisposition, Disposition as ApiDisposition, DraftAction,
     DraftAttachmentKeyPackets, DraftRecipient, MessageAttachmentHeaders, MessageFlags,
     NewAttachmentDisposition, NewAttachmentResponse, PostAttachmentResponse,
 };
-use proton_mail_api::services::proton::request_data::NewAttachmentParams;
-use proton_mail_api::services::proton::response_data::{MessageAttachment, MessageRecipient};
-use proton_mail_common::actions::draft::AttachmentDispositionUpdate;
-use proton_mail_common::datatypes::attachment::ContentId;
-use proton_mail_common::datatypes::{Disposition, MimeType};
-use proton_mail_common::draft::attachments::DraftAttachmentState;
-use proton_mail_common::draft::recipients::RecipientEntry;
-use proton_mail_common::draft::{
+use mail_api::services::proton::request_data::NewAttachmentParams;
+use mail_api::services::proton::response_data::{MessageAttachment, MessageRecipient};
+use mail_common::actions::draft::AttachmentDispositionUpdate;
+use mail_common::datatypes::attachment::ContentId;
+use mail_common::datatypes::{Disposition, MimeType};
+use mail_common::draft::attachments::DraftAttachmentState;
+use mail_common::draft::recipients::RecipientEntry;
+use mail_common::draft::{
     AttachmentDispositionSwapError, Draft, DraftSyncStatus, RecipientGroupId, ReplyMode,
 };
-use proton_mail_common::models::{
+use mail_common::models::{
     Attachment, DraftAttachmentMetadata, DraftAttachmentUploadState, Message,
 };
-use proton_mail_common::test_utils::message_body::{
+use mail_common::test_utils::message_body::{
     TEST_USER_ID, message_body_test_message_mime, message_body_test_user_secret,
 };
-use proton_mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
-use proton_mail_common::{MailContextError, MailUserContext, draft};
-use stash::UserDb;
-use stash::orm::Model;
-use stash::stash::{StashError, Tether};
+use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
+use mail_common::{MailContextError, MailUserContext, draft};
+use mail_core_api::consts::{General, Mail};
+use mail_core_api::services::proton::UserId;
+use mail_core_api::services::proton::common::ApiErrorInfo;
+use mail_core_common::models::ModelExtension;
+use mail_crypto_inbox::attachment::{
+    BinaryAttachmentEncryptedSignature, BinaryAttachmentSignature, KeyPackets,
+};
+use mail_stash::UserDb;
+use mail_stash::orm::Model;
+use mail_stash::stash::{StashError, Tether};
 use std::path::Path;
 
 #[tokio::test]
@@ -375,8 +375,7 @@ async fn removing_uploaded_attachment() {
                 id: new_attachment_id.clone(),
                 file_name: "new_file_name".to_string(),
                 file_size: 1024,
-                disposition:
-                    proton_mail_api::services::proton::response_data::Disposition::Attachment,
+                disposition: mail_api::services::proton::response_data::Disposition::Attachment,
                 key_packets: KeyPackets::from(""),
                 signature: None,
                 enc_signature: None,
@@ -484,9 +483,10 @@ async fn draft_reply_or_forward_creates_new_attachments() {
     message.body.attachments = remote_existing_message.body.attachments.clone();
 
     if reply_mode != ReplyMode::Forward {
-        message.body.attachments.retain(|a| {
-            a.disposition == proton_mail_api::services::proton::prelude::Disposition::Inline
-        })
+        message
+            .body
+            .attachments
+            .retain(|a| a.disposition == mail_api::services::proton::prelude::Disposition::Inline)
     }
 
     ctx.mock_get_message(
@@ -529,9 +529,9 @@ async fn draft_reply_or_forward_creates_new_attachments() {
                 mime_type: attachment.mime_type.to_string(),
                 disposition: match attachment.disposition {
                     Disposition::Attachment => NewAttachmentDisposition::Attachment,
-                    Disposition::Inline => {
-                        NewAttachmentDisposition::Inline(attachment.content_id.clone().unwrap().into_inner())
-                    }
+                    Disposition::Inline => NewAttachmentDisposition::Inline(
+                        attachment.content_id.clone().unwrap().into_inner(),
+                    ),
                 },
                 key_packets: vec![],
                 signature: Some(BinaryAttachmentSignature::from(vec![])),
@@ -540,15 +540,15 @@ async fn draft_reply_or_forward_creates_new_attachments() {
             },
             Ok(PostAttachmentResponse {
                 attachment: NewAttachmentResponse {
-                    id:id.clone(),
+                    id: id.clone(),
                     file_name: attachment.filename.clone(),
                     file_size: attachment.size,
                     disposition: match attachment.disposition {
                         Disposition::Attachment => {
-                            proton_mail_api::services::proton::response_data::Disposition::Attachment
+                            mail_api::services::proton::response_data::Disposition::Attachment
                         }
                         Disposition::Inline => {
-                            proton_mail_api::services::proton::response_data::Disposition::Inline
+                            mail_api::services::proton::response_data::Disposition::Inline
                         }
                     },
                     key_packets: new_key_packets.clone(),
@@ -568,7 +568,7 @@ async fn draft_reply_or_forward_creates_new_attachments() {
 
         message.body.attachments.push(MessageAttachment {
             id,
-            disposition: proton_mail_api::services::proton::response_data::Disposition::Attachment,
+            disposition: mail_api::services::proton::response_data::Disposition::Attachment,
             enc_signature: None,
             headers: MessageAttachmentHeaders {
                 content_disposition: ContentDisposition::One("".to_string()),
@@ -662,9 +662,10 @@ async fn deleting_draft_metadata_cleans_not_uploaded_attachments() {
     message.body.attachments = remote_existing_message.body.attachments.clone();
 
     if reply_mode != ReplyMode::Forward {
-        message.body.attachments.retain(|a| {
-            a.disposition == proton_mail_api::services::proton::prelude::Disposition::Inline
-        })
+        message
+            .body
+            .attachments
+            .retain(|a| a.disposition == mail_api::services::proton::prelude::Disposition::Inline)
     }
 
     ctx.mock_get_message(
@@ -945,7 +946,7 @@ async fn total_attachment_size_more_than_limit() {
     };
 
     let err = err
-        .as_action_error::<proton_mail_common::actions::draft::AttachmentUpload, UserDb>()
+        .as_action_error::<mail_common::actions::draft::AttachmentUpload, UserDb>()
         .unwrap();
 
     assert!(matches!(
@@ -1063,7 +1064,7 @@ async fn total_attachment_count_exceeds_limit() {
     };
 
     let err = err
-        .as_action_error::<proton_mail_common::actions::draft::AttachmentUpload, UserDb>()
+        .as_action_error::<mail_common::actions::draft::AttachmentUpload, UserDb>()
         .unwrap();
 
     assert!(matches!(
@@ -1173,7 +1174,7 @@ async fn can_not_send_without_all_uploaded_attachments() {
     };
 
     let err = err
-        .as_action_error::<proton_mail_common::actions::draft::Send, UserDb>()
+        .as_action_error::<mail_common::actions::draft::Send, UserDb>()
         .unwrap();
     assert!(matches!(
         err,
@@ -1343,7 +1344,7 @@ async fn catch_storage_quota_exceeded_error() {
     };
 
     let err = err
-        .as_action_error::<proton_mail_common::actions::draft::AttachmentUpload, UserDb>()
+        .as_action_error::<mail_common::actions::draft::AttachmentUpload, UserDb>()
         .unwrap();
 
     assert!(matches!(

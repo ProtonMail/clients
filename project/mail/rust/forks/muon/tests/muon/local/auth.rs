@@ -2,17 +2,17 @@ use anyhow::{bail, Ok, Result};
 use async_trait::async_trait;
 use futures::future;
 #[allow(deprecated)]
-use muon::client::flow::LoginExtraInfo;
-use muon::client::flow::LoginFlow;
-use muon::client::{Fingerprint, InfoProvider};
-use muon::rest::core;
-use muon::test::server::{Response, Server};
-use muon::util::ProtonRequestExt;
-use muon::{GET, POST};
+use mail_muon::client::flow::LoginExtraInfo;
+use mail_muon::client::flow::LoginFlow;
+use mail_muon::client::{Fingerprint, InfoProvider};
+use mail_muon::rest::core;
+use mail_muon::test::server::{Response, Server};
+use mail_muon::util::ProtonRequestExt;
+use mail_muon::{GET, POST};
 use serde_json::json;
 use std::sync::Arc;
 
-#[muon::test(user("foo", "bar"))]
+#[mail_muon::test(user("foo", "bar"))]
 #[allow(deprecated)]
 async fn test_auth_deprecated_success(s: Arc<Server>) -> Result<()> {
     let c = s.client();
@@ -33,7 +33,7 @@ async fn test_auth_deprecated_success(s: Arc<Server>) -> Result<()> {
     Ok(())
 }
 
-#[muon::test(user("foo", "bar"))]
+#[mail_muon::test(user("foo", "bar"))]
 async fn test_auth_success(s: Arc<Server>) -> Result<()> {
     let c = s.client();
 
@@ -49,7 +49,7 @@ async fn test_auth_success(s: Arc<Server>) -> Result<()> {
     Ok(())
 }
 
-#[muon::test(user("foo", "bar"))]
+#[mail_muon::test(user("foo", "bar"))]
 async fn test_auth_failure(s: Arc<Server>) -> Result<()> {
     assert!(matches!(
         s.client().auth().login("foo", "baz").await,
@@ -59,7 +59,7 @@ async fn test_auth_failure(s: Arc<Server>) -> Result<()> {
     Ok(())
 }
 
-#[muon::test(user("foo", "bar"))]
+#[mail_muon::test(user("foo", "bar"))]
 async fn test_auth_refresh(s: Arc<Server>) -> Result<()> {
     // Authenticate the client.
     let LoginFlow::Ok(c, _) = s.client().auth().login("foo", "bar").await else {
@@ -82,7 +82,7 @@ async fn test_auth_refresh(s: Arc<Server>) -> Result<()> {
     Ok(())
 }
 
-#[muon::test(user("foo", "bar"))]
+#[mail_muon::test(user("foo", "bar"))]
 async fn test_auth_refresh_parallel(s: Arc<Server>) -> Result<()> {
     // Authenticate the client.
     let LoginFlow::Ok(c, _) = s.client().auth().login("foo", "bar").await else {
@@ -128,7 +128,7 @@ async fn test_auth_refresh_parallel(s: Arc<Server>) -> Result<()> {
     Ok(())
 }
 
-#[muon::test]
+#[mail_muon::test]
 async fn test_unauth_session_success(s: Arc<Server>) -> Result<()> {
     let fingerprint_content = "Some fingerprint";
     let fingerprint = json!(fingerprint_content);
@@ -160,7 +160,7 @@ async fn test_unauth_session_success(s: Arc<Server>) -> Result<()> {
     Ok(())
 }
 
-#[muon::test]
+#[mail_muon::test]
 async fn test_unauth_session_failure(s: Arc<Server>) -> Result<()> {
     s.add_handler(move |req| (req.uri().path() == "/auth/v4/sessions").then_some(new_res(400)));
 
@@ -175,7 +175,7 @@ async fn test_unauth_session_failure(s: Arc<Server>) -> Result<()> {
     Ok(())
 }
 
-#[muon::test]
+#[mail_muon::test]
 async fn test_unauth_session_refresh(s: Arc<Server>) -> Result<()> {
     let c = s.client();
     let r = s.new_recorder();
@@ -203,7 +203,7 @@ async fn test_unauth_session_refresh(s: Arc<Server>) -> Result<()> {
     Ok(())
 }
 
-#[muon::test]
+#[mail_muon::test]
 async fn test_unauth_session_refresh_failure(s: Arc<Server>) -> Result<()> {
     let c = s.client();
     let r = s.new_recorder();
@@ -236,7 +236,7 @@ async fn test_unauth_session_refresh_failure(s: Arc<Server>) -> Result<()> {
     Ok(())
 }
 
-#[muon::test]
+#[mail_muon::test]
 async fn test_unauth_session_refresh_parallel(s: Arc<Server>) -> Result<()> {
     let c = s.client();
     let r = s.new_recorder();

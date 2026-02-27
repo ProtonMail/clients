@@ -1,32 +1,32 @@
 #![allow(dead_code)]
-use proton_core_api::services::proton::{
+use mail_api::services::proton::prelude::{ContentDisposition, MailSettings};
+use mail_api::services::proton::request_data::{DraftParams, DraftRecipient, DraftSender};
+use mail_api::services::proton::response_data::AttachmentMetadata;
+use mail_api::services::proton::response_data::{
+    Disposition, Message as ApiMessage, MessageAttachment, MessageAttachmentHeaders,
+};
+use mail_common::datatypes::{MimeType, SystemLabelId};
+use mail_common::draft::ReplyMode;
+use mail_common::draft::compose::{DEFAULT_SUBJECT, FORWARD_PREFIX, REPLY_PREFIX};
+use mail_common::draft::recipients::{RecipientEntry, RecipientList};
+use mail_common::models::Message;
+use mail_common::test_utils::init::Params as TestParams;
+use mail_common::test_utils::message_body::{
+    message_body_test_addresses, message_body_test_mail_settings, message_body_test_message_simple,
+    message_body_test_user_info,
+};
+use mail_core_api::services::proton::{
     Address as ApiAddress, AddressFlags as ApiAddressFlags,
     AddressSignedKeyList as ApiAddressSignedKeyList, AddressStatus as ApiAddressStatus,
     AddressType as ApiAddressType,
 };
-use proton_core_api::services::proton::{AddressId, LabelId};
-use proton_crypto_account::keys::{ArmoredPrivateKey, EncryptedKeyToken, KeyTokenSignature};
-use proton_crypto_inbox::attachment::KeyPackets;
-use proton_crypto_inbox::message::EncryptedDraft;
-use proton_crypto_inbox::proton_crypto_account::keys::{
+use mail_core_api::services::proton::{AddressId, LabelId};
+use mail_crypto_inbox::attachment::KeyPackets;
+use mail_crypto_inbox::message::EncryptedDraft;
+use mail_crypto_inbox::proton_crypto_account::keys::{
     AddressKeys as ApiAddressKeys, KeyFlag, KeyId, LockedKey,
 };
-use proton_mail_api::services::proton::prelude::{ContentDisposition, MailSettings};
-use proton_mail_api::services::proton::request_data::{DraftParams, DraftRecipient, DraftSender};
-use proton_mail_api::services::proton::response_data::AttachmentMetadata;
-use proton_mail_api::services::proton::response_data::{
-    Disposition, Message as ApiMessage, MessageAttachment, MessageAttachmentHeaders,
-};
-use proton_mail_common::datatypes::{MimeType, SystemLabelId};
-use proton_mail_common::draft::ReplyMode;
-use proton_mail_common::draft::compose::{DEFAULT_SUBJECT, FORWARD_PREFIX, REPLY_PREFIX};
-use proton_mail_common::draft::recipients::{RecipientEntry, RecipientList};
-use proton_mail_common::models::Message;
-use proton_mail_common::test_utils::init::Params as TestParams;
-use proton_mail_common::test_utils::message_body::{
-    message_body_test_addresses, message_body_test_mail_settings, message_body_test_message_simple,
-    message_body_test_user_info,
-};
+use proton_crypto_account::keys::{ArmoredPrivateKey, EncryptedKeyToken, KeyTokenSignature};
 
 const MOCK_ATTACHMENT_KEY_PACKET: &str = "wV4DGS71hsmM2EQSAQdAwLggNHWQfw7ZdO/BJrT4WpD3yK2ZhqRt6/abVcoKii4wVlG50hY+UgSoVOf3RBJ33bastQrBMK25JsRJqFByq2t2BXKojQVQtP9B1CmjNjZ0";
 

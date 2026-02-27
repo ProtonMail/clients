@@ -1,4 +1,4 @@
-use stash::stash::StashError;
+use mail_stash::stash::StashError;
 
 use crate::{AppError, MailContextError};
 

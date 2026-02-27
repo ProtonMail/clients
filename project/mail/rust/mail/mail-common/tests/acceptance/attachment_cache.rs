@@ -1,21 +1,21 @@
 use insta::assert_snapshot;
 use itertools::Itertools;
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::datatypes::SystemLabel;
-use proton_mail_common::datatypes::exclusive_location::ExclusiveLocation;
-use proton_mail_common::datatypes::{Disposition, SystemLabelId as _};
-use proton_mail_common::models::attachment_cache::AttachmentCacheMetadata;
-use proton_mail_common::models::{Attachment, Conversation};
-use proton_mail_common::test_utils::utils::create_address;
-use stash::orm::Model;
+use mail_common::datatypes::exclusive_location::ExclusiveLocation;
+use mail_common::datatypes::{Disposition, SystemLabelId as _};
+use mail_common::models::attachment_cache::AttachmentCacheMetadata;
+use mail_common::models::{Attachment, Conversation};
+use mail_common::test_utils::utils::create_address;
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::datatypes::SystemLabel;
+use mail_stash::orm::Model;
 use std::path::PathBuf;
 use std::sync::atomic::Ordering;
 use std::time::{Duration, SystemTime};
 
-use proton_mail_common::models::{AttachmentType, Message};
+use mail_common::models::{AttachmentType, Message};
 
-use proton_mail_common::MailContextError;
-use proton_mail_common::test_utils::test_context::MailTestContext;
+use mail_common::MailContextError;
+use mail_common::test_utils::test_context::MailTestContext;
 use std::sync::atomic::AtomicU64;
 // FIXME: There is duplicated logic from mail/mail-common/src/models/attachment_cache.rs
 // This will be removed when we delete the mail-test-utils crate.

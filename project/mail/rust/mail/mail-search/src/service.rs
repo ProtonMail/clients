@@ -10,9 +10,9 @@
 
 use std::sync::Arc;
 
-use proton_mail_api::services::proton::common::MessageId;
-use stash::UserDb;
-use stash::stash::{Bond, Stash, StashError};
+use mail_api::services::proton::common::MessageId;
+use mail_stash::UserDb;
+use mail_stash::stash::{Bond, Stash, StashError};
 use tokio::sync::RwLock;
 use tracing::{debug, info, warn};
 
@@ -22,7 +22,7 @@ use crate::intent::{LocalMessageId, SearchIndexIntent, SearchOperation};
 use crate::storage::StashBlobStorage;
 use crate::traits::MessageDataProvider;
 use crate::worker::SearchIndexWorker;
-use proton_task_service::TaskService;
+use mail_task_service::TaskService;
 
 /// Error type for search service operations
 #[derive(Debug, thiserror::Error)]
@@ -63,7 +63,7 @@ impl SearchServiceError {
 #[derive(Clone)]
 pub struct MailSearchService {
     engine: Arc<RwLock<FoundationSearchEngine<StashBlobStorage>>>,
-    stash: Stash<UserDb>,
+    mail_stash: Stash<UserDb>,
 }
 
 impl MailSearchService {
@@ -82,29 +82,29 @@ impl MailSearchService {
     ///
     /// Returns an error if database migrations fail.
     pub async fn new(
-        stash: Stash<UserDb>,
+        mail_stash: Stash<UserDb>,
         task_service: Arc<TaskService>,
     ) -> Result<Self, SearchServiceError> {
         info!("Initializing Foundation Search engine with Stash");
 
         // Run migrtions first to ensure database schema is up to date
-        crate::migrations::run(&stash)
+        crate::migrations::run(&mail_stash)
             .await
             .map_err(|e| SearchServiceError::Migration(e.to_string()))?;
 
-        let storage = StashBlobStorage::new(stash.clone());
+        let storage = StashBlobStorage::new(mail_stash.clone());
         let engine = FoundationSearchEngine::new(storage, task_service);
 
         Ok(Self {
             engine: Arc::new(RwLock::new(engine)),
-            stash,
+            mail_stash,
         })
     }
 
     /// Get a reference to the underlying Stash connection pool
     #[must_use]
-    pub fn stash(&self) -> &Stash<UserDb> {
-        &self.stash
+    pub fn mail_stash(&self) -> &Stash<UserDb> {
+        &self.mail_stash
     }
 
     /// Index or update message body content and metadata
@@ -365,10 +365,11 @@ impl MailSearchService {
         info!("Creating search index worker with table watcher");
 
         // Create table watcher for this Stash instance (account-specific)
-        let watcher_handle = crate::watcher::SearchIndexIntentWatcher::watch(&self.stash).await?;
+        let watcher_handle =
+            crate::watcher::SearchIndexIntentWatcher::watch(&self.mail_stash).await?;
 
         Ok(SearchIndexWorker::new(
-            self.stash.clone(),
+            self.mail_stash.clone(),
             self.clone(),
             data_provider,
             watcher_handle,

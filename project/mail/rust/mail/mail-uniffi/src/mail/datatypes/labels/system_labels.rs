@@ -1,6 +1,6 @@
 use crate::core::datatypes::Id;
 use crate::mail::datatypes::LabelDescription;
-use proton_mail_common::datatypes::labels::system_labels::SystemLabel as RealSystemLabel;
+use mail_common::datatypes::labels::system_labels::SystemLabel as RealSystemLabel;
 use uniffi::Record as UniffiRecord;
 
 /// Representation of a `Label` defined by the system

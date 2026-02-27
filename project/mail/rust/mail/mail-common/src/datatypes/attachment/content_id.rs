@@ -1,5 +1,5 @@
+use mail_stash::exports::{FromSql, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use serde::{Deserialize, Serialize};
-use stash::exports::{FromSql, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use uuid::Uuid;
 
 /// Represents an attachment content id.
@@ -44,7 +44,7 @@ impl Default for ContentId {
 }
 
 impl ToSql for ContentId {
-    fn to_sql(&self) -> proton_sqlite3::rusqlite::Result<ToSqlOutput<'_>> {
+    fn to_sql(&self) -> mail_sqlite3::rusqlite::Result<ToSqlOutput<'_>> {
         self.0.to_sql()
     }
 }

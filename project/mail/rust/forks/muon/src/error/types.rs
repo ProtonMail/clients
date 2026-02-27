@@ -8,10 +8,10 @@ use derive_more::{Debug, Display};
 use std::error::Error as StdError;
 use std::fmt::{Formatter, Result as FmtResult};
 
-/// A `Result` alias where the `Err` case is `muon::Error`.
+/// A `Result` alias where the `Err` case is `mail_muon::Error`.
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
-/// An error that may occur when using muon.
+/// An error that may occur when using mail_muon.
 #[derive(Debug)]
 pub struct Error {
     /// The kind of error.

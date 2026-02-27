@@ -1,7 +1,7 @@
 use anyhow::Result;
-use proton_core_api::services::proton::muon::util::BoxErrExt;
-use proton_core_common::db::account::SessionEncryptionKey;
-use proton_core_common::os::{KeyChain, KeyChainEntryKind, KeyChainError};
+use mail_core_api::services::proton::mail_muon::util::BoxErrExt;
+use mail_core_common::db::account::SessionEncryptionKey;
+use mail_core_common::os::{KeyChain, KeyChainEntryKind, KeyChainError};
 use secrecy::{ExposeSecret, SecretString};
 use std::fs;
 use std::path::{Path, PathBuf};

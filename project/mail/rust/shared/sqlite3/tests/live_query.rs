@@ -1,12 +1,12 @@
 #![allow(clippy::print_stdout)]
 use std::collections::BTreeSet;
 
+use mail_stash::UserDb;
+use mail_stash::macros::Model;
+use mail_stash::orm::Model;
+use mail_stash::stash::Stash;
 use serde::{Deserialize, Serialize};
 use sqlite_watcher::watcher::TableObserver;
-use stash::UserDb;
-use stash::macros::Model;
-use stash::orm::Model;
-use stash::stash::Stash;
 use tokio::spawn as spawn_async;
 
 #[derive(Clone, Debug, Deserialize, Model, PartialEq, Serialize)]
@@ -36,8 +36,8 @@ impl TableObserver for FooWatcher {
 async fn test_tracker() {
     let dir = tempfile::TempDir::new().expect("failed to create temp dir");
     let db_path = dir.path().join("sqlite.db");
-    let stash: Stash<UserDb> = Stash::new(Some(&db_path)).expect("Failed to create Stash");
-    let conn = stash.connection().await.unwrap();
+    let mail_stash: Stash<UserDb> = Stash::new(Some(&db_path)).expect("Failed to create Stash");
+    let conn = mail_stash.connection().await.unwrap();
 
     conn.execute(
         "CREATE TABLE foo (id INTEGER PRIMARY KEY AUTOINCREMENT, bar INTEGER)",
@@ -46,7 +46,7 @@ async fn test_tracker() {
     .await
     .expect("failed to create table");
 
-    let receiver = stash
+    let receiver = mail_stash
         .subscribe_to(|sender| Box::new(FooWatcher { sender }))
         .await
         .unwrap()
@@ -54,7 +54,7 @@ async fn test_tracker() {
 
     let mut join_handles = Vec::new();
     for _ in 0..3 {
-        let stash_clone = stash.clone();
+        let stash_clone = mail_stash.clone();
         let h = spawn_async(async move {
             let mut conn = stash_clone.connection().await.unwrap();
             conn.tx(async |tx| {

@@ -1,3 +1,4 @@
+use mail_crypto_notifications::{DecryptableNotification, PGPEncryptedNotification};
 use proton_crypto_account::{
     keys::PGPDeviceKey,
     proton_crypto::crypto::{
@@ -5,7 +6,6 @@ use proton_crypto_account::{
         PublicKey,
     },
 };
-use proton_crypto_notifications::{DecryptableNotification, PGPEncryptedNotification};
 use serde::{Deserialize, Serialize};
 
 pub const TEST_DECRYPTION_KEY: &str = "-----BEGIN PGP PRIVATE KEY BLOCK-----

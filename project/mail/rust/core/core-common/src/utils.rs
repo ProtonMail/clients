@@ -5,8 +5,8 @@ mod tests;
 use std::time::Instant;
 
 use base64::{Engine, prelude::BASE64_STANDARD};
-pub use proton_api_utils::{PaginateOptions, PaginateResponse};
-use proton_core_api::MAX_PAGE_ELEMENT_COUNT;
+pub use mail_api_utils::{PaginateOptions, PaginateResponse};
+use mail_core_api::MAX_PAGE_ELEMENT_COUNT;
 use proton_crypto::generate_secure_random_bytes;
 use tokio::task::JoinSet;
 use unicode_segmentation::UnicodeSegmentation;

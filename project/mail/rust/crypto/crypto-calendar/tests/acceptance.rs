@@ -1,10 +1,10 @@
+use mail_crypto_calendar::{CalendarEventDecryptor, CalendarEventEncryptor, UnlockedCalendarKey};
 use proton_crypto::crypto::{KeyGeneratorAlgorithm, PGPProviderSync};
 use proton_crypto::{new_pgp_provider, new_srp_provider};
 use proton_crypto_account::keys::{
     KeyFlag, KeyId, LocalAddressKey, LocalUserKey, UnlockedAddressKey, UnlockedAddressKeys,
 };
 use proton_crypto_account::salts::KeySalt;
-use proton_crypto_calendar::{CalendarEventDecryptor, CalendarEventEncryptor, UnlockedCalendarKey};
 
 #[test]
 fn export_and_import_key() {

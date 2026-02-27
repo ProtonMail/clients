@@ -8,22 +8,20 @@ use crate::datatypes::{
     SpamAction, SwipeAction, SystemLabelId, ViewLayout, ViewMode,
 };
 use crate::{AppError, MailContextError};
-use proton_action_queue::queue::Queue;
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::datatypes::{ImageProxy, InitializationKey};
-use proton_core_common::models::{
-    InitializationError, InitializationWatcher, InitializedComponent,
-};
-use proton_crypto_inbox::keys::CryptoMailSettings;
-use proton_mail_api::services::proton::ProtonMail;
-use proton_mail_api::services::proton::response_data::MailSettings as ApiMailSettings;
+use mail_action_queue::queue::Queue;
+use mail_api::services::proton::ProtonMail;
+use mail_api::services::proton::response_data::MailSettings as ApiMailSettings;
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::datatypes::{ImageProxy, InitializationKey};
+use mail_core_common::models::{InitializationError, InitializationWatcher, InitializedComponent};
+use mail_crypto_inbox::keys::CryptoMailSettings;
+use mail_stash::UserDb;
+use mail_stash::exports::{Connection, Transaction};
+use mail_stash::macros::Model;
+use mail_stash::orm::{Model, ModelHooks};
+use mail_stash::stash::{Stash, StashError, Tether, WatcherHandle};
 use smart_default::SmartDefault;
 use sqlite_watcher::watcher::TableObserver;
-use stash::UserDb;
-use stash::exports::{Connection, Transaction};
-use stash::macros::Model;
-use stash::orm::{Model, ModelHooks};
-use stash::stash::{Stash, StashError, Tether, WatcherHandle};
 
 impl ModelHooks for MailSettings {
     fn before_save(&mut self, tx: &Transaction<'_>) -> Result<(), StashError> {
@@ -191,13 +189,13 @@ impl MailSettings {
     pub async fn initialize<PM: ProtonMail>(
         watcher: Arc<InitializationWatcher>,
         api: &PM,
-        stash: &Stash<UserDb>,
+        mail_stash: &Stash<UserDb>,
     ) -> Result<(), InitializationError<MailContextError>> {
         InitializedComponent::initialize(
             watcher,
             Self::INIT_KEY,
             &[],
-            stash.connection().await?,
+            mail_stash.connection().await?,
             async move || Self::fetch_mail_settings(api).await,
             |tx, res| {
                 res.store(tx)?;
@@ -303,8 +301,8 @@ impl MailSettings {
         Ok(())
     }
 
-    pub async fn watch(stash: &Stash<UserDb>) -> Result<WatcherHandle, StashError> {
-        stash
+    pub async fn watch(mail_stash: &Stash<UserDb>) -> Result<WatcherHandle, StashError> {
+        mail_stash
             .subscribe_to(|sender| Box::new(MailSettingsWatcher { sender }))
             .await
     }

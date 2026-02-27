@@ -1,4 +1,4 @@
-use proton_mail_common::datatypes::folder_banner::{
+use mail_common::datatypes::folder_banner::{
     AutoDeleteBanner as RealAutoDeleteBanner, AutoDeleteState as RealAutoDeleteState,
     SpamOrTrash as RealSpamOrTrash,
 };

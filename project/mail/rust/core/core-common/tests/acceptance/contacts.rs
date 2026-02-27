@@ -1,27 +1,27 @@
 #![allow(clippy::needless_pass_by_value)]
 use core_event_loop::v6::EventSubscriber;
-use pretty_assertions::assert_eq;
-use proton_core_api::services::proton::{
+use mail_core_api::services::proton::{
     Action, ContactBasic as ApiContactBasic, ContactCard as ApiContactCard,
     ContactEmail as ApiContactEmail, ContactEvent, ContactFull as ApiContactFull,
     ContactSendingPreferences as ApiContactSendingPreferences, CoreEvent, EventId,
 };
-use proton_core_api::services::proton::{ContactEmailId, ContactId, ContactUID, LabelId};
-use proton_core_common::datatypes::{ContactSendingPreferences, ContactTypes, Labels};
-use proton_core_common::event_loop::event_subscriber::CoreEventSubscriber;
-use proton_core_common::event_loop::v6::CoreEventCache;
-use proton_core_common::models::{
+use mail_core_api::services::proton::{ContactEmailId, ContactId, ContactUID, LabelId};
+use mail_core_common::datatypes::{ContactSendingPreferences, ContactTypes, Labels};
+use mail_core_common::event_loop::event_subscriber::CoreEventSubscriber;
+use mail_core_common::event_loop::v6::CoreEventCache;
+use mail_core_common::models::{
     Contact, ContactCard, ContactEmail, ModelExtension, ModelIdExtension,
 };
-use proton_core_common::services::event_loop_service::EventManagerContext;
-use proton_core_common::test_utils::account::unlocked_user_key;
-use proton_core_common::test_utils::test_context::TestContext;
-use proton_core_common::{AddressKeysContactFetchPolicy, UserContext};
+use mail_core_common::services::event_loop_service::EventManagerContext;
+use mail_core_common::test_utils::account::unlocked_user_key;
+use mail_core_common::test_utils::test_context::TestContext;
+use mail_core_common::{AddressKeysContactFetchPolicy, UserContext};
+use mail_stash::orm::Model;
+use mail_stash::params;
+use pretty_assertions::assert_eq;
 use proton_crypto_account::contacts::ContactCardType;
 use proton_crypto_account::proton_crypto::crypto::AccessKeyInfo;
 use proton_crypto_account::proton_crypto::new_pgp_provider;
-use stash::orm::Model;
-use stash::params;
 use std::sync::Arc;
 
 macro_rules! prune_email {
@@ -86,7 +86,7 @@ async fn test_sync_and_load_contacts() {
         .await;
 
     // Sync contacts
-    let mut tether = user_ctx.stash().connection().await.unwrap();
+    let mut tether = user_ctx.mail_stash().connection().await.unwrap();
     let contacts = Contact::sync(user_ctx.session())
         .await
         .expect("failed to download contacts");
@@ -96,7 +96,7 @@ async fn test_sync_and_load_contacts() {
         .expect("failed to load contacts in db");
 
     // Check database
-    let conn = user_ctx.stash().connection().await.unwrap();
+    let conn = user_ctx.mail_stash().connection().await.unwrap();
     let mut contacts = Contact::find("LIMIT 100", vec![], &conn)
         .await
         .expect("Failed to get contacts");
@@ -126,7 +126,7 @@ async fn test_sync_and_load_contacts_mixed() {
     .await;
 
     // Check database
-    let conn = user_ctx.stash().connection().await.unwrap();
+    let conn = user_ctx.mail_stash().connection().await.unwrap();
 
     let remote_id = test_contacts.first().unwrap().id.clone();
     let mut contact = Contact::find_by_remote_id(remote_id, &conn)
@@ -211,7 +211,7 @@ async fn test_sync_and_delete_event_contact() {
         .expect("failed to execute event");
 
     // Were the  deletions successful?
-    let conn = user_ctx.stash().connection().await.unwrap();
+    let conn = user_ctx.mail_stash().connection().await.unwrap();
 
     let contacts = Contact::find("LIMIT 100", vec![], &conn)
         .await
@@ -264,7 +264,7 @@ async fn test_sync_and_modify_event_contact() {
         .await
         .expect("failed to execute event");
 
-    let conn = user_ctx.stash().connection().await.unwrap();
+    let conn = user_ctx.mail_stash().connection().await.unwrap();
 
     let mut contact = Contact::find_by_remote_id(remote_id, &conn)
         .await
@@ -315,7 +315,7 @@ async fn test_contact_load_public_address_keys() {
     // Check public address keys from contacts
     let pgp = new_pgp_provider();
     let unlocked_user_keys = unlocked_user_key(&pgp);
-    let mut tether = user_ctx.stash().connection().await.unwrap();
+    let mut tether = user_ctx.mail_stash().connection().await.unwrap();
 
     let keys_first_call = user_ctx
         .public_address_keys_from_contacts(
@@ -421,7 +421,7 @@ async fn prepare_sync_test_data_contacts(
     ctx.mock_get_full_contact(test_remote_full_contact).await;
 
     // Sync contacts
-    let mut tether = user_ctx.stash().connection().await.unwrap();
+    let mut tether = user_ctx.mail_stash().connection().await.unwrap();
     let contacts = Contact::sync(user_ctx.session())
         .await
         .expect("failed to download contacts");

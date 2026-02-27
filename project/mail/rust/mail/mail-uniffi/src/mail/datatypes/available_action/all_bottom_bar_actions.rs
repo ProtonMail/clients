@@ -1,7 +1,7 @@
 use crate::mail::datatypes::MovableSystemFolderAction;
 use crate::{UniffiEnum, UniffiRecord};
-use proton_core_common::utils::MapVec as _;
-use proton_mail_common::actions::{
+use mail_core_common::utils::MapVec as _;
+use mail_common::actions::{
     AllListActions as RealAllListActions, ListActions as RealListActions,
 };
 

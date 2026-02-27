@@ -149,10 +149,10 @@ mod contact_list {
         models::{Contact, ContactEmail, Label},
         tests::common::new_core_test_connection,
     };
+    use mail_core_api::services::proton::LabelId;
+    use mail_stash::orm::Model;
+    use mail_stash::stash::StashError;
     use pretty_assertions::assert_eq;
-    use proton_core_api::services::proton::LabelId;
-    use stash::orm::Model;
-    use stash::stash::StashError;
     use test_case::test_case;
 
     #[test_case(vec![], vec![]
@@ -300,17 +300,17 @@ mod contact_list {
 }
 
 mod contact_watcher {
-    use stash::{orm::Model, params};
+    use mail_stash::{orm::Model, params};
 
     use crate::{cid, contact, models::Contact, tests::common::new_core_test_connection};
 
     #[tokio::test]
     async fn test_contact_list_watcher() {
-        let stash = new_core_test_connection().await;
-        let mut tether = stash.connection().await.unwrap();
+        let mail_stash = new_core_test_connection().await;
+        let mut tether = mail_stash.connection().await.unwrap();
         let mut contact = contact!(remote_id: cid!("123"), name: "Barbara Fox".to_string());
         tether.tx(async |tx| contact.save(tx).await).await.unwrap();
-        let (_, list_receiver) = Contact::watch_contact_list(&stash).await.unwrap();
+        let (_, list_receiver) = Contact::watch_contact_list(&mail_stash).await.unwrap();
         let list_receiver = list_receiver.receiver;
 
         // Rename contact
@@ -375,7 +375,7 @@ mod contact_suggestions {
         models::{Contact, Label},
         tests::common::new_core_test_connection,
     };
-    use stash::orm::Model;
+    use mail_stash::orm::Model;
     use test_case::test_case;
 
     use super::display_suggestions;
@@ -849,7 +849,7 @@ mod contact_suggestions {
     ) -> Vec<ContactSuggestion> {
         let mut tether = new_core_test_connection().await.connection().await.unwrap();
         tether
-            .tx::<_, _, stash::stash::StashError>(async |tx| {
+            .tx::<_, _, mail_stash::stash::StashError>(async |tx| {
                 for label in &mut test_case.contact_groups {
                     label.save(tx).await.unwrap();
                 }

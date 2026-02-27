@@ -3,8 +3,8 @@ use crate::services::event_loop_service::EventManagerContext;
 use async_trait::async_trait;
 use core_event_loop::RawEvent;
 use core_event_loop::provider::{EventProvider, EventProviderError, EventProviderResult};
-use proton_core_api::service::ApiServiceError;
-use proton_core_api::services::proton::ProtonCore;
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::ProtonCore;
 
 #[derive(Debug, thiserror::Error)]
 pub enum CoreEventProviderError {
@@ -55,7 +55,7 @@ impl EventProvider<EventManagerContext> for CoreEventLoopContext {
                 .session()
                 .get_event(
                     event_id.clone().into_inner().into(),
-                    proton_core_api::services::proton::GetEventOptions::all(),
+                    mail_core_api::services::proton::GetEventOptions::all(),
                 )
                 .await?;
 

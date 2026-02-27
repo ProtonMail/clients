@@ -1,6 +1,6 @@
-use muon::tls::errors::Error;
-use muon::tls::objects::{GlobalRef, JClass, JObject};
-use muon::tls::{JNIEnv, JavaVM};
+use mail_muon::tls::errors::Error;
+use mail_muon::tls::objects::{GlobalRef, JClass, JObject};
+use mail_muon::tls::{JNIEnv, JavaVM};
 use std::sync::Once;
 
 static INIT_ONCE: Once = Once::new();
@@ -17,7 +17,7 @@ pub extern "C" fn init_tls(env: JNIEnv<'_>, cls: JClass<'_>) {
 fn try_init_tls(env: JNIEnv<'_>, cls: JClass<'_>) -> Result<(), Error> {
     let runtime = Runtime::new(env, cls)?;
 
-    muon::tls::init_external(Box::leak(runtime));
+    mail_muon::tls::init_external(Box::leak(runtime));
 
     Ok(())
 }
@@ -42,7 +42,7 @@ impl Runtime {
     }
 }
 
-impl muon::tls::Runtime for Runtime {
+impl mail_muon::tls::Runtime for Runtime {
     fn java_vm(&self) -> &JavaVM {
         &self.vm
     }

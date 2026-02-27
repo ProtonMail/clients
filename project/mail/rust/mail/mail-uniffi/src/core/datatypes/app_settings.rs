@@ -1,5 +1,5 @@
 use crate::{UniffiEnum, UniffiRecord};
-use proton_core_common::models::{
+use mail_core_common::models::{
     AppAppearance as RealAppAppearance, AppProtection as RealAppProtection,
     AppSettings as RealAppSettings, ProtectionAutoLock as RealAutoLock,
 };

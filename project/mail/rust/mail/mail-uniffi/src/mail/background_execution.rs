@@ -1,9 +1,9 @@
 use crate::async_runtime;
 use crate::errors::UserSessionError;
 use crate::mail::MailSession;
-use proton_mail_common::MailContext;
-use proton_mail_common::ProtonMailError as RealProtonMailError;
-use proton_mail_common::{
+use mail_common::MailContext;
+use mail_common::ProtonMailError as RealProtonMailError;
+use mail_common::{
     BackgroundExecutionContext, BackgroundExecutionResult as RealBackgroundExecutionResult,
     BackgroundExecutionStatus as RealBackgroundExecutionStatus,
 };

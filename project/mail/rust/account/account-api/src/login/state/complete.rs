@@ -1,17 +1,17 @@
 use crate::DelinquentState;
 use crate::login::state::{HasSessionId, HasUserId, StateData};
-use proton_core_api::services::proton::prelude::*;
-use proton_core_api::session::Session;
+use mail_core_api::services::proton::prelude::*;
+use mail_core_api::session::Session;
 
 /// Represents a completed login flow.
 pub struct Complete {
-    client: muon::Client,
+    client: mail_muon::Client,
     data: StateData,
     user: Option<User>,
 }
 
 impl Complete {
-    pub(crate) fn new(client: muon::Client, data: StateData, user: Option<User>) -> Self {
+    pub(crate) fn new(client: mail_muon::Client, data: StateData, user: Option<User>) -> Self {
         Self { client, data, user }
     }
 

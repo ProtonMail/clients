@@ -7,24 +7,24 @@ mod labels_with_counters;
 use super::{ConversationCounter, MessageCounter};
 use crate::models::MailSettings;
 use indoc::formatdoc;
-use proton_core_api::services::proton::{LabelId, ProtonCore};
-use proton_core_common::datatypes::{LabelType, LocalLabelId};
-use proton_core_common::models::{
+use mail_core_api::services::proton::{LabelId, ProtonCore};
+use mail_core_common::datatypes::{LabelType, LocalLabelId};
+use mail_core_common::models::{
     InitializationError, InitializationWatcher, InitializedComponent, Label, LabelError,
     ModelIdExtension,
 };
-use sqlite_watcher::watcher::TableObserver;
-use stash::UserDb;
-use stash::exports::Row;
-use stash::orm::{ConversionError, DbRecord};
-use stash::stash::{Stash, WatcherHandle};
-use stash::utils::{IterMapToSql, placeholders};
-use stash::{
+use mail_stash::UserDb;
+use mail_stash::exports::Row;
+use mail_stash::orm::{ConversionError, DbRecord};
+use mail_stash::stash::{Stash, WatcherHandle};
+use mail_stash::utils::{IterMapToSql, placeholders};
+use mail_stash::{
     exports::ToSql,
     orm::Model,
     params,
     stash::{StashError, Tether},
 };
+use sqlite_watcher::watcher::TableObserver;
 use std::collections::BTreeSet;
 use std::ops::Deref;
 use std::sync::Arc;
@@ -47,7 +47,7 @@ impl LabelWithCounters {
     pub async fn initialize<API>(
         watcher: Arc<InitializationWatcher>,
         api: &API,
-        stash: &Stash<UserDb>,
+        mail_stash: &Stash<UserDb>,
     ) -> Result<(), InitializationError<LabelError>>
     where
         API: ProtonCore,
@@ -56,7 +56,7 @@ impl LabelWithCounters {
             watcher,
             Label::INIT_KEY,
             &[],
-            stash.connection().await?,
+            mail_stash.connection().await?,
             async || {
                 let labels = Label::all_labels(api).await?;
                 Ok(labels)
@@ -193,8 +193,8 @@ impl LabelWithCounters {
         Ok(values)
     }
 
-    pub async fn watch(stash: &Stash<UserDb>) -> Result<WatcherHandle, StashError> {
-        stash
+    pub async fn watch(mail_stash: &Stash<UserDb>) -> Result<WatcherHandle, StashError> {
+        mail_stash
             .subscribe_to(|sender| Box::new(LabelWithCountersWatcher { sender }))
             .await
     }

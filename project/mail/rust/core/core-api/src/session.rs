@@ -1,10 +1,10 @@
 use derive_more::Debug;
 use futures::FutureExt;
-use muon::client::InfoProvider;
-use muon::client::flow::{ForkFlowResult, WithSelectorFlow};
-use muon::common::{BoxFut, ParseEndpointErr, Sender};
-use muon::rt::DynResolver;
-use muon::{ProtonRequest, ProtonResponse, Result as MuonResult};
+use mail_muon::client::InfoProvider;
+use mail_muon::client::flow::{ForkFlowResult, WithSelectorFlow};
+use mail_muon::common::{BoxFut, ParseEndpointErr, Sender};
+use mail_muon::rt::DynResolver;
+use mail_muon::{ProtonRequest, ProtonResponse, Result as MuonResult};
 use std::borrow::Borrow;
 use std::fmt::Formatter;
 use std::sync::Arc;
@@ -17,11 +17,11 @@ use crate::services::proton::{self, BuildError};
 use crate::store::{BoxStore, DynStore, Store, TempStore};
 use crate::verification::{DynChallengeNotifier, FailNotifier};
 
-pub use muon::app::AppVersion;
-pub use muon::common::{Endpoint, Name, Server};
-pub use muon::env::{Env, EnvId};
-pub use muon::tls::TlsPinSet;
-use proton_network_monitor_service::{ConnectionMonitor, NetworkStatusObserver};
+pub use mail_muon::app::AppVersion;
+pub use mail_muon::common::{Endpoint, Name, Server};
+pub use mail_muon::env::{Env, EnvId};
+pub use mail_muon::tls::TlsPinSet;
+use mail_network_monitor_service::{ConnectionMonitor, NetworkStatusObserver};
 
 pub trait EnvIdExt: Sized {
     /// Create a new environment ID for a custom environment.
@@ -248,7 +248,7 @@ impl Builder {
 /// An API session, capable of making requests to the API on behalf of a user.
 #[derive(Clone)]
 pub struct Session {
-    client: muon::Client,
+    client: mail_muon::Client,
     config: Arc<Config>,
     store: DynStore,
     connection_monitor: ConnectionMonitor,
@@ -312,7 +312,7 @@ impl Session {
                 selector,
                 id: session_id.unwrap_or_default(),
             }),
-            ForkFlowResult::Failure { reason, .. } => Err(muon::Error::from(reason))?,
+            ForkFlowResult::Failure { reason, .. } => Err(mail_muon::Error::from(reason))?,
         }
     }
 
@@ -346,7 +346,7 @@ impl Session {
                 connection_monitor: self.connection_monitor.clone(),
                 network_status_observer: self.network_status_observer.clone(),
             }),
-            WithSelectorFlow::Failed { reason, .. } => Err(muon::Error::from(reason).into()),
+            WithSelectorFlow::Failed { reason, .. } => Err(mail_muon::Error::from(reason).into()),
         }
     }
 
@@ -394,12 +394,12 @@ pub struct SessionParts {
 
 impl Session {
     #[must_use]
-    pub fn to_parts(&self) -> (muon::Client, SessionParts) {
+    pub fn to_parts(&self) -> (mail_muon::Client, SessionParts) {
         self.clone().into_parts()
     }
 
     #[must_use]
-    pub fn into_parts(self) -> (muon::Client, SessionParts) {
+    pub fn into_parts(self) -> (mail_muon::Client, SessionParts) {
         let parts = SessionParts {
             config: self.config,
             store: self.store,
@@ -411,7 +411,7 @@ impl Session {
     }
 
     #[must_use]
-    pub fn from_parts(client: muon::Client, parts: SessionParts) -> Self {
+    pub fn from_parts(client: mail_muon::Client, parts: SessionParts) -> Self {
         Self {
             client,
             config: parts.config,

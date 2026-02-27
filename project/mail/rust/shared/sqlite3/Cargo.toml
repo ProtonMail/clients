@@ -1,5 +1,5 @@
 [package]
-name = "proton-sqlite3"
+name = "mail-sqlite3"
 version = "0.7.15"
 edition.workspace = true
 rust-version.workspace = true
@@ -24,7 +24,7 @@ rusqlite = { workspace = true, features = [
 ] }
 serde = { workspace = true }
 slotmap = "1"
-stash = { workspace = true }
+mail-stash = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }

@@ -1,7 +1,7 @@
 use super::utils::{date_from_timestamp, format_flags};
 use crate::widgets::utils::format_senders;
 use crate::widgets::{AsIntoTable, IntoTable};
-use proton_mail_common::datatypes::ContextualConversation;
+use mail_common::datatypes::ContextualConversation;
 use ratatui::layout::Constraint;
 use ratatui::prelude::*;
 use ratatui::widgets::{Cell, Row};

@@ -29,26 +29,26 @@ use crate::{AppError, ImagePolicy, MailContextError, MailContextResult, MailUser
 use anyhow::{Context, anyhow};
 use chrono::{DateTime, Local};
 use futures::future::join3;
-use proton_action_queue::action::{ActionId, MetadataBuilder};
-use proton_action_queue::queue::{ActionError, Queue, QueuedActionOutput, QueuedError};
-use proton_canonical_email::canonicalize_auto;
-use proton_core_api::consts::Mail;
-use proton_core_api::services::proton::AddressId;
-use proton_core_api::session::Session;
-use proton_core_common::datatypes::UnixTimestamp;
-use proton_core_common::db::account::EncryptedPassword;
-use proton_core_common::models::{Address, ModelExtension, ModelIdExtension, User};
-use proton_core_common::{Origin, Platform};
-use proton_mail_api::services::proton::ProtonMail;
-use proton_mail_api::services::proton::common::MessageId;
-use proton_mail_api::services::proton::prelude::DraftReplyOrForwardParams;
-use proton_mail_api::services::proton::response_data::Message as ApiMessage;
-use proton_mail_html_transformer::Transformer;
-use proton_mail_html_transformer::transforms::styles::BrowserCapabilities;
-use stash::UserDb;
-use stash::exports::SqliteError;
-use stash::orm::Model;
-use stash::stash::{StashError, Tether};
+use mail_action_queue::action::{ActionId, MetadataBuilder};
+use mail_action_queue::queue::{ActionError, Queue, QueuedActionOutput, QueuedError};
+use mail_api::services::proton::ProtonMail;
+use mail_api::services::proton::common::MessageId;
+use mail_api::services::proton::prelude::DraftReplyOrForwardParams;
+use mail_api::services::proton::response_data::Message as ApiMessage;
+use mail_canonical_email::canonicalize_auto;
+use mail_core_api::consts::Mail;
+use mail_core_api::services::proton::AddressId;
+use mail_core_api::session::Session;
+use mail_core_common::datatypes::UnixTimestamp;
+use mail_core_common::db::account::EncryptedPassword;
+use mail_core_common::models::{Address, ModelExtension, ModelIdExtension, User};
+use mail_core_common::{Origin, Platform};
+use mail_html_transformer::Transformer;
+use mail_html_transformer::transforms::styles::BrowserCapabilities;
+use mail_stash::UserDb;
+use mail_stash::exports::SqliteError;
+use mail_stash::orm::Model;
+use mail_stash::stash::{StashError, Tether};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 use tokio::fs;
@@ -2026,7 +2026,7 @@ async fn queue_or_replace_draft_save(
             // Save (C). Replacing A with C will cause C to Depend on B and B on C rather
             // than A. Extra book keeping is required to prevent this. For now, in the interest
             // of saving time, we just queue the action normally when a cycle is detected.
-            Err(ActionError::Queue(proton_action_queue::queue::Error::CyclicDependency)) => {
+            Err(ActionError::Queue(mail_action_queue::queue::Error::CyclicDependency)) => {
                 queue
                     .queue_action_with_metadata(save_action, metadata)
                     .await

@@ -1,8 +1,8 @@
 use core::str;
 
+use mail_crypto_inbox_mime::write::InboxMimeBuilder;
+use mail_crypto_inbox_mime::{MimeProcessor, ProcessMime, ProcessedBodyType};
 use mail_parser::decoders::base64::base64_decode;
-use proton_crypto_inbox_mime::write::InboxMimeBuilder;
-use proton_crypto_inbox_mime::{MimeProcessor, ProcessMime, ProcessedBodyType};
 
 pub const WEB_EXAMPLE: &str = r#"Content-Type: multipart/mixed;boundary=---------------------d600e8c7e563966198cbd667aac541cd
 

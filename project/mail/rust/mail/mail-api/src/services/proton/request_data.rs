@@ -21,15 +21,15 @@ use crate::services::proton::common::{AttachmentId, MessageId};
 use crate::services::proton::prelude::MobileAction;
 use crate::services::proton::response_data::MimeType;
 use indexmap::IndexMap;
-use proton_core_api::services::proton::{PrivateEmail, PrivateString};
-use proton_crypto_inbox::attachment::{
+use mail_core_api::services::proton::{PrivateEmail, PrivateString};
+use mail_crypto_inbox::attachment::{
     Base64AttachmentEncryptedSignature, BinaryAttachmentEncryptedSignature,
     BinaryAttachmentSignature, EncryptedAttachment, KeyPackets,
 };
-use proton_crypto_inbox::keys::{InboxSessionKey, KeyPacket, PackageCryptoType, SessionKeyExposed};
-use proton_crypto_inbox::message::EncryptedDraft;
-use proton_crypto_inbox::message::packages::PackageMimeType;
-use proton_crypto_inbox::proton_crypto::crypto::SessionKeyAlgorithm;
+use mail_crypto_inbox::keys::{InboxSessionKey, KeyPacket, PackageCryptoType, SessionKeyExposed};
+use mail_crypto_inbox::message::EncryptedDraft;
+use mail_crypto_inbox::message::packages::PackageMimeType;
+use mail_crypto_inbox::proton_crypto::crypto::SessionKeyAlgorithm;
 use serde::Serialize;
 use serde_repr::Serialize_repr;
 use serde_with::{BoolFromInt, DisplayFromStr, base64::Base64, serde_as};

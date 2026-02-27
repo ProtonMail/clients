@@ -1,4 +1,4 @@
-use proton_mail_common::datatypes::attachment::{
+use mail_common::datatypes::attachment::{
     MimeType as RealMimeType, MimeTypeCategory as RealMimeTypeCategory,
 };
 use uniffi::{Enum as UniffiEnum, Record as UniffiRecord};

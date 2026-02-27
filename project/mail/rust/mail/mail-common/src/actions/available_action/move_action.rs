@@ -4,11 +4,11 @@ use crate::{
     AppError,
     datatypes::labels::hierarchy::{self, Hierarchy},
 };
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::datatypes::{LabelColor, LabelType, LocalLabelId, SystemLabel};
-use proton_core_common::models::{Label, ModelIdExtension};
-use stash::orm::Model;
-use stash::stash::Tether;
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::datatypes::{LabelColor, LabelType, LocalLabelId, SystemLabel};
+use mail_core_common::models::{Label, ModelIdExtension};
+use mail_stash::orm::Model;
+use mail_stash::stash::Tether;
 
 /// This enum represents the action of moving a message or conversation to a folder.
 ///

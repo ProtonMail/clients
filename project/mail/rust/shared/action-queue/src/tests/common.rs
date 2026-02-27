@@ -1,8 +1,8 @@
 use crate::action::{Action, ActionId, Error, Handler, WriterGuard, WriterGuardError};
 use crate::queue::ActionRequeueReason;
 use crate::rebase::RebaseChangeSet;
-use stash::marker::DatabaseMarker;
-use stash::stash::{Bond, StashError};
+use mail_stash::marker::DatabaseMarker;
+use mail_stash::stash::{Bond, StashError};
 use std::marker::PhantomData;
 
 #[derive(Clone, Debug, Copy, PartialEq, Eq)]

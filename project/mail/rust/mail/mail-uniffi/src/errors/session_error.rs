@@ -1,8 +1,8 @@
 use super::{ProtonError, SessionReason};
 use crate::UniffiEnum;
 use derive_more::From;
-use proton_mail_common::MailErrorReason as RealMailErrorReason;
-use proton_mail_common::ProtonMailError as RealProtonMailError;
+use mail_common::MailErrorReason as RealMailErrorReason;
+use mail_common::ProtonMailError as RealProtonMailError;
 
 #[derive(Debug, From, UniffiEnum)]
 pub enum UserSessionError {

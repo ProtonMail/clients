@@ -1,6 +1,6 @@
-use proton_core_api::services::proton::GetKeysAllResponse;
-use proton_core_common::test_utils::test_context::TestContext;
-use proton_core_common::{
+use mail_core_api::services::proton::GetKeysAllResponse;
+use mail_core_common::test_utils::test_context::TestContext;
+use mail_core_common::{
     CoreContextError, PublicAddressKeyFetchPolicy, PublicAddressKeysResponseCache,
 };
 use proton_crypto::new_pgp_provider;
@@ -71,7 +71,7 @@ async fn fetch_public_keys_stores_in_cache() {
         .await
         .unwrap();
 
-    let tether = user_ctx.stash().connection().await.unwrap();
+    let tether = user_ctx.mail_stash().connection().await.unwrap();
     let cached = PublicAddressKeysResponseCache::get(email.to_owned(), true, &tether)
         .await
         .unwrap()
@@ -86,7 +86,7 @@ async fn fetch_public_keys_loads_cached_version_when_network_fails() {
     mock_keys_failure(ctx.mock_server()).await;
     let email = "foo@params.com";
     user_ctx
-        .stash()
+        .mail_stash()
         .connection()
         .await
         .unwrap()

@@ -1,9 +1,9 @@
 use anyhow::Result;
-use muon::test::server::Server;
-use muon::GET;
+use mail_muon::test::server::Server;
+use mail_muon::GET;
 use std::sync::Arc;
 
-#[muon::test]
+#[mail_muon::test]
 async fn test_dropout(s: Arc<Server>) -> Result<()> {
     let c = s.client();
 

@@ -13,12 +13,12 @@ pub use self::responses::*;
 pub use self::test_utils::*;
 
 use jiff::Zoned;
-use muon::PUT;
-use muon::ProtonRequest;
-use muon::ProtonResponse;
-use muon::common::Sender;
-use muon::{GET, http::HttpReqExt};
-use proton_core_api::service::ApiServiceResult;
+use mail_core_api::service::ApiServiceResult;
+use mail_muon::PUT;
+use mail_muon::ProtonRequest;
+use mail_muon::ProtonResponse;
+use mail_muon::common::Sender;
+use mail_muon::{GET, http::HttpReqExt};
 
 pub const CALENDAR_V1: &str = "/calendar/v1";
 

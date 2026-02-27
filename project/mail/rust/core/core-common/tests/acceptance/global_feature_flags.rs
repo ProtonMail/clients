@@ -1,15 +1,15 @@
 use std::time::Duration;
 
-use proton_core_api::services::proton::{
+use mail_core_api::services::proton::{
     GetUnleashFeaturesResponse, UnleashToggle, UnleashToggleVariant,
 };
-use proton_core_common::datatypes::UnixTimestamp;
-use proton_core_common::models::FeatureFlag;
-use proton_core_common::services::FeatureFlagsService;
-use proton_core_common::test_utils::test_context::TestContext;
-use proton_core_common::test_utils::utils::RespondNthTime;
+use mail_core_common::datatypes::UnixTimestamp;
+use mail_core_common::models::FeatureFlag;
+use mail_core_common::services::FeatureFlagsService;
+use mail_core_common::test_utils::test_context::TestContext;
+use mail_core_common::test_utils::utils::RespondNthTime;
+use mail_stash::orm::Model;
 use serde_json::json;
-use stash::orm::Model;
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, ResponseTemplate};
 

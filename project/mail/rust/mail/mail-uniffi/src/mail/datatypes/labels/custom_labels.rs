@@ -1,6 +1,6 @@
 use crate::core::datatypes::Id;
 use crate::mail::datatypes::{LabelColor, LabelDescription};
-use proton_mail_common::datatypes::labels::custom_labels::CustomLabel as RealCustomLabel;
+use mail_common::datatypes::labels::custom_labels::CustomLabel as RealCustomLabel;
 use uniffi::Record as UniffiRecord;
 
 /// Represent a `Label` defined by End User

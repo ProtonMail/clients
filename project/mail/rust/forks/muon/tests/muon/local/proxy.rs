@@ -1,12 +1,12 @@
 use anyhow::Result;
-use muon::common::ConstProxy;
-use muon::test::proxy;
-use muon::test::server::{Server, HTTPS};
-use muon::util::ProtonRequestExt;
-use muon::GET;
+use mail_muon::common::ConstProxy;
+use mail_muon::test::proxy;
+use mail_muon::test::server::{Server, HTTPS};
+use mail_muon::util::ProtonRequestExt;
+use mail_muon::GET;
 use std::sync::Arc;
 
-#[muon::test]
+#[mail_muon::test]
 #[cfg_attr(ci, ignore = "local proxy not supported in CI")]
 async fn test_ping_proxy_http(s: Arc<Server>) -> Result<()> {
     let proxy = ConstProxy::new(proxy::url()?.try_into()?);
@@ -17,7 +17,7 @@ async fn test_ping_proxy_http(s: Arc<Server>) -> Result<()> {
     Ok(())
 }
 
-#[muon::test(scheme(HTTPS))]
+#[mail_muon::test(scheme(HTTPS))]
 #[cfg_attr(ci, ignore = "local proxy not supported in CI")]
 async fn test_ping_proxy_https(s: Arc<Server>) -> Result<()> {
     let proxy = ConstProxy::new(proxy::url()?.try_into()?);

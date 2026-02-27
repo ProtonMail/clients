@@ -3,11 +3,11 @@ use crate::os::safe_write_async;
 use crate::{CoreContextResult, UserContext};
 use anyhow::Context as _;
 use indoc::indoc;
-use proton_core_api::services::proton::prelude::GetImagesLogoOptions;
-use proton_core_api::services::proton::{PrivateEmail, ProtonCore};
-use stash::exports::{SqliteError, ToSql};
-use stash::params;
-use stash::stash::{Bond, StashError, Tether};
+use mail_core_api::services::proton::prelude::GetImagesLogoOptions;
+use mail_core_api::services::proton::{PrivateEmail, ProtonCore};
+use mail_stash::exports::{SqliteError, ToSql};
+use mail_stash::params;
+use mail_stash::stash::{Bond, StashError, Tether};
 use std::hash::{DefaultHasher, Hash, Hasher};
 use tracing::info;
 

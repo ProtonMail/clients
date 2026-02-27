@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use clap::Parser;
-use proton_ical::VCalendar;
+use mail_ical::VCalendar;
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::{fmt, fs};

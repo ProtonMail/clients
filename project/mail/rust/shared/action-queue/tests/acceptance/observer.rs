@@ -1,13 +1,13 @@
 use super::common::{DefaultError, new_queue_typed};
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
 };
-use proton_action_queue::observers::{ActionAwaiter, ActionFailureObserver, ActionFailureReason};
-use proton_action_queue::queue::BroadcastMessage;
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_action_queue::tests::common::TestDb;
+use mail_action_queue::observers::{ActionAwaiter, ActionFailureObserver, ActionFailureReason};
+use mail_action_queue::queue::BroadcastMessage;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_action_queue::tests::common::TestDb;
+use mail_stash::stash::Bond;
 use serde::{Deserialize, Serialize};
-use stash::stash::Bond;
 use std::time::Duration;
 
 #[tokio::test]

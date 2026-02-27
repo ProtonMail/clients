@@ -8,10 +8,10 @@ use crate::widgets::{ScrollableList, ScrollableListState};
 use anyhow::{Context as _, anyhow};
 use futures::StreamExt as _;
 use futures::stream::iter;
-use proton_core_common::CoreAccountState;
-use proton_core_common::db::account::CoreAccount;
+use mail_core_common::CoreAccountState;
+use mail_core_common::db::account::CoreAccount;
 
-use proton_mail_common::{MailContext, MailContextError, NewMailUserContextOptions};
+use mail_common::{MailContext, MailContextError, NewMailUserContextOptions};
 use ratatui::Frame;
 use ratatui::crossterm::event::{Event, KeyCode};
 use ratatui::layout::Flex;

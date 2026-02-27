@@ -19,8 +19,8 @@ pub mod theme;
 mod tracker_info;
 mod utm_info;
 
-use proton_mail_api::services::proton::prelude::ContentDisposition;
-use stash::orm::Model;
+use mail_api::services::proton::prelude::ContentDisposition;
+use mail_stash::orm::Model;
 
 pub use assigned_actions::*;
 pub use contextual_conversation::*;
@@ -29,12 +29,12 @@ use derive_more::derive::TryFrom;
 pub use exclusive_location::ExclusiveLocation;
 pub use ids::*;
 pub use include_switch::IncludeSwitch;
+use mail_core_common::models::Label;
+use mail_stash::stash::{Bond, StashError, StashResult, Tether};
 pub use privacy_info::{PrivacyInfo, PrivacyInfoStatus};
-use proton_core_common::models::Label;
 pub use read_filter::ReadFilter;
 pub use rollback_item_type::RollbackItemType;
 pub use search_options::SearchOptions;
-use stash::stash::{Bond, StashError, StashResult, Tether};
 pub use system_folder::MovableSystemFolder;
 pub use tracker_info::{TrackerDomain, TrackerInfo};
 pub use utm_info::{StrippedUTMInfo, UTMLink};
@@ -48,25 +48,9 @@ use crate::models::{
 use crate::{AppError, MailContextError, MailUserContext};
 use attachment::{ContentId, MimeTypeCategory};
 use core::fmt;
-use proton_core_api::services::proton::{AddressId, LabelId, PrivateEmail, PrivateString};
-use proton_core_common::datatypes::{
-    AvatarInformation, LabelColor, LabelType, LocalLabelId, SystemLabel,
-};
-use proton_crypto_account::keys::{
-    EmailMimeType as CryptoMimeType, PGPScheme as CryptoPgpScheme, UnlockedAddressKeys,
-};
-use proton_crypto_inbox::attachment::{
-    AttachmentEncryptedSignature as RealAttachmentEncryptedSignature,
-    AttachmentSignature as RealAttachmentSignature, KeyPackets as RealKeyPackets,
-};
-use proton_crypto_inbox::message::{DecryptableMessage, DecryptedBody, GettablePGPMessage};
-use proton_crypto_inbox::proton_crypto::crypto::PGPProviderSync;
-use proton_crypto_inbox::proton_crypto_inbox_mime::{
-    Disposition as CryptoDisposition, ProcessedMessage,
-};
-use proton_mail_api::services::proton::common::AttachmentId;
-use proton_mail_api::services::proton::request_data::PutMobileSettings;
-use proton_mail_api::services::proton::response_data::{
+use mail_api::services::proton::common::AttachmentId;
+use mail_api::services::proton::request_data::PutMobileSettings;
+use mail_api::services::proton::response_data::{
     AlmostAllMail as ApiAlmostAllMail, AttachmentMetadata as ApiAttachmentMetadata,
     ComposerDirection as ApiComposerDirection, ComposerMode as ApiComposerMode,
     ConversationCount as ApiConversationCount, Disposition as ApiDisposition,
@@ -81,12 +65,28 @@ use proton_mail_api::services::proton::response_data::{
     ShowMoved as ApiShowMoved, SpamAction as ApiSpamAction, SwipeAction as ApiSwipeAction,
     ViewLayout as ApiViewLayout, ViewMode as ApiViewMode,
 };
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use stash::exports::{
+use mail_core_api::services::proton::{AddressId, LabelId, PrivateEmail, PrivateString};
+use mail_core_common::datatypes::{
+    AvatarInformation, LabelColor, LabelType, LocalLabelId, SystemLabel,
+};
+use mail_crypto_inbox::attachment::{
+    AttachmentEncryptedSignature as RealAttachmentEncryptedSignature,
+    AttachmentSignature as RealAttachmentSignature, KeyPackets as RealKeyPackets,
+};
+use mail_crypto_inbox::mail_crypto_inbox_mime::{
+    Disposition as CryptoDisposition, ProcessedMessage,
+};
+use mail_crypto_inbox::message::{DecryptableMessage, DecryptedBody, GettablePGPMessage};
+use mail_crypto_inbox::proton_crypto::crypto::PGPProviderSync;
+use mail_stash::exports::{
     Connection, FromSql, FromSqlError, FromSqlResult, SqliteError, ToSql, ToSqlOutput, Transaction,
     Value, ValueRef,
 };
-use stash::{params, sql_using_serde};
+use mail_stash::{params, sql_using_serde};
+use proton_crypto_account::keys::{
+    EmailMimeType as CryptoMimeType, PGPScheme as CryptoPgpScheme, UnlockedAddressKeys,
+};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};

@@ -3,8 +3,8 @@ use std::time::Duration;
 
 use chrono::DateTime;
 use cookie::{Cookie, CookieJar};
-use muon::common::{BoxFut, Sender, SenderLayer, ServiceType};
-use muon::{ProtonRequest, ProtonResponse, Result as MuonResult};
+use mail_muon::common::{BoxFut, Sender, SenderLayer, ServiceType};
+use mail_muon::{ProtonRequest, ProtonResponse, Result as MuonResult};
 use proton_crypto_account::proton_crypto::crypto::UnixTimestamp;
 use tokio::sync::RwLock;
 
@@ -81,14 +81,14 @@ impl SetDefaultTimeoutLayer {
         /// The timeout we set by default.
         const CUSTOM_TIMEOUT: Duration = Duration::from_secs(60);
 
-        /// The timeout muon sets by default.
+        /// The timeout `mail_muon` sets by default.
         const MUON_DEFAULT_TIMEOUT: Duration = Duration::from_secs(30);
 
         // NOTE: This is not a bug! Muon logs a warning if no timeout is explicitly set;
         // this workaround sets the timeout explicitly if it was not already set to a
         // non-default value earlier in the layer stack.
         if req.get_allowed_time() == MUON_DEFAULT_TIMEOUT {
-            // The request has muon's standard 30s timeout. We bump it here to 60s.
+            // The request has mail_muon's standard 30s timeout. We bump it here to 60s.
             req = req.allowed_time(CUSTOM_TIMEOUT);
         }
 

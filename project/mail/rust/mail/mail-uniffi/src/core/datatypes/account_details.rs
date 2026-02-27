@@ -1,6 +1,6 @@
 use crate::UniffiRecord;
 use crate::core::datatypes::AvatarInformation;
-use proton_core_common::datatypes::AccountDetails as RealAccountDetails;
+use mail_core_common::datatypes::AccountDetails as RealAccountDetails;
 
 /// Represents detailed information about a user account.
 ///

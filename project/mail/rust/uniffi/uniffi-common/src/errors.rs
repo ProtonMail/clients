@@ -1,4 +1,4 @@
-use proton_core_api::service::ApiServiceError;
+use mail_core_api::service::ApiServiceError;
 
 #[derive(Debug, uniffi::Enum)]
 pub enum UserApiServiceError {

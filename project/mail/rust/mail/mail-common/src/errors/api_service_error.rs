@@ -1,5 +1,5 @@
 use crate::errors::unexpected::Unexpected;
-use proton_core_api::service::ApiServiceError;
+use mail_core_api::service::ApiServiceError;
 
 #[derive(Debug)]
 pub enum UserApiServiceError {

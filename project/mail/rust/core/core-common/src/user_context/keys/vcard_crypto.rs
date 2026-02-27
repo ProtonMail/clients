@@ -1,6 +1,7 @@
 use base64::{DecodeError, Engine as _, prelude::BASE64_STANDARD as BASE_64};
 use itertools::Itertools as _;
-use proton_core_api::services::proton::PrivateEmailRef;
+use mail_core_api::services::proton::PrivateEmailRef;
+use mail_vcard::{parameters::preference::Preference, vcard::VCard};
 use proton_crypto_account::{
     keys::{EmailMimeType, PGPScheme, PinnedPublicKeys},
     proton_crypto::{
@@ -8,7 +9,6 @@ use proton_crypto_account::{
         crypto::{DataEncoding, PGPProviderSync, PublicKey},
     },
 };
-use proton_vcard::{parameters::preference::Preference, vcard::VCard};
 use thiserror::Error;
 use tracing::error;
 
@@ -237,8 +237,8 @@ mod tests {
 
     mod extended_preferences {
         use super::*;
+        use mail_vcard::{parameters::Parameters, xtended::Xtended};
         use pretty_assertions as pa;
-        use proton_vcard::{parameters::Parameters, xtended::Xtended};
         use test_case::test_case;
 
         struct TestCase {

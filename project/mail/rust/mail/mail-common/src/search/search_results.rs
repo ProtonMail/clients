@@ -6,11 +6,11 @@
 //! The key responsibility is converting remote MessageIds (used by the search
 //! engine) back to local MessageIds (used by the UI).
 
-use proton_core_common::models::ModelIdExtension;
-use proton_mail_api::services::proton::common::MessageId;
-use proton_mail_search::{FoundEntry, MailSearchService};
-use stash::orm::Model;
-use stash::stash::Tether;
+use mail_api::services::proton::common::MessageId;
+use mail_core_common::models::ModelIdExtension;
+use mail_search::{FoundEntry, MailSearchService};
+use mail_stash::orm::Model;
+use mail_stash::stash::Tether;
 
 use crate::MailContextError;
 use crate::datatypes::LocalMessageId;

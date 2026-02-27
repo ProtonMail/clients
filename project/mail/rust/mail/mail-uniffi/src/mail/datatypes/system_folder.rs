@@ -1,4 +1,4 @@
-use proton_mail_common::datatypes::MovableSystemFolder as RealMovableSystemFolder;
+use mail_common::datatypes::MovableSystemFolder as RealMovableSystemFolder;
 use uniffi::Enum as UniffiEnum;
 
 /// This enum represents the system labels that are valid target for Move actions.

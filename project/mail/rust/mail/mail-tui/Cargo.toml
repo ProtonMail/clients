@@ -1,5 +1,5 @@
 [package]
-name = "proton-mail-tui"
+name = "mail-tui"
 version = "0.4.1"
 edition.workspace = true
 rust-version.workspace = true
@@ -16,22 +16,22 @@ flume = { workspace = true }
 futures = { workspace = true }
 itertools = { workspace = true }
 log = "0.4.25"
-proton-account-api = { workspace = true }
-proton-action-queue = { workspace = true }
-proton-calendar-api-v1 = { workspace = true }
-proton-calendar-common = { workspace = true }
-proton-core-common = { workspace = true }
-proton-crypto-inbox = { workspace = true }
-proton-mail-api = { workspace = true }
-proton-mail-common = { workspace = true, features = ["foundation_search"] }
-proton-mail-html-transformer = { workspace = true }
-proton-issue-reporter-service = { workspace = true }
-proton-log-service = { workspace = true, features = ["non_blocking"] }
+mail-account-api = { workspace = true }
+mail-action-queue = { workspace = true }
+mail-calendar-api-v1 = { workspace = true }
+mail-calendar-common = { workspace = true }
+mail-core-common = { workspace = true }
+mail-crypto-inbox = { workspace = true }
+mail-api = { workspace = true }
+mail-common = { workspace = true, features = ["foundation_search"] }
+mail-html-transformer = { workspace = true }
+mail-issue-reporter-service = { workspace = true }
+mail-log-service = { workspace = true, features = ["non_blocking"] }
 ratatui = { version = "0.28.1", features = ["all-widgets", "unstable"] }
 ratatui-explorer = { version = "=0.1.2", features = ["crossterm"] }
 secrecy = { workspace = true }
 sqlite-watcher = { workspace = true }
-stash = { workspace = true }
+mail-stash = { workspace = true }
 throbber-widgets-tui = "0.7.1"
 tokio = { workspace = true }
 tokio-util = { workspace = true }
@@ -42,7 +42,7 @@ tui-input = "0.10.1"
 tui-logger = { version = "0.12.1", features = ["tracing-support"] }
 tui-textarea = { version = "0.6.1", features = ["ratatui"] }
 qrcode = "0.14.1"
-proton-network-monitor-service = { workspace = true }
+mail-network-monitor-service = { workspace = true }
 zeroizing-alloc = { workspace = true }
 
 [target.'cfg(target_os="linux")'.dependencies]

@@ -1,6 +1,6 @@
 //! ## Types
 //!
-//! This module defines core types used throughout the `muon` crate.
+//! This module defines core types used throughout the `mail_muon` crate.
 
 use derive_more::{Debug, Display, From, Into};
 use futures::prelude::*;

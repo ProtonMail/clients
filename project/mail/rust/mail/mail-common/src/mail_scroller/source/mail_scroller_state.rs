@@ -4,8 +4,8 @@ use crate::{
     models::{CachedScrollData, ScrollData},
 };
 use derive_more::Display;
-use proton_core_common::datatypes::LocalLabelId;
-use stash::stash::{StashError, Tether};
+use mail_core_common::datatypes::LocalLabelId;
+use mail_stash::stash::{StashError, Tether};
 use tracing::{debug, error, info, instrument};
 
 #[derive(Debug, Display)]

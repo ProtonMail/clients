@@ -1,5 +1,5 @@
 use jiff::Span;
-use proton_core_api::declare_proton_id;
+use mail_core_api::declare_proton_id;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 

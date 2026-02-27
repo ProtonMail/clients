@@ -9,14 +9,14 @@ use crate::widgets::utils::ScrollableState;
 use crate::widgets::{AsIntoTable, CenteredThrobber, ScrollableTable, ScrollableTableState};
 use anyhow::{Context, anyhow};
 use crossterm::event::KeyModifiers;
-use proton_core_common::datatypes::LocalLabelId;
-use proton_mail_common::datatypes::folder_banner::{AutoDeleteBanner, AutoDeleteState};
-use proton_mail_common::datatypes::{ContextualConversation, IncludeSwitch, LocalConversationId};
-use proton_mail_common::models::{Conversation, LabelWithCounters, Message as MailMessage};
-use proton_mail_common::{MailContextResult, MailUserContext, Mailbox};
-use proton_mail_common::{
+use mail_common::datatypes::folder_banner::{AutoDeleteBanner, AutoDeleteState};
+use mail_common::datatypes::{ContextualConversation, IncludeSwitch, LocalConversationId};
+use mail_common::models::{Conversation, LabelWithCounters, Message as MailMessage};
+use mail_common::{MailContextResult, MailUserContext, Mailbox};
+use mail_common::{
     MailScroller as RealMailScroller, ScrollerListUpdate, ScrollerStatusUpdate, ScrollerUpdate,
 };
+use mail_core_common::datatypes::LocalLabelId;
 use ratatui::Frame;
 use ratatui::crossterm::event::{Event, KeyCode};
 use ratatui::layout::Rect;

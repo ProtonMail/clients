@@ -1,23 +1,21 @@
 use indoc::formatdoc;
 use jiff::Zoned;
-use proton_calendar_api_v1::{self as cal, ProtonCalendarMock};
-use proton_calendar_common::{RsvpAnswer, RsvpEventId, RsvpOrganizer};
-use proton_core_api::services::proton::{GetKeysAllResponse, PrivateString, UserId};
-use proton_core_common::datatypes::AddressFlags;
-use proton_core_common::models::{
-    Address, Contact, ContactEmail, ModelExtension, ModelIdExtension,
-};
-use proton_crypto_calendar::{CalendarEventEncryptor, KeyPacket, UnlockedCalendarKey};
-use proton_crypto_inbox::attachment::{EncryptableAttachment, KeyPackets};
-use proton_crypto_inbox::proton_crypto::new_pgp_provider;
-use proton_mail_api::services::proton::prelude::{self as mail, ContentDisposition};
-use proton_mail_common::models::Message;
-use proton_mail_common::test_utils::message_body::{
+use mail_api::services::proton::prelude::{self as mail, ContentDisposition};
+use mail_calendar_api_v1::{self as cal, ProtonCalendarMock};
+use mail_calendar_common::{RsvpAnswer, RsvpEventId, RsvpOrganizer};
+use mail_common::models::Message;
+use mail_common::test_utils::message_body::{
     TEST_USER_ADDRESS_ID, TEST_USER_ID, message_body_test_message_simple, message_body_test_params,
     message_body_test_user_secret,
 };
-use proton_mail_common::test_utils::test_context::MailTestContext;
-use stash::orm::Model;
+use mail_common::test_utils::test_context::MailTestContext;
+use mail_core_api::services::proton::{GetKeysAllResponse, PrivateString, UserId};
+use mail_core_common::datatypes::AddressFlags;
+use mail_core_common::models::{Address, Contact, ContactEmail, ModelExtension, ModelIdExtension};
+use mail_crypto_calendar::{CalendarEventEncryptor, KeyPacket, UnlockedCalendarKey};
+use mail_crypto_inbox::attachment::{EncryptableAttachment, KeyPackets};
+use mail_crypto_inbox::proton_crypto::new_pgp_provider;
+use mail_stash::orm::Model;
 use std::str::FromStr;
 
 const CALENDAR_ID: &str = "yXbOd5cP";

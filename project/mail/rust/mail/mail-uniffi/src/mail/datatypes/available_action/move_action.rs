@@ -1,8 +1,8 @@
-use proton_core_common::utils::MapVec as _;
-use proton_mail_common::actions::{
+use mail_common::actions::{
     CustomFolderAction as RealCustomFolderAction,
     MovableSystemFolderAction as RealMovableSystemFolderAction, MoveAction as RealMoveAction,
 };
+use mail_core_common::utils::MapVec as _;
 
 use crate::mail::datatypes::system_folder::MovableSystemFolder;
 use crate::mail::datatypes::{Id, LabelColor};

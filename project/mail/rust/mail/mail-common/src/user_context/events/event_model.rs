@@ -7,8 +7,8 @@
 //! persistent data structures.
 //!
 //! The data types used by events therefore do NOT need to be convertible to and
-//! from database-compatible format using [`ToSql`](stash::exports::ToSql) and
-//! [`FromSql`](stash::exports::FromSql). If anything in this module implements
+//! from database-compatible format using [`ToSql`](mail_stash::exports::ToSql) and
+//! [`FromSql`](mail_stash::exports::FromSql). If anything in this module implements
 //! those traits, it is a sign that a mistake has been made. Additionally, they
 //! do not generally need to be serializable or deserializable, as they are not
 //! used for network communication or any other interchange purpose as a general
@@ -32,15 +32,15 @@
 
 use crate::datatypes::{ConversationLabelsCount, MessageLabelsCount};
 use crate::models::{Conversation, IncomingDefaultEvent, MailSettings};
-use proton_core_api::services::proton::EventId;
-use proton_core_common::datatypes::Refresh;
-use proton_core_common::event_loop::events::{Action, LabelEvent};
-use proton_core_common::utils::MapVec as _;
-use proton_mail_api::services::proton::common::{ConversationId, MessageId};
-use proton_mail_api::services::proton::response_data::{
+use mail_api::services::proton::common::{ConversationId, MessageId};
+use mail_api::services::proton::response_data::{
     ConversationEvent as ApiConversationEvent, MailEvent as ApiMailEvent,
     MailEventV5 as ApiCombinedMailEvent, MessageEvent as ApiMessageEvent, MessageMetadata,
 };
+use mail_core_api::services::proton::EventId;
+use mail_core_common::datatypes::Refresh;
+use mail_core_common::event_loop::events::{Action, LabelEvent};
+use mail_core_common::utils::MapVec as _;
 
 /// TODO: Document this struct.
 #[derive(Clone, Debug, Eq, PartialEq)]

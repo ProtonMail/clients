@@ -1,9 +1,9 @@
 use crate::events::v6::MailEventLoopV6Context;
 use async_trait::async_trait;
 use core_event_loop::{EventProvider, EventProviderError, EventProviderResult, RawEvent};
-use proton_core_api::service::ApiServiceError;
-use proton_core_common::services::event_loop_service::EventManagerContext;
-use proton_mail_api::services::proton::ProtonMail;
+use mail_api::services::proton::ProtonMail;
+use mail_core_api::service::ApiServiceError;
+use mail_core_common::services::event_loop_service::EventManagerContext;
 
 #[derive(Debug, thiserror::Error)]
 pub enum MailEventProviderError {

@@ -8,7 +8,7 @@ use crate::signup::state::want_create::WantCreate;
 use crate::signup::state::{Recovery, StateData, StateResult, Username};
 use derive_more::Display;
 use futures::TryFutureExt;
-use muon::Client;
+use mail_muon::Client;
 
 /// Represents the state where the user can provide recovery information.
 #[derive(Debug, Display, Clone)]

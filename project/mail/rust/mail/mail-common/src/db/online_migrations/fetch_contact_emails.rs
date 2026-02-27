@@ -1,6 +1,6 @@
 use std::sync::Weak;
 
-use proton_core_common::models::Contact;
+use mail_core_common::models::Contact;
 use tracing::instrument;
 
 use crate::{MailContextError, MailContextResult, MailUserContext};

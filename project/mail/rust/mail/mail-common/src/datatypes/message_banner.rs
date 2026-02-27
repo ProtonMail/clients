@@ -1,6 +1,6 @@
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::datatypes::UnixTimestamp;
-use stash::stash::Tether;
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::datatypes::UnixTimestamp;
+use mail_stash::stash::Tether;
 
 use crate::models::{IncomingDefault, IncomingDefaultLocation, MailSettings, Message};
 

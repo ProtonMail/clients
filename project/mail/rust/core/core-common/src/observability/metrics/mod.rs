@@ -1,5 +1,5 @@
-use proton_core_api::services::observability::ApiServiceObservabilityResponse;
-use proton_observability::metric;
+use mail_core_api::services::observability::ApiServiceObservabilityResponse;
+use mail_observability::metric;
 use serde::{Deserialize, Serialize};
 
 metric! {
@@ -27,10 +27,10 @@ pub enum MailboxPasswordMetricStatus {
 
 #[cfg(test)]
 mod tests {
-    use proton_core_api::services::proton::prelude::{
+    use mail_core_api::services::proton::prelude::{
         PostMetricsRequestData, PostMetricsRequestElement,
     };
-    use proton_observability::into_metrics_element;
+    use mail_observability::into_metrics_element;
 
     use super::*;
     use serde_json::{self, json};

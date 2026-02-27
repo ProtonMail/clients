@@ -1,19 +1,19 @@
 use itertools::Itertools;
-use proton_action_queue::action::ActionGroup;
-use proton_action_queue::queue::QueuedError;
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::services::proton::{AddressId, LabelId};
-use proton_core_common::datatypes::SystemLabel;
-use proton_core_common::models::{Address, Label, ModelExtension, ModelIdExtension};
-use proton_core_common::test_utils::account::TEST_ADDRESS_ID;
-use proton_mail_api::services::proton::common::{ConversationId, MessageId};
-use proton_mail_common::MailUserContext;
-use proton_mail_common::datatypes::SystemLabelId;
-use proton_mail_common::models::{ConversationCounter, LabelExt, Message, MessageCounter};
-use proton_mail_common::test_utils::init::Params;
-use proton_mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
-use stash::orm::Model;
-use stash::stash::{StashError, Tether};
+use mail_action_queue::action::ActionGroup;
+use mail_action_queue::queue::QueuedError;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_api::services::proton::common::{ConversationId, MessageId};
+use mail_common::MailUserContext;
+use mail_common::datatypes::SystemLabelId;
+use mail_common::models::{ConversationCounter, LabelExt, Message, MessageCounter};
+use mail_common::test_utils::init::Params;
+use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
+use mail_core_api::services::proton::{AddressId, LabelId};
+use mail_core_common::datatypes::SystemLabel;
+use mail_core_common::models::{Address, Label, ModelExtension, ModelIdExtension};
+use mail_core_common::test_utils::account::TEST_ADDRESS_ID;
+use mail_stash::orm::Model;
+use mail_stash::stash::{StashError, Tether};
 use std::sync::Arc;
 
 #[tokio::test]

@@ -4,11 +4,11 @@ use crate::datatypes::{
 };
 use crate::decrypted_message::ThemeOpts;
 use crate::models::{Conversation, MailSettings, Message};
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::models::{Label, ModelIdExtension};
-use proton_mail_common::test_utils::db::new_test_connection;
-use proton_mail_common::test_utils::utils::create_address;
-use stash::orm::Model;
+use mail_common::test_utils::db::new_test_connection;
+use mail_common::test_utils::utils::create_address;
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::models::{Label, ModelIdExtension};
+use mail_stash::orm::Model;
 use std::sync::LazyLock;
 use test_case::test_case;
 
@@ -463,11 +463,11 @@ static DARK_MODE_WITH_OVERRIDE_CASE: LazyLock<TestCase<Message>> = LazyLock::new
 #[test_case(&DARK_MODE_WITH_OVERRIDE_CASE; "dark_mode_with_override")]
 #[tokio::test]
 async fn message_actions(test_case: &TestCase<Message>) {
-    use stash::stash::StashError;
+    use mail_stash::stash::StashError;
 
     // Setup
-    let stash = new_test_connection().await;
-    let mut tether = stash.connection().await.unwrap();
+    let mail_stash = new_test_connection().await;
+    let mut tether = mail_stash.connection().await.unwrap();
     let address = create_address(&mut tether).await;
     let mut settings = MailSettings::get_or_default(&tether).await;
     settings.mobile_settings = Some(MobileSettings {

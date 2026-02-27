@@ -1,9 +1,9 @@
 use crate::core::datatypes::AvatarInformation;
 use crate::mail::datatypes::{MessageRecipient, MessageSender};
-use proton_core_common::datatypes::AvatarInformation as RealAvatarInformation;
-use proton_core_common::utils::MapVec;
-use proton_mail_common::datatypes::MessageRecipient as RealMessageRecipient;
-use proton_mail_common::datatypes::MessageSender as RealMessageSender;
+use mail_common::datatypes::MessageRecipient as RealMessageRecipient;
+use mail_common::datatypes::MessageSender as RealMessageSender;
+use mail_core_common::datatypes::AvatarInformation as RealAvatarInformation;
+use mail_core_common::utils::MapVec;
 
 #[uniffi_export]
 pub fn avatar_information_from_message_senders(

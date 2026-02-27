@@ -1,26 +1,26 @@
-use proton_core_api::services::proton::{
+use mail_api::services::proton::common::{ConversationId, MessageId};
+use mail_api::services::proton::response_data::{
+    MailSettings as ApiMailSettings, Message as ApiMessage, MessageBody as ApiMessageBody,
+    MessageMetadata as ApiMessageMetadata, ViewMode as ApiViewMode,
+};
+use mail_common::Mailbox;
+use mail_common::datatypes::{ExclusiveLocation, SystemLabelId};
+use mail_common::models::{ConversationCounter, Message, MessageCounter};
+use mail_common::test_utils::init::Params as TestParams;
+use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
+use mail_core_api::services::proton::{
     Address as ApiAddress, DelinquentState, Flags as ApiFlags, Label as ApiLabel,
     ProductUsedSpace as ApiProductUsedSpace, Role as ApiRole, User as ApiUser,
     UserMnemonicStatus as ApiUserMnemonicStatus, UserType as ApiUserType,
 };
-use proton_core_api::services::proton::{AddressId, LabelId, LabelType as ApiLabelType, UserId};
-use proton_core_common::datatypes::SystemLabel;
-use proton_core_common::models::{Label, ModelExtension, ModelIdExtension, PaidSubscription};
-use proton_core_common::test_utils::addresses::ApiAddressTestUtils;
+use mail_core_api::services::proton::{AddressId, LabelId, LabelType as ApiLabelType, UserId};
+use mail_core_common::datatypes::SystemLabel;
+use mail_core_common::models::{Label, ModelExtension, ModelIdExtension, PaidSubscription};
+use mail_core_common::test_utils::addresses::ApiAddressTestUtils;
+use mail_stash::orm::Model;
+use mail_stash::params;
+use mail_stash::stash::{StashError, Tether};
 use proton_crypto_account::keys::{ArmoredPrivateKey, KeyId, LockedKey, UserKeys as ApiUserKeys};
-use proton_mail_api::services::proton::common::{ConversationId, MessageId};
-use proton_mail_api::services::proton::response_data::{
-    MailSettings as ApiMailSettings, Message as ApiMessage, MessageBody as ApiMessageBody,
-    MessageMetadata as ApiMessageMetadata, ViewMode as ApiViewMode,
-};
-use proton_mail_common::Mailbox;
-use proton_mail_common::datatypes::{ExclusiveLocation, SystemLabelId};
-use proton_mail_common::models::{ConversationCounter, Message, MessageCounter};
-use proton_mail_common::test_utils::init::Params as TestParams;
-use proton_mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
-use stash::orm::Model;
-use stash::params;
-use stash::stash::{StashError, Tether};
 use std::collections::HashMap;
 use velcro::hash_map;
 
@@ -391,13 +391,13 @@ async fn label_as_with_archive() {
 
 mod rebase {
     use super::*;
+    use mail_action_queue::action::ActionGroup;
+    use mail_action_queue::rebase::RebaseChangeSet;
+    use mail_common::models::ConversationLabel;
+    use mail_common::test_utils::scroller::StoreLabeledModelMap;
+    use mail_common::{MailUserContext, conv_id, conversation, message, msg_id};
+    use mail_core_common::datatypes::LocalLabelId;
     use pretty_assertions::{assert_eq, assert_ne};
-    use proton_action_queue::action::ActionGroup;
-    use proton_action_queue::rebase::RebaseChangeSet;
-    use proton_core_common::datatypes::LocalLabelId;
-    use proton_mail_common::models::ConversationLabel;
-    use proton_mail_common::test_utils::scroller::StoreLabeledModelMap;
-    use proton_mail_common::{MailUserContext, conv_id, conversation, message, msg_id};
     use std::sync::Arc;
 
     // NOTE: The must_archive rebase is handled by the message/conv move rules.

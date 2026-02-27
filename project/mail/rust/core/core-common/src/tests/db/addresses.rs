@@ -3,14 +3,14 @@ use crate::datatypes::{
 };
 use crate::models::Address;
 use crate::tests::common::new_core_test_connection;
-use proton_core_api::services::proton::AddressId;
+use mail_core_api::services::proton::AddressId;
+use mail_stash::orm::Model;
+use mail_stash::params;
+use mail_stash::stash::StashError;
 use proton_crypto_account::keys::{
     AddressKeys as RealAddressKeys, ArmoredPrivateKey, EncryptedKeyToken, KeyId, KeyTokenSignature,
     LockedKey,
 };
-use stash::orm::Model;
-use stash::params;
-use stash::stash::StashError;
 
 #[tokio::test]
 async fn test_address_create() {

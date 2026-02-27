@@ -2,8 +2,8 @@ use crate::app::Command;
 use crate::messages::Messages;
 use futures::FutureExt;
 use futures::future::BoxFuture;
+use mail_stash::stash::WatcherHandle;
 use sqlite_watcher::watcher::DropRemoveTableObserverHandle;
-use stash::stash::WatcherHandle;
 use tracing::error;
 
 /// Handle which on drop terminates the observation of database changes.

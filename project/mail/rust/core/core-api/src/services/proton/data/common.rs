@@ -75,15 +75,19 @@ impl Deref for PrivateEmail {
 }
 
 #[cfg(feature = "sql")]
-impl ::stash::exports::ToSql for PrivateEmail {
-    fn to_sql(&self) -> Result<::stash::exports::ToSqlOutput<'_>, ::stash::exports::SqliteError> {
+impl ::mail_stash::exports::ToSql for PrivateEmail {
+    fn to_sql(
+        &self,
+    ) -> Result<::mail_stash::exports::ToSqlOutput<'_>, ::mail_stash::exports::SqliteError> {
         self.as_clear_text_str().to_sql()
     }
 }
 
 #[cfg(feature = "sql")]
-impl ::stash::exports::FromSql for PrivateEmail {
-    fn column_result(value: stash::exports::ValueRef<'_>) -> ::stash::exports::FromSqlResult<Self> {
+impl ::mail_stash::exports::FromSql for PrivateEmail {
+    fn column_result(
+        value: mail_stash::exports::ValueRef<'_>,
+    ) -> ::mail_stash::exports::FromSqlResult<Self> {
         String::column_result(value).map(Self)
     }
 }
@@ -208,15 +212,19 @@ impl Deref for PrivateString {
 }
 
 #[cfg(feature = "sql")]
-impl ::stash::exports::ToSql for PrivateString {
-    fn to_sql(&self) -> Result<::stash::exports::ToSqlOutput<'_>, ::stash::exports::SqliteError> {
+impl ::mail_stash::exports::ToSql for PrivateString {
+    fn to_sql(
+        &self,
+    ) -> Result<::mail_stash::exports::ToSqlOutput<'_>, ::mail_stash::exports::SqliteError> {
         self.as_clear_text_str().to_sql()
     }
 }
 
 #[cfg(feature = "sql")]
-impl ::stash::exports::FromSql for PrivateString {
-    fn column_result(value: stash::exports::ValueRef<'_>) -> ::stash::exports::FromSqlResult<Self> {
+impl ::mail_stash::exports::FromSql for PrivateString {
+    fn column_result(
+        value: mail_stash::exports::ValueRef<'_>,
+    ) -> ::mail_stash::exports::FromSqlResult<Self> {
         String::column_result(value).map(Self)
     }
 }

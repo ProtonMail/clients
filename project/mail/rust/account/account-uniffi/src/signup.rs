@@ -7,18 +7,18 @@ use crate::password_validator::PasswordType;
 use crate::password_validator::PasswordValidatorService;
 use crate::user_behavior::UserBehavior;
 use itertools::Itertools;
-use muon::common::IntoDyn;
-use proton_account_api::countries::Country as RealCountry;
-use proton_account_api::signup::SignupError as RealSignupError;
-use proton_account_api::signup::SignupFlow as RealSignupFlow;
-use proton_account_api::signup::state::StateKind;
-use proton_core_common::post_login_check::PostLoginValidationError as RealPostLoginValidationError;
+use mail_account_api::countries::Country as RealCountry;
+use mail_account_api::signup::SignupError as RealSignupError;
+use mail_account_api::signup::SignupFlow as RealSignupFlow;
+use mail_account_api::signup::state::StateKind;
+use mail_core_common::post_login_check::PostLoginValidationError as RealPostLoginValidationError;
+use mail_muon::common::IntoDyn;
+use mail_uniffi_runtime::{async_runtime, uniffi_async};
 use std::fmt::Debug;
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::Mutex;
 use tokio::task::JoinError;
-use uniffi_runtime::{async_runtime, uniffi_async};
 
 use crate::password_validator::PasswordValidatorServiceToken;
 

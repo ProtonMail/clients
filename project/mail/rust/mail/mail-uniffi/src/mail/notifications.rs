@@ -1,9 +1,8 @@
 use std::sync::Arc;
 
-use proton_core_common::datatypes::EncryptedPushNotification as RealEncryptedPushNotification;
-use proton_mail_common::ProtonMailError as RealProtonMailError;
-use proton_mail_common::actions::notifications_quick_actions;
-use proton_mail_common::datatypes::mail_notifications::{
+use mail_common::ProtonMailError as RealProtonMailError;
+use mail_common::actions::notifications_quick_actions;
+use mail_common::datatypes::mail_notifications::{
     DecryptableInboxPushNotification,
     DecryptedEmailPushNotification as RealDecryptedEmailPushNotification,
     DecryptedEmailPushNotificationAction as RealDecryptedEmailPushNotificationAction,
@@ -12,6 +11,7 @@ use proton_mail_common::datatypes::mail_notifications::{
     NotificationSender as RealNotificationSender,
     PushNotificationQuickAction as RealPushNotificationQuickAction,
 };
+use mail_core_common::datatypes::EncryptedPushNotification as RealEncryptedPushNotification;
 
 use crate::core::datatypes::RemoteId;
 use crate::core::{FFIKeyChain, OSKeyChain, StoredSession};

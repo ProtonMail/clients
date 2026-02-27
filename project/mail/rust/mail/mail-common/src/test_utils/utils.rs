@@ -6,13 +6,13 @@ use crate::models::{
     Conversation, ConversationCounter, ConversationLabel, Message, MessageCounter,
 };
 use futures::{FutureExt as _, StreamExt};
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::datatypes::LocalLabelId;
-use proton_core_common::models::{Address, Label, ModelExtension, ModelIdExtension};
-use proton_core_common::test_utils::account::test_api_address;
-use proton_mail_api::services::proton::common::{ConversationId, MessageId};
-use stash::orm::Model;
-use stash::stash::{StashError, Tether};
+use mail_api::services::proton::common::{ConversationId, MessageId};
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::datatypes::LocalLabelId;
+use mail_core_common::models::{Address, Label, ModelExtension, ModelIdExtension};
+use mail_core_common::test_utils::account::test_api_address;
+use mail_stash::orm::Model;
+use mail_stash::stash::{StashError, Tether};
 use std::collections::{BTreeMap, HashMap};
 
 #[derive(Default, Clone, Debug)]

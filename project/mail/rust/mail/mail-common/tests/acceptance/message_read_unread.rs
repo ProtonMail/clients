@@ -1,17 +1,17 @@
 use itertools::Itertools;
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::models::ModelIdExtension;
-use proton_mail_api::services::proton::common::MessageId;
-use proton_mail_api::services::proton::response_data::MailSettings as ApiMailSettings;
-use proton_mail_api::services::proton::response_data::MessageMetadata as ApiMessageMetadata;
-use proton_mail_api::services::proton::response_data::ViewMode as ApiViewMode;
-use proton_mail_common::Mailbox;
-use proton_mail_common::datatypes::SystemLabelId;
-use proton_mail_common::models::{Conversation, Message};
-use proton_mail_common::test_utils::init::Params;
-use proton_mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
-use stash::orm::Model;
-use stash::params;
+use mail_api::services::proton::common::MessageId;
+use mail_api::services::proton::response_data::MailSettings as ApiMailSettings;
+use mail_api::services::proton::response_data::MessageMetadata as ApiMessageMetadata;
+use mail_api::services::proton::response_data::ViewMode as ApiViewMode;
+use mail_common::Mailbox;
+use mail_common::datatypes::SystemLabelId;
+use mail_common::models::{Conversation, Message};
+use mail_common::test_utils::init::Params;
+use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::models::ModelIdExtension;
+use mail_stash::orm::Model;
+use mail_stash::params;
 use test_case::test_case;
 
 struct TestCase {
@@ -98,7 +98,7 @@ static ALL_READ: &[TestCase] = &[
 #[tokio::test]
 async fn mark_message_read(messages: &[TestCase], expected_unread: usize) {
     // Setup
-    // * Create all given messages in stash
+    // * Create all given messages in mail_stash
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
     let mut tether = user_ctx.user_stash().connection().await.unwrap();
@@ -183,7 +183,7 @@ async fn mark_message_read(messages: &[TestCase], expected_unread: usize) {
 #[tokio::test]
 async fn mark_message_unread(messages: &[TestCase], expected_unread: usize) {
     // Setup
-    // * Create all given messages in stash
+    // * Create all given messages in mail_stash
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
     let tether = user_ctx.user_stash().connection().await.unwrap();
@@ -267,14 +267,14 @@ fn test_message(params: &Params) -> impl FnMut(&TestCase) -> ApiMessageMetadata 
 
 mod rebase {
     use super::*;
-    use proton_action_queue::action::ActionGroup;
-    use proton_action_queue::rebase::RebaseChangeSet;
-    use proton_core_api::services::proton::AddressId;
-    use proton_core_common::models::{Address, ModelExtension};
-    use proton_core_common::test_utils::account::TEST_ADDRESS_ID;
-    use proton_mail_api::services::proton::common::ConversationId;
-    use proton_mail_common::MailUserContext;
-    use stash::stash::StashError;
+    use mail_action_queue::action::ActionGroup;
+    use mail_action_queue::rebase::RebaseChangeSet;
+    use mail_api::services::proton::common::ConversationId;
+    use mail_common::MailUserContext;
+    use mail_core_api::services::proton::AddressId;
+    use mail_core_common::models::{Address, ModelExtension};
+    use mail_core_common::test_utils::account::TEST_ADDRESS_ID;
+    use mail_stash::stash::StashError;
     use std::sync::Arc;
 
     async fn setup(unread: Vec<bool>) -> (MailTestContext, Arc<MailUserContext>, Vec<Message>) {

@@ -1,10 +1,10 @@
 use super::*;
-use proton_core_api::services::proton::{ContactEmailId, ContactId, LabelId};
-use proton_core_common::datatypes::{LabelType, Labels};
-use proton_core_common::models::{Contact, ContactEmail, Label};
-use proton_mail_common::test_utils::db::new_test_connection_file;
-use stash::orm::Model;
-use stash::stash::StashError;
+use mail_common::test_utils::db::new_test_connection_file;
+use mail_core_api::services::proton::{ContactEmailId, ContactId, LabelId};
+use mail_core_common::datatypes::{LabelType, Labels};
+use mail_core_common::models::{Contact, ContactEmail, Label};
+use mail_stash::orm::Model;
+use mail_stash::stash::StashError;
 use test_case::test_case;
 
 #[test]
@@ -389,8 +389,8 @@ fn to_message_recipient_only_copies_valid_values_group() {
 
 #[tokio::test]
 async fn contact_group_resolution_from_message_recipients() {
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut tether = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut tether = mail_stash.connection().await.unwrap();
 
     let contact_group_name = "contact_group".to_owned();
     let unknown_contact_group_name = "unknown".to_owned();

@@ -1,5 +1,5 @@
 use super::ScrollerEq;
-use proton_mail_common_derive::ScrollerEq;
+use mail_common_derive::ScrollerEq;
 
 #[derive(ScrollerEq, PartialEq, Debug)]
 struct TestConversation {

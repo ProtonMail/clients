@@ -13,8 +13,8 @@
 //! ```
 //! # fn display_update_modal() {}
 //! # use anyhow::*;
-//! use muon::App;
-//! use muon::app::{Platform, SemVer};
+//! use mail_muon::App;
+//! use mail_muon::app::{Platform, SemVer};
 //! # fn main() -> anyhow::Result<()> {
 //! // create an app, with a custom user-agent
 //! let app = App::new("web-drive@1.0.0")?.with_user_agent("Mozilla/5.0");
@@ -46,7 +46,7 @@ use std::fmt::{Formatter, Result as FmtResult};
 use std::num::ParseIntError;
 use thiserror::Error;
 
-/// Represents an app using the `muon` client.
+/// Represents an app using the `mail_muon` client.
 #[must_use]
 #[derive(Debug, Display, Clone, PartialEq, Eq, Hash)]
 #[display("{version} ({agent})")]
@@ -73,7 +73,7 @@ impl App {
     /// # Example
     ///
     /// ```
-    /// use muon::App;
+    /// use mail_muon::App;
     ///
     /// assert!(App::new("web-drive@1.0.0").is_ok());
     /// assert!(App::new("foo-bar@a.b.c").is_err());
@@ -94,7 +94,7 @@ impl App {
     /// # Example
     ///
     /// ```
-    /// use muon::App;
+    /// use mail_muon::App;
     ///
     /// let app = App::new("web-drive@1.0.0").unwrap();
     /// assert_eq!(format!("{app}"), "web-drive@1.0.0 (None)");

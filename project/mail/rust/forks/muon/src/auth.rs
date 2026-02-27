@@ -1,6 +1,6 @@
 //! ## Auth
 //!
-//! This module defines the auth type held by the `muon` client,
+//! This module defines the auth type held by the `mail_muon` client,
 //! used to authenticate with the Proton REST API.
 
 use derive_more::{Debug, Display};

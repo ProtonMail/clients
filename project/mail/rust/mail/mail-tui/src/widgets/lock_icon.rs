@@ -1,4 +1,4 @@
-use proton_crypto_inbox::lock_icon::{LockColor, LockIcon, UiLock};
+use mail_crypto_inbox::lock_icon::{LockColor, LockIcon, UiLock};
 use ratatui::style::{Color, Style, Stylize};
 
 use crate::CLI_ARGS;

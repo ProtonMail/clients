@@ -1,59 +1,59 @@
 use super::drafts_common::{self, draft_message};
 use chrono::{Days, Local, Months, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
 use indoc::formatdoc;
-use proton_action_queue::queue::{ActionError, AsActionError, QueuedError};
-use proton_core_api::consts::{CoreBundle, Mail};
-use proton_core_api::services::proton::ContactFull;
-use proton_core_api::services::proton::common::ApiErrorInfo;
-use proton_core_api::services::proton::{
+use mail_action_queue::queue::{ActionError, AsActionError, QueuedError};
+use mail_api::services::proton::prelude::{MailEvent, MessageEvent, PostCancelSendResponse};
+use mail_api::services::proton::request_data::{
+    DraftAttachmentKeyPackets, DraftParams, DraftRecipient, DraftSender,
+};
+use mail_api::services::proton::response_data::{
+    Conversation as ApiConversation, ConversationLabel, MessageFlags, MessageRecipient,
+};
+use mail_common::datatypes::LocalMessageId;
+use mail_common::datatypes::{MimeType, SystemLabelId};
+use mail_common::draft::compose::DEFAULT_SUBJECT;
+use mail_common::draft::observers::{DraftSendResultWatcher, DraftSendResultWatcherMode};
+use mail_common::draft::recipients::RecipientEntry;
+use mail_common::draft::{Draft, DraftExpirationTime, RecipientGroupId};
+use mail_common::models::{
+    DraftSendFailure, DraftSendFailureSend, DraftSendResult, DraftSendResultOrigin, MailSettings,
+    Message, MessageBodyMetadata, MessageMimeType,
+};
+use mail_common::test_utils::init::Params as TestParams;
+use mail_common::test_utils::message_body::*;
+use mail_common::test_utils::messages::{
+    TestDraftAuthInput, TestDraftSendAddressSubPackage, TestDraftSendPackage, TestDraftSendRequest,
+};
+use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
+use mail_common::{MailContextError, MailUserContext, draft};
+use mail_core_api::consts::{CoreBundle, Mail};
+use mail_core_api::services::proton::ContactFull;
+use mail_core_api::services::proton::common::ApiErrorInfo;
+use mail_core_api::services::proton::{
     Action, ContactCard as ApiContactCard, ContactEmail as ApiContactEmail, ContactEmailId,
     ContactId, ContactSendingPreferences as ApiContactSendingPreferences, ContactUID, EventId,
     GetKeysAllResponse,
 };
-use proton_core_api::services::proton::{
+use mail_core_api::services::proton::{
     Address as ApiAddress, AddressFlags as ApiAddressFlags,
     AddressSignedKeyList as ApiAddressSignedKeyList, AddressStatus as ApiAddressStatus,
     AddressType as ApiAddressType,
 };
-use proton_core_api::services::proton::{AddressId, LabelId, UserId};
-use proton_core_common::datatypes::UnixTimestamp;
-use proton_core_common::models::{Contact, ModelExtension};
+use mail_core_api::services::proton::{AddressId, LabelId, UserId};
+use mail_core_common::datatypes::UnixTimestamp;
+use mail_core_common::models::{Contact, ModelExtension};
+use mail_crypto_inbox::keys::PackageCryptoType;
+use mail_crypto_inbox::message::EncryptedDraft;
+use mail_crypto_inbox::proton_crypto_account::keys::{
+    AddressKeys as ApiAddressKeys, KeyFlag, KeyId, LockedKey,
+};
+use mail_stash::UserDb;
+use mail_stash::orm::Model;
+use mail_stash::stash::{Bond, StashError};
 use proton_crypto_account::contacts::{ContactCardType, EncryptableAndSignableCard};
 use proton_crypto_account::keys::{ArmoredPrivateKey, EncryptedKeyToken, KeyTokenSignature};
 use proton_crypto_account::proton_crypto::new_pgp_provider;
-use proton_crypto_inbox::keys::PackageCryptoType;
-use proton_crypto_inbox::message::EncryptedDraft;
-use proton_crypto_inbox::proton_crypto_account::keys::{
-    AddressKeys as ApiAddressKeys, KeyFlag, KeyId, LockedKey,
-};
-use proton_mail_api::services::proton::prelude::{MailEvent, MessageEvent, PostCancelSendResponse};
-use proton_mail_api::services::proton::request_data::{
-    DraftAttachmentKeyPackets, DraftParams, DraftRecipient, DraftSender,
-};
-use proton_mail_api::services::proton::response_data::{
-    Conversation as ApiConversation, ConversationLabel, MessageFlags, MessageRecipient,
-};
-use proton_mail_common::datatypes::LocalMessageId;
-use proton_mail_common::datatypes::{MimeType, SystemLabelId};
-use proton_mail_common::draft::compose::DEFAULT_SUBJECT;
-use proton_mail_common::draft::observers::{DraftSendResultWatcher, DraftSendResultWatcherMode};
-use proton_mail_common::draft::recipients::RecipientEntry;
-use proton_mail_common::draft::{Draft, DraftExpirationTime, RecipientGroupId};
-use proton_mail_common::models::{
-    DraftSendFailure, DraftSendFailureSend, DraftSendResult, DraftSendResultOrigin, MailSettings,
-    Message, MessageBodyMetadata, MessageMimeType,
-};
-use proton_mail_common::test_utils::init::Params as TestParams;
-use proton_mail_common::test_utils::message_body::*;
-use proton_mail_common::test_utils::messages::{
-    TestDraftAuthInput, TestDraftSendAddressSubPackage, TestDraftSendPackage, TestDraftSendRequest,
-};
-use proton_mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
-use proton_mail_common::{MailContextError, MailUserContext, draft};
 use secrecy::ExposeSecret;
-use stash::UserDb;
-use stash::orm::Model;
-use stash::stash::{Bond, StashError};
 use std::sync::Arc;
 use std::time::Duration;
 use velcro::hash_map;
@@ -488,7 +488,7 @@ async fn schedule_send_with_old_delivery_time_fails() {
     };
 
     let schedule_send_error = schedule_send_error
-        .as_action_error::<proton_mail_common::actions::draft::Send, UserDb>()
+        .as_action_error::<mail_common::actions::draft::Send, UserDb>()
         .unwrap();
 
     assert!(matches!(
@@ -532,7 +532,7 @@ async fn send_fails_if_recipient_is_not_valid() {
         send_fails_if_recipient_is_not_valid_impl(CoreBundle::KeyGetInputInvalid as u32).await;
 
     let err = err
-        .as_action_error::<proton_mail_common::actions::draft::Send, UserDb>()
+        .as_action_error::<mail_common::actions::draft::Send, UserDb>()
         .unwrap();
 
     assert!(matches!(
@@ -549,7 +549,7 @@ async fn send_fails_if_recipient_is_not_a_known_proton_address() {
         send_fails_if_recipient_is_not_valid_impl(CoreBundle::KeyGetAddressMissing as u32).await;
 
     let err = err
-        .as_action_error::<proton_mail_common::actions::draft::Send, UserDb>()
+        .as_action_error::<mail_common::actions::draft::Send, UserDb>()
         .unwrap();
 
     assert!(matches!(
@@ -1061,13 +1061,13 @@ async fn schedule_send_message_limit() {
 
     let mut params = draft_test_params();
 
-    params.message_count.push(
-        proton_mail_api::services::proton::response_data::MessageCount {
+    params
+        .message_count
+        .push(mail_api::services::proton::response_data::MessageCount {
             label_id: LabelId::all_scheduled(),
             total: 100,
             unread: 0,
-        },
-    );
+        });
 
     let mut message = message_body_test_message_simple();
 

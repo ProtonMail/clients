@@ -19,8 +19,8 @@
 //! [`EnvId`](`crate::env::EnvId`).
 //!
 //! ```
-//! use muon::{App, Client, env::EnvId, GET};
-//! # use muon::doc::*;
+//! use mail_muon::{App, Client, env::EnvId, GET};
+//! # use mail_muon::doc::*;
 //! # tokio_test::block_on(async {
 //! let app = App::new("windows-vpn@4.1.0")?;
 //! let env = EnvId::new_prod();
@@ -37,8 +37,8 @@
 //! ### Example
 //! ```
 //! #
-//! # use muon::doc::*;
-//! use muon::{App, Client, GET};
+//! # use mail_muon::doc::*;
+//! use mail_muon::{App, Client, GET};
 //! # tokio_test::block_on(async {
 //! let store = MyPersistenceStorage::prod();
 //! let app = App::new("windows-vpn@4.1.0")?;
@@ -56,19 +56,19 @@
 //!
 //! ### Login example
 //! ```
-//! use muon::client::flow::LoginFlow;
-//! use muon::client::PasswordMode;
-//! use muon::{App, Client, GET};
+//! use mail_muon::client::flow::LoginFlow;
+//! use mail_muon::client::PasswordMode;
+//! use mail_muon::{App, Client, GET};
 //! use async_trait::async_trait;
-//! use muon::client::{Fingerprint, InfoProvider};
+//! use mail_muon::client::{Fingerprint, InfoProvider};
 //! use serde_json::json;
 //! use std::sync::Arc;
-//! # use muon::doc::*;
+//! # use mail_muon::doc::*;
 //! # tokio_test::block_on(async {
 //! const USER: &str = "user";
 //! const PASS: &str = "pass";
 //!
-//! // InfoProviderImpl is created by the client apps and passed to muon
+//! // InfoProviderImpl is created by the client apps and passed to mail_muon
 //! // It takes care of requesting extra info from the clients on a need basis
 //! // Including requesting the fingerprint as you can see below:
 //! struct InfoProviderImpl {}
@@ -163,8 +163,8 @@
 //!
 //! ### Logout example
 //! ```
-//! use muon::{App, Client, env::EnvId};
-//! # use muon::doc::*;
+//! use mail_muon::{App, Client, env::EnvId};
+//! # use mail_muon::doc::*;
 //! # tokio_test::block_on(async {
 //! let env = EnvId::new_atlas();
 //! let app = App::new("windows-vpn@4.1.0")?;
@@ -186,13 +186,13 @@
 //!
 //! ### Fork a parent session example
 //! ```
-//! # use muon::doc::*;
+//! # use mail_muon::doc::*;
 //! # fn display_selector() -> String {"".to_owned()}
-//! # fn handle_fork_failure(r: impl Into<muon::Error>) {}
+//! # fn handle_fork_failure(r: impl Into<mail_muon::Error>) {}
 //! # async fn send_selector_to_slave(s: String) {}
 //! # tokio_test::block_on(async {
-//! use muon::client::flow::ForkFlowResult;
-//! use muon::{App, Client, GET};
+//! use mail_muon::client::flow::ForkFlowResult;
+//! use mail_muon::{App, Client, GET};
 //! let store = MyPersistenceStorage::prod();
 //! let app = App::new("windows-vpn@4.1.0")?;
 //! let client = Client::new(app, store)?;
@@ -227,9 +227,9 @@
 //! ### Example
 //! ```
 //! #
-//! # use muon::doc::*;
+//! # use mail_muon::doc::*;
 //! # tokio_test::block_on(async {
-//! use muon::{App, Client, GET};
+//! use mail_muon::{App, Client, GET};
 //! let store = MyPersistenceStorage::prod();// aa
 //! let app = App::new("windows-vpn@4.1.0")?;
 //! let client = Client::new(app, store)?;
@@ -253,14 +253,14 @@
 //!
 //! ### How to resync an de-synchronized store
 //! ```
-//! # use muon::doc::*;
+//! # use mail_muon::doc::*;
 //! # fn is_store_unsync() -> bool { true }
 //! # fn display_modal_unsync() {}
 //! # tokio_test::block_on(async {
 //! use std::thread;
 //! use std::time::Duration;
-//! use muon::{App, Client, GET};
-//! use muon::client::flow::LoginFlow;
+//! use mail_muon::{App, Client, GET};
+//! use mail_muon::client::flow::LoginFlow;
 //! let store = MyPersistenceStorage::prod();
 //! let app = App::new("windows-vpn@4.1.0")?;
 //! let client = Client::new(app, store)?;
@@ -323,7 +323,7 @@ pub mod headers;
 pub mod middleware;
 // re-export of auth here
 pub use crate::auth::{Auth, PasswordMode, Tokens};
-/// Implements a builder for configuring a `muon` client.
+/// Implements a builder for configuring a `mail_muon` client.
 mod builder;
 pub use builder::Builder;
 
@@ -429,7 +429,7 @@ pub struct Client {
 }
 
 impl Client {
-    /// Creates a new `muon` client with a default configuration.
+    /// Creates a new `mail_muon` client with a default configuration.
     /// The client will be configured for the given `app` and `store`.
     ///
     /// This is a convenience function; non-default configurations can be built
@@ -465,7 +465,7 @@ impl Client {
         Builder::new(app, store.into().await)
     }
 
-    /// Add an info provider to the client. Used by muon to ask for information.
+    /// Add an info provider to the client. Used by mail_muon to ask for information.
     pub fn with_info_provider(mut self, provider: Arc<dyn InfoProvider>) -> Self {
         self.provider = Some(provider);
         self
@@ -521,9 +521,9 @@ impl Client {
     /// The logout flow deletes the client's session from the Proton API.
     ///
     /// ```
-    /// use muon::{App, Client};
-    /// use muon::env::EnvId;
-    /// use muon::client::flow::LoginFlow;
+    /// use mail_muon::{App, Client};
+    /// use mail_muon::env::EnvId;
+    /// use mail_muon::client::flow::LoginFlow;
     /// let app = App::new("windows-vpn@4.1.0").unwrap();
     /// let env = EnvId::new_prod();
     /// let client = Client::new(app, env).unwrap();
@@ -585,13 +585,13 @@ impl Client {
     /// The sync may or may not fail, but it is the responsibility of the
     /// user-defined [`Store`](crate::store::Store) to handle them.
     /// ```
-    /// # use muon::doc::*;
+    /// # use mail_muon::doc::*;
     /// # use std::time::Duration;
     /// # use std::thread;
     /// # fn is_store_unsync() -> bool { true }
     /// # fn display_modal_unsync() {}
     /// # tokio_test::block_on(async {
-    /// # use muon::{App, Client, http::GET};
+    /// # use mail_muon::{App, Client, http::GET};
     /// let app = App::new("windows-vpn@4.1.0")?;
     /// let app = app.with_user_agent("Mozilla/5.0");
     /// let store = MyPersistenceStorage::prod();
@@ -628,21 +628,21 @@ impl Sender<HttpReq, HttpRes> for Client {
     }
 }
 
-/// An interface to the info provider. This is used by the muon Client to ask
+/// An interface to the info provider. This is used by the mail_muon Client to ask
 /// for extra info from the apps that use it. All functions defined by
-/// InfoProvider need return optionals. Apps that integrate muon need to be able
-/// to choose if they send the info that muon wants to request.
+/// InfoProvider need return optionals. Apps that integrate mail_muon need to be able
+/// to choose if they send the info that mail_muon wants to request.
 /// Here's an example on how to use InfoProvider
 /// ```
-/// use muon::{App, Client};
-/// use muon::env::EnvId;
-/// use muon::client::flow::LoginFlow;
+/// use mail_muon::{App, Client};
+/// use mail_muon::env::EnvId;
+/// use mail_muon::client::flow::LoginFlow;
 /// use std::sync::Arc;
 /// use async_trait::async_trait;
-/// use muon::client::{InfoProvider,Fingerprint};
+/// use mail_muon::client::{InfoProvider,Fingerprint};
 /// use serde_json::json;
 ///
-/// // ExampleInfoProvider shows how to implement the InfoProvider trait a client that uses muon.
+/// // ExampleInfoProvider shows how to implement the InfoProvider trait a client that uses mail_muon.
 /// struct ExampleInfoProvider {}
 /// #[async_trait]
 /// impl InfoProvider for ExampleInfoProvider {

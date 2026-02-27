@@ -2,7 +2,7 @@ use crate::shared::SecureString;
 use crate::signup::state::want_recovery::WantRecovery;
 use crate::signup::state::{State, StateData, Username};
 use derive_more::Display;
-use muon::Client;
+use mail_muon::Client;
 use tracing::info;
 
 /// Represents the state where the user needs to provide password.

@@ -1,14 +1,14 @@
-use proton_core_api::services::proton::Label as ApiLabel;
-use proton_core_api::services::proton::{LabelId, LabelType as ApiLabelType};
-use proton_mail_api::services::proton::common::MessageId;
-use proton_mail_api::services::proton::response_data::{
+use mail_api::services::proton::common::MessageId;
+use mail_api::services::proton::response_data::{
     MailSettings as ApiMailSettings, MessageFlags as ApiMessageFlags,
     MessageMetadata as ApiMessageMetadata, ViewMode as ApiViewMode,
 };
-use proton_mail_common::Mailbox;
-use proton_mail_common::datatypes::SystemLabelId;
-use proton_mail_common::test_utils::init::Params as TestParams;
-use proton_mail_common::test_utils::test_context::MailTestContext;
+use mail_common::Mailbox;
+use mail_common::datatypes::SystemLabelId;
+use mail_common::test_utils::init::Params as TestParams;
+use mail_common::test_utils::test_context::MailTestContext;
+use mail_core_api::services::proton::Label as ApiLabel;
+use mail_core_api::services::proton::{LabelId, LabelType as ApiLabelType};
 
 #[tokio::test]
 async fn test_new_mailbox_sync_conversations() {

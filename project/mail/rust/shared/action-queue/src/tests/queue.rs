@@ -3,9 +3,9 @@ use crate::action::{
     Action, DefaultVersionConverter, Factory, MetadataBuilder, NoopError, Priority, Type,
 };
 use crate::tests::common::{NoopActionHandler, TestDb};
+use mail_stash::params;
+use mail_stash::stash::{Stash, StashConfiguration};
 use serde::{Deserialize, Serialize};
-use stash::params;
-use stash::stash::{Stash, StashConfiguration};
 use std::time::Duration;
 
 #[derive(Copy, Clone, Serialize, Deserialize)]
@@ -384,7 +384,7 @@ impl Handler<TestDb> for ActionHandler2 {
 async fn queue_actions() {
     // Check that an actions are popped from the queue ordered by priority and time.
     let queue = new_queue().await;
-    let tether = &queue.stash().connection().await.unwrap();
+    let tether = &queue.mail_stash().connection().await.unwrap();
 
     let actions = (0..=9)
         .map(|num| Action2 { num, die: false })

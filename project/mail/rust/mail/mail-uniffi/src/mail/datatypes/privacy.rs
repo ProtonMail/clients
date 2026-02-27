@@ -1,4 +1,4 @@
-use proton_mail_common::datatypes::{
+use mail_common::datatypes::{
     PrivacyInfo as RealPrivacyInfo, PrivacyInfoStatus as RealPrivacyInfoStatus,
     StrippedUTMInfo as RealStrippedUTMInfo, TrackerDomain as RealTrackerDomain,
     TrackerInfo as RealTrackerInfo, UTMLink as RealUTMLink,

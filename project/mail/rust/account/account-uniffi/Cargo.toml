@@ -1,5 +1,5 @@
 [package]
-name = "proton-account-uniffi"
+name = "mail-account-uniffi"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
@@ -11,16 +11,16 @@ crate-type = ["lib", "cdylib", "staticlib"]
 
 [dependencies]
 # Proton
-proton-account-api.workspace = true
-proton-account-common.workspace = true
-proton-core-api.workspace = true
-proton-core-common.workspace = true
-proton-observability.workspace = true
-muon.workspace = true
+mail-account-api.workspace = true
+mail-account-common.workspace = true
+mail-core-api.workspace = true
+mail-core-common.workspace = true
+mail-observability.workspace = true
+mail-muon.workspace = true
 uniffi.workspace = true
-uniffi-common.workspace = true
-uniffi-macros.workspace = true
-uniffi-runtime.workspace = true
+mail-uniffi-common.workspace = true
+mail-uniffi-macros.workspace = true
+mail-uniffi-runtime.workspace = true
 
 # crates.io dependencies
 futures.workspace = true

@@ -1,9 +1,9 @@
 use crate::{MailContextError, MailUserContext};
-use proton_calendar_common as cal;
-use proton_core_api::services::proton::AddressId;
+use mail_calendar_common as cal;
+use mail_core_api::services::proton::AddressId;
+use mail_crypto_inbox::proton_crypto::crypto::PGPProviderSync;
+use mail_stash::stash::Tether;
 use proton_crypto_account::keys::UnlockedAddressKeys;
-use proton_crypto_inbox::proton_crypto::crypto::PGPProviderSync;
-use stash::stash::Tether;
 use tracing::error;
 
 pub struct RsvpKeys<'a> {

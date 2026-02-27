@@ -1,7 +1,7 @@
 use crate::core::datatypes::UnixTimestamp;
 use crate::{UniffiEnum, UniffiRecord};
-use proton_core_common::utils::MapVec;
-use proton_mail_common::{SnoozeOptions, SnoozeTime as RealSnoozeTime};
+use mail_common::{SnoozeOptions, SnoozeTime as RealSnoozeTime};
+use mail_core_common::utils::MapVec;
 
 #[derive(Debug, Clone, PartialEq, UniffiRecord)]
 pub struct SnoozeActions {

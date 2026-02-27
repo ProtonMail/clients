@@ -5,15 +5,15 @@ use crate::{
 };
 use indoc::indoc;
 use jiff::{Zoned, civil::Weekday};
-use pretty_assertions as pa;
-use proton_calendar_api_v1::{CalendarAttendee, CalendarAttendeeStatus, ProtonCalendarMock};
-use proton_calendar_common::{
+use mail_calendar_api_v1::{CalendarAttendee, CalendarAttendeeStatus, ProtonCalendarMock};
+use mail_calendar_common::{
     RsvpAttendee, RsvpError, RsvpEventId, RsvpFetchApiError, RsvpFetchError, RsvpIntent,
     RsvpOrganizer, RsvpProgress, RsvpRecency, RsvpRelation,
 };
-use proton_core_api::session::{Config, Session};
-use proton_core_common::test_utils::test_context::MockApiEnv;
-use proton_ical as ical;
+use mail_core_api::session::{Config, Session};
+use mail_core_common::test_utils::test_context::MockApiEnv;
+use mail_ical as ical;
+use pretty_assertions as pa;
 use std::str::FromStr;
 
 /// Make sure we can understand RSVPs that have been auto-imported into the

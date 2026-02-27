@@ -1,5 +1,5 @@
 #[macro_use]
-extern crate uniffi_macros;
+extern crate mail_uniffi_macros;
 
 pub mod errors;
 pub mod login;

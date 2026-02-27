@@ -1,17 +1,17 @@
 #![allow(async_fn_in_trait)]
 
 use crate::MailContextError;
-use proton_core_api::services::proton::{PrivateEmail, PrivateString};
-use proton_core_common::datatypes::EncryptedPushNotification;
-use proton_core_common::datatypes::StoredDevicePrivateKey;
-use proton_core_common::os::KeyChain;
-use proton_core_common::os::KeyChainExt;
+use mail_api::services::proton::common::MessageId;
+use mail_api::services::push_notifications::DecryptedEmailPushNotificationAction as ApiDecryptedEmailPushNotificationAction;
+use mail_api::services::push_notifications::DecryptedInboxPushNotification as ApiDecryptedInboxPushNotification;
+use mail_api::services::push_notifications::NotificationSender as ApiNotificationSender;
+use mail_core_api::services::proton::{PrivateEmail, PrivateString};
+use mail_core_common::datatypes::EncryptedPushNotification;
+use mail_core_common::datatypes::StoredDevicePrivateKey;
+use mail_core_common::os::KeyChain;
+use mail_core_common::os::KeyChainExt;
 use proton_crypto_account::keys::PGPDeviceKey;
 use proton_crypto_account::proton_crypto;
-use proton_mail_api::services::proton::common::MessageId;
-use proton_mail_api::services::push_notifications::DecryptedEmailPushNotificationAction as ApiDecryptedEmailPushNotificationAction;
-use proton_mail_api::services::push_notifications::DecryptedInboxPushNotification as ApiDecryptedInboxPushNotification;
-use proton_mail_api::services::push_notifications::NotificationSender as ApiNotificationSender;
 use secrecy::ExposeSecret;
 use serde_with::serde_derive::{Deserialize, Serialize};
 use std::sync::Arc;

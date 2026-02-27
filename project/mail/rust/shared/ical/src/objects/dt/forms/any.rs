@@ -78,7 +78,7 @@ impl TryFrom<DateTime<AnyForm>> for JiffZoned {
 
                 // TODO use let-chains once we bump php-ical to a newer toolchain
                 if result.is_err() {
-                    if let Some(tz) = proton_ical_tz::windows_to_tzdb(tz.value.as_str()) {
+                    if let Some(tz) = mail_ical_tz::windows_to_tzdb(tz.value.as_str()) {
                         if let Ok(this) = dt.in_tz(tz) {
                             return Ok(this);
                         }

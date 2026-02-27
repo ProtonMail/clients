@@ -1,7 +1,7 @@
 use crate::app_events::{UserSessionCreatedEvent, UserSessionDeletedEvent};
 use crate::db::account::{CoreSessionObserver, CoreSessionObserverNotification};
 use crate::{Context, CoreContextError, OnSessionDeletedResponse};
-use proton_event_service::{EventService, EventStream};
+use mail_event_service::{EventService, EventStream};
 use std::sync::Weak;
 
 pub struct SessionObserverService {

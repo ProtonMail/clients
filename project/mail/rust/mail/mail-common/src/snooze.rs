@@ -1,5 +1,5 @@
 use chrono::{DateTime, Datelike, Days, NaiveTime, TimeZone, Weekday};
-use proton_core_common::{
+use mail_core_common::{
     datatypes::{UnixTimestamp, WeekStart},
     models::{PaidSubscription, User},
 };
@@ -134,7 +134,7 @@ pub enum SnoozeTime {
 mod tests {
     use super::*;
     use chrono::FixedOffset;
-    use proton_core_common::models::{PaidSubscription, User};
+    use mail_core_common::models::{PaidSubscription, User};
     use test_case::test_case;
 
     fn create_test_user(has_mail_subscription: bool) -> User {

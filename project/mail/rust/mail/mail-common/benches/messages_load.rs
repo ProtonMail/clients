@@ -1,17 +1,17 @@
 mod profiler;
 use criterion::{Criterion, criterion_group, criterion_main};
-use proton_core_api::services::proton::{AddressId, LabelId};
-use proton_core_common::datatypes::{AddressFlags, AddressStatus, AddressType, LabelType};
-use proton_core_common::db::migrations::migrate_core_db;
-use proton_core_common::models::{Address, Label, ModelExtension};
-use proton_mail_api::services::proton::common::{AttachmentId, ConversationId, MessageId};
-use proton_mail_api::services::proton::prelude::{AttachmentMetadata, Disposition, MessageFlags};
-use proton_mail_common::datatypes::SystemLabelId;
-use proton_mail_common::db::offline_migrations::run as migrate_mail_db;
-use proton_mail_common::models::Message;
-use stash::UserDb;
-use stash::orm::Model;
-use stash::stash::{Bond, Stash, StashConfiguration, StashError};
+use mail_api::services::proton::common::{AttachmentId, ConversationId, MessageId};
+use mail_api::services::proton::prelude::{AttachmentMetadata, Disposition, MessageFlags};
+use mail_common::datatypes::SystemLabelId;
+use mail_common::db::offline_migrations::run as migrate_mail_db;
+use mail_common::models::Message;
+use mail_core_api::services::proton::{AddressId, LabelId};
+use mail_core_common::datatypes::{AddressFlags, AddressStatus, AddressType, LabelType};
+use mail_core_common::db::migrations::migrate_core_db;
+use mail_core_common::models::{Address, Label, ModelExtension};
+use mail_stash::UserDb;
+use mail_stash::orm::Model;
+use mail_stash::stash::{Bond, Stash, StashConfiguration, StashError};
 use std::string::ToString;
 use tempfile::TempDir;
 use uuid::Uuid;
@@ -30,11 +30,11 @@ pub fn current_benchmark(c: &mut Criterion) {
             pool_size: None,
             idle_count: None,
         };
-        let stash = Stash::new(stash_config).unwrap();
-        let (label_id, address_id) = runtime.block_on(async { setup_db(&stash).await });
+        let mail_stash = Stash::new(stash_config).unwrap();
+        let (label_id, address_id) = runtime.block_on(async { setup_db(&mail_stash).await });
         b.iter(|| {
             runtime.block_on(async {
-                let mut tether = stash.connection().await.unwrap();
+                let mut tether = mail_stash.connection().await.unwrap();
                 tether
                     .tx::<_, _, StashError>(async |tx| {
                         create_messages(tx, label_id.clone(), address_id.clone(), 100).await;
@@ -54,11 +54,11 @@ pub fn current_benchmark(c: &mut Criterion) {
             pool_size: None,
             idle_count: None,
         };
-        let stash = Stash::new(stash_config).unwrap();
-        runtime.block_on(async { setup_and_create_messages(&stash, 100).await });
+        let mail_stash = Stash::new(stash_config).unwrap();
+        runtime.block_on(async { setup_and_create_messages(&mail_stash, 100).await });
         b.iter(|| {
             runtime.block_on(async {
-                let tether = stash.connection().await.unwrap();
+                let tether = mail_stash.connection().await.unwrap();
                 let _ = Message::all(&tether).await.unwrap();
             })
         })
@@ -71,11 +71,11 @@ pub fn current_benchmark(c: &mut Criterion) {
             pool_size: None,
             idle_count: None,
         };
-        let stash = Stash::new(stash_config).unwrap();
-        runtime.block_on(async { setup_and_create_messages(&stash, 100).await });
+        let mail_stash = Stash::new(stash_config).unwrap();
+        runtime.block_on(async { setup_and_create_messages(&mail_stash, 100).await });
         b.iter(|| {
             runtime.block_on(async {
-                let tether = stash.connection().await.unwrap();
+                let tether = mail_stash.connection().await.unwrap();
                 tether.execute("BEGIN", vec![]).await.unwrap();
                 let _ = Message::all(&tether).await.unwrap();
                 tether.execute("END", vec![]).await.unwrap();
@@ -84,14 +84,14 @@ pub fn current_benchmark(c: &mut Criterion) {
     });
 }
 
-async fn setup_db(stash: &Stash<UserDb>) -> (LabelId, AddressId) {
-    migrate_core_db(stash).await.unwrap();
-    migrate_mail_db(stash).await.unwrap();
+async fn setup_db(mail_stash: &Stash<UserDb>) -> (LabelId, AddressId) {
+    migrate_core_db(mail_stash).await.unwrap();
+    migrate_mail_db(mail_stash).await.unwrap();
 
     let address_id: AddressId = AddressId::from(Uuid::new_v4().to_string());
     let label_id: LabelId = LabelId::from(Uuid::new_v4().to_string());
 
-    let mut tether = stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection().await.unwrap();
 
     tether
         .tx::<_, _, StashError>(async |tx| {
@@ -152,9 +152,9 @@ async fn create_messages(
     }
 }
 
-async fn setup_and_create_messages(stash: &Stash<UserDb>, message_count: usize) {
-    let (label_id, address_id) = setup_db(stash).await;
-    let mut tether = stash.connection().await.unwrap();
+async fn setup_and_create_messages(mail_stash: &Stash<UserDb>, message_count: usize) {
+    let (label_id, address_id) = setup_db(mail_stash).await;
+    let mut tether = mail_stash.connection().await.unwrap();
     tether
         .tx::<_, _, StashError>(async |tx| {
             for order in 0..message_count {
@@ -173,7 +173,7 @@ async fn new_message_random_message(
     label_id: LabelId,
     order: usize,
 ) -> Message {
-    let message = proton_mail_api::services::proton::response_data::MessageMetadata {
+    let message = mail_api::services::proton::response_data::MessageMetadata {
         id: MessageId::from(Uuid::new_v4().to_string()),
         conversation_id: ConversationId::from(Uuid::new_v4().to_string()),
         address_id,

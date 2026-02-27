@@ -4,11 +4,11 @@ use crate::atlas::{
 use anyhow::{bail, Result};
 use async_trait::async_trait;
 #[allow(deprecated)]
-use muon::client::flow::LoginExtraInfo;
-use muon::client::flow::{ForkFlowResult, LoginFlow, WithSelectorFlow};
-use muon::client::{Fingerprint, InfoProvider};
-use muon::rest::core;
-use muon::{Status, GET, POST};
+use mail_muon::client::flow::LoginExtraInfo;
+use mail_muon::client::flow::{ForkFlowResult, LoginFlow, WithSelectorFlow};
+use mail_muon::client::{Fingerprint, InfoProvider};
+use mail_muon::rest::core;
+use mail_muon::{Status, GET, POST};
 use std::future::Future;
 use std::sync::Arc;
 use totp_rs::{Algorithm, Secret, TOTP};

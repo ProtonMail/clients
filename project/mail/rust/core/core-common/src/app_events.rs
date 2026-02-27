@@ -1,7 +1,7 @@
 //! These events are not related to the events that arrive as updates to proton state. They
 //! are triggered during the execution of an application.
 
-use proton_core_api::services::proton::{SessionId, UserId};
+use mail_core_api::services::proton::{SessionId, UserId};
 
 #[derive(Debug, Clone)]
 pub struct UserSessionDeletedEvent {

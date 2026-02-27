@@ -463,7 +463,7 @@ impl<K: ToString, V: ToString> AsQuery for (K, V) {
 ///
 /// # Example
 /// ```rust
-/// use muon::http::{AsQuery, serde_to_query};
+/// use mail_muon::http::{AsQuery, serde_to_query};
 /// use serde::Serialize;
 ///
 /// #[derive(Serialize)]
@@ -524,8 +524,8 @@ pub trait HttpReqExt: Into<HttpReq> + Sized + Send {
     /// # Example
     ///
     /// ```rust
-    /// # use muon::GET;
-    /// # use muon::Result;
+    /// # use mail_muon::GET;
+    /// # use mail_muon::Result;
     /// # use crate::muon::http::HttpReqExt;
     /// # use std::io::Cursor;
     /// # #[tokio::main]

@@ -3,8 +3,8 @@ use crate::password::{
     FlowAuthError,
     state::{State, StateData},
 };
-use proton_core_api::services::observability::ApiServiceObservabilityResponse;
-use proton_observability::{PreLoginMetricRecorder, metric};
+use mail_core_api::services::observability::ApiServiceObservabilityResponse;
+use mail_observability::{PreLoginMetricRecorder, metric};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -104,10 +104,10 @@ impl From<&PasswordError> for ApiServiceObservabilityResponse {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use proton_core_api::services::proton::prelude::{
+    use mail_core_api::services::proton::prelude::{
         PostMetricsRequestData, PostMetricsRequestElement,
     };
-    use proton_observability::into_metrics_element;
+    use mail_observability::into_metrics_element;
     use serde_json::{self, json};
 
     #[test]

@@ -1,24 +1,24 @@
 use itertools::Itertools;
-use proton_core_api::services::proton::LabelId;
-use proton_core_api::services::proton::LabelType as ApiLabelType;
-use proton_core_api::services::proton::{Address as ApiAddress, Label as ApiLabel};
-use proton_core_common::models::{Address, Label, ModelIdExtension};
-use proton_core_common::test_utils::addresses::ApiAddressTestUtils;
-use proton_mail_api::services::proton::common::{ConversationId, MessageId};
-use proton_mail_api::services::proton::response_data::{
+use mail_api::services::proton::common::{ConversationId, MessageId};
+use mail_api::services::proton::response_data::{
     Conversation as ApiConversation, ConversationCount as ApiConversationCount,
     MessageCount as ApiMessageCount,
 };
-use proton_mail_common::Mailbox;
-use proton_mail_common::datatypes::SystemLabelId;
-use proton_mail_common::models::{Conversation, ConversationCounter, LabelWithCounters, Message};
-use proton_mail_common::test_utils::conversations::ApiConversationTestUtils;
-use proton_mail_common::test_utils::init::Params as TestParams;
-use proton_mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
-use stash::orm::Model;
-use stash::params;
-use stash::stash::StashError;
-use stash::stash::Tether;
+use mail_common::Mailbox;
+use mail_common::datatypes::SystemLabelId;
+use mail_common::models::{Conversation, ConversationCounter, LabelWithCounters, Message};
+use mail_common::test_utils::conversations::ApiConversationTestUtils;
+use mail_common::test_utils::init::Params as TestParams;
+use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
+use mail_core_api::services::proton::LabelId;
+use mail_core_api::services::proton::LabelType as ApiLabelType;
+use mail_core_api::services::proton::{Address as ApiAddress, Label as ApiLabel};
+use mail_core_common::models::{Address, Label, ModelIdExtension};
+use mail_core_common::test_utils::addresses::ApiAddressTestUtils;
+use mail_stash::orm::Model;
+use mail_stash::params;
+use mail_stash::stash::StashError;
+use mail_stash::stash::Tether;
 use std::collections::HashMap;
 use velcro::hash_map;
 
@@ -444,15 +444,15 @@ async fn action_label_as_with_archive() {
 
 mod rebase {
     use super::*;
+    use mail_action_queue::action::ActionGroup;
+    use mail_action_queue::rebase::RebaseChangeSet;
+    use mail_common::datatypes::ConversationViewOptions;
+    use mail_common::models::ConversationLabel;
+    use mail_common::test_utils::scroller::StoreLabeledModelMap;
+    use mail_common::{MailUserContext, conv_id, conversation, message};
+    use mail_core_common::datatypes::LocalLabelId;
+    use mail_core_common::models::ModelExtension;
     use pretty_assertions::{assert_eq, assert_ne};
-    use proton_action_queue::action::ActionGroup;
-    use proton_action_queue::rebase::RebaseChangeSet;
-    use proton_core_common::datatypes::LocalLabelId;
-    use proton_core_common::models::ModelExtension;
-    use proton_mail_common::datatypes::ConversationViewOptions;
-    use proton_mail_common::models::ConversationLabel;
-    use proton_mail_common::test_utils::scroller::StoreLabeledModelMap;
-    use proton_mail_common::{MailUserContext, conv_id, conversation, message};
     use std::sync::Arc;
 
     // NOTE: The must_archive rebase is handled by the message/conv move rules.

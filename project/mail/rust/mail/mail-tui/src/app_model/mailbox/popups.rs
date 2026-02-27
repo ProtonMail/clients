@@ -4,19 +4,19 @@ use crate::messages::Messages;
 use crate::widgets::utils::{ScrollableState, parse_date_time};
 use crate::widgets::{AsList, ScrollableList, ScrollableListState, TextInput, TextInputState};
 use chrono::Local;
-use proton_core_common::datatypes::{LabelType, LocalLabelId, WeekStart};
-use proton_core_common::models::{Label, ModelExtension};
-use proton_mail_common::actions::LabelAsAction;
-use proton_mail_common::datatypes::{LocalConversationId, ViewMode};
-use proton_mail_common::models::{Conversation, LabelWithCounters, MailLabel};
-use proton_mail_common::{MailContextResult, MailUserContext, Sidebar};
-use proton_mail_common::{SnoozeOptions, SnoozeTime};
+use mail_common::actions::LabelAsAction;
+use mail_common::datatypes::{LocalConversationId, ViewMode};
+use mail_common::models::{Conversation, LabelWithCounters, MailLabel};
+use mail_common::{MailContextResult, MailUserContext, Sidebar};
+use mail_common::{SnoozeOptions, SnoozeTime};
+use mail_core_common::datatypes::{LabelType, LocalLabelId, WeekStart};
+use mail_core_common::models::{Label, ModelExtension};
+use mail_stash::orm::Model;
 use ratatui::crossterm::event::{Event, KeyCode, KeyModifiers};
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, List, ListItem, Tabs};
 use ratatui::{Frame, symbols};
-use stash::orm::Model;
 use std::sync::Arc;
 
 use super::LabelAs;
@@ -287,15 +287,14 @@ pub struct LabelItemPopup {
 
 impl LabelItemPopup {
     pub async fn new(ctx: &MailUserContext, item: Items) -> MailContextResult<Self> {
-        let stash = ctx.user_stash();
-        let tether = stash.connection().await?;
+        let mail_stash = ctx.user_stash();
+        let tether = mail_stash.connection().await?;
         let labels = match item.clone() {
             Items::Conversation(local_ids) => {
                 Conversation::available_label_as_actions(local_ids, &tether).await?
             }
             Items::Message(local_ids) => {
-                proton_mail_common::models::Message::available_label_as_actions(local_ids, &tether)
-                    .await?
+                mail_common::models::Message::available_label_as_actions(local_ids, &tether).await?
             }
         };
 

@@ -3,21 +3,21 @@ use crate::actions::addresses::incoming_defaults_dependency_key;
 use crate::datatypes::LocalIncomingDefaultId;
 use crate::models::{IncomingDefault, IncomingDefaultLocation};
 use anyhow::anyhow;
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionDependencyKeys, DefaultVersionConverter, Type, WriterGuard,
 };
-use proton_action_queue::action::{ActionId, Handler};
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::services::proton::{IncomingDefaultId, PrivateEmail};
-use proton_core_api::session::Session;
-use proton_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;
-use proton_core_common::models::ModelExtension;
-use proton_mail_api::services::proton::ProtonMail;
-use proton_mail_api::services::proton::response_data::IncomingDefaultLocation as ApiIncomingDefaultLocation;
+use mail_action_queue::action::{ActionId, Handler};
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_api::services::proton::ProtonMail;
+use mail_api::services::proton::response_data::IncomingDefaultLocation as ApiIncomingDefaultLocation;
+use mail_core_api::services::proton::{IncomingDefaultId, PrivateEmail};
+use mail_core_api::session::Session;
+use mail_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;
+use mail_core_common::models::ModelExtension;
+use mail_stash::UserDb;
+use mail_stash::orm::Model;
+use mail_stash::stash::Bond;
 use serde::{Deserialize, Serialize};
-use stash::UserDb;
-use stash::orm::Model;
-use stash::stash::Bond;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Block {

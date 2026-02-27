@@ -1,10 +1,5 @@
 use common::TEST_VERIFICATION_KEY;
-use proton_crypto_account::keys::{
-    APIPublicAddressKeyGroup, APIPublicAddressKeys, APIPublicKey, APIPublicKeySource,
-    APIUnverifiedPublicAddressKeyGroup, DecryptedAddressKey, EmailMimeType, KeyFlag, KeyId,
-    PGPScheme, PinnedPublicKeys, PublicAddressKeys, SKLSignature, SignedKeyList,
-};
-use proton_crypto_inbox::{
+use mail_crypto_inbox::{
     keys::{
         ComposerPreference, CryptoMailSettings, EncryptionPreferencesError,
         InboxVerificationPreferences, PackageCryptoType, SendPreferences,
@@ -14,6 +9,11 @@ use proton_crypto_inbox::{
         crypto::{AccessKeyInfo, DataEncoding, PGPProviderSync, UnixTimestamp},
         new_pgp_provider,
     },
+};
+use proton_crypto_account::keys::{
+    APIPublicAddressKeyGroup, APIPublicAddressKeys, APIPublicKey, APIPublicKeySource,
+    APIUnverifiedPublicAddressKeyGroup, DecryptedAddressKey, EmailMimeType, KeyFlag, KeyId,
+    PGPScheme, PinnedPublicKeys, PublicAddressKeys, SKLSignature, SignedKeyList,
 };
 
 mod common;

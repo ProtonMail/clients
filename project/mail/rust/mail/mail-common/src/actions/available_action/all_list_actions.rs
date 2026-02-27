@@ -7,8 +7,8 @@ use crate::actions::{
     ActionContext, GenericAction, GenericMobileActions, MobileActionsBuilder, SystemFolders,
 };
 use crate::datatypes::MobileAction;
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::datatypes::SystemLabel;
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::datatypes::SystemLabel;
 
 /// All actions available from list toolbar for either conversation groupping enabled and disabled
 ///

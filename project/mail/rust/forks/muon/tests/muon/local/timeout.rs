@@ -1,12 +1,12 @@
 use anyhow::Result;
 use futures_timer::Delay;
-use muon::common::{BoxFut, Sender, SenderLayer};
-use muon::test::server::Server;
-use muon::util::{DurationExt, ProtonRequestExt};
-use muon::{Error, ProtonRequest, ProtonResponse, GET};
+use mail_muon::common::{BoxFut, Sender, SenderLayer};
+use mail_muon::test::server::Server;
+use mail_muon::util::{DurationExt, ProtonRequestExt};
+use mail_muon::{Error, ProtonRequest, ProtonResponse, GET};
 use std::sync::Arc;
 
-#[muon::test]
+#[mail_muon::test]
 async fn test_timeout_total(s: Arc<Server>) -> Result<()> {
     let c = s.client();
 
@@ -27,7 +27,7 @@ async fn test_timeout_total(s: Arc<Server>) -> Result<()> {
     Ok(())
 }
 
-#[muon::test]
+#[mail_muon::test]
 async fn test_timeout_pause_resume(s: Arc<Server>) -> Result<()> {
     struct PauseLayer;
 

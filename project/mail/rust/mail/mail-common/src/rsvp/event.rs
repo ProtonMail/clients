@@ -3,11 +3,11 @@ use crate::models::MessageBodyMetadata;
 use crate::rsvp::{RsvpKeys, RsvpMail};
 use crate::{AppError, MailContextResult};
 use crate::{MailUserContext, models::Message};
-use proton_calendar_common::{self as cal, RsvpAnswer, RsvpAnswerError, RsvpError};
-use proton_core_common::models::{Address, User};
-use proton_crypto_inbox::proton_crypto;
-use stash::orm::Model;
-use stash::stash::Tether;
+use mail_calendar_common::{self as cal, RsvpAnswer, RsvpAnswerError, RsvpError};
+use mail_core_common::models::{Address, User};
+use mail_crypto_inbox::proton_crypto;
+use mail_stash::orm::Model;
+use mail_stash::stash::Tether;
 use std::ops;
 use tracing::{error, info, instrument};
 

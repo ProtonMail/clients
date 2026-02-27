@@ -1,10 +1,10 @@
 use derive_more::From;
-use muon::{ProtonRequest, ProtonResponse, common::Sender};
-use proton_core_api::{
+use mail_core_api::{
     service::ApiServiceResult,
     services::proton::{PostAuthInfoRequest, PostAuthInfoResponse, ProtonAuth as _},
 };
-use proton_core_common::device::DeviceInfo;
+use mail_core_common::device::DeviceInfo;
+use mail_muon::{ProtonRequest, ProtonResponse, common::Sender};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -165,7 +165,7 @@ mod test {
         Behavior, ChallengeInfo, ChallengePayload, PayloadFrameBehavior, PayloadFrameMetadata,
         PayloadFrameV2_2,
     };
-    use proton_core_common::device::DeviceInfo;
+    use mail_core_common::device::DeviceInfo;
     use std::collections::HashMap;
 
     #[test]

@@ -1,5 +1,5 @@
 use crate::UniffiRecord;
-use proton_core_common::datatypes::AvatarInformation as RealAvatarInformation;
+use mail_core_common::datatypes::AvatarInformation as RealAvatarInformation;
 
 /// TODO: Document this struct.
 #[derive(Clone, Debug, Eq, PartialEq, UniffiRecord)]

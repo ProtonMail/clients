@@ -7,18 +7,18 @@ use crate::password::state::{State, StateData, StateKind};
 use crate::shared::SecureString;
 use crate::shared::challenge::get_auth_info;
 use futures::TryFutureExt as _;
-use muon::Status;
-use muon::rest::auth::v4::fido2;
-use proton_core_api::auth::KeySecret;
-use proton_core_api::consts::CoreBundle;
-use proton_core_api::service::{ApiServiceError, ServiceError};
-use proton_core_api::services::proton::prelude::*;
-use proton_core_api::session::Session;
-use proton_core_api::store::StoreError;
-use proton_core_common::datatypes::{PasswordMode, TfaStatus};
+use mail_core_api::auth::KeySecret;
+use mail_core_api::consts::CoreBundle;
+use mail_core_api::service::{ApiServiceError, ServiceError};
+use mail_core_api::services::proton::prelude::*;
+use mail_core_api::session::Session;
+use mail_core_api::store::StoreError;
+use mail_core_common::datatypes::{PasswordMode, TfaStatus};
+use mail_muon::Status;
+use mail_muon::rest::auth::v4::fido2;
+use mail_observability::PreLoginMetricRecorder;
 use proton_crypto_account::keys::UserKeys;
 use proton_crypto_account::proton_crypto::{CryptoError, new_srp_provider};
-use proton_observability::PreLoginMetricRecorder;
 use serde::{Deserialize, Serialize};
 use std::borrow::Borrow;
 use std::string::FromUtf8Error;
@@ -349,7 +349,7 @@ impl PasswordFlow {
 
     /// Get the API client for external operations.
     #[must_use]
-    pub fn api(&self) -> muon::Client {
+    pub fn api(&self) -> mail_muon::Client {
         self.data.client.clone()
     }
 

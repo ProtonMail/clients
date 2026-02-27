@@ -109,7 +109,7 @@ pub enum ResultsetChange<T: Model, I: ToSql> {
 /// serialisation and deserialisation. A common pattern is for those fields to
 /// be public on the struct, but the actual method of management is up to the
 /// implementor. Meanwhile, the associated [`Stash`] would usually be stored in
-/// a private `stash` field — but this again is up to the implementor.
+/// a private `mail_stash` field — but this again is up to the implementor.
 ///
 /// # See also
 ///
@@ -179,7 +179,7 @@ where
 /// serialisation and deserialisation. A common pattern is for those fields to
 /// be public on the struct, but the actual method of management is up to the
 /// implementor. Meanwhile, the associated [`Stash`] would usually be stored in
-/// a private `stash` field — but this again is up to the implementor.
+/// a private `mail_stash` field — but this again is up to the implementor.
 ///
 /// # See also
 ///
@@ -597,7 +597,7 @@ where
 /// trait is a supertrait of [`Model`].
 ///
 /// For more information on how this works, see the documentation for
-/// `stash::converter()` (note: this is not a public function).
+/// `mail_stash::converter()` (note: this is not a public function).
 ///
 #[derive(Debug)]
 pub struct DbRecords(pub(crate) Vec<Box<dyn Any + Send + 'static>>);

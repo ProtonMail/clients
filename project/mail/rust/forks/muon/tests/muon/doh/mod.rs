@@ -1,15 +1,15 @@
 use anyhow::Result;
-use muon::app::AppVersion;
-use muon::common::prelude::*;
-use muon::common::{Host, Server};
-use muon::dns::{DohClient, DohService, GoogleDoh, Quad9Doh};
-use muon::env::{DynEnv, Env, Prod};
-use muon::http::HyperConnector;
-use muon::rt::{AsyncDialer, AsyncResolver, AsyncSpawner, DynResolver, Resolver};
-use muon::test::store::TestStore;
-use muon::tls::{BaseTrustAnchor, BaseVerifier, RustlsTls, TlsExt, TlsPin, TlsPinSet};
-use muon::util::*;
-use muon::{autoimpl, App, Client, GET};
+use mail_muon::app::AppVersion;
+use mail_muon::common::prelude::*;
+use mail_muon::common::{Host, Server};
+use mail_muon::dns::{DohClient, DohService, GoogleDoh, Quad9Doh};
+use mail_muon::env::{DynEnv, Env, Prod};
+use mail_muon::http::HyperConnector;
+use mail_muon::rt::{AsyncDialer, AsyncResolver, AsyncSpawner, DynResolver, Resolver};
+use mail_muon::test::store::TestStore;
+use mail_muon::tls::{BaseTrustAnchor, BaseVerifier, RustlsTls, TlsExt, TlsPin, TlsPinSet};
+use mail_muon::util::*;
+use mail_muon::{autoimpl, App, Client, GET};
 
 #[tokio::test]
 async fn test_doh_normal_routing() -> Result<()> {

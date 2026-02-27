@@ -1,6 +1,6 @@
 use crate::UserContext;
 use crate::models::{ModelExtension, UserSettings};
-use proton_issue_reporter_service::{IssueLevel, IssueReportKeys, UserIssueReporter};
+use mail_issue_reporter_service::{IssueLevel, IssueReportKeys, UserIssueReporter};
 use std::sync::{Arc, Weak};
 use tracing::{debug, warn};
 

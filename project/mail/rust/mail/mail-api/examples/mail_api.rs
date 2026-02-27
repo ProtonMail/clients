@@ -1,22 +1,22 @@
 #![allow(clippy::print_stdout)]
 
-use muon::env::EnvId;
-use proton_account_api::login::LoginFlow;
-use proton_account_api::shared::challenge::ChallengeInfo;
-use proton_core_api::services::proton::LabelId;
-use proton_core_api::session::Session;
-use proton_core_common::datatypes::ApiConfig;
-use proton_core_common::db::account::SessionEncryptionKey;
-use proton_core_common::event_loop::EventPollMode;
-use proton_core_common::migration_snooper::NoopMigrationSnooper;
-use proton_core_common::os::{InMemoryKeyChain, KeyChainExt as _};
-use proton_core_common::post_login_check::DefaultPostLoginValidator;
-use proton_core_common::services::FeatureFlagsBackgroundTask;
-use proton_core_common::{Context, Origin};
-use proton_issue_reporter_service::NoopIssueReporter;
-use proton_log_service::LogService;
-use proton_mail_api::services::proton::ProtonMail;
-use proton_mail_api::services::proton::requests::{GetConversationsOptions, GetMessagesOptions};
+use mail_account_api::login::LoginFlow;
+use mail_account_api::shared::challenge::ChallengeInfo;
+use mail_api::services::proton::ProtonMail;
+use mail_api::services::proton::requests::{GetConversationsOptions, GetMessagesOptions};
+use mail_core_api::services::proton::LabelId;
+use mail_core_api::session::Session;
+use mail_core_common::datatypes::ApiConfig;
+use mail_core_common::db::account::SessionEncryptionKey;
+use mail_core_common::event_loop::EventPollMode;
+use mail_core_common::migration_snooper::NoopMigrationSnooper;
+use mail_core_common::os::{InMemoryKeyChain, KeyChainExt as _};
+use mail_core_common::post_login_check::DefaultPostLoginValidator;
+use mail_core_common::services::FeatureFlagsBackgroundTask;
+use mail_core_common::{Context, Origin};
+use mail_issue_reporter_service::NoopIssueReporter;
+use mail_log_service::LogService;
+use mail_muon::env::EnvId;
 use std::io::{BufRead, Write, stdin, stdout};
 use std::sync::Arc;
 use tempfile::TempDir;
@@ -36,7 +36,7 @@ async fn main() {
         .with_filter(
             EnvFilter::builder()
                 .with_default_directive(LevelFilter::TRACE.into())
-                .parse_lossy("info,proton_core_api=debug,proton_mail_api_debug"),
+                .parse_lossy("info,mail_core_api=debug,proton_mail_api_debug"),
         );
 
     tracing_subscriber::registry().with(file_subscriber).init();
@@ -132,7 +132,7 @@ async fn create_context() -> Arc<Context> {
     let tmp_dir = TempDir::new().expect("failed to create temp dir");
     let keychain = Arc::new(InMemoryKeyChain::default()).clone();
     let key = SessionEncryptionKey::random();
-    let log_config = proton_log_service::Config::builder()
+    let log_config = mail_log_service::Config::builder()
         .name("log".into())
         .directory(tmp_dir.path().into())
         .build();

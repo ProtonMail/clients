@@ -1,5 +1,5 @@
 use futures::TryFutureExt;
-use proton_core_api::services::proton::{SessionId, UserId};
+use mail_core_api::services::proton::{SessionId, UserId};
 use tracing::info;
 
 use crate::login::PostLoginValidator;
@@ -9,12 +9,12 @@ use crate::shared::SecureString;
 
 /// Represents the login flow state where the user must provide their mailbox password.
 pub struct WantMbp {
-    client: muon::Client,
+    client: mail_muon::Client,
     data: StateData,
 }
 
 impl WantMbp {
-    pub(crate) fn new(client: muon::Client, data: StateData) -> Self {
+    pub(crate) fn new(client: mail_muon::Client, data: StateData) -> Self {
         info!("Login flow wants mailbox password");
 
         Self { client, data }

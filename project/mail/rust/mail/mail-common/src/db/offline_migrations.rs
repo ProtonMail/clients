@@ -7,10 +7,10 @@ mod v045_proton_mail_draft_send_result;
 mod v046_proton_mail_android_signatures;
 
 use include_dir::{Dir, include_dir};
-use proton_sqlite3::{Migrator, MigratorError, file::embedded_migrations};
-use stash::{UserDb, stash::Stash};
+use mail_sqlite3::{Migrator, MigratorError, file::embedded_migrations};
+use mail_stash::{UserDb, stash::Stash};
 
-pub async fn run(stash: &Stash<UserDb>) -> Result<usize, MigratorError> {
+pub async fn run(mail_stash: &Stash<UserDb>) -> Result<usize, MigratorError> {
     const TABLE: &str = "proton_mail_db_version";
     const MIGRATIONS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/src/db/offline_migrations");
 
@@ -38,7 +38,7 @@ pub async fn run(stash: &Stash<UserDb>) -> Result<usize, MigratorError> {
         v046_proton_mail_android_signatures::AndroidSignaturesMigration,
     ));
 
-    let mut tether = stash.connection().await?;
+    let mut tether = mail_stash.connection().await?;
 
     Migrator::new(TABLE, migrations).migrate(&mut tether).await
 }
@@ -46,13 +46,13 @@ pub async fn run(stash: &Stash<UserDb>) -> Result<usize, MigratorError> {
 #[cfg(test)]
 mod tests {
     use super::{Stash, run as migrate_mail_db};
-    use proton_core_common::db::migrations::migrate_core_db;
+    use mail_core_common::db::migrations::migrate_core_db;
 
     #[tokio::test]
     async fn smoke() {
-        let stash = Stash::new(None).unwrap();
+        let mail_stash = Stash::new(None).unwrap();
 
-        migrate_core_db(&stash).await.unwrap();
-        migrate_mail_db(&stash).await.unwrap();
+        migrate_core_db(&mail_stash).await.unwrap();
+        migrate_mail_db(&mail_stash).await.unwrap();
     }
 }

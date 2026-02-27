@@ -4,16 +4,16 @@
 //! providing access to message body and remote ID data.
 
 use async_trait::async_trait;
-use proton_core_common::models::{ModelExtension, ModelIdExtension};
-use proton_crypto_inbox::message::DecryptedBody;
-use proton_mail_api::services::proton::common::MessageId;
-use proton_mail_search::MessageDataProvider;
-use stash::UserDb;
-use stash::stash::{Stash, StashError};
+use mail_api::services::proton::common::MessageId;
+use mail_core_common::models::{ModelExtension, ModelIdExtension};
+use mail_crypto_inbox::message::DecryptedBody;
+use mail_search::MessageDataProvider;
+use mail_stash::UserDb;
+use mail_stash::stash::{Stash, StashError};
 
 use crate::datatypes::LocalMessageId as MailLocalMessageId;
 use crate::models::{DraftMetadata, Message, MessageBodyMetadata, MessageMimeType, RawMessageBody};
-use proton_mail_search::MessageMetadata;
+use mail_search::MessageMetadata;
 
 /// Stash-based message data provider
 ///
@@ -21,13 +21,13 @@ use proton_mail_search::MessageMetadata;
 /// by querying the Message and MessageBody models.
 #[derive(Clone)]
 pub struct StashMessageDataProvider {
-    stash: Stash<UserDb>,
+    mail_stash: Stash<UserDb>,
 }
 
 impl StashMessageDataProvider {
     /// Create a new message data provider
-    pub fn new(stash: Stash<UserDb>) -> Self {
-        Self { stash }
+    pub fn new(mail_stash: Stash<UserDb>) -> Self {
+        Self { mail_stash }
     }
 }
 
@@ -37,9 +37,9 @@ impl MessageDataProvider for StashMessageDataProvider {
 
     async fn get_body(
         &self,
-        message_id: proton_mail_search::LocalMessageId,
+        message_id: mail_search::LocalMessageId,
     ) -> Result<Option<(String, bool)>, Self::Error> {
-        let tether = self.stash.connection().await?;
+        let tether = self.mail_stash.connection().await?;
 
         // Convert u64 to mail-common's LocalMessageId
         let local_id: MailLocalMessageId = message_id.into();
@@ -92,9 +92,9 @@ impl MessageDataProvider for StashMessageDataProvider {
 
     async fn get_remote_id(
         &self,
-        message_id: proton_mail_search::LocalMessageId,
+        message_id: mail_search::LocalMessageId,
     ) -> Result<Option<MessageId>, Self::Error> {
-        let tether = self.stash.connection().await?;
+        let tether = self.mail_stash.connection().await?;
 
         // Convert u64 to mail-common's LocalMessageId
         let local_id: MailLocalMessageId = message_id.into();
@@ -104,9 +104,9 @@ impl MessageDataProvider for StashMessageDataProvider {
 
     async fn has_local_draft_metadata(
         &self,
-        message_id: proton_mail_search::LocalMessageId,
+        message_id: mail_search::LocalMessageId,
     ) -> Result<bool, Self::Error> {
-        let tether = self.stash.connection().await?;
+        let tether = self.mail_stash.connection().await?;
 
         // Convert u64 to mail-common's LocalMessageId
         let local_id: MailLocalMessageId = message_id.into();
@@ -120,9 +120,9 @@ impl MessageDataProvider for StashMessageDataProvider {
 
     async fn get_metadata(
         &self,
-        message_id: proton_mail_search::LocalMessageId,
+        message_id: mail_search::LocalMessageId,
     ) -> Result<Option<MessageMetadata>, Self::Error> {
-        let tether = self.stash.connection().await?;
+        let tether = self.mail_stash.connection().await?;
 
         // Convert u64 to mail-common's LocalMessageId
         let local_id: MailLocalMessageId = message_id.into();

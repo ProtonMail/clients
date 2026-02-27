@@ -1,43 +1,43 @@
 use super::drafts_common::*;
 use itertools::Itertools;
-use proton_action_queue::queue::{ActionError, AsActionError, QueuedError};
-use proton_core_api::consts::{CoreBundle, Mail};
-use proton_core_api::services::proton::common::ApiErrorInfo;
-use proton_core_api::services::proton::{AddressStatus, LabelId, UserId};
-use proton_core_common::datatypes::UnixTimestamp;
-use proton_core_common::models::{Address, ModelExtension, ModelIdExtension};
-use proton_crypto_inbox::attachment::KeyPackets;
-use proton_mail_api::services::proton::common::ConversationId;
-use proton_mail_api::services::proton::prelude::{
+use mail_action_queue::queue::{ActionError, AsActionError, QueuedError};
+use mail_api::services::proton::common::ConversationId;
+use mail_api::services::proton::prelude::{
     AttachmentId, ContentDisposition, MessageAttachmentHeaders, NewAttachmentDisposition,
     NewAttachmentParams, NewAttachmentResponse, PostAttachmentResponse,
 };
-use proton_mail_api::services::proton::request_data::{
+use mail_api::services::proton::request_data::{
     DraftAction, DraftAttachmentKeyPackets, DraftRecipient,
 };
-use proton_mail_api::services::proton::response_data::MessageFlags;
-use proton_mail_api::services::proton::response_data::{Disposition, MessageAttachment};
-use proton_mail_common::MailContextError;
-use proton_mail_common::datatypes::attachment::{ContentId, MimeType as AttachmentMimeType};
-use proton_mail_common::datatypes::{
+use mail_api::services::proton::response_data::MessageFlags;
+use mail_api::services::proton::response_data::{Disposition, MessageAttachment};
+use mail_common::MailContextError;
+use mail_common::datatypes::attachment::{ContentId, MimeType as AttachmentMimeType};
+use mail_common::datatypes::{
     AttachmentMetadata, MessageSender, MimeType, ParsedHeaders, RollbackItemType, SystemLabelId,
 };
-use proton_mail_common::decrypted_message::DecryptedMessageBody;
-use proton_mail_common::draft::compose::DraftAddressValidationError;
-use proton_mail_common::draft::{
+use mail_common::decrypted_message::DecryptedMessageBody;
+use mail_common::draft::compose::DraftAddressValidationError;
+use mail_common::draft::{
     Draft, DraftActorOptions, DraftExpirationTime, DraftSyncStatus, Error, OpenError, ReplyMode,
     SaveError,
 };
-use proton_mail_common::models::{
+use mail_common::models::{
     Attachment, AttachmentType, Conversation, DraftAttachmentMetadata, DraftAttachmentUploadState,
     DraftMetadata, DraftSendResult, DraftSendResultOrigin, Message, MessageBodyMetadata,
     RawMessageBody, RollbackItem,
 };
-use proton_mail_common::test_utils::message_body::*;
-use proton_mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
-use stash::UserDb;
-use stash::orm::Model;
-use stash::stash::{StashError, Tether};
+use mail_common::test_utils::message_body::*;
+use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
+use mail_core_api::consts::{CoreBundle, Mail};
+use mail_core_api::services::proton::common::ApiErrorInfo;
+use mail_core_api::services::proton::{AddressStatus, LabelId, UserId};
+use mail_core_common::datatypes::UnixTimestamp;
+use mail_core_common::models::{Address, ModelExtension, ModelIdExtension};
+use mail_crypto_inbox::attachment::KeyPackets;
+use mail_stash::UserDb;
+use mail_stash::orm::Model;
+use mail_stash::stash::{StashError, Tether};
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::time::Duration;
@@ -1091,7 +1091,7 @@ async fn already_sent_error_move_draft_to_sent_and_schedules_rollback() {
     };
 
     let err = err
-        .as_action_error::<proton_mail_common::actions::draft::Save, UserDb>()
+        .as_action_error::<mail_common::actions::draft::Save, UserDb>()
         .unwrap();
 
     assert!(matches!(

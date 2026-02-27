@@ -7,9 +7,9 @@ use anyhow::Context;
 use async_trait::async_trait;
 use core_event_loop::v6::{EventSource, EventSubscriber};
 use core_event_loop::{EventSubscriberError, EventSubscriberResult, RefreshFlag};
-use proton_action_queue::action::ActionGroup;
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
+use mail_action_queue::action::ActionGroup;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
 use std::collections::HashMap;
 use std::sync::Weak;
 use tracing::{debug, error};
@@ -131,7 +131,7 @@ pub async fn refresh_contacts(ctx: &UserContext) -> EventSubscriberResult<()> {
         let contacts = ctx.spawn(async move { Contact::sync(&api).await });
         let api = ctx.session().clone();
         let all_remote_labels = ctx.spawn(async move { Label::fetch_contact_labels(&api).await });
-        let mut tether = ctx.stash().connection().await?;
+        let mut tether = ctx.mail_stash().connection().await?;
         let mut all_local_labels: HashMap<_, _> = Label::all_contact_groups(&tether)
             .await?
             .into_iter()

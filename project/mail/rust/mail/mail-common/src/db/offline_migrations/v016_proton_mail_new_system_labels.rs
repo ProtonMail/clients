@@ -1,13 +1,13 @@
 //! Modifies `v001_proton_mail_default_labels`
 
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::datatypes::LocalLabelId;
-use stash::stash::{Bond, StashError};
-use stash::{UserDb, params};
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::datatypes::LocalLabelId;
+use mail_stash::stash::{Bond, StashError};
+use mail_stash::{UserDb, params};
 
 use crate::datatypes::SystemLabelId;
-use proton_sqlite3::Migration;
-use stash::exports::SqliteError;
+use mail_sqlite3::Migration;
+use mail_stash::exports::SqliteError;
 
 pub fn default_labels() -> [(LabelId, &'static str); 2] {
     [

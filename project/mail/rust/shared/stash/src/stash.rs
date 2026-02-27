@@ -28,7 +28,7 @@ use core::time::Duration;
 use derivative::Derivative;
 use flume::{Receiver as QueueReceiver, Sender as QueueSender, unbounded};
 use indoc::formatdoc;
-use proton_task_service::IntoNonPausableFuture;
+use mail_task_service::IntoNonPausableFuture;
 use rusqlite::ffi::SQLITE_INTERRUPT;
 use rusqlite::hooks::Action;
 use rusqlite::types::FromSql;
@@ -224,7 +224,7 @@ pub enum StashError {
     QueryReturnedNoRows,
 
     /// Critical internal error that cannot be recovered from.
-    #[error("Critical internal stash error: {0}")]
+    #[error("Critical internal mail_stash error: {0}")]
     Critical(#[from] anyhow::Error),
 
     #[error("Failed to acquire connection in the given time limit")]
@@ -417,7 +417,7 @@ impl Query {
     }
 }
 
-/// Configuration used to create stash database pool.
+/// Configuration used to create mail_stash database pool.
 ///
 #[derive(Default, Clone, Copy)]
 pub struct StashConfiguration<'a> {
@@ -455,7 +455,7 @@ impl<'a> From<Option<&'a PathBuf>> for StashConfiguration<'a> {
     }
 }
 
-/// This is stash's database pool. Its main use is to create [`Tether`]s.
+/// This is mail_stash's database pool. Its main use is to create [`Tether`]s.
 // Internally this spawns a task that handles all of the operations (See [`StashOperation`]).
 #[derive(Clone)]
 pub struct Stash<Db: DatabaseMarker> {
@@ -660,7 +660,7 @@ impl WatcherHandle {
 /// Because [`PooledConnection`] is not [`Send`] compatible, it cannot be passed
 /// between threads, and so cannot cross the async boundary. This is an
 /// inherited limitation of the [`rusqlite`] crate.
-/// `stash` works around it by using the actor pattern and wrapping each connection in a
+/// `mail_stash` works around it by using the actor pattern and wrapping each connection in a
 /// thread, using message passing for executing the queries and waiting for the result.
 pub struct Tether<Db: DatabaseMarker = crate::marker::UserDb> {
     connection: StashPooledConnection,
@@ -724,7 +724,7 @@ impl<Db: DatabaseMarker> Tether<Db> {
         self.connection
             .send_async(operation.into())
             .await
-            .map_err(|_| anyhow!("The stash worker dropped"))?;
+            .map_err(|_| anyhow!("The mail_stash worker dropped"))?;
 
         receiver
             .await
@@ -750,7 +750,7 @@ impl<Db: DatabaseMarker> Tether<Db> {
         self.connection
             .send_async(operation.into())
             .await
-            .map_err(|_| anyhow!("The stash worker dropped"))?;
+            .map_err(|_| anyhow!("The mail_stash worker dropped"))?;
 
         receiver
             .await
@@ -810,7 +810,7 @@ impl<Db: DatabaseMarker> Tether<Db> {
         self.connection
             .send_async(operation.into())
             .await
-            .map_err(|_| anyhow!("The stash worker dropped"))?;
+            .map_err(|_| anyhow!("The mail_stash worker dropped"))?;
 
         let item = receiver
             .await
@@ -849,8 +849,8 @@ impl<Db: DatabaseMarker> Tether<Db> {
     /// # Example
     ///
     /// ```
-    /// use stash::params;
-    /// use stash::stash::Tether;
+    /// use mail_stash::params;
+    /// use mail_stash::stash::Tether;
     ///
     /// async fn value_query(tether:&Tether) {
     ///     let values:Vec<f64> = tether.query_values(
@@ -997,11 +997,11 @@ impl<Db: DatabaseMarker> Tether<Db> {
         self.connection
             .send_async(operation.into())
             .await
-            .map_err(|_| anyhow!("The stash worker dropped"))?;
+            .map_err(|_| anyhow!("The mail_stash worker dropped"))?;
 
         receiver
             .await
-            .map_err(|_| anyhow!("The stash worker dropped"))??;
+            .map_err(|_| anyhow!("The mail_stash worker dropped"))??;
 
         Ok(Bond::new(self))
     }
@@ -1015,9 +1015,9 @@ impl<Db: DatabaseMarker> Tether<Db> {
     /// they are received, and return the results via oneshot channels. In this
     /// way, it is very similar to the main worker, but is connection-specific.
     ///
-    async fn new(stash: &Stash<Db>) -> Result<Self, StashError> {
+    async fn new(mail_stash: &Stash<Db>) -> Result<Self, StashError> {
         let span = Span::current();
-        let pool = stash.pool.clone();
+        let pool = mail_stash.pool.clone();
 
         let connection = task::spawn_blocking(move || {
             let _span = span.entered();
@@ -1033,8 +1033,8 @@ impl<Db: DatabaseMarker> Tether<Db> {
 
         Ok(Self {
             connection,
-            watcher: stash.watcher.clone(),
-            tx_lock: Arc::clone(&stash.tx_lock),
+            watcher: mail_stash.watcher.clone(),
+            tx_lock: Arc::clone(&mail_stash.tx_lock),
             _marker: PhantomData,
         })
     }
@@ -1057,11 +1057,11 @@ impl<Db: DatabaseMarker> Tether<Db> {
         self.connection
             .send_async(operation.into())
             .await
-            .map_err(|_| anyhow!("The stash worker dropped"))?;
+            .map_err(|_| anyhow!("The mail_stash worker dropped"))?;
 
         let ret = receiver
             .await
-            .map_err(|_| anyhow!("The stash worker dropped"))?;
+            .map_err(|_| anyhow!("The mail_stash worker dropped"))?;
 
         // This cannot fail as the type system assures us that the return type of `callback` is T
         ret.map(|x| *x.downcast().expect("Downcast failed?"))
@@ -1106,11 +1106,11 @@ impl<Db: DatabaseMarker> Tether<Db> {
         self.connection
             .send_async(operation.into())
             .await
-            .map_err(|_| anyhow!("The stash worker dropped"))?;
+            .map_err(|_| anyhow!("The mail_stash worker dropped"))?;
 
         let ret = receiver
             .await
-            .map_err(|_| anyhow!("The stash worker dropped"))?;
+            .map_err(|_| anyhow!("The mail_stash worker dropped"))?;
 
         // This cannot fail as the type system assures us that the return type of `callback` is T
         ret.map(|x| *x.downcast().expect("Downcast failed?"))
@@ -1256,11 +1256,11 @@ impl<'tether, Db: DatabaseMarker> Bond<'tether, Db> {
         self.connection
             .send_async(operation.into())
             .await
-            .map_err(|_| anyhow!("The stash worker dropped"))?;
+            .map_err(|_| anyhow!("The mail_stash worker dropped"))?;
 
         if let Err(e) = receiver
             .await
-            .map_err(|_| anyhow!("The stash worker dropped"))?
+            .map_err(|_| anyhow!("The mail_stash worker dropped"))?
         {
             error!("Commit error: {e:}");
 
@@ -1284,11 +1284,11 @@ impl<'tether, Db: DatabaseMarker> Bond<'tether, Db> {
         self.connection
             .send_async(operation.into())
             .await
-            .map_err(|_| anyhow!("The stash worker dropped"))?;
+            .map_err(|_| anyhow!("The mail_stash worker dropped"))?;
 
         receiver
             .await
-            .map_err(|_| anyhow!("The stash worker dropped"))??;
+            .map_err(|_| anyhow!("The mail_stash worker dropped"))??;
 
         std::mem::forget(self);
 
@@ -1313,11 +1313,11 @@ impl<'tether, Db: DatabaseMarker> Bond<'tether, Db> {
         self.connection
             .send_async(operation.into())
             .await
-            .map_err(|_| anyhow!("The stash worker dropped"))?;
+            .map_err(|_| anyhow!("The mail_stash worker dropped"))?;
 
         let ret = receiver
             .await
-            .map_err(|_| anyhow!("The stash worker dropped"))?;
+            .map_err(|_| anyhow!("The mail_stash worker dropped"))?;
 
         // This cannot fail as the type system assures us that the return type of `callback` is T
         ret.map(|x| *x.downcast().expect("Downcast failed?"))

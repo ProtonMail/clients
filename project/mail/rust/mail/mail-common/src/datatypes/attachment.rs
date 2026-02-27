@@ -3,7 +3,7 @@ mod mime_type;
 
 pub use self::content_id::*;
 pub use self::mime_type::*;
-use proton_mail_api::services::proton::prelude::NewAttachmentDisposition;
+use mail_api::services::proton::prelude::NewAttachmentDisposition;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

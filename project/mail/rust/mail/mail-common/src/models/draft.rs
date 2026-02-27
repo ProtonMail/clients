@@ -20,22 +20,22 @@ use anyhow::anyhow;
 use chrono::Utc;
 use derive_more::derive::TryFrom;
 use indoc::formatdoc;
-use proton_action_queue::action::ActionId;
-use proton_core_api::service::ApiServiceError;
-use proton_core_api::services::proton::{AddressId, PrivateEmail};
-use proton_core_common::datatypes::UnixTimestamp;
-use proton_core_common::db::account::{EncryptedPassword, SessionEncryptionKey};
-use proton_core_common::models::ModelIdExtension;
-use proton_mail_api::services::proton::common::MessageId;
+use mail_action_queue::action::ActionId;
+use mail_api::services::proton::common::MessageId;
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::{AddressId, PrivateEmail};
+use mail_core_common::datatypes::UnixTimestamp;
+use mail_core_common::db::account::{EncryptedPassword, SessionEncryptionKey};
+use mail_core_common::models::ModelIdExtension;
+use mail_stash::exports::SqliteError;
+use mail_stash::macros::{DbRecord, Model};
+use mail_stash::orm::{Model, ModelHooks};
+use mail_stash::stash::{Bond, Stash, StashError, Tether, WatcherHandle};
+use mail_stash::{UserDb, exports::*};
+use mail_stash::{params, sql_using_serde};
 use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
 use sqlite_watcher::watcher::TableObserver;
-use stash::exports::SqliteError;
-use stash::macros::{DbRecord, Model};
-use stash::orm::{Model, ModelHooks};
-use stash::stash::{Bond, Stash, StashError, Tether, WatcherHandle};
-use stash::{UserDb, exports::*};
-use stash::{params, sql_using_serde};
 use std::collections::BTreeSet;
 use std::fmt::{Display, Formatter};
 use std::time::Duration;
@@ -487,8 +487,8 @@ impl DraftSendResult {
     }
 
     /// Subscribe to changes made to this database table.
-    pub async fn watch(stash: &Stash<UserDb>) -> Result<WatcherHandle, StashError> {
-        stash
+    pub async fn watch(mail_stash: &Stash<UserDb>) -> Result<WatcherHandle, StashError> {
+        mail_stash
             .subscribe_to(|sender| Box::new(DraftSendResultTableObserver { sender }))
             .await
     }
@@ -1154,8 +1154,8 @@ impl DraftAttachmentMetadata {
     }
 
     /// Subscribe to changes made to this database table.
-    pub async fn watch(stash: &Stash<UserDb>) -> Result<WatcherHandle, StashError> {
-        stash
+    pub async fn watch(mail_stash: &Stash<UserDb>) -> Result<WatcherHandle, StashError> {
+        mail_stash
             .subscribe_to(|sender| Box::new(DraftAttachmentMetadataTableObserver { sender }))
             .await
     }
@@ -1326,7 +1326,7 @@ pub enum DraftAttachmentUploadState {
 }
 
 impl ToSql for DraftAttachmentUploadState {
-    fn to_sql(&self) -> proton_sqlite3::rusqlite::Result<ToSqlOutput<'_>> {
+    fn to_sql(&self) -> mail_sqlite3::rusqlite::Result<ToSqlOutput<'_>> {
         Ok(ToSqlOutput::Owned(Value::Integer(*self as i64)))
     }
 }
@@ -1360,7 +1360,7 @@ pub enum DraftAttachmentOwnership {
 }
 
 impl ToSql for DraftAttachmentOwnership {
-    fn to_sql(&self) -> proton_sqlite3::rusqlite::Result<ToSqlOutput<'_>> {
+    fn to_sql(&self) -> mail_sqlite3::rusqlite::Result<ToSqlOutput<'_>> {
         Ok(ToSqlOutput::Owned(Value::Integer(*self as i64)))
     }
 }

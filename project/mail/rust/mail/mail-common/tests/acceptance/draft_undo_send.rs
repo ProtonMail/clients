@@ -1,21 +1,21 @@
-use proton_action_queue::queue::{ActionError, AsActionError, QueuedError};
-use proton_core_api::consts::Mail;
-use proton_core_api::services::proton::common::ApiErrorInfo;
-use proton_core_api::services::proton::{LabelId, UserId};
-use proton_core_common::models::ModelExtension;
-use proton_mail_api::services::proton::prelude::{MessageFlags, PostCancelSendResponse};
-use proton_mail_common::MailContextError;
-use proton_mail_common::actions::draft::UndoSend;
-use proton_mail_common::datatypes::SystemLabelId;
-use proton_mail_common::draft::{Draft, Error, UndoError};
-use proton_mail_common::models::Message;
-use proton_mail_common::test_utils::message_body::{
+use mail_action_queue::queue::{ActionError, AsActionError, QueuedError};
+use mail_api::services::proton::prelude::{MessageFlags, PostCancelSendResponse};
+use mail_common::MailContextError;
+use mail_common::actions::draft::UndoSend;
+use mail_common::datatypes::SystemLabelId;
+use mail_common::draft::{Draft, Error, UndoError};
+use mail_common::models::Message;
+use mail_common::test_utils::message_body::{
     TEST_USER_ID, message_body_test_message_simple, message_body_test_params,
     message_body_test_user_secret,
 };
-use proton_mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
-use stash::UserDb;
-use stash::orm::Model;
+use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
+use mail_core_api::consts::Mail;
+use mail_core_api::services::proton::common::ApiErrorInfo;
+use mail_core_api::services::proton::{LabelId, UserId};
+use mail_core_common::models::ModelExtension;
+use mail_stash::UserDb;
+use mail_stash::orm::Model;
 
 #[tokio::test]
 async fn draft_undo_send() {

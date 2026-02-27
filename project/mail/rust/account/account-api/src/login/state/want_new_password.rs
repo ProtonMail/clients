@@ -6,7 +6,7 @@ use crate::shared::SecureString;
 use crate::shared::crypto::{NewAddrKey, NewUserKey};
 use crate::{AccountApi, prelude::*};
 use futures::TryFutureExt;
-use proton_core_api::services::proton::{AddressId, ProtonCore, SessionId, UserId};
+use mail_core_api::services::proton::{AddressId, ProtonCore, SessionId, UserId};
 use proton_crypto_account::proton_crypto;
 use proton_crypto_account::proton_crypto::srp::SRPProvider;
 use std::collections::HashMap;
@@ -15,12 +15,12 @@ use tracing::info;
 /// Represents the login flow state where the user must provide a new password
 /// (for users with temporary passwords).
 pub struct WantNewPassword {
-    client: muon::Client,
+    client: mail_muon::Client,
     data: StateData,
 }
 
 impl WantNewPassword {
-    pub(crate) fn new(client: muon::Client, data: StateData) -> Self {
+    pub(crate) fn new(client: mail_muon::Client, data: StateData) -> Self {
         info!("Login flow wants new password for temporary password user");
 
         Self { client, data }

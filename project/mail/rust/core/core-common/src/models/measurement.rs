@@ -1,4 +1,4 @@
-use stash::{
+use mail_stash::{
     AccountDb,
     macros::Model,
     orm::Model,

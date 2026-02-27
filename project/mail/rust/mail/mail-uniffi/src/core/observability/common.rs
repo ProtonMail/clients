@@ -1,7 +1,7 @@
 #[cfg(test)]
 pub mod test_helper {
-    use proton_core_api::services::proton::{PostMetricsRequestData, PostMetricsRequestElement};
-    use proton_observability::{ObservabilityMetric, into_metrics_element};
+    use mail_core_api::services::proton::{PostMetricsRequestData, PostMetricsRequestElement};
+    use mail_observability::{ObservabilityMetric, into_metrics_element};
     use serde_json::json;
 
     pub const TIMESTAMP: i64 = 1_741_021_308;

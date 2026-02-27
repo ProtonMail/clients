@@ -1,8 +1,8 @@
-use proton_core_common::{
+use mail_core_common::{
     datatypes::LocalLabelId,
     models::{Label, LabelError, ModelExtension},
 };
-use stash::{
+use mail_stash::{
     UserDb,
     macros::Model,
     orm::Model,
@@ -83,8 +83,8 @@ pub struct MailBusyLabel {
 mod tests {
     use super::*;
     use crate::test_utils::test_context::MailTestContext;
-    use proton_core_api::services::proton::Label as ApiLabel;
-    use proton_core_common::datatypes::SystemLabel;
+    use mail_core_api::services::proton::Label as ApiLabel;
+    use mail_core_common::datatypes::SystemLabel;
 
     fn api_label(id: &str, parent_id: Option<&str>) -> ApiLabel {
         ApiLabel {
@@ -108,7 +108,13 @@ mod tests {
     #[tokio::test]
     async fn busy() {
         let ctx = MailTestContext::new().await;
-        let mut tether = ctx.user_context().await.stash().connection().await.unwrap();
+        let mut tether = ctx
+            .user_context()
+            .await
+            .mail_stash()
+            .connection()
+            .await
+            .unwrap();
 
         let inbox = system_label(&mut tether, SystemLabel::Inbox).await;
         let trash = system_label(&mut tether, SystemLabel::Trash).await;

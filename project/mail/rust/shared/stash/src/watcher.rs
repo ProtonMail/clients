@@ -50,8 +50,8 @@ impl<M: Model> TypedTableObserver for TableWatcher<M> {
 }
 
 impl<M: Model> TableWatcher<M> {
-    pub async fn watch(stash: &Stash<M::Database>) -> Result<WatcherHandle, StashError> {
-        stash
+    pub async fn watch(mail_stash: &Stash<M::Database>) -> Result<WatcherHandle, StashError> {
+        mail_stash
             .subscribe_to(|sender| {
                 Box::new(Self {
                     sender,

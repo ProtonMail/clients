@@ -50,7 +50,7 @@ use tracing::{debug, error, info, warn};
 use crate::engine::{CleanupResult, IndexResult, SearchStats};
 use crate::error::SearchError;
 use crate::traits::BlobStorage;
-use proton_task_service::{IntoNonPausableFuture, TaskService};
+use mail_task_service::{IntoNonPausableFuture, TaskService};
 use std::sync::Arc;
 
 /// Extract a human-readable message from a panic payload

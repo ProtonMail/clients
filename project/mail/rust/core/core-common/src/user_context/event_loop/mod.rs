@@ -1,10 +1,10 @@
 use crate::UserContext;
 use anyhow::Context;
-use proton_action_queue::action::{Metadata, Priority};
-use proton_action_queue::observers::ActionAwaiter;
-use proton_action_queue::queue::QueuedError;
-use proton_action_queue::{action::ActionId, queue::ActionError};
-use stash::UserDb;
+use mail_action_queue::action::{Metadata, Priority};
+use mail_action_queue::observers::ActionAwaiter;
+use mail_action_queue::queue::QueuedError;
+use mail_action_queue::{action::ActionId, queue::ActionError};
+use mail_stash::UserDb;
 use std::sync::{Arc, Weak};
 use std::time::Duration;
 use tracing::error;

@@ -3,16 +3,16 @@ use crate::services::proton::{MAIL_V4, MAIL_V6, Package, PostSendRequest};
 use crate::services::proton::{PostSendMessageResponse, ProtonMail};
 use crate::{INCOMING_DEFAULTS_PAGE_SIZE, MAX_LIMIT_VALUE_U64, MAX_PAGE_ELEMENT_COUNT_U64};
 use bytes::Bytes;
-use muon::common::{RetryPolicy, Sender};
-use muon::util::DurationExt;
-use muon::{DELETE, ProtonRequest, ProtonResponse};
-use proton_core_api::service::ApiServiceResult;
-use proton_core_api::services::proton::muon::util::ProtonRequestExt;
-use proton_core_api::services::proton::muon::{GET, POST, PUT, serde_to_query};
-use proton_core_api::services::proton::{
+use mail_core_api::service::ApiServiceResult;
+use mail_core_api::services::proton::mail_muon::util::ProtonRequestExt;
+use mail_core_api::services::proton::mail_muon::{GET, POST, PUT, serde_to_query};
+use mail_core_api::services::proton::{
     CORE_V4, EventId, GetEventsLatestResponse, IncomingDefaultId, LabelId,
 };
-use proton_core_api::utils::HttpReqExt as _;
+use mail_core_api::utils::HttpReqExt as _;
+use mail_muon::common::{RetryPolicy, Sender};
+use mail_muon::util::DurationExt;
+use mail_muon::{DELETE, ProtonRequest, ProtonResponse};
 use serde::Serialize;
 use serde_json::json;
 use std::io::Cursor;
@@ -109,7 +109,7 @@ impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> ProtonMail for This {
     ) -> ApiServiceResult<PostAttachmentResponse> {
         // It is not necessary to have a dedicated request here, but we leave it
         // so that it matches the current setup. Eventually, there may also be
-        // an opportunity to directly convert this into form data when muon supports this.
+        // an opportunity to directly convert this into form data when mail_muon supports this.
         let request = PostUploadAttachmentRequest::from(params);
         let response = POST!("{MAIL_V4}/attachments")
             .multipart(move |mut form| {

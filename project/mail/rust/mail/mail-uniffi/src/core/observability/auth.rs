@@ -1,6 +1,6 @@
-use proton_observability::{PreLoginMetricRecorder, metric};
+use mail_observability::{PreLoginMetricRecorder, metric};
+use mail_uniffi_runtime::async_runtime;
 use serde::{Deserialize, Serialize};
-use uniffi_runtime::async_runtime;
 
 #[derive(Debug, Serialize, Deserialize, uniffi::Enum)]
 pub enum FidoLaunchResultStatus {

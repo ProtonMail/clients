@@ -11,9 +11,9 @@ mod core;
 pub mod migrations;
 
 pub type ChangeSender<T> =
-    flume::Sender<stash::orm::ResultsetChange<T, <T as stash::orm::Model>::IdType>>;
+    flume::Sender<mail_stash::orm::ResultsetChange<T, <T as mail_stash::orm::Model>::IdType>>;
 
 pub type ChangeReceiver<T> =
-    flume::Receiver<stash::orm::ResultsetChange<T, <T as stash::orm::Model>::IdType>>;
+    flume::Receiver<mail_stash::orm::ResultsetChange<T, <T as mail_stash::orm::Model>::IdType>>;
 
-pub use proton_sqlite3;
+pub use mail_sqlite3;

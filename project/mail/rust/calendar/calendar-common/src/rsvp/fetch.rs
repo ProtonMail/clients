@@ -10,15 +10,15 @@ use jiff::{
     Zoned,
     civil::{Date, Weekday},
 };
-use proton_calendar_api_v1::{
+use mail_calendar_api_v1::{
     CalendarAttendeeId, CalendarAttendeeStatus, CalendarBootstrap, CalendarEvent, ProtonCalendar,
 };
-use proton_canonical_email::{self as email, CanonicalEmail};
-use proton_core_api::session::Session;
-use proton_core_common::validation::is_valid_email_address;
+use mail_canonical_email::{self as email, CanonicalEmail};
+use mail_core_api::session::Session;
+use mail_core_common::validation::is_valid_email_address;
+use mail_crypto_calendar::CalendarEventDecryptor;
+use mail_ical as ical;
 use proton_crypto::crypto::PGPProviderSync;
-use proton_crypto_calendar::CalendarEventDecryptor;
-use proton_ical as ical;
 use std::{collections::HashMap, num::NonZeroU32};
 use tracing::{debug, info, instrument, trace, warn};
 
@@ -1531,7 +1531,7 @@ mod tests {
 
     mod extract_metadata {
         use super::*;
-        use proton_ical::ics;
+        use mail_ical::ics;
         use test_case::test_case;
 
         struct TestCase {

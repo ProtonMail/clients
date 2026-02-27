@@ -3,14 +3,14 @@ use crate::DelinquentState;
 use crate::login::state::State;
 use crate::shared::SecureString;
 use crate::shared::challenge::{Behavior, ChallengeInfo};
-use muon::rest::auth::v4::fido2;
-use proton_core_api::service::{ApiServiceError, ServiceError};
-use proton_core_api::services::proton::{SessionId, UserId};
-use proton_core_api::session::Session;
-use proton_core_api::store::{StoreError, UserData};
-use proton_core_common::migration_snooper::MigrationSnooper;
-use proton_core_common::post_login_check::PostLoginValidationError;
-use proton_core_common::post_login_check::PostLoginValidator;
+use mail_core_api::service::{ApiServiceError, ServiceError};
+use mail_core_api::services::proton::{SessionId, UserId};
+use mail_core_api::session::Session;
+use mail_core_api::store::{StoreError, UserData};
+use mail_core_common::migration_snooper::MigrationSnooper;
+use mail_core_common::post_login_check::PostLoginValidationError;
+use mail_core_common::post_login_check::PostLoginValidator;
+use mail_muon::rest::auth::v4::fido2;
 use secrecy::SecretString;
 use std::fmt::Debug;
 use thiserror::Error;
@@ -121,7 +121,7 @@ pub enum LoginError {
     ApiError(#[from] ApiError),
 
     #[error("Failed to poll the fork for completion: {0}")]
-    WithCodePollFlowFailed(#[from] muon::Error),
+    WithCodePollFlowFailed(#[from] mail_muon::Error),
 
     #[error("Failed during QR login encoding or encryption")]
     QRLoginEncoding,

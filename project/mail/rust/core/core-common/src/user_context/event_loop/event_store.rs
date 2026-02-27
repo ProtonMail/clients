@@ -3,9 +3,9 @@ use crate::{CoreEventLoopContext, UserContext};
 use anyhow::anyhow;
 use async_trait::async_trait;
 use core_event_loop::store::EventStore;
-use proton_core_api::services::proton::EventId;
-use stash::params;
-use stash::stash::{Bond, StashError, Tether};
+use mail_core_api::services::proton::EventId;
+use mail_stash::params;
+use mail_stash::stash::{Bond, StashError, Tether};
 use tracing::error;
 
 // Once v5 event code has been dropped, these declarations can be moved
@@ -33,7 +33,7 @@ impl EventStore<EventManagerContext> for CoreEventLoopContext {
         // Start storing the event ids for contacts and mail as well. Backend uses
         // the same cursor internally. When we switch feature on, it will just progress
         // independently.
-        ctx.stash()
+        ctx.mail_stash()
             .connection()
             .await?
             .tx(async |tx| {
@@ -53,7 +53,7 @@ pub async fn load_event_id(
     ctx: &UserContext,
     key: &'static str,
 ) -> anyhow::Result<Option<core_event_loop::EventId>> {
-    let tether = ctx.stash().connection().await?;
+    let tether = ctx.mail_stash().connection().await?;
     match load_event_id_query(key, &tether).await {
         Ok(value) => Ok(value.map(|id| id.into_inner().into())),
         Err(e) => {
@@ -80,7 +80,7 @@ pub async fn store_event_id(
     key: &'static str,
     id: core_event_loop::EventId,
 ) -> anyhow::Result<()> {
-    ctx.stash()
+    ctx.mail_stash()
         .connection()
         .await?
         .tx(async |tx| store_event_id_query(key, id, tx).await)

@@ -2,17 +2,17 @@ use crate::actions::draft::SEND_ACTION_GROUP;
 use crate::context::MailUserDatabaseInitializer;
 use crate::{MailContext, MailContextResult, MailUserContext, NewMailUserContextOptions};
 use core_event_loop::v6::EventSubscriberResult;
-use proton_action_queue::action::ActionGroup;
-use proton_action_queue::queue::{QueuedActionState, QueuedResult};
-use proton_core_api::auth::UserKeySecret;
-use proton_core_api::connection_status::ConnectionStatus;
-use proton_core_api::services::proton::UserId;
-use proton_core_common::UserDatabaseInitializer;
-use proton_core_common::event_loop::v6::CoreEventCache;
-use proton_core_common::services::event_loop_service::EventManagerContext;
-use proton_core_common::test_utils::test_context::{BaseTestContext, TestContext};
-use proton_mail_api::services::proton::prelude::MailEvent;
-use proton_mail_api::services::proton::response_data::MailEventV5;
+use mail_action_queue::action::ActionGroup;
+use mail_action_queue::queue::{QueuedActionState, QueuedResult};
+use mail_api::services::proton::prelude::MailEvent;
+use mail_api::services::proton::response_data::MailEventV5;
+use mail_core_api::auth::UserKeySecret;
+use mail_core_api::connection_status::ConnectionStatus;
+use mail_core_api::services::proton::UserId;
+use mail_core_common::UserDatabaseInitializer;
+use mail_core_common::event_loop::v6::CoreEventCache;
+use mail_core_common::services::event_loop_service::EventManagerContext;
+use mail_core_common::test_utils::test_context::{BaseTestContext, TestContext};
 use std::ops::Deref;
 use std::sync::Arc;
 use std::time::Duration;
@@ -223,7 +223,7 @@ pub trait MailUserContextTestExtension {
     #[cfg(feature = "events-v6")]
     async fn apply_mail_event_v6(
         &self,
-        event: proton_mail_api::services::proton::prelude::MailEventV6,
+        event: mail_api::services::proton::prelude::MailEventV6,
     ) -> EventSubscriberResult<()>;
 }
 
@@ -266,7 +266,7 @@ impl MailUserContextTestExtension for MailUserContext {
     #[cfg(feature = "events-v6")]
     async fn apply_mail_event_v6(
         &self,
-        event: proton_mail_api::services::proton::prelude::MailEventV6,
+        event: mail_api::services::proton::prelude::MailEventV6,
     ) -> EventSubscriberResult<()> {
         use core_event_loop::v6::EventSubscriber;
         let mut cache = <crate::events::v6::MailEventSourceV6 as core_event_loop::v6::EventSource>::Cache::default();

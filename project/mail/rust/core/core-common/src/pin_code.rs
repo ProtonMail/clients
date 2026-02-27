@@ -1,13 +1,13 @@
-use stash::orm::Model;
+use mail_stash::orm::Model;
 use std::error::Error;
 use std::io::Error as IoError;
 use std::ops::Deref;
 use std::sync::Arc;
 use tracing::{info, instrument};
 
-use proton_crypto_pin_hash::argon2::{Argon2HashingError, ProtonArgon2Hash};
+use mail_crypto_pin_hash::argon2::{Argon2HashingError, ProtonArgon2Hash};
+use mail_stash::stash::StashError;
 use secrecy::{ExposeSecret, SecretString};
-use stash::stash::StashError;
 use thiserror::Error;
 use tokio::task::{self, JoinError};
 

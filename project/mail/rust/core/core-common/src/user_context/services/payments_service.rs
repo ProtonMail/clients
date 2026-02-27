@@ -2,7 +2,7 @@ use std::sync::{Arc, Weak};
 
 use anyhow::anyhow;
 use bytes::Bytes;
-use proton_core_api::services::proton::{
+use mail_core_api::services::proton::{
     GetPaymentMethodResponse, GetPaymentsPlansOptions, GetPaymentsPlansResponse,
     GetPaymentsStatusResponse, GetPaymentsSubscriptionResponse, NewSubscription,
     NewSubscriptionValues, PaymentReceipt, PostPaymentsTokensResponse, ProtonPayments,

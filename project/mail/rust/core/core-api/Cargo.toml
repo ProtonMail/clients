@@ -1,5 +1,5 @@
 [package]
-name = "proton-core-api"
+name = "mail-core-api"
 version = "0.8.1"
 edition.workspace = true
 rust-version.workspace = true
@@ -16,11 +16,11 @@ chrono = { workspace = true }
 cookie = { workspace = true }
 derive_more = { workspace = true }
 futures = { workspace = true }
-muon = { workspace = true }
+mail-muon = { workspace = true }
 parking_lot = { workspace = true }
-proton-api-utils = { workspace = true }
+mail-api-utils = { workspace = true }
 proton-crypto-account = { workspace = true }
-proton-task-service = { workspace = true }
+mail-task-service = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serde_qs = { workspace = true }
@@ -28,20 +28,20 @@ serde_repr = { workspace = true }
 serde_with = { workspace = true }
 serde-aux = { workspace = true }
 smart-default = { workspace = true }
-stash = { workspace = true, optional = true }
+mail-stash = { workspace = true, optional = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
 url = { workspace = true }
-proton-network-monitor-service = { workspace = true, features = ["muon"] }
+mail-network-monitor-service = { workspace = true, features = ["muon"] }
 
 [dev-dependencies]
 insta = { workspace = true }
-proton-core-api = { path = ".", features = ["mocks"] }
+mail-core-api = { path = ".", features = ["mocks"] }
 
 [features]
 default = []
-sql = ["dep:stash"]
+sql = ["dep:mail-stash"]
 mocks = []
 
 [lints]

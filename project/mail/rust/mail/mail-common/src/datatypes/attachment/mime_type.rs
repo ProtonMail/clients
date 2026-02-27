@@ -1,6 +1,6 @@
 use crate::AppError;
+use mail_stash::sql_using_serde;
 use mime::Mime;
-use stash::sql_using_serde;
 use std::fmt;
 use std::iter::repeat;
 use std::sync::LazyLock;

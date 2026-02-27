@@ -1,14 +1,14 @@
-use proton_core_api::services::proton::Label as ApiLabel;
-use proton_core_api::services::proton::LabelId;
-use proton_core_api::services::proton::LabelType;
-use proton_core_common::models::{Label, ModelIdExtension};
-use proton_mail_api::services::proton::response_data::{
+use mail_api::services::proton::response_data::{
     AlmostAllMail, MailSettings as ApiMailSettings, MessageCount as ApiMessageCount, ShowMoved,
 };
-use proton_mail_common::Sidebar;
-use proton_mail_common::datatypes::SystemLabelId;
-use proton_mail_common::test_utils::init::Params as TestParams;
-use proton_mail_common::test_utils::test_context::MailTestContext;
+use mail_common::Sidebar;
+use mail_common::datatypes::SystemLabelId;
+use mail_common::test_utils::init::Params as TestParams;
+use mail_common::test_utils::test_context::MailTestContext;
+use mail_core_api::services::proton::Label as ApiLabel;
+use mail_core_api::services::proton::LabelId;
+use mail_core_api::services::proton::LabelType;
+use mail_core_common::models::{Label, ModelIdExtension};
 use std::default::Default;
 use test_case::test_case;
 use velcro::hash_map;
@@ -63,8 +63,8 @@ async fn sidebar_system_labels(
 
     let user_ctx = ctx.mail_user_context().await;
 
-    let stash = user_ctx.user_stash();
-    let tether = stash.connection().await.unwrap();
+    let mail_stash = user_ctx.user_stash();
+    let tether = mail_stash.connection().await.unwrap();
 
     // Action
     let result = Sidebar.system_labels(&tether).await.unwrap();

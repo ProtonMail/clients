@@ -8,16 +8,16 @@
 //!
 
 use derive_more::Display;
-use muon::client::middleware::AuthErr;
+use mail_muon::client::middleware::AuthErr;
 use serde::Deserialize;
 use serde_json::Value as JsonValue;
 use std::fmt::Debug;
 use std::time::Duration;
 
 use crate::service::ApiServiceError;
-use muon::common::Timeout;
-use muon::error::ErrorKind as MuonErrorKind;
-use muon::{Status, StatusErr};
+use mail_muon::common::Timeout;
+use mail_muon::error::ErrorKind as MuonErrorKind;
+use mail_muon::{Status, StatusErr};
 use std::error::Error;
 
 /// Defines timeout values.
@@ -60,8 +60,8 @@ impl ApiErrorInfo {
 }
 
 #[allow(clippy::redundant_closure_for_method_calls)]
-impl From<muon::Error> for ApiServiceError {
-    fn from(e: muon::Error) -> Self {
+impl From<mail_muon::Error> for ApiServiceError {
+    fn from(e: mail_muon::Error) -> Self {
         use MuonErrorKind::*;
 
         // Check if the error is the result of a timeout.

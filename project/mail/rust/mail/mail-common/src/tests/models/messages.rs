@@ -25,16 +25,10 @@ use crate::test_utils::utils::{create_address, test_address};
 use crate::{conv_id, conversation, message, msg_id};
 use futures::FutureExt;
 use futures::future::BoxFuture;
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::datatypes::SystemLabel;
-use proton_core_common::datatypes::{LabelColor, LabelType};
-use proton_core_common::models::Label;
-use proton_core_common::test_utils::addresses::MY_ADDRESS_ID;
-use proton_crypto_inbox::attachment::KeyPackets;
-use proton_mail_api::services::proton::common::AttachmentId;
-use proton_mail_api::services::proton::prelude::ContentDisposition;
-use proton_mail_api::services::proton::response_data::MessageMetadata as ApiMessageMetadata;
-use proton_mail_api::services::proton::response_data::{
+use mail_api::services::proton::common::AttachmentId;
+use mail_api::services::proton::prelude::ContentDisposition;
+use mail_api::services::proton::response_data::MessageMetadata as ApiMessageMetadata;
+use mail_api::services::proton::response_data::{
     AttachmentMetadata as ApiAttachmentMetadata, ConversationLabel as ApiConversationLabel,
     Disposition as ApiDisposition, Message as ApiMessage,
     MessageAttachment as ApiMessageAttachment,
@@ -42,10 +36,16 @@ use proton_mail_api::services::proton::response_data::{
     MessageReplyTo as ApiMessageReplyTo, MessageSender as ApiMessageSender,
     MimeType as ApiMimeType,
 };
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::datatypes::SystemLabel;
+use mail_core_common::datatypes::{LabelColor, LabelType};
+use mail_core_common::models::Label;
+use mail_core_common::test_utils::addresses::MY_ADDRESS_ID;
+use mail_crypto_inbox::attachment::KeyPackets;
+use mail_stash::orm::Model;
+use mail_stash::params;
+use mail_stash::stash::{Stash, Tether};
 use serde_json::json;
-use stash::orm::Model;
-use stash::params;
-use stash::stash::{Stash, Tether};
 use test_case::test_case;
 use velcro::hash_map;
 
@@ -169,8 +169,8 @@ mod available_label_as_actions {
         labels: Vec<Label>,
         expected: Result<&[LabelAsAction], AppError>,
     ) {
-        let stash = new_test_connection().await;
-        let mut conn = stash.connection().await.unwrap();
+        let mail_stash = new_test_connection().await;
+        let mut conn = mail_stash.connection().await.unwrap();
         let address = create_address(&mut conn).await;
         let mut conversation = conversation!(remote_id: conv_id!("conversation"));
         let mut message_ids = vec![];
@@ -607,8 +607,8 @@ mod available_move_to_actions {
         labels: Vec<Label>,
         expected: Result<&[ExpectedMoveAction], AppError>,
     ) {
-        let stash = new_test_connection().await;
-        let mut conn = stash.connection().await.unwrap();
+        let mail_stash = new_test_connection().await;
+        let mut conn = mail_stash.connection().await.unwrap();
         let address = create_address(&mut conn).await;
         let mut conversation = conversation!(remote_id: conv_id!("conversation"));
         let mut message_ids = vec![];
@@ -662,7 +662,7 @@ mod available_move_to_actions {
         .await
         .unwrap();
 
-        let new_conn = async || stash.connection().await.unwrap();
+        let new_conn = async || mail_stash.connection().await.unwrap();
         let view = Label::find_by_remote_id(view.remote_id.clone().unwrap(), &conn)
             .await
             .unwrap()
@@ -690,8 +690,8 @@ mod available_move_to_actions {
 
 #[tokio::test]
 async fn test_create_message() {
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut tether = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut tether = mail_stash.connection().await.unwrap();
     test_create_message_dependencies_core(&mut tether).await;
     let _conversation_id = test_create_message_dependencies(&mut tether).await;
     let message = test_message_with_metadata(vec![LabelId::inbox(), MY_LABEL_ID1.clone()], vec![]);
@@ -740,8 +740,8 @@ async fn test_create_message() {
 #[tokio::test]
 async fn test_create_message_without_synced_conversation() {
     // Validate that we can create messages without having fetch the conversation.
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut tether = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut tether = mail_stash.connection().await.unwrap();
     test_create_message_dependencies_core(&mut tether).await;
     create_labels(&mut tether).await;
 
@@ -806,8 +806,8 @@ async fn test_create_message_without_synced_conversation() {
 
 #[tokio::test]
 async fn test_create_message_with_attachments() {
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut conn = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut conn = mail_stash.connection().await.unwrap();
     test_create_message_dependencies_core(&mut conn).await;
     let attachment_metadata = ApiAttachmentMetadata {
         id: AttachmentId::from("myattachment"),
@@ -921,8 +921,8 @@ async fn test_create_message_with_attachments() {
 
 #[tokio::test]
 async fn test_update_message() {
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut tether = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut tether = mail_stash.connection().await.unwrap();
     tether.execute("DELETE FROM labels", vec![]).await.unwrap();
     test_create_message_dependencies_core(&mut tether).await;
     let _conv_id = test_create_message_dependencies(&mut tether).await;
@@ -998,8 +998,8 @@ async fn test_update_message() {
 
 #[tokio::test]
 async fn test_delete_local_message() {
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut conn = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut conn = mail_stash.connection().await.unwrap();
     let mut state = new_test_delete_db_state();
     prepare_db_state_core(&mut conn, &mut state.addresses).await;
     // Deleting a message must
@@ -1163,8 +1163,8 @@ async fn test_delete_local_message() {
 
 #[tokio::test]
 async fn deleting_all_messages_in_a_label_removes_conversation_label() {
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut conn = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut conn = mail_stash.connection().await.unwrap();
     let mut state = new_test_delete_all_messages_in_conv_label_db_state();
     prepare_db_state_core(&mut conn, &mut state.addresses).await;
     let (state, state_map) = prepare_and_patch_db_state(&mut conn, state.clone()).await;
@@ -1247,8 +1247,8 @@ async fn deleting_all_messages_in_a_label_removes_conversation_label() {
 
 #[tokio::test]
 async fn test_message_metadata_list() {
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut conn = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut conn = mail_stash.connection().await.unwrap();
     let mut state = new_test_delete_db_state();
     prepare_db_state_core(&mut conn, &mut state.addresses).await;
     let (_, _state_map) = prepare_and_patch_db_state(&mut conn, state.clone()).await;
@@ -1258,8 +1258,8 @@ async fn test_message_metadata_list() {
 
 #[tokio::test]
 async fn test_delete_local_message_does_not_change_conv_unread_count() {
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut conn = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut conn = mail_stash.connection().await.unwrap();
     let mut state = new_test_delete_db_state();
     prepare_db_state_core(&mut conn, &mut state.addresses).await;
     let (mut state, state_map) = prepare_and_patch_db_state(&mut conn, state.clone()).await;
@@ -1289,8 +1289,8 @@ async fn test_delete_local_message_does_not_change_conv_unread_count() {
 
 #[tokio::test]
 async fn test_undelete_local_message() {
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut conn = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut conn = mail_stash.connection().await.unwrap();
     let mut state = new_test_delete_db_state();
     prepare_db_state_core(&mut conn, &mut state.addresses).await;
     // Same as test_delete_local_message, but undo the operations
@@ -1446,8 +1446,8 @@ async fn test_undelete_local_message() {
 
 #[tokio::test]
 async fn test_create_message_and_body() {
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut conn = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut conn = mail_stash.connection().await.unwrap();
     test_create_message_dependencies_core(&mut conn).await;
     test_create_message_dependencies(&mut conn).await;
     let message = ApiMessage {
@@ -1510,8 +1510,8 @@ async fn test_create_message_and_body() {
 
 #[tokio::test]
 async fn test_update_message_and_body() {
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut conn = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut conn = mail_stash.connection().await.unwrap();
     test_create_message_dependencies_core(&mut conn).await;
     test_create_message_dependencies(&mut conn).await;
 
@@ -1627,8 +1627,8 @@ async fn test_update_message_and_body() {
 
 #[tokio::test]
 async fn test_create_message_and_body_with_attachments() {
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut conn = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut conn = mail_stash.connection().await.unwrap();
     test_create_message_dependencies_core(&mut conn).await;
     let attachment_id = AttachmentId::from("attachment");
     test_create_message_dependencies(&mut conn).await;
@@ -1731,8 +1731,8 @@ async fn test_create_message_and_body_with_attachments() {
 async fn message_metadata_update_does_not_purge_inline_attachments() {
     // Ensure that metadata updates do not wipe inline attachments as metadata only
     // has attachments with disposition attachment.
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut conn = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut conn = mail_stash.connection().await.unwrap();
     test_create_message_dependencies_core(&mut conn).await;
     let attachment_id = AttachmentId::from("attachment");
     let attachment_inline_id = AttachmentId::from("attachment-inine");
@@ -1854,8 +1854,8 @@ async fn message_metadata_update_does_not_purge_inline_attachments() {
 #[tokio::test]
 async fn messages_mark_read() {
     // Mark conversation as read and update all conversation / message counts
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut conn = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut conn = mail_stash.connection().await.unwrap();
     let mut state = new_test_unread_db_state();
     prepare_db_state_core(&mut conn, &mut state.addresses).await;
     let (state, state_map) = prepare_and_patch_db_state(&mut conn, state.clone()).await;
@@ -1879,13 +1879,13 @@ async fn messages_mark_read() {
     let local_label_id1 = *state_map.labels.get(&MY_LABEL_ID1).unwrap();
     let local_label_id2 = *state_map.labels.get(&MY_LABEL_ID2).unwrap();
 
-    let check_counters = |stash: Stash<UserDb>,
+    let check_counters = |mail_stash: Stash<UserDb>,
                           read_message_count: u64,
                           read_conv_count: u64|
      -> BoxFuture<'_, ()> {
         let state_map = &state_map;
         async move {
-            let clouser_conn = stash.connection().await.unwrap();
+            let clouser_conn = mail_stash.connection().await.unwrap();
             // Check conversation counts
             {
                 let conv_counts = conv_counts_as_map(&clouser_conn).await;
@@ -1962,7 +1962,7 @@ async fn messages_mark_read() {
     )
     .unwrap();
     assert_eq!(db_conv.num_unread, 2);
-    let stash_fun = || stash.clone();
+    let stash_fun = || mail_stash.clone();
 
     check_counters(stash_fun(), 1, 0).await;
     conn.tx::<_, _, StashError>(async |tx| {
@@ -2000,8 +2000,8 @@ async fn messages_mark_read() {
 #[tokio::test]
 async fn messages_mark_read_with_separate_conversations() {
     // Mark conversation as read and update all conversation / message counts
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut conn = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut conn = mail_stash.connection().await.unwrap();
     let mut state = new_test_unread_db_state_multi_conv();
     prepare_db_state_core(&mut conn, &mut state.addresses).await;
     let (state, state_map) = prepare_and_patch_db_state(&mut conn, state.clone()).await;
@@ -2105,8 +2105,8 @@ async fn messages_mark_read_with_separate_conversations() {
 #[tokio::test]
 async fn messages_mark_unread() {
     // Mark conversation as read and update all conversation / message counts
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut conn = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut conn = mail_stash.connection().await.unwrap();
     let mut state = new_test_unread_db_state();
     prepare_db_state_core(&mut conn, &mut state.addresses).await;
     let (state, state_map) = prepare_and_patch_db_state(&mut conn, state.clone()).await;
@@ -2140,13 +2140,13 @@ async fn messages_mark_unread() {
     .await
     .unwrap();
 
-    let check_counters = |stash: Stash<UserDb>,
+    let check_counters = |mail_stash: Stash<UserDb>,
                           label_1_msg_diff: u64,
                           label_1_conv_diff: u64|
      -> BoxFuture<'_, ()> {
         let state_map = &state_map;
         async move {
-            let closure_conn = stash.connection().await.unwrap();
+            let closure_conn = mail_stash.connection().await.unwrap();
             // Check conversation counts
             {
                 let conv_counts = conv_counts_as_map(&closure_conn).await;
@@ -2197,7 +2197,7 @@ async fn messages_mark_unread() {
         .boxed()
     };
 
-    check_counters(stash.clone(), 3, 1).await;
+    check_counters(mail_stash.clone(), 3, 1).await;
     conn.tx::<_, _, StashError>(async |tx| {
         Message::mark_unread_async(std::iter::once(local_msg_id1), tx)
             .await
@@ -2223,7 +2223,7 @@ async fn messages_mark_unread() {
     .unwrap();
     assert_eq!(db_conv.num_unread, 1);
 
-    check_counters(stash.clone(), 2, 0).await;
+    check_counters(mail_stash.clone(), 2, 0).await;
     conn.tx::<_, _, StashError>(async |tx| {
         Message::mark_unread_async(std::iter::once(local_msg_id3), tx)
             .await
@@ -2232,7 +2232,7 @@ async fn messages_mark_unread() {
     })
     .await
     .unwrap();
-    check_counters(stash.clone(), 1, 0).await;
+    check_counters(mail_stash.clone(), 1, 0).await;
     conn.tx::<_, _, StashError>(async |tx| {
         Message::mark_unread_async(std::iter::once(local_msg_id4), tx)
             .await
@@ -2243,7 +2243,7 @@ async fn messages_mark_unread() {
     .unwrap();
     // All conversation messages on label_1 have been marked as read, we should now see an updated
     // conversation count.
-    check_counters(stash.clone(), 0, 0).await;
+    check_counters(mail_stash.clone(), 0, 0).await;
 
     let db_conv = ContextualConversation::new(
         Conversation::find_by_id(local_conv_id, &conn)
@@ -2259,8 +2259,8 @@ async fn messages_mark_unread() {
 #[tokio::test]
 async fn label_messages() {
     // Label conversation with a label that was never assigned to the conversation.
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut conn = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut conn = mail_stash.connection().await.unwrap();
     let mut state = new_test_label_db_state();
     prepare_db_state_core(&mut conn, &mut state.addresses).await;
     let (state, state_map) = prepare_and_patch_db_state(&mut conn, state.clone()).await;
@@ -2325,11 +2325,11 @@ async fn label_messages() {
         assert_eq!(label_counts.total, 1);
     }
 
-    let check_full_conversations = |stash: &Stash<UserDb>| -> BoxFuture<'_, ()> {
+    let check_full_conversations = |mail_stash: &Stash<UserDb>| -> BoxFuture<'_, ()> {
         let state = &state;
-        let stash = stash.clone();
+        let mail_stash = mail_stash.clone();
         async move {
-            let tether = stash.connection().await.unwrap();
+            let tether = mail_stash.connection().await.unwrap();
             // Check conversation after all messages have been labeled.
             let db_conversation =
                 ContextualConversation::load(local_conv_id, local_label_id1, &tether)
@@ -2394,7 +2394,7 @@ async fn label_messages() {
     .await
     .unwrap();
 
-    check_full_conversations(&stash).await;
+    check_full_conversations(&mail_stash).await;
 
     // Apply again, should be noop.
     conn.tx::<_, _, StashError>(async |tx| {
@@ -2410,14 +2410,14 @@ async fn label_messages() {
     .await
     .unwrap();
 
-    check_full_conversations(&stash).await;
+    check_full_conversations(&mail_stash).await;
 }
 
 #[tokio::test]
 async fn unlabel_messages() {
     // assign a label to messages and progressively remove it.
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut tether = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut tether = mail_stash.connection().await.unwrap();
     let mut state = new_test_label_db_state();
     prepare_db_state_core(&mut tether, &mut state.addresses).await;
     let (state, state_map) = prepare_and_patch_db_state(&mut tether, state.clone()).await;
@@ -2574,8 +2574,8 @@ async fn unlabel_messages() {
 #[tokio::test]
 async fn unlabel_message_correctly_updates_unread_counter() {
     // assign a label to messages and progressively remove it.
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut tether = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut tether = mail_stash.connection().await.unwrap();
     let mut state = new_test_label_db_state();
     prepare_db_state_core(&mut tether, &mut state.addresses).await;
     let (state, state_map) = prepare_and_patch_db_state(&mut tether, state.clone()).await;
@@ -2659,8 +2659,8 @@ async fn exclusive_location_from_api_metadata(
     // Setup
     //   * Create a ApiMessageMetadata with label_ids
 
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut conn = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut conn = mail_stash.connection().await.unwrap();
     test_create_message_dependencies_core(&mut conn).await;
 
     conn.tx::<_, _, StashError>(async |tx| {
@@ -2717,9 +2717,9 @@ async fn message_exclusive_location_on_save(
 ) {
     // Setup:
     //   * create a message with some labels
-    let (stash, _db_dir) = new_test_connection_file().await;
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
     let mut address = test_address();
-    let mut tether = stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection().await.unwrap();
 
     let mut conversation = Conversation::test_default();
     let message = tether
@@ -2886,8 +2886,8 @@ fn test_message_with_metadata(
 #[tokio::test]
 async fn watch_messages_in_label() {
     // Label conversation with a label that was never assigned to the conversation.
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut conn = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut conn = mail_stash.connection().await.unwrap();
     let mut state = new_test_label_db_state();
     prepare_db_state_core(&mut conn, &mut state.addresses).await;
     let (state, state_map) = prepare_and_patch_db_state(&mut conn, state.clone()).await;
@@ -2908,7 +2908,7 @@ async fn watch_messages_in_label() {
     .await
     .unwrap();
 
-    let handle = Message::watch(&stash).await.unwrap();
+    let handle = Message::watch(&mail_stash).await.unwrap();
     let watch_result = &handle.receiver;
 
     tokio::spawn(async move {
@@ -2951,8 +2951,8 @@ async fn resolve_local_ids(tether: &Tether, message: &mut Message) {
 
 #[tokio::test]
 async fn test_deleting_address_will_trigger_message_deletion() {
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut tether = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut tether = mail_stash.connection().await.unwrap();
     let address = create_address(&mut tether).await;
     let mut conv = conversation!(remote_id: conv_id!("my_conv"));
     let id = tether
@@ -3016,8 +3016,8 @@ fn message_can_reply_property() {
 
 #[tokio::test]
 async fn message_save_updates_local_ids_for_attachment_metadata() {
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut tether = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut tether = mail_stash.connection().await.unwrap();
     let address = create_address(&mut tether).await;
     let inline_attachment_id = AttachmentId::from("inline-att");
     let regular_attachment_id = AttachmentId::from("regular-att");
@@ -3029,7 +3029,7 @@ async fn message_save_updates_local_ids_for_attachment_metadata() {
             address_id: address.remote_id.clone().unwrap(),
             attachments_metadata: vec![ApiAttachmentMetadata {
                 id: regular_attachment_id.clone(),
-                disposition: proton_mail_api::services::proton::prelude::Disposition::Attachment,
+                disposition: mail_api::services::proton::prelude::Disposition::Attachment,
                 mime_type: "application/pdf".to_string(),
                 name: "file.pdf".to_string(),
                 size: 1024,
@@ -3057,8 +3057,7 @@ async fn message_save_updates_local_ids_for_attachment_metadata() {
             attachments: vec![
                 ApiMessageAttachment {
                     id: regular_attachment_id.clone(),
-                    disposition:
-                        proton_mail_api::services::proton::prelude::Disposition::Attachment,
+                    disposition: mail_api::services::proton::prelude::Disposition::Attachment,
                     enc_signature: None,
                     headers: ApiMessageAttachmentHeaders {
                         content_disposition: ContentDisposition::One("".to_string()),
@@ -3075,7 +3074,7 @@ async fn message_save_updates_local_ids_for_attachment_metadata() {
                 },
                 ApiMessageAttachment {
                     id: inline_attachment_id.clone(),
-                    disposition: proton_mail_api::services::proton::prelude::Disposition::Inline,
+                    disposition: mail_api::services::proton::prelude::Disposition::Inline,
                     enc_signature: None,
                     headers: ApiMessageAttachmentHeaders {
                         content_disposition: ContentDisposition::One("cid-10".to_string()),
@@ -3120,8 +3119,8 @@ async fn message_save_updates_local_ids_for_attachment_metadata() {
 
 #[tokio::test]
 async fn message_save_preserves_pgp_attachments() {
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut tether = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut tether = mail_stash.connection().await.unwrap();
     let address = create_address(&mut tether).await;
     let mut conv = conversation!(remote_id: conv_id!("my_conv"));
     let mut message = message!(remote_id: msg_id!("my-msg"), remote_conversation_id:conv.remote_id.clone(), remote_address_id: address.remote_id.clone().unwrap(), local_address_id:address.id());
@@ -3273,8 +3272,8 @@ async fn message_save_preserves_pgp_attachments() {
 
 #[tokio::test]
 async fn message_expiration_deletion() {
-    let (stash, _db_dir) = new_test_connection_file().await;
-    let mut tether = stash.connection().await.unwrap();
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
+    let mut tether = mail_stash.connection().await.unwrap();
     let address = create_address(&mut tether).await;
     let mut conv = conversation!(remote_id: conv_id!("my_conv"));
     let expiration_time = UnixTimestamp::now().saturating_sub(20);

@@ -4,10 +4,10 @@ use crate::errors::unexpected::UnexpectedError;
 use crate::{core::datatypes::ApiConfig, uniffi_async};
 use futures::{FutureExt, TryFutureExt};
 use itertools::Itertools;
-use proton_core_api::verification as hv;
-use proton_mail_common::ProtonMailError as RealProtonMailError;
-use proton_mail_common::Unexpected;
-use proton_mail_common::UserApiServiceError as RealUserApiServiceError;
+use mail_common::ProtonMailError as RealProtonMailError;
+use mail_common::Unexpected;
+use mail_common::UserApiServiceError as RealUserApiServiceError;
+use mail_core_api::verification as hv;
 use std::{ops::Deref, sync::Arc};
 use tracing::error;
 

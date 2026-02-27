@@ -1,7 +1,7 @@
 use crate::widgets::utils::{date_from_timestamp, format_recipients, sender_name};
 use crate::widgets::{AsIntoTable, IntoTable};
-use proton_mail_common::datatypes::MessageRecipientDisplayMode;
-use proton_mail_common::models::Message;
+use mail_common::datatypes::MessageRecipientDisplayMode;
+use mail_common::models::Message;
 use ratatui::layout::Constraint;
 use ratatui::prelude::*;
 use ratatui::widgets::{Cell, Row};

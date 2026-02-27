@@ -6,7 +6,7 @@ use crate::notifier::HvNotifier;
 use anyhow::Result;
 use app::new_app_details;
 use clap::Parser;
-use proton_mail_common::MailContext;
+use mail_common::MailContext;
 use std::io::{Result as IoResult, Write, stdin, stdout};
 use std::path::PathBuf;
 use std::sync::Arc;

@@ -1,8 +1,8 @@
 use crate::datatypes::AddressStatus;
 use crate::models::Address;
 use crate::{CoreContextError, CoreContextResult, UserContext};
-use stash::orm::Model;
-use stash::params;
+use mail_stash::orm::Model;
+use mail_stash::params;
 use std::sync::Weak;
 
 #[cfg(test)]
@@ -28,7 +28,7 @@ impl AddressService {
             )));
         };
 
-        let tether = ctx.stash().connection().await?;
+        let tether = ctx.mail_stash().connection().await?;
 
         let address = Address::find_first(
             "WHERE send=1 AND receive=1 AND status=? ORDER BY display_order".to_owned(),

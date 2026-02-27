@@ -1,23 +1,23 @@
-use proton_core_api::services::proton::LabelId;
-use proton_core_api::services::proton::LabelType as ApiLabelType;
-use proton_core_api::services::proton::{Address as ApiAddress, Label as ApiLabel};
-use proton_core_common::datatypes::LabelType;
-use proton_core_common::models::{Address, Label, ModelIdExtension};
-use proton_core_common::test_utils::addresses::ApiAddressTestUtils;
-use proton_mail_api::services::proton::common::{ConversationId, MessageId};
-use proton_mail_api::services::proton::response_data::{
+use mail_api::services::proton::common::{ConversationId, MessageId};
+use mail_api::services::proton::response_data::{
     Conversation as ApiConversation, ConversationCount as ApiConversationCount,
     MessageCount as ApiMessageCount,
 };
-use proton_mail_common::Mailbox;
-use proton_mail_common::datatypes::SystemLabelId;
-use proton_mail_common::models::{Conversation, Message};
-use proton_mail_common::test_utils::conversations::ApiConversationTestUtils;
-use proton_mail_common::test_utils::init::Params as TestParams;
-use proton_mail_common::test_utils::labels::ApiLabelTestUtils;
-use proton_mail_common::test_utils::mailbox::MailboxTestUtils;
-use proton_mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
-use stash::orm::Model;
+use mail_common::Mailbox;
+use mail_common::datatypes::SystemLabelId;
+use mail_common::models::{Conversation, Message};
+use mail_common::test_utils::conversations::ApiConversationTestUtils;
+use mail_common::test_utils::init::Params as TestParams;
+use mail_common::test_utils::labels::ApiLabelTestUtils;
+use mail_common::test_utils::mailbox::MailboxTestUtils;
+use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
+use mail_core_api::services::proton::LabelId;
+use mail_core_api::services::proton::LabelType as ApiLabelType;
+use mail_core_api::services::proton::{Address as ApiAddress, Label as ApiLabel};
+use mail_core_common::datatypes::LabelType;
+use mail_core_common::models::{Address, Label, ModelIdExtension};
+use mail_core_common::test_utils::addresses::ApiAddressTestUtils;
+use mail_stash::orm::Model;
 use std::collections::HashMap;
 use velcro::hash_map;
 

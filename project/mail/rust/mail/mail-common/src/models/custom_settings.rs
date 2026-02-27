@@ -2,17 +2,17 @@ use crate::datatypes::NotAMagicLocalIdError;
 use crate::draft::compose::PM_SIGNATURE;
 use crate::migration_snooper::PostLoginMobileMigrationPayload;
 use crate::{AppError, MailUserContext};
-use proton_core_api::services::proton::UserId;
-use proton_core_common::models::{InitializationError, InitializationWatcher, User};
-use proton_core_common::{datatypes::InitializationKey, models::InitializedComponent};
-use stash::exports::{
+use mail_core_api::services::proton::UserId;
+use mail_core_common::models::{InitializationError, InitializationWatcher, User};
+use mail_core_common::{datatypes::InitializationKey, models::InitializedComponent};
+use mail_stash::exports::{
     FromSql, FromSqlError, FromSqlResult, SqliteError, ToSql, ToSqlOutput, Transaction, Value,
     ValueRef,
 };
-use stash::macros::Model;
-use stash::orm::Model;
-use stash::stash::{RunTransaction, Stash, StashError, Tether};
-use stash::{AccountDb, UserDb};
+use mail_stash::macros::Model;
+use mail_stash::orm::Model;
+use mail_stash::stash::{RunTransaction, Stash, StashError, Tether};
+use mail_stash::{AccountDb, UserDb};
 use std::sync::Arc;
 use tracing::instrument;
 

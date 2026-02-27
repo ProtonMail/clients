@@ -1,20 +1,20 @@
-use proton_core_api::services::proton::prelude::{Address as ApiAddress, Label as ApiLabel};
-use proton_core_api::services::proton::{
+use mail_core_api::services::proton::prelude::{Address as ApiAddress, Label as ApiLabel};
+use mail_core_api::services::proton::{
     Action, AddressFlags, AddressId, AddressStatus, AddressType, EventId, LabelId,
     LabelType as ApiLabelType,
 };
-use proton_core_common::datatypes::LabelType;
-use proton_core_common::models::{Address, Label, ModelIdExtension};
+use mail_core_common::datatypes::LabelType;
+use mail_core_common::models::{Address, Label, ModelIdExtension};
 use proton_crypto_account::keys::AddressKeys;
-use proton_mail_api::services::proton::common::{ConversationId, MessageId};
-use proton_mail_api::services::proton::prelude::{
+use mail_api::services::proton::common::{ConversationId, MessageId};
+use mail_api::services::proton::prelude::{
     Conversation as ApiConversation, ConversationEvent, ConversationLabel as ApiConversationLabel,
     MessageMetadata as ApiMessageMetadata,
 };
-use proton_mail_api::services::proton::response_data::{MailEvent, MessageEvent, MessageFlags};
-use proton_mail_common::models::{LabelWithCounters, Message};
-use proton_mail_common::test_utils::init::Params;
-use proton_mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
+use mail_api::services::proton::response_data::{MailEvent, MessageEvent, MessageFlags};
+use mail_common::models::{LabelWithCounters, Message};
+use mail_common::test_utils::init::Params;
+use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
 use wiremock::matchers::query_param;
 
 #[tokio::test]
@@ -191,8 +191,8 @@ async fn event_fetches_missing_dependencies() {
 async fn test_session_deletion_cleans_mail_caches() {
     // This test verifies that when a session is remotely terminated (e.g., "log out from all devices"),
     // the mail layer properly cleans up mail-specific cache directories.
-    use proton_core_common::db::account::CoreSession;
-    use proton_core_common::models::ModelExtension;
+    use mail_core_common::db::account::CoreSession;
+    use mail_core_common::models::ModelExtension;
     use std::time::Duration;
 
     let ctx = MailTestContext::new().await;
@@ -225,7 +225,7 @@ async fn test_session_deletion_cleans_mail_caches() {
         .unwrap()
         .tx(async |tx| {
             CoreSession::delete_by_id(session_id.clone(), tx).await?;
-            Ok::<_, stash::stash::StashError>(())
+            Ok::<_, mail_stash::stash::StashError>(())
         })
         .await
         .unwrap();
@@ -642,12 +642,12 @@ async fn events_skips_unresolved_labels() {
 
 #[cfg(feature = "events-v6")]
 mod v6 {
-    use proton_core_common::models::ModelExtension;
-    use proton_mail_api::services::proton::prelude::{
+    use mail_core_common::models::ModelExtension;
+    use mail_api::services::proton::prelude::{
         ConversationCount, MailConversationEventV6, MailEventV6, MailLabelEventV6,
         MailMessageEventV6, MessageCount,
     };
-    use proton_mail_common::{
+    use mail_common::{
         datatypes::SystemLabelId,
         models::{Conversation, ConversationCounter, MessageCounter},
     };

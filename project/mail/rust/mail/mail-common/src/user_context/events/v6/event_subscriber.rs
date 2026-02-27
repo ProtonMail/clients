@@ -15,13 +15,13 @@ use core_event_loop::v6::{EventSource, EventSubscriber};
 use core_event_loop::{EventSubscriberError, EventSubscriberResult, RefreshFlag};
 use indoc::formatdoc;
 use itertools::Itertools;
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_common::datatypes::SystemLabel;
-use proton_core_common::join_task;
-use proton_core_common::models::Label;
-use proton_core_common::services::event_loop_service::EventManagerContext;
-use proton_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
-use stash::orm::Model;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_core_common::datatypes::SystemLabel;
+use mail_core_common::join_task;
+use mail_core_common::models::Label;
+use mail_core_common::services::event_loop_service::EventManagerContext;
+use mail_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
+use mail_stash::orm::Model;
 use std::collections::HashMap;
 use std::sync::Weak;
 use tracing::{debug, error, info, warn};
@@ -209,7 +209,7 @@ pub async fn refresh_mail(ctx: &MailUserContext) -> Result<(), MailEventSubscrib
     let api = ctx.session().clone();
     let mail_settings = ctx.spawn(async move { MailSettings::fetch_mail_settings(&api).await });
 
-    let mut tether = ctx.user_context.stash().connection().await?;
+    let mut tether = ctx.user_context.mail_stash().connection().await?;
     let mut all_local_labels: HashMap<_, _> = Label::all_mail(&tether)
         .await?
         .into_iter()

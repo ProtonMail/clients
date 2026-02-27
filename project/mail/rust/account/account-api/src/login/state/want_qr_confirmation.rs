@@ -2,8 +2,7 @@ use std::sync::Arc;
 
 use base64::{Engine as _, engine::general_purpose};
 use futures::TryFutureExt;
-use muon::client::flow::{ForkFlowResult, WithCodeFlow, WithCodePollFlow};
-use proton_core_api::{
+use mail_core_api::{
     auth::{KeySecret, UserKeySecret},
     services::{
         observability::ApiServiceObservabilityResponse,
@@ -12,10 +11,11 @@ use proton_core_api::{
     session::SessionParts,
     store::{Store, UserData},
 };
-use proton_core_common::{Context, PassphraseAcquireError};
+use mail_core_common::{Context, PassphraseAcquireError};
+use mail_muon::client::flow::{ForkFlowResult, WithCodeFlow, WithCodePollFlow};
+use mail_observability::{PreLoginMetricRecorder, metric};
 use proton_crypto_account::proton_crypto;
 use proton_crypto_subtle::aead::{AesGcmCiphertext, AesGcmKey};
-use proton_observability::{PreLoginMetricRecorder, metric};
 use regex::Regex;
 use secrecy::ExposeSecret;
 use serde::{Deserialize, Serialize};
@@ -238,7 +238,7 @@ pub enum ProcessTargetDeviceQrError {
 /// If the encryption key is missing from the QR code, the passphrase is not sent as part of the fork confirmation payload.
 pub async fn process_target_device_qr_code(
     qr_code: &str,
-    client: muon::Client,
+    client: mail_muon::Client,
     context: Arc<Context>,
     observability: PreLoginMetricRecorder,
 ) -> Result<(), ProcessTargetDeviceQrError> {

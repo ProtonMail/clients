@@ -2,15 +2,15 @@ use crate::actions::{MailActionError, PREFETCH_ROLLBACK_ACTION_GROUP};
 use crate::datatypes::LocalMessageId;
 use crate::models::Message;
 use crate::{MailContextError, MailUserContext};
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionDependencyKeys, ActionGroup, ActionId, DefaultVersionConverter, Handler,
     Priority, Type, WriterGuard,
 };
-use proton_action_queue::rebase::RebaseChangeSet;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_stash::UserDb;
+use mail_stash::orm::Model;
+use mail_stash::stash::Bond;
 use serde::{self, Deserialize, Serialize};
-use stash::UserDb;
-use stash::orm::Model;
-use stash::stash::Bond;
 use std::sync::Weak;
 use tracing::error;
 

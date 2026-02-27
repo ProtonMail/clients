@@ -1,13 +1,13 @@
 use super::common::DefaultError;
 use super::common::{TestReadExtension, TestWriteExtension, new_queue_typed};
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionId, DefaultVersionConverter, Handler, MetadataBuilder, Type, WriterGuard,
 };
-use proton_action_queue::queue::{ActionError, Error, QueuedError};
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_action_queue::tests::common::TestDb;
+use mail_action_queue::queue::{ActionError, Error, QueuedError};
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_action_queue::tests::common::TestDb;
+use mail_stash::stash::Bond;
 use serde::{Deserialize, Serialize};
-use stash::stash::Bond;
 
 #[tokio::test]
 async fn cancel_causes_revert() {
@@ -28,7 +28,7 @@ async fn cancel_causes_revert() {
     // Check local state is present.
     assert_eq!(
         queue
-            .stash()
+            .mail_stash()
             .connection()
             .await
             .unwrap()
@@ -45,7 +45,7 @@ async fn cancel_causes_revert() {
     // Check state is reverted.
     assert!(
         queue
-            .stash()
+            .mail_stash()
             .connection()
             .await
             .unwrap()
@@ -74,7 +74,7 @@ async fn cancel_causes_revert_with_dependees() {
     let value4 = 400_u32;
 
     {
-        let mut conn = queue.stash().connection().await.unwrap();
+        let mut conn = queue.mail_stash().connection().await.unwrap();
         conn.tx(async |tx| tx.ext_insert_value(key, value).await)
             .await
             .unwrap();
@@ -121,7 +121,7 @@ async fn cancel_causes_revert_with_dependees() {
     // Check local state is present.
     assert_eq!(
         queue
-            .stash()
+            .mail_stash()
             .connection()
             .await
             .unwrap()
@@ -140,7 +140,7 @@ async fn cancel_causes_revert_with_dependees() {
     // Check state is reverted.
     assert_eq!(
         queue
-            .stash()
+            .mail_stash()
             .connection()
             .await
             .unwrap()
@@ -178,7 +178,7 @@ async fn accidental_cyclic_dependency_with_replace() {
     let action_148 = create_action(148);
 
     {
-        let mut conn = queue.stash().connection().await.unwrap();
+        let mut conn = queue.mail_stash().connection().await.unwrap();
         conn.tx(async |tx| tx.ext_insert_value("foo", 0).await)
             .await
             .unwrap();
@@ -227,7 +227,7 @@ async fn cancel_causes_revert_to_only_direct_dependees() {
     let value4 = 400_u32;
 
     {
-        let mut conn = queue.stash().connection().await.unwrap();
+        let mut conn = queue.mail_stash().connection().await.unwrap();
         conn.tx(async |tx| tx.ext_insert_value(key, value).await)
             .await
             .unwrap();

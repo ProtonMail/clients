@@ -11,34 +11,34 @@ use anyhow::{Context as _, anyhow};
 use bytes::Bytes;
 use indoc::{formatdoc, indoc};
 use itertools::Itertools;
-use proton_core_api::service::ApiServiceError;
-use proton_core_api::services::proton::AddressId;
-use proton_core_common::datatypes::LocalAddressId;
-use proton_core_common::models::{Address, ModelExtension, ModelIdExtension};
-use proton_core_common::utils::MapVec as _;
-use proton_crypto_inbox::attachment::{
+use mail_api::services::proton::ProtonMail;
+use mail_api::services::proton::common::{AttachmentId, ConversationId, MessageId};
+use mail_api::services::proton::response_data::{
+    Attachment as ApiAttachment, MessageAttachment as ApiMessageAttachment,
+};
+use mail_api::services::proton::responses::GetAttachmentMetadataResponse;
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::AddressId;
+use mail_core_common::datatypes::LocalAddressId;
+use mail_core_common::models::{Address, ModelExtension, ModelIdExtension};
+use mail_core_common::utils::MapVec as _;
+use mail_crypto_inbox::attachment::{
     AttachmentEncryptedSignature as RealAttachmentEncryptedSignature,
     AttachmentSignature as RealAttachmentSignature, DecryptableAttachment, EncryptableAttachment,
     EncryptedAttachment, KeyPackets as RealKeyPackets,
 };
-use proton_crypto_inbox::proton_crypto::crypto::OpenPGPFingerprint;
-use proton_crypto_inbox::proton_crypto::new_pgp_provider;
-use proton_mail_api::services::proton::ProtonMail;
-use proton_mail_api::services::proton::common::{AttachmentId, ConversationId, MessageId};
-use proton_mail_api::services::proton::response_data::{
-    Attachment as ApiAttachment, MessageAttachment as ApiMessageAttachment,
-};
-use proton_mail_api::services::proton::responses::GetAttachmentMetadataResponse;
+use mail_crypto_inbox::proton_crypto::crypto::OpenPGPFingerprint;
+use mail_crypto_inbox::proton_crypto::new_pgp_provider;
+use mail_stash::UserDb;
+use mail_stash::exports::Connection;
+use mail_stash::exports::Transaction;
+use mail_stash::exports::{SqliteError, ToSql};
+use mail_stash::macros::Model;
+use mail_stash::orm::Model;
+use mail_stash::orm::ModelHooks;
+use mail_stash::stash::{Bond, StashError, Tether};
+use mail_stash::{params, sql_using_serde};
 use serde::{Deserialize, Serialize};
-use stash::UserDb;
-use stash::exports::Connection;
-use stash::exports::Transaction;
-use stash::exports::{SqliteError, ToSql};
-use stash::macros::Model;
-use stash::orm::Model;
-use stash::orm::ModelHooks;
-use stash::stash::{Bond, StashError, Tether};
-use stash::{params, sql_using_serde};
 use std::os::unix::fs::MetadataExt;
 use std::path::Path;
 use std::str::FromStr;
@@ -443,7 +443,7 @@ impl Attachment {
         Attachment::find(
             format!(
                 "WHERE local_id IN ({})",
-                stash::utils::placeholders_n(params.len())
+                mail_stash::utils::placeholders_n(params.len())
             ),
             params,
             tether,
@@ -906,7 +906,7 @@ impl Attachment {
 }
 
 impl ModelHooks for Attachment {
-    fn before_save(&mut self, tx: &Transaction<'_>) -> stash::stash::StashResult<()> {
+    fn before_save(&mut self, tx: &Transaction<'_>) -> mail_stash::stash::StashResult<()> {
         // If we already exist in the db
         if let Some(local_id) = self.local_id {
             // There is currently a race because we try to write too much data at the same time

@@ -3,17 +3,17 @@ use crate::actions::{
 };
 use crate::datatypes::{LocalMessageId, RollbackItemType};
 use crate::models::Message;
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
 };
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::consts::General;
-use proton_core_api::session::Session;
-use proton_core_common::models::ModelIdExtension;
-use proton_mail_api::services::proton::ProtonMail;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_api::services::proton::ProtonMail;
+use mail_core_api::consts::General;
+use mail_core_api::session::Session;
+use mail_core_common::models::ModelIdExtension;
+use mail_stash::UserDb;
+use mail_stash::stash::{Bond, RunTransaction};
 use serde::{Deserialize, Serialize};
-use stash::UserDb;
-use stash::stash::{Bond, RunTransaction};
 use tracing::{error, info};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

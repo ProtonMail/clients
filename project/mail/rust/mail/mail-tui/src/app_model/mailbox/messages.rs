@@ -20,38 +20,36 @@ use anyhow::{Context, Result, anyhow};
 use futures::FutureExt;
 use futures::future::try_join_all;
 use itertools::Itertools as _;
-use proton_calendar_api_v1::CalendarAttendeeStatus;
-use proton_calendar_common::{RsvpAnswer, RsvpOccurrence, RsvpProgress, RsvpRecency, RsvpRelation};
-use proton_core_common::datatypes::LocalLabelId;
-use proton_core_common::os::safe_write;
-use proton_crypto_inbox::lock_icon::UiLock;
-use proton_mail_api::proton_core_api::services::proton::PrivateEmail;
-use proton_mail_common::datatypes::message_banner::MessageBanner;
-use proton_mail_common::datatypes::{
+use mail_api::mail_core_api::services::proton::PrivateEmail;
+use mail_calendar_api_v1::CalendarAttendeeStatus;
+use mail_calendar_common::{RsvpAnswer, RsvpOccurrence, RsvpProgress, RsvpRecency, RsvpRelation};
+use mail_common::datatypes::message_banner::MessageBanner;
+use mail_common::datatypes::{
     ContextualConversation, ConversationViewOptions, IncludeSwitch, LocalConversationId,
     LocalMessageId, MessageRecipientDisplayMode, SearchOptions,
 };
-use proton_mail_common::decrypted_message::{
-    DecryptedMessageBody, PrivacyLockBuilder, TransformOpts,
-};
-use proton_mail_common::draft::{Draft, ReplyMode};
-use proton_mail_common::models::{
+use mail_common::decrypted_message::{DecryptedMessageBody, PrivacyLockBuilder, TransformOpts};
+use mail_common::draft::{Draft, ReplyMode};
+use mail_common::models::{
     Attachment, IncomingDefault, LabelWithCounters, Message as MailMessage, MessageBodyMetadata,
 };
-use proton_mail_common::{AppError, MailContextResult, MailUserContext, Mailbox, RsvpEvent};
-use proton_mail_common::{
+use mail_common::{AppError, MailContextResult, MailUserContext, Mailbox, RsvpEvent};
+use mail_common::{
     MailScroller as RealMailScroller, ScrollerListUpdate, ScrollerStatusUpdate, ScrollerUpdate,
 };
-use proton_mail_html_transformer::Html2TextOptions;
+use mail_core_common::datatypes::LocalLabelId;
+use mail_core_common::os::safe_write;
+use mail_crypto_inbox::lock_icon::UiLock;
+use mail_html_transformer::Html2TextOptions;
+use mail_stash::orm::Model;
+use mail_stash::params;
+use mail_stash::stash::Tether;
 use ratatui::Frame;
 use ratatui::crossterm::event::{Event, KeyCode, KeyModifiers};
 use ratatui::layout::Rect;
 use ratatui::prelude::*;
 use ratatui::style::Styled;
 use ratatui::widgets::{Block, Borders, Cell, List, ListItem, Paragraph, Row, Table};
-use stash::orm::Model;
-use stash::params;
-use stash::stash::Tether;
 use std::fmt::Write;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -342,8 +340,8 @@ impl MessagesState {
         Command::task(async move {
             #[allow(clippy::redundant_closure_call)] // Poor's man try blocks
             let c: Result<_> = (|| async move {
-                let stash = ctx.user_stash();
-                let tether = stash.connection().await?;
+                let mail_stash = ctx.user_stash();
+                let tether = mail_stash.connection().await?;
                 let local_id = metadata.id();
 
                 let decrypted = MailMessage::message_body(&ctx, local_id)
@@ -1602,7 +1600,7 @@ fn html_to_text(message: &str) -> Result<String> {
     // TODO: Best effort terminal image rendering. See https://docs.rs/termimage/latest/termimage/
     let cursor = std::io::Cursor::new(message);
 
-    proton_mail_html_transformer::Transformer::html2text(
+    mail_html_transformer::Transformer::html2text(
         cursor,
         Html2TextOptions {
             decorate_links: false,

@@ -9,39 +9,37 @@ use crate::models::{Attachment, AttachmentType, DraftMetadata, Message};
 use crate::{AppError, MailContextError, MailContextResult, MailUserContext};
 use anyhow::anyhow;
 use chrono::{DateTime, Datelike, Days, Local, LocalResult, NaiveTime};
-use proton_account_api::AccountApi;
-use proton_action_queue::observers::ActionAwaiter;
-use proton_action_queue::queue::{BroadcastMessage, Queue, QueuedError};
-use proton_core_api::consts::Mail;
-use proton_core_api::service::ApiServiceError;
-use proton_core_api::services::proton::{PrivateEmail, PrivateEmailRef};
-use proton_core_api::session::Session;
-use proton_core_common::AddressKeysContactFetchPolicy;
-use proton_core_common::models::{ModelExtension, PaidSubscription};
-use proton_core_common::services::NetworkMonitorService;
+use mail_account_api::AccountApi;
+use mail_action_queue::observers::ActionAwaiter;
+use mail_action_queue::queue::{BroadcastMessage, Queue, QueuedError};
+use mail_api::services::proton::ProtonMail;
+use mail_api::services::proton::prelude::AuthInput;
+use mail_api::services::proton::request_data::{AddressSubPackage, Package, PackageSignaturesMode};
+use mail_core_api::consts::Mail;
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::{PrivateEmail, PrivateEmailRef};
+use mail_core_api::session::Session;
+use mail_core_common::AddressKeysContactFetchPolicy;
+use mail_core_common::models::{ModelExtension, PaidSubscription};
+use mail_core_common::services::NetworkMonitorService;
+use mail_crypto_inbox::attachment::DecryptableAttachment;
+use mail_crypto_inbox::eo::Challenge;
+use mail_crypto_inbox::keys::{
+    ComposerPreference, CryptoMailSettings, InboxSessionKey, PackageCryptoType, SendPreferences,
+};
+use mail_crypto_inbox::mail_crypto_inbox_mime::write::InboxMimeBuilder;
+use mail_crypto_inbox::message::packages::{
+    EncryptedPackageBody, PackageMimeType, package_body_encrypt,
+};
+use mail_crypto_inbox::proton_crypto::new_srp_provider;
+use mail_stash::UserDb;
+use mail_stash::orm::Model;
+use mail_stash::stash::{RunTransaction, Tether};
 use proton_crypto_account::keys::{
     PrimaryUnlockedAddressKey, UnlockedAddressKey, UnlockedAddressKeys,
 };
 use proton_crypto_account::proton_crypto::crypto::PGPProviderSync;
-use proton_crypto_inbox::attachment::DecryptableAttachment;
-use proton_crypto_inbox::eo::Challenge;
-use proton_crypto_inbox::keys::{
-    ComposerPreference, CryptoMailSettings, InboxSessionKey, PackageCryptoType, SendPreferences,
-};
-use proton_crypto_inbox::message::packages::{
-    EncryptedPackageBody, PackageMimeType, package_body_encrypt,
-};
-use proton_crypto_inbox::proton_crypto::new_srp_provider;
-use proton_crypto_inbox::proton_crypto_inbox_mime::write::InboxMimeBuilder;
-use proton_mail_api::services::proton::ProtonMail;
-use proton_mail_api::services::proton::prelude::AuthInput;
-use proton_mail_api::services::proton::request_data::{
-    AddressSubPackage, Package, PackageSignaturesMode,
-};
 use secrecy::{ExposeSecret, SecretString};
-use stash::UserDb;
-use stash::orm::Model;
-use stash::stash::{RunTransaction, Tether};
 use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use std::time::Duration;

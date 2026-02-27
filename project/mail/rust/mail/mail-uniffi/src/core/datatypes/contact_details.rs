@@ -3,22 +3,22 @@ use crate::core::datatypes::AvatarInformation;
 use crate::errors::UserSessionError;
 use crate::mail::MailUserSession;
 use crate::uniffi_async;
-use proton_core_api::services::proton::ContactId;
-use proton_core_common::datatypes::contact_details::ContactDetailAddress as RealAddress;
-use proton_core_common::datatypes::contact_details::ContactDetailsEmail as RealContactDetailsEmail;
-use proton_core_common::datatypes::contact_details::ContactField as RealContactField;
-use proton_core_common::datatypes::contact_details::ContactGroup as RealContactGroup;
-use proton_core_common::datatypes::contact_details::ExtendedName as RealExtendedName;
-use proton_core_common::datatypes::contact_details::Gender as RealGender;
-use proton_core_common::datatypes::contact_details::InspectableContactDetails as RealContactDetails;
-use proton_core_common::datatypes::contact_details::Telephone as RealTelephone;
-use proton_core_common::datatypes::contact_details::VCardUrl as RealVCardUrl;
-use proton_core_common::datatypes::contact_details::VCardUrlValue as RealVCardUrlValue;
-use proton_core_common::datatypes::contact_details::VcardPropType as RealVcardPropType;
-use proton_core_common::utils::MapVec as _;
-use proton_mail_common::ProtonMailError as RealProtonMailError;
-use proton_vcard::values::date_and_or_time::DateAndOrTimeValue;
-use proton_vcard::values::date_and_or_time::MaybeDateAndOrTime;
+use mail_common::ProtonMailError as RealProtonMailError;
+use mail_core_api::services::proton::ContactId;
+use mail_core_common::datatypes::contact_details::ContactDetailAddress as RealAddress;
+use mail_core_common::datatypes::contact_details::ContactDetailsEmail as RealContactDetailsEmail;
+use mail_core_common::datatypes::contact_details::ContactField as RealContactField;
+use mail_core_common::datatypes::contact_details::ContactGroup as RealContactGroup;
+use mail_core_common::datatypes::contact_details::ExtendedName as RealExtendedName;
+use mail_core_common::datatypes::contact_details::Gender as RealGender;
+use mail_core_common::datatypes::contact_details::InspectableContactDetails as RealContactDetails;
+use mail_core_common::datatypes::contact_details::Telephone as RealTelephone;
+use mail_core_common::datatypes::contact_details::VCardUrl as RealVCardUrl;
+use mail_core_common::datatypes::contact_details::VCardUrlValue as RealVCardUrlValue;
+use mail_core_common::datatypes::contact_details::VcardPropType as RealVcardPropType;
+use mail_core_common::utils::MapVec as _;
+use mail_vcard::values::date_and_or_time::DateAndOrTimeValue;
+use mail_vcard::values::date_and_or_time::MaybeDateAndOrTime;
 
 #[uniffi_export]
 pub async fn get_contact_details(
@@ -29,7 +29,7 @@ pub async fn get_contact_details(
 
     uniffi_async(async move {
         let ctx = ctx.user_context();
-        let mut tether = ctx.stash().connection().await?;
+        let mut tether = ctx.mail_stash().connection().await?;
         let details =
             RealContactDetails::get_from_contact(ctx, contact_id.into(), &mut tether).await?;
         Ok::<_, RealProtonMailError>(details.into())

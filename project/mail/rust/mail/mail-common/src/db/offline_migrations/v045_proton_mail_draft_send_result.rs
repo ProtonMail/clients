@@ -1,9 +1,9 @@
 use crate::datatypes::LocalAttachmentId;
 use crate::models::{DraftAttachmentInternalError, DraftAttachmentInternalUploadError};
-use proton_sqlite3::Migration;
-use stash::macros::DbRecord;
-use stash::stash::{Bond, StashError};
-use stash::{UserDb, params};
+use mail_sqlite3::Migration;
+use mail_stash::macros::DbRecord;
+use mail_stash::stash::{Bond, StashError};
+use mail_stash::{UserDb, params};
 
 #[derive(DbRecord, Debug, Clone, Eq, PartialEq)]
 struct V1Value {

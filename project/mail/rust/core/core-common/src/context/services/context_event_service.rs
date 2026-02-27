@@ -4,7 +4,7 @@ use crate::app_events::{
 };
 use crate::services::Service;
 use async_trait::async_trait;
-use proton_event_service::EventService;
+use mail_event_service::EventService;
 use std::ops::Deref;
 
 #[derive(Default)]

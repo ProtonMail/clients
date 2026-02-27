@@ -1,11 +1,11 @@
 use crate::actions::labels::Expand;
 use crate::datatypes::labels::hierarchy::custom_folder_hierarchy;
 use crate::{AppError, MailContextError, MailUserContext};
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::datatypes::{LabelType, LocalLabelId};
-use proton_core_common::models::Label;
-use stash::params;
-use stash::{orm::Model, stash::Tether};
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::datatypes::{LabelType, LocalLabelId};
+use mail_core_common::models::Label;
+use mail_stash::params;
+use mail_stash::{orm::Model, stash::Tether};
 use tracing::error;
 
 use crate::datatypes::ShowMoved;

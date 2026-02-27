@@ -1,4 +1,4 @@
-use proton_mail_html_transformer::Transformer;
+use mail_html_transformer::Transformer;
 
 #[test]
 fn et_1207() {

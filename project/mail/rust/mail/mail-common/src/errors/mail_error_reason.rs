@@ -1,4 +1,4 @@
-use proton_core_api::services::proton::{AddressId, PrivateEmail};
+use mail_core_api::services::proton::{AddressId, PrivateEmail};
 
 /// Specific Reason for error occurrence
 ///

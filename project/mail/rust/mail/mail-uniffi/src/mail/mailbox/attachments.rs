@@ -2,8 +2,8 @@ use crate::core::datatypes::Id;
 use crate::errors::ActionError;
 use crate::mail::{DecryptedAttachment, Mailbox};
 use crate::uniffi_async;
-use proton_mail_common::ProtonMailError as RealProtonMailError;
-use proton_mail_common::models::Attachment;
+use mail_common::ProtonMailError as RealProtonMailError;
+use mail_common::models::Attachment;
 
 #[uniffi_export]
 impl Mailbox {

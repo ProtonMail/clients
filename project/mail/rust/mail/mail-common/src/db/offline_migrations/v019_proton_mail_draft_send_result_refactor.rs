@@ -3,11 +3,11 @@
 use crate::models::{
     DraftSendFailure, DraftSendFailureAttachment, DraftSendFailureSave, DraftSendFailureSend,
 };
-use proton_core_api::services::proton::AddressId;
-use proton_sqlite3::Migration;
-use stash::macros::DbRecord;
-use stash::stash::{Bond, StashError};
-use stash::{UserDb, params, sql_using_serde};
+use mail_core_api::services::proton::AddressId;
+use mail_sqlite3::Migration;
+use mail_stash::macros::DbRecord;
+use mail_stash::stash::{Bond, StashError};
+use mail_stash::{UserDb, params, sql_using_serde};
 
 pub struct DraftSendResultMigration;
 

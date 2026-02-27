@@ -1,10 +1,10 @@
 use anyhow::Result;
-use muon::common::RetryPolicy;
-use muon::test::server::{Response, Server};
-use muon::GET;
+use mail_muon::common::RetryPolicy;
+use mail_muon::test::server::{Response, Server};
+use mail_muon::GET;
 use std::sync::Arc;
 
-#[muon::test]
+#[mail_muon::test]
 async fn test_handle_429_once(s: Arc<Server>) -> Result<()> {
     let p = RetryPolicy::default().max_count(2);
     let c = s.client();
@@ -18,7 +18,7 @@ async fn test_handle_429_once(s: Arc<Server>) -> Result<()> {
     Ok(())
 }
 
-#[muon::test]
+#[mail_muon::test]
 async fn test_handle_429(s: Arc<Server>) -> Result<()> {
     let p = RetryPolicy::default().max_count(1);
     let r = s.new_recorder();
@@ -45,7 +45,7 @@ async fn test_handle_429(s: Arc<Server>) -> Result<()> {
     Ok(())
 }
 
-#[muon::test]
+#[mail_muon::test]
 async fn test_handle_5xx(s: Arc<Server>) -> Result<()> {
     let p = RetryPolicy::default().max_count(1);
     let r = s.new_recorder();

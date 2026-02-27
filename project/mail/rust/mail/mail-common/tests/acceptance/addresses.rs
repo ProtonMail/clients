@@ -1,16 +1,16 @@
 use crate::acceptance::drafts_common::draft_test_params;
-use proton_core_api::services::proton::{Action, AddressEvent, CoreEvent, EventId, UserId};
-use proton_core_common::test_utils::test_context::UserContextTestExtension;
-use proton_mail_api::services::proton::common::MessageId;
-use proton_mail_api::services::proton::prelude::{
+use mail_api::services::proton::common::MessageId;
+use mail_api::services::proton::prelude::{
     ConversationId, MailEvent, MessageEvent, MessageMetadata,
 };
-use proton_mail_api::services::proton::response_data::MessageFlags;
-use proton_mail_common::models::Message;
-use proton_mail_common::test_utils::message_body::{TEST_USER_ID, message_body_test_user_secret};
-use proton_mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
-use stash::orm::Model;
-use stash::params;
+use mail_api::services::proton::response_data::MessageFlags;
+use mail_common::models::Message;
+use mail_common::test_utils::message_body::{TEST_USER_ID, message_body_test_user_secret};
+use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
+use mail_core_api::services::proton::{Action, AddressEvent, CoreEvent, EventId, UserId};
+use mail_core_common::test_utils::test_context::UserContextTestExtension;
+use mail_stash::orm::Model;
+use mail_stash::params;
 
 #[tokio::test]
 async fn address_delete_event() {

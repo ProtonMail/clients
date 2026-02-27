@@ -1,17 +1,17 @@
-use proton_calendar_common as cal;
-use proton_core_common::models::ContactEmail;
-use stash::{UserDb, orm::Model, stash::Stash};
+use mail_calendar_common as cal;
+use mail_core_common::models::ContactEmail;
+use mail_stash::{UserDb, orm::Model, stash::Stash};
 use tracing::warn;
 
 #[derive(Debug)]
 pub struct RsvpContacts {
-    stash: Stash<UserDb>,
+    mail_stash: Stash<UserDb>,
 }
 
 impl RsvpContacts {
-    pub fn new(stash: &Stash<UserDb>) -> Self {
+    pub fn new(mail_stash: &Stash<UserDb>) -> Self {
         Self {
-            stash: stash.clone(),
+            mail_stash: mail_stash.clone(),
         }
     }
 }
@@ -19,7 +19,7 @@ impl RsvpContacts {
 impl cal::RsvpContacts for RsvpContacts {
     async fn get_display_name(&self, email: &str) -> Option<String> {
         let contact = async {
-            let tether = self.stash.connection().await?;
+            let tether = self.mail_stash.connection().await?;
             ContactEmail::find_first(
                 "WHERE canonical_email = ?",
                 vec![Box::new(email.to_string())],
@@ -48,8 +48,8 @@ impl cal::RsvpContacts for RsvpContacts {
 mod tests {
     use super::*;
     use crate::test_utils::test_context::MailTestContext;
-    use proton_calendar_common::RsvpContacts as _;
-    use proton_core_common::models::{Contact, ContactEmail};
+    use mail_calendar_common::RsvpContacts as _;
+    use mail_core_common::models::{Contact, ContactEmail};
 
     #[tokio::test]
     async fn smoke() {
@@ -80,16 +80,16 @@ mod tests {
             ..Contact::test_default()
         };
 
-        let mut stash = ctx.user_stash().connection().await.unwrap();
+        let mut mail_stash = ctx.user_stash().connection().await.unwrap();
 
         for contact in [&mut bj, &mut rs] {
-            stash
+            mail_stash
                 .tx(async |tether| contact.save(tether).await)
                 .await
                 .unwrap();
 
             for email in &mut contact.contact_emails {
-                stash
+                mail_stash
                     .tx(async |tether| email.save(tether).await)
                     .await
                     .unwrap();

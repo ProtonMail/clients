@@ -14,4 +14,4 @@ pub use proton_crypto_account::proton_crypto;
 pub use proton_crypto_account;
 
 // re-export mime crate;
-pub use proton_crypto_inbox_mime;
+pub use mail_crypto_inbox_mime;

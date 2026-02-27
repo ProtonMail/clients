@@ -1,22 +1,22 @@
 use crate::datatypes::SystemLabelId;
 use crate::test_utils::test_context::MailTestContext;
-use proton_core_api::services::proton::{Label as ApiLabel, LabelId};
-use proton_core_api::services::proton::{ProtonIdMarker, common::ApiErrorInfo};
-use proton_mail_api::services::proton::common::ConversationId;
-use proton_mail_api::services::proton::prelude::PutConversationsUnreadRequest;
-use proton_mail_api::services::proton::requests::{
+use mail_api::services::proton::common::ConversationId;
+use mail_api::services::proton::prelude::PutConversationsUnreadRequest;
+use mail_api::services::proton::requests::{
     PutConversationsLabelRequest, PutConversationsReadRequest, PutConversationsSnoozeRequest,
     PutConversationsUnlabelRequest, PutConversationsUnsnoozeRequest,
 };
-use proton_mail_api::services::proton::response_data::{
+use mail_api::services::proton::response_data::{
     Conversation as ApiConversation, ConversationLabel as ApiConversationLabel, MessageMetadata,
     OperationResult,
 };
-use proton_mail_api::services::proton::responses::{
+use mail_api::services::proton::responses::{
     GetConversationResponse, PutConversationsLabelResponse, PutConversationsReadResponse,
     PutConversationsSnoozeResponse, PutConversationsUnlabelResponse,
     PutConversationsUnsnoozeResponse,
 };
+use mail_core_api::services::proton::{Label as ApiLabel, LabelId};
+use mail_core_api::services::proton::{ProtonIdMarker, common::ApiErrorInfo};
 use serde_json;
 use std::collections::HashSet;
 use wiremock::matchers::{body_json, method, path};

@@ -1,5 +1,5 @@
 [package]
-name = "proton-network-monitor-service"
+name = "mail-network-monitor-service"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
@@ -8,8 +8,8 @@ license.workspace = true
 [dependencies]
 async-trait = { workspace = true }
 tokio = { workspace = true }
-muon = { workspace = true, optional = true }
-proton-task-service = { workspace = true }
+mail-muon = { workspace = true, optional = true }
+mail-task-service = { workspace = true }
 tracing = { workspace = true }
 futures = { workspace = true }
 thiserror = { workspace = true }
@@ -20,6 +20,6 @@ tracing-subscriber = { workspace = true }
 
 [features]
 default = ["muon"]
-muon = ["dep:muon"]
+muon = ["dep:mail-muon"]
 [lints]
 workspace = true

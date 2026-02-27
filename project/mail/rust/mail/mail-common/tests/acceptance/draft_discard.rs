@@ -1,19 +1,19 @@
 use super::drafts_common::*;
-use proton_core_api::consts::{General, Mail};
-use proton_core_api::services::proton::common::ApiErrorInfo;
-use proton_core_api::services::proton::{LabelId, UserId};
-use proton_core_common::models::{Label, ModelExtension, ModelIdExtension};
-use proton_mail_api::services::proton::prelude::{
+use mail_api::services::proton::prelude::{
     DraftAttachmentKeyPackets, MessageFlags, OperationResult, PutMessagesDeleteResponse,
 };
-use proton_mail_common::datatypes::SystemLabelId;
-use proton_mail_common::draft::{Draft, ReplyMode};
-use proton_mail_common::models::{Conversation, DraftMetadata, Message};
-use proton_mail_common::test_utils::message_body::{
+use mail_common::datatypes::SystemLabelId;
+use mail_common::draft::{Draft, ReplyMode};
+use mail_common::models::{Conversation, DraftMetadata, Message};
+use mail_common::test_utils::message_body::{
     TEST_USER_ID, message_body_test_message_simple, message_body_test_user_secret,
 };
-use proton_mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
-use stash::orm::Model;
+use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
+use mail_core_api::consts::{General, Mail};
+use mail_core_api::services::proton::common::ApiErrorInfo;
+use mail_core_api::services::proton::{LabelId, UserId};
+use mail_core_common::models::{Label, ModelExtension, ModelIdExtension};
+use mail_stash::orm::Model;
 
 #[tokio::test]
 async fn discard_before_save_only_deletes_metadata() {

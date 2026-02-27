@@ -15,23 +15,23 @@ use crate::{
 };
 use anyhow::anyhow;
 use itertools::Itertools;
-use proton_action_queue::action::ActionGroup;
-use proton_action_queue::queue::Queue;
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::service::ApiServiceError;
-use proton_core_api::{services::proton::LabelId, session::Session};
-use proton_core_common::datatypes::{LocalLabelId, UnixTimestamp};
-use proton_core_common::models::Label;
-use proton_core_common::models::ModelExtension;
-use proton_mail_api::services::proton::prelude::GetMessagesOptions;
-use proton_mail_api::services::proton::{
+use mail_action_queue::action::ActionGroup;
+use mail_action_queue::queue::Queue;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_api::services::proton::prelude::GetMessagesOptions;
+use mail_api::services::proton::{
     ProtonMail,
     common::ConversationId,
     prelude::{GetConversationsOptions, GetConversationsResponse},
     response_data::MessageMetadata as ApiMessageMetadata,
 };
-use stash::UserDb;
-use stash::stash::{Bond, Tether};
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::{services::proton::LabelId, session::Session};
+use mail_core_common::datatypes::{LocalLabelId, UnixTimestamp};
+use mail_core_common::models::Label;
+use mail_core_common::models::ModelExtension;
+use mail_stash::UserDb;
+use mail_stash::stash::{Bond, Tether};
 use std::ops::ControlFlow;
 use tracing::{debug, error, info, instrument};
 
@@ -568,7 +568,7 @@ impl RemoteConversationScrollerSource {
                 let mut rebase_change_set = RebaseChangeSet::default();
                 // Save all conversations.
                 for conversation in conversations.iter_mut() {
-                    use stash::orm::Model;
+                    use mail_stash::orm::Model;
 
                     // Skip conversations that have been deleted
                     if let Some(remote_id) = &conversation.remote_id

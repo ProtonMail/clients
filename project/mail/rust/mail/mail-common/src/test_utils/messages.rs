@@ -1,32 +1,32 @@
 use crate::test_utils::test_context::MailTestContext;
 use itertools::Itertools;
-use proton_core_api::services::proton::LabelId;
-use proton_core_api::services::proton::common::ApiErrorInfo;
-use proton_core_common::utils::MapVec;
-use proton_crypto_inbox::keys::PackageCryptoType;
-use proton_mail_api::services::proton::common::{ConversationId, MessageId};
-use proton_mail_api::services::proton::prelude::{
+use mail_api::services::proton::common::{ConversationId, MessageId};
+use mail_api::services::proton::prelude::{
     AddressSubPackage, AuthInput, IncomingDefault, Package, PostCancelSendResponse,
     PostIncomingDefaultResponse, PostSendDirectMessageResponse, PostSendRequest,
     PutIncomingDefaultResponse, PutMessageHamResponse, RunningTasks,
 };
-use proton_mail_api::services::proton::request_data::{
+use mail_api::services::proton::request_data::{
     DraftAction, DraftAttachmentKeyPackets, DraftParams, DraftRecipient, DraftSender,
 };
-use proton_mail_api::services::proton::requests::{
+use mail_api::services::proton::requests::{
     PostCreateDraftRequest, PutMessagesDeleteRequest, PutMessagesLabelRequest,
     PutMessagesReadRequest, PutMessagesUnlabelRequest, PutMessagesUnreadRequest,
     PutUpdateDraftRequest,
 };
-use proton_mail_api::services::proton::response_data::{
+use mail_api::services::proton::response_data::{
     Conversation as ApiConversation, Message as ApiMessage, MessageMetadata, MimeType,
     OperationResult,
 };
-use proton_mail_api::services::proton::responses::{
+use mail_api::services::proton::responses::{
     GetMessageResponse, GetMessagesResponse, PostCreateDraftResponse, PostMessagesRelabelResponse,
     PostSendMessageResponse, PutMessagesDeleteResponse, PutMessagesLabelResponse,
     PutMessagesReadResponse, PutMessagesUnlabelResponse, PutMessagesUnreadResponse,
 };
+use mail_core_api::services::proton::LabelId;
+use mail_core_api::services::proton::common::ApiErrorInfo;
+use mail_core_common::utils::MapVec;
+use mail_crypto_inbox::keys::PackageCryptoType;
 use serde::Serialize;
 use serde_json::{Value as JsonValue, json};
 use serde_with::{BoolFromInt, serde_as};

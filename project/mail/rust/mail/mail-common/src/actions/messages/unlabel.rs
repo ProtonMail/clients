@@ -1,15 +1,15 @@
 use crate::actions::{GenericLabelRelatedActionData, MailActionError, filter_responses};
 use crate::datatypes::{LocalMessageId, RollbackItemType};
 use crate::models::Message;
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
 };
-use proton_core_api::services::proton::Proton;
-use proton_core_common::datatypes::LocalLabelId;
-use proton_core_common::models::ModelIdExtension;
-use proton_mail_api::services::proton::ProtonMail;
+use mail_core_api::services::proton::Proton;
+use mail_core_common::datatypes::LocalLabelId;
+use mail_core_common::models::ModelIdExtension;
+use mail_api::services::proton::ProtonMail;
 use serde::{Deserialize, Serialize};
-use stash::stash::Bond;
+use mail_stash::stash::Bond;
 use tracing::{error, info};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

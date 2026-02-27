@@ -3,15 +3,15 @@ use crate::actions::MailActionError;
 use crate::datatypes::LocalMessageId;
 use crate::models::{Message, MessageScrollData};
 use itertools::Itertools;
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionId, DefaultVersionConverter, Handler, Priority, Type, WriterGuard,
 };
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::session::Session;
-use proton_core_common::models::ModelExtension;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_core_api::session::Session;
+use mail_core_common::models::ModelExtension;
+use mail_stash::UserDb;
+use mail_stash::stash::Bond;
 use serde::{self, Deserialize, Serialize};
-use stash::UserDb;
-use stash::stash::Bond;
 use std::collections::HashSet;
 
 /// Refresh message metadata action.

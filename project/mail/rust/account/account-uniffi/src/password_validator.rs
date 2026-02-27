@@ -1,9 +1,10 @@
 use std::sync::Arc;
 
-use muon::http::DynHttpSender;
-use proton_account_common::password_validator::PasswordType as RealPasswordType;
-use proton_account_common::password_validator::PasswordValidatorResult;
-use proton_account_common::password_validator::PasswordValidatorService as RealPasswordValidatorService;
+use mail_account_common::password_validator::PasswordType as RealPasswordType;
+use mail_account_common::password_validator::PasswordValidatorResult;
+use mail_account_common::password_validator::PasswordValidatorService as RealPasswordValidatorService;
+use mail_muon::http::DynHttpSender;
+use mail_uniffi_runtime::async_runtime;
 use secrecy::ExposeSecret;
 use secrecy::SecretString;
 use thiserror::Error;
@@ -11,7 +12,6 @@ use tokio::sync::Mutex;
 use tokio::task::AbortHandle;
 use tokio::task::JoinError;
 use tracing::error;
-use uniffi_runtime::async_runtime;
 
 #[derive(uniffi::Object)]
 pub struct PasswordValidatorService {

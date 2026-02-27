@@ -1,15 +1,15 @@
 use crate::datatypes::SystemLabelId;
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::datatypes::{LabelColor, LabelType, LocalLabelId};
-use proton_core_common::models::Label;
-use proton_core_common::models::ModelIdExtension;
-use proton_mail_api::services::proton::common::{AttachmentId, ConversationId};
-use proton_mail_api::services::proton::response_data::{
+use mail_api::services::proton::common::{AttachmentId, ConversationId};
+use mail_api::services::proton::response_data::{
     AttachmentMetadata, Conversation as ApiConversation, ConversationLabel as ApiConversationLabel,
     MessageRecipient as ApiMessageRecipient, MessageSender as ApiMessageSender,
 };
-use stash::orm::Model;
-use stash::stash::{StashError, Tether};
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::datatypes::{LabelColor, LabelType, LocalLabelId};
+use mail_core_common::models::Label;
+use mail_core_common::models::ModelIdExtension;
+use mail_stash::orm::Model;
+use mail_stash::stash::{StashError, Tether};
 use std::collections::BTreeMap;
 use std::sync::LazyLock;
 
@@ -25,7 +25,7 @@ pub static MY_CONVERSATION_ID: LazyLock<ConversationId> =
 #[macro_export]
 macro_rules! conv_id {
     ($id:expr) => {{
-        use proton_mail_api::services::proton::common::ConversationId;
+        use mail_api::services::proton::common::ConversationId;
         Some(ConversationId::from($id.to_string()).into())
     }};
 }
@@ -33,7 +33,7 @@ macro_rules! conv_id {
 #[macro_export]
 macro_rules! lbl_id {
     ($id:expr) => {{
-        use proton_core_api::services::proton::LabelId;
+        use mail_core_api::services::proton::LabelId;
         Some(LabelId::from($id.to_string()).into())
     }};
 }
@@ -41,7 +41,7 @@ macro_rules! lbl_id {
 #[macro_export]
 macro_rules! msg_id {
     ($id:expr) => {{
-        use proton_mail_api::services::proton::common::MessageId;
+        use mail_api::services::proton::common::MessageId;
         Some(MessageId::from($id.to_string()).into())
     }};
 }
@@ -49,7 +49,7 @@ macro_rules! msg_id {
 #[macro_export]
 macro_rules! label {
     ($($field:tt)*) => {{
-        use proton_core_common::models::Label;
+        use mail_core_common::models::Label;
 
         Label {
             $($field)*,
@@ -61,7 +61,7 @@ macro_rules! label {
 #[macro_export]
 macro_rules! api_label {
     ($($field:tt)*) => {{
-        use proton_core_api::services::proton::{Label as ApiLabel};
+        use mail_core_api::services::proton::{Label as ApiLabel};
 
         ApiLabel {
             $($field)*,
@@ -85,7 +85,7 @@ macro_rules! message {
 #[macro_export]
 macro_rules! api_message {
     ($($field:tt)*) => {{
-        use proton_mail_api::services::proton::response_data::{Message as ApiMessage};
+        use mail_api::services::proton::response_data::{Message as ApiMessage};
 
         ApiMessage {
             $($field)*,
@@ -97,7 +97,7 @@ macro_rules! api_message {
 #[macro_export]
 macro_rules! api_message_meta {
     ($($field:tt)*) => {{
-        use proton_mail_api::services::proton::response_data::{MessageMetadata as ApiMessageMetadata};
+        use mail_api::services::proton::response_data::{MessageMetadata as ApiMessageMetadata};
 
         ApiMessageMetadata {
             $($field)*,
@@ -133,7 +133,7 @@ macro_rules! conv_label {
 #[macro_export]
 macro_rules! api_conversation {
     ($($field:tt)*) => {{
-        use proton_mail_api::services::proton::response_data::{Conversation as ApiConversation};
+        use mail_api::services::proton::response_data::{Conversation as ApiConversation};
 
         ApiConversation {
             $($field)*,

@@ -1,15 +1,15 @@
 use async_trait::async_trait;
 use futures::TryFutureExt;
-use muon::client::Auth;
-use muon::env::EnvId;
-use muon::store::{Store as MuonStore, StoreError as MuonStoreError};
+use mail_muon::client::Auth;
+use mail_muon::env::EnvId;
+use mail_muon::store::{Store as MuonStore, StoreError as MuonStoreError};
 use std::sync::Weak;
 use std::{borrow::Borrow, sync::Arc};
 use tokio::sync::RwLock;
 
 use crate::store::Store;
 
-/// Implements the muon store trait for our store type.
+/// Implements the `mail_muon` store trait for our store type.
 pub struct MuonStoreImpl<S> {
     env_id: EnvId,
     store: Weak<RwLock<S>>,

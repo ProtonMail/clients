@@ -9,27 +9,27 @@ use crate::mail::datatypes::AttachmentMetadata;
 use crate::mail::state::MailUserContextPtr;
 use crate::{AsyncLiveQueryCallback, uniffi_async};
 use anyhow::anyhow;
-use proton_mail_common::MailContextError;
-use proton_mail_common::ProtonMailError as RealProtonMailError;
-use proton_mail_common::datatypes::attachment::ContentId;
-use proton_mail_common::datatypes::{Disposition, LocalAttachmentId};
-use proton_mail_common::draft::Draft as RealDraft;
-use proton_mail_common::draft::attachments::{
+use mail_common::MailContextError;
+use mail_common::ProtonMailError as RealProtonMailError;
+use mail_common::datatypes::attachment::ContentId;
+use mail_common::datatypes::{Disposition, LocalAttachmentId};
+use mail_common::draft::Draft as RealDraft;
+use mail_common::draft::attachments::{
     DraftAttachment as RealDraftAttachment,
     DraftAttachmentDispositionSwapError as RealDraftAttachmentDispositionSwapError,
     DraftAttachmentError as RealDraftAttachmentError,
     DraftAttachmentState as RealDraftAttachmentState,
     DraftAttachmentUploadError as RealDraftAttachmentUploadError,
 };
-use proton_mail_common::draft::observers::DraftAttachmentObserver;
-use proton_mail_common::models::Attachment as RealAttachment;
+use mail_common::draft::observers::DraftAttachmentObserver;
+use mail_common::models::Attachment as RealAttachment;
+use mail_uniffi_common::errors::UserApiServiceError;
+use mail_uniffi_runtime::async_runtime;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::task::AbortHandle;
 use tokio_util::sync::CancellationToken;
 use tracing::error;
-use uniffi_common::errors::UserApiServiceError;
-use uniffi_runtime::async_runtime;
 
 #[derive(uniffi::Enum)]
 pub enum DraftAttachmentError {
@@ -327,8 +327,8 @@ impl AttachmentList {
         };
         uniffi_async::<_, RealProtonMailError, _>(async move {
             let metadata_id = self.draft.metadata_id;
-            let stash = ctx.user_stash().clone();
-            let mut observer = DraftAttachmentObserver::new(metadata_id, stash)
+            let mail_stash = ctx.user_stash().clone();
+            let mut observer = DraftAttachmentObserver::new(metadata_id, mail_stash)
                 .await
                 .map_err(RealProtonMailError::from)?;
             let handle = ctx.spawn(async move {
@@ -362,8 +362,8 @@ impl AttachmentList {
         };
         uniffi_async::<_, RealProtonMailError, _>(async move {
             let metadata_id = self.draft.metadata_id;
-            let stash = ctx.user_stash().clone();
-            let observer = DraftAttachmentObserver::new(metadata_id, stash)
+            let mail_stash = ctx.user_stash().clone();
+            let observer = DraftAttachmentObserver::new(metadata_id, mail_stash)
                 .await
                 .map_err(RealProtonMailError::from)?;
             Ok(Arc::new(DraftAttachmentListUpdateStream {

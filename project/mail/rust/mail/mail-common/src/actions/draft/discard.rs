@@ -4,18 +4,18 @@ use crate::datatypes::SystemLabelId;
 use crate::datatypes::{LocalConversationId, LocalMessageId};
 use crate::draft::DiscardError;
 use crate::models::{Conversation, DraftMetadata, Message, MetadataId};
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionGroup, ActionId, DefaultVersionConverter, Handler, Priority, Type, WriterGuard,
 };
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::consts::General;
-use proton_core_api::services::proton::LabelId;
-use proton_core_api::session::Session;
-use proton_core_common::models::{ModelExtension, ModelIdExtension};
-use proton_mail_api::services::proton::ProtonMail;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_api::services::proton::ProtonMail;
+use mail_core_api::consts::General;
+use mail_core_api::services::proton::LabelId;
+use mail_core_api::session::Session;
+use mail_core_common::models::{ModelExtension, ModelIdExtension};
+use mail_stash::UserDb;
+use mail_stash::stash::Bond;
 use serde::{Deserialize, Serialize};
-use stash::UserDb;
-use stash::stash::Bond;
 use tracing::{debug, error, info};
 
 /// Action which discards a Draft.

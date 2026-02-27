@@ -6,11 +6,11 @@ use crate::messages::Messages;
 use anyhow::anyhow;
 use crossterm::event::{Event, KeyCode};
 use futures::FutureExt;
-use proton_core_common::models::{ModelExtension, User};
-use proton_mail_common::{
+use mail_common::{
     BackgroundExecutionContext, BackgroundExecutionResult, BackgroundExecutionStatus,
 };
-use proton_mail_common::{MailContext, MailContextResult, MailUserContext};
+use mail_common::{MailContext, MailContextResult, MailUserContext};
+use mail_core_common::models::{ModelExtension, User};
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Margin, Rect};
 use ratatui::prelude::{Line, Span, Stylize};

@@ -5,16 +5,16 @@ use crate::actions::{
 use crate::datatypes::LocalConversationId;
 use crate::datatypes::RollbackItemType;
 use crate::models::Conversation;
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
 };
-use proton_action_queue::rebase::{RebaseChangeSet, RebaseKey};
-use proton_core_api::session::Session;
-use proton_core_common::datatypes::LocalLabelId;
-use proton_core_common::models::{ModelExtension, ModelIdExtension};
+use mail_action_queue::rebase::{RebaseChangeSet, RebaseKey};
+use mail_core_api::session::Session;
+use mail_core_common::datatypes::LocalLabelId;
+use mail_core_common::models::{ModelExtension, ModelIdExtension};
+use mail_stash::UserDb;
+use mail_stash::stash::Bond;
 use serde::{self, Deserialize, Serialize};
-use stash::UserDb;
-use stash::stash::Bond;
 use tracing::error;
 
 /// Delete conversations action.

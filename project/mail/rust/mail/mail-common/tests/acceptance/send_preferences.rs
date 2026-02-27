@@ -1,11 +1,11 @@
-use proton_core_api::services::proton::PrivateEmailRef;
-use proton_core_common::AddressKeysContactFetchPolicy;
-use proton_crypto_inbox::keys::PackageCryptoType;
-use proton_crypto_inbox::message::packages::PackageMimeType;
-use proton_crypto_inbox::proton_crypto;
-use proton_mail_common::models::MailSettings;
-use proton_mail_common::test_utils::init::Params as TestParams;
-use proton_mail_common::test_utils::test_context::MailTestContext;
+use mail_common::models::MailSettings;
+use mail_common::test_utils::init::Params as TestParams;
+use mail_common::test_utils::test_context::MailTestContext;
+use mail_core_api::services::proton::PrivateEmailRef;
+use mail_core_common::AddressKeysContactFetchPolicy;
+use mail_crypto_inbox::keys::PackageCryptoType;
+use mail_crypto_inbox::message::packages::PackageMimeType;
+use mail_crypto_inbox::proton_crypto;
 
 #[tokio::test]
 async fn load_sending_preferences() {

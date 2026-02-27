@@ -5,23 +5,21 @@ use crate::models::{Attachment, AttachmentType};
 use crate::{AppError, DecryptedAttachment, MailContextError, MailContextResult, MailUserContext};
 use anyhow::Context as _;
 use indoc::indoc;
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::datatypes::SystemLabel;
-use proton_core_common::models::ModelExtension as _;
-use proton_core_common::os::{safe_write_async, sanitize_filename};
-use proton_core_common::{DeleteFilesSafeError, Origin};
-use proton_crypto_inbox::attachment::DecryptableAttachment as _;
-use proton_crypto_inbox::proton_crypto::crypto::{
-    PGPProvider, PGPProviderSync, VerificationResult,
-};
-use proton_crypto_inbox::proton_crypto::new_pgp_provider;
-use stash::exports::{SqliteError, ToSql};
-use stash::macros::Model;
-use stash::orm::Model as _;
-use stash::stash::{Bond, StashError};
-use stash::stash::{RunTransaction, Tether};
-use stash::utils::placeholders_n;
-use stash::{UserDb, params};
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::datatypes::SystemLabel;
+use mail_core_common::models::ModelExtension as _;
+use mail_core_common::os::{safe_write_async, sanitize_filename};
+use mail_core_common::{DeleteFilesSafeError, Origin};
+use mail_crypto_inbox::attachment::DecryptableAttachment as _;
+use mail_crypto_inbox::proton_crypto::crypto::{PGPProvider, PGPProviderSync, VerificationResult};
+use mail_crypto_inbox::proton_crypto::new_pgp_provider;
+use mail_stash::exports::{SqliteError, ToSql};
+use mail_stash::macros::Model;
+use mail_stash::orm::Model as _;
+use mail_stash::stash::{Bond, StashError};
+use mail_stash::stash::{RunTransaction, Tether};
+use mail_stash::utils::placeholders_n;
+use mail_stash::{UserDb, params};
 use std::io::Read;
 use std::os::unix::fs::MetadataExt as _;
 use std::path::{Path, PathBuf};
@@ -729,7 +727,7 @@ mod test {
     use std::sync::atomic::AtomicU64;
 
     use itertools::Itertools as _;
-    use proton_core_api::services::proton::LabelId;
+    use mail_core_api::services::proton::LabelId;
 
     use crate::datatypes::SystemLabelId as _;
 

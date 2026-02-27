@@ -6,21 +6,21 @@ use crate::models::{
     Attachment, Conversation, DraftAttachmentMetadata, DraftMetadata, DraftSendFailure,
     DraftSendFailureSave, DraftSendResult, DraftSendResultOrigin, Message,
 };
-use proton_action_queue::action::Priority;
-use proton_action_queue::db::StoredAction;
-use proton_core_api::services::proton::AddressId;
-use proton_core_common::datatypes::{AddressFlags, AddressStatus, AddressType};
-use proton_core_common::models::Address;
-use proton_mail_api::services::proton::common::{ConversationId, MessageId};
-use proton_mail_common::test_utils::db::new_test_connection_file;
-use stash::UserDb;
-use stash::orm::Model;
-use stash::stash::{Bond, StashError};
+use mail_action_queue::action::Priority;
+use mail_action_queue::db::StoredAction;
+use mail_api::services::proton::common::{ConversationId, MessageId};
+use mail_common::test_utils::db::new_test_connection_file;
+use mail_core_api::services::proton::AddressId;
+use mail_core_common::datatypes::{AddressFlags, AddressStatus, AddressType};
+use mail_core_common::models::Address;
+use mail_stash::UserDb;
+use mail_stash::orm::Model;
+use mail_stash::stash::{Bond, StashError};
 #[tokio::test]
 async fn draft_send_observer_only_triggers_for_new_items_empty_db() {
-    let (stash, _db_dir) = new_test_connection_file().await;
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
 
-    let mut conn = stash.connection().await.unwrap();
+    let mut conn = mail_stash.connection().await.unwrap();
     conn.tx::<_, _, StashError>(async |tx| {
         create_test_messages(2, tx).await;
         Ok(())
@@ -28,9 +28,10 @@ async fn draft_send_observer_only_triggers_for_new_items_empty_db() {
     .await
     .unwrap();
 
-    let mut watcher = DraftSendResultWatcher::new(stash.clone(), DraftSendResultWatcherMode::All)
-        .await
-        .unwrap();
+    let mut watcher =
+        DraftSendResultWatcher::new(mail_stash.clone(), DraftSendResultWatcherMode::All)
+            .await
+            .unwrap();
 
     let mut v1 = DraftSendResult::failure(
         LocalMessageId::from(1),
@@ -88,9 +89,9 @@ async fn draft_send_observer_only_triggers_for_new_items_empty_db() {
 
 #[tokio::test]
 async fn draft_send_observer_only_triggers_for_new_items_with_existing() {
-    let (stash, _db_dir) = new_test_connection_file().await;
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
 
-    let mut conn = stash.connection().await.unwrap();
+    let mut conn = mail_stash.connection().await.unwrap();
     conn.tx::<_, _, StashError>(async |tx| {
         create_test_messages(5, tx).await;
 
@@ -108,9 +109,10 @@ async fn draft_send_observer_only_triggers_for_new_items_with_existing() {
     .await
     .unwrap();
 
-    let mut watcher = DraftSendResultWatcher::new(stash.clone(), DraftSendResultWatcherMode::All)
-        .await
-        .unwrap();
+    let mut watcher =
+        DraftSendResultWatcher::new(mail_stash.clone(), DraftSendResultWatcherMode::All)
+            .await
+            .unwrap();
 
     let mut v1 = DraftSendResult::failure(
         LocalMessageId::from(4),
@@ -184,9 +186,9 @@ async fn draft_send_observer_only_triggers_for_new_items_with_existing() {
 
 #[tokio::test]
 async fn draft_send_observer_re_triggers_for_same_message_with_different_error() {
-    let (stash, _db_dir) = new_test_connection_file().await;
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
 
-    let mut conn = stash.connection().await.unwrap();
+    let mut conn = mail_stash.connection().await.unwrap();
     conn.tx::<_, _, StashError>(async |tx| {
         create_test_messages(2, tx).await;
         Ok(())
@@ -194,9 +196,10 @@ async fn draft_send_observer_re_triggers_for_same_message_with_different_error()
     .await
     .unwrap();
 
-    let mut watcher = DraftSendResultWatcher::new(stash.clone(), DraftSendResultWatcherMode::All)
-        .await
-        .unwrap();
+    let mut watcher =
+        DraftSendResultWatcher::new(mail_stash.clone(), DraftSendResultWatcherMode::All)
+            .await
+            .unwrap();
 
     let mut v1 = DraftSendResult::failure(
         LocalMessageId::from(1),
@@ -240,7 +243,7 @@ async fn draft_send_observer_re_triggers_for_same_message_with_different_error()
 
 #[tokio::test]
 async fn draft_send_observer_only_triggers_when_send_action_is_queued() {
-    let (stash, _db_dir) = new_test_connection_file().await;
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
 
     let mut action = StoredAction {
         id: None,
@@ -258,7 +261,7 @@ async fn draft_send_observer_only_triggers_when_send_action_is_queued() {
         retries: 0,
         _phantom: std::marker::PhantomData::<UserDb>,
     };
-    let mut conn = stash.connection().await.unwrap();
+    let mut conn = mail_stash.connection().await.unwrap();
     let mut draft_metadata = DraftMetadata::builder()
         .local_message_id(LocalMessageId::from(2))
         .build();
@@ -273,7 +276,7 @@ async fn draft_send_observer_only_triggers_when_send_action_is_queued() {
     .unwrap();
 
     let mut watcher =
-        DraftSendResultWatcher::new(stash.clone(), DraftSendResultWatcherMode::SentOnly)
+        DraftSendResultWatcher::new(mail_stash.clone(), DraftSendResultWatcherMode::SentOnly)
             .await
             .unwrap();
 
@@ -334,9 +337,9 @@ async fn draft_send_observer_only_triggers_when_send_action_is_queued() {
 
 #[tokio::test]
 async fn draft_attachment_observer_updates_when_attachment_is_removed() {
-    let (stash, _db_dir) = new_test_connection_file().await;
+    let (mail_stash, _db_dir) = new_test_connection_file().await;
 
-    let mut conn = stash.connection().await.unwrap();
+    let mut conn = mail_stash.connection().await.unwrap();
     let mut attachment = Attachment {
         local_id: None,
         attachment_type: Default::default(),
@@ -368,7 +371,7 @@ async fn draft_attachment_observer_updates_when_attachment_is_removed() {
         .await
         .unwrap();
 
-    let mut watcher = DraftAttachmentObserver::new(metadata.id.unwrap(), stash.clone())
+    let mut watcher = DraftAttachmentObserver::new(metadata.id.unwrap(), mail_stash.clone())
         .await
         .unwrap();
 

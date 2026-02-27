@@ -1,9 +1,9 @@
-use proton_mail_api::services::proton::response_data::IncomingDefault as ApiIncomingDefault;
-use proton_mail_api::services::proton::response_data::IncomingDefaultLocation as ApiIncomingDefaultLocation;
-use proton_mail_common::models::{IncomingDefault, IncomingDefaultLocation};
-use proton_mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
-use stash::orm::Model;
-use stash::stash::StashError;
+use mail_api::services::proton::response_data::IncomingDefault as ApiIncomingDefault;
+use mail_api::services::proton::response_data::IncomingDefaultLocation as ApiIncomingDefaultLocation;
+use mail_common::models::{IncomingDefault, IncomingDefaultLocation};
+use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
+use mail_stash::orm::Model;
+use mail_stash::stash::StashError;
 use wiremock::{
     Mock, ResponseTemplate,
     matchers::{method, path},
@@ -30,12 +30,12 @@ fn domain_api_incoming_default(domain: &str) -> ApiIncomingDefault {
 }
 
 async fn count_incoming_defaults_for_email(
-    tether: &stash::stash::Tether,
+    tether: &mail_stash::stash::Tether,
     email: &str,
 ) -> Result<usize, StashError> {
     let results = IncomingDefault::find(
         "WHERE email = ? AND deleted = 0",
-        stash::params![email.to_string()],
+        mail_stash::params![email.to_string()],
         tether,
     )
     .await?;
@@ -43,12 +43,12 @@ async fn count_incoming_defaults_for_email(
 }
 
 async fn count_incoming_defaults_for_domain(
-    tether: &stash::stash::Tether,
+    tether: &mail_stash::stash::Tether,
     domain: &str,
 ) -> Result<usize, StashError> {
     let results = IncomingDefault::find(
         "WHERE domain = ? AND deleted = 0",
-        stash::params![domain.to_string()],
+        mail_stash::params![domain.to_string()],
         tether,
     )
     .await?;

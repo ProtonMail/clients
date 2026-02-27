@@ -30,43 +30,43 @@ use core_event_loop::EventLoopError;
 use core_event_loop::v6::{EventSubscriber, EventSubscriberId};
 use events::event_subscriber::MailEventV5Subscriber;
 use initialization::InitializationMediator;
-use parking_lot::Mutex;
-use proton_account_api::password::PasswordFlow;
-use proton_action_queue::action::ActionGroup;
-use proton_action_queue::queue::{Queue, QueueAutoExecutorPool};
-use proton_core_api::connection_status::ConnectionStatus;
-use proton_core_api::crypto_clock;
-use proton_core_api::services::proton::ProtonCore;
-use proton_core_api::services::proton::{AddressId, PrivateEmailRef, SessionId, UserId};
-use proton_core_api::session::Session;
+use mail_account_api::password::PasswordFlow;
+use mail_action_queue::action::ActionGroup;
+use mail_action_queue::queue::{Queue, QueueAutoExecutorPool};
+use mail_core_api::connection_status::ConnectionStatus;
+use mail_core_api::crypto_clock;
+use mail_core_api::services::proton::ProtonCore;
+use mail_core_api::services::proton::{AddressId, PrivateEmailRef, SessionId, UserId};
+use mail_core_api::session::Session;
 #[cfg(not(feature = "events-v6"))]
-use proton_core_common::CoreEventLoopContext;
-use proton_core_common::datatypes::{
+use mail_core_common::CoreEventLoopContext;
+use mail_core_common::datatypes::{
     AccountDetails, AddressStatus, BlackFridayWave, LocalAddressId, NotificationSettings,
     UpsellEligibility, UpsellType,
 };
-use proton_core_common::event_loop::EventPollMode;
-use proton_core_common::models::{Address, PaidSubscription, Role, User, UserSettings};
-use proton_core_common::services::event_loop_service::EventManagerContext;
-use proton_core_common::services::{
+use mail_core_common::event_loop::EventPollMode;
+use mail_core_common::models::{Address, PaidSubscription, Role, User, UserSettings};
+use mail_core_common::services::event_loop_service::EventManagerContext;
+use mail_core_common::services::{
     EventLoopService, EventPollConfigService, NetworkMonitorService, UserIssueReporterService,
 };
-use proton_core_common::{
+use mail_core_common::{
     AddressKeysContactFetchPolicy, ContactError, Context as CoreContext, CoreContextError,
     KeyHandlingError, Origin, UserContext, services::UserMetricService,
 };
-use proton_crypto_account::keys::{PinnedPublicKeys, PublicAddressKeys};
-use proton_crypto_inbox::keys::{
+use mail_crypto_inbox::keys::{
     ComposerPreference, CryptoMailSettings, InboxVerificationPreferences, SendPreferences,
 };
-use proton_crypto_inbox::proton_crypto::CryptoClockProvider;
-use proton_crypto_inbox::proton_crypto::crypto::PGPProviderSync;
-use proton_crypto_inbox::proton_crypto_account::keys::{UnlockedAddressKeys, UnlockedUserKeys};
-use proton_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
-use proton_task_service::Spawner;
-use stash::UserDb;
-use stash::orm::Model;
-use stash::stash::{RunTransaction, Stash, StashError, Tether, WatcherHandle};
+use mail_crypto_inbox::proton_crypto::CryptoClockProvider;
+use mail_crypto_inbox::proton_crypto::crypto::PGPProviderSync;
+use mail_crypto_inbox::proton_crypto_account::keys::{UnlockedAddressKeys, UnlockedUserKeys};
+use mail_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
+use mail_stash::UserDb;
+use mail_stash::orm::Model;
+use mail_stash::stash::{RunTransaction, Stash, StashError, Tether, WatcherHandle};
+use mail_task_service::Spawner;
+use parking_lot::Mutex;
+use proton_crypto_account::keys::{PinnedPublicKeys, PublicAddressKeys};
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
 use std::future::Future;
@@ -334,7 +334,7 @@ impl MailUserContext {
                 let task_service = mail_context.core_context().task_service().task_service_arc();
 
                 let search_service = MailSearchService::new(
-                    user_context.stash().clone(),
+                    user_context.mail_stash().clone(),
                     task_service,
                 )
                 .await
@@ -386,7 +386,7 @@ impl MailUserContext {
                         .with_service(InitializationMediator::new(
                             mail_context.core_context().task_service().task_service(),
                         ))
-                        .with_service(RsvpService::new(user_context.stash()))
+                        .with_service(RsvpService::new(user_context.mail_stash()))
                         .with_service(PrefetchService::new())
                 }
 
@@ -584,7 +584,7 @@ impl MailUserContext {
 
     #[must_use]
     pub fn user_stash(&self) -> &Stash<UserDb> {
-        self.user_context.stash()
+        self.user_context.mail_stash()
     }
 
     pub fn mail_context(&self) -> &MailContext {
@@ -642,8 +642,8 @@ impl MailUserContext {
     }
 
     pub async fn user(&self) -> MailContextResult<User> {
-        let stash = self.user_stash();
-        let tether = stash.connection().await?;
+        let mail_stash = self.user_stash();
+        let tether = mail_stash.connection().await?;
         let user_id = self.user_id();
         let real_user = User::load(user_id.clone(), &tether)
             .await?

@@ -1,5 +1,5 @@
 [package]
-name = "proton-mail-api"
+name = "mail-api"
 version = "0.5.0"
 edition.workspace = true
 rust-version.workspace = true
@@ -11,22 +11,22 @@ license.workspace = true
 bitflags = { workspace = true, features = ["serde"] }
 bytes = { workspace = true }
 indexmap = { workspace = true }
-muon = { workspace = true }
-proton-account-api = { workspace = true }
-proton-api-utils = { workspace = true }
-proton-core-api = { workspace = true }
-proton-crypto-inbox = { workspace = true }
-proton-task-service = { workspace = true }
+mail-muon = { workspace = true }
+mail-account-api = { workspace = true }
+mail-api-utils = { workspace = true }
+mail-core-api = { workspace = true }
+mail-crypto-inbox = { workspace = true }
+mail-task-service = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serde_repr = { workspace = true }
 serde_with = { workspace = true, features = ["base64"] }
 smart-default = { workspace = true }
-stash = { workspace = true, optional = true }
+mail-stash = { workspace = true, optional = true }
 
 [dev-dependencies]
 bytes = "1.9.0"
-proton-core-api = { workspace = true }
+mail-core-api = { workspace = true }
 reqwest = { workspace = true, features = ["stream"] }
 test-case = { workspace = true }
 tokio = { workspace = true }
@@ -34,11 +34,11 @@ tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 wiremock = { workspace = true }
 insta = { workspace = true }
-proton-core-common = { workspace = true, features = ["test-utils"] }
-proton-mail-api = { path = ".", features = ["mocks"] }
-proton-log-service = { workspace = true }
+mail-core-common = { workspace = true, features = ["test-utils"] }
+mail-api = { path = ".", features = ["mocks"] }
+mail-log-service = { workspace = true }
 tempfile = { workspace = true }
-proton-issue-reporter-service = { workspace = true }
+mail-issue-reporter-service = { workspace = true }
 
 
 [lints]
@@ -46,5 +46,5 @@ workspace = true
 
 [features]
 default = []
-sql = ["dep:stash", "proton-core-api/sql"]
+sql = ["dep:mail-stash", "mail-core-api/sql"]
 mocks = []

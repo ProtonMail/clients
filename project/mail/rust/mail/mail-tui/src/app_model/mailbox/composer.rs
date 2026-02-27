@@ -18,19 +18,21 @@ use anyhow::anyhow;
 use chrono::{DateTime, Local};
 use crossterm::event::{KeyCode, KeyModifiers};
 use futures::FutureExt;
-use proton_core_common::models::ModelExtension;
-use proton_mail_api::proton_core_api::services::proton::AddressId;
-use proton_mail_common::datatypes::{Disposition, LocalAttachmentId, LocalMessageId};
-use proton_mail_common::draft::attachments::{DraftAttachment, DraftAttachmentState};
-use proton_mail_common::draft::observers::DraftAttachmentObserver;
-use proton_mail_common::draft::recipients::RecipientList;
-use proton_mail_common::draft::{
+use mail_api::mail_core_api::services::proton::AddressId;
+use mail_common::datatypes::{Disposition, LocalAttachmentId, LocalMessageId};
+use mail_common::draft::attachments::{DraftAttachment, DraftAttachmentState};
+use mail_common::draft::observers::DraftAttachmentObserver;
+use mail_common::draft::recipients::RecipientList;
+use mail_common::draft::{
     AttachmentDispositionSwapError, Draft, DraftActorOptions, DraftEvent, DraftExpirationTime,
     DraftSyncStatus, RecipientGroupId, ReplyMode,
 };
-use proton_mail_common::models::{Attachment, MessageMimeType, MetadataId};
-use proton_mail_common::{MailContextError, MailUserContext, Mailbox};
-use proton_mail_html_transformer::Html2TextOptions;
+use mail_common::models::{Attachment, MessageMimeType, MetadataId};
+use mail_common::{MailContextError, MailUserContext, Mailbox};
+use mail_core_common::models::ModelExtension;
+use mail_html_transformer::Html2TextOptions;
+use mail_stash::UserDb;
+use mail_stash::stash::{Stash, StashError, Tether};
 use ratatui::Frame;
 use ratatui::crossterm::event::Event;
 use ratatui::layout::Rect;
@@ -38,8 +40,6 @@ use ratatui::prelude::*;
 use ratatui::widgets::{Block, Borders, Clear, List};
 use recipient_list::TuiRecipientList;
 use secrecy::{ExposeSecret, SecretString};
-use stash::UserDb;
-use stash::stash::{Stash, StashError, Tether};
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio_util::sync::CancellationToken;
@@ -215,9 +215,9 @@ impl Composer {
     async fn create(
         draft: Draft,
         sync_status: Option<DraftSyncStatus>,
-        stash: Stash<UserDb>,
+        mail_stash: Stash<UserDb>,
     ) -> Command<Messages> {
-        match Self::new_impl(draft, sync_status, stash).await {
+        match Self::new_impl(draft, sync_status, mail_stash).await {
             Ok((composer, background_cmd)) => {
                 let error_msg = composer
                     .draft
@@ -249,7 +249,7 @@ impl Composer {
     async fn new_impl(
         draft: Draft,
         sync_status: Option<DraftSyncStatus>,
-        stash: Stash<UserDb>,
+        mail_stash: Stash<UserDb>,
     ) -> Result<(Self, Command<Messages>), MailContextError> {
         let state = draft.state().await?;
         let to_list = recipient_list_to_display_value(&state.to_list);
@@ -258,7 +258,7 @@ impl Composer {
 
         let text_area = match state.mime_type {
             MessageMimeType::TextHtml => {
-                let text = proton_mail_html_transformer::Transformer::html2text_str(
+                let text = mail_html_transformer::Transformer::html2text_str(
                     &state.body,
                     Html2TextOptions::default(),
                 )
@@ -272,11 +272,11 @@ impl Composer {
             }
         };
 
-        let tether = stash.connection().await?;
+        let tether = mail_stash.connection().await?;
         let attachment_infos = Self::build_attachment_infos(draft.metadata_id, &tether).await?;
         drop(tether);
 
-        let mut observer = DraftAttachmentObserver::new(draft.metadata_id, stash).await?;
+        let mut observer = DraftAttachmentObserver::new(draft.metadata_id, mail_stash).await?;
         let cancellation_token = CancellationToken::new();
         let cancellation_token_cloned = cancellation_token.clone();
 

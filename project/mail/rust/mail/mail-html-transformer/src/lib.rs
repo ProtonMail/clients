@@ -16,7 +16,7 @@
 //! # Example
 //!
 //! ```
-//! use proton_mail_html_transformer::Transformer;
+//! use mail_html_transformer::Transformer;
 //!
 //! let input = r#"
 //! <html>

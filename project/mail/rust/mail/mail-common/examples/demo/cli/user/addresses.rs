@@ -1,7 +1,7 @@
 use crate::cli::ctx::MailContextExt;
 use anyhow::Result;
-use proton_core_common::models::Address;
-use proton_mail_common::MailContext;
+use mail_common::MailContext;
+use mail_core_common::models::Address;
 use std::sync::Arc;
 
 /// List all addresses owned by the user.

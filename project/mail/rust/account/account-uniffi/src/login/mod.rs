@@ -1,17 +1,17 @@
 use crate::{password_validator::PasswordValidatorService, user_behavior::UserBehavior};
 use datatypes::{Fido2RequestFfi, Fido2ResponseFfi, MigrationData};
-use muon::common::IntoDyn;
-use proton_account_api::login as login_api;
-use proton_account_api::login::state::want_qr_confirmation::ProcessTargetDeviceQrError as RealProcessTargetDeviceQrError;
-use proton_account_api::responses as responses_api;
-use proton_core_api::service::ApiServiceError;
-use proton_core_common::post_login_check::PostLoginValidationError as RealPostLoginValidationError;
+use mail_account_api::login as login_api;
+use mail_account_api::login::state::want_qr_confirmation::ProcessTargetDeviceQrError as RealProcessTargetDeviceQrError;
+use mail_account_api::responses as responses_api;
+use mail_core_api::service::ApiServiceError;
+use mail_core_common::post_login_check::PostLoginValidationError as RealPostLoginValidationError;
+use mail_muon::common::IntoDyn;
+use mail_uniffi_common::errors::UserApiServiceError;
+use mail_uniffi_runtime::{async_runtime, uniffi_async};
 use std::sync::Arc;
 use tokio::{sync::Mutex, task::JoinError};
 use tracing::warn;
 use uniffi::Enum as UniffiEnum;
-use uniffi_common::errors::UserApiServiceError;
-use uniffi_runtime::{async_runtime, uniffi_async};
 
 pub mod datatypes;
 

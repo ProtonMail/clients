@@ -1,20 +1,20 @@
 use std::sync::Arc;
 
 use clap::Parser;
-use proton_action_queue::observers::ActionAwaiter;
-use proton_action_queue::queue::BroadcastMessage;
-use proton_core_common::Origin;
-use proton_core_common::datatypes::{ApiConfig, AppDetails};
-use proton_core_common::db::account::SessionEncryptionKey;
-use proton_core_common::event_loop::EventPollMode;
-use proton_core_common::os::{InMemoryKeyChain, KeyChainExt};
-use proton_issue_reporter_service::NoopIssueReporter;
-use proton_log_service::LogService;
-use proton_mail_common::MailContext;
-use proton_mail_common::datatypes::Disposition;
-use proton_mail_common::draft::recipients::RecipientEntry;
-use proton_mail_common::draft::{Draft, RecipientGroupId};
-use proton_mail_common::models::Attachment;
+use mail_action_queue::observers::ActionAwaiter;
+use mail_action_queue::queue::BroadcastMessage;
+use mail_common::MailContext;
+use mail_common::datatypes::Disposition;
+use mail_common::draft::recipients::RecipientEntry;
+use mail_common::draft::{Draft, RecipientGroupId};
+use mail_common::models::Attachment;
+use mail_core_common::Origin;
+use mail_core_common::datatypes::{ApiConfig, AppDetails};
+use mail_core_common::db::account::SessionEncryptionKey;
+use mail_core_common::event_loop::EventPollMode;
+use mail_core_common::os::{InMemoryKeyChain, KeyChainExt};
+use mail_issue_reporter_service::NoopIssueReporter;
+use mail_log_service::LogService;
 use tempfile::TempDir;
 use tokio::runtime;
 use tracing::{error, info};
@@ -42,11 +42,11 @@ async fn main() {
     let env_filter = EnvFilter::builder()
         .with_default_directive(LevelFilter::DEBUG.into())
         .parse_lossy(
-            "info,proton_sqlite3=trace,\
-                proton_core_common=trace,proton_mail_common=trace,\
-                core_event_loop=trace,proton_core_api=trace,\
-                proton_action_queue=trace,proton_mail_api=trace,\
-                stash=error",
+            "info,mail_sqlite3=trace,\
+                mail_core_common=trace,mail_common=trace,\
+                core_event_loop=trace,mail_core_api=trace,\
+                mail_action_queue=trace,mail_api=trace,\
+                mail_stash=error",
         );
     tracing_subscriber::FmtSubscriber::builder()
         .with_env_filter(env_filter)
@@ -69,7 +69,7 @@ async fn main() {
 
     info!("TMP DIR: {:?}", tmp_dir.path());
 
-    let config = proton_log_service::Config::builder()
+    let config = mail_log_service::Config::builder()
         .name("log".into())
         .directory(tmp_dir.path().into())
         .build();

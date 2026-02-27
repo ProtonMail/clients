@@ -1,8 +1,8 @@
 use crate::datatypes::LocalMessageId;
-use stash::macros::Model;
-use stash::orm::Model;
-use stash::stash::{StashError, Tether};
-use stash::{UserDb, params};
+use mail_stash::macros::Model;
+use mail_stash::orm::Model;
+use mail_stash::stash::{StashError, Tether};
+use mail_stash::{UserDb, params};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Model)]
 #[TableName("message_utm_link_urls")]

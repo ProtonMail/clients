@@ -4,8 +4,8 @@ use proton_crypto_account::proton_crypto::crypto::{
 };
 use proton_crypto_account::proton_crypto::utils::to_canonicalized_string;
 
+use mail_crypto_inbox_mime::MimeSignatureVerifier;
 use proton_crypto_account::proton_crypto::CryptoInfoError;
-use proton_crypto_inbox_mime::MimeSignatureVerifier;
 
 pub(crate) fn verify_mime<P>(
     pgp: &P,

@@ -1,7 +1,7 @@
 use crate::models::MailSettings;
 use crate::{MailContextResult, MailUserContext};
-use proton_core_api::services::proton::PrivateEmail;
-use proton_core_common::datatypes::LightOrDarkMode;
+use mail_core_api::services::proton::PrivateEmail;
+use mail_core_common::datatypes::LightOrDarkMode;
 
 impl MailUserContext {
     /// Get sender image for an address.

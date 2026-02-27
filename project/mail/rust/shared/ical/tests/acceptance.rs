@@ -1,7 +1,7 @@
 use insta::assert_snapshot;
 use jiff::Zoned;
+use mail_ical::*;
 use pretty_assertions as pa;
-use proton_ical::*;
 use std::fmt::Write;
 use std::{fs, path::Path};
 use test_case::test_case;

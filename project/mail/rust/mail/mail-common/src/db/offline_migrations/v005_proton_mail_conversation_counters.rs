@@ -1,7 +1,7 @@
-use stash::stash::{Bond, StashError};
-use stash::{UserDb, params};
+use mail_stash::stash::{Bond, StashError};
+use mail_stash::{UserDb, params};
 
-use proton_sqlite3::Migration;
+use mail_sqlite3::Migration;
 
 use super::v001_proton_mail_default_labels::default_labels;
 

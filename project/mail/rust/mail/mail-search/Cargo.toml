@@ -1,5 +1,5 @@
 [package]
-name = "proton-mail-search"
+name = "mail-search"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
@@ -13,22 +13,22 @@ chrono = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 tokio = { workspace = true }
-proton-task-service = { workspace = true }
+mail-task-service = { workspace = true }
 
 # Database access (for intent/blob storage)
-stash = { workspace = true }
+mail-stash = { workspace = true }
 sqlite-watcher = { workspace = true }
 flume = { workspace = true }
 
 # Migration support
 include_dir = { workspace = true }
-proton-sqlite3 = { workspace = true }
+mail-sqlite3 = { workspace = true }
 
 # Message ID types
-proton-mail-api = { workspace = true }
+mail-api = { workspace = true }
 
 # HTML to text conversion (for text/html messages)
-proton-mail-html-transformer = { workspace = true }
+mail-html-transformer = { workspace = true }
 
 # Content hashing for duplicate detection
 sha2 = { workspace = true }

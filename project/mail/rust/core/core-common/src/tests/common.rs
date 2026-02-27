@@ -1,6 +1,6 @@
 use crate::db::migrations::migrate_core_db;
-use stash::UserDb;
-use stash::stash::{Stash, StashConfiguration};
+use mail_stash::UserDb;
+use mail_stash::stash::{Stash, StashConfiguration};
 use tracing::subscriber::set_global_default;
 use tracing_subscriber::fmt::layer;
 use tracing_subscriber::layer::SubscriberExt;
@@ -14,7 +14,7 @@ macro_rules! lid {
 #[macro_export]
 macro_rules! cid {
     ($id:expr) => {{
-        use proton_core_api::services::proton::ContactId;
+        use mail_core_api::services::proton::ContactId;
         Some(ContactId::from($id))
     }};
 }
@@ -22,7 +22,7 @@ macro_rules! cid {
 #[macro_export]
 macro_rules! ceid {
     ($id:expr) => {{
-        use proton_core_api::services::proton::ContactEmailId;
+        use mail_core_api::services::proton::ContactEmailId;
         Some(ContactEmailId::from($id))
     }};
 }
@@ -61,7 +61,7 @@ macro_rules! label {
 
 #[macro_export]
 macro_rules! label_id {
-    ($id:expr) => {{ proton_core_api::services::proton::LabelId::from($id) }};
+    ($id:expr) => {{ mail_core_api::services::proton::LabelId::from($id) }};
 }
 
 #[macro_export]
@@ -91,9 +91,9 @@ pub async fn new_core_test_connection() -> Stash<UserDb> {
             .with(layer().with_test_writer()),
     );
 
-    let stash = Stash::new(StashConfiguration::test()).unwrap();
+    let mail_stash = Stash::new(StashConfiguration::test()).unwrap();
 
-    migrate_core_db(&stash).await.unwrap();
+    migrate_core_db(&mail_stash).await.unwrap();
 
-    stash
+    mail_stash
 }

@@ -1,7 +1,7 @@
 use std::{str::Utf8Error, string::FromUtf8Error};
 
+use mail_crypto_inbox_mime::ProcessMimeError;
 use proton_crypto_account::proton_crypto::CryptoError;
-use proton_crypto_inbox_mime::ProcessMimeError;
 
 use crate::keys::SessionKeyError;
 

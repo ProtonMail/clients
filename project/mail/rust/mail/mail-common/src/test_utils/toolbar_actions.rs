@@ -7,7 +7,7 @@ use crate::actions::{ListAction, MessageAction};
 use crate::datatypes::{MobileAction, MovableSystemFolder, SystemLabelId, theme::MailTheme};
 use crate::decrypted_message::ThemeOpts;
 use crate::models::Message;
-use proton_core_api::services::proton::LabelId;
+use mail_core_api::services::proton::LabelId;
 
 /// Unified test case structure that can be used for both list actions and message actions
 #[derive(Debug)]

@@ -3,24 +3,24 @@ use super::{MailUserSession, datatypes::MailSettings};
 use crate::errors::unexpected::UnexpectedError;
 use crate::errors::{ProtonError, UserSessionError};
 use crate::{LiveQueryCallback, WatchHandle, declare_live_query_tagger, uniffi_async};
-use proton_core_common::models::ModelExtension;
-use proton_mail_common::ProtonMailError as RealProtonMailError;
-use proton_mail_common::models::{
+use mail_common::ProtonMailError as RealProtonMailError;
+use mail_common::models::{
     CustomSettings as RealCustomSettings, MailSettings as RealMailSettings,
     MobileSignatureStatus as RealMobileSignatureStatus,
 };
-use proton_mail_common::{MailContextError, MailUserContext};
+use mail_common::{MailContextError, MailUserContext};
+use mail_core_common::models::ModelExtension;
+use mail_uniffi_runtime::async_runtime;
 use std::sync::Arc;
 use tracing::instrument;
 use uniffi::{Enum, Object, Record};
-use uniffi_runtime::async_runtime;
 
 #[uniffi_export]
 pub async fn mail_settings(ctx: &MailUserSession) -> Result<MailSettings, UserSessionError> {
-    let stash = ctx.user_stash()?;
+    let mail_stash = ctx.user_stash()?;
 
     Ok(uniffi_async::<_, MailContextError, _>(async move {
-        let tether = stash.connection().await?;
+        let tether = mail_stash.connection().await?;
 
         Ok(RealMailSettings::get_or_default(&tether).await)
     })
@@ -31,11 +31,11 @@ pub async fn mail_settings(ctx: &MailUserSession) -> Result<MailSettings, UserSe
 
 #[uniffi_export]
 pub fn mail_settings_sync(ctx: &MailUserSession) -> Result<MailSettings, UserSessionError> {
-    let stash = ctx.user_stash()?;
+    let mail_stash = ctx.user_stash()?;
 
     Ok(async_runtime()
         .block_on(async move {
-            let tether = stash.connection().await?;
+            let tether = mail_stash.connection().await?;
 
             Ok::<_, MailContextError>(RealMailSettings::get_or_default(&tether).await)
         })
@@ -59,8 +59,8 @@ pub async fn watch_mail_settings(
     let ctx = ctx.ctx()?;
 
     uniffi_async(async move {
-        let stash = ctx.user_stash();
-        let tether = stash.connection().await?;
+        let mail_stash = ctx.user_stash();
+        let tether = mail_stash.connection().await?;
 
         let settings = RealMailSettings::all(&tether)
             .await?
@@ -68,7 +68,7 @@ pub async fn watch_mail_settings(
             .unwrap_or_default()
             .into();
 
-        let handle = RealMailSettings::watch(stash).await?;
+        let handle = RealMailSettings::watch(mail_stash).await?;
         let watcher = WatchMailSettingsMarker::watch_channel(&*ctx, handle, callback);
 
         Result::<_, RealProtonMailError>::Ok(SettingsWatcher {

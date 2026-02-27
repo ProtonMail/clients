@@ -1,16 +1,16 @@
 use itertools::Itertools;
-use proton_core_api::services::proton::LabelId;
-use proton_core_common::datatypes::SystemLabel;
-use proton_mail_api::services::proton::common::MessageId;
-use proton_mail_api::services::proton::prelude::RunningTasks;
-use proton_mail_common::api_message_meta;
-use proton_mail_common::datatypes::{AlmostAllMail, IncludeSwitch, SearchOptions, SystemLabelId};
-use proton_mail_common::models::{MailSettings, Message};
-use proton_mail_common::msg_id;
-use proton_mail_common::test_utils::scroller::{TestScroller, TestUpdate, save_single_message};
-use proton_mail_common::test_utils::{init::Params as TestParams, test_context::MailTestContext};
-use stash::orm::Model;
-use stash::stash::StashError;
+use mail_api::services::proton::common::MessageId;
+use mail_api::services::proton::prelude::RunningTasks;
+use mail_common::api_message_meta;
+use mail_common::datatypes::{AlmostAllMail, IncludeSwitch, SearchOptions, SystemLabelId};
+use mail_common::models::{MailSettings, Message};
+use mail_common::msg_id;
+use mail_common::test_utils::scroller::{TestScroller, TestUpdate, save_single_message};
+use mail_common::test_utils::{init::Params as TestParams, test_context::MailTestContext};
+use mail_core_api::services::proton::LabelId;
+use mail_core_common::datatypes::SystemLabel;
+use mail_stash::orm::Model;
+use mail_stash::stash::StashError;
 use std::time::Duration;
 use std::vec;
 

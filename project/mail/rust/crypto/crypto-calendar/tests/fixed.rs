@@ -11,20 +11,20 @@
 //! private keys.
 
 use indoc::indoc;
-use pretty_assertions as pa;
-use proton_calendar_api_v1::{
+use mail_calendar_api_v1::{
     CalendarBootstrap, CalendarKey, CalendarKeyFlags, CalendarMember, CalendarMemberPassphrase,
     CalendarPassphrase,
 };
+use mail_crypto_calendar::{
+    CalendarEventDecryptor, EncryptedIcsRef, KeyPacketRef, KeyPackets, LockedCalendarKey,
+    SignatureRef,
+};
+use pretty_assertions as pa;
 use proton_crypto::{
     crypto::{DataEncoding, PGPProviderSync},
     new_pgp_provider,
 };
 use proton_crypto_account::keys::{DecryptedAddressKey, KeyFlag, KeyId, UnlockedAddressKeys};
-use proton_crypto_calendar::{
-    CalendarEventDecryptor, EncryptedIcsRef, KeyPacketRef, KeyPackets, LockedCalendarKey,
-    SignatureRef,
-};
 
 const ADDRESS_KEY: &str = indoc! {"
     -----BEGIN PGP PRIVATE KEY BLOCK-----

@@ -2,15 +2,15 @@ use crate::core::datatypes::Id;
 use crate::errors::MailScrollerError;
 use crate::mail::datatypes::{Conversation, Message};
 use crate::{PaginatorSearchOptions, WatchHandle, async_runtime, uniffi_async};
-use proton_mail_common::MailUserContext;
-use proton_mail_common::ProtonMailError as RealProtonMailError;
-use proton_mail_common::datatypes::{
+use mail_common::MailUserContext;
+use mail_common::ProtonMailError as RealProtonMailError;
+use mail_common::datatypes::{
     ContextualConversation as RealContextualConversation, IncludeSwitch as RealIncludeSwitch,
     ReadFilter as RealReadFilter,
 };
-use proton_mail_common::models::Message as RealMessage;
-use proton_mail_common::{MailCursor as RealMailCursor, NextMailCursorItem};
-use proton_mail_common::{
+use mail_common::models::Message as RealMessage;
+use mail_common::{MailCursor as RealMailCursor, NextMailCursorItem};
+use mail_common::{
     MailScroller as RealMailScroller, MailScrollerHandle, ScrollerListUpdate, ScrollerStatusUpdate,
     ScrollerUpdate,
 };

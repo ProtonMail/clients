@@ -2,13 +2,13 @@ use super::drafts_common::*;
 
 mod ios_share_ext {
     use super::*;
-    use proton_core_api::services::proton::UserId;
-    use proton_mail_common::draft::Draft;
-    use proton_mail_common::test_utils::{
+    use mail_common::draft::Draft;
+    use mail_common::test_utils::{
         message_body::{TEST_USER_ID, message_body_test_user_secret},
         test_context::MailTestContext,
     };
-    use proton_mail_common::{IosShareExtDraft, IosShareExtension};
+    use mail_common::{IosShareExtDraft, IosShareExtension};
+    use mail_core_api::services::proton::UserId;
 
     #[tokio::test]
     async fn smoke() {
@@ -56,20 +56,20 @@ mod ios_share_ext {
 
 mod mailto {
     use super::*;
-    use proton_core_api::services::proton::{LabelId, UserId};
-    use proton_mail_common::MailUserContext;
-    use proton_mail_common::datatypes::{MimeType, SystemLabelId};
-    use proton_mail_common::draft::recipients::{
+    use mail_common::MailUserContext;
+    use mail_common::datatypes::{MimeType, SystemLabelId};
+    use mail_common::draft::recipients::{
         PrivacyLockState, Recipient, SingleRecipient, ValidationState,
     };
-    use proton_mail_common::draft::{Draft, DraftActor, DraftActorOptions, RecipientGroupId};
-    use proton_mail_common::models::MailSettings;
-    use proton_mail_common::test_utils::message_body::{
+    use mail_common::draft::{Draft, DraftActor, DraftActorOptions, RecipientGroupId};
+    use mail_common::models::MailSettings;
+    use mail_common::test_utils::message_body::{
         TEST_USER_ID, message_body_test_message_simple, message_body_test_user_secret,
     };
-    use proton_mail_common::test_utils::test_context::MailTestContext;
-    use proton_mailto::Mailto;
-    use stash::orm::Model;
+    use mail_common::test_utils::test_context::MailTestContext;
+    use mail_core_api::services::proton::{LabelId, UserId};
+    use mail_mailto::Mailto;
+    use mail_stash::orm::Model;
     use std::sync::Arc;
 
     async fn setup(mailto: Mailto) -> (MailTestContext, Arc<MailUserContext>, DraftActor) {

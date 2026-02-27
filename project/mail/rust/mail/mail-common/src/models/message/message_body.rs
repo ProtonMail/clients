@@ -2,16 +2,16 @@ use crate::datatypes::LocalMessageId;
 #[cfg(feature = "foundation_search")]
 use crate::search::MailSearchService;
 use indoc::indoc;
-use proton_crypto_inbox::message::RawDecryptedBody;
-use proton_sqlite3::rusqlite;
-use proton_sqlite3::rusqlite::types::ToSqlOutput;
-use rusqlite::types;
-use stash::exports::{FromSql, FromSqlError, ToSql, Value};
-use stash::{
+use mail_crypto_inbox::message::RawDecryptedBody;
+use mail_sqlite3::rusqlite;
+use mail_sqlite3::rusqlite::types::ToSqlOutput;
+use mail_stash::exports::{FromSql, FromSqlError, ToSql, Value};
+use mail_stash::{
     macros::DbRecord,
     params,
     stash::{Bond, StashError, Tether},
 };
+use rusqlite::types;
 #[cfg(feature = "foundation_search")]
 use tracing::debug;
 use tracing::instrument;

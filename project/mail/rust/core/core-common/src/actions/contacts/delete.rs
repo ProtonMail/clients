@@ -2,15 +2,15 @@ use crate::CoreContextError;
 use crate::actions::dependency_builder::ActionDependencyKeysBuilder;
 use crate::datatypes::LocalContactId;
 use crate::models::{Contact, ModelExtension, ModelIdExtension};
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
 };
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_api::services::proton::ContactId;
-use proton_core_api::session::Session;
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_core_api::services::proton::ContactId;
+use mail_core_api::session::Session;
+use mail_stash::UserDb;
+use mail_stash::stash::Bond;
 use serde::{Deserialize, Serialize};
-use stash::UserDb;
-use stash::stash::Bond;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Delete {

@@ -5,17 +5,17 @@ use crate::errors::{
 };
 use crate::mail::MailUserSession;
 use crate::{async_runtime, uniffi_async};
-use proton_core_common::utils::MapVec;
-use proton_mail_common::MailContextError;
-use proton_mail_common::MailErrorReason as RealMailErrorReason;
-use proton_mail_common::ProtonMailError as RealProtonMailError;
-use proton_mail_common::datatypes::LocalMessageId;
-use proton_mail_common::draft::observers::{
+use mail_common::MailContextError;
+use mail_common::MailErrorReason as RealMailErrorReason;
+use mail_common::ProtonMailError as RealProtonMailError;
+use mail_common::datatypes::LocalMessageId;
+use mail_common::draft::observers::{
     DraftSendResultWatcher as RealDraftSendResultWatcher, DraftSendResultWatcherMode,
 };
-use proton_mail_common::models::{
+use mail_common::models::{
     DraftSendResult as RealDraftSendResult, DraftSendResultOrigin as RealDraftSendResultOrigin,
 };
+use mail_core_common::utils::MapVec;
 use std::sync::Arc;
 use tokio::task::AbortHandle;
 use tracing::error;

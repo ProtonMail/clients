@@ -6,12 +6,12 @@ use crate::shared::crypto::SharedCryptoError;
 use crate::signup::state::{Recovery, StateKind, Username};
 use crate::{AccountApi, ApiError};
 use futures::TryFutureExt;
-use proton_core_api::services::observability::ApiServiceObservabilityResponse;
-use proton_core_api::store::{DynStore, StoreError};
-use proton_core_common::post_login_check::{PostLoginValidationError, PostLoginValidator};
+use mail_core_api::services::observability::ApiServiceObservabilityResponse;
+use mail_core_api::store::{DynStore, StoreError};
+use mail_core_common::post_login_check::{PostLoginValidationError, PostLoginValidator};
+use mail_observability::{PreLoginMetricRecorder, metric};
 use proton_crypto_account::errors::{AccountCryptoError, SKLError};
 use proton_crypto_account::{proton_crypto::CryptoError, salts::SaltError};
-use proton_observability::{PreLoginMetricRecorder, metric};
 use state::State;
 use std::fmt::Debug;
 use thiserror::Error;
@@ -116,7 +116,7 @@ impl From<SharedCryptoError> for SignupError {
 /// The flow guides the user through the signup process, ensuring all necessary steps
 /// are completed in the correct order.
 pub struct SignupFlow {
-    client: muon::Client,
+    client: mail_muon::Client,
     store: DynStore,
     state: Vec<State>,
     domains: Vec<String>,
@@ -127,7 +127,7 @@ pub struct SignupFlow {
 impl SignupFlow {
     /// Create a new signup flow, implicitly fetching available domains.
     pub async fn new(
-        client: muon::Client,
+        client: mail_muon::Client,
         store: DynStore,
         challenge_info: ChallengeInfo,
         post_login_validator: Box<dyn PostLoginValidator>,
@@ -274,7 +274,7 @@ impl SignupFlow {
     }
 
     /// Complete the signup flow.
-    pub fn complete(&mut self) -> Result<(muon::Client, User, Address), SignupError> {
+    pub fn complete(&mut self) -> Result<(mail_muon::Client, User, Address), SignupError> {
         self.state()?.complete()
     }
 
@@ -290,7 +290,7 @@ impl SignupFlow {
     }
 
     #[must_use]
-    pub fn api(&self) -> &muon::Client {
+    pub fn api(&self) -> &mail_muon::Client {
         &self.client
     }
 
@@ -324,10 +324,10 @@ impl DomainAvailability {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use proton_core_api::services::proton::prelude::{
+    use mail_core_api::services::proton::prelude::{
         PostMetricsRequestData, PostMetricsRequestElement,
     };
-    use proton_observability::into_metrics_element;
+    use mail_observability::into_metrics_element;
     use serde_json::{self, json};
 
     fn assert_serialization_deserialization(

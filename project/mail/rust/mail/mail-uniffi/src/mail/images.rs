@@ -1,4 +1,4 @@
-use proton_mail_common::ImagePolicy as RealImagePolicy;
+use mail_common::ImagePolicy as RealImagePolicy;
 use uniffi::Enum;
 
 #[derive(Clone, Copy, Debug, Enum)]

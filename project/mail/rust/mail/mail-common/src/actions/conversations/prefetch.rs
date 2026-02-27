@@ -2,18 +2,18 @@ use crate::actions::{MailActionError, PREFETCH_ROLLBACK_ACTION_GROUP};
 use crate::datatypes::{ConversationViewOptions, DeletedItemType, LocalConversationId};
 use crate::models::{Conversation, DeletedItem, Message};
 use crate::{MailContextError, MailUserContext};
-use proton_action_queue::action::{
+use mail_action_queue::action::{
     Action, ActionDependencyKeys, ActionGroup, ActionId, DefaultVersionConverter, Handler,
     Priority, Type, WriterGuard,
 };
 
-use proton_action_queue::rebase::RebaseChangeSet;
-use proton_core_common::datatypes::LocalLabelId;
-use proton_core_common::models::{Label, ModelIdExtension};
+use mail_action_queue::rebase::RebaseChangeSet;
+use mail_core_common::datatypes::LocalLabelId;
+use mail_core_common::models::{Label, ModelIdExtension};
+use mail_stash::UserDb;
+use mail_stash::orm::Model;
+use mail_stash::stash::Bond;
 use serde::{self, Deserialize, Serialize};
-use stash::UserDb;
-use stash::orm::Model;
-use stash::stash::Bond;
 use std::sync::Weak;
 use tracing::error;
 

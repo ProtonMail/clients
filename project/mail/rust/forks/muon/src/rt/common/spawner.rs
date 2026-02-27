@@ -2,7 +2,7 @@
 //!
 //! This module defines the [`Spawner`] trait and related types.
 //! A spawner is a type that can spawn a future for background execution.
-//! The `muon` client uses a spawner to drive any asynchronous tasks that it
+//! The `mail_muon` client uses a spawner to drive any asynchronous tasks that it
 //! needs to perform.
 
 use crate::common::IntoDyn;

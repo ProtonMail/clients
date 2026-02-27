@@ -2,8 +2,8 @@ use crate::cli::ctx::MailContextExt;
 use crate::cli::read;
 use anyhow::Result;
 use futures::TryFutureExt;
-use proton_account_api::login::LoginFlow;
-use proton_mail_common::{MailContext, MailUserContext};
+use mail_account_api::login::LoginFlow;
+use mail_common::{MailContext, MailUserContext};
 use std::sync::Arc;
 
 /// Login to an account.

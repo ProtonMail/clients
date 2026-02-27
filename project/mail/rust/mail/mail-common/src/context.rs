@@ -2,52 +2,50 @@ use crate::actions::MailActionError;
 use crate::migration_snooper::MailMigrationSnooper;
 use crate::{AppError, ImageLoaderError, MailUserContext, draft};
 use anyhow::anyhow;
-use proton_account_api::login::LoginFlow;
-use proton_account_api::shared::challenge::ChallengeInfo;
-use proton_account_api::signup::SignupFlow;
-use proton_action_queue::action::{self, Action, WriterGuardError};
-use proton_action_queue::queue::{
-    ActionError as QueueActionError, ActionRequeueReason, QueuedError,
-};
-use proton_calendar_common::RsvpError;
-use proton_core_api::service::ApiServiceError;
-use proton_core_api::services::proton::BuildError;
-use proton_core_api::services::proton::{SessionId, UserId};
-use proton_core_api::session::SessionParts;
-use proton_core_api::verification::DynChallengeNotifier;
-use proton_core_common::auth_store::DecryptExt;
-use proton_core_common::datatypes::ApiConfig;
-use proton_core_common::db::account::{CoreAccount, CoreSession};
-use proton_core_common::device::DynDeviceInfoProvider;
-use proton_core_common::event_loop::EventPollMode;
-use proton_core_common::models::{LabelError, ModelExtension};
-use proton_core_common::os::{KeyChain, KeyChainError};
-use proton_core_common::pin_code::{PinCode, PinError};
-use proton_core_common::post_login_check::DefaultPostLoginValidator;
-use proton_core_common::services::global_feature_flags::FeatureFlagsBackgroundTask;
-use proton_core_common::services::issue_reporter_service::IssueReporterService;
+use mail_account_api::login::LoginFlow;
+use mail_account_api::shared::challenge::ChallengeInfo;
+use mail_account_api::signup::SignupFlow;
+use mail_action_queue::action::{self, Action, WriterGuardError};
+use mail_action_queue::queue::{ActionError as QueueActionError, ActionRequeueReason, QueuedError};
+use mail_calendar_common::RsvpError;
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::BuildError;
+use mail_core_api::services::proton::{SessionId, UserId};
+use mail_core_api::session::SessionParts;
+use mail_core_api::verification::DynChallengeNotifier;
+use mail_core_common::auth_store::DecryptExt;
+use mail_core_common::datatypes::ApiConfig;
+use mail_core_common::db::account::{CoreAccount, CoreSession};
+use mail_core_common::device::DynDeviceInfoProvider;
+use mail_core_common::event_loop::EventPollMode;
+use mail_core_common::models::{LabelError, ModelExtension};
+use mail_core_common::os::{KeyChain, KeyChainError};
+use mail_core_common::pin_code::{PinCode, PinError};
+use mail_core_common::post_login_check::DefaultPostLoginValidator;
+use mail_core_common::services::global_feature_flags::FeatureFlagsBackgroundTask;
+use mail_core_common::services::issue_reporter_service::IssueReporterService;
 
 use core_event_loop::EventLoopError;
-use proton_core_common::services::{
+use mail_core_common::services::{
     DeviceInfoService, NetworkMonitorService, SessionObserverService,
 };
-use proton_core_common::{
+use mail_core_common::{
     ContactError, Context, CoreAccountState, CoreContextError, CoreContextResult, CoreSessionState,
     KeyHandlingError, Origin, UserContext,
 };
-use proton_core_common::{OnSessionDeletedResponse, UserDatabaseInitializer};
-use proton_crypto_inbox::attachment::AttachmentEncryptionError;
-use proton_crypto_inbox::keys::EncryptionPreferencesError;
-use proton_issue_reporter_service::{
+use mail_core_common::{OnSessionDeletedResponse, UserDatabaseInitializer};
+use mail_crypto_inbox::attachment::AttachmentEncryptionError;
+use mail_crypto_inbox::keys::EncryptionPreferencesError;
+use mail_issue_reporter_service::{
     IssueLevel, IssueReportKeys, IssueReporter, TracedIssueReporter,
 };
-use proton_log_service::LogService;
-use proton_network_monitor_service::NetworkMonitorServiceError;
-use proton_sqlite3::MigratorError;
-use proton_task_service::Spawner;
+use mail_log_service::LogService;
+use mail_network_monitor_service::NetworkMonitorServiceError;
+use mail_sqlite3::MigratorError;
+use mail_stash::stash::{Stash, StashError, WatcherHandle};
+use mail_stash::{AccountDb, UserDb};
+use mail_task_service::Spawner;
 use secrecy::ExposeSecret;
-use stash::stash::{Stash, StashError, WatcherHandle};
-use stash::{AccountDb, UserDb};
 use std::collections::HashMap;
 use std::future::Future;
 use std::path::{Path, PathBuf};
@@ -68,7 +66,7 @@ pub struct NewMailUserContextOptions {
     /// Used only for tests - we want to postpone initialization but still
     /// have access to uninitialized context - in order to setup data for mocks etc.
     pub initialize: bool,
-    /// When enabled will force resync the [`User`](`proton_core_common::models::User`) from the
+    /// When enabled will force resync the [`User`](`mail_core_common::models::User`) from the
     /// server.
     pub resync_user: bool,
 }
@@ -124,7 +122,7 @@ pub enum MailContextError {
     #[error("Event Loop: {0}")]
     EventLoop(#[from] EventLoopError),
     #[error("Action Queue: {0}")]
-    ActionQueue(#[from] proton_action_queue::queue::Error),
+    ActionQueue(#[from] mail_action_queue::queue::Error),
     #[error("Action: {0}")]
     Action(#[from] MailActionError),
     #[error("QueuedAction: {0}")]
@@ -327,7 +325,7 @@ impl MailContext {
         device_info_provider: Option<DynDeviceInfoProvider>,
         log_service: LogService,
         event_poll_mode: EventPollMode,
-        network_monitor_config: proton_network_monitor_service::Config,
+        network_monitor_config: mail_network_monitor_service::Config,
         issue_reporter: Arc<dyn IssueReporter>,
     ) -> Result<Arc<Self>, MailContextError> {
         tracing::info!("Creating MailContext");
@@ -417,7 +415,7 @@ impl MailContext {
 
                     let mail_cache_path = ctx.mail_cache_path_for(&user_id);
                     tracing::info!("Removing mail cache directory: {:?}", mail_cache_path);
-                    proton_core_common::nuke::remove_dir(&mail_cache_path).await;
+                    mail_core_common::nuke::remove_dir(&mail_cache_path).await;
                     tracing::info!("Mail cache cleanup completed for user {user_id}");
 
                     OnSessionDeletedResponse::Continue
@@ -1031,8 +1029,8 @@ pub struct MailUserDatabaseInitializer {}
 
 #[async_trait::async_trait]
 impl UserDatabaseInitializer for MailUserDatabaseInitializer {
-    async fn initialize(&self, stash: &Stash<UserDb>) -> Result<(), MigratorError> {
-        crate::db::offline_migrations::run(stash).await?;
+    async fn initialize(&self, mail_stash: &Stash<UserDb>) -> Result<(), MigratorError> {
+        crate::db::offline_migrations::run(mail_stash).await?;
         Ok(())
     }
 }

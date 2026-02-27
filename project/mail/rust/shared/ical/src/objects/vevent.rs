@@ -195,8 +195,8 @@ impl VEvent {
     /// # Example
     ///
     /// ```rust
-    /// # use proton_ical::*;
-    /// # use proton_ical::utils::*;
+    /// # use mail_ical::*;
+    /// # use mail_ical::utils::*;
     /// #
     /// let event = VEvent::new("0001", dt("20180101T120000"))
     ///     .with_dtstart(d("20180101"))
@@ -216,8 +216,8 @@ impl VEvent {
     /// `DTSTART`:
     ///
     /// ```rust
-    /// # use proton_ical::*;
-    /// # use proton_ical::utils::*;
+    /// # use mail_ical::*;
+    /// # use mail_ical::utils::*;
     /// #
     /// let event = VEvent::new("0001", dt("20180101T120000"))
     ///     .with_dtstart(d("20180101"));
@@ -231,8 +231,8 @@ impl VEvent {
     /// If this event doesn't have `DTSTART`, this function will fail:
     ///
     /// ```rust
-    /// # use proton_ical::*;
-    /// # use proton_ical::utils::*;
+    /// # use mail_ical::*;
+    /// # use mail_ical::utils::*;
     /// #
     /// let event = VEvent::new("0001", dt("20180101T120000"));
     ///

@@ -72,7 +72,7 @@ pub enum BuildMimeError {
 /// # Examples
 ///
 /// ```
-/// use proton_crypto_inbox_mime::write::InboxMimeBuilder;
+/// use mail_crypto_inbox_mime::write::InboxMimeBuilder;
 /// let mut output = Vec::new();
 ///
 /// InboxMimeBuilder::new()

@@ -1,6 +1,6 @@
 use super::generic_mobile_actions::{ActionContext, GenericMobileActions};
 use crate::datatypes::{MobileAction, SystemLabelId};
-use proton_core_api::services::proton::LabelId;
+use mail_core_api::services::proton::LabelId;
 
 pub struct MobileActionsBuilder<T: GenericMobileActions> {
     visible_actions: Vec<T>,

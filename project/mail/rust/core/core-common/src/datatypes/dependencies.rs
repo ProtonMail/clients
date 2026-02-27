@@ -4,15 +4,15 @@ use crate::{
     CoreContextError,
     models::{Contact, ContactEmail},
 };
-use proton_core_api::{
+use mail_core_api::{
     services::proton::{ContactEmail as ApiContactEmail, ContactId},
     session::Session,
 };
-use stash::{
+use mail_stash::{
     UserDb,
     stash::{RunTransaction, Tether},
 };
-use stash::{orm::Model, params};
+use mail_stash::{orm::Model, params};
 
 #[derive(Default)]
 pub struct ContactsDependencyFetcher {

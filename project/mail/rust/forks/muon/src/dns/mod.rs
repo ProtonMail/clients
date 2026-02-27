@@ -1,6 +1,6 @@
 //! ## DNS
 //!
-//! This module provides DNS resolution capabilities for the `muon` library.
+//! This module provides DNS resolution capabilities for the `mail_muon` library.
 //! It defines the [`Dns`] trait, which is an abstraction over a DNS client,
 //! and an adapter to use a DNS client as a [`Resolver`];
 //!

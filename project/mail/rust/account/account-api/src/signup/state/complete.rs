@@ -7,23 +7,23 @@ use crate::prelude::*;
 #[derive(Debug, Display, Clone)]
 #[display("Complete")]
 pub struct Complete {
-    client: muon::Client,
+    client: mail_muon::Client,
     user: User,
     addr: Address,
 }
 
 impl Complete {
-    pub fn new(client: muon::Client, user: User, addr: Address) -> Self {
+    pub fn new(client: mail_muon::Client, user: User, addr: Address) -> Self {
         Self { client, user, addr }
     }
 
     /// Consumes the state and returns the authenticated client and user details.
-    pub fn into_inner(self) -> (muon::Client, User, Address) {
+    pub fn into_inner(self) -> (mail_muon::Client, User, Address) {
         (self.client, self.user, self.addr)
     }
 
     /// Returns a reference to the client.
-    pub fn client(&self) -> &muon::Client {
+    pub fn client(&self) -> &mail_muon::Client {
         &self.client
     }
 

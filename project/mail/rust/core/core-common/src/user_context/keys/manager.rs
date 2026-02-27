@@ -12,12 +12,16 @@ use crate::models::Address;
 use crate::models::{ModelIdExtension, User};
 use crate::{CoreContextError, CoreContextResult, UserContext};
 use indoc::indoc;
+use mail_core_api::consts::CoreBundle;
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::ProtonCore;
+use mail_core_api::services::proton::{AddressId, UserId};
+use mail_core_api::services::proton::{GetKeysAllOptions, PrivateEmailRef};
+use mail_stash::macros::DbRecord;
+use mail_stash::orm::Model;
+use mail_stash::stash::{Bond, StashError, Tether};
+use mail_stash::{params, sql_using_serde};
 use parking_lot::RwLock;
-use proton_core_api::consts::CoreBundle;
-use proton_core_api::service::ApiServiceError;
-use proton_core_api::services::proton::ProtonCore;
-use proton_core_api::services::proton::{AddressId, UserId};
-use proton_core_api::services::proton::{GetKeysAllOptions, PrivateEmailRef};
 use proton_crypto_account::keys::{
     APIPublicAddressKeyGroup, APIPublicAddressKeys, PublicAddressKeys,
 };
@@ -26,10 +30,6 @@ use proton_crypto_account::keys::{
 };
 use proton_crypto_account::proton_crypto::crypto::PGPProviderSync;
 use serde::{Deserialize, Serialize};
-use stash::macros::DbRecord;
-use stash::orm::Model;
-use stash::stash::{Bond, StashError, Tether};
-use stash::{params, sql_using_serde};
 use std::{collections::HashMap, time::Duration};
 
 /// Manages an caches the PGP keys.

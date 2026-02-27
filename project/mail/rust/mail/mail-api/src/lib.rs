@@ -10,7 +10,7 @@ pub const MAX_LIMIT_VALUE_U64: u64 = 150;
 
 pub const INCOMING_DEFAULTS_PAGE_SIZE: u64 = 100;
 
-pub use proton_core_api;
+pub use mail_core_api;
 
 #[cfg(test)]
 mod integration_tests {

@@ -1,7 +1,7 @@
 use crate::models::PaidSubscription;
 use crate::test_utils::account::{TEST_USER_ID, TEST_USER_MAIL, testdata_user_keys};
 use crate::test_utils::test_context::TestContext;
-use proton_core_api::services::proton::{
+use mail_core_api::services::proton::{
     DateFormat as ApiDateFormat, DelinquentState, Density as ApiDensity, Email as ApiEmail,
     Flags as ApiFlags, GetSettingsResponse as GetCoreSettingsResponse, GetUsersResponse,
     HighSecurity as ApiHighSecurity, LogAuth as ApiLogAuth, Password as ApiPassword,

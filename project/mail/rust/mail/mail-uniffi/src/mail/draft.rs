@@ -20,20 +20,20 @@ use crate::mail::state::MailUserContextPtr;
 use crate::mail::{ImagePolicy, MailUserSession};
 use crate::{async_runtime, uniffi_async};
 use chrono::Local;
-use proton_core_api::services::proton::PrivateEmail;
-use proton_mail_common::ProtonMailError as RealProtonMailError;
-use proton_mail_common::draft::recipients::ExpirationFeatureSupportReport;
-use proton_mail_common::draft::{
+use mail_common::ProtonMailError as RealProtonMailError;
+use mail_common::draft::recipients::ExpirationFeatureSupportReport;
+use mail_common::draft::{
     Draft as RealDraft, DraftActorOptions, DraftEvent,
     DraftExpirationTime as RealDraftExpirationTime, DraftSyncStatus as RealDraftSyncStatus, EoData,
     RecipientGroupId, ReplyMode, ScheduleSendOptions,
     compose::DraftAddressValidationError as RealDraftAddressValidationError,
     compose::DraftAddressValidationResult as RealDraftAddressValidationResult,
 };
-use proton_mail_common::models::DraftSendResult as RealDraftSendResult;
-use proton_mail_common::models::{DraftMetadata, MessageMimeType as RealMessageMimeType};
-use proton_mail_common::{MailContextError, MailUserContext};
-use proton_mailto::Mailto;
+use mail_common::models::DraftSendResult as RealDraftSendResult;
+use mail_common::models::{DraftMetadata, MessageMimeType as RealMessageMimeType};
+use mail_common::{MailContextError, MailUserContext};
+use mail_core_api::services::proton::PrivateEmail;
+use mail_mailto::Mailto;
 use recipients::ComposerRecipientList;
 use secrecy::{ExposeSecret, SecretString};
 use std::str::FromStr;
@@ -79,9 +79,9 @@ pub struct ComposerContent {
 impl From<ScheduleSendOptions<Local>> for DraftScheduleSendOptions {
     fn from(value: ScheduleSendOptions<Local>) -> Self {
         Self {
-            tomorrow_time: proton_core_common::datatypes::UnixTimestamp::from(value.time_tomorrow)
+            tomorrow_time: mail_core_common::datatypes::UnixTimestamp::from(value.time_tomorrow)
                 .into(),
-            monday_time: proton_core_common::datatypes::UnixTimestamp::from(value.time_next_monday)
+            monday_time: mail_core_common::datatypes::UnixTimestamp::from(value.time_next_monday)
                 .into(),
             is_custom_option_available: value.is_custom_datetime_available,
         }
@@ -162,7 +162,7 @@ impl Draft {
     async fn new_impl(
         ctx: MailUserContextPtr,
         real_ctx: &MailUserContext,
-        draft: proton_mail_common::draft::Draft,
+        draft: mail_common::draft::Draft,
     ) -> Result<Arc<Self>, MailContextError> {
         let state = draft.state().await?;
         let staging_path = draft.attachment_staging_path(real_ctx);
@@ -629,7 +629,7 @@ impl Draft {
 
     #[returns(VoidDraftSendResult)]
     pub async fn schedule(self: Arc<Self>, timestamp: UnixTimestamp) -> Result<(), DraftSendError> {
-        let timestamp = proton_core_common::datatypes::UnixTimestamp::from(timestamp)
+        let timestamp = mail_core_common::datatypes::UnixTimestamp::from(timestamp)
             .to_date_time()
             .ok_or(DraftSendError::Other(ProtonError::Unexpected(
                 UnexpectedError::Internal,
@@ -867,7 +867,7 @@ pub async fn draft_cancel_schedule_send(
     .map_err(DraftCancelScheduleSendError::from)?;
 
     Ok(DraftCancelScheduledSendInfo {
-        last_scheduled_time: proton_core_common::datatypes::UnixTimestamp::from(old_time).into(),
+        last_scheduled_time: mail_core_common::datatypes::UnixTimestamp::from(old_time).into(),
     })
 }
 
@@ -902,7 +902,7 @@ impl TryFrom<DraftExpirationTime> for RealDraftExpirationTime {
             DraftExpirationTime::OneDay => Ok(RealDraftExpirationTime::OneDay),
             DraftExpirationTime::ThreeDays => Ok(RealDraftExpirationTime::ThreeDays),
             DraftExpirationTime::Custom(timestamp) => {
-                let expiration_time = proton_core_common::datatypes::UnixTimestamp::from(timestamp)
+                let expiration_time = mail_core_common::datatypes::UnixTimestamp::from(timestamp)
                     .to_date_time()
                     .ok_or(DraftExpirationError::Other(ProtonError::Unexpected(
                         UnexpectedError::Internal,
@@ -953,5 +953,5 @@ fn draft_options() -> DraftActorOptions {
 
 #[uniffi::export]
 pub fn sanitize_pasted_content(content: &str, mime_type: MessageMimeType) -> String {
-    proton_mail_common::draft::compose::sanitize_pasted_content(content, mime_type.into())
+    mail_common::draft::compose::sanitize_pasted_content(content, mime_type.into())
 }

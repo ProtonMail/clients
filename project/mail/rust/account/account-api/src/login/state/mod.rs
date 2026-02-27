@@ -12,20 +12,20 @@ use crate::shared::crypto::{NewAddrKey, NewUserKey, SharedCryptoError};
 use derive_more::{Debug, From};
 use futures::TryFutureExt;
 use itertools::Itertools;
-use muon::rest::auth::v4::fido2;
-use proton_core_api::auth::UserKeySecret;
-use proton_core_api::services::proton::{
+use mail_core_api::auth::UserKeySecret;
+use mail_core_api::services::proton::{
     Address, AddressId, PasswordMode, ProtonCore, SessionId, User, UserId,
 };
-use proton_core_api::session::{Session, SessionParts};
-use proton_core_api::store::UserData;
-use proton_core_common::post_login_check::{UserCheckResult, UserCheckStatus};
+use mail_core_api::session::{Session, SessionParts};
+use mail_core_api::store::UserData;
+use mail_core_common::post_login_check::{UserCheckResult, UserCheckStatus};
+use mail_muon::rest::auth::v4::fido2;
+use mail_observability::{PreLoginMetricRecorder, metric};
 use proton_crypto_account::keys::{LockedKey, UnlockedUserKey, UserKeys};
 use proton_crypto_account::proton_crypto;
 use proton_crypto_account::proton_crypto::crypto::PGPProviderSync;
 use proton_crypto_account::proton_crypto::srp::SRPProvider;
 use proton_crypto_account::salts::{Salt, Salts};
-use proton_observability::{PreLoginMetricRecorder, metric};
 use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -151,7 +151,7 @@ impl State {
     /// the Legacy version of the application.
     pub async fn migrate(
         self,
-        client: muon::Client,
+        client: mail_muon::Client,
         user_id: UserId,
         session_id: SessionId,
         user_data: UserData,
@@ -264,7 +264,7 @@ impl State {
     /// Create a `WantLogin` state.
     #[must_use]
     pub fn new(
-        client: muon::Client,
+        client: mail_muon::Client,
         parts: SessionParts,
         challenge_info: Option<ChallengeInfo>,
     ) -> Self {
@@ -274,7 +274,7 @@ impl State {
     /// Create a `WantNewPassword` state from a resumed login flow.
     #[must_use]
     pub fn new_from_new_password(
-        client: muon::Client,
+        client: mail_muon::Client,
         parts: SessionParts,
         user_id: UserId,
         session_id: SessionId,
@@ -293,7 +293,7 @@ impl State {
     #[allow(clippy::too_many_arguments)]
     #[must_use]
     pub fn new_from_tfa(
-        client: muon::Client,
+        client: mail_muon::Client,
         parts: SessionParts,
         user_id: UserId,
         session_id: SessionId,
@@ -313,7 +313,7 @@ impl State {
     /// Create a `WantMbp` state from a resumed login flow.
     #[must_use]
     pub fn new_from_mbp(
-        client: muon::Client,
+        client: mail_muon::Client,
         parts: SessionParts,
         user_id: UserId,
         session_id: SessionId,
@@ -333,7 +333,7 @@ impl State {
 impl State {
     /// Create a `WantLogin` state.
     fn want_login(
-        client: muon::Client,
+        client: mail_muon::Client,
         parts: SessionParts,
         challenge_info: Option<ChallengeInfo>,
     ) -> Self {
@@ -352,18 +352,18 @@ impl State {
     }
 
     /// Create a `WantMbp` state.
-    fn want_mbp(client: muon::Client, data: StateData) -> Self {
+    fn want_mbp(client: mail_muon::Client, data: StateData) -> Self {
         WantMbp::new(client, data).into()
     }
 
     /// Create a `WantNewPassword` state.
-    fn want_new_password(client: muon::Client, data: StateData) -> Self {
+    fn want_new_password(client: mail_muon::Client, data: StateData) -> Self {
         WantNewPassword::new(client, data).into()
     }
 
     /// Inspect the user after successful authentication and determine the appropriate next step.
     async fn inspect_user(
-        client: muon::Client,
+        client: mail_muon::Client,
         data: StateData,
         pass: SecureString,
         post_login_validator: &dyn PostLoginValidator,
@@ -407,7 +407,7 @@ impl State {
 
     /// Complete the finalization with key unlocking and storage.
     async fn finalize(
-        client: muon::Client,
+        client: mail_muon::Client,
         data: StateData,
         pass: SecureString,
         post_login_validator: &dyn PostLoginValidator,
@@ -530,7 +530,7 @@ impl State {
 
     /// Finalize login flow for the migration.
     async fn finalize_migration(
-        client: muon::Client,
+        client: mail_muon::Client,
         data: StateData,
         user_data: UserData,
     ) -> Result<Self, LoginError> {
@@ -548,7 +548,7 @@ impl State {
     async fn setup_keys<S: SRPProvider, P: PGPProviderSync>(
         srp: &S,
         pgp: &P,
-        client: &muon::Client,
+        client: &mail_muon::Client,
         addr: &[Address],
         pass: &str,
     ) -> Result<(User, Vec<Address>), LoginError> {
@@ -615,7 +615,7 @@ impl State {
 
     /// Set up a new address for an external account that doesn't have any addresses.
     #[allow(unused)]
-    async fn setup_address(client: &muon::Client, user: &User) -> Result<(), LoginError> {
+    async fn setup_address(client: &mail_muon::Client, user: &User) -> Result<(), LoginError> {
         use crate::requests::PostAddressesSetupRequest;
 
         let domains = AccountApi::get_available_domains(client, Some("signup".to_owned()))
@@ -642,7 +642,7 @@ impl State {
     /// Set up keys for all addresses that don't have any keys.
     async fn setup_address_keys<P: PGPProviderSync>(
         pgp: &P,
-        client: &muon::Client,
+        client: &mail_muon::Client,
         user_key: &UnlockedUserKey<P>,
         addresses: &[Address],
     ) -> Result<Vec<Address>, LoginError> {
@@ -663,7 +663,7 @@ impl State {
     /// Set up keys for an address that doesn't have any keys.
     async fn setup_address_key<P: PGPProviderSync>(
         pgp: &P,
-        client: &muon::Client,
+        client: &mail_muon::Client,
         user_key: &UnlockedUserKey<P>,
         address: &Address,
     ) -> Result<(), LoginError> {
@@ -769,10 +769,10 @@ enum UnlockUserKeyStatus {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use proton_core_api::services::proton::prelude::{
+    use mail_core_api::services::proton::prelude::{
         PostMetricsRequestData, PostMetricsRequestElement,
     };
-    use proton_observability::into_metrics_element;
+    use mail_observability::into_metrics_element;
     use serde_json::{self, json};
 
     fn assert_serialization_deserialization(status: UnlockUserKeyStatus, expected_status: &str) {

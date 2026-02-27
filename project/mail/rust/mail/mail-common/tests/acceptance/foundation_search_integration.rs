@@ -1,16 +1,16 @@
-use proton_core_api::services::proton::prelude::{Action, EventId};
-use proton_core_common::datatypes::SystemLabel;
-use proton_core_common::models::ModelIdExtension;
-use proton_mail_api::services::proton::common::MessageId;
-use proton_mail_api::services::proton::response_data::{MailEvent, MessageEvent};
-use proton_mail_common::api_message_meta;
-use proton_mail_common::models::Message;
-use proton_mail_common::test_utils::{
+use mail_api::services::proton::common::MessageId;
+use mail_api::services::proton::response_data::{MailEvent, MessageEvent};
+use mail_common::api_message_meta;
+use mail_common::models::Message;
+use mail_common::test_utils::{
     init::Params as TestParams,
     test_context::{MailTestContext, MailUserContextTestExtension},
 };
-use proton_mail_search::{SearchIndexIntent, SearchOperation};
-use stash::orm::Model;
+use mail_core_api::services::proton::prelude::{Action, EventId};
+use mail_core_common::datatypes::SystemLabel;
+use mail_core_common::models::ModelIdExtension;
+use mail_search::{SearchIndexIntent, SearchOperation};
+use mail_stash::orm::Model;
 
 /// Integration test for Foundation Search indexing via message events
 ///

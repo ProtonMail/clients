@@ -125,7 +125,7 @@ fn run_worker(id: usize, ex: Arc<Executor<'static>>, rx: Receiver<()>) -> JoinHa
     trace!(%id, "spawning worker thread");
 
     thread::Builder::new()
-        .name(format!("muon-{id}"))
+        .name(format!("mail_muon-{id}"))
         .spawn(move || {
             trace_span!("worker", %id).in_scope(move || {
                 let mut rx = pin!(rx);

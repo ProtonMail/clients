@@ -1,5 +1,5 @@
 use anyhow::Result;
-use proton_core_api::verification::{ChallengePayload, ChallengeResponse};
+use mail_core_api::verification::{ChallengePayload, ChallengeResponse};
 use std::sync::mpsc::Sender;
 
 #[derive(Debug)]

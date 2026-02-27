@@ -2,7 +2,7 @@ use crate::app::events::{NewChallengeEvent, Proxy, UserEvent};
 use anyhow::Result;
 use async_trait::async_trait;
 use futures::TryFutureExt;
-use proton_core_api::verification::*;
+use mail_core_api::verification::*;
 use serde::Deserialize;
 use std::sync::mpsc::channel;
 

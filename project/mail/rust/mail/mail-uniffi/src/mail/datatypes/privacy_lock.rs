@@ -1,4 +1,4 @@
-use proton_crypto_inbox::lock_icon::{LockColor, LockIcon, LockTooltip, UiLock};
+use mail_crypto_inbox::lock_icon::{LockColor, LockIcon, LockTooltip, UiLock};
 
 #[derive(Clone, uniffi::Record)]
 pub struct PrivacyLock {

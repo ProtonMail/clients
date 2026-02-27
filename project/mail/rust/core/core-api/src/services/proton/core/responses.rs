@@ -26,7 +26,7 @@
 //! are used by both requests and responses.
 //!
 
-use proton_api_utils::PaginateResponse;
+use mail_api_utils::PaginateResponse;
 use proton_crypto_account::keys::{
     APIPublicAddressKeyGroup as PublicAddressKeyGroup,
     APIUnverifiedPublicAddressKeyGroup as UnverifiedPublicAddressKeyGroup, ArmoredPrivateKey,

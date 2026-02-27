@@ -16,14 +16,14 @@ use crate::{
 };
 use core_event_loop::v6::EventSubscriberError;
 use core_event_loop::{EventLoopError, EventProviderError};
-use proton_action_queue::action::Action;
-use proton_action_queue::queue::{ActionError as InternalActionError, MultiActionError};
-use proton_core_api::service::ApiServiceError;
-use proton_core_common::ContactError;
-use proton_core_common::device_registration::RegisteredDeviceTaskError;
-use proton_core_common::models::LabelError;
-use proton_core_common::pin_code::PinError;
-use stash::UserDb;
+use mail_action_queue::action::Action;
+use mail_action_queue::queue::{ActionError as InternalActionError, MultiActionError};
+use mail_core_api::service::ApiServiceError;
+use mail_core_common::ContactError;
+use mail_core_common::device_registration::RegisteredDeviceTaskError;
+use mail_core_common::models::LabelError;
+use mail_core_common::pin_code::PinError;
+use mail_stash::UserDb;
 
 /// Categories of errors that can be returned by the ProtonMail SDK.
 ///
@@ -128,14 +128,14 @@ impl From<ApiServiceError> for ProtonMailError {
     }
 }
 
-impl From<proton_account_api::ApiError> for ProtonMailError {
-    fn from(error: proton_account_api::ApiError) -> Self {
+impl From<mail_account_api::ApiError> for ProtonMailError {
+    fn from(error: mail_account_api::ApiError) -> Self {
         let _guard = log_error(&error);
         match error {
-            proton_account_api::ApiError::Muon(error) => Self::from(ApiServiceError::from(error)),
-            proton_account_api::ApiError::Status(error) => Self::from(ApiServiceError::from(error)),
-            proton_account_api::ApiError::Serialization(_) => Self::from(Unexpected::Internal),
-            proton_account_api::ApiError::Internal(_) => Self::from(Unexpected::Internal),
+            mail_account_api::ApiError::Muon(error) => Self::from(ApiServiceError::from(error)),
+            mail_account_api::ApiError::Status(error) => Self::from(ApiServiceError::from(error)),
+            mail_account_api::ApiError::Serialization(_) => Self::from(Unexpected::Internal),
+            mail_account_api::ApiError::Internal(_) => Self::from(Unexpected::Internal),
         }
     }
 }

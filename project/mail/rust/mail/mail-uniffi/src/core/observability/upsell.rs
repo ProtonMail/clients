@@ -1,12 +1,12 @@
 use crate::mail::MailUserSession;
-use proton_core_common::datatypes::UnixTimestamp;
-use proton_mail_common::MailUserContext;
-use proton_observability::metric;
+use mail_common::MailUserContext;
+use mail_core_common::datatypes::UnixTimestamp;
+use mail_observability::metric;
+use mail_uniffi_runtime::async_runtime;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use thiserror::Error;
 use tracing::error;
-use uniffi_runtime::async_runtime;
 
 #[derive(Debug, Error)]
 pub enum ObservabilityError {

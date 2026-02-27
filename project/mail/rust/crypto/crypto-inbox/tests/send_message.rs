@@ -14,7 +14,7 @@ use proton_crypto_account::keys::{
     UnlockedAddressKey,
 };
 
-use proton_crypto_inbox::{
+use mail_crypto_inbox::{
     attachment::{
         AttachmentEncryptedSignature, AttachmentSignature, DecryptableAttachment, KeyPackets,
     },
@@ -36,7 +36,7 @@ use proton_crypto_inbox::{
     },
 };
 
-use proton_crypto_inbox_mime::{MimeProcessor, ProcessMime, write::InboxMimeBuilder};
+use mail_crypto_inbox_mime::{MimeProcessor, ProcessMime, write::InboxMimeBuilder};
 
 mod common;
 
@@ -482,7 +482,7 @@ fn send_external_mime_sign_only() {
 /// Contains all test models for the send email request.
 mod send_request {
 
-    use proton_crypto_inbox::attachment::Base64AttachmentEncryptedSignature;
+    use mail_crypto_inbox::attachment::Base64AttachmentEncryptedSignature;
 
     use super::*;
 
@@ -540,7 +540,7 @@ mod send_request {
 
 /// Contains all test domain models.
 mod models {
-    use proton_crypto_inbox_mime::Disposition;
+    use mail_crypto_inbox_mime::Disposition;
 
     use super::*;
 
@@ -1063,7 +1063,7 @@ mod send_logic {
 
         for attachment in &draft.attachments {
             match attachment.disposition {
-                proton_crypto_inbox_mime::Disposition::Attachment => {
+                mail_crypto_inbox_mime::Disposition::Attachment => {
                     builder = builder.attachment(
                         &attachment.name,
                         Some(&attachment.mime_type),
@@ -1071,7 +1071,7 @@ mod send_logic {
                     );
                 }
 
-                proton_crypto_inbox_mime::Disposition::Inline => {
+                mail_crypto_inbox_mime::Disposition::Inline => {
                     if let Some(content_id) = attachment.headers.get("content-id") {
                         builder = builder.inline_attachment(
                             content_id,

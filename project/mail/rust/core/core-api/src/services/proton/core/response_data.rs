@@ -38,10 +38,12 @@ use serde_repr::Serialize_repr;
 use serde_with::{BoolFromInt, DefaultOnNull, FromInto, serde_as};
 
 mod legacy_feature_flags;
-mod unleash_toggles;
 
+pub use core_unleash_op::{
+    GetUnleashFeaturesResponse, UnleashToggle, UnleashTogglePayload, UnleashTogglePayloadType,
+    UnleashToggleVariant,
+};
 pub use legacy_feature_flags::*;
-pub use unleash_toggles::*;
 
 //  ENUMS
 //==============================================================================

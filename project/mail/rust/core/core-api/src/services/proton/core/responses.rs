@@ -296,13 +296,6 @@ pub struct UserKey {
     pub flags: u32,
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "camelCase")]
-pub struct GetUnleashFeaturesResponse {
-    pub toggles: Vec<UnleashToggle>,
-}
-
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 #[cfg_attr(feature = "mocks", derive(Serialize))]
 #[serde(rename_all = "PascalCase")]

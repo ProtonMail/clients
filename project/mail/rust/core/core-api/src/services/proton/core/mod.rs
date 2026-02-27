@@ -26,8 +26,8 @@ pub const CORE_V5: &str = "/core/v5";
 pub const CORE_V6: &str = "/core/v6";
 pub const CONTACTS_V6: &str = "/contacts/v6";
 
-/// The Unleash API base path (v2).
-pub const UNLEASH_V2: &str = "/feature/v2";
+/// Re-export Unleash API base path from core-unleash-op.
+pub use core_unleash_op::UNLEASH_V2;
 
 #[allow(async_fn_in_trait)]
 pub trait ProtonCore {

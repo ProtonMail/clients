@@ -56,6 +56,9 @@
 [workspace.dependencies.core-muon-op]
   path = "project/core/rust/core-muon-op"
 
+[workspace.dependencies.core-unleash-op]
+  path = "project/core/rust/core-unleash-op"
+
 [workspace.dependencies.muon]
   version = "2.0.4"
   registry = "proton"

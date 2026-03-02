@@ -167,6 +167,9 @@
 [workspace.dependencies.num_enum]
   version = "0.7"
 
+[workspace.dependencies]
+  flume = "0.12"
+
 [workspace.lints.clippy]
   all = "deny"
 

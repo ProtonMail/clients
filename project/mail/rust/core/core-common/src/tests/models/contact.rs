@@ -184,6 +184,18 @@ mod contact_list {
         label!(local_id: lid!(100), remote_id: Some(label_id!("family")), name: "Family".to_string(), label_type: LabelType::ContactGroup)
     ]
     ,5; "TEST 5 Contact groups (labels)")]
+    #[test_case(vec![
+        contact!(local_id: lid!(123), name: "Jake Peralta".to_string(), contact_emails: vec![
+            contact_email!(local_id: lid!(1), remote_id: ceid!("1"), email: "jake@99.com".into(), label_ids: labels!("squad")),
+            contact_email!(local_id: lid!(2), remote_id: ceid!("2"), email: "jake.peralta@work.com".into()),
+        ]),
+        contact!(local_id: lid!(124), name: "Amy Santiago".to_string(), contact_emails: vec![
+            contact_email!(local_id: lid!(3), remote_id: ceid!("3"), email: "amy@99.com".into(), label_ids: labels!("squad")),
+        ]),
+    ], vec![
+        label!(local_id: lid!(200), remote_id: Some(label_id!("squad")), name: "Squad".to_string(), label_type: LabelType::ContactGroup)
+    ]
+    ,6; "TEST 6 Only emails explicitly added to the group are shown")]
     fn test_grouped_contacts(contacts: Vec<Contact>, groups: Vec<Label>, test_number: u32) {
         let groups = GroupedContacts::from_contacts_and_groups(contacts, groups);
         insta::assert_snapshot!(
@@ -217,6 +229,51 @@ mod contact_list {
 
         let result = Contact::contact_list(&tether).await.unwrap();
         insta::assert_snapshot!(display_group(result));
+    }
+
+    #[tokio::test]
+    async fn test_contact_group_by_id_only_returns_emails_in_group() {
+        let mut tether = new_core_test_connection().await.connection().await.unwrap();
+
+        let group_id = LabelId::from("squad");
+        let mut group = Label {
+            remote_id: Some(group_id.clone()),
+            name: "Squad".to_owned(),
+            label_type: LabelType::ContactGroup,
+            ..Label::test_default()
+        };
+
+        let mut contact = contact!(remote_id: cid!("peralta"), name: "Jake Peralta".to_string());
+
+        let email_in_group = contact_email!(
+            remote_id: ceid!("1"),
+            email: "jake@99.com".into(),
+            label_ids: Labels::new(vec![group_id.clone()]),
+            remote_contact_id: contact.remote_id.clone()
+        );
+        let email_not_in_group = contact_email!(
+            remote_id: ceid!("2"),
+            email: "jake.peralta@work.com".into(),
+            remote_contact_id: contact.remote_id.clone()
+        );
+
+        contact.contact_emails = vec![email_in_group, email_not_in_group];
+
+        tether
+            .tx::<_, _, StashError>(async |tx| {
+                group.save(tx).await.unwrap();
+                contact.save(tx).await.unwrap();
+                Ok(())
+            })
+            .await
+            .unwrap();
+
+        let result = Contact::contact_group_by_id(&tether, group.id())
+            .await
+            .unwrap();
+
+        assert_eq!(result.contacts.len(), 1);
+        assert_eq!(result.contacts[0].email.as_clear_text_str(), "jake@99.com");
     }
 
     #[tokio::test]

@@ -449,7 +449,7 @@ impl Contact {
              JOIN contacts ON contact_emails.remote_contact_id = contacts.remote_id
              WHERE contacts.deleted = 0
              AND EXISTS (
-                 SELECT 1 FROM json_each(contacts.label_ids)
+                 SELECT 1 FROM json_each(contact_emails.label_ids)
                  WHERE json_each.value = ?
              )
              ORDER BY contact_emails.display_order, contact_emails.local_id",

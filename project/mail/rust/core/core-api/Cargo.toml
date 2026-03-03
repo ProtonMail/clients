@@ -8,7 +8,7 @@ categories = ["api-bindings"]
 license.workspace = true
 
 [dependencies]
-core-unleash-op = { path = "../../../../core/rust/core-unleash-op" }
+core-feature-flags = { path = "../../../../core/rust/core-feature-flags" }
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 bytes = { workspace = true }
@@ -43,7 +43,7 @@ mail-core-api = { path = ".", features = ["mocks"] }
 [features]
 default = []
 sql = ["dep:mail-stash"]
-mocks = ["core-unleash-op/mocks"]
+mocks = ["core-feature-flags/mocks"]
 
 [lints]
 workspace = true

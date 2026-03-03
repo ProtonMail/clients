@@ -32,6 +32,8 @@ dependencies = [
  "core-common-types",
  "core-device-info-op",
  "core-event-loop",
+ "core-feature-flags",
+ "core-feature-flags-op",
  "core-fido-op",
  "core-hv-op",
  "core-key",
@@ -42,7 +44,6 @@ dependencies = [
  "core-muon-op",
  "core-observability",
  "core-proc",
- "core-unleash-op",
  "core-user-manager",
  "core-validator",
  "crux_core",
@@ -1113,6 +1114,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "core-feature-flags"
+version = "0.1.0"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "core-feature-flags-op"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "core-feature-flags",
+ "core-muon-op",
+ "core-proc",
+ "crux_core",
+ "facet",
+ "serde",
+ "thiserror 2.0.18",
+]
+
+[[package]]
 name = "core-fido-op"
 version = "0.1.0"
 dependencies = [
@@ -1325,19 +1347,6 @@ dependencies = [
  "tokio",
  "uniffi",
  "uuid",
-]
-
-[[package]]
-name = "core-unleash-op"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "core-proc",
- "crux_core",
- "derive_more 2.1.1",
- "facet",
- "serde",
- "thiserror 2.0.18",
 ]
 
 [[package]]

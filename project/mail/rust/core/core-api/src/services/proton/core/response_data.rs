@@ -39,7 +39,7 @@ use serde_with::{BoolFromInt, DefaultOnNull, FromInto, serde_as};
 
 mod legacy_feature_flags;
 
-pub use core_unleash_op::{
+pub use core_feature_flags::{
     GetUnleashFeaturesResponse, UnleashToggle, UnleashTogglePayload, UnleashTogglePayloadType,
     UnleashToggleVariant,
 };

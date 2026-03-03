@@ -1,0 +1,13 @@
+[package]
+name = "core-feature-flags"
+version = "0.1.0"
+edition.workspace = true
+
+[features]
+mocks = []
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+
+[lints]
+workspace = true

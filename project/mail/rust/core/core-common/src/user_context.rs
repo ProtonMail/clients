@@ -2,6 +2,7 @@ pub use self::keys::*;
 use self::services::{EventLoopService, InitializationService};
 
 use crate::actions::event_poll::EventPoll as EventPollAction;
+use crate::context::services::TelemetryService;
 use crate::context::services::{MeasurementService, SessionObserverService, UserMetricService};
 use crate::datatypes::AccountDetails;
 use crate::db::account::CoreAccount;
@@ -136,6 +137,8 @@ impl UserContext {
                     .with_cyclic_service(AddressService::new);
 
                 if matches!(origin, Origin::App) {
+                    let telemetry_service =
+                        TelemetryService::new(session.clone(), user_stash.clone()).await?;
                     builder = builder
                         .with_cyclic_service(UserFeatureFlagsService::new)
                         .with_cyclic_service(PaymentsService::new)
@@ -150,7 +153,8 @@ impl UserContext {
                             InitializationWatcher::new(&user_stash).await?,
                         ))
                         .with_cyclic_service(UserMetricService::new)
-                        .with_cyclic_service(MeasurementService::new);
+                        .with_cyclic_service(MeasurementService::new)
+                        .with_service(telemetry_service);
                 }
 
                 builder.build(
@@ -168,6 +172,14 @@ impl UserContext {
 
             fs::create_dir_all(this.sender_images_cache_path())?;
             fs::create_dir_all(this.trash_path())?;
+
+            if matches!(origin, Origin::App)
+                && let Some(telemetry_service) = this.get_service_opt::<TelemetryService>().cloned()
+            {
+                this.spawn(async move {
+                    telemetry_service.periodic_sync_task().await;
+                });
+            }
 
             if matches!(origin, Origin::App)
                 && let Some(init_service) = this.get_service_opt::<InitializationService>()

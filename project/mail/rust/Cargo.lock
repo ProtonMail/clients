@@ -1216,6 +1216,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "773648b94d0e5d620f64f280777445740e61fe701025087ec8b57f45c791888b"
 
 [[package]]
+name = "core-telemetry"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+ "uuid",
+]
+
+[[package]]
 name = "cpp_demangle"
 version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3984,6 +3995,7 @@ dependencies = [
  "mail-sqlite3",
  "mail-stash",
  "mail-task-service",
+ "mail-telemetry",
  "mime",
  "non-empty-string",
  "parking_lot",
@@ -4097,6 +4109,7 @@ dependencies = [
  "mail-sqlite3",
  "mail-stash",
  "mail-task-service",
+ "mail-telemetry",
  "mail-vcard",
  "parking_lot",
  "pretty_assertions",
@@ -4501,6 +4514,25 @@ dependencies = [
  "tokio-util",
  "tracing",
  "tracing-test",
+]
+
+[[package]]
+name = "mail-telemetry"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "core-telemetry",
+ "include_dir",
+ "mail-core-api",
+ "mail-muon",
+ "mail-sqlite3",
+ "mail-stash",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "uuid",
 ]
 
 [[package]]

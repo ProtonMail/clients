@@ -64,6 +64,7 @@ jiff = { workspace = true }
 url = { workspace = true }
 mail-network-monitor-service = { workspace = true, features = ["muon"] }
 mail-observability = { workspace = true }
+mail-telemetry = { workspace = true }
 topological-sort = { workspace = true }
 
 [dev-dependencies]

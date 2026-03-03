@@ -1,0 +1,24 @@
+[package]
+name = "mail-telemetry"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+core-telemetry = { workspace = true }
+include_dir = { workspace = true }
+mail-core-api = { workspace = true }
+mail-muon = { workspace = true }
+mail-sqlite3 = { workspace = true }
+mail-stash = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
+
+[lints]
+workspace = true

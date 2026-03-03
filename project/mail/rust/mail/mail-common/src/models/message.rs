@@ -30,6 +30,7 @@ use mail_action_queue::enqueue;
 use mail_action_queue::queue::MultiActionError;
 use mail_action_queue::queue::{ActionError as QueueActionError, Queue, QueuedActionOutput};
 use mail_core_api::session::Session;
+use mail_core_common::services::{TelemetryService, now_unix_ms};
 use mail_core_common::utils::MapVec as _;
 use mail_sqlite3::rusqlite::Transaction;
 use mail_sqlite3::rusqlite::params_from_iter;
@@ -1637,12 +1638,31 @@ impl Message {
         tether: &Tether,
         attachment_prefetch: bool,
     ) -> Result<DecryptedMessageBody, MailContextError> {
+        let start_time_ms = now_unix_ms();
         let pgp = proton_crypto::new_pgp_provider();
         let address_keys = ctx.unlocked_address_keys(&pgp, tether, address_id).await?;
 
-        encrypted_message_body
+        let result = encrypted_message_body
             .decrypt_and_store(ctx, address_id, address_keys, pgp, attachment_prefetch)
-            .await
+            .await;
+
+        let decrypt_error = result.as_ref().err().map(|e| e.to_string());
+        ctx.spawn_ex(move |ctx| async move {
+            if let Some(telemetry) = ctx.user_context().get_service_opt::<TelemetryService>()
+                && let Err(e) = telemetry
+                    .build_latency_event(
+                        "mail.any.message",
+                        "decrypt_message",
+                        start_time_ms,
+                        decrypt_error,
+                    )
+                    .await
+            {
+                error!("Failed to record decrypt telemetry event: {e:?}");
+            }
+        });
+
+        result
     }
 
     #[tracing::instrument(skip(ctx, tether))]

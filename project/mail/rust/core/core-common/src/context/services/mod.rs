@@ -18,6 +18,7 @@ pub use device_info_service::DeviceInfoService;
 pub use event_poll_config_service::EventPollConfigService;
 pub use global_feature_flags::{FeatureFlagsBackgroundTask, FeatureFlagsService};
 pub use hv_notifier_service::HvNotifierService;
+pub use mail_telemetry::{TelemetryService, now_unix_ms};
 pub use measurement_service::MeasurementService;
 pub use network_monitor_service::NetworkMonitorService;
 pub use service::Service;

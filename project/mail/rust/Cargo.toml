@@ -40,6 +40,7 @@ members = [
   "shared/stash",
   "shared/stash-macros",
   "shared/task-service",
+  "shared/telemetry-service",
   "shared/vcard",
   "uniffi/uniffi-bindgen",
   "uniffi/uniffi-common",
@@ -350,6 +351,15 @@ registry = "proton"
 
 [workspace.dependencies.mail-observability]
 path = "shared/observability"
+
+[workspace.dependencies.mail-telemetry]
+version = "0.1.0"
+path = "shared/telemetry-service"
+registry = "proton"
+
+[workspace.dependencies.core-telemetry]
+path = "../../core/rust/core-telemetry/"
+default-features = false
 
 [workspace.dependencies.mail-mailto]
 path = "shared/mailto"

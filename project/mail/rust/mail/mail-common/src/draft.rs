@@ -1010,7 +1010,7 @@ impl DraftActor {
     ) -> Result<(), MailContextError> {
         self.act(|sender| DraftActorMessage::SetPassword {
             sender,
-            password: SecretString::new(String::from(password)),
+            password: password.into(),
             hint,
         })
         .await?

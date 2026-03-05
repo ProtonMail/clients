@@ -110,7 +110,7 @@ rusqlite = { version = "0.32.1", features = [
 ] }
 sqlite-watcher = { version = "0.7.0", features = ["rusqlite"] }
 slotmap = "1.0.7"
-secrecy = { version = "0.8", features = ["serde"] }
+secrecy = { version = "0.10.3", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
 serde-aux = "4.5"
 serde_json = "1.0.137"
@@ -122,7 +122,7 @@ smart-default = "0.7.1"
 strum = "0.26.3"
 tempfile = "3.21.0"
 test-case = "3.3.1"
-thiserror = "1.0.69"
+thiserror = "2.0.18"
 tokio = { version = "1", features = ["full"] }
 tokio-util = { version = "0.7", features = ["rt"] }
 tracing = "0.1"

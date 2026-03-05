@@ -627,10 +627,7 @@ impl Composer {
                 "Applying password".to_owned(),
             )),
             Command::task(async move {
-                let cmd = match draft
-                    .set_password(password.expose_secret().as_str(), hint)
-                    .await
-                {
+                let cmd = match draft.set_password(password.expose_secret(), hint).await {
                     Ok(()) => Command::message(Messages::DisplayInfo(
                         None,
                         "Password applied successfully".to_owned(),

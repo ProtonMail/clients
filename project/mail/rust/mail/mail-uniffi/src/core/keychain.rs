@@ -77,7 +77,7 @@ impl KeyChain for FFIKeyChain {
     fn store_entry(&self, kind: KeyChainEntryKind, key: SecretString) -> Result<(), KeyChainError> {
         let kind = kind.into();
         self.0
-            .store(kind, key.expose_secret().clone())
+            .store(kind, key.expose_secret().to_owned())
             .map_err(Into::into)
     }
 
@@ -91,6 +91,6 @@ impl KeyChain for FFIKeyChain {
         self.0
             .load(kind)
             .map_err(Into::into)
-            .map(|o| o.map(SecretString::new))
+            .map(|o| o.map(Into::into))
     }
 }

@@ -240,7 +240,7 @@ impl StoreInKeyChain for PinHash {
 
     fn to_stored_string(&self) -> SecretString {
         // unwrap safety: SecretString::from_str returns `Infallible`
-        self.as_ref().parse().unwrap()
+        self.as_ref().to_owned().into()
     }
 }
 

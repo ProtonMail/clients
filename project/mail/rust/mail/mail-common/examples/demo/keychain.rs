@@ -43,7 +43,7 @@ impl KeyChain for OnDiskKeyChain {
         };
 
         let entry = fs::read_to_string(&self.path)
-            .map(SecretString::new)
+            .map(Into::into)
             .box_map_err(KeyChainError::new)?;
 
         Ok(Some(entry))

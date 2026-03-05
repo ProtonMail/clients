@@ -5,8 +5,7 @@ use proton_crypto_account::{
     },
     proton_crypto::crypto::{DataEncoding, PGPProviderSync},
 };
-use secrecy::ExposeSecret;
-use secrecy::SecretVec;
+use secrecy::{ExposeSecret, SecretSlice};
 use std::{
     sync::Arc,
     time::{Duration, Instant},
@@ -21,7 +20,7 @@ pub const ADDRESS_KEY_LIFETIME: Duration = Duration::from_secs(300);
 /// Represents a cached user key independent of the PGP provider.
 pub struct CachedUserKey {
     id: KeyId,
-    private_key: SecretVec<u8>,
+    private_key: SecretSlice<u8>,
 }
 
 impl CachedUserKey {
@@ -35,7 +34,7 @@ impl CachedUserKey {
 
         Ok(CachedUserKey {
             id: key.id.clone(),
-            private_key: SecretVec::new(exported_key.as_ref().to_vec()),
+            private_key: exported_key.as_ref().to_vec().into(),
         })
     }
 
@@ -63,7 +62,7 @@ pub struct CachedAddressKey {
     flags: KeyFlag,
     primary: bool,
     is_v6: bool,
-    private_key: SecretVec<u8>,
+    private_key: SecretSlice<u8>,
 }
 
 impl CachedAddressKey {
@@ -83,7 +82,7 @@ impl CachedAddressKey {
             flags: key.flags,
             primary: key.primary,
             is_v6: key.is_v6,
-            private_key: SecretVec::new(exported_key.as_ref().to_vec()),
+            private_key: exported_key.as_ref().to_vec().into(),
         })
     }
 

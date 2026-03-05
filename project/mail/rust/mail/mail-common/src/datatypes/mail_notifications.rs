@@ -13,7 +13,7 @@ use mail_core_common::os::KeyChainExt;
 use proton_crypto_account::keys::PGPDeviceKey;
 use proton_crypto_account::proton_crypto;
 use secrecy::ExposeSecret;
-use serde_with::serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tracing::error;
 
@@ -137,14 +137,12 @@ impl DecryptableInboxPushNotification for EncryptedPushNotification {
             return Err(MailContextError::Crypto);
         };
 
-        let pgp_device_key = PGPDeviceKey::deserialize_from_secure_storage(
-            &pgp,
-            key.as_ref().expose_secret().as_slice(),
-        )
-        .map_err(|_e| {
-            error!("Could not load device key");
-            MailContextError::Crypto
-        })?;
+        let pgp_device_key =
+            PGPDeviceKey::deserialize_from_secure_storage(&pgp, key.as_ref().expose_secret())
+                .map_err(|_e| {
+                    error!("Could not load device key");
+                    MailContextError::Crypto
+                })?;
 
         let decrypted_notification = self
             .into_decrypted_push_notification(&pgp, &pgp_device_key)

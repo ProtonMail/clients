@@ -56,7 +56,7 @@ impl MigrationData {
                 password_mode,
                 key_secret: UserKeySecret(KeySecret::new(key_secret.as_bytes().into())),
             },
-            SecretString::new(refresh_token),
+            refresh_token.into(),
         )
     }
 }

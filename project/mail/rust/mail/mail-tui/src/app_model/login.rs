@@ -183,7 +183,7 @@ impl AppStateHandler for LoginModel {
                 }
 
                 let email = self.email_input_state.value().trim().to_owned();
-                let password = SecretString::new(self.password_input_state.value().to_owned());
+                let password: SecretString = self.password_input_state.value().to_owned().into();
                 let ctx = Arc::clone(ctx);
                 Command::batch([
                     Command::message(Messages::DisplayBackgroundProgress(

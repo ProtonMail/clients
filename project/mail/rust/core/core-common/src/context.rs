@@ -56,7 +56,7 @@ use mail_task_service::{Spawner, SpawnerRef};
 use mail_vcard::VcardValidationError;
 use proton_crypto_account::keys::PGPDeviceKey;
 use proton_crypto_account::proton_crypto::crypto::PGPProviderSync;
-use secrecy::{ExposeSecret, SecretVec};
+use secrecy::{ExposeSecret, SecretSlice};
 use serde_json::json;
 use services::{
     DeviceInfoService, EventPollConfigService, FeatureFlagsService, HvNotifierService,
@@ -1220,7 +1220,7 @@ impl Context {
     }
 
     /// Retrieves the passphrase for the current session by decrypting the session's key secret.
-    pub async fn get_session_passphrase(&self) -> Result<SecretVec<u8>, PassphraseAcquireError> {
+    pub async fn get_session_passphrase(&self) -> Result<SecretSlice<u8>, PassphraseAcquireError> {
         let session_id = self.get_primary_session_id().await?;
         let db_key = self.get_encryption_key()?;
         self.get_session(session_id)

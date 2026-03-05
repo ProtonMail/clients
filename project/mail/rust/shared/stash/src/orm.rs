@@ -46,7 +46,7 @@ pub enum ConversionError {
     ColumnNamesNotAvailable,
 
     /// Basic deserialisation error from [`serde`].
-    #[error("Deserialization error{}: {1}", .0.as_ref().map(|column| format!(r#" for column "{column}""#)).unwrap_or_default())]
+    #[error("Deserialization error{}: {}", .0.as_ref().map(|column| format!(r#" for column "{column}""#)).unwrap_or_default(), .1)]
     DeserializationError(Option<String>, String),
 
     /// SQL type conversion error from [`rusqlite`], specifically when trying to

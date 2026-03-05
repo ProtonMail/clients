@@ -189,7 +189,7 @@ impl IcsWrite<Value> for TextRef<'_> {
 
 #[derive(Clone, Debug, PartialEq, Eq, Error)]
 pub enum TextViolation {
-    #[error("illegal character 0x{:04x} at byte {0}", *.1 as u32)]
+    #[error("illegal character 0x{:04x} at byte {}", *.1 as u32, .0)]
     IllegalCharacter(usize, char),
 }
 

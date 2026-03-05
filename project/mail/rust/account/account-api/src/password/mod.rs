@@ -39,7 +39,7 @@ pub enum FlowAuthError {
     #[error("Password wrong: {0:?}")]
     PasswordWrong(#[from] PasswordWrongDetails),
 
-    #[error("Auth error: {0} ({})", _0.err_info().map(|i| i.to_string()).unwrap_or_default())]
+    #[error("Auth error: {} ({})", .0,.0.err_info().map(|i| i.to_string()).unwrap_or_default())]
     Other(#[from] ApiError),
 }
 
@@ -68,7 +68,7 @@ pub enum LoginFailedReason {
 /// Errors that can occur during the password change flow.
 #[derive(Debug, Error)]
 pub enum PasswordError {
-    #[error("API error: {0} ({})", _0.err_info().map(|i| i.to_string()).unwrap_or_default())]
+    #[error("API error: {} ({})", .0, .0.err_info().map(|i| i.to_string()).unwrap_or_default())]
     Api(#[source] ApiError),
 
     #[error("API service error: {0}")]

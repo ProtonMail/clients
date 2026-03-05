@@ -297,7 +297,7 @@ mod php {
 
 #[derive(Clone, Debug, PartialEq, Eq, Error)]
 pub enum ParamValueViolation {
-    #[error("illegal character 0x{:04x} at byte {0}", *.1 as u32)]
+    #[error("illegal character 0x{:04x} at byte {}", *.1 as u32,.0)]
     IllegalCharacter(usize, char),
 }
 

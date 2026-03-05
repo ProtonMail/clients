@@ -6,7 +6,7 @@ use mail_crypto_notifications::{
 use proton_crypto_account::{
     errors::KeySerializationError, keys::PGPDeviceKey, proton_crypto::crypto::PGPProviderSync,
 };
-use secrecy::{ExposeSecret, Secret, SecretString};
+use secrecy::{ExposeSecret, SecretSlice, SecretString};
 use serde::{Deserialize, Serialize};
 use tracing::error;
 
@@ -34,10 +34,10 @@ impl std::fmt::Display for StoredDevicePublicKey {
 }
 
 /// Device key stored in the keychain
-pub struct StoredDevicePrivateKey(Secret<Vec<u8>>);
+pub struct StoredDevicePrivateKey(SecretSlice<u8>);
 
-impl AsRef<Secret<Vec<u8>>> for StoredDevicePrivateKey {
-    fn as_ref(&self) -> &Secret<Vec<u8>> {
+impl AsRef<SecretSlice<u8>> for StoredDevicePrivateKey {
+    fn as_ref(&self) -> &SecretSlice<u8> {
         &self.0
     }
 }
@@ -47,7 +47,7 @@ impl StoredDevicePrivateKey {
     ///
     #[must_use]
     pub fn with_bytes(value: Vec<u8>) -> Self {
-        Self(Secret::new(value))
+        Self(value.into())
     }
 
     /// Transforms it to `PGPDeviceKey`
@@ -68,7 +68,7 @@ impl StoredDevicePrivateKey {
     fn to_base64(&self) -> SecretString {
         let key = self.0.expose_secret();
 
-        SecretString::new(BASE64_STANDARD.encode(key))
+        BASE64_STANDARD.encode(key).into()
     }
 
     fn from_base64(val: &SecretString) -> Result<Self, base64::DecodeError> {

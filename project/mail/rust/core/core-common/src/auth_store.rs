@@ -12,7 +12,7 @@ use mail_core_api::store::{AuthInfo, Store, StoreError, UserData};
 use mail_stash::AccountDb;
 use mail_stash::orm::Model;
 use mail_stash::stash::Stash;
-use secrecy::{ExposeSecret, SecretString, SecretVec};
+use secrecy::{ExposeSecret, SecretSlice, SecretString};
 use std::ops::Deref;
 use std::sync::Arc;
 use tracing::{error, info, warn};
@@ -445,8 +445,8 @@ pub trait DecryptExt
 where
     for<'a> &'a Self: Deref<Target = EncryptedData>,
 {
-    fn decrypt_to_bytes(&self, key: &SessionEncryptionKey) -> Result<SecretVec<u8>, StoreError> {
-        Ok(key.decrypt(self)?.into())
+    fn decrypt_to_bytes(&self, key: &SessionEncryptionKey) -> Result<SecretSlice<u8>, StoreError> {
+        Ok((key.decrypt(self)?).into())
     }
 
     fn decrypt_to_string(&self, key: &SessionEncryptionKey) -> Result<SecretString, StoreError> {

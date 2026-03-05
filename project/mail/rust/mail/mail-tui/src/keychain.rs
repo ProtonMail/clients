@@ -57,7 +57,7 @@ impl KeyChain for AppKeyChain {
 
     fn load_entry(&self, kind: KeyChainEntryKind) -> Result<Option<SecretString>, KeyChainError> {
         match self.kind_to_entry(kind).get_password() {
-            Ok(str) => Ok(Some(SecretString::new(str))),
+            Ok(str) => Ok(Some(str.into())),
             Err(e) => match e {
                 keyring::Error::NoEntry => Ok(None),
                 _ => Err(KeyChainError::new(anyhow!(e).into())),

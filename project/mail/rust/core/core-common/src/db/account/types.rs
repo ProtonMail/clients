@@ -553,7 +553,7 @@ impl StoreInKeyChain for SessionEncryptionKey {
     }
 
     fn to_stored_string(&self) -> SecretString {
-        SecretString::new(self.to_base64())
+        self.to_base64().into()
     }
 }
 

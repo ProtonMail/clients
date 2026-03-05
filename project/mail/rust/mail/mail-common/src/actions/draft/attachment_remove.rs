@@ -16,8 +16,7 @@ use mail_core_common::models::ModelExtension;
 use mail_stash::orm::Model as _;
 use mail_stash::stash::{Bond, Tether};
 use mail_stash::{UserDb, params};
-use serde::Deserialize;
-use serde_with::serde_derive::Serialize;
+use serde::{Deserialize, Serialize};
 use tracing::{debug, error, info};
 
 #[derive(Serialize, Deserialize)]

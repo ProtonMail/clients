@@ -7,7 +7,6 @@ use anyhow::anyhow;
 use crossterm::event::{Event, KeyCode};
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout, Margin, Rect};
-use secrecy::SecretString;
 
 pub struct PasswordProtectPopup {
     password_text_input_state: TextInputState,
@@ -59,7 +58,7 @@ impl Popup for PasswordProtectPopup {
                         Command::message(Messages::DisplayError(None, anyhow!("Password is empty")))
                     } else {
                         Command::message(ComposerMessage::SetPasswordProtection(
-                            SecretString::new(String::from(self.password_text_input_state.value())),
+                            String::from(self.password_text_input_state.value()).into(),
                             if self.hint_text_input_state.value().is_empty() {
                                 None
                             } else {

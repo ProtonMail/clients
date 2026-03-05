@@ -14,7 +14,7 @@ rand = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 
 [dev-dependencies]
-proton-crypto = { workspace = true }
+proton-crypto = { workspace = true, features = ["gopgp"] }
 
 [lints]
 workspace = true

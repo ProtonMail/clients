@@ -35,7 +35,7 @@ use mail_common::{MailContextError, MailUserContext};
 use mail_core_api::services::proton::PrivateEmail;
 use mail_mailto::Mailto;
 use recipients::ComposerRecipientList;
-use secrecy::{ExposeSecret, SecretString};
+use secrecy::ExposeSecret;
 use std::str::FromStr;
 use std::sync::{Arc, Weak};
 use std::time::Duration;
@@ -131,7 +131,7 @@ pub struct DraftPassword {
 impl From<EoData> for DraftPassword {
     fn from(value: EoData) -> Self {
         Self {
-            password: value.password.expose_secret().clone(),
+            password: value.password.expose_secret().to_owned(),
             hint: value.password_hint,
         }
     }
@@ -702,7 +702,7 @@ impl Draft {
         password: String,
         hint: Option<String>,
     ) -> Result<(), DraftPasswordError> {
-        let password = SecretString::new(password);
+        let password = password.into();
         uniffi_async(async move {
             self.instance
                 .set_password_with_secret(password, hint)

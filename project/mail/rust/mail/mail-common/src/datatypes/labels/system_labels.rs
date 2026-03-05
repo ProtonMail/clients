@@ -1,7 +1,7 @@
 use crate::AppError;
 use crate::datatypes::LabelDescription;
 use crate::datatypes::labels::messages_counts;
-use mail_core_common::datatypes::LocalLabelId;
+use mail_core_common::datatypes::{LocalLabelId, SystemLabel as Sl};
 use mail_core_common::models::Label;
 use mail_stash::orm::Model;
 use mail_stash::stash::Tether;
@@ -14,14 +14,18 @@ pub struct SystemLabel {
     pub notify: bool,
     pub display_order: u32,
     pub sticky: bool,
-    pub total: u64,
-    pub unread: u64,
+    pub count: u64,
 }
 
 impl SystemLabel {
     pub async fn new(label: &Label, tether: &Tether) -> Result<Self, AppError> {
         let (unread, total) = messages_counts(label, tether).await?;
         let label_description = LabelDescription::new(label);
+        let count = match Sl::from_opt_rid(label.remote_id.as_ref()) {
+            Some(Sl::Snoozed | Sl::Scheduled) => total,
+            _ => unread,
+        };
+
         Ok(Self {
             local_id: label.id(),
             display: label.display,
@@ -30,8 +34,7 @@ impl SystemLabel {
             notify: label.notify,
             display_order: label.display_order,
             sticky: label.sticky,
-            total,
-            unread,
+            count,
         })
     }
 

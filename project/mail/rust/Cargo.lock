@@ -2648,7 +2648,8 @@ dependencies = [
 [[package]]
 name = "gopenpgp-sys"
 version = "0.3.3"
-source = "git+https://github.com/ProtonMail/proton-crypto-rs.git?rev=33d22de54c578408108f580d6cafae06f656da9a#33d22de54c578408108f580d6cafae06f656da9a"
+source = "sparse+https://rust-registry.proton.me/index/"
+checksum = "e81404bf5710b9075990639b5349491b5d476b59b83950d02d939cc354ad4ec3"
 dependencies = [
  "base64",
  "bindgen 0.72.1",
@@ -4362,7 +4363,7 @@ dependencies = [
  "num",
  "num_cpus",
  "pin-project",
- "proton-srp",
+ "proton-srp 0.7.1",
  "rand 0.8.5",
  "reqwest",
  "rustls-native-certs 0.7.3",
@@ -6010,23 +6011,26 @@ dependencies = [
 
 [[package]]
 name = "proton-crypto"
-version = "0.7.1"
-source = "git+https://github.com/ProtonMail/proton-crypto-rs.git?rev=33d22de54c578408108f580d6cafae06f656da9a#33d22de54c578408108f580d6cafae06f656da9a"
+version = "0.10.0"
+source = "sparse+https://rust-registry.proton.me/index/"
+checksum = "a19d1bccfcf132e6627863964ee49eff2eed0e4b90245b473d5280f7eae813ab"
 dependencies = [
  "gopenpgp-sys",
  "hex",
  "parking_lot",
- "proton-srp",
+ "proton-srp 0.8.1",
  "rand 0.8.5",
  "serde",
  "subtle",
  "thiserror 1.0.69",
+ "web-time",
 ]
 
 [[package]]
 name = "proton-crypto-account"
-version = "0.12.3"
-source = "git+https://github.com/ProtonMail/proton-crypto-rs.git?rev=33d22de54c578408108f580d6cafae06f656da9a#33d22de54c578408108f580d6cafae06f656da9a"
+version = "0.15.0"
+source = "sparse+https://rust-registry.proton.me/index/"
+checksum = "c26d9b525fede959a0f1d2f4b57e472a1980670b87988cb41d166e047e3d40e2"
 dependencies = [
  "base64",
  "derive_more 2.0.1",
@@ -6086,6 +6090,23 @@ dependencies = [
  "bcrypt",
  "crypto-bigint",
  "pgp",
+ "rand 0.8.5",
+ "sha2",
+ "thiserror 1.0.69",
+ "zeroize",
+]
+
+[[package]]
+name = "proton-srp"
+version = "0.8.1"
+source = "sparse+https://rust-registry.proton.me/index/"
+checksum = "1f778bc9d0e0f96fba5e35ad767033315814be753ab80d47642e909f0015f488"
+dependencies = [
+ "base64",
+ "bcrypt",
+ "crypto-bigint",
+ "hex",
+ "md-5",
  "rand 0.8.5",
  "sha2",
  "thiserror 1.0.69",

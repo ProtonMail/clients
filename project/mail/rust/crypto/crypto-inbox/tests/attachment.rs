@@ -1,4 +1,4 @@
-use std::io::{self, Write};
+use std::io::{self};
 
 use base64::Engine;
 use mail_crypto_inbox::{
@@ -368,14 +368,13 @@ fn test_attachment_encrypt_decrypt_stream_helper(enc_sig: bool) {
     let primary_address_key = address_keys.primary_for_mail().expect("No primary key");
 
     let mut data = Vec::with_capacity(TEST_ATTACHMENT_PLAIN_DATA.len());
-    let mut metadata = {
-        let mut attachment_writer =
-            encrypt_and_sign_to_writer(&pgp, &primary_address_key, &mut data).unwrap();
-        attachment_writer
-            .write_all(TEST_ATTACHMENT_PLAIN_DATA.as_bytes())
-            .unwrap();
-        attachment_writer.finalize().unwrap()
-    };
+    let mut metadata = encrypt_and_sign_to_writer(
+        &pgp,
+        &primary_address_key,
+        TEST_ATTACHMENT_PLAIN_DATA.as_bytes(),
+        &mut data,
+    )
+    .unwrap();
 
     if enc_sig {
         metadata.signature = None;

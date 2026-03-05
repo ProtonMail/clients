@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -10,7 +9,6 @@ use mail_stash::params;
 use mail_stash::stash::Stash;
 use tokio::time::interval_at;
 use tracing::{debug, error, info, trace};
-use uuid::Uuid;
 
 use crate::api::TelemetryHttp;
 use crate::db::TelemetryDb;
@@ -18,15 +16,6 @@ use crate::migration::migrate_user_db;
 
 pub const TELEMETRY_BATCH_SIZE: u32 = 500;
 const TELEMETRY_SYNC_INTERVAL_SECS: u64 = 30;
-
-#[must_use]
-pub fn now_unix_ms() -> f64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_secs_f64()
-        * 1000.0
-}
 
 pub struct TelemetryService {
     tcl: Arc<Tcl<TelemetryHttp, TelemetryDb>>,
@@ -68,13 +57,7 @@ impl TelemetryService {
         Ok(matches!(telemetry_enabled, Some(value) if value != 0))
     }
 
-    pub async fn build_latency_event(
-        &self,
-        measurement_group: &str,
-        event_name: &str,
-        start_time_ms: f64,
-        error: Option<String>,
-    ) -> core_telemetry::Result<()> {
+    pub async fn record_event(&self, event: TelemetryEvent) -> core_telemetry::Result<()> {
         if !self
             .telemetry_enabled()
             .await
@@ -83,24 +66,6 @@ impl TelemetryService {
             return Ok(());
         }
 
-        let end_time_ms = now_unix_ms();
-        let status = if error.is_none() { "success" } else { "error" };
-
-        let mut dimensions = HashMap::from([("status".to_string(), status.to_string())]);
-        if let Some(msg) = error {
-            dimensions.insert("error".to_string(), msg);
-        }
-
-        let event = TelemetryEvent {
-            id: Uuid::new_v4().to_string(),
-            measurement_group: measurement_group.to_string(),
-            event: event_name.to_string(),
-            values: HashMap::from([
-                ("start_time".to_string(), start_time_ms),
-                ("end_time".to_string(), end_time_ms),
-            ]),
-            dimensions,
-        };
         info!(
             group = %event.measurement_group,
             event_name = %event.event,

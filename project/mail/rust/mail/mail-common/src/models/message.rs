@@ -30,7 +30,7 @@ use mail_action_queue::enqueue;
 use mail_action_queue::queue::MultiActionError;
 use mail_action_queue::queue::{ActionError as QueueActionError, Queue, QueuedActionOutput};
 use mail_core_api::session::Session;
-use mail_core_common::services::{TelemetryService, now_unix_ms};
+use mail_core_common::services::TelemetryService;
 use mail_core_common::utils::MapVec as _;
 use mail_sqlite3::rusqlite::Transaction;
 use mail_sqlite3::rusqlite::params_from_iter;
@@ -82,6 +82,7 @@ use mail_stash::macros::{DbRecord, Model};
 use mail_stash::orm::{Model, ModelHooks};
 use mail_stash::params;
 use mail_stash::stash::{Bond, RunTransaction, Stash, StashError, Tether, WatcherHandle};
+use mail_telemetry::LatencyEvents;
 use std::collections::HashSet;
 use std::collections::hash_map::Entry as HmEntry;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
@@ -1638,25 +1639,19 @@ impl Message {
         tether: &Tether,
         attachment_prefetch: bool,
     ) -> Result<DecryptedMessageBody, MailContextError> {
-        let start_time_ms = now_unix_ms();
-        let pgp = proton_crypto::new_pgp_provider();
-        let address_keys = ctx.unlocked_address_keys(&pgp, tether, address_id).await?;
+        let (result, event) =
+            LatencyEvents::measure_latency("mail.any.message", "decrypt_message", async || {
+                let pgp = proton_crypto::new_pgp_provider();
+                let address_keys = ctx.unlocked_address_keys(&pgp, tether, address_id).await?;
 
-        let result = encrypted_message_body
-            .decrypt_and_store(ctx, address_id, address_keys, pgp, attachment_prefetch)
+                encrypted_message_body
+                    .decrypt_and_store(ctx, address_id, address_keys, pgp, attachment_prefetch)
+                    .await
+            })
             .await;
-
-        let decrypt_error = result.as_ref().err().map(|e| e.to_string());
         ctx.spawn_ex(move |ctx| async move {
             if let Some(telemetry) = ctx.user_context().get_service_opt::<TelemetryService>()
-                && let Err(e) = telemetry
-                    .build_latency_event(
-                        "mail.any.message",
-                        "decrypt_message",
-                        start_time_ms,
-                        decrypt_error,
-                    )
-                    .await
+                && let Err(e) = telemetry.record_event(event).await
             {
                 error!("Failed to record decrypt telemetry event: {e:?}");
             }

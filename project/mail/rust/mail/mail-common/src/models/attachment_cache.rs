@@ -421,7 +421,7 @@ impl Attachment {
         &self,
         ctx: &MailUserContext,
         pgp: &P,
-        data: impl Read,
+        data: impl Read + Send,
         tether: &Tether,
     ) -> MailContextResult<(Vec<u8>, VerificationResult)>
     where

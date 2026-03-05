@@ -162,7 +162,7 @@ pub trait DecryptableAttachment {
     ) -> Result<DecryptedAttachmentReader<'a, R, P::Decryptor<'a>>, AttachmentDecryptionError>
     where
         P: PGPProviderSync,
-        R: io::Read,
+        R: io::Read + Send,
     {
         let key_packet_bytes = self.attachment_key_packets().decode()?;
         let signature_option = self.attachment_signature();
@@ -290,7 +290,7 @@ fn decrypt_and_verify_with_encrypted_signature_stream<'a, P, R>(
 ) -> Result<DecryptedAttachmentReader<'a, R, P::Decryptor<'a>>, AttachmentDecryptionError>
 where
     P: PGPProviderSync,
-    R: io::Read,
+    R: io::Read + Send,
 {
     let detached_signature = pgp
         .new_decryptor()

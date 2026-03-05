@@ -8,8 +8,8 @@ use proton_crypto_account::{
     proton_crypto::{
         CryptoError,
         crypto::{
-            AsPublicKeyRef, DataEncoding, DetachedSignatureVariant, Encryptor,
-            EncryptorDetachedSignatureWriter, EncryptorSync, EncryptorWriter, PGPProviderSync,
+            AsPublicKeyRef, DataEncoding, DetachedSignatureVariant, Encryptor, EncryptorSync,
+            PGPProviderSync, SigningMode, WritingMode,
         },
     },
 };
@@ -154,38 +154,41 @@ where
     Ok(EncryptedAttachment { metadata, data })
 }
 
-/// Creates an encryption writer [`SigncryptedAttachmentWriter`], where each write operation results
-/// in writing encrypted data to the provided writer.
+/// Encrypts and signs an attachment using streaming, reading the input from the specified source and writing the encrypted output to the given destination.
 ///
-/// The key packets and signatures (i.e., attachment metadata) can be accessed with [`SigncryptedAttachmentWriter::finalize`]
-/// once all data has been written.
-pub fn encrypt_and_sign_to_writer<'a, P, W>(
+/// Returns metadata for the attachment, including the detached signature and key packets.
+pub fn encrypt_and_sign_to_writer<'a, P, R, W>(
     pgp: &'a P,
     primary_address_key: &'a PrimaryUnlockedAddressKey<P::PrivateKey, P::PublicKey>,
-    attachment_data: W,
-) -> Result<SigncryptedAttachmentWriter<'a, W, P, P::Encryptor<'a>>, AttachmentEncryptionError>
+    attachment_source: R,
+    encrypted_dest: W,
+) -> Result<EncryptedAttachmentMetadata, AttachmentEncryptionError>
 where
     P: PGPProviderSync,
     W: Write + 'a,
+    R: io::Read,
 {
     encrypt_and_sign_to_writer_helper(
         pgp,
         primary_address_key.for_encryption(),
         primary_address_key.for_signing(),
-        attachment_data,
+        attachment_source,
+        encrypted_dest,
     )
 }
 
 /// Streaming attachment encryption helper.
-fn encrypt_and_sign_to_writer_helper<'a, P, W>(
+fn encrypt_and_sign_to_writer_helper<'a, P, R, W>(
     pgp: &'a P,
     encryption_key: &'a impl AsPublicKeyRef<P::PublicKey>,
     signing_keys: &'a [impl AsRef<P::PrivateKey>],
-    attachment_data: W,
-) -> Result<SigncryptedAttachmentWriter<'a, W, P, P::Encryptor<'a>>, AttachmentEncryptionError>
+    attachment_source: R,
+    encrypted_dest: W,
+) -> Result<EncryptedAttachmentMetadata, AttachmentEncryptionError>
 where
     P: PGPProviderSync,
     W: Write + 'a,
+    R: io::Read,
 {
     if signing_keys.is_empty() {
         return Err(AttachmentEncryptionError::NoSigningKeys);
@@ -206,24 +209,32 @@ where
         .encrypt_session_key(&session_key)
         .map_err(AttachmentEncryptionError::SessionKeyEncryption)?;
 
-    let attachment_writer = pgp
+    let detached_message_data = pgp
         .new_encryptor()
         .with_session_key(session_key.clone())
         .with_signing_key_refs(signing_keys)
-        .encrypt_stream_with_detached_signature(
-            attachment_data,
-            DetachedSignatureVariant::Plaintext,
+        .encrypt_to_writer(
+            attachment_source,
             DataEncoding::Bytes,
+            SigningMode::Detached(DetachedSignatureVariant::Plaintext),
+            WritingMode::All,
+            encrypted_dest,
         )
-        .map(|writer| SigncryptedAttachmentWriter {
-            pgp,
-            writer,
-            session_key,
-            key_packets,
-        })
         .map_err(AttachmentEncryptionError::Encryption)?;
 
-    Ok(attachment_writer)
+    let detached_signature_bytes = detached_message_data
+        .detached_signature
+        .ok_or(AttachmentEncryptionError::NoSigningKeys)?;
+
+    // Encrypt the detached signature with the session key and attach the key packets.
+    let encrypted_detached_signature =
+        encrypt_detached_signature(pgp, &key_packets, &session_key, &detached_signature_bytes)?;
+
+    Ok(EncryptedAttachmentMetadata {
+        signature: Some(BinaryAttachmentSignature(detached_signature_bytes)),
+        encrypted_signature: Some(encrypted_detached_signature),
+        key_packets,
+    })
 }
 
 fn encrypt_attachment_and_sign_detached<P>(
@@ -239,24 +250,22 @@ where
 
     let detached_signature_bytes = {
         // Encrypt the data and produce a detached signature.
-        let mut pt_writer = pgp
+        let detached_message_data = pgp
             .new_encryptor()
             .with_session_key_ref(session_key)
             .with_signing_key_refs(signing_keys)
-            .encrypt_stream_with_detached_signature(
-                &mut data,
-                DetachedSignatureVariant::Plaintext,
+            .encrypt_to_writer(
+                attachment_data.as_ref(),
                 DataEncoding::Bytes,
+                SigningMode::Detached(DetachedSignatureVariant::Plaintext),
+                WritingMode::All,
+                &mut data,
             )
             .map_err(AttachmentEncryptionError::Encryption)?;
 
-        pt_writer
-            .write_all(attachment_data.as_ref())
-            .map_err(|err| AttachmentEncryptionError::Encryption(err.into()))?;
-
-        pt_writer
-            .finalize_with_detached_signature()
-            .map_err(AttachmentEncryptionError::Encryption)?
+        detached_message_data
+            .detached_signature
+            .ok_or(AttachmentEncryptionError::NoSigningKeys)?
     };
 
     Ok((data, BinaryAttachmentSignature(detached_signature_bytes)))
@@ -279,84 +288,21 @@ where
     encrypted_signature_bytes.extend_from_slice(key_packets);
 
     // Write encrypted_data.
-    let mut pt_signature_writer = pgp
+    let _ = pgp
         .new_encryptor()
         .with_session_key_ref(session_key)
-        .encrypt_stream(&mut encrypted_signature_bytes, DataEncoding::Bytes)
-        .map_err(AttachmentEncryptionError::SignatureEncryption)?;
-
-    pt_signature_writer
-        .write_all(detached_signature_bytes.as_ref())
-        .map_err(|err| AttachmentEncryptionError::SignatureEncryption(err.into()))?;
-
-    pt_signature_writer
-        .finalize()
+        .encrypt_to_writer(
+            detached_signature_bytes,
+            DataEncoding::Bytes,
+            SigningMode::Inline,
+            WritingMode::All,
+            &mut encrypted_signature_bytes,
+        )
         .map_err(AttachmentEncryptionError::SignatureEncryption)?;
 
     Ok(BinaryAttachmentEncryptedSignature(
         encrypted_signature_bytes,
     ))
-}
-
-/// Attachment writer for encrypting and signing data.
-#[derive(Debug)]
-pub struct SigncryptedAttachmentWriter<'a, W, P, E>
-where
-    W: Write + 'a,
-    P: PGPProviderSync,
-    E: Encryptor<'a>,
-{
-    pgp: &'a P,
-    writer: E::EncryptorDetachedSignatureWriter<'a, W>,
-    session_key: P::SessionKey,
-    key_packets: Vec<u8>,
-}
-
-impl<'a, W, P, E> Write for SigncryptedAttachmentWriter<'a, W, P, E>
-where
-    W: Write + 'a,
-    P: PGPProviderSync,
-    E: Encryptor<'a>,
-{
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        self.writer.write(buf)
-    }
-
-    fn flush(&mut self) -> io::Result<()> {
-        self.writer.flush()
-    }
-}
-
-impl<'a, W, Provider, ProvEncryptor> SigncryptedAttachmentWriter<'a, W, Provider, ProvEncryptor>
-where
-    W: Write + 'a,
-    Provider: PGPProviderSync,
-    ProvEncryptor: Encryptor<'a>,
-{
-    /// Finalizes the encryption and returns the `EncryptedAttachmentMetadata`.
-    ///
-    /// Must be called once all attachment data has been written to this writer.
-    pub fn finalize(self) -> Result<EncryptedAttachmentMetadata, AttachmentEncryptionError> {
-        let detached_signature_bytes = self
-            .writer
-            .finalize_with_detached_signature()
-            .map_err(AttachmentEncryptionError::Encryption)?;
-
-        let encrypted_detached_signature = encrypt_detached_signature(
-            self.pgp,
-            &self.key_packets,
-            &self.session_key,
-            &detached_signature_bytes,
-        )?;
-
-        let metadata = EncryptedAttachmentMetadata {
-            signature: Some(BinaryAttachmentSignature(detached_signature_bytes)),
-            encrypted_signature: Some(encrypted_detached_signature),
-            key_packets: self.key_packets,
-        };
-
-        Ok(metadata)
-    }
 }
 
 /// Represents decrypted attachment information that can be re-encrypted for new recipients.

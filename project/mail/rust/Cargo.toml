@@ -276,13 +276,13 @@ path = "crypto/crypto-inbox-mime"
 registry = "proton"
 
 [workspace.dependencies.proton-crypto-account]
-git = "https://github.com/ProtonMail/proton-crypto-rs.git"
-rev = "33d22de54c578408108f580d6cafae06f656da9a"
+version = "0.15.0"
 features = ["sql"]
+registry = "proton"
 
 [workspace.dependencies.proton-crypto]
-git = "https://github.com/ProtonMail/proton-crypto-rs.git"
-rev = "33d22de54c578408108f580d6cafae06f656da9a"
+version = "0.10.0"
+registry = "proton"
 
 [workspace.dependencies.proton-crypto-subtle]
 version = "0.1.0"

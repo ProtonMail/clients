@@ -32,7 +32,9 @@ use events::event_subscriber::MailEventV5Subscriber;
 use initialization::InitializationMediator;
 use mail_account_api::password::PasswordFlow;
 use mail_action_queue::action::ActionGroup;
-use mail_action_queue::queue::{Queue, QueueAutoExecutorPool};
+use mail_action_queue::queue::{
+    OnlineStatusWaiterBuilder, Queue, QueueAutoExecutor, QueueAutoExecutorPool,
+};
 use mail_core_api::connection_status::ConnectionStatus;
 use mail_core_api::crypto_clock;
 use mail_core_api::services::proton::ProtonCore;
@@ -40,6 +42,7 @@ use mail_core_api::services::proton::{AddressId, PrivateEmailRef, SessionId, Use
 use mail_core_api::session::Session;
 #[cfg(not(feature = "events-v6"))]
 use mail_core_common::CoreEventLoopContext;
+use mail_core_common::actions::event_poll::EVENT_POLL_ACTION_GROUP;
 use mail_core_common::datatypes::{
     AccountDetails, AddressStatus, BlackFridayWave, LocalAddressId, NotificationSettings,
     UpsellEligibility, UpsellType,
@@ -140,6 +143,25 @@ impl SendQueueExecutorPool {
     }
 }
 
+/// Event Poll executor only
+pub struct EventPollQueueExecutor {
+    pub executor: QueueAutoExecutor<UserDb>,
+}
+
+impl EventPollQueueExecutor {
+    pub fn pause(&self) {
+        self.executor.pause();
+    }
+
+    pub fn resume(&self) {
+        self.executor.resume();
+    }
+
+    pub fn terminate(&self) {
+        self.executor.terminate();
+    }
+}
+
 pub struct QueuesService {
     weak: Weak<MailUserContext>,
 }
@@ -158,6 +180,9 @@ impl QueuesService {
         if let Some(service) = ctx.get_service_opt::<DefaultQueueExecutor>() {
             service.pause();
         };
+        if let Some(service) = ctx.get_service_opt::<EventPollQueueExecutor>() {
+            service.pause();
+        }
         ctx.get_service::<SendQueueExecutorPool>().pause();
     }
 
@@ -170,6 +195,9 @@ impl QueuesService {
         if let Some(service) = ctx.get_service_opt::<DefaultQueueExecutor>() {
             service.resume();
         };
+        if let Some(service) = ctx.get_service_opt::<EventPollQueueExecutor>() {
+            service.resume();
+        }
         ctx.get_service::<SendQueueExecutorPool>().resume();
     }
 
@@ -182,6 +210,9 @@ impl QueuesService {
         if let Some(service) = ctx.get_service_opt::<DefaultQueueExecutor>() {
             service.terminate();
         };
+        if let Some(service) = ctx.get_service_opt::<EventPollQueueExecutor>() {
+            service.terminate();
+        }
         ctx.get_service::<SendQueueExecutorPool>().terminate();
     }
 }
@@ -377,6 +408,14 @@ impl MailUserContext {
                                 NonZeroUsize::new(DEFAULT_PREFETCH_ROLLBACK_QUEUE_POOL_SIZE)
                                     .unwrap(),
                                 mail_context.core_context().as_ref(),
+                                true,
+                                user_context.as_ref(),
+                                span.clone(),
+                            ),
+                        })
+                        .with_service(EventPollQueueExecutor {
+                            executor: user_context.queue().new_executor_with_group(EVENT_POLL_ACTION_GROUP).into_auto_executor(
+                                mail_context.core_context().as_ref().build(),
                                 true,
                                 user_context.as_ref(),
                                 span.clone(),

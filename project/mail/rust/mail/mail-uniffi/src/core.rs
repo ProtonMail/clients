@@ -7,6 +7,7 @@ pub mod observability;
 mod report_an_issue;
 pub mod resolver;
 mod session;
+pub mod telemetry;
 pub mod validation;
 pub mod verification;
 

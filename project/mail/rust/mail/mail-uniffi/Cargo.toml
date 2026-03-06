@@ -32,6 +32,7 @@ core-event-loop = { workspace = true }
 mail-api = { workspace = true }
 mail-common = { workspace = true, features = ["proton_mail_error_log"] }
 mail-observability = { workspace = true }
+mail-telemetry = { workspace = true }
 mail-task-service = { workspace = true }
 mail-issue-reporter-service-uniffi = { workspace = true }
 mail-ical = { workspace = true }

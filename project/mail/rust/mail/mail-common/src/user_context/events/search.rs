@@ -8,12 +8,9 @@
 //! because the local message ID used by intents is no longer referenceable.
 
 use crate::AppError;
-use crate::models::Message;
 use mail_api::services::proton::common::MessageId;
 use mail_core_common::event_loop::events::Action;
-use mail_core_common::models::ModelIdExtension;
 use mail_stash::stash::Bond;
-use tracing::warn;
 
 #[cfg(feature = "foundation_search")]
 use crate::search::MailSearchService;
@@ -40,6 +37,8 @@ pub async fn handle_search_indexing_for_message(
     action: Action,
     local_id: Option<u64>,
 ) -> Result<(), AppError> {
+    use crate::models::Message;
+    use mail_core_common::models::ModelIdExtension;
     match action {
         Action::Delete => {
             // If we have a local_id, use it directly. Otherwise, look it up.
@@ -55,9 +54,10 @@ pub async fn handle_search_indexing_for_message(
 
             // Queue search removal
             if let Err(e) = MailSearchService::queue_remove(local_id, tx).await {
-                warn!(
+                tracing::warn!(
                     "Failed to queue search removal for message {}: {}",
-                    local_id, e
+                    local_id,
+                    e
                 );
             }
         }
@@ -75,9 +75,10 @@ pub async fn handle_search_indexing_for_message(
             };
 
             if let Err(e) = MailSearchService::queue_index(local_id, tx).await {
-                warn!(
+                tracing::warn!(
                     "Failed to queue search indexing for message {}: {}",
-                    local_id, e
+                    local_id,
+                    e
                 );
             }
         }

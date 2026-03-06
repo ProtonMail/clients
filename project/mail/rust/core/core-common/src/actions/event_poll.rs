@@ -2,8 +2,8 @@ use crate::UserContext;
 use core_event_loop::EventLoopError;
 use core_event_loop::v6::EventSubscriberError;
 use mail_action_queue::action::{
-    ActionDependencyKey, ActionDependencyKeys, FactoryResult, VersionConverter,
-    VersionConverterError, deserialize,
+    ActionDependencyKeys, ActionGroup, FactoryResult, VersionConverter, VersionConverterError,
+    deserialize,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_action_queue::{
@@ -30,17 +30,15 @@ impl EventPoll {
     pub fn forced() -> Self {
         EventPoll { force: true }
     }
-
-    #[must_use]
-    pub fn dependency_key() -> ActionDependencyKey {
-        ActionDependencyKey::from("event-poll")
-    }
 }
+
+pub const EVENT_POLL_ACTION_GROUP: ActionGroup = ActionGroup("event-poll");
 
 impl Action<UserDb> for EventPoll {
     const TYPE: Type = Type("event_poll");
     const VERSION: u32 = 2;
     const PRIORITY: Priority = Priority::Normal;
+    const GROUP: ActionGroup = EVENT_POLL_ACTION_GROUP;
 
     type VersionConverter = EventPollVersionConverter;
     type Handler = EventPollHandler;

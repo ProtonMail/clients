@@ -23,7 +23,7 @@ mail-calendar-common = { workspace = true }
 mail-core-common = { workspace = true }
 mail-crypto-inbox = { workspace = true }
 mail-api = { workspace = true }
-mail-common = { workspace = true, features = ["foundation_search"] }
+mail-common = { workspace = true }
 mail-html-transformer = { workspace = true }
 mail-issue-reporter-service = { workspace = true }
 mail-log-service = { workspace = true, features = ["non_blocking"] }

@@ -8,7 +8,7 @@ categories = ["api-bindings"]
 license.workspace = true
 
 [dependencies]
-core-feature-flags = { path = "../../../../core/rust/core-feature-flags" }
+core-feature-flags = { workspace = true }
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 bytes = { workspace = true }

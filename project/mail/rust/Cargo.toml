@@ -199,6 +199,9 @@ version = "0.1"
 path = "../../core/rust/core-event-loop"
 registry = "proton"
 
+[workspace.dependencies.core-feature-flags]
+path = "../../core/rust/core-feature-flags"
+
 [workspace.dependencies.mail-sqlite3]
 version = "0.7"
 path = "shared/sqlite3"

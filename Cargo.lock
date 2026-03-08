@@ -99,6 +99,7 @@ dependencies = [
  "core-client-info-op",
  "core-common-types",
  "core-device-info-op",
+ "core-feature-flags-op",
  "core-logging",
  "core-logging-op",
  "core-muon-op",

@@ -45,6 +45,8 @@ pub enum DraftAttachmentUploadError {
     Server(String),
     AttachmentTooLarge,
     TotalAttachmentsTooLarge,
+    StorageQuotaExceeded,
+    Timeout,
     Unexpected,
 }
 
@@ -78,6 +80,8 @@ impl From<DraftAttachmentInternalUploadError> for DraftAttachmentUploadError {
                 Self::TotalAttachmentsTooLarge
             }
             DraftAttachmentInternalUploadError::Unexpected => Self::Unexpected,
+            DraftAttachmentInternalUploadError::StorageQuotaExceeded => Self::StorageQuotaExceeded,
+            DraftAttachmentInternalUploadError::Timeout => Self::Timeout,
         }
     }
 }

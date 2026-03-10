@@ -1353,6 +1353,14 @@ async fn catch_storage_quota_exceeded_error() {
             draft::AttachmentUploadError::StorageQuotaExceeded
         )))
     ));
+
+    let attachments = draft.attachments().await.unwrap();
+    assert!(matches!(
+        attachments[0].state,
+        DraftAttachmentState::Error(draft::attachments::DraftAttachmentError::Upload(
+            draft::attachments::DraftAttachmentUploadError::StorageQuotaExceeded
+        ))
+    ));
 }
 
 #[tokio::test]

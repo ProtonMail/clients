@@ -5,14 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [mail-uniffi-v0.164.0] - 2026-03-02
+## [mail-uniffi-v0.164.1] - 2026-03-10
+
+### Changed
+
+- Move sidebar code to common module - proton/clients/monorepo!1217
 
 ### Features
 
+- Update crypto-inbox to new crypto api - proton/clients/monorepo!1230
 - Transformations for snapshot tests
 
 ### Fixes
 
+- [ET-5686] Visionary and Business users should be able to customize their mobile signanture - proton/clients/monorepo!1279
+- [ET-5009] Event loop stalling outgoing operations - proton/clients/monorepo!1265
+- Use telemetry for upsell instead of observability - proton/clients/monorepo!1243
+- [ET-5906] [BREAKING] Standarize count for system labels, one value instead of unread and total - proton/clients/monorepo!1234
+- [ET-5894] Contact groups supply only emails from a group instead of all emails of the contact
 - Tie scroller order with local_id for very rare instance of returning duplicate entnries
 
 ## [mail-uniffi-v0.162.5] - 2026-02-17

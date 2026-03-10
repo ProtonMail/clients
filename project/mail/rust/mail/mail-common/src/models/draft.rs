@@ -1413,6 +1413,8 @@ pub enum DraftAttachmentInternalUploadError {
     Server(String),
     AttachmentTooLarge,
     TotalAttachmentsTooLarge,
+    Timeout,
+    StorageQuotaExceeded,
     /// Unexpected internal error
     Unexpected,
 }
@@ -1451,22 +1453,30 @@ impl DraftAttachmentInternalUploadError {
     pub fn from_mail_context_error(error: &MailContextError) -> Self {
         match error {
             MailContextError::Api(e) => Self::Server(e.to_string()),
-            MailContextError::Draft(Error::AttachmentUpload(
-                AttachmentUploadError::MessageAlreadySent,
-            )) => Self::MessageAlreadySent,
-            MailContextError::Draft(Error::AttachmentUpload(
-                AttachmentUploadError::TooManyAttachments,
-            )) => Self::TooManyAttachments,
-            MailContextError::Draft(Error::AttachmentUpload(AttachmentUploadError::Crypto(e))) => {
-                Self::Crypto(e.to_string())
-            }
+            MailContextError::Draft(Error::AttachmentUpload(e)) => match e {
+                AttachmentUploadError::MetadataNotFound(_)
+                | AttachmentUploadError::AttachmentMetadataNotFound(_)
+                | AttachmentUploadError::AttachmentMetadataNotFoundCid(_)
+                | AttachmentUploadError::MessageDoesNotExist
+                | AttachmentUploadError::MessageDoesNotExistOnServer(_)
+                | AttachmentUploadError::AttachmentDataMissing(_)
+                | AttachmentUploadError::MissingContentId(_)
+                | AttachmentUploadError::ExistingUploadActionExist(_)
+                | AttachmentUploadError::RetryInvalidState(_)
+                | AttachmentUploadError::AttachmentAlreadyUploaded(_) => Self::Unexpected,
+                AttachmentUploadError::Crypto(attachment_encryption_error) => {
+                    Self::Crypto(attachment_encryption_error.to_string())
+                }
+                AttachmentUploadError::TooManyAttachments => Self::TooManyAttachments,
+                AttachmentUploadError::MessageAlreadySent => Self::MessageAlreadySent,
+                AttachmentUploadError::AttachmentTooLarge => Self::AttachmentTooLarge,
+                AttachmentUploadError::TotalAttachmentSizeTooLarge => {
+                    Self::TotalAttachmentsTooLarge
+                }
+                AttachmentUploadError::Timeout => Self::Timeout,
+                AttachmentUploadError::StorageQuotaExceeded => Self::StorageQuotaExceeded,
+            },
             MailContextError::AttachmentEncryption(e) => Self::Crypto(e.to_string()),
-            MailContextError::Draft(Error::AttachmentUpload(
-                AttachmentUploadError::AttachmentTooLarge,
-            )) => Self::AttachmentTooLarge,
-            MailContextError::Draft(Error::AttachmentUpload(
-                AttachmentUploadError::TotalAttachmentSizeTooLarge,
-            )) => Self::TotalAttachmentsTooLarge,
             _ => Self::Unexpected,
         }
     }

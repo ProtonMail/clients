@@ -100,6 +100,12 @@ impl From<RealDraftAttachmentUploadError> for DraftAttachmentUploadError {
             RealDraftAttachmentUploadError::TotalAttachmentsTooLarge => {
                 Self::Reason(DraftAttachmentUploadErrorReason::TotalAttachmentSizeTooLarge)
             }
+            RealDraftAttachmentUploadError::StorageQuotaExceeded => {
+                Self::Reason(DraftAttachmentUploadErrorReason::StorageQuotaExceeded)
+            }
+            RealDraftAttachmentUploadError::Timeout => {
+                Self::Reason(DraftAttachmentUploadErrorReason::Timeout)
+            }
         }
     }
 }

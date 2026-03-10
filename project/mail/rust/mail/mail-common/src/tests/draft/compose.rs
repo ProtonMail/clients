@@ -19,7 +19,7 @@ use mail_core_api::services::proton::LabelId;
 use mail_core_common::datatypes::AddressFlags;
 use mail_core_common::datatypes::{AddressStatus, AddressType, LocalAddressId};
 use mail_core_common::datatypes::{UserMnemonicStatus, UserType};
-use mail_core_common::models::{PaidSubscription, User};
+use mail_core_common::models::{PaidSubscription, Role, User};
 use std::str::FromStr;
 use test_case::test_case;
 
@@ -467,6 +467,16 @@ mod signatures {
         ..TEST_ADDRESS_AND_MOBILE_SIGNATURE
     };
 
+    // Org members (Business/Visionary) have subscribed=0 but should still be
+    // treated as paid users and be able to use their custom mobile signature.
+    const TEST_ADDRESS_AND_MOBILE_SIGNATURE_ORG_MEMBER: TestCase = TestCase {
+        given_user: || User {
+            role: Role::Member,
+            ..User::default()
+        },
+        ..TEST_ADDRESS_AND_MOBILE_SIGNATURE
+    };
+
     const TEST_HTML_SIGNATURES: TestCase = TestCase {
         given_user: || user().with_paid_mail_plan(),
         given_address: || address().with_signature("cheers, <b>jerry</b>"),
@@ -519,6 +529,7 @@ mod signatures {
     #[test_case(TEST_DISABLED_MOBILE_SIGNATURE)]
     #[test_case(TEST_ADDRESS_AND_MOBILE_SIGNATURE)]
     #[test_case(TEST_ADDRESS_AND_MOBILE_SIGNATURE_FREE)]
+    #[test_case(TEST_ADDRESS_AND_MOBILE_SIGNATURE_ORG_MEMBER)]
     #[test_case(TEST_HTML_SIGNATURES)]
     #[test_case(TEST_HTML_SIGNATURES_TO_TEXT)]
     #[test_case(TEST_MAIL_SETTINGS_SIGNATURE)]

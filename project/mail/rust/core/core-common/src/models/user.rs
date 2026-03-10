@@ -178,7 +178,8 @@ impl User {
 
     #[must_use]
     pub fn has_paid_mail_plan(&self) -> bool {
-        self.subscribed.contains(PaidSubscription::MAIL) && !self.is_delinquent()
+        (self.subscribed.contains(PaidSubscription::MAIL) || self.role == Role::Member)
+            && !self.is_delinquent()
     }
 }
 

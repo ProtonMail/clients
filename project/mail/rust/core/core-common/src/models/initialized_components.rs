@@ -215,6 +215,18 @@ impl InitializedComponent {
         .await
     }
 
+    pub fn set_state_sync(
+        key: InitializationKey,
+        state: InitializedComponentState,
+        tx: &Transaction<'_>,
+    ) -> Result<(), StashError> {
+        Self {
+            key: key.into(),
+            state,
+        }
+        .save_sync(tx)
+    }
+
     async fn fail(key: InitializationKey, tether: &mut Tether) -> Result<(), StashError> {
         Self::set_state(key, InitializedComponentState::Failed, tether).await
     }

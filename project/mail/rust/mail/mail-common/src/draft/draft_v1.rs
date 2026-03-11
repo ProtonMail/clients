@@ -113,7 +113,7 @@ impl Draft {
     ) -> MailContextResult<ScheduleSendOptions<Local>> {
         let user = ctx.user().await?;
 
-        ScheduleSendOptions::new(user.subscribed)
+        ScheduleSendOptions::new(&user)
             .context("Failed to get schedule send options")
             .map_err(MailContextError::Other)
     }

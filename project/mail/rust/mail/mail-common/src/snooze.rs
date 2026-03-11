@@ -1,7 +1,7 @@
 use chrono::{DateTime, Datelike, Days, NaiveTime, TimeZone, Weekday};
 use mail_core_common::{
     datatypes::{UnixTimestamp, WeekStart},
-    models::{PaidSubscription, User},
+    models::User,
 };
 
 /// Snooze options for a given day.
@@ -106,7 +106,7 @@ impl SnoozeOptions {
             }
         }
 
-        if user.subscribed.contains(PaidSubscription::MAIL) {
+        if user.has_paid_mail_plan() {
             options.push(SnoozeTime::Custom);
         }
 

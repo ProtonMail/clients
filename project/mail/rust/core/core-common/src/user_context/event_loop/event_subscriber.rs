@@ -204,7 +204,6 @@ async fn handle_event(
     let mut event: CoreEvent = event.clone().into();
     if let Some(user) = event.user.as_mut() {
         debug!("Handling user event");
-        // Update user:
         user.save(tx).await.map_err(|e| {
             error!("Failed to update user: {e:?}");
             e

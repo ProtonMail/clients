@@ -17,7 +17,7 @@ use mail_stash::exports::{
     FromSql, FromSqlError, SqliteError, ToSql, ToSqlOutput, Transaction, Value,
 };
 use mail_stash::macros::Model;
-use mail_stash::orm::Model;
+use mail_stash::orm::{Model, ModelHooks};
 use mail_stash::stash::Stash;
 use mail_stash::stash::StashError;
 use serde::{Deserialize, Serialize};
@@ -28,6 +28,7 @@ use super::{InitializationError, InitializationWatcher, InitializedComponent, Us
 #[derive(Clone, Debug, Eq, Model, PartialEq, SmartDefault)]
 #[TableName("users")]
 #[Database(UserDb)]
+#[ModelHooks]
 pub struct User {
     #[IdField(optional)]
     pub remote_id: Option<UserId>,
@@ -199,6 +200,18 @@ impl SyncedUserSettings {
         } = self;
         user.save_sync(tx)?;
         settings.save_sync(tx)?;
+        Ok(())
+    }
+}
+
+impl ModelHooks for User {
+    fn before_save(&mut self, _tx: &Transaction<'_>) -> Result<(), StashError> {
+        tracing::info!(
+            "User `{:?}` is being written, sub: `{:b}` & role: `{:?}`",
+            self.remote_id,
+            self.subscribed,
+            self.role,
+        );
         Ok(())
     }
 }

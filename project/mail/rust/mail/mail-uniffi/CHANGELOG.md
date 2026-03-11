@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Standarize mail subscription permitions read - proton/clients/monorepo!1295
+
+### Fixes
+
+- [ET-5414] StorageQuota error in attachment upload state - proton/clients/monorepo!1287
+
+
 ## [mail-uniffi-v0.164.1] - 2026-03-10
 
 ### Changed
@@ -14,7 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Features
 
 - Update crypto-inbox to new crypto api - proton/clients/monorepo!1230
-- Transformations for snapshot tests
 
 ### Fixes
 
@@ -23,6 +33,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use telemetry for upsell instead of observability - proton/clients/monorepo!1243
 - [ET-5906] [BREAKING] Standarize count for system labels, one value instead of unread and total - proton/clients/monorepo!1234
 - [ET-5894] Contact groups supply only emails from a group instead of all emails of the contact
+
+
+## [mail-uniffi-v0.164.0] - 2026-03-02
+
+### Features
+
+- Transformations for snapshot tests
+
+### Fixes
+
 - Tie scroller order with local_id for very rare instance of returning duplicate entnries
 
 ## [mail-uniffi-v0.162.5] - 2026-02-17

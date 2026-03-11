@@ -33,9 +33,15 @@ def main(
         tags = {t.commit: t for t in r.tags}
         commits, cur_tag = OrderedDict(), None
 
-        for c in r.iter_commits(f"{init or ''}..{r.commit(head)}", paths=path):
+        if path:
+            path_commits = set(r.iter_commits(f"{init or ''}..{r.commit(head)}", paths=path))
+        else:
+            path_commits = None
+
+        for c in r.iter_commits(f"{init or ''}..{r.commit(head)}"):
             cur_tag = tags.get(c) or cur_tag
-            commits.setdefault(cur_tag, []).append(c)
+            if path_commits is None or c in path_commits:
+                commits.setdefault(cur_tag, []).append(c)
 
         print(render(commits, re.compile(only) if only else None, name))
 

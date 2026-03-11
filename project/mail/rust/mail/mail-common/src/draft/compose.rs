@@ -17,7 +17,7 @@ use mail_canonical_email::CanonicalEmail;
 use mail_core_api::services::proton::AddressId;
 use mail_core_common::Platform;
 use mail_core_common::datatypes::{AddressStatus, UnixTimestamp};
-use mail_core_common::models::{Address, ModelIdExtension, PaidSubscription, User};
+use mail_core_common::models::{Address, ModelIdExtension, User};
 use mail_crypto_inbox::message::{
     DecryptableMessage, EncryptableDraft, EncryptedDraft, GettablePGPMessage, RawDecryptedBody,
 };
@@ -846,9 +846,7 @@ pub fn validate_sender_address(
         ));
     }
 
-    if address.email.to_lowercase().ends_with("@pm.me")
-        && !user.subscribed.contains(PaidSubscription::MAIL)
-    {
+    if address.email.to_lowercase().ends_with("@pm.me") && !user.has_paid_mail_plan() {
         return Some(DraftAddressValidationResult::new(
             address.email.clone(),
             DraftAddressValidationError::SubscriptionRequired,

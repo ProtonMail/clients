@@ -20,7 +20,7 @@ use mail_core_api::service::ApiServiceError;
 use mail_core_api::services::proton::{PrivateEmail, PrivateEmailRef};
 use mail_core_api::session::Session;
 use mail_core_common::AddressKeysContactFetchPolicy;
-use mail_core_common::models::{ModelExtension, PaidSubscription};
+use mail_core_common::models::{ModelExtension, User};
 use mail_core_common::services::NetworkMonitorService;
 use mail_crypto_inbox::attachment::DecryptableAttachment;
 use mail_crypto_inbox::eo::Challenge;
@@ -677,14 +677,12 @@ pub struct ScheduleSendOptions<Tz: chrono::TimeZone> {
 }
 
 impl ScheduleSendOptions<Local> {
-    pub fn new(
-        user_subscriptions: PaidSubscription,
-    ) -> Result<Self, ScheduleSendOptionsDateTimeError> {
+    pub fn new(user: &User) -> Result<Self, ScheduleSendOptionsDateTimeError> {
         let now = Local::now();
         Ok(Self {
             time_tomorrow: Self::calculate_tomorrow(now)?,
             time_next_monday: Self::calculate_next_monday(now)?,
-            is_custom_datetime_available: user_subscriptions.contains(PaidSubscription::MAIL),
+            is_custom_datetime_available: user.has_paid_mail_plan(),
         })
     }
 }
@@ -895,9 +893,9 @@ mod tests {
 
     #[test]
     fn send_options_custom_option_available_only_for_paid_users() {
-        let options = ScheduleSendOptions::new(PaidSubscription::empty()).unwrap();
+        let options = ScheduleSendOptions::new(&User::default()).unwrap();
         assert!(!options.is_custom_datetime_available);
-        let options = ScheduleSendOptions::new(PaidSubscription::MAIL).unwrap();
+        let options = ScheduleSendOptions::new(&User::default().with_paid_mail_plan()).unwrap();
         assert!(options.is_custom_datetime_available)
     }
 }

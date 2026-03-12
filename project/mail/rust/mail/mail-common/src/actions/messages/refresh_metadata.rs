@@ -1,10 +1,10 @@
 use crate::AppError;
-use crate::actions::MailActionError;
+use crate::actions::{MailActionError, PREFETCH_ROLLBACK_ACTION_GROUP};
 use crate::datatypes::LocalMessageId;
 use crate::models::{Message, MessageScrollData};
 use itertools::Itertools;
 use mail_action_queue::action::{
-    Action, ActionId, DefaultVersionConverter, Handler, Priority, Type, WriterGuard,
+    Action, ActionGroup, ActionId, DefaultVersionConverter, Handler, Priority, Type, WriterGuard,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_core_api::session::Session;
@@ -36,6 +36,7 @@ impl Action<UserDb> for RefreshMetadata {
     const TYPE: Type = Type("refresh_message_metadata");
     const VERSION: u32 = 1;
     const PRIORITY: Priority = Priority::Normal;
+    const GROUP: ActionGroup = PREFETCH_ROLLBACK_ACTION_GROUP;
 
     type VersionConverter = DefaultVersionConverter<Self>;
     type Handler = RefreshMetadataHandler;

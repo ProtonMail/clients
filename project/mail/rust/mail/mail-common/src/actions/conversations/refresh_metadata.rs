@@ -1,11 +1,11 @@
 use crate::AppError;
-use crate::actions::MailActionError;
+use crate::actions::{MailActionError, PREFETCH_ROLLBACK_ACTION_GROUP};
 use crate::datatypes::{ConversationViewOptions, LocalConversationId};
 use crate::models::{Conversation, ConversationScrollData};
 use crate::{MailUserContext, models::Message};
 use anyhow::anyhow;
 use mail_action_queue::action::{
-    Action, ActionId, DefaultVersionConverter, Handler, Priority, Type, WriterGuard,
+    Action, ActionGroup, ActionId, DefaultVersionConverter, Handler, Priority, Type, WriterGuard,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::prelude::GetMessagesOptions;
@@ -39,6 +39,7 @@ impl Action<UserDb> for RefreshMetadata {
     const TYPE: Type = Type("refresh_conversation_metadata");
     const VERSION: u32 = 1;
     const PRIORITY: Priority = Priority::Normal;
+    const GROUP: ActionGroup = PREFETCH_ROLLBACK_ACTION_GROUP;
 
     type VersionConverter = DefaultVersionConverter<Self>;
     type Handler = RefreshMetadataHandler;

@@ -3,6 +3,7 @@ use std::sync::Arc;
 use core_event_loop::EventLoopError;
 use mail_action_queue::queue::{ActionError, AsActionError, QueuedError};
 use mail_api::services::proton::prelude::ViewMode;
+use mail_common::actions::PREFETCH_ROLLBACK_ACTION_GROUP;
 use mail_common::actions::refresh::ActionRefresh;
 use mail_common::models::{Conversation, DraftMetadata, Message};
 use mail_common::test_utils::init::{DEFAULT_MAIL_SETTINGS, Params as TestParams};
@@ -26,6 +27,16 @@ use wiremock::{Mock, ResponseTemplate, Times};
 async fn refresh(ctx: &MailUserContext, refresh: Refresh) -> Result<(), Arc<anyhow::Error>> {
     ctx.refresh_action(refresh).await.unwrap();
     let result = ctx.execute_all_actions().await;
+
+    match result {
+        Ok(_) => {}
+        Err(QueuedError::Action(error, _id)) => return Err(error),
+        _ => panic!("Unexpected message: {result:?}"),
+    }
+
+    let result = ctx
+        .execute_all_actions_with_group(PREFETCH_ROLLBACK_ACTION_GROUP)
+        .await;
 
     match result {
         Ok(_) => Ok(()),

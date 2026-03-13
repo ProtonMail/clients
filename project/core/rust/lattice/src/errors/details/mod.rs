@@ -1,0 +1,5 @@
+mod access_token_with_insufficient_scope_error_details;
+pub use access_token_with_insufficient_scope_error_details::AccessTokenWithInsufficientScopeErrorDetails;
+
+mod login_failed_error_details;
+pub use login_failed_error_details::{LoginFailedErrorDetails, LoginFailedReason};

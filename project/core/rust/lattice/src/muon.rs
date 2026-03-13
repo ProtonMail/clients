@@ -3,9 +3,10 @@ use muon::{
     common::ContentType,
     http::{HttpReq, HttpRes, Method as MuonMethod},
 };
-use serde_json::Value;
 
-use crate::{LatticeContract, LatticeError, Method, api_definitions::LtApiResponse};
+use crate::{
+    LatticeContract, LatticeError, LtApiResponseError, Method, api_definitions::LtApiResponse,
+};
 
 impl<T: serde::Serialize> Method<T> {
     fn as_muon_method(&self) -> MuonMethod {
@@ -42,7 +43,7 @@ pub fn from_muon_res<T: LatticeContract>(response: &HttpRes) -> Result<T::Respon
 
         let api_response: LtApiResponse<T::Response> =
             serde_json::from_slice::<LtApiResponse<T::Response>>(body)
-                .map_err(LatticeError::SerdeJSON)?;
+                .map_err(|e| LatticeError::SerdeJSON(e, String::from_utf8(body.to_vec()).ok()))?;
 
         return Ok(api_response.body);
     }
@@ -50,10 +51,10 @@ pub fn from_muon_res<T: LatticeContract>(response: &HttpRes) -> Result<T::Respon
     if (400..500).contains(&s) {
         let body = response.body();
 
-        let value: LtApiResponse<Value> = serde_json::from_slice::<LtApiResponse<Value>>(body)
-            .map_err(LatticeError::SerdeJSON)?;
+        let value: LtApiResponseError = serde_json::from_slice::<LtApiResponseError>(body)
+            .map_err(|e| LatticeError::SerdeJSON(e, String::from_utf8(body.to_vec()).ok()))?;
 
-        return Err(LatticeError::ApiError(s, value.code, value.body));
+        return Err(LatticeError::ApiError(s, Box::new(value)));
     }
 
     Err(LatticeError::UnexpectedStatusCode(
@@ -79,7 +80,7 @@ pub fn as_muon_req(contract: &impl LatticeContract) -> Result<HttpReq, LatticeEr
         .fold(http_req, |http_req, header| http_req.header(header));
 
     if let Some(body) = method.into_body() {
-        let body = serde_json::to_vec(&body).map_err(LatticeError::SerdeJSON)?;
+        let body = serde_json::to_vec(&body).map_err(|e| LatticeError::SerdeJSON(e, None))?;
 
         http_req = http_req.body(body).header(ContentType::JSON);
     }

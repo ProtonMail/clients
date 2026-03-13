@@ -11,6 +11,7 @@
   serde = ["dep:serde", "dep:serde_json", "bitflags?/serde"]
   muon = ["dep:muon"]
   observability = ["serde"]
+  full = ["core", "auth", "muon", "serde", "facet", "observability"]
 
 [dependencies]
   serde = { optional = true, version = "^1.0.228", features = ["derive"] }
@@ -23,6 +24,15 @@
   proton-crypto-account = { optional = true, workspace = true }
   num_enum = { workspace = true, optional = true }
   muon = { workspace = true, optional = true }
+
+[dev-dependencies]
+  muon = { workspace = true, features = ["full-native"] }
+  tokio = { version = "1.50", features = ["full"] }
+  futures = { version = "0.3" }
+  rand = { version = "0.9" }
+  async-compat = { version = "0.2" }
+  lattice = { path = ".", features = ["full"] }
+  totp-rs = { version = "5.7" }
 
 [lints]
   workspace = true

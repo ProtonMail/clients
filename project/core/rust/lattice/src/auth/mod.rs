@@ -7,6 +7,7 @@ use zeroize::Zeroize;
 use crate::Sensitive;
 
 pub mod delete_auth;
+pub mod devices;
 pub mod get_auth_modulus;
 pub mod get_auth_sessions_forks;
 pub mod get_auth_sessions_forks_by_id;

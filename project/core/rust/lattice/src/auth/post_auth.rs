@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use crate::{
     LatticeContract, LatticeError, Method, Sensitive, UnauthReq,
     auth::{
-        LtAuthApiSession, LtAuthPasswordMode,
+        LtAuthApiSession, LtAuthPasswordMode, LtAuthTwoFactorOptions,
         post_auth_2fa::{LtAuthSrpProof, LtAuthTwoFactorProof},
     },
 };
@@ -26,15 +26,35 @@ pub struct LtAuthPostReq {
     pub payload: Option<serde_json::Value>,
 }
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
 pub struct LtAuthPostRes {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub session: LtAuthApiSession,
     pub server_proof: Sensitive<String>,
     pub password_mode: LtAuthPasswordMode,
+    #[cfg_attr(
+        feature = "serde",
+        serde(rename = "2FA", default, deserialize_with = "deserialize_filtered_tfa")
+    )]
+    pub tfa: Option<LtAuthTwoFactorOptions>,
+}
+
+#[cfg(feature = "serde")]
+fn deserialize_filtered_tfa<'de, D>(
+    deserializer: D,
+) -> Result<Option<LtAuthTwoFactorOptions>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::Deserialize;
+
+    // Execute standard deserialization first
+    let opt = Option::<LtAuthTwoFactorOptions>::deserialize(deserializer)?;
+
+    // Filter out the state where enabled == 0
+    Ok(opt.filter(|t| !t.enabled.is_empty()))
 }
 
 impl LatticeContract for LtAuthPostReq {

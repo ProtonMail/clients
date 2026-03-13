@@ -7,14 +7,11 @@
 //! functionality.
 //!
 
-use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use std::fmt::Debug;
-use std::hash::Hash;
-use std::ops::Deref;
 
 use crate::declare_proton_id;
+pub use mail_proton_ids::ProtonIdMarker;
 
 //  ENUMS
 //==============================================================================
@@ -88,23 +85,6 @@ pub enum DeviceEnvironment {
     AppleProdET = 14,
     AppleDevET = 15,
     AppleDev = 16,
-}
-
-//  TRAITS
-//==============================================================================
-
-pub trait ProtonIdMarker:
-    Deref<Target = str>
-    + Clone
-    + Debug
-    + DeserializeOwned
-    + Eq
-    + Hash
-    + PartialEq
-    + Serialize
-    + Sync
-    + Send
-{
 }
 
 declare_proton_id! {

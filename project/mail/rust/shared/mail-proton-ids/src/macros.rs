@@ -1,3 +1,12 @@
+/// Declares a Proton ID newtype.
+///
+/// # Example
+///
+/// ```rust
+/// mail_proton_ids::declare_proton_id! {
+///     pub MyId
+/// }
+/// ```
 #[macro_export]
 macro_rules! declare_proton_id {
     (
@@ -6,7 +15,7 @@ macro_rules! declare_proton_id {
     ) => {
         $(#[$($attrss)*])*
         #[derive(Clone, Debug, serde::Deserialize, Hash, PartialEq, Eq, PartialOrd, Ord, serde::Serialize)]
-        $visibility struct $ name(String);
+        $visibility struct $name(String);
 
         impl $name {
             #[must_use]
@@ -31,7 +40,7 @@ macro_rules! declare_proton_id {
             }
         }
 
-        impl From<String> for $name{
+        impl From<String> for $name {
             fn from(id: String) -> Self {
                 Self(id)
             }
@@ -65,6 +74,6 @@ macro_rules! declare_proton_id {
             }
         }
 
-        impl $crate::services::proton::ProtonIdMarker for $name {}
+        impl $crate::ProtonIdMarker for $name {}
     }
 }

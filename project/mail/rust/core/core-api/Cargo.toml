@@ -9,6 +9,7 @@ license.workspace = true
 
 [dependencies]
 core-feature-flags = { workspace = true }
+mail-proton-ids = { workspace = true }
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 bytes = { workspace = true }
@@ -42,7 +43,7 @@ mail-core-api = { path = ".", features = ["mocks"] }
 
 [features]
 default = []
-sql = ["dep:mail-stash"]
+sql = ["dep:mail-stash", "mail-proton-ids/sql"]
 mocks = ["core-feature-flags/mocks"]
 
 [lints]

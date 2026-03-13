@@ -73,7 +73,6 @@ mod auth;
 mod core;
 mod data;
 mod layers;
-mod macros;
 pub mod measurements;
 mod payments;
 mod store;

@@ -4061,6 +4061,7 @@ dependencies = [
  "mail-core-api",
  "mail-muon",
  "mail-network-monitor-service",
+ "mail-proton-ids",
  "mail-stash",
  "mail-task-service",
  "parking_lot",
@@ -4425,6 +4426,14 @@ checksum = "187a2b93c4c8c32f552ee06c2d99915e575de2fc7e04b07891c9edfee5b8edd6"
 dependencies = [
  "encoding_rs",
  "hashify",
+]
+
+[[package]]
+name = "mail-proton-ids"
+version = "0.1.0"
+dependencies = [
+ "mail-stash",
+ "serde",
 ]
 
 [[package]]

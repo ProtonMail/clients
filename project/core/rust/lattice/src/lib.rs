@@ -12,9 +12,13 @@ pub mod core;
 #[cfg(feature = "observability")]
 pub mod observability;
 
-pub mod api_definitions;
+mod api_definitions;
+pub use api_definitions::*;
 
 mod sensitive;
+
+mod errors;
+pub use errors::*;
 
 use derive_more::Display;
 pub use sensitive::*;
@@ -27,7 +31,8 @@ use std::{borrow::Cow, collections::HashMap};
 #[derive(Debug, Display)]
 pub enum LatticeError {
     #[cfg(feature = "serde")]
-    SerdeJSON(serde_json::Error),
+    #[display("SerdeJSON: {_0} {_1:?}")]
+    SerdeJSON(serde_json::Error, Option<String>),
 
     #[cfg(feature = "muon")]
     Muon(::muon::Error),
@@ -36,8 +41,18 @@ pub enum LatticeError {
     UnexpectedStatusCode(u16, Vec<u8>),
 
     #[cfg(feature = "serde")]
-    #[display("ApiError Status({_0}), {_1:?}: {_2:#?}")]
-    ApiError(u16, crate::api_definitions::LtApiCode, serde_json::Value),
+    #[display("ApiError Status({_0}), {_1:?}")]
+    ApiError(u16, Box<LtApiResponseError>),
+}
+
+impl LatticeError {
+    pub fn as_api_error(&self) -> Option<&LtApiResponseError> {
+        if let Self::ApiError(_, error) = self {
+            Some(error)
+        } else {
+            None
+        }
+    }
 }
 
 /// A trait for all Lattice contracts.

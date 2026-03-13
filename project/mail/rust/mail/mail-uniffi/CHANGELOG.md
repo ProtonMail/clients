@@ -5,14 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [mail-uniffi-v0.164.2] - 2026-03-13
 
 ### Changed
 
 - Standarize mail subscription permitions read - proton/clients/monorepo!1295
 
+### Features
+
+- [UFC-123] Add early and periodic fetching
+- [UFC-123] Separate api and crux code into separate crates
+- [UFC-123] Move Mail's unleash implementation to shared core crate
+
 ### Fixes
 
+- [ET-5970] Move refresh actions to prefetch queue - proton/clients/monorepo!1314
+- Changelog script should consider tags on any path - proton/clients/monorepo!1300
 - [ET-5414] StorageQuota error in attachment upload state - proton/clients/monorepo!1287
 
 

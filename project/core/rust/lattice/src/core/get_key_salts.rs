@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use proton_crypto_account::salts::Salts;
 
-use crate::{AuthReq, LatticeContract, LatticeError};
+use crate::{AuthReq, LatticeError, LtContract};
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize))]
@@ -18,7 +18,7 @@ pub struct LtCoreGetKeysSaltsRes {
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
 pub struct LtCoreGetKeySaltsReq;
 
-impl LatticeContract for LtCoreGetKeySaltsReq {
+impl LtContract for LtCoreGetKeySaltsReq {
     type Response = LtCoreGetKeysSaltsRes;
     type Body<'a> = ();
 

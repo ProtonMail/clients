@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeContract, LatticeError, Method, Sensitive};
+use crate::{AuthReq, LatticeError, LtContract, Method, Sensitive};
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -12,7 +12,7 @@ pub struct LtAuthPostDevicesDeviceIDReq {
     pub encrypted_secret: Sensitive<String>,
 }
 
-impl LatticeContract for LtAuthPostDevicesDeviceIDReq {
+impl LtContract for LtAuthPostDevicesDeviceIDReq {
     type Response = ();
     type Body<'b> = &'b Self;
 

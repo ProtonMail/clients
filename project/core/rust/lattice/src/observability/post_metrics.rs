@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{LatticeContract, LatticeError, Method, UnauthReq};
+use crate::{LatticeError, LtContract, Method, UnauthReq};
 
 pub const DATA_V1_METRICS_PATH: &str = "/data/v1/metrics";
 
@@ -26,7 +26,7 @@ pub struct LtDataPostMetricsElement {
     pub data: serde_json::Value,
 }
 
-impl LatticeContract for LtDataPostMetricsReq {
+impl LtContract for LtDataPostMetricsReq {
     type Response = ();
     type Body<'b> = &'b Self;
 

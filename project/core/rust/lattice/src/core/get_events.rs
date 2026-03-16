@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeContract, LatticeError, auth::LtAuthEventId, core::LtCoreEvents};
+use crate::{AuthReq, LatticeError, LtContract, auth::LtAuthEventId, core::LtCoreEvents};
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -20,7 +20,7 @@ pub struct LtCoreGetEventsIdRes {
     pub events: LtCoreEvents,
 }
 
-impl LatticeContract for LtCoreGetEventsIdReq {
+impl LtContract for LtCoreGetEventsIdReq {
     type Response = LtCoreGetEventsIdRes;
     type Body<'a> = ();
 
@@ -68,7 +68,7 @@ impl<'de> serde::Deserialize<'de> for LtCoreGetEventsIdRawRes {
     }
 }
 
-impl LatticeContract for LtCoreGetEventsIdRawReq {
+impl LtContract for LtCoreGetEventsIdRawReq {
     type Response = LtCoreGetEventsIdRawRes;
     type Body<'a> = ();
 
@@ -93,7 +93,7 @@ pub struct LtCoreGetEventsLatestRes {
     pub event_id: LtAuthEventId,
 }
 
-impl LatticeContract for LtCoreGetEventsLatestReq {
+impl LtContract for LtCoreGetEventsLatestReq {
     type Response = LtCoreGetEventsLatestRes;
     type Body<'a> = ();
 

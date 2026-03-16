@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeContract, LatticeError, Method, auth::devices::LtAuthDevice};
+use crate::{AuthReq, LatticeError, LtContract, Method, auth::devices::LtAuthDevice};
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -22,7 +22,7 @@ pub struct LtAuthPostDevicesRes {
     pub device: LtAuthDevice,
 }
 
-impl LatticeContract for LtAuthPostDevicesReq {
+impl LtContract for LtAuthPostDevicesReq {
     type Response = LtAuthPostDevicesRes;
     type Body<'b> = &'b Self;
 

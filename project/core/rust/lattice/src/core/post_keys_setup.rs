@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 
 use crate::{
-    AuthReq, LatticeContract, LatticeError, Method, Sensitive,
+    AuthReq, LatticeError, LtContract, Method, Sensitive,
     core::{LtCoreAddressKeyInput, LtCoreAsyncUserInitialization, user::LtCoreUser},
 };
 
@@ -52,7 +52,7 @@ pub struct LtCorePostKeysSetupRes {
     pub user: LtCoreUser,
 }
 
-impl LatticeContract for LtCorePostKeysSetupReq {
+impl LtContract for LtCorePostKeysSetupReq {
     type Response = LtCorePostKeysSetupRes;
     type Body<'a> = &'a LtCoreSetupKeysBody;
 

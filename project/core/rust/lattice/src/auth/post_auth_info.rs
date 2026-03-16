@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{
-    AuthReq, LatticeContract, LatticeError, Method, UnauthReq,
+    AuthReq, LatticeError, LtContract, Method, UnauthReq,
     auth::{LtAuthSrpChallenge, LtAuthTwoFactorOptions},
 };
 
@@ -32,7 +32,7 @@ pub enum LtAuthPostInfoRes {
     },
 }
 
-impl LatticeContract for LtAuthPostInfoReq {
+impl LtContract for LtAuthPostInfoReq {
     type Response = LtAuthPostInfoRes;
     type Body<'b> = &'b Self;
 

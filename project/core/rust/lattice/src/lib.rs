@@ -9,6 +9,9 @@ pub mod muon;
 #[cfg(feature = "core")]
 pub mod core;
 
+#[cfg(feature = "quark")]
+pub mod quark;
+
 #[cfg(feature = "observability")]
 pub mod observability;
 
@@ -28,16 +31,20 @@ use std::{borrow::Cow, collections::HashMap};
 /// An error type for Lattice operations.
 ///
 /// This error type is used to wrap errors from the `serde_json` crate.
-#[derive(Debug, Display)]
+#[derive(derive_more::Debug, Display)]
 pub enum LatticeError {
     #[cfg(feature = "serde")]
     #[display("SerdeJSON: {_0} {_1:?}")]
     SerdeJSON(serde_json::Error, Option<String>),
 
+    #[display("UnexpectedResponse: {_0}")]
+    UnexpectedResponse(String),
+
     #[cfg(feature = "muon")]
     Muon(::muon::Error),
 
-    #[display("UnexpectedStatusCode {_0}: {_1:?}")]
+    #[display("UnexpectedStatusCode({_0}: \"{}\")", String::from_utf8(_1.to_vec()).unwrap_or_else(|_| format!("Invalid UTF-8: {:?}", _1)))]
+    #[debug("UnexpectedStatusCode({_0}: \"{}\")", String::from_utf8(_1.to_vec()).unwrap_or_else(|_| format!("Invalid UTF-8: {:?}", _1)))]
     UnexpectedStatusCode(u16, Vec<u8>),
 
     #[cfg(feature = "serde")]
@@ -67,7 +74,7 @@ impl LatticeError {
 /// ## GET
 /// ### Without path parameters
 /// ```rust
-/// use lattice::{LatticeContract, LatticeError, Method};
+/// use lattice::{LtContract, LatticeError, Method};
 /// use std::borrow::Cow;
 ///
 /// struct GetRequest;
@@ -77,7 +84,7 @@ impl LatticeError {
 ///     some_json_field: String,
 /// }
 ///
-/// impl LatticeContract for GetRequest {
+/// impl LtContract for GetRequest {
 ///     type Response = GetRequestRes;
 ///     type Body<'a> = ();
 ///
@@ -91,7 +98,7 @@ impl LatticeError {
 ///
 /// ### With path parameters
 /// ```rust
-/// use lattice::{LatticeContract, LatticeError, Method};
+/// use lattice::{LtContract, LatticeError, Method};
 /// use std::borrow::Cow;
 ///
 /// struct GetRequest {
@@ -103,7 +110,7 @@ impl LatticeError {
 ///     some_json_field: String,
 /// }
 ///
-/// impl LatticeContract for GetRequest {
+/// impl LtContract for GetRequest {
 ///     type Response = GetRequestRes;
 ///     type Body<'a> = ();
 ///
@@ -117,7 +124,7 @@ impl LatticeError {
 ///
 /// ## DELETE
 /// ```rust
-/// use lattice::{LatticeContract, LatticeError, Method};
+/// use lattice::{LtContract, LatticeError, Method};
 /// use std::borrow::Cow;
 ///
 /// #[derive(serde::Deserialize)]
@@ -129,7 +136,7 @@ impl LatticeError {
 ///     some_path_param: String,
 /// }
 ///
-/// impl LatticeContract for PutRequest {
+/// impl LtContract for PutRequest {
 ///     type Response = PutRequestRes;
 ///     type Body<'a> = ();
 ///
@@ -148,7 +155,7 @@ impl LatticeError {
 /// ## POST / PUT
 /// ### Without url parameters
 /// ```rust
-/// use lattice::{LatticeContract, LatticeError, Method};
+/// use lattice::{LtContract, LatticeError, Method};
 /// use std::borrow::Cow;
 ///
 /// #[derive(serde::Deserialize)]
@@ -161,7 +168,7 @@ impl LatticeError {
 ///     some_json_field: String,
 /// }
 ///
-/// impl LatticeContract for PostRequest {
+/// impl LtContract for PostRequest {
 ///     type Response = PostRequestRes;
 ///     type Body<'a> = &'a Self;
 ///
@@ -179,7 +186,7 @@ impl LatticeError {
 ///
 /// ### With url parameters
 /// ```rust
-/// use lattice::{LatticeContract, LatticeError, Method};
+/// use lattice::{LtContract, LatticeError, Method};
 /// use std::borrow::Cow;
 ///
 /// #[derive(serde::Deserialize)]
@@ -197,7 +204,7 @@ impl LatticeError {
 ///     some_json_field: String,
 /// }
 ///
-/// impl LatticeContract for PostRequest {
+/// impl LtContract for PostRequest {
 ///     type Response = PostRequestRes;
 ///     type Body<'a> = &'a PostRequestBody;
 ///
@@ -215,7 +222,7 @@ impl LatticeError {
 ///
 /// ## Query parameters
 /// ```rust
-/// use lattice::{LatticeContract, LatticeError, Method};
+/// use lattice::{LtContract, LatticeError, Method};
 /// use std::collections::HashMap;
 /// use std::borrow::Cow;
 ///
@@ -228,7 +235,7 @@ impl LatticeError {
 ///     some_json_field: String,
 /// }
 ///
-/// impl LatticeContract for GetRequest {
+/// impl LtContract for GetRequest {
 ///     type Response = GetRequestRes;
 ///     type Body<'a> = ();
 ///
@@ -248,7 +255,7 @@ impl LatticeError {
 ///
 /// The query parameters are a `HashMap<String, String>`.
 /// The key is the query parameter name and the value is the query parameter value.
-pub trait LatticeContract {
+pub trait LtContract {
     /// The response type for the contract.
     ///
     /// This type needs to implement `Deserialize` from `serde`.

@@ -3,6 +3,10 @@ use proton_crypto_account::proton_crypto::{
     CryptoError, new_srp_provider,
     srp::{ClientProof, SRPProvider},
 };
+use rand::{
+    Rng,
+    distr::{Alphabetic, Alphanumeric, SampleString, Uniform},
+};
 use serde_json::{Value, json};
 
 use lattice::{
@@ -16,6 +20,29 @@ use lattice::{
 };
 
 use crate::common::{Session, SessionExt};
+
+pub fn random_username() -> String {
+    random_string(14)
+}
+
+pub fn random_password() -> String {
+    random_string(34)
+}
+
+pub fn random_totp_secret() -> String {
+    const BASE32_NOPAD: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+    let mut rng = rand::rng();
+    let dist = Uniform::new(0, BASE32_NOPAD.len()).unwrap();
+    let mut secret = String::with_capacity(32);
+    for _ in 0..32 {
+        secret.push(BASE32_NOPAD.chars().nth(rng.sample(dist)).unwrap());
+    }
+    secret.to_uppercase()
+}
+
+pub fn random_string(length: usize) -> String {
+    Alphabetic.sample_string(&mut rand::rng(), length)
+}
 
 async fn login_get_proofs(
     username: &str,

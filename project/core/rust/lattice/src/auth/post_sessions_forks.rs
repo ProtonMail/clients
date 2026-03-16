@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeContract, Method};
+use crate::{AuthReq, LtContract, Method};
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -31,7 +31,7 @@ pub struct LtAuthPostSessionsForksRes {
     pub selector: String,
 }
 
-impl LatticeContract for LtAuthPostSessionsForksReq {
+impl LtContract for LtAuthPostSessionsForksReq {
     type Response = LtAuthPostSessionsForksRes;
     type Body<'a> = &'a Self;
 

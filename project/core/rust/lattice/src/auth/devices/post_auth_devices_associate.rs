@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeContract, LatticeError, Method};
+use crate::{AuthReq, LatticeError, LtContract, Method};
 
 use super::LtAuthAssociatedDevice;
 
@@ -22,7 +22,7 @@ pub struct LtAuthPostDevicesAssociateRes {
     pub device: LtAuthAssociatedDevice,
 }
 
-impl LatticeContract for LtAuthPostDevicesAssociateReq {
+impl LtContract for LtAuthPostDevicesAssociateReq {
     type Response = LtAuthPostDevicesAssociateRes;
     type Body<'b> = &'b Self;
 

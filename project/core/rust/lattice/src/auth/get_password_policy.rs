@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeContract, LatticeError, UnauthReq};
+use crate::{AuthReq, LatticeError, LtContract, UnauthReq};
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -72,7 +72,7 @@ impl From<i32> for LtAuthPasswordPolicyState {
     }
 }
 
-impl LatticeContract for LtAuthGetPasswordPoliciesReq {
+impl LtContract for LtAuthGetPasswordPoliciesReq {
     type Body<'a> = ();
     type Response = LtAuthGetPasswordPoliciesRes;
 

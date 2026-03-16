@@ -10,15 +10,41 @@ use lattice::{
     details::{
         AccessTokenWithInsufficientScopeErrorDetails, LoginFailedErrorDetails, LoginFailedReason,
     },
+    quark::{
+        LtQuarkJSONRes,
+        user::{
+            LtQuarkUserStatus,
+            user_create::{LtQuarkUserCreate, LtQuarkUserCreateRes},
+        },
+    },
 };
 use muon::auth::scope;
 use totp_rs::{Algorithm, Secret, TOTP};
 
-use crate::common::{SessionExt, generate_muon_session, login_muon_session};
+use crate::common::{
+    SessionExt, generate_muon_session, login_muon_session, random_password, random_totp_secret,
+    random_username,
+};
 
 #[tokio::test]
 async fn test_auth() {
     let session = generate_muon_session().await;
+
+    let username = random_username();
+    let password = random_password();
+    let totp_secret = random_totp_secret();
+
+    let res = session
+        .send_quark(LtQuarkUserCreate {
+            name: username.to_string(),
+            password: password.to_string(),
+            totp_secret: Some(totp_secret.to_string()),
+            ..Default::default()
+        })
+        .await;
+
+    assert_api_ok!(res, LtQuarkJSONRes(LtQuarkUserCreateRes { status: LtQuarkUserStatus::Active, name: name_, password: password_, .. }) if name_ == &username && password_ == &password);
+
     let res = session.send_lt(LtCoreGetSettingsReq).await;
     assert_api_err!(&res,
         LtApiResponseError::AccessTokenWithInsufficientScope(LtApiResponseErrorInfo {
@@ -28,7 +54,8 @@ async fn test_auth() {
         if missing_scopes == &["full"]
     );
     let session_clone = async || session.client().get_session(()).await.unwrap();
-    let session = login_muon_session(session_clone().await, "plus", "plus1").await;
+    let session =
+        login_muon_session(session_clone().await, &username, &format!("{password}1")).await;
     assert_api_err!(
         session,
         LtApiResponseError::LoginFailed(LtApiResponseErrorInfo {
@@ -38,7 +65,8 @@ async fn test_auth() {
             ..
         })
     );
-    let session = login_muon_session(session_clone().await, "plus_____1", "plus").await;
+    let session =
+        login_muon_session(session_clone().await, &format!("{username}1"), &password).await;
     assert_api_err!(
         session,
         LtApiResponseError::LoginFailed(LtApiResponseErrorInfo {
@@ -49,10 +77,7 @@ async fn test_auth() {
         })
     );
 
-    const USER_2FA: &str = "twofa";
-    const PASS_2FA: &str = "a";
-    const TOTP_2FA: &str = "4R5YJICSS6N72KNN3YRTEGLJCEKIMSKJ";
-    let (session, tfa) = login_muon_session(session_clone().await, USER_2FA, PASS_2FA)
+    let (session, tfa) = login_muon_session(session_clone().await, &username, &password)
         .await
         .unwrap();
     assert!(tfa.is_some(), "{tfa:?} is expected to be Some");
@@ -64,14 +89,14 @@ async fn test_auth() {
 
     let res = session
         .send_lt(LtAuthPost2fa {
-            tfa_proof: LtAuthTwoFactorProof::Totp(add_one(next_totp(TOTP_2FA)).into()),
+            tfa_proof: LtAuthTwoFactorProof::Totp(add_one(next_totp(&totp_secret)).into()),
         })
         .await;
     assert_api_err!(
         res,
         LtApiResponseError::LoginFailed(LtApiResponseErrorInfo {
             details: LoginFailedErrorDetails {
-                login_failed_reason: LoginFailedReason::WrongPassword
+                login_failed_reason: LoginFailedReason::TotpWrong
             },
             ..
         })
@@ -79,7 +104,7 @@ async fn test_auth() {
 
     let res = session
         .send_lt(LtAuthPost2fa {
-            tfa_proof: LtAuthTwoFactorProof::Totp(next_totp(TOTP_2FA).into()),
+            tfa_proof: LtAuthTwoFactorProof::Totp(next_totp(&totp_secret).into()),
         })
         .await;
     assert_api_ok!(res, LtAuthPost2faRes { scopes } if scopes.contains(&scope::FULL.to_string()));

@@ -1,13 +1,13 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeContract, Method};
+use crate::{AuthReq, LtContract, Method};
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LtAuthDeleteReq;
 
-impl LatticeContract for LtAuthDeleteReq {
+impl LtContract for LtAuthDeleteReq {
     type Response = ();
     type Body<'a> = ();
 

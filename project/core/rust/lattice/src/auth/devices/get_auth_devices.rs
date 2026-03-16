@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeContract, LatticeError};
+use crate::{AuthReq, LatticeError, LtContract};
 
 use super::LtAuthDevice;
 
@@ -17,7 +17,7 @@ pub struct LtAuthGetDevicesRes {
     pub auth_devices: Vec<LtAuthDevice>,
 }
 
-impl LatticeContract for LtAuthGetDevicesReq {
+impl LtContract for LtAuthGetDevicesReq {
     type Response = LtAuthGetDevicesRes;
     type Body<'a> = ();
 

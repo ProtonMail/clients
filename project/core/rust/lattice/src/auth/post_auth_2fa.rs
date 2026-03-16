@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use passkey::types::webauthn::CredentialRequestOptions;
 
 use crate::auth::LtAuthFidoKeyId;
-use crate::{AuthReq, LatticeContract, LatticeError, Method, Sensitive};
+use crate::{AuthReq, LatticeError, LtContract, Method, Sensitive};
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -80,7 +80,7 @@ pub struct LtAuthPost2faRes {
     pub scopes: Vec<String>,
 }
 
-impl LatticeContract for LtAuthPost2fa {
+impl LtContract for LtAuthPost2fa {
     type Response = LtAuthPost2faRes;
     type Body<'b> = &'b Self;
 

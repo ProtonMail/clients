@@ -1,6 +1,6 @@
 use std::{borrow::Cow, collections::HashMap, iter::once};
 
-use crate::{LatticeContract, LatticeError, UnauthReq};
+use crate::{LatticeError, LtContract, UnauthReq};
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -17,7 +17,7 @@ pub struct LtCoreGetDomainsAvailableRes {
     pub domains: Vec<String>,
 }
 
-impl LatticeContract for LtCoreGetDomainsAvailableReq {
+impl LtContract for LtCoreGetDomainsAvailableReq {
     type Response = LtCoreGetDomainsAvailableRes;
     type Body<'a> = ();
 

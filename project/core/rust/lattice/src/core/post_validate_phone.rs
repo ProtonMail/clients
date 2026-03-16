@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{LatticeContract, LatticeError, Method, UnauthReq};
+use crate::{LatticeError, LtContract, Method, UnauthReq};
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
@@ -9,7 +9,7 @@ pub struct LtCorePostValidatePhoneReq {
     pub phone: String,
 }
 
-impl LatticeContract for LtCorePostValidatePhoneReq {
+impl LtContract for LtCorePostValidatePhoneReq {
     type Response = ();
     type Body<'a> = &'a Self;
 

@@ -1,13 +1,13 @@
 use std::borrow::Cow;
 
-use crate::{LatticeContract, LatticeError, UnauthReq};
+use crate::{LatticeError, LtContract, UnauthReq};
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LtCoreGetTestsPingReq;
 
-impl LatticeContract for LtCoreGetTestsPingReq {
+impl LtContract for LtCoreGetTestsPingReq {
     type Response = ();
     type Body<'a> = ();
 

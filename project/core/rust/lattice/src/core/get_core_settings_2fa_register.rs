@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeContract, LatticeError, auth::LtAuthFidoKey};
+use crate::{AuthReq, LatticeError, LtContract, auth::LtAuthFidoKey};
 use passkey::types::webauthn::{AttestationStatementFormatIdentifiers, CredentialCreationOptions};
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -17,7 +17,7 @@ pub struct LtCoreGetSettings2faRegisterRes {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LtCoreGetSettings2faRegisterReq;
 
-impl LatticeContract for LtCoreGetSettings2faRegisterReq {
+impl LtContract for LtCoreGetSettings2faRegisterReq {
     type Response = LtCoreGetSettings2faRegisterRes;
     type Body<'a> = ();
 

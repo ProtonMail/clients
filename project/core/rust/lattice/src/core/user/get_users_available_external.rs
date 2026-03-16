@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
 
-use crate::{LatticeContract, LatticeError, UnauthReq};
+use crate::{LatticeError, LtContract, UnauthReq};
 
 pub struct LtCoreGetUsersAvailableExternalReq {
     /// The username to check for availability.
@@ -11,7 +11,7 @@ pub struct LtCoreGetUsersAvailableExternalReq {
     pub payment_info_token: Option<String>,
 }
 
-impl LatticeContract for LtCoreGetUsersAvailableExternalReq {
+impl LtContract for LtCoreGetUsersAvailableExternalReq {
     type Response = ();
     type Body<'a> = ();
 

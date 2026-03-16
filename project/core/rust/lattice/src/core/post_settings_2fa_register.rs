@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use passkey::types::webauthn::{AuthenticatorTransport, CredentialCreationOptions};
 
-use crate::{AuthReq, LatticeContract, LatticeError, Method, Sensitive, core::LtCoreUserSettings};
+use crate::{AuthReq, LatticeError, LtContract, Method, Sensitive, core::LtCoreUserSettings};
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug)]
@@ -25,7 +25,7 @@ pub struct LtCorePostSettings2faRegisterRes {
     pub user_settings: LtCoreUserSettings,
 }
 
-impl LatticeContract for LtCorePostSettings2faRegisterReq {
+impl LtContract for LtCorePostSettings2faRegisterReq {
     type Response = LtCorePostSettings2faRegisterRes;
     type Body<'a> = &'a Self;
 

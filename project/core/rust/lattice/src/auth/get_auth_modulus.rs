@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{LatticeContract, Sensitive, UnauthReq};
+use crate::{LtContract, Sensitive, UnauthReq};
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -17,7 +17,7 @@ pub struct LtAuthGetModulusRes {
     pub modulus: Sensitive<String>,
 }
 
-impl LatticeContract for LtAuthGetModulusReq {
+impl LtContract for LtAuthGetModulusReq {
     type Response = LtAuthGetModulusRes;
     type Body<'a> = ();
 

@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{
-    LatticeContract, LatticeError, Method, UnauthReq,
+    LatticeError, LtContract, Method, UnauthReq,
     core::user::{LtCoreCreateUserType, LtCoreSrpVerifier, LtCoreUser},
 };
 
@@ -32,7 +32,7 @@ pub struct LtCorePostUsersExternalRes {
     pub user: LtCoreUser,
 }
 
-impl LatticeContract for LtCorePostUsersExternalReq {
+impl LtContract for LtCorePostUsersExternalReq {
     type Response = LtCorePostUsersExternalRes;
     type Body<'a> = &'a Self;
 

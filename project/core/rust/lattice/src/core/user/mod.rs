@@ -1,6 +1,7 @@
 pub mod get_users;
 pub mod get_users_available;
 pub mod get_users_available_external;
+pub mod post_code;
 pub mod post_users;
 pub mod post_users_external;
 

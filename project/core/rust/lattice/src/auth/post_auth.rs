@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{
-    LatticeContract, LatticeError, Method, Sensitive, UnauthReq,
+    LatticeError, LtContract, Method, Sensitive, UnauthReq,
     auth::{
         LtAuthApiSession, LtAuthPasswordMode, LtAuthTwoFactorOptions,
         post_auth_2fa::{LtAuthSrpProof, LtAuthTwoFactorProof},
@@ -57,7 +57,7 @@ where
     Ok(opt.filter(|t| !t.enabled.is_empty()))
 }
 
-impl LatticeContract for LtAuthPostReq {
+impl LtContract for LtAuthPostReq {
     type Response = LtAuthPostRes;
     type Body<'b> = &'b Self;
 

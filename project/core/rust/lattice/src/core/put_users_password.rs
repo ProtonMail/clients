@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{
-    AuthReq, LatticeContract, LatticeError, Method, Sensitive,
+    AuthReq, LatticeError, LtContract, Method, Sensitive,
     auth::post_auth_2fa::{LtAuthSrpProof, LtAuthTwoFactorProof},
 };
 
@@ -24,7 +24,7 @@ pub struct LtCorePutUsersPasswordReq {
     pub tfa_proof: Option<LtAuthTwoFactorProof>,
 }
 
-impl LatticeContract for LtCorePutUsersPasswordReq {
+impl LtContract for LtCorePutUsersPasswordReq {
     type Response = LtCorePutUsersPasswordRes;
     type Body<'a> = &'a Self;
 

@@ -7,11 +7,12 @@
   core = ["auth", "dep:passkey", "dep:bitflags", "dep:proton-crypto-account", "dep:num_enum"]
   auth = ["dep:passkey", "dep:bitflags"]
   default = []
+  quark = []
   facet = ["dep:facet"]
   serde = ["dep:serde", "dep:serde_json", "bitflags?/serde"]
   muon = ["dep:muon"]
   observability = ["serde"]
-  full = ["core", "auth", "muon", "serde", "facet", "observability"]
+  full = ["core", "auth", "muon", "serde", "facet", "observability", "quark"]
 
 [dependencies]
   serde = { optional = true, version = "^1.0.228", features = ["derive"] }

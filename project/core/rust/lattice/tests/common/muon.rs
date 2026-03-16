@@ -3,6 +3,7 @@ use std::pin::Pin;
 use async_compat::Compat;
 use futures::TryFutureExt;
 use muon::{
+    Environment,
     client::builder::Hyper,
     common::{GenericContext, RetryPolicy},
     http::hyper::connector::HyperConnector,
@@ -14,8 +15,9 @@ use muon::{
 };
 
 use lattice::{
-    LatticeContract, LatticeError,
-    muon::{as_muon_req, from_muon_res},
+    LatticeError, LtContract,
+    muon::LtContractExt,
+    quark::{LtQuarkContract, LtQuarkContractExt},
 };
 
 #[derive(Debug, Clone)]
@@ -118,8 +120,16 @@ pub type MuonCtx = GenericContext<
 pub type Session = muon::Session<MuonCtx>;
 pub type Client = muon::Client<MuonCtx>;
 
+pub fn environment() -> muon::Environment {
+    match std::env::var("ENV_NAME") {
+        Ok(name) => Environment::new_atlas_name(name),
+        Err(std::env::VarError::NotPresent) => Environment::new_atlas(),
+        Err(std::env::VarError::NotUnicode(e)) => panic!("{}", e.display()),
+    }
+}
+
 pub fn new_client() -> Client {
-    let env = muon::Environment::new_atlas();
+    let env = environment();
     let app = muon::App::new("android-mail@99.9.40.0-dev").unwrap();
     let builder = muon::Client::builder_with_transport::<Hyper>(app, env)
         .with_operating_system(MyOperatingSystem::default(), rand::rng())
@@ -138,13 +148,20 @@ pub async fn generate_muon_session() -> Session {
 }
 
 pub(crate) trait SessionExt {
-    async fn send_lt<T: LatticeContract>(&self, req: T) -> Result<T::Response, LatticeError>;
+    async fn send_lt<T: LtContract>(&self, req: T) -> Result<T::Response, LatticeError>;
+    async fn send_quark<T: LtQuarkContract>(&self, req: T) -> Result<T::Response, LatticeError>;
 }
 
 impl SessionExt for Session {
-    async fn send_lt<T: LatticeContract>(&self, req: T) -> Result<T::Response, LatticeError> {
-        let http_req = as_muon_req(&req)?;
+    async fn send_lt<T: LtContract>(&self, req: T) -> Result<T::Response, LatticeError> {
+        let http_req = req.to_muon_req()?;
         let response = self.send(http_req).await.map_err(LatticeError::Muon)?;
-        from_muon_res::<T>(&response)
+        T::from_muon_res(&response)
+    }
+
+    async fn send_quark<T: LtQuarkContract>(&self, req: T) -> Result<T::Response, LatticeError> {
+        let http_req = req.to_muon_req()?;
+        let response = self.send(http_req).await.map_err(LatticeError::Muon)?;
+        T::from_muon_res(&response)
     }
 }

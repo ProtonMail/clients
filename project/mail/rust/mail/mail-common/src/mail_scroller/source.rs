@@ -1,8 +1,14 @@
 mod data_scroller_source;
+mod hybrid_search;
+#[cfg(feature = "foundation_search")]
+mod local_search;
 mod mail_scroller_state;
 mod remote_source;
 
 pub use self::data_scroller_source::*;
+pub use self::hybrid_search::*;
+#[cfg(feature = "foundation_search")]
+pub use self::local_search::*;
 pub use self::remote_source::*;
 use crate::datatypes::SearchOptions;
 use crate::datatypes::{ContextualConversation, LocalConversationId, LocalMessageId, ReadFilter};

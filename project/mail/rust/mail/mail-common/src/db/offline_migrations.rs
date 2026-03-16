@@ -37,7 +37,6 @@ pub async fn run(mail_stash: &Stash<UserDb>) -> Result<usize, MigratorError> {
     migrations.push(Box::new(
         v046_proton_mail_android_signatures::AndroidSignaturesMigration,
     ));
-
     let mut tether = mail_stash.connection().await?;
 
     Migrator::new(TABLE, migrations).migrate(&mut tether).await

@@ -995,7 +995,30 @@ pub struct SearchScrollData {
     pub display_order: u64,
 }
 
+/// Highlighting positions for local search results
+#[cfg(feature = "foundation_search")]
+#[derive(Debug, Model, Eq, PartialEq, Clone, TypedBuilder)]
+#[TableName("mail_search_highlighting")]
+#[Database(UserDb)]
+pub struct SearchHighlighting {
+    #[IdField]
+    pub local_message_id: LocalMessageId,
+
+    #[DbField]
+    pub highlighting_positions: String,
+}
+
 impl SearchScrollData {
+    /// Clears all search-related persisted data (scroll data and highlighting).
+    /// Call on re-initialize (new search, clear, change_state) to avoid stale highlighting
+    /// rows accumulating — mail_search_highlighting has no FK to search_scroll_data.
+    pub async fn clear_all_search_data(bond: &Bond<'_, UserDb>) -> Result<(), StashError> {
+        SearchScrollData::delete_all(bond).await?;
+        #[cfg(feature = "foundation_search")]
+        SearchHighlighting::delete_all(bond).await?;
+        Ok(())
+    }
+
     pub async fn last(tether: &Tether<UserDb>) -> Result<Option<Self>, StashError> {
         SearchScrollData::find_first("ORDER BY display_order DESC", vec![], tether).await
     }
@@ -1022,6 +1045,26 @@ impl SearchScrollData {
     ) -> Result<Option<Message>, StashError> {
         let message = Message::find_by_id(self.local_message_id, tether).await?;
         Ok(message)
+    }
+
+    /// Get highlighting positions for a specific message ID
+    #[cfg(feature = "foundation_search")]
+    pub async fn highlighting_positions_for_message(
+        message_id: LocalMessageId,
+        tether: &Tether<UserDb>,
+    ) -> Result<Option<Vec<crate::search::SearchMatchPosition>>, StashError> {
+        let Some(highlighting) = SearchHighlighting::find_by_id(message_id, tether).await? else {
+            return Ok(None);
+        };
+        serde_json::from_str(&highlighting.highlighting_positions)
+            .map(Some)
+            .map_err(|e| {
+                StashError::Custom(anyhow!(
+                    "Corrupt highlighting data for message {}: {}",
+                    message_id,
+                    e
+                ))
+            })
     }
 
     pub async fn has_more(&self, tether: &Tether<UserDb>) -> Result<bool, StashError> {

@@ -13,6 +13,7 @@ use mail_core_common::UserDatabaseInitializer;
 use mail_core_common::event_loop::v6::CoreEventCache;
 use mail_core_common::services::event_loop_service::EventManagerContext;
 use mail_core_common::test_utils::test_context::{BaseTestContext, TestContext};
+use mail_network_monitor_service::OsNetworkStatus;
 use std::ops::Deref;
 use std::sync::Arc;
 use std::time::Duration;
@@ -42,6 +43,23 @@ impl MailTestContext {
     #[must_use]
     pub fn mock_server(&self) -> &MockServer {
         &self.mock_web_server
+    }
+
+    /// Set OS network status to offline for tests (e.g. LocalOnly hybrid search).
+    /// Use [`Self::set_network_online`] to restore.
+    pub fn set_network_offline(&self) {
+        self.core_test_context
+            .context
+            .network_monitor_service()
+            .update_os_network_status(OsNetworkStatus::Offline);
+    }
+
+    /// Set OS network status to online. Restores after [`Self::set_network_offline`].
+    pub fn set_network_online(&self) {
+        self.core_test_context
+            .context
+            .network_monitor_service()
+            .update_os_network_status(OsNetworkStatus::Online);
     }
 
     pub async fn new() -> Self {

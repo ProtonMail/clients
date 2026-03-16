@@ -1,0 +1,20 @@
+//! Shared API event types.
+
+use serde_repr::Deserialize_repr;
+#[cfg(feature = "mocks")]
+use serde_repr::Serialize_repr;
+
+mail_proton_ids::declare_proton_id! {
+    pub EventId
+}
+
+/// The action associated with an API event.
+#[derive(Clone, Copy, Debug, Deserialize_repr, Eq, Hash, PartialEq)]
+#[cfg_attr(feature = "mocks", derive(Serialize_repr))]
+#[repr(u8)]
+pub enum Action {
+    Delete = 0,
+    Create = 1,
+    Update = 2,
+    UpdateFlags = 3,
+}

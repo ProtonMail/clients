@@ -1,0 +1,22 @@
+[package]
+name = "mail-api-shared"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+derive_more = { workspace = true }
+mail-muon = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_qs = { workspace = true }
+thiserror = { workspace = true }
+
+[features]
+default = []
+mocks = []
+
+[lints]
+workspace = true

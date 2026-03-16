@@ -12,6 +12,7 @@ pub use self::response_data::*;
 pub use self::responses::*;
 use crate::service::ApiServiceResult;
 use bytes::Bytes;
+use mail_api_labels::LabelApi;
 use mail_muon::common::RetryPolicy;
 use proton_crypto_account::keys::APIPublicAddressKeys;
 use std::future::Future;
@@ -30,7 +31,7 @@ pub const CONTACTS_V6: &str = "/contacts/v6";
 pub use core_feature_flags::UNLEASH_V2;
 
 #[allow(async_fn_in_trait)]
-pub trait ProtonCore {
+pub trait ProtonCore: LabelApi {
     async fn get_addresses(&self) -> ApiServiceResult<GetAddressesResponse>;
 
     async fn get_address_by_id(&self, id: AddressId) -> ApiServiceResult<GetAddressResponse>;
@@ -89,41 +90,6 @@ pub trait ProtonCore {
         &self,
         ids: Vec<ContactId>,
     ) -> ApiServiceResult<PutDeleteContactsResponse>;
-
-    async fn delete_label(&self, label_id: LabelId) -> ApiServiceResult<()>;
-
-    async fn get_labels(&self, label_type: LabelType) -> ApiServiceResult<GetLabelsResponse>;
-
-    /// Method to get labels by their IDs.
-    /// Makes a POST request to the `/labels/by-ids` endpoint.
-    /// Names refer to the fact labels are acquired by their IDs.
-    /// HTTP `GET` method is not suppose to have a body,
-    /// so POST method is used instead.
-    async fn get_labels_by_ids(
-        &self,
-        label_ids: Vec<LabelId>,
-    ) -> ApiServiceResult<GetLabelsResponse>;
-
-    async fn post_labels(&self, body: PostLabelsRequest) -> ApiServiceResult<PostLabelsResponse>;
-
-    async fn put_label(
-        &self,
-        label_id: LabelId,
-        body: PutLabelRequest,
-    ) -> ApiServiceResult<PutLabelResponse>;
-
-    /// This method is used to patch an existing label.
-    /// The `label_id` is used to identify the label to patch.
-    /// Body contains expanded and notify fields.
-    /// Expanded is a boolean that indicates if the label is expanded.
-    /// For example if the folder is expanded in the UI.
-    /// Notify is a boolean that indicates if the user should be notified
-    /// about new messages in the label. By default both of them are disabled.
-    async fn patch_label(
-        &self,
-        label_id: LabelId,
-        body: PatchLabelRequest,
-    ) -> ApiServiceResult<PatchLabelResponse>;
 
     /// This method is used to register device for push notifications.
     /// The registering will delete any duplicate having the same (User ID, Product, Device Token) from different sessions.

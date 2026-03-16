@@ -32,7 +32,7 @@ use proton_crypto_account::keys::{
     APIUnverifiedPublicAddressKeyGroup as UnverifiedPublicAddressKeyGroup, ArmoredPrivateKey,
     KeyId,
 };
-use serde::{Deserialize, Deserializer};
+use serde::Deserialize;
 use serde_with::{BoolFromInt, serde_as};
 
 #[cfg(feature = "mocks")]
@@ -203,63 +203,9 @@ pub struct PutDeleteContactResponse {
     pub response: ApiErrorInfo,
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct GetLabelsResponse {
-    #[serde(deserialize_with = "deserialize_labels")]
-    pub labels: Vec<Label>,
-}
-
-fn deserialize_labels<'de, D>(deserializer: D) -> Result<Vec<Label>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    use std::collections::HashMap;
-    #[derive(Deserialize)]
-    #[serde(untagged)]
-    pub enum LabelsMapOrList {
-        Map(HashMap<String, Label>),
-        List(Vec<Label>),
-    }
-
-    impl LabelsMapOrList {
-        pub fn into_vec(self) -> Vec<Label> {
-            match self {
-                LabelsMapOrList::Map(map) => map.into_values().collect(),
-                LabelsMapOrList::List(list) => list,
-            }
-        }
-    }
-
-    LabelsMapOrList::deserialize(deserializer).map(LabelsMapOrList::into_vec)
-}
-
-/// TODO: Document this struct.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct PostLabelsResponse {
-    /// TODO: Document this field.
-    pub label: Label,
-}
-
-/// TODO: Document this struct.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct PutLabelResponse {
-    /// TODO: Document this field.
-    pub label: Label,
-}
-/// TODO: Document this struct.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct PatchLabelResponse {
-    /// TODO: Document this struct.
-    pub label: Label,
-}
+pub use mail_api_labels::{
+    GetLabelsResponse, PatchLabelResponse, PostLabelsResponse, PutLabelResponse,
+};
 
 /// Represents a user key in the response.
 #[serde_as]

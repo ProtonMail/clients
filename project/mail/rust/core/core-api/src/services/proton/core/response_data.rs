@@ -35,7 +35,7 @@ use serde_json::Value as JsonValue;
 use serde_repr::Deserialize_repr;
 #[cfg(feature = "mocks")]
 use serde_repr::Serialize_repr;
-use serde_with::{BoolFromInt, DefaultOnNull, FromInto, serde_as};
+use serde_with::{BoolFromInt, FromInto, serde_as};
 
 mod legacy_feature_flags;
 
@@ -44,27 +44,8 @@ pub use core_feature_flags::{
     UnleashToggleVariant,
 };
 pub use legacy_feature_flags::*;
-
-//  ENUMS
-//==============================================================================
-
-/// TODO: Document this enum.
-#[derive(Clone, Copy, Debug, Deserialize_repr, Eq, Hash, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize_repr))]
-#[repr(u8)]
-pub enum Action {
-    /// TODO: Document this field.
-    Delete = 0,
-
-    /// TODO: Document this field.
-    Create = 1,
-
-    /// TODO: Document this field.
-    Update = 2,
-
-    /// TODO: Document this field.
-    UpdateFlags = 3,
-}
+pub use mail_api_event_types::Action;
+pub use mail_api_labels::LabelEvent;
 
 /// TODO: Document this enum.
 #[derive(Clone, Copy, Debug, Deserialize_repr, Eq, Hash, PartialEq)]
@@ -1024,92 +1005,6 @@ pub struct UserSettings {
     /// TODO: Document this field.
     #[serde_as(as = "BoolFromInt")]
     pub welcome: bool,
-}
-
-/// TODO: Document this struct.
-#[serde_as]
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-#[allow(clippy::struct_excessive_bools)]
-pub struct Label {
-    /// TODO: Document this field.
-    #[serde(rename = "ID")]
-    pub id: LabelId,
-
-    /// TODO: Document this field.
-    #[serde(rename = "ParentID")]
-    pub parent_id: Option<LabelId>,
-
-    /// TODO: Document this field.
-    pub color: String,
-
-    /// TODO: Document this field.
-    #[serde_as(as = "DefaultOnNull<BoolFromInt>")]
-    pub display: bool,
-
-    /// TODO: Document this field.
-    #[serde_as(as = "DefaultOnNull<BoolFromInt>")]
-    pub expanded: bool,
-
-    /// TODO: Document this field.
-    #[serde(rename = "Type")]
-    pub label_type: LabelType,
-
-    /// TODO: Document this field.
-    pub name: String,
-
-    /// TODO: Document this field.
-    #[serde_as(as = "DefaultOnNull<BoolFromInt>")]
-    pub notify: bool,
-
-    /// TODO: Document this field.
-    #[serde(default)]
-    pub order: u32,
-
-    /// TODO: Document this field.
-    pub path: Option<String>,
-
-    /// TODO: Document this field.
-    #[serde_as(as = "DefaultOnNull<BoolFromInt>")]
-    pub sticky: bool,
-}
-
-#[cfg(feature = "mocks")]
-impl Label {
-    #[must_use]
-    pub fn test_default() -> Self {
-        Self {
-            id: LabelId::from(""),
-            parent_id: None,
-            color: String::default(),
-            display: false,
-            expanded: false,
-            label_type: LabelType::Label,
-            name: String::default(),
-            notify: false,
-            order: 0,
-            path: None,
-            sticky: false,
-        }
-    }
-}
-
-/// Data for an event related to a [`LabelEvent`] record.
-#[serde_as]
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct LabelEvent {
-    /// TODO: Document this field.
-    #[serde(rename = "ID")]
-    pub id: LabelId,
-
-    /// TODO: Document this field.
-    pub action: Action,
-
-    /// TODO: Document this field.
-    pub label: Option<Label>,
 }
 
 /// Core event data structure that matches the core fields from events.

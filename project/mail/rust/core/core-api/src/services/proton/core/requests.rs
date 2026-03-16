@@ -27,7 +27,7 @@ use serde::Serialize;
 use serde_with::{BoolFromInt, StringWithSeparator, formats::CommaSeparator, serde_as};
 use smart_default::SmartDefault;
 
-use super::{DeviceEnvironment, LabelType};
+use super::DeviceEnvironment;
 
 /// Parameters for getting Captcha details.
 #[serde_as]
@@ -203,75 +203,9 @@ pub struct PutDeleteContacts {
     pub ids: Vec<ContactId>,
 }
 
-/// TODO: Document this struct.
-#[derive(Clone, Debug, Serialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct PostLabelsRequest {
-    /// TODO: Document this field.
-    #[serde(rename = "ParentID")]
-    pub parent_id: Option<LabelId>,
-
-    /// TODO: Document this field.
-    pub color: String,
-
-    /// TODO: Document this field.
-    #[serde(rename = "Type")]
-    pub label_type: LabelType,
-
-    /// TODO: Document this field.
-    pub name: String,
-}
-
-/// TODO: Document this struct.
-#[derive(Clone, Debug, Serialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct PutLabelRequest {
-    /// TODO: Document this field.
-    #[serde(rename = "ParentID")]
-    pub parent_id: Option<LabelId>,
-
-    /// TODO: Document this field.
-    pub color: String,
-
-    /// TODO: Document this field.
-    pub name: String,
-}
-
-/// TODO: Document this struct
-#[serde_as]
-#[derive(Clone, Debug, Default, Serialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct PatchLabelRequest {
-    /// TODO: Document this field.
-    #[serde_as(as = "Option<BoolFromInt>")]
-    pub expanded: Option<bool>,
-    /// TODO: Document this field.
-    #[serde_as(as = "Option<BoolFromInt>")]
-    pub notify: Option<bool>,
-}
-
-/// TODO: Document this struct.
-#[derive(Clone, Debug, Serialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct GetLabelsOptions {
-    /// TODO: Document this field.
-    #[serde(rename = "Type")]
-    pub label_type: LabelType,
-}
-
-/// Represents `POST /labels/by-ids` request body.
-///
-/// Name refers to the fact it actually gets labels by their IDs.
-/// But due to the fact GET requests are not supposed to have a body
-/// The struct is used with the POST method instead.
-///
-#[derive(Clone, Debug, Serialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct GetLabelsByIdsOptions {
-    /// Label IDs to get.
-    #[serde(rename = "LabelIDs")]
-    pub label_ids: Vec<LabelId>,
-}
+pub use mail_api_labels::{
+    GetLabelsByIdsOptions, GetLabelsOptions, PatchLabelRequest, PostLabelsRequest, PutLabelRequest,
+};
 
 /// Represents `POST /devices` request body.
 ///

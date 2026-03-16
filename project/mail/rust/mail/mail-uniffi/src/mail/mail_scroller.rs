@@ -657,6 +657,16 @@ pub struct SearchScroller {
 
 impl SearchScroller {
     #[must_use]
+    #[cfg(not(feature = "foundation_search"))]
+    pub(crate) fn new(scroller: RealMailScroller<RealMessage>, handle: Arc<WatchHandle>) -> Self {
+        Self {
+            scroller: Arc::new(scroller),
+            handle,
+        }
+    }
+
+    #[must_use]
+    #[cfg(feature = "foundation_search")]
     pub(crate) fn new(scroller: RealMailScroller<RealMessage>, handle: Arc<WatchHandle>) -> Self {
         Self {
             scroller: Arc::new(scroller),
@@ -783,6 +793,52 @@ impl SearchScroller {
 
     pub fn terminate(&self) {
         self.scroller.terminate();
+    }
+}
+
+#[cfg(feature = "foundation_search")]
+#[uniffi_export]
+impl SearchScroller {
+    /// Get highlighting positions for a message in the search results
+    ///
+    /// Returns highlighting positions if the message was found via local search,
+    /// or None if it came from remote search or has no highlighting data.
+    pub async fn highlighting_positions(
+        &self,
+        message_id: Id,
+        mailbox: Arc<super::Mailbox>,
+    ) -> Result<Option<Vec<super::search_results::SearchMatchPosition>>, MailScrollerError> {
+        use super::search_results::SearchMatchPosition;
+        use mail_common::datatypes::LocalMessageId;
+        use mail_common::models::SearchScrollData;
+        use mail_common::search::SearchMatchPosition as CommonSearchMatchPosition;
+
+        let ctx = mailbox.ctx().map_err(MailScrollerError::Other)?;
+
+        uniffi_async::<_, RealProtonMailError, _>(async move {
+            let tether = ctx.user_stash().connection().await?;
+            let local_id = LocalMessageId::from(u64::from(message_id));
+
+            let positions: Option<Vec<CommonSearchMatchPosition>> =
+                SearchScrollData::highlighting_positions_for_message(local_id, &tether)
+                    .await
+                    .map_err(RealProtonMailError::from)?;
+
+            Result::<_, RealProtonMailError>::Ok(positions.map(
+                |positions: Vec<CommonSearchMatchPosition>| {
+                    positions
+                        .into_iter()
+                        .map(|p| SearchMatchPosition {
+                            attribute: p.attribute.as_str().to_string(),
+                            position: p.position,
+                            value_index: p.value_index,
+                        })
+                        .collect()
+                },
+            ))
+        })
+        .await
+        .map_err(Into::into)
     }
 }
 

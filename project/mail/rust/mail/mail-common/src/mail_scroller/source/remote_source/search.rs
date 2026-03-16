@@ -58,7 +58,7 @@ impl SearchScrollerSource {
         let mut tether = ctx.user_stash().connection().await?;
 
         tether
-            .tx(async |tx| SearchScrollData::delete_all(tx).await)
+            .tx(async |tx| SearchScrollData::clear_all_search_data(tx).await)
             .await?;
 
         let Some(remote_label_id) =
@@ -69,12 +69,13 @@ impl SearchScrollerSource {
 
         debug!("Paginating for the first time, getting first page & spawning sync task.");
 
-        Self::spawn_first_page_sync(
+        Self::spawn_first_page(
             ctx,
             self.total.clone(),
             remote_label_id,
             self.options.clone(),
             self.page_size,
+            false, // remote-only: use API total
         )
         .await
     }
@@ -92,12 +93,18 @@ impl SearchScrollerSource {
         })
     }
 
-    pub(crate) async fn spawn_first_page_sync(
+    /// Spawns first-page sync in the background. Returns the task handle for the caller to await.
+    ///
+    /// When `use_deduped_count_for_total` is true (hybrid), total is set from SearchScrollData
+    /// after save so it reflects the deduped count (local + remote - overlap). When false
+    /// (remote-only), total is set from the API response.
+    pub(crate) async fn spawn_first_page(
         ctx: &MailUserContext,
         total: Arc<Mutex<u64>>,
         remote_label_id: LabelId,
         search: SearchOptions,
         page_size: usize,
+        use_deduped_count_for_total: bool,
     ) -> Result<MailPaginatorJoinHandle, MailContextError> {
         let mail_stash = ctx.user_stash().clone();
         let session = ctx.session().clone();
@@ -112,6 +119,7 @@ impl SearchScrollerSource {
                 remote_label_id,
                 search,
                 page_size,
+                use_deduped_count_for_total,
                 ctx.action_queue(),
             )
             .await?;
@@ -157,6 +165,7 @@ impl SearchScrollerSource {
     }
 
     #[instrument(skip_all)]
+    #[allow(clippy::too_many_arguments)]
     async fn sync_first_page(
         session: &Session,
         total: &Mutex<u64>,
@@ -164,6 +173,7 @@ impl SearchScrollerSource {
         remote_label_id: LabelId,
         search: SearchOptions,
         page_size: usize,
+        use_deduped_count_for_total: bool,
         queue: &Queue<UserDb>,
     ) -> Result<Vec<Message>, MailContextError> {
         info!("Syncing first page in {remote_label_id:?}");
@@ -181,9 +191,10 @@ impl SearchScrollerSource {
             })
             .await?;
 
-        let mut total = total.lock().await;
-        *total = response.total;
-        drop(total);
+        if !use_deduped_count_for_total {
+            let mut total_guard = total.lock().await;
+            *total_guard = response.total;
+        }
 
         debug!(
             "Fetched {}/{} elements",
@@ -195,7 +206,15 @@ impl SearchScrollerSource {
             return Ok(vec![]);
         }
 
-        Self::save_messages(response.messages, session, tether, queue).await
+        let messages = Self::save_messages(response.messages, session, tether, queue).await?;
+
+        if use_deduped_count_for_total && let Some(last) = SearchScrollData::last(tether).await? {
+            let count = last.visible_element_count(tether).await?;
+            let mut total_guard = total.lock().await;
+            *total_guard = count;
+        }
+
+        Ok(messages)
     }
 
     #[instrument(skip_all)]
@@ -274,6 +293,8 @@ impl SearchScrollerSource {
         tether
             .quiet_tx(async |tx| {
                 let mut rebase_change_set = RebaseChangeSet::default();
+                // Append after existing rows (no display_order interleaving). Skip messages
+                // already in SearchScrollData (from local search) to merge/dedup local+remote.
                 let mut display_order = SearchScrollData::last(tx)
                     .await?
                     .map(|s| s.display_order.saturating_add(1))
@@ -287,6 +308,13 @@ impl SearchScrollerSource {
                 )
                 .await?;
                 for message in messages.iter_mut() {
+                    // Skip messages already in SearchScrollData (from local search) to merge/dedup.
+                    if SearchScrollData::find_by_id(message.id(), tx)
+                        .await?
+                        .is_some()
+                    {
+                        continue;
+                    }
                     SearchScrollData::builder()
                         .local_message_id(message.id())
                         .display_order(display_order)

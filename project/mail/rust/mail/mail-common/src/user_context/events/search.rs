@@ -13,7 +13,13 @@ use mail_core_common::event_loop::events::Action;
 use mail_stash::stash::Bond;
 
 #[cfg(feature = "foundation_search")]
+use crate::models::Message;
+#[cfg(feature = "foundation_search")]
 use crate::search::MailSearchService;
+#[cfg(feature = "foundation_search")]
+use mail_core_common::models::ModelIdExtension;
+#[cfg(feature = "foundation_search")]
+use tracing::warn;
 
 /// Handle search indexing for a single message event (v6 event structure)
 ///

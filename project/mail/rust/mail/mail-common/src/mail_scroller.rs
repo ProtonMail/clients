@@ -43,6 +43,23 @@ mod conversation_scroller;
 
 const MIN_STATUS_UPDATE_DURATION: Duration = Duration::from_millis(1500);
 
+/// Filters out items already present in `existing` (by id). Used when Append may overlap with
+/// a prior Refresh (e.g. hybrid + fast remote).
+fn filter_new_items_for_append<T, Id>(
+    existing: &[T],
+    items: Vec<T>,
+    id_fn: impl Fn(&T) -> Id,
+) -> Vec<T>
+where
+    Id: Eq + std::hash::Hash,
+{
+    let existing_ids: std::collections::HashSet<_> = existing.iter().map(&id_fn).collect();
+    items
+        .into_iter()
+        .filter(|i| !existing_ids.contains(&id_fn(i)))
+        .collect()
+}
+
 #[derive(Debug)]
 pub enum ScrollerStatusUpdate {
     FetchNewStart(ScrollerSource),
@@ -257,7 +274,26 @@ impl MailScroller<Message> {
             .await?
             .expect("System labels should always have a local counterpart");
 
-        let source = SearchScrollerSource::new(label, options, page_size);
+        let source = HybridSearchScrollerSource::new(label, options, page_size);
+
+        Self::new(ctx, source, page_size, label).await
+    }
+
+    #[cfg(feature = "foundation_search")]
+    pub async fn local_search(
+        ctx: Weak<MailUserContext>,
+        options: SearchOptions,
+        page_size: usize,
+    ) -> Result<(Self, MailScrollerHandle<Message>), MailContextError> {
+        let ctx = ctx.upgrade().ok_or(MailContextError::MissingContext)?;
+        let tether = ctx.user_stash().connection().await?;
+        let label = MailSettings::get_or_default(&tether).await.all_mail();
+
+        let label = Label::remote_id_counterpart(label, &tether)
+            .await?
+            .expect("System labels should always have a local counterpart");
+
+        let source = LocalSearchScrollerSource::new(label, options, page_size);
 
         Self::new(ctx, source, page_size, label).await
     }
@@ -1100,16 +1136,34 @@ where
                 handle.abort();
             }
 
-            debug!(scroller_id = %self.scroller_id, items = items.len(), "Append items");
+            // Dedup: when Refresh runs before FetchMore (e.g. hybrid + fast remote), we may
+            // receive the same items from both. Filter out items already in the list.
+            let new_items = filter_new_items_for_append(&self.items.read(), items, |i| i.item_id());
 
-            self.items.write().extend(items.clone());
+            if new_items.is_empty() {
+                debug!("All items already present (Refresh race), skipping append");
 
-            Ok(ScrollerListUpdate::Append {
-                src: call_src,
-                scroller_id: self.scroller_id,
-                items,
+                Ok(ScrollerListUpdate::None {
+                    src: call_src,
+                    scroller_id: self.scroller_id,
+                }
+                .into())
+            } else {
+                debug!(
+                    scroller_id = %self.scroller_id,
+                    items = new_items.len(),
+                    "Append items"
+                );
+
+                self.items.write().extend(new_items.clone());
+
+                Ok(ScrollerListUpdate::Append {
+                    src: call_src,
+                    scroller_id: self.scroller_id,
+                    items: new_items,
+                }
+                .into())
             }
-            .into())
         }
     }
 
@@ -1832,5 +1886,31 @@ mod tests {
             }
             _ => panic!("Expected ReplaceBefore variant for this scenario"),
         }
+    }
+
+    #[test]
+    fn test_filter_new_items_for_append_dedup() {
+        // Simulates Refresh-before-FetchMore: existing has items from Refresh, items from
+        // FetchMore may overlap. Spec I10: no duplicates.
+        let existing: Vec<(u64, &str)> = vec![(1, "a"), (2, "b"), (3, "c")];
+        let items = vec![(2, "b"), (3, "c"), (4, "d"), (5, "e")]; // 2,3 overlap
+        let new = filter_new_items_for_append(&existing, items, |(id, _)| *id);
+        assert_eq!(new, vec![(4, "d"), (5, "e")]);
+    }
+
+    #[test]
+    fn test_filter_new_items_for_append_all_duplicates() {
+        let existing: Vec<u64> = vec![1, 2, 3];
+        let items = vec![1, 2, 3];
+        let new = filter_new_items_for_append(&existing, items, |&x| x);
+        assert!(new.is_empty());
+    }
+
+    #[test]
+    fn test_filter_new_items_for_append_no_duplicates() {
+        let existing: Vec<u64> = vec![1, 2, 3];
+        let items = vec![4, 5, 6];
+        let new = filter_new_items_for_append(&existing, items, |&x| x);
+        assert_eq!(new, vec![4, 5, 6]);
     }
 }

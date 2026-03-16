@@ -1,0 +1,17 @@
+[
+  {
+    "remote_id": "local_msg_1",
+    "subject": "Project timeline discussion",
+    "body": "Let's discuss the et-rust project timeline tomorrow at 10am. We need to review the quarterly milestones and budget allocation."
+  },
+  {
+    "remote_id": "local_msg_2",
+    "subject": "Quarterly report review",
+    "body": "Please find attached the quarterly report for Q1. The project deliverables are on track and we exceeded our targets."
+  },
+  {
+    "remote_id": "local_msg_3",
+    "subject": "Budget meeting scheduled",
+    "body": "The spacex rocket budget meeting is scheduled for next week. We will discuss project costs and resource allocation for the upcoming quarter."
+  }
+]

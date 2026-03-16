@@ -56,6 +56,7 @@ mail-action-queue = { workspace = true }
 mail-account-api = { workspace = true }
 mail-calendar-api-v1 = { workspace = true }
 mail-calendar-common = { workspace = true }
+mail-api-labels = { workspace = true }
 mail-core-api = { workspace = true, features = ["sql"] }
 mail-api = { workspace = true, features = ["sql"] }
 mail-canonical-email = { workspace = true }

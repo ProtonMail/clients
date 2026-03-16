@@ -1,0 +1,20 @@
+[package]
+name = "mail-api-event-types"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+mail-proton-ids = { workspace = true }
+serde = { workspace = true }
+serde_repr = { workspace = true }
+mail-stash = { workspace = true, optional = true }
+
+[features]
+default = []
+mocks = []
+sql = ["dep:mail-stash", "mail-proton-ids/sql"]
+
+[lints]
+workspace = true

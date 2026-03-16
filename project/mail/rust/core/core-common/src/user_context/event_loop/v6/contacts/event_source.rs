@@ -6,6 +6,7 @@ use futures::StreamExt;
 use futures::future::BoxFuture;
 use futures::stream::FuturesUnordered;
 use itertools::Itertools;
+use mail_api_labels::LabelApi;
 use mail_core_api::consts::General;
 use mail_core_api::service::ApiServiceError;
 use mail_core_api::services::proton::{Action, ContactId, ContactRootEventV6, LabelId, ProtonCore};

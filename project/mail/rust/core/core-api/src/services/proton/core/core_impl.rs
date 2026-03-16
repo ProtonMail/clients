@@ -4,7 +4,7 @@ use std::time::Duration;
 use bytes::Bytes;
 use mail_muon::common::{RetryPolicy, Sender};
 use mail_muon::util::ProtonRequestExt;
-use mail_muon::{DELETE, GET, PATCH, POST, PUT};
+use mail_muon::{GET, POST, PUT};
 use mail_muon::{ProtonRequest, ProtonResponse, serde_to_query};
 use proton_crypto_account::keys::APIPublicAddressKeys;
 use serde_json::json;
@@ -163,71 +163,6 @@ impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> ProtonCore for This {
 
     async fn get_users(&self) -> ApiServiceResult<GetUsersResponse> {
         Ok(GET!("{CORE_V4}/users")
-            .send_with(self)
-            .await?
-            .ok()?
-            .into_body_json()?)
-    }
-
-    async fn delete_label(&self, label_id: LabelId) -> ApiServiceResult<()> {
-        DELETE!("{CORE_V4}/labels/{label_id}")
-            .send_with(self)
-            .await?
-            .ok()?;
-
-        Ok(())
-    }
-
-    async fn get_labels(&self, label_type: LabelType) -> ApiServiceResult<GetLabelsResponse> {
-        Ok(GET!("{CORE_V4}/labels")
-            .query(serde_to_query(GetLabelsOptions { label_type })?)
-            .send_with(self)
-            .await?
-            .ok()?
-            .into_body_json()?)
-    }
-
-    async fn get_labels_by_ids(
-        &self,
-        label_ids: Vec<LabelId>,
-    ) -> ApiServiceResult<GetLabelsResponse> {
-        Ok(POST!("{CORE_V4}/labels/by-ids")
-            .body_json(GetLabelsByIdsOptions { label_ids })?
-            .send_with(self)
-            .await?
-            .ok()?
-            .into_body_json()?)
-    }
-
-    async fn post_labels(&self, body: PostLabelsRequest) -> ApiServiceResult<PostLabelsResponse> {
-        Ok(POST!("{CORE_V4}/labels")
-            .body_json(body)?
-            .send_with(self)
-            .await?
-            .ok()?
-            .into_body_json()?)
-    }
-
-    async fn put_label(
-        &self,
-        label_id: LabelId,
-        body: PutLabelRequest,
-    ) -> ApiServiceResult<PutLabelResponse> {
-        Ok(PUT!("{CORE_V4}/labels/{label_id}")
-            .body_json(body)?
-            .send_with(self)
-            .await?
-            .ok()?
-            .into_body_json()?)
-    }
-
-    async fn patch_label(
-        &self,
-        label_id: LabelId,
-        body: PatchLabelRequest,
-    ) -> ApiServiceResult<PatchLabelResponse> {
-        Ok(PATCH!("{CORE_V4}/labels/{label_id}")
-            .body_json(body)?
             .send_with(self)
             .await?
             .ok()?

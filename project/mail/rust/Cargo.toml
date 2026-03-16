@@ -41,6 +41,9 @@ members = [
   "shared/stash-macros",
   "shared/task-service",
   "shared/telemetry-service",
+  "api/mail-api-event-types",
+  "api/mail-api-labels",
+  "api/mail-api-shared",
   "shared/mail-proton-ids",
   "shared/vcard",
   "uniffi/uniffi-bindgen",
@@ -160,6 +163,18 @@ version = "0.2.9"
 features = ["serde"]
 git = "https://github.com/ProtonMail/rust-email_address.git"
 branch = "fix/parse-display-format-without-whitespace"
+
+[workspace.dependencies.mail-api-event-types]
+version = "0.1.0"
+path = "api/mail-api-event-types"
+
+[workspace.dependencies.mail-api-labels]
+version = "0.1.0"
+path = "api/mail-api-labels"
+
+[workspace.dependencies.mail-api-shared]
+version = "0.1.0"
+path = "api/mail-api-shared"
 
 [workspace.dependencies.mail-proton-ids]
 version = "0.1.0"

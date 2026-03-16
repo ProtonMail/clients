@@ -1,0 +1,25 @@
+[package]
+name = "mail-api-labels"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+mail-proton-ids = { workspace = true }
+mail-api-event-types = { workspace = true }
+mail-api-shared = { workspace = true }
+mail-muon = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_repr = { workspace = true }
+serde_with = { workspace = true }
+mail-stash = { workspace = true, optional = true }
+
+[features]
+default = []
+mocks = ["mail-api-event-types/mocks", "mail-api-shared/mocks"]
+sql = ["dep:mail-stash", "mail-proton-ids/sql", "mail-api-event-types/sql"]
+
+[lints]
+workspace = true

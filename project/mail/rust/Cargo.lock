@@ -3891,6 +3891,44 @@ dependencies = [
 ]
 
 [[package]]
+name = "mail-api-event-types"
+version = "0.1.0"
+dependencies = [
+ "mail-proton-ids",
+ "mail-stash",
+ "serde",
+ "serde_repr",
+]
+
+[[package]]
+name = "mail-api-labels"
+version = "0.1.0"
+dependencies = [
+ "mail-api-event-types",
+ "mail-api-shared",
+ "mail-muon",
+ "mail-proton-ids",
+ "mail-stash",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "serde_with",
+]
+
+[[package]]
+name = "mail-api-shared"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "derive_more 2.0.1",
+ "mail-muon",
+ "serde",
+ "serde_json",
+ "serde_qs",
+ "thiserror 2.0.18",
+]
+
+[[package]]
 name = "mail-api-utils"
 version = "0.1.0"
 
@@ -3983,6 +4021,7 @@ dependencies = [
  "mail-account-api",
  "mail-action-queue",
  "mail-api",
+ "mail-api-labels",
  "mail-calendar-api-v1",
  "mail-calendar-common",
  "mail-canonical-email",
@@ -4057,6 +4096,9 @@ dependencies = [
  "derive_more 2.0.1",
  "futures",
  "insta",
+ "mail-api-event-types",
+ "mail-api-labels",
+ "mail-api-shared",
  "mail-api-utils",
  "mail-core-api",
  "mail-muon",
@@ -4106,6 +4148,7 @@ dependencies = [
  "itertools 0.13.0",
  "jiff",
  "mail-action-queue",
+ "mail-api-labels",
  "mail-api-utils",
  "mail-core-api",
  "mail-core-common",

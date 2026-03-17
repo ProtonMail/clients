@@ -11,7 +11,6 @@ use mail_core_api::connection_status::ConnectionStatus;
 use mail_core_api::services::proton::UserId;
 use mail_core_common::UserDatabaseInitializer;
 use mail_core_common::event_loop::v6::CoreEventCache;
-use mail_core_common::services::event_loop_service::EventManagerContext;
 use mail_core_common::test_utils::test_context::{BaseTestContext, TestContext};
 use mail_network_monitor_service::OsNetworkStatus;
 use std::ops::Deref;
@@ -277,7 +276,7 @@ impl MailUserContextTestExtension for MailUserContext {
         let combined_event: MailEventV5 = event.into();
         let mut cache = CoreEventCache::default();
         self.event_subscriber()
-            .on_event(&EventManagerContext, &combined_event, &mut cache)
+            .on_event(&self.user_context().as_arc(), &combined_event, &mut cache)
             .await
     }
 
@@ -289,7 +288,7 @@ impl MailUserContextTestExtension for MailUserContext {
         use core_event_loop::v6::EventSubscriber;
         let mut cache = <crate::events::v6::MailEventSourceV6 as core_event_loop::v6::EventSource>::Cache::default();
         crate::events::v6::MailEventV6Subscriber::from(self.as_weak())
-            .on_event(&EventManagerContext, &event, &mut cache)
+            .on_event(&self.user_context().as_arc(), &event, &mut cache)
             .await
     }
 }

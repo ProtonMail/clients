@@ -4,7 +4,6 @@ use crate::db::account::{CoreAccount, CoreSession};
 use crate::event_loop::EventPollMode;
 use crate::event_loop::event_source::CoreEventSource;
 use crate::models::ModelExtension;
-use crate::services::event_loop_service::EventManagerContext;
 use crate::services::global_feature_flags::FeatureFlagsBackgroundTask;
 use crate::test_utils::account::{TEST_USER_ID, TEST_USER_MAIL, testdata_user_secret};
 use crate::test_utils::utils::mock_auth_endpoints;
@@ -330,9 +329,7 @@ impl UserContextTestExtension for UserContext {
         use core_event_loop::v6::EventSubscriber;
         let subscriber = self.event_subscriber();
         let mut cache = <CoreEventSource as EventSource>::Cache::default();
-        subscriber
-            .on_event(&EventManagerContext, event, &mut cache)
-            .await
+        subscriber.on_event(self, event, &mut cache).await
     }
 }
 

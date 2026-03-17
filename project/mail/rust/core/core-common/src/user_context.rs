@@ -142,8 +142,9 @@ impl UserContext {
                     builder = builder
                         .with_cyclic_service(UserFeatureFlagsService::new)
                         .with_cyclic_service(PaymentsService::new)
-                        .with_cyclic_service(move |_| {
+                        .with_cyclic_service(move |ctx| {
                             let event_loop = EventManager::new(
+                                ctx,
                                 context_cloned.task_service().task_service(),
                                 cancellation_token_cloned,
                             );

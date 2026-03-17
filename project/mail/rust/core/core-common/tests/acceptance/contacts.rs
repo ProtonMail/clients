@@ -12,7 +12,6 @@ use mail_core_common::event_loop::v6::CoreEventCache;
 use mail_core_common::models::{
     Contact, ContactCard, ContactEmail, ModelExtension, ModelIdExtension,
 };
-use mail_core_common::services::event_loop_service::EventManagerContext;
 use mail_core_common::test_utils::account::unlocked_user_key;
 use mail_core_common::test_utils::test_context::TestContext;
 use mail_core_common::{AddressKeysContactFetchPolicy, UserContext};
@@ -206,7 +205,7 @@ async fn test_sync_and_delete_event_contact() {
     let mut cache = CoreEventCache::default();
     // Fire event:
     test_event_subscriber
-        .on_event(&EventManagerContext, &event, &mut cache)
+        .on_event(&user_ctx, &event, &mut cache)
         .await
         .expect("failed to execute event");
 
@@ -260,7 +259,7 @@ async fn test_sync_and_modify_event_contact() {
     // Fire event:
     let mut cache = CoreEventCache::default();
     test_event_subscriber
-        .on_event(&EventManagerContext, &event, &mut cache)
+        .on_event(&user_ctx, &event, &mut cache)
         .await
         .expect("failed to execute event");
 

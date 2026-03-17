@@ -54,7 +54,8 @@ fn calculate_days_from_timestamps(
         4..=10 => DaysSinceAccountCreation::FourThroughTen,
         11..=30 => DaysSinceAccountCreation::ElevenThroughThirty,
         31..=60 => DaysSinceAccountCreation::ThirtyOneThroughSixty,
-        _ => DaysSinceAccountCreation::MoreThanSixty,
+        61..=120 => DaysSinceAccountCreation::SixtyOneThroughHundredTwenty,
+        _ => DaysSinceAccountCreation::MoreThanHundredTwenty,
     })
 }
 
@@ -456,7 +457,21 @@ mod tests {
         let result =
             calculate_days_from_timestamps(create_time, UnixTimestamp::from(sixty_one_days_later))
                 .unwrap();
-        assert!(matches!(result, DaysSinceAccountCreation::MoreThanSixty));
+        assert!(matches!(
+            result,
+            DaysSinceAccountCreation::SixtyOneThroughHundredTwenty
+        ));
+
+        let hundred_twenty_one_days_later = account_created + Duration::days(121);
+        let result = calculate_days_from_timestamps(
+            create_time,
+            UnixTimestamp::from(hundred_twenty_one_days_later),
+        )
+        .unwrap();
+        assert!(matches!(
+            result,
+            DaysSinceAccountCreation::MoreThanHundredTwenty
+        ));
     }
 
     #[test]

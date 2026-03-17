@@ -36,8 +36,10 @@ pub enum DaysSinceAccountCreation {
     ElevenThroughThirty,
     #[strum(serialize = "31-60")]
     ThirtyOneThroughSixty,
-    #[strum(serialize = ">60")]
-    MoreThanSixty,
+    #[strum(serialize = "61-120")]
+    SixtyOneThroughHundredTwenty,
+    #[strum(serialize = ">120")]
+    MoreThanHundredTwenty,
     #[strum(serialize = "n/a")]
     NotApplicable,
 }
@@ -336,13 +338,13 @@ mod tests {
     fn drive_spotlight_mailbox_button_tapped_event() {
         let event = UpsellEvents::drive_spotlight_mailbox_button_tapped(
             PlanBeforeUpgrade::new("free"),
-            DaysSinceAccountCreation::MoreThanSixty,
+            DaysSinceAccountCreation::MoreThanHundredTwenty,
         );
 
         assert_eq!(event.event, "drive_spotlight_mailbox_button_tapped");
         assert!(event.values.is_empty());
         assert_eq!(event.dimensions["plan_before_upgrade"], "free");
-        assert_eq!(event.dimensions["days_since_account_creation"], ">60");
+        assert_eq!(event.dimensions["days_since_account_creation"], ">120");
         assert_eq!(event.dimensions.len(), 2);
     }
 

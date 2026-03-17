@@ -11,10 +11,9 @@ use mail_core_api::services::proton::ProtonCore;
 impl EventProvider<EventManagerContext> for CoreEventLoopV6Context {
     async fn get_latest_event_id(
         &self,
-        _: &EventManagerContext,
+        ctx: &EventManagerContext,
     ) -> EventProviderResult<core_event_loop::EventId> {
         async {
-            let ctx = self.inner()?;
             Ok::<_, CoreEventProviderError>(
                 ctx.session()
                     .get_core_event_latest_v6()
@@ -30,11 +29,10 @@ impl EventProvider<EventManagerContext> for CoreEventLoopV6Context {
 
     async fn get_event(
         &self,
-        _: &EventManagerContext,
+        ctx: &EventManagerContext,
         event_id: &core_event_loop::EventId,
     ) -> EventProviderResult<RawEvent> {
         async {
-            let ctx = self.inner()?;
             let json_string = ctx
                 .session()
                 .get_core_event_v6(event_id.clone().into_inner().into())

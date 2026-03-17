@@ -325,8 +325,8 @@ impl UserContext {
             let event_loop_service = self.event_loop_service();
             let event_poll = event_loop_service.event_poll();
 
-            let core_event_ctx = v6::CoreEventLoopV6Context::from(Arc::downgrade(self));
-            let contact_event_ctx = v6::ContactEventLoopV6Context::from(Arc::downgrade(self));
+            let core_event_ctx = v6::CoreEventLoopV6Context;
+            let contact_event_ctx = v6::ContactEventLoopV6Context;
             event_poll
                 .add::<v6::CoreEventSourceV6>(
                     core_event_ctx.clone().boxed(),

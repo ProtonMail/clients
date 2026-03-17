@@ -59,6 +59,7 @@ where
     E: EventSource,
 {
     fn name(&self) -> &'static str;
+
     /// Invoked when an event has been fetched from the server.
     async fn on_event(
         &self,
@@ -84,6 +85,8 @@ pub(crate) trait SubscriberList<Ctx>: Any + Send + Sync
 where
     Ctx: Send + Sync + 'static,
 {
+    fn is_empty(&self) -> bool;
+
     async fn on_event(&self, ctx: &Ctx, events: &RawEvent) -> Result<(), EventLoopError>;
     async fn on_refresh(&self, ctx: &Ctx, refresh: RefreshFlag) -> Result<(), EventLoopError>;
 }
@@ -153,6 +156,10 @@ where
     E: EventSource,
     Ctx: Send + Sync + 'static,
 {
+    fn is_empty(&self) -> bool {
+        self.subscribers.is_empty()
+    }
+
     async fn on_event(&self, ctx: &Ctx, event: &RawEvent) -> Result<(), EventLoopError> {
         let event = RawEvent::deserialize::<E::Event>(event)
             .map_err(|e| EventLoopError::Deserialize(anyhow::Error::new(e)))?;

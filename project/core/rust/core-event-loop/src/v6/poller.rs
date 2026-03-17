@@ -59,6 +59,11 @@ impl EventPoller {
     where
         Ctx: Send + Sync + 'static,
     {
+        if subscribers.is_empty() {
+            tracing::warn!("Skipping event poll as there are no subscribers");
+            return Ok(());
+        }
+
         let Some(last_event_id) = store
             .load(ctx)
             .await
@@ -228,6 +233,7 @@ mod tests {
             .returning(move |_, _| Ok(event.clone()));
         let event = raw_event_2.clone();
         let id = event_id_2.clone();
+        subscriber.expect_is_empty().return_const(false);
         subscriber
             .expect_on_event()
             .once()
@@ -340,6 +346,8 @@ mod tests {
         let mut provider = MockEventProvider::new();
         let mut subscriber = MockSubscriberList::new();
         let mut store = MockEventStore::new();
+
+        subscriber.expect_is_empty().return_const(false);
 
         let event_id = event_id_1.clone();
         store

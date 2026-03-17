@@ -27,10 +27,9 @@ impl EventProviderError for CoreEventProviderError {
 impl EventProvider<EventManagerContext> for CoreEventLoopContext {
     async fn get_latest_event_id(
         &self,
-        _: &EventManagerContext,
+        ctx: &EventManagerContext,
     ) -> EventProviderResult<core_event_loop::EventId> {
         async {
-            let ctx = self.inner()?;
             Ok::<_, CoreEventProviderError>(
                 ctx.session()
                     .get_events_latest()
@@ -46,11 +45,10 @@ impl EventProvider<EventManagerContext> for CoreEventLoopContext {
 
     async fn get_event(
         &self,
-        _: &EventManagerContext,
+        ctx: &EventManagerContext,
         event_id: &core_event_loop::EventId,
     ) -> EventProviderResult<RawEvent> {
         async {
-            let ctx = self.inner()?;
             let json_string = ctx
                 .session()
                 .get_event(

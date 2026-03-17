@@ -18,18 +18,16 @@ pub const MAIL_EVENT_TYPE_ID: &str = "proton-mail-event";
 impl EventStore<EventManagerContext> for CoreEventLoopContext {
     async fn load(
         &self,
-        _: &EventManagerContext,
+        ctx: &EventManagerContext,
     ) -> anyhow::Result<Option<core_event_loop::EventId>> {
-        let ctx = self.inner()?;
-        load_event_id(&ctx, CORE_EVENT_TYPE_ID).await
+        load_event_id(ctx, CORE_EVENT_TYPE_ID).await
     }
 
     async fn store(
         &self,
-        _: &EventManagerContext,
+        ctx: &EventManagerContext,
         id: core_event_loop::EventId,
     ) -> anyhow::Result<()> {
-        let ctx = self.inner()?;
         // Start storing the event ids for contacts and mail as well. Backend uses
         // the same cursor internally. When we switch feature on, it will just progress
         // independently.

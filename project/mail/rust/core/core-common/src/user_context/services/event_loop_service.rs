@@ -62,6 +62,12 @@ impl EventManager {
         self.run(move |manager| manager.add::<E>(provider, store))
             .await?
     }
+
+    pub async fn remove<E: EventSource>(&self) -> Result<(), EventLoopError> {
+        self.run(core_event_loop::v6::EventManager::remove::<E>)
+            .await
+    }
+
     pub async fn subscribe<E: EventSource>(
         &self,
         subscriber: impl EventSubscriber<EventManagerContext, E> + 'static,

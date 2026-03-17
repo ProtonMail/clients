@@ -4,7 +4,6 @@ use core_event_loop::v6::EventSubscriber;
 use mail_core_api::services::proton::{Action, ContactEventV6, ContactId, ContactRootEventV6};
 use mail_core_common::{
     event_loop::v6::{ContactEventCache, ContactEventV6Subscriber},
-    services::event_loop_service::EventManagerContext,
     test_utils::test_context::TestContext,
 };
 
@@ -34,7 +33,7 @@ async fn deleted_contact_does_not_fail_event_poll() {
 
     // Fire event:
     subscriber
-        .on_event(&EventManagerContext, &event, &mut cache)
+        .on_event(&user_ctx, &event, &mut cache)
         .await
         .unwrap();
 }

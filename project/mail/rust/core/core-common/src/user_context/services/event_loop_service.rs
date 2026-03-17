@@ -1,9 +1,10 @@
+use crate::UserContext;
 use crate::event_loop::EventLoopActionIds;
 use core_event_loop::store::EventStore;
 use core_event_loop::v6::{EventSource, EventSubscriber, EventSubscriberId};
 use core_event_loop::{EventLoopError, EventProvider, v6};
 use mail_task_service::TaskService;
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 use tokio::sync::{Mutex, mpsc, oneshot};
 use tokio_util::sync::CancellationToken;
 use tracing::{Instrument, Span};
@@ -37,7 +38,7 @@ impl EventLoopService {
     }
 }
 
-pub struct EventManagerContext;
+pub type EventManagerContext = Arc<UserContext>;
 
 pub struct EventManager {
     tx: mpsc::Sender<EventManagerMessage>,
@@ -45,9 +46,13 @@ pub struct EventManager {
 
 impl EventManager {
     #[must_use]
-    pub fn new(task_service: &TaskService, cancellation_token: CancellationToken) -> Self {
+    pub fn new(
+        ctx: Weak<UserContext>,
+        task_service: &TaskService,
+        cancellation_token: CancellationToken,
+    ) -> Self {
         let (tx, rx) = mpsc::channel(2);
-        let actor = EventManagerActor::new(rx);
+        let actor = EventManagerActor::new(ctx, rx);
         task_service.spawn_cancellable(cancellation_token, async move {
             actor.run().await;
         });
@@ -130,34 +135,32 @@ enum EventManagerMessage {
 struct EventManagerActor {
     rx: mpsc::Receiver<EventManagerMessage>,
     manager: v6::EventManager<EventManagerContext>,
+    ctx: Weak<UserContext>,
 }
 
 impl EventManagerActor {
-    fn new(rx: mpsc::Receiver<EventManagerMessage>) -> Self {
+    fn new(ctx: Weak<UserContext>, rx: mpsc::Receiver<EventManagerMessage>) -> Self {
         Self {
             rx,
             manager: v6::EventManager::new(),
+            ctx,
         }
     }
 
     async fn run(mut self) {
         while let Some(event) = self.rx.recv().await {
+            let Some(ctx) = self.ctx.upgrade() else {
+                tracing::error!("Terminating event manager actor due to dead context");
+                return;
+            };
             match event {
                 EventManagerMessage::Run(f) => f(&mut self.manager),
                 EventManagerMessage::Poll(sender, span) => {
-                    let r = self
-                        .manager
-                        .poll(&EventManagerContext)
-                        .instrument(span)
-                        .await;
+                    let r = self.manager.poll(&ctx).instrument(span).await;
                     let _ = sender.send(r);
                 }
                 EventManagerMessage::Init(sender, span) => {
-                    let r = self
-                        .manager
-                        .initialize_all(&EventManagerContext)
-                        .instrument(span)
-                        .await;
+                    let r = self.manager.initialize_all(&ctx).instrument(span).await;
                     let _ = sender.send(r);
                 }
             }

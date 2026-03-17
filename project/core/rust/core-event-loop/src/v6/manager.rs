@@ -390,6 +390,16 @@ mod tests {
             .add::<TestEventSourceC>(provider_c, store_c)
             .unwrap();
 
+        manager
+            .subscribe(create_subscriber::<TestEventSourceA>())
+            .unwrap();
+        manager
+            .subscribe(create_subscriber::<TestEventSourceB>())
+            .unwrap();
+        manager
+            .subscribe(create_subscriber::<TestEventSourceC>())
+            .unwrap();
+
         let ctx = TestCtx;
 
         manager.poll(&ctx).await.unwrap();
@@ -559,5 +569,12 @@ mod tests {
             });
 
         (Box::new(provider), Box::new(store))
+    }
+
+    fn create_subscriber<T: EventSource>() -> MockEventSubscriber<TestCtx, T> {
+        let mut subscriber = MockEventSubscriber::new();
+        subscriber.expect_name().returning(|| "SUBSCRIBER_NAME");
+        subscriber.expect_on_event().returning(|_, _, _| Ok(()));
+        subscriber
     }
 }

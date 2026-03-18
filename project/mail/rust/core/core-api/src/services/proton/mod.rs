@@ -72,8 +72,8 @@ use tokio::sync::RwLock;
 mod auth;
 mod core;
 mod data;
+pub mod growth;
 mod layers;
-pub mod measurements;
 mod payments;
 mod store;
 
@@ -84,7 +84,7 @@ pub mod traits;
 pub use self::auth::*;
 pub use self::core::*;
 pub use self::data::*;
-pub use self::measurements::*;
+pub use self::growth::*;
 pub use self::payments::*;
 pub use mail_muon;
 use mail_muon::rt::{AsyncResolver, ResolverExt, with_fallback};

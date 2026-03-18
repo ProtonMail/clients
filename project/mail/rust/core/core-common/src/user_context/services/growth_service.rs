@@ -13,12 +13,12 @@ use crate::datatypes::{
 use crate::models::{InitializedComponent, Measurement, ModelExtension, User};
 use crate::{CoreContextError, UserContext};
 use mail_core_api::connection_status::ConnectionStatus;
-use mail_core_api::services::proton::measurements::requests::{
+use mail_core_api::services::proton::growth::requests::{
     PostMeasurementEventRequest, PostMeasurementEventsRequest,
 };
 use mail_core_api::services::proton::{
     MeasurementEventType as ApiMeasurementEventType, MeasurementValue as ApiMeasurementValue,
-    ProtonMeasurements,
+    ProtonGrowth,
 };
 use mail_stash::AccountDb;
 use mail_stash::orm::Model;
@@ -34,14 +34,14 @@ struct MeasurementMetadata {
     app_package_name: String,
 }
 
-pub struct MeasurementService {
+pub struct GrowthService {
     ctx: Weak<UserContext>,
     session_start_ms: RwLock<Option<u128>>,
     last_telemetry_state: RwLock<Option<bool>>,
     last_metadata: RwLock<Option<MeasurementMetadata>>,
 }
 
-impl MeasurementService {
+impl GrowthService {
     #[must_use]
     pub fn new(ctx: Weak<UserContext>) -> Self {
         Self {
@@ -148,7 +148,7 @@ impl MeasurementService {
 
     async fn send_single_batch(
         ctx: &UserContext,
-        service: &MeasurementService,
+        service: &GrowthService,
         events: PostMeasurementEventsRequest,
     ) -> anyhow::Result<()> {
         if events.is_empty() {
@@ -162,7 +162,7 @@ impl MeasurementService {
         );
 
         let client = ctx.session();
-        let response = client.post_events(events).await?;
+        let response = client.post_measurements(events).await?;
 
         *service.session_start_ms.write() = response.session_start_ms;
 
@@ -173,7 +173,7 @@ impl MeasurementService {
         self.last_metadata.read().clone()
     }
 
-    async fn handle_optout(ctx: &UserContext, service: &MeasurementService) -> anyhow::Result<()> {
+    async fn handle_optout(ctx: &UserContext, service: &GrowthService) -> anyhow::Result<()> {
         if let Some(metadata) = service.get_last_measurement_metadata() {
             let session_start_ms = *service.session_start_ms.read();
 
@@ -225,7 +225,7 @@ impl MeasurementService {
 
     async fn fetch_and_send_measurements(
         ctx: &UserContext,
-        service: &MeasurementService,
+        service: &GrowthService,
     ) -> anyhow::Result<()> {
         let measurements = {
             let tether = ctx.account_stash().connection().await?;
@@ -267,11 +267,8 @@ impl MeasurementService {
         Ok(())
     }
 
-    async fn send_measurements(
-        ctx: &UserContext,
-        service: &MeasurementService,
-    ) -> anyhow::Result<()> {
-        trace!("MeasurementService: Checking conditions and sending measurements");
+    async fn send_measurements(ctx: &UserContext, service: &GrowthService) -> anyhow::Result<()> {
+        trace!("GrowthService: Checking conditions and sending measurements");
 
         if Self::is_kill_switch_enabled(ctx).await {
             trace!("Kill switch enabled, skipping measurement sending");
@@ -314,7 +311,7 @@ impl MeasurementService {
     }
 }
 
-impl MeasurementService {
+impl GrowthService {
     #[allow(clippy::result_large_err)]
     #[tracing::instrument(skip_all)]
     pub fn init_background_task(&self) -> Result<(), CoreContextError> {
@@ -327,11 +324,11 @@ impl MeasurementService {
         let ctx_weak = self.ctx.clone();
         ctx.spawn(
             async move {
-                debug!("MeasurementService background task started");
+                debug!("GrowthService: background task started");
 
                 loop {
                     let Some(ctx) = ctx_weak.upgrade() else {
-                        error!("MeasurementService: Context dropped during init wait");
+                        error!("GrowthService: Context dropped during init wait");
                         return;
                     };
                     let watcher = ctx
@@ -342,7 +339,7 @@ impl MeasurementService {
                     let tether = match ctx.mail_stash().connection().await {
                         Ok(t) => t,
                         Err(e) => {
-                            error!("MeasurementService: Db connection failed: {e:?}");
+                            error!("GrowthService: Db connection failed: {e:?}");
                             return;
                         }
                     };
@@ -358,12 +355,12 @@ impl MeasurementService {
                     )
                     .await
                     {
-                        error!("MeasurementService: Init wait failed: {e:?}, retrying");
+                        error!("GrowthService: Init wait failed: {e:?}, retrying");
                         continue;
                     }
                     break;
                 }
-                debug!("MeasurementService: user settings initialized, starting send loop");
+                debug!("GrowthService: user settings initialized, starting send loop");
 
                 let mut interval =
                     tokio::time::interval(Duration::from_secs(MEASUREMENT_SEND_INTERVAL_SECS));
@@ -373,12 +370,12 @@ impl MeasurementService {
                     interval.tick().await;
 
                     let Some(ctx) = ctx_weak.upgrade() else {
-                        debug!("MeasurementService: Context dropped, exiting task");
+                        debug!("GrowthService: Context dropped, exiting task");
                         return;
                     };
 
-                    let Some(service) = ctx.get_service_opt::<MeasurementService>() else {
-                        error!("MeasurementService not found in context");
+                    let Some(service) = ctx.get_service_opt::<GrowthService>() else {
+                        error!("GrowthService not found in context");
                         return;
                     };
 

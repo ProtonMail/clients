@@ -1418,10 +1418,17 @@ where
 
         if let Some(task) = task.take() {
             match task.await {
-                Ok(result) => result,
-                Err(_) => Err(MailContextError::TaskCancelled),
+                Ok(result) => {
+                    debug!("Task finished succesfully.");
+                    result
+                }
+                Err(e) => {
+                    error!("Task finished with an error: `{e}`");
+                    Err(MailContextError::TaskCancelled)
+                }
             }
         } else {
+            debug!("There is no task to wait for. Skipping...");
             Ok(())
         }
     }

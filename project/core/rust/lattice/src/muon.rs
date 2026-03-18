@@ -4,9 +4,9 @@ use muon::{
     http::{HttpReq, Method as MuonMethod},
 };
 
-use crate::{LatticeError, LtApiResponseError, LtContract, Method, api_definitions::LtApiResponse};
+use crate::{LatticeError, LtApiResponseError, LtContract, LtRequestBody, LtResponseBody, Method};
 
-impl<T: serde::Serialize> Method<T> {
+impl<T: LtRequestBody> Method<T> {
     fn as_muon_method(&self) -> MuonMethod {
         match self {
             Self::Get => MuonMethod::GET,
@@ -56,7 +56,7 @@ impl<T: LtContract> LtContractExt for T {
             .fold(http_req, |http_req, header| http_req.header(header));
 
         if let Some(body) = method.into_body() {
-            let body = serde_json::to_vec(&body).map_err(|e| LatticeError::SerdeJSON(e, None))?;
+            let body = body.to_body()?;
 
             http_req = http_req.body(body).header(ContentType::JSON);
         }
@@ -69,14 +69,7 @@ impl<T: LtContract> LtContractExt for T {
 
         if (200..300).contains(&s) {
             let body = response.body();
-            // TODO: Handle status code and proton status codes.
-
-            let api_response: LtApiResponse<T::Response> = serde_json::from_slice::<
-                LtApiResponse<T::Response>,
-            >(body)
-            .map_err(|e| LatticeError::SerdeJSON(e, String::from_utf8(body.to_vec()).ok()))?;
-
-            return Ok(api_response.body);
+            return T::Response::from_body(body);
         }
 
         if (400..500).contains(&s) {

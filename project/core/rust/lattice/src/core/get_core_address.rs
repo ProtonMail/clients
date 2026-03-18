@@ -1,6 +1,8 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeError, LtContract, auth::LtAuthAddressId, core::LtCoreAddress};
+use crate::{
+    AuthReq, LatticeError, LtContract, LtSlimAPIJSON, auth::LtAuthAddressId, core::LtCoreAddress,
+};
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -19,8 +21,8 @@ pub struct LtCoreGetAddressReq {
 }
 
 impl LtContract for LtCoreGetAddressReq {
-    type Response = LtCoreGetAddressRes;
-    type Body<'a> = ();
+    type Response = LtSlimAPIJSON<LtCoreGetAddressRes>;
+    type Body<'a> = LtSlimAPIJSON<()>;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
         Ok(Cow::Owned(format!("/core/v4/addresses/{}", self.id.0)))

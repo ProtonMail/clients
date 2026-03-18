@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{LatticeError, LtContract, UnauthReq};
+use crate::{LatticeError, LtContract, LtSlimAPIJSON, UnauthReq};
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -8,8 +8,8 @@ use crate::{LatticeError, LtContract, UnauthReq};
 pub struct LtCoreGetTestsPingReq;
 
 impl LtContract for LtCoreGetTestsPingReq {
-    type Response = ();
-    type Body<'a> = ();
+    type Response = LtSlimAPIJSON<()>;
+    type Body<'a> = LtSlimAPIJSON<()>;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
         Ok(Cow::Borrowed("/core/v4/tests/ping"))

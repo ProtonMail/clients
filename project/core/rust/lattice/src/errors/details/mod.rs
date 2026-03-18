@@ -3,3 +3,6 @@ pub use access_token_with_insufficient_scope_error_details::AccessTokenWithInsuf
 
 mod login_failed_error_details;
 pub use login_failed_error_details::{LoginFailedErrorDetails, LoginFailedReason};
+
+mod human_verification_error_details;
+pub use human_verification_error_details::HumanVerificationErrorDetails;

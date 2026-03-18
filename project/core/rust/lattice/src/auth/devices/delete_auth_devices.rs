@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LtContract, Method};
+use crate::{AuthReq, LtContract, LtSlimAPIJSON, Method};
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -17,8 +17,8 @@ pub enum LtAuthDeleteDevicesReq {
 pub struct LtAuthDeleteDevicesRes {}
 
 impl LtContract for LtAuthDeleteDevicesReq {
-    type Response = LtAuthDeleteDevicesRes;
-    type Body<'a> = ();
+    type Response = LtSlimAPIJSON<LtAuthDeleteDevicesRes>;
+    type Body<'a> = LtSlimAPIJSON<()>;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, crate::LatticeError> {
         match self {

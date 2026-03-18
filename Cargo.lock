@@ -1131,6 +1131,7 @@ dependencies = [
  "core-proc",
  "crux_core",
  "facet",
+ "lattice",
  "serde",
  "thiserror 2.0.18",
 ]

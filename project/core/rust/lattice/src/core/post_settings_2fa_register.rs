@@ -2,7 +2,9 @@ use std::borrow::Cow;
 
 use passkey::types::webauthn::{AuthenticatorTransport, CredentialCreationOptions};
 
-use crate::{AuthReq, LatticeError, LtContract, Method, Sensitive, core::LtCoreUserSettings};
+use crate::{
+    AuthReq, LatticeError, LtContract, LtSlimAPIJSON, Method, Sensitive, core::LtCoreUserSettings,
+};
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug)]
@@ -26,11 +28,11 @@ pub struct LtCorePostSettings2faRegisterRes {
 }
 
 impl LtContract for LtCorePostSettings2faRegisterReq {
-    type Response = LtCorePostSettings2faRegisterRes;
-    type Body<'a> = &'a Self;
+    type Response = LtSlimAPIJSON<LtCorePostSettings2faRegisterRes>;
+    type Body<'a> = LtSlimAPIJSON<&'a Self>;
 
     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, LatticeError> {
-        Ok(Method::Post(self))
+        Ok(Method::Post(LtSlimAPIJSON(self)))
     }
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {

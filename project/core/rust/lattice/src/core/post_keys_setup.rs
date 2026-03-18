@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 
 use crate::{
-    AuthReq, LatticeError, LtContract, Method, Sensitive,
+    AuthReq, LatticeError, LtContract, LtSlimAPIJSON, Method, Sensitive,
     core::{LtCoreAddressKeyInput, LtCoreAsyncUserInitialization, user::LtCoreUser},
 };
 
@@ -53,11 +53,11 @@ pub struct LtCorePostKeysSetupRes {
 }
 
 impl LtContract for LtCorePostKeysSetupReq {
-    type Response = LtCorePostKeysSetupRes;
-    type Body<'a> = &'a LtCoreSetupKeysBody;
+    type Response = LtSlimAPIJSON<LtCorePostKeysSetupRes>;
+    type Body<'a> = LtSlimAPIJSON<&'a LtCoreSetupKeysBody>;
 
     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, LatticeError> {
-        Ok(Method::Post(&self.body))
+        Ok(Method::Post(LtSlimAPIJSON(&self.body)))
     }
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {

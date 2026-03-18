@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{LatticeError, LtContract, Method, UnauthReq};
+use crate::{LatticeError, LtContract, LtSlimAPIJSON, Method, UnauthReq};
 
 #[cfg_attr(
     feature = "serde",
@@ -85,11 +85,11 @@ pub struct LtCoreCodeDestinationSms {
 pub struct LtCorePostCodeRes {}
 
 impl LtContract for LtCorePostCodeReq {
-    type Response = LtCorePostCodeRes;
-    type Body<'a> = &'a Self;
+    type Response = LtSlimAPIJSON<LtCorePostCodeRes>;
+    type Body<'a> = LtSlimAPIJSON<&'a Self>;
 
     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, LatticeError> {
-        Ok(Method::Post(self))
+        Ok(Method::Post(LtSlimAPIJSON(self)))
     }
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {

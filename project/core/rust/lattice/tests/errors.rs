@@ -6,7 +6,7 @@ use lattice::{
     details::AccessTokenWithInsufficientScopeErrorDetails,
 };
 
-use crate::common::{SessionExt, generate_muon_session};
+use crate::common::generate_muon_session;
 
 #[tokio::test]
 async fn test_errors() {

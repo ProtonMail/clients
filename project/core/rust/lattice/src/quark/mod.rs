@@ -1,5 +1,6 @@
 pub mod encryption;
 pub mod event;
+pub mod jail;
 pub mod user;
 
 use std::str::FromStr;

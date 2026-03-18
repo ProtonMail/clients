@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeError, LtContract, Method, Sensitive};
+use crate::{AuthReq, LatticeError, LtContract, LtSlimAPIJSON, Method, Sensitive};
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -13,11 +13,11 @@ pub struct LtAuthPostDevicesDeviceIDReq {
 }
 
 impl LtContract for LtAuthPostDevicesDeviceIDReq {
-    type Response = ();
-    type Body<'b> = &'b Self;
+    type Response = LtSlimAPIJSON<()>;
+    type Body<'b> = LtSlimAPIJSON<&'b Self>;
 
     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, LatticeError> {
-        Ok(Method::Post(self))
+        Ok(Method::Post(LtSlimAPIJSON(self)))
     }
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {

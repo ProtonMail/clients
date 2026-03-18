@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeError, LtContract, Method};
+use crate::{AuthReq, LatticeError, LtContract, LtSlimAPIJSON, Method};
 
 use super::LtAuthAssociatedDevice;
 
@@ -23,11 +23,11 @@ pub struct LtAuthPostDevicesAssociateRes {
 }
 
 impl LtContract for LtAuthPostDevicesAssociateReq {
-    type Response = LtAuthPostDevicesAssociateRes;
-    type Body<'b> = &'b Self;
+    type Response = LtSlimAPIJSON<LtAuthPostDevicesAssociateRes>;
+    type Body<'b> = LtSlimAPIJSON<&'b Self>;
 
     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, LatticeError> {
-        Ok(Method::Post(self))
+        Ok(Method::Post(LtSlimAPIJSON(self)))
     }
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {

@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeError, LtContract, UnauthReq};
+use crate::{AuthReq, LatticeError, LtContract, LtSlimAPIJSON, UnauthReq};
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -73,8 +73,8 @@ impl From<i32> for LtAuthPasswordPolicyState {
 }
 
 impl LtContract for LtAuthGetPasswordPoliciesReq {
-    type Body<'a> = ();
-    type Response = LtAuthGetPasswordPoliciesRes;
+    type Body<'a> = LtSlimAPIJSON<()>;
+    type Response = LtSlimAPIJSON<LtAuthGetPasswordPoliciesRes>;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
         Ok(Cow::Borrowed("/auth/v4/password-policies"))

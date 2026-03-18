@@ -22,19 +22,18 @@ use muon::auth::scope;
 use totp_rs::{Algorithm, Secret, TOTP};
 
 use crate::common::{
-    SessionExt, generate_muon_session, login_muon_session, random_password, random_totp_secret,
-    random_username,
+    generate_muon_session, login_muon_session, random_password, random_totp_secret, random_username,
 };
 
 #[tokio::test]
 async fn test_auth() {
-    let session = generate_muon_session().await;
+    let session_init = generate_muon_session().await;
 
     let username = random_username();
     let password = random_password();
     let totp_secret = random_totp_secret();
 
-    let res = session
+    let res = session_init
         .send_quark(LtQuarkUserCreate {
             name: username.to_string(),
             password: password.to_string(),
@@ -45,7 +44,7 @@ async fn test_auth() {
 
     assert_api_ok!(res, LtQuarkJSONRes(LtQuarkUserCreateRes { status: LtQuarkUserStatus::Active, name: name_, password: password_, .. }) if name_ == &username && password_ == &password);
 
-    let res = session.send_lt(LtCoreGetSettingsReq).await;
+    let res = session_init.send_lt(LtCoreGetSettingsReq).await;
     assert_api_err!(&res,
         LtApiResponseError::AccessTokenWithInsufficientScope(LtApiResponseErrorInfo {
             details: AccessTokenWithInsufficientScopeErrorDetails { missing_scopes },
@@ -53,9 +52,12 @@ async fn test_auth() {
         })
         if missing_scopes == &["full"]
     );
-    let session_clone = async || session.client().get_session(()).await.unwrap();
-    let session =
-        login_muon_session(session_clone().await, &username, &format!("{password}1")).await;
+    let session = login_muon_session(
+        session_init.clone().await,
+        &username,
+        &format!("{password}1"),
+    )
+    .await;
     assert_api_err!(
         session,
         LtApiResponseError::LoginFailed(LtApiResponseErrorInfo {
@@ -65,8 +67,12 @@ async fn test_auth() {
             ..
         })
     );
-    let session =
-        login_muon_session(session_clone().await, &format!("{username}1"), &password).await;
+    let session = login_muon_session(
+        session_init.clone().await,
+        &format!("{username}1"),
+        &password,
+    )
+    .await;
     assert_api_err!(
         session,
         LtApiResponseError::LoginFailed(LtApiResponseErrorInfo {
@@ -77,7 +83,7 @@ async fn test_auth() {
         })
     );
 
-    let (session, tfa) = login_muon_session(session_clone().await, &username, &password)
+    let (session, tfa) = login_muon_session(session_init.clone().await, &username, &password)
         .await
         .unwrap();
     assert!(tfa.is_some(), "{tfa:?} is expected to be Some");

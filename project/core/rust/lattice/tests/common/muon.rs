@@ -1,6 +1,7 @@
 use std::pin::Pin;
 
 use async_compat::Compat;
+use derive_more::{Debug, Deref};
 use futures::TryFutureExt;
 use muon::{
     Environment,
@@ -15,10 +16,11 @@ use muon::{
 };
 
 use lattice::{
-    LatticeError, LtContract,
+    LatticeError, LtApiResponseError, LtContract, LtSlimAPIJSON,
     muon::LtContractExt,
-    quark::{LtQuarkContract, LtQuarkContractExt},
+    quark::{LtQuarkContract, LtQuarkContractExt, jail::unban::LtQuarkJailUnban},
 };
+use serde::Deserialize;
 
 #[derive(Debug, Clone)]
 pub struct TimeCapability {
@@ -117,7 +119,6 @@ pub type MuonCtx = GenericContext<
     WithoutPersistence<()>,
     muon::NoInfo,
 >;
-pub type Session = muon::Session<MuonCtx>;
 pub type Client = muon::Client<MuonCtx>;
 
 pub fn environment() -> muon::Environment {
@@ -144,24 +145,53 @@ pub fn new_client() -> Client {
 pub async fn generate_muon_session() -> Session {
     let client = new_client();
 
-    client.new_session_without_credentials(()).await.unwrap()
+    Session(client.new_session_without_credentials(()).await.unwrap())
 }
 
-pub(crate) trait SessionExt {
-    async fn send_lt<T: LtContract>(&self, req: T) -> Result<T::Response, LatticeError>;
-    async fn send_quark<T: LtQuarkContract>(&self, req: T) -> Result<T::Response, LatticeError>;
-}
+#[derive(Deref, Debug)]
+pub struct Session(pub(super) muon::Session<MuonCtx>);
 
-impl SessionExt for Session {
-    async fn send_lt<T: LtContract>(&self, req: T) -> Result<T::Response, LatticeError> {
-        let http_req = req.to_muon_req()?;
-        let response = self.send(http_req).await.map_err(LatticeError::Muon)?;
-        T::from_muon_res(&response)
+impl Session {
+    pub async fn clone(&self) -> Self {
+        Self(self.0.client().get_session(()).await.unwrap())
     }
 
-    async fn send_quark<T: LtQuarkContract>(&self, req: T) -> Result<T::Response, LatticeError> {
+    pub async fn send_lt<
+        E: for<'de> Deserialize<'de>,
+        T: LtContract<Response = LtSlimAPIJSON<E>>,
+    >(
+        &self,
+        req: T,
+    ) -> Result<E, LatticeError> {
         let http_req = req.to_muon_req()?;
-        let response = self.send(http_req).await.map_err(LatticeError::Muon)?;
+        let response = self
+            .0
+            .send(http_req.clone())
+            .await
+            .map_err(LatticeError::Muon)?;
+        let response = if (400..=500).contains(&response.status().as_u16()) {
+            let api_error: LtApiResponseError =
+                serde_json::from_slice::<LtApiResponseError>(response.body()).map_err(|e| {
+                    LatticeError::SerdeJSON(e, String::from_utf8(response.body().to_vec()).ok())
+                })?;
+            if matches!(api_error, LtApiResponseError::HumanVerification(..)) {
+                self.send_quark(LtQuarkJailUnban).await?;
+                self.0.send(http_req).await.map_err(LatticeError::Muon)?
+            } else {
+                response
+            }
+        } else {
+            response
+        };
+        Ok(T::from_muon_res(&response)?.0)
+    }
+
+    pub async fn send_quark<T: LtQuarkContract>(
+        &self,
+        req: T,
+    ) -> Result<T::Response, LatticeError> {
+        let http_req = req.to_muon_req()?;
+        let response = self.0.send(http_req).await.map_err(LatticeError::Muon)?;
         T::from_muon_res(&response)
     }
 }

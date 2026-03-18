@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LtContract, Method};
+use crate::{AuthReq, LtContract, LtSlimAPIJSON, Method};
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -32,15 +32,15 @@ pub struct LtAuthPostSessionsForksRes {
 }
 
 impl LtContract for LtAuthPostSessionsForksReq {
-    type Response = LtAuthPostSessionsForksRes;
-    type Body<'a> = &'a Self;
+    type Response = LtSlimAPIJSON<LtAuthPostSessionsForksRes>;
+    type Body<'a> = LtSlimAPIJSON<&'a Self>;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, crate::LatticeError> {
         Ok(Cow::Borrowed("/auth/v4/sessions/forks"))
     }
 
     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, crate::LatticeError> {
-        Ok(Method::Post(self))
+        Ok(Method::Post(LtSlimAPIJSON(self)))
     }
 }
 

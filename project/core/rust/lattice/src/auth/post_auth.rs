@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{
-    LatticeError, LtContract, Method, Sensitive, UnauthReq,
+    LatticeError, LtContract, LtSlimAPIJSON, Method, Sensitive, UnauthReq,
     auth::{
         LtAuthApiSession, LtAuthPasswordMode, LtAuthTwoFactorOptions,
         post_auth_2fa::{LtAuthSrpProof, LtAuthTwoFactorProof},
@@ -58,11 +58,11 @@ where
 }
 
 impl LtContract for LtAuthPostReq {
-    type Response = LtAuthPostRes;
-    type Body<'b> = &'b Self;
+    type Response = LtSlimAPIJSON<LtAuthPostRes>;
+    type Body<'b> = LtSlimAPIJSON<&'b Self>;
 
     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, LatticeError> {
-        Ok(Method::Post(self))
+        Ok(Method::Post(LtSlimAPIJSON(self)))
     }
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {

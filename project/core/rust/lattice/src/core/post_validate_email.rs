@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{LatticeError, LtContract, Method, UnauthReq};
+use crate::{LatticeError, LtContract, LtSlimAPIJSON, Method, UnauthReq};
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
@@ -10,11 +10,11 @@ pub struct LtCorePostValidateEmailReq {
 }
 
 impl LtContract for LtCorePostValidateEmailReq {
-    type Response = ();
-    type Body<'a> = &'a Self;
+    type Response = LtSlimAPIJSON<()>;
+    type Body<'a> = LtSlimAPIJSON<&'a Self>;
 
     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, LatticeError> {
-        Ok(Method::Post(self))
+        Ok(Method::Post(LtSlimAPIJSON(self)))
     }
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {

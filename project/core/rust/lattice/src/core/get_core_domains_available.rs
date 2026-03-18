@@ -1,6 +1,6 @@
 use std::{borrow::Cow, collections::HashMap, iter::once};
 
-use crate::{LatticeError, LtContract, UnauthReq};
+use crate::{LatticeError, LtContract, LtSlimAPIJSON, UnauthReq};
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -18,8 +18,8 @@ pub struct LtCoreGetDomainsAvailableRes {
 }
 
 impl LtContract for LtCoreGetDomainsAvailableReq {
-    type Response = LtCoreGetDomainsAvailableRes;
-    type Body<'a> = ();
+    type Response = LtSlimAPIJSON<LtCoreGetDomainsAvailableRes>;
+    type Body<'a> = LtSlimAPIJSON<()>;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
         Ok(Cow::Borrowed("/core/v4/domains/available"))

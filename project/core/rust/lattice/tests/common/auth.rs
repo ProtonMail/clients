@@ -19,7 +19,7 @@ use lattice::{
     },
 };
 
-use crate::common::{Session, SessionExt};
+use crate::common::Session;
 
 pub fn random_username() -> String {
     random_string(14)
@@ -155,7 +155,7 @@ pub async fn login_muon_session(
     let (api_session, _password_mode, tfa) =
         srp_handshake(&session, username, password, Some(valid_fingerprint())).await?;
     let client = session.client().clone();
-    let _ = session.remove_auth().await.unwrap();
+    let _ = session.0.remove_auth().await.unwrap();
 
     let credentials = Auth::internal(
         api_session.user_id,
@@ -167,10 +167,12 @@ pub async fn login_muon_session(
         ),
     );
     Ok((
-        client
-            .new_session_with_credentials((), credentials.try_into().unwrap())
-            .await
-            .unwrap(),
+        Session(
+            client
+                .new_session_with_credentials((), credentials.try_into().unwrap())
+                .await
+                .unwrap(),
+        ),
         tfa,
     ))
 }

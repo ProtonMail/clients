@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
 
-use crate::{LatticeError, LtContract, UnauthReq};
+use crate::{LatticeError, LtContract, LtSlimAPIJSON, UnauthReq};
 
 pub struct LtCoreGetUsersAvailableExternalReq {
     /// The username to check for availability.
@@ -12,8 +12,8 @@ pub struct LtCoreGetUsersAvailableExternalReq {
 }
 
 impl LtContract for LtCoreGetUsersAvailableExternalReq {
-    type Response = ();
-    type Body<'a> = ();
+    type Response = LtSlimAPIJSON<()>;
+    type Body<'a> = LtSlimAPIJSON<()>;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
         Ok(Cow::Borrowed("/core/v4/users/availableExternal"))

@@ -4,7 +4,10 @@ pub mod details;
 
 use derive_more::{Display, Error};
 
-use crate::details::{AccessTokenWithInsufficientScopeErrorDetails, LoginFailedErrorDetails};
+use crate::details::{
+    AccessTokenWithInsufficientScopeErrorDetails, HumanVerificationErrorDetails,
+    LoginFailedErrorDetails,
+};
 
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
@@ -72,6 +75,9 @@ pub enum LtApiResponseError {
 
     #[display("DeviceAlreadyAssociated")]
     DeviceAlreadyAssociated(LtApiResponseErrorInfo<EnforcedCode<9107>, NullErrorDetails>),
+
+    #[display("HumanVerification")]
+    HumanVerification(LtApiResponseErrorInfo<EnforcedCode<9001>, HumanVerificationErrorDetails>),
 
     #[display("Other")]
     Other(LtApiResponseErrorInfo<u32, serde_json::Value>),

@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use proton_crypto_account::salts::Salts;
 
-use crate::{AuthReq, LatticeError, LtContract};
+use crate::{AuthReq, LatticeError, LtContract, LtSlimAPIJSON};
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize))]
@@ -19,8 +19,8 @@ pub struct LtCoreGetKeysSaltsRes {
 pub struct LtCoreGetKeySaltsReq;
 
 impl LtContract for LtCoreGetKeySaltsReq {
-    type Response = LtCoreGetKeysSaltsRes;
-    type Body<'a> = ();
+    type Response = LtSlimAPIJSON<LtCoreGetKeysSaltsRes>;
+    type Body<'a> = LtSlimAPIJSON<()>;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
         Ok(Cow::Borrowed("/core/v4/keys/salts"))

@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeError, LtContract, core::user::LtCoreUser};
+use crate::{AuthReq, LatticeError, LtContract, LtSlimAPIJSON, core::user::LtCoreUser};
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -16,8 +16,8 @@ pub struct LtCoreGetUsersRes {
 }
 
 impl LtContract for LtCoreGetUsersReq {
-    type Response = LtCoreGetUsersRes;
-    type Body<'a> = ();
+    type Response = LtSlimAPIJSON<LtCoreGetUsersRes>;
+    type Body<'a> = LtSlimAPIJSON<()>;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
         Ok(Cow::Borrowed("/core/v4/users"))

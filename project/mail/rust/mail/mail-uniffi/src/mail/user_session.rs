@@ -26,7 +26,7 @@ use mail_common::{MailContextError, MailUserContext};
 use mail_core_api::services::proton::ProtonAuth;
 use mail_core_common::UserContext;
 use mail_core_common::actions::user_feature_flags::OverrideFlag;
-use mail_core_common::services::{MeasurementService, PaymentsService};
+use mail_core_common::services::{GrowthService, PaymentsService};
 use mail_muon::common::IntoDyn;
 use mail_observability::PreLoginMetricRecorder;
 use mail_stash::UserDb;
@@ -346,7 +346,7 @@ impl MailUserSession {
         let new_session = matches!(event_type, MeasurementEventType::Open { new_session: true });
 
         uniffi_async(async move {
-            let service = ctx.user_context().get_service::<MeasurementService>();
+            let service = ctx.user_context().get_service::<GrowthService>();
 
             if new_session {
                 service.clear_session_start();

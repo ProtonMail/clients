@@ -3,17 +3,17 @@ use mail_muon::{POST, ProtonRequest, ProtonResponse, common::Sender, http::HttpR
 use crate::service::ApiServiceResult;
 
 use super::{
-    MEASUREMENTS_V1, ProtonMeasurements,
+    GROWTH_V1, ProtonGrowth,
     requests::{PostMeasurementEventRequest, PostMeasurementEventsRequest},
     responses::PostMeasurementEventResponse,
 };
 
-impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> ProtonMeasurements for This {
-    async fn post_event(
+impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> ProtonGrowth for This {
+    async fn post_measurement(
         &self,
         request: PostMeasurementEventRequest,
     ) -> ApiServiceResult<PostMeasurementEventResponse> {
-        Ok(POST!("{MEASUREMENTS_V1}/measurement")
+        Ok(POST!("{GROWTH_V1}/measurement")
             .body_json(request)?
             .send_with(self)
             .await?
@@ -21,11 +21,11 @@ impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> ProtonMeasurements fo
             .into_body_json()?)
     }
 
-    async fn post_events(
+    async fn post_measurements(
         &self,
         request: PostMeasurementEventsRequest,
     ) -> ApiServiceResult<PostMeasurementEventResponse> {
-        Ok(POST!("{MEASUREMENTS_V1}/measurements")
+        Ok(POST!("{GROWTH_V1}/measurements")
             .body_json(request)?
             .send_with(self)
             .await?

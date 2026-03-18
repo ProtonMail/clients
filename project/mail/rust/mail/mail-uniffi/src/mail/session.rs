@@ -15,7 +15,7 @@ use crate::mail::state::MailUserContextMap;
 use crate::version::rust_sdk_version;
 use crate::{AsyncLiveQueryCallback, declare_live_query_tagger};
 use crate::{LiveQueryCallback, WatchHandle, async_runtime, async_runtime_slim, uniffi_async};
-use mail_core_common::services::{MeasurementService, SessionObserverService};
+use mail_core_common::services::{GrowthService, SessionObserverService};
 
 use chrono::Local;
 use futures::TryFutureExt;
@@ -1086,7 +1086,7 @@ impl MailSession {
 
             // Since we do not have an access to user context yet but we do not want to keep this logic in
             // uniffi layer, we use associated function here.
-            MeasurementService::record_prelogin(
+            GrowthService::record_prelogin(
                 ctx.core_context().account_stash(),
                 event_type.into(),
                 asid,

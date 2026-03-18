@@ -8,7 +8,7 @@ use crate::datatypes::AccountDetails;
 use crate::db::account::CoreAccount;
 use crate::db::migrations::{migrate_core_db, verify_core_db};
 use crate::models::{Address, InitializationWatcher, Label, User, UserSettings};
-use crate::services::{AddressService, MeasurementService};
+use crate::services::{AddressService, GrowthService};
 use crate::{Context, CoreContextError, CoreContextResult, OnSessionDeletedResponse, Origin};
 pub use event_loop::CoreEventLoopContext;
 use mail_action_queue::queue::{self, Queue};
@@ -153,7 +153,7 @@ impl UserContext {
                             InitializationWatcher::new(&user_stash).await?,
                         ))
                         .with_cyclic_service(UserMetricService::new)
-                        .with_cyclic_service(MeasurementService::new)
+                        .with_cyclic_service(GrowthService::new)
                         .with_service(telemetry_service);
                 }
 
@@ -212,8 +212,8 @@ impl UserContext {
                 });
             }
 
-            if let Some(measurement_service) = this.get_service_opt::<MeasurementService>() {
-                measurement_service.init_background_task()?;
+            if let Some(growth_service) = this.get_service_opt::<GrowthService>() {
+                growth_service.init_background_task()?;
             }
 
             if matches!(origin, Origin::App) {

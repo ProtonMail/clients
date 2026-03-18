@@ -3,26 +3,25 @@ use responses::PostMeasurementEventResponse;
 
 use crate::service::ApiServiceResult;
 
-mod measurements_impl;
+mod growth_impl;
 mod request_data;
 pub mod requests;
 pub mod responses;
 
 pub use self::request_data::*;
 
-// TODO: This endpoint does not exist YET.
-pub const MEASUREMENTS_V1: &str = "/growth/v1";
+pub const GROWTH_V1: &str = "/growth/v1";
 
 #[allow(async_fn_in_trait)]
-pub trait ProtonMeasurements {
+pub trait ProtonGrowth {
     /// NOTE: This endpoint is made solely for Android
-    async fn post_event(
+    async fn post_measurement(
         &self,
         request: PostMeasurementEventRequest,
     ) -> ApiServiceResult<PostMeasurementEventResponse>;
 
     /// NOTE: This endpoint is made solely for Android
-    async fn post_events(
+    async fn post_measurements(
         &self,
         request: PostMeasurementEventsRequest,
     ) -> ApiServiceResult<PostMeasurementEventResponse>;

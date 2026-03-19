@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [mail-uniffi-v0.164.3] - 2026-03-19
+
+### Features
+
+- Forwardport measurement service improvements - proton/clients/monorepo!1392
+- Introduce new DaysSinceAccountCreation variant for upsell telemetry - proton/clients/monorepo!1373
+- [FOUN-281] Hybrid local+remote search with highlighting - proton/clients/monorepo!1268
+
+### Fixes
+
+- [ET-5994] Scroller messages panic
+- [ET-5994] Double transaction panic
+- [ET-5995] Sync dependencies for conversation and message - proton/clients/monorepo!1407
+- [ET-5990] Danging mail event source round 2
+- [ET-5990] Dangling Mail Event Source - proton/clients/monorepo!1374
+
+
 ## [mail-uniffi-v0.164.2] - 2026-03-13
 
 ### Changed

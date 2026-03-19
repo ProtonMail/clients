@@ -11,7 +11,7 @@ use crate::datatypes::{
 use crate::models::{
     Attachment, Conversation, ConversationLabel, MailSettings, Message, MessageLabel,
 };
-use crate::{AppError, MailContextResult, MailUserContext};
+use crate::{AppError, MailContextError, MailContextResult, MailUserContext};
 use futures::try_join;
 use itertools::Itertools;
 use mail_action_queue::queue::Queue;
@@ -153,7 +153,7 @@ impl ContextualConversation {
         view_options: ConversationViewOptions,
         ctx: &MailUserContext,
         origin: OpenConversationOrigin,
-    ) -> Result<Option<ContextualConversationAndMessages>, AppError> {
+    ) -> Result<Option<ContextualConversationAndMessages>, MailContextError> {
         let mail_stash = ctx.user_stash();
         let api = ctx.session();
         let conv_and_messages = match origin {
@@ -213,7 +213,7 @@ impl ContextualConversation {
         mail_stash: &Stash<UserDb>,
         api: &Session,
         queue: &Queue<UserDb>,
-    ) -> Result<Option<ContextualConversationAndMessages>, AppError> {
+    ) -> Result<Option<ContextualConversationAndMessages>, MailContextError> {
         let t = Instant::now();
         let mut conn = mail_stash.connection().await?;
 
@@ -231,10 +231,10 @@ impl ContextualConversation {
         .await
         {
             Ok(conversation) => conversation,
-            Err(AppError::ConversationNotFound(_)) => {
+            Err(MailContextError::App(AppError::ConversationNotFound(_))) => {
                 return Ok(None);
             }
-            Err(AppError::ConversationDoesNotExistOnServer(remote_id)) => {
+            Err(MailContextError::App(AppError::ConversationDoesNotExistOnServer(remote_id))) => {
                 warn!("Conversation {remote_id:?} does not exist on the server");
                 return Ok(None);
             }
@@ -286,7 +286,7 @@ impl ContextualConversation {
         api: &Session,
         // set to some for rebasing
         queue: &Queue<UserDb>,
-    ) -> Result<Option<ContextualConversationAndMessages>, AppError> {
+    ) -> Result<Option<ContextualConversationAndMessages>, MailContextError> {
         Self::conversation_and_messages_impl(
             network_monitor_service,
             local_conversation_id,
@@ -309,7 +309,7 @@ impl ContextualConversation {
         mail_stash: &Stash<UserDb>,
         api: &Session,
         queue: &Queue<UserDb>,
-    ) -> Result<Option<ContextualConversationAndMessages>, AppError> {
+    ) -> Result<Option<ContextualConversationAndMessages>, MailContextError> {
         Self::conversation_and_messages_impl(
             network_monitor_service,
             local_conversation_id,
@@ -333,7 +333,7 @@ impl ContextualConversation {
         api: &Session,
         extra_sync_allowed: bool,
         queue: &Queue<UserDb>,
-    ) -> Result<Option<ContextualConversationAndMessages>, AppError> {
+    ) -> Result<Option<ContextualConversationAndMessages>, MailContextError> {
         let t = Instant::now();
         let mut conn = mail_stash.connection().await?;
 
@@ -352,10 +352,10 @@ impl ContextualConversation {
         .await
         {
             Ok(()) => {}
-            Err(AppError::ConversationNotFound(_)) => {
+            Err(MailContextError::App(AppError::ConversationNotFound(_))) => {
                 return Ok(None);
             }
-            Err(AppError::ConversationDoesNotExistOnServer(remote_id)) => {
+            Err(MailContextError::App(AppError::ConversationDoesNotExistOnServer(remote_id))) => {
                 warn!("Conversation {remote_id:?} does not exist on the server");
                 return Ok(None);
             }

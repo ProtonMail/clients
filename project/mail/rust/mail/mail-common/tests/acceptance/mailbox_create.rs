@@ -5,6 +5,7 @@ use mail_api::services::proton::response_data::{
 };
 use mail_common::Mailbox;
 use mail_common::datatypes::SystemLabelId;
+use mail_common::models::Message;
 use mail_common::test_utils::init::Params as TestParams;
 use mail_common::test_utils::test_context::MailTestContext;
 use mail_core_api::services::proton::Label as ApiLabel;
@@ -308,6 +309,42 @@ async fn test_new_mailbox_always_sync_messages_for_drafts_and_sent() {
             user_ctx.session(),
             10,
         )
+        .await
+        .unwrap();
+}
+
+#[tokio::test]
+async fn resolve_message_fetches_missing_dependenceis() {
+    // Set up a user and initialise the inbox
+    let ctx = MailTestContext::new().await;
+    let params = TestParams::default_basic();
+    let new_label_id = LabelId::from("NEW_LABEL");
+
+    let new_label = ApiLabel {
+        id: new_label_id.clone(),
+        name: "testlabel2".to_owned(),
+        label_type: ApiLabelType::Label,
+        ..ApiLabel::test_default()
+    };
+
+    let message_id = MessageId::from("m1");
+
+    let messages = vec![ApiMessageMetadata {
+        id: message_id.clone(),
+        conversation_id: params.conversations[0].id.clone(),
+        order: 0,
+        address_id: params.addresses[0].id.clone(),
+        label_ids: vec![LabelId::inbox(), new_label_id.clone()],
+        ..ApiMessageMetadata::test_default()
+    }];
+
+    ctx.setup_user(params.clone()).await;
+    ctx.mock_get_labels_by_ids(vec![new_label]).await;
+    ctx.mock_get_message_metadata(messages, 1).await;
+
+    let user_ctx = ctx.mail_user_context().await;
+
+    Message::find_or_fetch_by_remote_id(&user_ctx, message_id)
         .await
         .unwrap();
 }

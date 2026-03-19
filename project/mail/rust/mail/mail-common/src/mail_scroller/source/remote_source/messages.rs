@@ -432,6 +432,10 @@ impl RemoteMessageScrollerSource {
         tether: &mut Tether,
         queue: &Queue<UserDb>,
     ) -> Result<Vec<Message>, MailContextError> {
+        if api_messages.is_empty() {
+            return Ok(vec![]);
+        }
+
         // Resolve missing dependencies.
         let mut dependency_fetcher = DependencyFetcher::new();
         for message in api_messages.iter() {
@@ -455,9 +459,17 @@ impl RemoteMessageScrollerSource {
                     MessageLabelsCount::upsert(message_labels_count.clone(), tx).await?;
                 }
 
+                // It's possible the last message in this list may dissappear from the list due to
+                // the draft filtering rules. Save the required data here to preserve scroll
+                // sync sate.
+                let last = api_messages.last().unwrap();
+                let time: UnixTimestamp = last.time.into();
+                let snooze_time: UnixTimestamp = last.snooze_time.into();
+                let remote_id = last.id.clone();
+                let display_order = last.order;
+
                 // Save all messages.
                 let mut rebase_change_set = RebaseChangeSet::default();
-
                 let messages = Message::save_scroller_messages(
                     api_messages,
                     &mut rebase_change_set,
@@ -473,15 +485,6 @@ impl RemoteMessageScrollerSource {
                 {
                     error!("Failed to rebase changes: {e}")
                 }
-
-                let last = messages.last().unwrap();
-                let time = last.time;
-                let snooze_time = last.snooze_time;
-
-                // Unwrap safety: RemoteId is present as this method is called on message
-                // downloaded from API
-                let remote_id = last.remote_id.clone().unwrap();
-                let display_order = last.display_order;
 
                 if update_scroller {
                     Self::update_scroller_data(

@@ -3,6 +3,7 @@
 mod tests;
 
 use crate::css_parser::{parse_style_attribute, parse_stylesheet};
+use crate::utils::parse_url;
 use html5ever::ns;
 use html5ever::{LocalName, namespace_url};
 use kuchikiki::{Attribute, ExpandedName, NodeData, NodeRef, iter::NodeEdge};
@@ -346,7 +347,9 @@ pub fn strip_whitelist(doc: NodeRef, strip_style_sheets: StripStyleSheets) -> u6
                         return false;
                     }
 
-                    if !(ATTR_SET.contains(name) && validate_uri_attribute(name, value)) {
+                    if !(ATTR_SET.contains(name)
+                        && validate_and_normalize_uri_attribute(name, value))
+                    {
                         return false;
                     }
 
@@ -376,30 +379,40 @@ pub fn strip_whitelist(doc: NodeRef, strip_style_sheets: StripStyleSheets) -> u6
     total as u64
 }
 
-fn validate_uri_attribute(name: &ExpandedName, value: &mut Attribute) -> bool {
+fn validate_and_normalize_uri_attribute(name: &ExpandedName, value: &mut Attribute) -> bool {
     if !get_uri_attributes().contains(name) {
         return true;
     }
 
-    is_valid_url_for_attribute(&value.value, name)
+    let Ok(uri) = parse_url(&value.value) else {
+        // Invalid urls should be ignored
+        return false;
+    };
+
+    let is_valid = is_valid_url_type_for_attribute(&uri, name);
+
+    if is_valid && is_proton_broken_url(&value.value) {
+        value.value = format!("https://{}", value.value);
+    }
+    is_valid
+}
+
+// This is "temporary" solution. Our mail has sent `<a href="account.proton.me/...">` which in terms of mail is invalid link.
+// This is a relative link that points to `about:blank` or `localhost`.
+// We cannot just fix the API, because even if we do, mails were already sent, milk was spilled.
+// Therefore the fastest way to hotfix it is to detect this particular case and prepend https://
+// Instead of generic solution, because this has the lowest risk of breaking something else.
+fn is_proton_broken_url(uri: &str) -> bool {
+    uri.starts_with("account.proton.me")
 }
 
 fn is_valid_url(value: &str) -> bool {
-    let Ok(uri) = url::Url::parse(value) else {
+    let Ok(uri) = parse_url(value) else {
         // Invalid urls should be ignored
         return false;
     };
 
     is_valid_url_type(uri)
-}
-
-fn is_valid_url_for_attribute(value: &str, attribute_name: &ExpandedName) -> bool {
-    let Ok(uri) = url::Url::parse(value) else {
-        // Invalid urls should be ignored
-        return false;
-    };
-
-    is_valid_url_type_for_attribute(uri, attribute_name)
 }
 
 // Check if the cid data is actually valid
@@ -435,11 +448,11 @@ fn is_valid_url_type(uri: url::Url) -> bool {
     scheme == "https" || scheme == "http" || scheme == "data"
 }
 
-fn is_valid_url_type_for_attribute(uri: url::Url, attribute_name: &ExpandedName) -> bool {
+fn is_valid_url_type_for_attribute(uri: &url::Url, attribute_name: &ExpandedName) -> bool {
     let scheme = uri.scheme().to_lowercase();
 
     if scheme == "cid" {
-        return is_valid_cid(&uri);
+        return is_valid_cid(uri);
     }
 
     if scheme == "mailto" {
@@ -577,7 +590,7 @@ impl<'i> Visitor<'i> for CssUrlVisitor {
                 Token::String(value) => {
                     // This string could be anything, we can't make any assumptions, but
                     // if it happens to be an uri, we can at least check it.
-                    if let Ok(uri) = url::Url::parse(value)
+                    if let Ok(uri) = parse_url(&value)
                         && !is_valid_url_type(uri)
                     {
                         *value = String::new().into();

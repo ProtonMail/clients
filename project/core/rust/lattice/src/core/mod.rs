@@ -4,6 +4,8 @@ pub mod get_core_domains_available;
 pub mod get_core_settings_2fa_register;
 pub mod get_events;
 pub mod get_key_salts;
+pub mod get_organization_settings;
+pub mod get_organizations_logo;
 pub mod get_settings;
 pub mod get_tests_ping;
 pub mod keys;

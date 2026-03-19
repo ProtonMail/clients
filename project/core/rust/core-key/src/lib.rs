@@ -1,5 +1,6 @@
 // Core key library
 
+use lattice::core::LtCoreAddressFlags;
 use proton_crypto_account::errors::{AccountCryptoError, SKLError};
 use proton_crypto_account::keys::{
     KeyFlag, KeyId, LocalAddressKey, LocalSignedKeyList, LocalUserKey, UnlockedAddressKeys,
@@ -81,11 +82,14 @@ impl NewAddrKey {
     }
 }
 
-pub fn new_key_flags(external: bool) -> KeyFlag {
+pub fn new_key_flags(address_flags: LtCoreAddressFlags) -> KeyFlag {
     let mut flags = KeyFlag::default();
 
-    if external {
+    if address_flags.contains(LtCoreAddressFlags::DisableE2EE) {
         flags.set_email_no_encryption();
+    }
+
+    if address_flags.contains(LtCoreAddressFlags::DisableExpectedSigned) {
         flags.set_email_no_sign();
     }
 

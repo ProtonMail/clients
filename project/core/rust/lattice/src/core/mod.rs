@@ -14,6 +14,7 @@ pub mod post_validate_phone;
 pub mod put_users_password;
 pub mod user;
 
+use derive_more::{From, Into};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 use crate::{
@@ -125,6 +126,30 @@ pub struct LtCoreAddress {
     pub signed_key_list: Option<LtCoreAddressSignedKeyList>,
 
     pub status: LtCoreAddressStatus,
+
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub flags: LtCoreAddressFlags,
+}
+
+/// Address-level bit flags returned by the API.
+#[derive(From, Into)]
+#[cfg_attr(feature = "facet", derive(facet::Facet))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
+pub struct LtCoreAddressFlags(i32);
+
+bitflags::bitflags! {
+    impl LtCoreAddressFlags: i32 {
+        const WhitelistedSpam = 1 << 0;
+        const WhitelistedRate = 1 << 1;
+        #[deprecated]
+        const Starred = 1 << 2;
+        const DomainClaimed = 1 << 3;
+        const DisableE2EE = 1 << 4;
+        const DisableExpectedSigned = 1 << 5;
+        const BYOE = 1 << 6;
+        const UsernameReclaimed = 1 << 7;
+    }
 }
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

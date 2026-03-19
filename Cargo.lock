@@ -1188,6 +1188,7 @@ dependencies = [
 name = "core-key"
 version = "0.1.0"
 dependencies = [
+ "lattice",
  "proton-crypto-account",
  "serde",
  "serde_json",

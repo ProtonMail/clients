@@ -8,7 +8,6 @@ use crate::models::{
     DraftSendResultOrigin, Message, MetadataId,
 };
 use crate::{MailContextError, MailUserContext};
-use futures::future;
 use mail_action_queue::action::{
     Action, ActionGroup, ActionId, FactoryResult, Handler, Priority, Type, VersionConverter,
     VersionConverterError, WriterGuard, WriterGuardError, deserialize,
@@ -401,32 +400,26 @@ async fn encrypt_and_upload_attachment(
         data_packet: encrypted_attachment.data,
     };
 
-    let keep_alive = Box::pin(async {
-        loop {
-            time::sleep(Duration::from_secs(10)).await;
+    let mut upload_task =
+        ctx.spawn_ex(async move |ctx| ctx.session().post_attachment(new_attachment_params).await);
 
-            debug!(
-                "Upload takes a moment - running a no-op transaction to keep \
-                 the action alive",
-            );
+    let response = loop {
+        tokio::select! {
+            _ = time::sleep(Duration::from_secs(10)) => {
+                debug!(
+                    "Upload takes a moment - running a no-op transaction to keep \
+                    the action alive",
+                );
 
-            writer_guard
-                .tx::<_, _, WriterGuardError>(async |_| Ok(()))
-                .await
-                .map_err(MailContextError::from)?;
+                writer_guard
+                    .tx::<_, _, WriterGuardError>(async |_| Ok(()))
+                    .await
+                    .map_err(MailContextError::from)?;
+            }
+            r = &mut upload_task => {
+                break r?
+            }
         }
-    });
-
-    let response = Box::pin(ctx.session().post_attachment(new_attachment_params));
-
-    let response = match future::select(keep_alive, response).await {
-        future::Either::Left((Ok(()), _)) => {
-            unreachable!(); // the task is `loop {}`-ing
-        }
-        future::Either::Left((Err(e), _)) => {
-            return Err(e);
-        }
-        future::Either::Right((response, _)) => response,
     };
 
     let response = match response {

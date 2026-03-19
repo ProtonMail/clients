@@ -20,6 +20,7 @@ use crate::actions::{
 };
 use crate::datatypes::ConversationViewOptions;
 use crate::datatypes::MimeType;
+use crate::datatypes::dependencies::DependencyFetcher;
 use crate::models::*;
 use crate::{MailContextError, find_in_query};
 use futures::try_join;
@@ -1526,11 +1527,11 @@ impl Message {
             .collect()
     }
 
-    pub async fn sync_metadata<PM: ProtonMail>(
+    pub async fn sync_metadata(
         ids: Vec<MessageId>,
-        api: &PM,
+        api: &Session,
         mut tx: impl RunTransaction,
-    ) -> Result<Vec<Self>, AppError> {
+    ) -> Result<Vec<Self>, MailContextError> {
         let remote_msgs = Self::fetch_metadata(
             GetMessagesOptions {
                 ids: ids.into_iter().map_into().collect(),
@@ -1542,11 +1543,25 @@ impl Message {
         .messages;
         let mut local_msgs = Vec::with_capacity(remote_msgs.len());
 
+        let mut dep_fetcher = DependencyFetcher::new();
+        for msg in &remote_msgs {
+            dep_fetcher
+                .check_api_message_metadata(msg, tx.tether())
+                .await?;
+        }
+
+        dep_fetcher
+            .fetch_and_store(api, &mut tx)
+            .await
+            .inspect_err(|e| {
+                tracing::error!("Failed to sync message dependencies: {e}");
+            })?;
+
         tx.run_tx(async |tx| {
             for msg in remote_msgs {
+                let sync_decision = Message::sync_decision(&msg, None, tx).await?;
                 let mut remote_msg = Message::from_api_metadata(msg, tx).await?;
-
-                if !remote_msg.is_local_draft(tx).await? {
+                if sync_decision == MessageSyncDecision::Apply {
                     remote_msg.save(tx).await?;
                 }
                 local_msgs.push(remote_msg);

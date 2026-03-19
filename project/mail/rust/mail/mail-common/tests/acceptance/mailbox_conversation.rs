@@ -8,7 +8,9 @@ use mail_common::test_utils::init::Params as TestParams;
 use mail_common::test_utils::test_context::MailTestContext;
 use mail_core_api::services::proton::Label as ApiLabel;
 use mail_core_api::services::proton::{LabelId, LabelType as ApiLabelType};
+use mail_core_common::models::Label;
 use mail_core_common::models::ModelExtension;
+use mail_core_common::models::ModelIdExtension;
 use mail_stash::orm::Model;
 
 #[tokio::test]
@@ -636,6 +638,132 @@ async fn test_new_mailbox_syncs_new_conversation_if_total_does_not_add_up() {
             .iter()
             .any(|l| l.remote_label_id.as_ref() == Some(&new_label_id))
     );
+}
+
+#[tokio::test]
+async fn conversation_and_messages_fetches_missing_dependenceis() {
+    // Set up a user and initialise the inbox
+    let ctx = MailTestContext::new().await;
+    let params = TestParams::default_basic();
+    let new_label_id = LabelId::from("NEW_LABEL");
+
+    let new_label = ApiLabel {
+        id: new_label_id.clone(),
+        name: "testlabel2".to_owned(),
+        label_type: ApiLabelType::Label,
+        ..ApiLabel::test_default()
+    };
+
+    let message_id1 = MessageId::from("m1");
+
+    let messages = vec![ApiMessageMetadata {
+        id: message_id1.clone(),
+        conversation_id: params.conversations[0].id.clone(),
+        order: 0,
+        address_id: params.addresses[0].id.clone(),
+        label_ids: vec![LabelId::inbox(), new_label_id.clone()],
+        ..ApiMessageMetadata::test_default()
+    }];
+
+    let mut conversation: Conversation = params.conversations[0].clone().into();
+    ctx.setup_user(params.clone()).await;
+    ctx.mock_get_conversation_messages(params.conversations[0].clone(), messages, 1_u64)
+        .await;
+    ctx.mock_get_labels_by_ids(vec![new_label]).await;
+
+    let user_ctx = ctx.mail_user_context().await;
+
+    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    tether
+        .tx(async |tx| conversation.save(tx).await)
+        .await
+        .unwrap();
+
+    // Get conversations for mailbox.
+    let conversation = Conversation::find_first("", vec![], &tether)
+        .await
+        .unwrap()
+        .unwrap();
+
+    // Get the message for a conversation.
+    ContextualConversation::conversation_and_messages(
+        user_ctx.network_monitor_service(),
+        conversation.id(),
+        Label::remote_id_counterpart(LabelId::inbox(), &tether)
+            .await
+            .unwrap()
+            .unwrap(),
+        ConversationViewOptions::All,
+        user_ctx.user_stash(),
+        user_ctx.session(),
+        user_ctx.action_queue(),
+    )
+    .await
+    .unwrap()
+    .unwrap();
+}
+
+#[tokio::test]
+async fn conversation_and_messages_from_push_notification_fetches_missing_dependenceis() {
+    // Set up a user and initialise the inbox
+    let ctx = MailTestContext::new().await;
+    let params = TestParams::default_basic();
+    let new_label_id = LabelId::from("NEW_LABEL");
+
+    let new_label = ApiLabel {
+        id: new_label_id.clone(),
+        name: "testlabel2".to_owned(),
+        label_type: ApiLabelType::Label,
+        ..ApiLabel::test_default()
+    };
+
+    let message_id1 = MessageId::from("m1");
+
+    let messages = vec![ApiMessageMetadata {
+        id: message_id1.clone(),
+        conversation_id: params.conversations[0].id.clone(),
+        order: 0,
+        address_id: params.addresses[0].id.clone(),
+        label_ids: vec![LabelId::inbox(), new_label_id.clone()],
+        ..ApiMessageMetadata::test_default()
+    }];
+
+    let mut conversation: Conversation = params.conversations[0].clone().into();
+    ctx.setup_user(params.clone()).await;
+    ctx.mock_get_conversation_messages(params.conversations[0].clone(), messages, 1_u64)
+        .await;
+    ctx.mock_get_labels_by_ids(vec![new_label]).await;
+
+    let user_ctx = ctx.mail_user_context().await;
+
+    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    tether
+        .tx(async |tx| conversation.save(tx).await)
+        .await
+        .unwrap();
+
+    // Get conversations for mailbox.
+    let conversation = Conversation::find_first("", vec![], &tether)
+        .await
+        .unwrap()
+        .unwrap();
+
+    // Get the message for a conversation.
+    ContextualConversation::conversation_and_messages_from_push_notification(
+        user_ctx.network_monitor_service(),
+        conversation.id(),
+        Label::remote_id_counterpart(LabelId::inbox(), &tether)
+            .await
+            .unwrap()
+            .unwrap(),
+        ConversationViewOptions::All,
+        user_ctx.user_stash(),
+        user_ctx.session(),
+        user_ctx.action_queue(),
+    )
+    .await
+    .unwrap()
+    .unwrap();
 }
 
 // #[test]

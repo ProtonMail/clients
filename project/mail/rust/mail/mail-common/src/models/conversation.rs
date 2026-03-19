@@ -11,6 +11,7 @@ use crate::actions::{
     ActionMoveData, ConversationOrMessage, LabelAsAction, LabelAsData, LabelAsOutput, LabelPair,
     MoveAction, Undo, filter_responses,
 };
+use crate::datatypes::dependencies::DependencyFetcher;
 use crate::datatypes::{
     AttachmentMetadata, ConversationLabelsCount, CustomLabel, Disposition, ExclusiveLocation,
     LocalMessageId, MessageAttachmentInfos, MessageLabelsCount, MessageRecipients, MessageSenders,
@@ -1811,18 +1812,18 @@ impl Conversation {
         tx: &mut impl RunTransaction,
         session: &Session,
         queue: &Queue<UserDb>,
-    ) -> Result<Conversation, AppError> {
+    ) -> Result<Conversation, MailContextError> {
         let Some(conversation) = Self::find_by_id(local_conversation_id, tx.tether()).await? else {
-            return Err(AppError::ConversationNotFound(local_conversation_id));
+            return Err(AppError::ConversationNotFound(local_conversation_id).into());
         };
 
         let Some(ref rid) = conversation.remote_id else {
-            return Err(AppError::ConversationHasNoRemoteId(local_conversation_id));
+            return Err(AppError::ConversationHasNoRemoteId(local_conversation_id).into());
         };
 
         if network_monitor_service.is_os_offline() {
             debug!("No connection, skipping sync");
-            return Err(AppError::API(ApiServiceError::NetworkError(
+            return Err(MailContextError::Api(ApiServiceError::NetworkError(
                 "No connection".to_owned(),
             )));
         }
@@ -1837,16 +1838,30 @@ impl Conversation {
             Ok(r) => r,
             Err(ApiServiceError::UnprocessableEntity(s, Some(api_error))) => {
                 return if api_error.code == Mail::ConversationDoesNotExist as u32 {
-                    Err(AppError::ConversationDoesNotExistOnServer(rid.clone()))
+                    Err(AppError::ConversationDoesNotExistOnServer(rid.clone()).into())
                 } else {
-                    Err(AppError::from(ApiServiceError::UnprocessableEntity(
-                        s,
-                        Some(api_error),
-                    )))
+                    Err(ApiServiceError::UnprocessableEntity(s, Some(api_error)).into())
                 };
             }
-            Err(e) => return Err(AppError::from(e)),
+            Err(e) => return Err(e.into()),
         };
+
+        let mut dep_fetcher = DependencyFetcher::new();
+        dep_fetcher
+            .check_api_conversation(&conversation_response.conversation, tx.tether())
+            .await?;
+        for msg in &conversation_response.messages {
+            dep_fetcher
+                .check_api_message_metadata(msg, tx.tether())
+                .await?;
+        }
+
+        dep_fetcher
+            .fetch_and_store(session, tx)
+            .await
+            .inspect_err(|e| {
+                tracing::error!("Failed to fetch dependencies : {e}");
+            })?;
 
         tx.run_tx::<_, _>(async move |tx| {
             let mut rebase_change_set = RebaseChangeSet::default();
@@ -1922,7 +1937,7 @@ impl Conversation {
             Ok(new_conversation)
         })
         .await
-        .map_err(AppError::Other)
+        .map_err(MailContextError::Other)
     }
 
     #[tracing::instrument(skip(tx, session, network_monitor_service, queue))]
@@ -1933,10 +1948,10 @@ impl Conversation {
         session: &Session,
         extra_sync_allowed: bool,
         queue: &Queue<UserDb>,
-    ) -> Result<(), AppError> {
+    ) -> Result<(), MailContextError> {
         let Some(mut conversation) = Self::find_by_id(local_conversation_id, tx.tether()).await?
         else {
-            return Err(AppError::ConversationNotFound(local_conversation_id));
+            return Err(AppError::ConversationNotFound(local_conversation_id).into());
         };
 
         let total_message_count =
@@ -1946,13 +1961,13 @@ impl Conversation {
             extra_sync_allowed && total_message_count != conversation.num_messages;
         if !conversation.has_messages {
             let Some(ref rid) = conversation.remote_id else {
-                return Err(AppError::ConversationHasNoRemoteId(local_conversation_id));
+                return Err(AppError::ConversationHasNoRemoteId(local_conversation_id).into());
             };
             info!("Syncing {rid:?}'s messages");
 
             if network_monitor_service.check_now().await.is_offline() {
                 debug!("No connection, skipping sync");
-                return Err(AppError::API(ApiServiceError::NetworkError(
+                return Err(MailContextError::Api(ApiServiceError::NetworkError(
                     "No connection".to_owned(),
                 )));
             }
@@ -1966,16 +1981,30 @@ impl Conversation {
                 Ok(r) => r,
                 Err(ApiServiceError::UnprocessableEntity(s, Some(api_error))) => {
                     return if api_error.code == Mail::ConversationDoesNotExist as u32 {
-                        Err(AppError::ConversationDoesNotExistOnServer(rid.clone()))
+                        Err(AppError::ConversationDoesNotExistOnServer(rid.clone()).into())
                     } else {
-                        Err(AppError::from(ApiServiceError::UnprocessableEntity(
-                            s,
-                            Some(api_error),
-                        )))
+                        Err(ApiServiceError::UnprocessableEntity(s, Some(api_error)).into())
                     };
                 }
-                Err(e) => return Err(AppError::from(e)),
+                Err(e) => return Err(e.into()),
             };
+
+            let mut dep_fetcher = DependencyFetcher::new();
+            dep_fetcher
+                .check_api_conversation(&conversation_response.conversation, tx.tether())
+                .await?;
+            for msg in &conversation_response.messages {
+                dep_fetcher
+                    .check_api_message_metadata(msg, tx.tether())
+                    .await?;
+            }
+
+            dep_fetcher
+                .fetch_and_store(session, tx)
+                .await
+                .inspect_err(|e| {
+                    tracing::error!("Failed to fetch dependencies : {e}");
+                })?;
 
             tx.run_tx::<_, _>(async move |tx| {
                 let mut rebase_change_set = RebaseChangeSet::default();
@@ -2024,7 +2053,7 @@ impl Conversation {
                 Ok(())
             })
             .await
-            .map_err(AppError::Other)?;
+            .map_err(MailContextError::Other)?;
         } else if should_sync_all_messages {
             info!("Message state mismatch, syncing conversation from server");
             Self::sync_conversation_messages_from_push_notification(

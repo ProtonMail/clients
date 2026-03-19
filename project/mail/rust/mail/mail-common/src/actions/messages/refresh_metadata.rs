@@ -1,5 +1,5 @@
-use crate::AppError;
-use crate::actions::{MailActionError, PREFETCH_ROLLBACK_ACTION_GROUP};
+use crate::MailContextError;
+use crate::actions::PREFETCH_ROLLBACK_ACTION_GROUP;
 use crate::datatypes::LocalMessageId;
 use crate::models::{Message, MessageScrollData};
 use itertools::Itertools;
@@ -42,7 +42,7 @@ impl Action<UserDb> for RefreshMetadata {
     type Handler = RefreshMetadataHandler;
     type RemoteOutput = ();
     type LocalOutput = ();
-    type Error = MailActionError;
+    type Error = MailContextError;
 }
 
 pub struct RefreshMetadataHandler {
@@ -106,8 +106,8 @@ impl Handler<UserDb> for RefreshMetadataHandler {
 
         let refreshed_items = match items_sync_result {
             Ok(items) => items,
-            Err(AppError::API(e)) if e.is_network_failure() => {
-                return Err(MailActionError::Http(e));
+            Err(MailContextError::Api(e)) if e.is_network_failure() => {
+                return Err(MailContextError::Api(e));
             }
             Err(e) => {
                 tracing::error!("Unexpected error while refreshing messages metadata: `{e}`");
@@ -120,7 +120,7 @@ impl Handler<UserDb> for RefreshMetadataHandler {
                     })
                     .await?;
 
-                return Err(e.into());
+                return Err(e);
             }
         };
 

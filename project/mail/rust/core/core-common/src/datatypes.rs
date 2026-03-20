@@ -1857,16 +1857,8 @@ pub enum UpsellEligibility {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum UpsellType {
-    BlackFriday(BlackFridayWave),
-    Standard,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum BlackFridayWave {
-    /// 50% off
-    Wave1,
-    /// 80% off
-    Wave2,
+    MailPlus,
+    Unlimited,
 }
 
 #[cfg(any(test, feature = "test-utils"))]

@@ -110,12 +110,14 @@ impl From<UpsellEntryPoint> for TelemetryUpsellEntryPoint {
 #[derive(Debug, Clone, uniffi::Enum)]
 pub enum UpsellModalVariant {
     ComparisonPlus,
+    ComparisonUnlimited,
 }
 
 impl From<UpsellModalVariant> for TelemetryUpsellModalVariant {
     fn from(val: UpsellModalVariant) -> Self {
         match val {
             UpsellModalVariant::ComparisonPlus => Self::ComparisonPlus,
+            UpsellModalVariant::ComparisonUnlimited => Self::ComparisonUnlimited,
         }
     }
 }

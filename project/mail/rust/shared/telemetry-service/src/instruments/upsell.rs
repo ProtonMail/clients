@@ -52,6 +52,8 @@ impl Dimension for DaysSinceAccountCreation {
 pub enum UpsellModalVariant {
     #[strum(serialize = "Comparison.Plus")]
     ComparisonPlus,
+    #[strum(serialize = "Comparison.Unlimited")]
+    ComparisonUnlimited,
 }
 
 impl Dimension for UpsellModalVariant {

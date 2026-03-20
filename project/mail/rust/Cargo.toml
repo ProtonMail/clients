@@ -42,6 +42,7 @@ members = [
   "shared/task-service",
   "shared/telemetry-service",
   "contacts/contacts-api",
+  "core/labels-common",
   "shared/shared-types",
   "api/mail-api-event-types",
   "api/mail-api-labels",
@@ -252,6 +253,10 @@ path = "shared/ical-tz"
 version = "0.2"
 path = "shared/vcard"
 registry = "proton"
+
+[workspace.dependencies.mail-labels-common]
+version = "0.1.0"
+path = "core/labels-common"
 
 [workspace.dependencies.mail-shared-types]
 version = "0.1.0"

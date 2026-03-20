@@ -60,6 +60,10 @@ pub use self::system_label::*;
 pub use self::timestamp_ms::*;
 pub use self::user_feature_flags::*;
 
+pub use mail_labels_common::{
+    ALL_LABEL_TYPES, CONTACT_LABEL_TYPES, LabelColor, LabelType, Labels, LocalLabelId,
+    MAIL_LABEL_TYPES,
+};
 use mail_shared_types::declare_local_id;
 pub use mail_shared_types::{InitializationKey, LocalIdActionDepExt, LocalIdMarker, UnixTimestamp};
 
@@ -83,7 +87,7 @@ use mail_core_api::services::proton::{
 };
 use mail_core_api::services::proton::{
     AddressId, ContactEmailId, ContactId, DeviceEnvironment as ApiDeviceEnvironment, LabelId,
-    LabelType as ApiLabelType, LightOrDarkMode as ApiLightOrDarkMode,
+    LightOrDarkMode as ApiLightOrDarkMode,
 };
 use mail_core_api::session::{Config as RealApiConfig, EnvId};
 use mail_core_api::store::{MbpMode, TfaMode};
@@ -95,7 +99,7 @@ use mail_stash::utils::sql_using_serde;
 use proton_crypto_account::keys::{AddressKeys as RealAddressKeys, UserKeys as RealUserKeys};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use smart_default::SmartDefault;
-use std::fmt::{self, Debug, Display, Formatter};
+use std::fmt::Debug;
 use std::ops::Deref;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tracing::warn;
@@ -790,80 +794,6 @@ impl From<WeekStart> for Weekday {
     }
 }
 
-/// TODO: Document this enum.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, TryFrom)]
-#[try_from(repr)]
-#[repr(u8)]
-pub enum LabelType {
-    /// TODO: Document this field.
-    Label = 1,
-
-    /// TODO: Document this field.
-    ContactGroup = 2,
-
-    /// TODO: Document this field.
-    Folder = 3,
-
-    /// TODO: Document this field.
-    System = 4,
-}
-
-impl Display for LabelType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Label => write!(f, "Label"),
-            Self::ContactGroup => write!(f, "Contact Group"),
-            Self::Folder => write!(f, "Folder"),
-            Self::System => write!(f, "System"),
-        }
-    }
-}
-
-impl From<ApiLabelType> for LabelType {
-    fn from(value: ApiLabelType) -> Self {
-        match value {
-            ApiLabelType::Label => Self::Label,
-            ApiLabelType::ContactGroup => Self::ContactGroup,
-            ApiLabelType::Folder => Self::Folder,
-            ApiLabelType::System => Self::System,
-        }
-    }
-}
-
-impl From<LabelType> for ApiLabelType {
-    fn from(value: LabelType) -> Self {
-        match value {
-            LabelType::Label => Self::Label,
-            LabelType::ContactGroup => Self::ContactGroup,
-            LabelType::Folder => Self::Folder,
-            LabelType::System => Self::System,
-        }
-    }
-}
-
-impl FromSql for LabelType {
-    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        let val = u8::column_result(value)?;
-        Self::try_from(val).map_err(|_| FromSqlError::OutOfRange(i64::from(val)))
-    }
-}
-
-impl ToSql for LabelType {
-    fn to_sql(&self) -> Result<ToSqlOutput<'_>, SqliteError> {
-        Ok(ToSqlOutput::Owned(Value::Integer(*self as i64)))
-    }
-}
-
-pub const ALL_LABEL_TYPES: [LabelType; 4] = [
-    LabelType::Label,
-    LabelType::ContactGroup,
-    LabelType::Folder,
-    LabelType::System,
-];
-pub const MAIL_LABEL_TYPES: [LabelType; 3] =
-    [LabelType::Label, LabelType::Folder, LabelType::System];
-pub const CONTACT_LABEL_TYPES: [LabelType; 1] = [LabelType::ContactGroup];
-
 /// In which environment are we going to register the device
 /// for the push notification.
 ///
@@ -1201,39 +1131,9 @@ impl From<ApiFlags> for Flags {
 
 sql_using_serde!(Flags);
 
-/// Wrapper type around `Vec<RemoteId>` to implement [`FromSql`] and [`ToSql`].
-#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
-pub struct Labels(Vec<LabelId>);
-
-impl Labels {
-    /// Create a new [`Labels`] instance from a list of [`LabelId`]s.
-    ///
-    #[must_use]
-    pub fn new(ids: Vec<LabelId>) -> Self {
-        Self(ids)
-    }
-
-    /// Convert the [`Labels`] into the inner [`Vec`].
-    #[must_use]
-    pub fn into_inner(self) -> Vec<LabelId> {
-        self.0
-    }
-}
-
-impl Deref for Labels {
-    type Target = Vec<LabelId>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-sql_using_serde!(Labels);
-
 declare_local_id!(LocalContactId => ContactId);
 declare_local_id!(LocalContactEmailId => ContactEmailId);
 declare_local_id!(LocalAddressId => AddressId);
-declare_local_id!(LocalLabelId => LabelId);
 
 /// TODO: Document this struct.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -1607,50 +1507,6 @@ impl FromSql for Timestamp {
 impl ToSql for Timestamp {
     fn to_sql(&self) -> Result<ToSqlOutput<'_>, SqliteError> {
         f64::to_sql(&self.0)
-    }
-}
-
-#[derive(Clone, Debug, Default, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
-pub struct LabelColor(String);
-
-impl LabelColor {
-    #[must_use]
-    pub fn purple() -> Self {
-        Self("#8080FF".into())
-    }
-    #[must_use]
-    pub fn black() -> Self {
-        Self("#000000".into())
-    }
-}
-
-impl Display for LabelColor {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl From<String> for LabelColor {
-    fn from(value: String) -> Self {
-        Self(value)
-    }
-}
-
-impl From<&str> for LabelColor {
-    fn from(value: &str) -> Self {
-        Self(value.into())
-    }
-}
-
-impl FromSql for LabelColor {
-    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        value.as_str().map(|s| LabelColor(s.to_string()))
-    }
-}
-
-impl ToSql for LabelColor {
-    fn to_sql(&self) -> Result<ToSqlOutput<'_>, SqliteError> {
-        Ok(ToSqlOutput::from(self.0.clone()))
     }
 }
 

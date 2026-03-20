@@ -4175,6 +4175,7 @@ dependencies = [
  "mail-crypto-pin-hash",
  "mail-event-service",
  "mail-issue-reporter-service",
+ "mail-labels-common",
  "mail-log-service",
  "mail-network-monitor-service",
  "mail-observability",
@@ -4376,6 +4377,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "mail-labels-common"
+version = "0.1.0"
+dependencies = [
+ "derive_more 2.0.1",
+ "flume 0.11.1",
+ "futures",
+ "include_dir",
+ "itertools 0.13.0",
+ "mail-action-queue",
+ "mail-api-labels",
+ "mail-core-api",
+ "mail-shared-types",
+ "mail-sqlite3",
+ "mail-stash",
+ "pretty_assertions",
+ "rand 0.8.5",
+ "serde",
+ "sqlite-watcher",
+ "thiserror 2.0.18",
+ "tokio",
+ "topological-sort",
+ "tracing",
+]
+
+[[package]]
 name = "mail-log-service"
 version = "0.1.0"
 dependencies = [
@@ -4533,9 +4559,11 @@ dependencies = [
  "itertools 0.13.0",
  "jiff",
  "mail-action-queue",
+ "mail-api-event-types",
  "mail-proton-ids",
  "mail-stash",
  "serde",
+ "tracing",
 ]
 
 [[package]]

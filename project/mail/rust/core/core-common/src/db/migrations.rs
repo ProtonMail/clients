@@ -41,7 +41,9 @@ pub async fn migrate_core_db(mail_stash: &Stash<UserDb>) -> Result<usize, Migrat
     // this will only run once per new version.
     mail_action_queue::db::migrate(&mut tether).await?;
 
-    core_db().migrate(&mut tether).await
+    let count = core_db().migrate(&mut tether).await?;
+    mail_labels_common::db::migrate(&mut tether).await?;
+    Ok(count)
 }
 
 pub async fn verify_core_db(mail_stash: &Stash<UserDb>) -> Result<(), MigratorError> {

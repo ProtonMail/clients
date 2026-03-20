@@ -2,62 +2,12 @@ use crate::datatypes::{ProductUsedSpace, Refresh};
 use crate::models::{Address, Contact, ContactEmail, Label, User, UserSettings};
 use crate::utils::MapVec;
 use mail_core_api::services::proton::{
-    Action as ApiAction, AddressEvent as ApiAddressEvent,
-    ContactEmailEvent as ApiContactEmailEvent, ContactEvent as ApiContactEvent,
-    CoreEvent as ApiCoreEvent, EventId, LabelEvent as ApiLabelEvent, LabelId, ProtonIdMarker,
+    AddressEvent as ApiAddressEvent, ContactEmailEvent as ApiContactEmailEvent,
+    ContactEvent as ApiContactEvent, CoreEvent as ApiCoreEvent, EventId,
+    LabelEvent as ApiLabelEvent, LabelId,
 };
 use mail_core_api::services::proton::{AddressId, ContactEmailId, ContactId};
-
-/// TODO: Document this enum.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-#[repr(u8)]
-pub enum Action {
-    /// TODO: Document this field.
-    Delete = 0,
-
-    /// TODO: Document this field.
-    Create = 1,
-
-    /// TODO: Document this field.
-    Update = 2,
-
-    /// TODO: Document this field.
-    UpdateFlags = 3,
-}
-
-impl Action {
-    pub async fn log_entry<T: ProtonIdMarker>(
-        self,
-        id: &T,
-        local_id: impl AsyncFnOnce(&T) -> Option<u64>,
-    ) {
-        let action_str = match self {
-            Action::Delete => "Deleting",
-            Action::Create => "Creating",
-            Action::Update => "Updating",
-            Action::UpdateFlags => "Updating (flags)",
-        };
-
-        if self != Action::Create
-            && let Some(local_id) = local_id(id).await
-        {
-            tracing::info!("{action_str} {id:?} -> {local_id}");
-        } else {
-            tracing::info!("{action_str} {id:?}");
-        }
-    }
-}
-
-impl From<ApiAction> for Action {
-    fn from(value: ApiAction) -> Self {
-        match value {
-            ApiAction::Delete => Self::Delete,
-            ApiAction::Create => Self::Create,
-            ApiAction::Update => Self::Update,
-            ApiAction::UpdateFlags => Self::UpdateFlags,
-        }
-    }
-}
+pub use mail_shared_types::Action;
 
 /// An event related to a [`ContactEmail`] record.
 #[derive(Clone, Debug, Eq, PartialEq)]

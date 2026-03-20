@@ -7,7 +7,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use mail_api::services::proton::common::MessageId;
-use mail_html_transformer::{Html2TextOptions, Transformer, sanitizer::StripStyleSheets};
+use mail_html_transformer::html_to_text_fast;
 use mail_stash::UserDb;
 use mail_stash::stash::{Stash, StashError, WatcherHandle};
 use tokio::time::sleep;
@@ -15,7 +15,7 @@ use tracing::{debug, error, info, warn};
 
 use crate::intent::{LocalMessageId, SearchIndexIntent, SearchOperation};
 use crate::service::MailSearchService;
-use crate::traits::MessageDataProvider;
+use crate::traits::{BatchPreparedMessage, MIME_TYPE_HTML, MessageDataProvider};
 
 /// Worker-specific error types
 ///
@@ -42,14 +42,32 @@ const MAX_RETRY_COUNT: u64 = 3;
 /// Delay after processing an intent (to avoid hammering the CPU)
 const PROCESSING_DELAY: Duration = Duration::from_millis(10);
 
+/// Delay when intents are pending to allow them to accumulate before processing
+/// This is important because overall indexing process is slow, so we want to batch as many as possible
+/// to reduce Load/Save events
+///
+/// We always wait a small amount when intents are pending to let prefetch workers create more.
+/// Progressive delays for larger batches.
+const BULK_ACCUMULATION_DELAY_MIN: Duration = Duration::from_millis(2000); // Always wait if any pending
+const BULK_ACCUMULATION_DELAY_MEDIUM: Duration = Duration::from_millis(4000); // If >= 20 pending
+const BULK_ACCUMULATION_DELAY_LARGE: Duration = Duration::from_millis(10000); // If >= 50 pending
+
+/// Thresholds for bulk accumulation delay
+/// Lower thresholds allow longer delays to kick in sooner, helping batches accumulate to 100
+const BULK_ACCUMULATION_THRESHOLD_MEDIUM: i64 = 20; // Wait 4s if >= 20 pending
+const BULK_ACCUMULATION_THRESHOLD_LARGE: i64 = 50; // Wait 10s if >= 50 pending
+
 /// Delay for deferring intents without remote IDs (1 minute)
 /// This prevents messages without remote IDs from blocking the queue
 const DEFER_DELAY_SECONDS: i64 = 60;
 
-/// Batch size for processing intents
-/// Processing intents in batches improves performance by reducing commit overhead
-/// may need to adjust batch size once bucket based index release incorporated
-const BATCH_SIZE: usize = 5;
+/// Minimum batch size for processing intents
+const MIN_BATCH_SIZE: usize = 100;
+
+/// Maximum batch size for bulk loading mode
+/// When many intents are available, use larger batches to reduce Load/Save events
+/// For 1000 messages: 1 batch = 6 Load/Save events vs 10 batches = 60 Load/Save events
+const MAX_BATCH_SIZE: usize = 5000;
 
 /// The search index worker
 ///
@@ -161,13 +179,83 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
     /// Process a batch of pending intents
     ///
     /// Returns `true` if intents were processed, `false` if queue was empty.
+    ///
+    /// Uses adaptive batch sizing:
+    /// - Fetches up to `MAX_BATCH_SIZE` (5000) when ≥5000 pending
+    /// - Fetches all available when 100–4999 pending
+    /// - Requests `MIN_BATCH_SIZE` (100) when <100 pending (may receive fewer)
+    /// - Reduces Load/Save events: 1 batch of 1000 = 6 events vs 10 batches of 100 = 60 events
+    ///
+    /// When intents are pending, waits before fetching to allow more to accumulate:
+    /// - 2s if any pending, 4s if ≥20 pending, 10s if ≥50 pending.
+    ///
+    /// This is important because indexing is slow, so we want to batch as many as possible.
     pub(crate) async fn process_batch(&self) -> Result<bool, StashError> {
         let tether = self.mail_stash.connection().await?;
 
+        // Check how many intents are pending
+        let mut pending_count = SearchIndexIntent::pending_count(&tether).await?;
+
+        // Always wait briefly when intents are pending to let more accumulate
+        // By waiting, we allow prefetch workers to create more intents while we're about to process
+        // Progressive delay: more pending = longer wait to accumulate more
+        if pending_count > 0 {
+            let delay = if pending_count >= BULK_ACCUMULATION_THRESHOLD_LARGE {
+                BULK_ACCUMULATION_DELAY_LARGE
+            } else if pending_count >= BULK_ACCUMULATION_THRESHOLD_MEDIUM {
+                BULK_ACCUMULATION_DELAY_MEDIUM
+            } else {
+                BULK_ACCUMULATION_DELAY_MIN
+            };
+
+            debug!(
+                "Bulk mode: {} intents pending, waiting {}ms to allow accumulation",
+                pending_count,
+                delay.as_millis()
+            );
+            sleep(delay).await;
+
+            // Re-check count after delay (more intents may have accumulated)
+            let updated_count = SearchIndexIntent::pending_count(&tether).await?;
+            if updated_count > pending_count {
+                debug!(
+                    "Bulk mode: intents accumulated from {} to {} during delay",
+                    pending_count, updated_count
+                );
+                pending_count = updated_count;
+            }
+        }
+
+        // Use adaptive batch size: fetch as many as available, up to MAX_BATCH_SIZE
+        // This allows bulk loading to use large batches when many intents are available
+        let batch_size = if pending_count >= i64::try_from(MAX_BATCH_SIZE).unwrap_or(i64::MAX) {
+            MAX_BATCH_SIZE
+        } else if pending_count >= i64::try_from(MIN_BATCH_SIZE).unwrap_or(i64::MAX) {
+            usize::try_from(pending_count).unwrap_or(MIN_BATCH_SIZE)
+        } else {
+            MIN_BATCH_SIZE
+        };
+
         // Get a batch of intents
-        let intents = SearchIndexIntent::get_pending_batch(&tether, BATCH_SIZE).await?;
+        let intents = SearchIndexIntent::get_pending_batch(&tether, batch_size).await?;
         if intents.is_empty() {
             return Ok(false);
+        }
+
+        // Log batch information
+        if intents.len() == batch_size {
+            debug!(
+                "Fetched full batch: {} intents ({} pending)",
+                intents.len(),
+                pending_count
+            );
+        } else {
+            debug!(
+                "Fetched partial batch: {} intents ({} pending, requested {})",
+                intents.len(),
+                pending_count,
+                batch_size
+            );
         }
 
         debug!("Processing batch of {} intents", intents.len());
@@ -338,9 +426,10 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
             return Ok(PrepareIndexResult::Skip);
         };
 
-        // Convert HTML to text if appropriate (only for text/html MIME type)
+        // Convert HTML to text if appropriate (only for text/html MIME type).
+        // Use fast strip for indexing (no DOM parse) to keep Android/mobile indexing fast.
         let body_to_index = if is_html {
-            Self::convert_html_to_text(&body)
+            html_to_text_fast(&body)
         } else {
             body
         };
@@ -384,14 +473,112 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
         })
     }
 
+    /// Process a batch-prepared message and return a `PrepareIndexResult`
+    fn process_batch_prepared_message(
+        &self,
+        message_id: LocalMessageId,
+        prepared: BatchPreparedMessage,
+    ) -> Result<PrepareIndexResult, StashError> {
+        // Early checks are now done in SQL query, so these should never trigger
+        // But keep them as safety checks
+        if prepared.has_local_draft {
+            debug!(
+                "Message {:?} is being edited locally, skipping index (will index when sent)",
+                message_id
+            );
+            return Ok(PrepareIndexResult::Skip);
+        }
+
+        let Some(remote_id) = prepared.remote_id else {
+            debug!(
+                "Message {} has no remote ID yet, deferring (will retry in {}s)",
+                message_id, DEFER_DELAY_SECONDS
+            );
+            return Ok(PrepareIndexResult::Defer);
+        };
+
+        // SQL query already filtered for messages with body and no decryption error
+        // So body_raw should always be Some and decryption_error should always be None
+        let Some(bytes) = &prepared.body_raw else {
+            debug!(
+                "Message body not found for {:?}, skipping index",
+                message_id
+            );
+            return Ok(PrepareIndexResult::Skip);
+        };
+
+        // Convert body from raw bytes to String
+        // Do conversion synchronously (like old MessageBody::load()) - UTF-8 conversion is fast enough
+        // The old approach does this synchronously in async context, which works fine for small strings
+        let body = String::from_utf8_lossy(bytes).to_string();
+
+        // Determine if HTML based on mime_type
+        let is_html = prepared
+            .body_mime_type
+            .is_some_and(|mt| mt == MIME_TYPE_HTML);
+
+        // Convert HTML to text if appropriate (only for text/html MIME type)
+        let body_to_index = if is_html {
+            html_to_text_fast(&body)
+        } else {
+            body
+        };
+
+        // Parse message metadata (subject, from, to, cc, bcc) only now that we know message will be indexed
+        // Metadata is required for indexing - skip if not available
+        let metadata = if let Some((subject, sender_str, to_list_str, cc_list_str, bcc_list_str)) =
+            &prepared.metadata_raw
+        {
+            // Use the data provider's parsing method (implemented in mail-common)
+            // Note: This is synchronous (CPU-bound JSON parsing), no await needed
+            self.data_provider
+                .parse_metadata_raw(
+                    subject,
+                    sender_str,
+                    to_list_str.as_deref(),
+                    cc_list_str.as_deref(),
+                    bcc_list_str.as_deref(),
+                )
+                .map_err(|e| StashError::Custom(anyhow::anyhow!("Failed to parse metadata: {e}")))?
+        } else {
+            None
+        };
+
+        let Some(metadata) = metadata else {
+            debug!(
+                "Message metadata not found for {:?}, skipping index",
+                message_id
+            );
+            return Ok(PrepareIndexResult::Skip);
+        };
+
+        // Compute content hash for duplicate detection
+        let content_hash =
+            crate::traits::MessageMetadata::compute_content_hash(&body_to_index, Some(&metadata));
+
+        // Check if content hash matches stored hash (duplicate detection)
+        if let Some(stored_hash) = prepared.stored_content_hash
+            && stored_hash == content_hash
+        {
+            debug!(
+                "Skipping indexing: content hash matches for message {} (content unchanged)",
+                message_id
+            );
+            return Ok(PrepareIndexResult::SkipDuplicate);
+        }
+
+        Ok(PrepareIndexResult::Ready {
+            remote_id,
+            body: body_to_index,
+            metadata,
+            content_hash,
+        })
+    }
+
     /// Process a batch of index intents
     #[allow(clippy::too_many_lines)]
     async fn process_index_batch(&self, intents: Vec<SearchIndexIntent>) -> Result<(), StashError> {
         let batch_start = Instant::now();
-        info!(
-            "Starting batch index: {} messages (this may take a while for large batches)",
-            intents.len()
-        );
 
         // Prepare all documents (get bodies, remote IDs, metadata, etc.)
         let mut messages_to_index: Vec<(
@@ -402,39 +589,91 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
             String, // content_hash
         )> = Vec::new();
         let mut intents_to_defer = Vec::new();
+        let mut intents_to_delete = Vec::new();
 
         let prep_start = Instant::now();
+        #[cfg(feature = "search_index_timing")]
+        let stopwatch = crate::indexing_timing::BatchStopwatch::start();
 
-        for intent in intents {
-            match self
-                .prepare_message_for_indexing(intent.message_id)
-                .await
-                .map_err(|e| anyhow::anyhow!("Failed to prepare message: {}", e))?
-            {
-                PrepareIndexResult::Ready {
-                    remote_id,
-                    body,
-                    metadata,
-                    content_hash,
-                } => {
-                    messages_to_index.push((intent, remote_id, body, metadata, content_hash));
-                }
-                PrepareIndexResult::Defer => {
-                    // Defer instead of marking as failed - prevents queue blocking
-                    // The intent will be retried later when the message might have a remote ID
-                    intents_to_defer.push(intent);
-                }
-                PrepareIndexResult::Skip => {
-                    // Skip without deleting (local draft, missing data, etc.)
-                }
-                PrepareIndexResult::SkipDuplicate => {
-                    // Delete intent since content hasn't changed - no need to re-index
-                    let mut tether = self.mail_stash.connection().await?;
-                    tether
-                        .tx::<_, (), StashError>(async |bond| intent.delete(bond).await)
-                        .await?;
+        // Use batch preparation if available (much more efficient)
+        // Extract message IDs for batch preparation
+        let message_ids: Vec<LocalMessageId> = intents.iter().map(|i| i.message_id).collect();
+
+        let batch_results = self
+            .data_provider
+            .batch_prepare_messages(&message_ids)
+            .await
+            .map_err(|e| StashError::Custom(anyhow::anyhow!("Batch preparation failed: {e}")))?;
+
+        if let Some(results) = batch_results
+            && !results.is_empty()
+            && results.len() == intents.len()
+        {
+            // Use batch-prepared results
+            // Process messages sequentially with yields to match old approach behavior
+            // The old approach yielded between each message's database call, so we yield here too
+            for (intent, prepared) in intents.into_iter().zip(results.into_iter()) {
+                // Yield after each message to allow async runtime to schedule other tasks
+                // This matches the old approach where each message had its own async database call
+                tokio::task::yield_now().await;
+
+                let result = self.process_batch_prepared_message(intent.message_id, prepared)?;
+                match result {
+                    PrepareIndexResult::Ready {
+                        remote_id,
+                        body,
+                        metadata,
+                        content_hash,
+                    } => {
+                        messages_to_index.push((intent, remote_id, body, metadata, content_hash));
+                    }
+                    PrepareIndexResult::Defer => {
+                        intents_to_defer.push(intent);
+                    }
+                    PrepareIndexResult::Skip | PrepareIndexResult::SkipDuplicate => {
+                        // Delete intent so pending_count can reach 0 (historic load) or content unchanged
+                        intents_to_delete.push(intent);
+                    }
                 }
             }
+        } else {
+            // Batch preparation not supported (Ok(None)) or wrong size — fall back to individual
+            for intent in intents {
+                match self
+                    .prepare_message_for_indexing(intent.message_id)
+                    .await
+                    .map_err(|e| anyhow::anyhow!("Failed to prepare message: {e}"))?
+                {
+                    PrepareIndexResult::Ready {
+                        remote_id,
+                        body,
+                        metadata,
+                        content_hash,
+                    } => {
+                        messages_to_index.push((intent, remote_id, body, metadata, content_hash));
+                    }
+                    PrepareIndexResult::Defer => {
+                        intents_to_defer.push(intent);
+                    }
+                    PrepareIndexResult::Skip | PrepareIndexResult::SkipDuplicate => {
+                        intents_to_delete.push(intent);
+                    }
+                }
+            }
+        }
+
+        // Batch delete intents that were skipped or duplicate
+        if !intents_to_delete.is_empty() {
+            let to_delete = std::mem::take(&mut intents_to_delete);
+            let mut tether = self.mail_stash.connection().await?;
+            tether
+                .tx::<_, (), StashError>(async |bond| {
+                    for intent in &to_delete {
+                        intent.delete(bond).await?;
+                    }
+                    Ok(())
+                })
+                .await?;
         }
 
         // Defer intents without remote IDs (don't block the queue)
@@ -450,11 +689,13 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
                 .await?;
         }
 
-        let prep_elapsed = prep_start.elapsed().as_secs_f64();
+        let prep_elapsed = prep_start.elapsed();
+        #[cfg(feature = "search_index_timing")]
+        let stopwatch = stopwatch.record_prep_done();
         info!(
             "   Batch preparation complete: {} messages ready in {:.2}s",
             messages_to_index.len(),
-            prep_elapsed
+            prep_elapsed.as_secs_f64()
         );
 
         if messages_to_index.is_empty() {
@@ -463,7 +704,6 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
 
         // Batch index all messages (bodies are already converted from HTML to text if needed)
         // This is the CPU-intensive part (tokenization, indexing)
-        info!("   Starting CPU-intensive indexing phase (this will max out one CPU core)...");
         let index_start = Instant::now();
         let message_refs: Vec<(&MessageId, &str, &crate::traits::MessageMetadata)> =
             messages_to_index
@@ -476,12 +716,15 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
             .index_message_bodies_batch(&message_refs)
             .await;
 
-        let index_elapsed = index_start.elapsed().as_secs_f64();
+        let index_elapsed = index_start.elapsed();
+        #[cfg(feature = "search_index_timing")]
+        let stopwatch = stopwatch.record_index_done();
         #[allow(clippy::cast_precision_loss)]
-        let rate = messages_to_index.len() as f64 / index_elapsed;
+        let rate = messages_to_index.len() as f64 / index_elapsed.as_secs_f64();
         info!(
             "   Indexing phase complete in {:.2}s ({:.1} messages/s)",
-            index_elapsed, rate
+            index_elapsed.as_secs_f64(),
+            rate
         );
 
         // Handle results - delete successful intents, mark failed ones
@@ -492,6 +735,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
                     "Batch index succeeded for {} messages",
                     messages_to_index.len()
                 );
+                let cleanup_start = Instant::now();
                 let mut tether = self.mail_stash.connection().await?;
                 tether
                     .tx::<_, (), StashError>(async |bond| {
@@ -510,13 +754,23 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
                         Ok(())
                     })
                     .await?;
-
+                let cleanup_elapsed = cleanup_start.elapsed();
                 let batch_elapsed = batch_start.elapsed();
+                let batch_size = messages_to_index.len();
+
+                #[cfg(feature = "search_index_timing")]
+                stopwatch
+                    .record_cleanup_done()
+                    .record_batch_complete(batch_size);
+
                 #[allow(clippy::cast_precision_loss)]
                 let rate = messages_to_index.len() as f64 / batch_elapsed.as_secs_f64();
-                info!(
-                    "Completed batch index: {} messages in {:.2}s ({:.1} messages/s)",
-                    messages_to_index.len(),
+                debug!(
+                    "Batch complete: size={} | prep={:.3}s | index={:.3}s | cleanup={:.3}s | total={:.3}s | {:.1} msg/s",
+                    batch_size,
+                    prep_elapsed.as_secs_f64(),
+                    index_elapsed.as_secs_f64(),
+                    cleanup_elapsed.as_secs_f64(),
                     batch_elapsed.as_secs_f64(),
                     rate
                 );
@@ -561,7 +815,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
         match self
             .prepare_message_for_indexing(message_id)
             .await
-            .map_err(|e| WorkerError::Other(anyhow::anyhow!("Failed to prepare message: {}", e)))?
+            .map_err(|e| WorkerError::Other(anyhow::anyhow!("Failed to prepare message: {e}")))?
         {
             PrepareIndexResult::Ready {
                 remote_id,
@@ -573,7 +827,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
                     .index_message_body(&remote_id, &body, &metadata)
                     .await
                     .map_err(|e| {
-                        WorkerError::Other(anyhow::anyhow!("Failed to index message: {}", e))
+                        WorkerError::Other(anyhow::anyhow!("Failed to index message: {e}"))
                     })?;
 
                 // Save content hash to separate table after successful indexing
@@ -593,7 +847,19 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
                 Err(WorkerError::MissingRemoteId)
             }
             PrepareIndexResult::Skip => {
-                // Skip without deleting (local draft, missing data, etc.)
+                let mut tether = self.mail_stash.connection().await?;
+                tether
+                    .tx::<_, (), StashError>(async |bond| {
+                        SearchIndexIntent {
+                            message_id,
+                            operation: SearchOperation::Index,
+                            retry_count: 0,
+                            created_at: 0,
+                        }
+                        .delete(bond)
+                        .await
+                    })
+                    .await?;
                 Ok(())
             }
             PrepareIndexResult::SkipDuplicate => {
@@ -612,36 +878,6 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
                     })
                     .await?;
                 Ok(())
-            }
-        }
-    }
-
-    /// Convert HTML content to plain text for indexing
-    ///
-    /// This prevents HTML tags and attributes from appearing in search results.
-    /// Only called for messages with `text/html` MIME type.
-    ///
-    /// Uses the same transformation pipeline as mail-common to ensure consistency:
-    /// - Transforms Proton-specific schemes
-    /// - Adds noreferrer attributes
-    /// - Strips UTM parameters
-    /// - Converts to plain text without link/image decorations
-    fn convert_html_to_text(html: &str) -> String {
-        let mut transformer = Transformer::new(html);
-        transformer.transform_from_proton_schemes();
-        transformer.add_noreferrer();
-        transformer.strip_utm();
-        transformer.strip_whitelist(StripStyleSheets::No);
-
-        match transformer.to_plain_text(Html2TextOptions {
-            decorate_links: false,
-            decorate_images: false,
-        }) {
-            Ok(text_body) => text_body,
-            Err(e) => {
-                warn!("Failed to convert HTML to text: {}, using original HTML", e);
-                // Fallback to original HTML if conversion fails
-                html.to_string()
             }
         }
     }

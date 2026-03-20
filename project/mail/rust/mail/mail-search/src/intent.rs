@@ -136,7 +136,7 @@ impl SearchIndexIntent {
     ) -> Result<(), StashError> {
         // Build a batch INSERT statement with multiple VALUES clauses
         // SQLite supports up to 999 parameters, so we need to batch if needed
-        const BATCH_SIZE: usize = 300; // 300 * 3 params = 900 params (safe limit)
+        const BATCH_SIZE: usize = 249; // 249 * 4 params = 996 (SQLite limit 999)
 
         if message_ids.is_empty() {
             return Ok(());
@@ -146,7 +146,15 @@ impl SearchIndexIntent {
 
         for chunk in message_ids.chunks(BATCH_SIZE) {
             let placeholders: Vec<String> = (0..chunk.len())
-                .map(|i| format!("(?{}, ?{}, ?{})", i * 3 + 1, i * 3 + 2, i * 3 + 3))
+                .map(|i| {
+                    format!(
+                        "(?{}, ?{}, ?{}, ?{})",
+                        i * 4 + 1,
+                        i * 4 + 2,
+                        i * 4 + 3,
+                        i * 4 + 4
+                    )
+                })
                 .collect();
 
             let query = format!(
@@ -155,12 +163,13 @@ impl SearchIndexIntent {
                 placeholders.join(", ")
             );
 
-            // Build parameters: for each message_id, add (message_id, operation, timestamp)
+            // Build parameters: for each message_id, add (message_id, operation, retry_count=0, timestamp)
             // Need to box values to satisfy ToSql + Send trait bound
             let mut params: Vec<Box<dyn ToSql + Send>> = Vec::new();
             for message_id in chunk {
                 params.push(Box::new(*message_id));
                 params.push(Box::new(operation));
+                params.push(Box::new(0_i32)); // retry_count, default to 0
                 params.push(Box::new(timestamp));
             }
 

@@ -54,7 +54,7 @@ members = [
 
 [workspace.package]
 edition = "2024"
-rust-version = "1.88.0"
+rust-version = "1.93.0"
 license = "AGPL-3.0-only"
 #
 
@@ -77,6 +77,7 @@ non-empty-string = { version = "0.2.5", features = ["serde"] }
 derive_more = { version = "2.0", features = ["full"] }
 ext-php-rs = "0.15.3"
 fancy-regex = "0.14.0"
+flate2 = "1.1"
 flume = "0.11"
 futures = "0.3.31"
 function_name = "0.3.0"

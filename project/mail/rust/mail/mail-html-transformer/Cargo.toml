@@ -42,3 +42,7 @@ test-case = { workspace = true }
 [[bench]]
 name = "parsing_html"
 harness = false
+
+[[bench]]
+name = "html_extract_compare"
+harness = false

@@ -68,6 +68,67 @@ pub trait MessageDataProvider: Send + Sync {
         &self,
         message_id: LocalMessageId,
     ) -> Result<Option<MessageMetadata>, Self::Error>;
+
+    /// Batch prepare multiple messages for indexing (optional optimization)
+    ///
+    /// Returns `Ok(Some(results))` when batch preparation is supported and succeeded.
+    /// Returns `Ok(None)` when batch preparation is **not supported** — callers must fall back
+    /// to individual preparation. Returns `Err` on failure.
+    ///
+    /// Implementations that support batch preparation must override this and return `Some`.
+    /// The default returns `Ok(None)` to signal unsupported; callers that ignore this will
+    /// receive `None` and must handle it explicitly.
+    async fn batch_prepare_messages(
+        &self,
+        _message_ids: &[LocalMessageId],
+    ) -> Result<Option<Vec<BatchPreparedMessage>>, Self::Error> {
+        Ok(None)
+    }
+
+    /// Parse raw metadata strings into `MessageMetadata`
+    fn parse_metadata_raw(
+        &self,
+        _subject: &str,
+        _sender_json: &str,
+        _to_list_json: Option<&str>,
+        _cc_list_json: Option<&str>,
+        _bcc_list_json: Option<&str>,
+    ) -> Result<Option<MessageMetadata>, Self::Error> {
+        Ok(None)
+    }
+}
+
+/// MIME type values for `BatchPreparedMessage::body_mime_type`.
+/// Contract between batch preparation (e.g. mail-common) and the worker.
+pub const MIME_TYPE_PLAIN: i32 = 0;
+pub const MIME_TYPE_HTML: i32 = 1;
+
+/// Null byte separator between metadata fields in content hash. Prevents collisions
+/// from concatenation (e.g. "a" + "b" vs "ab").
+const METADATA_HASH_SEPARATOR: [u8; 1] = [0_u8];
+
+/// Raw metadata strings from batch preparation (subject, `sender_json`, `to_list_json`, `cc_list_json`, `bcc_list_json`)
+pub type RawMetadataStrings = (
+    String,
+    String,
+    Option<String>,
+    Option<String>,
+    Option<String>,
+);
+
+/// Result of batch preparing messages for indexing
+#[derive(Debug, Clone)]
+pub struct BatchPreparedMessage {
+    pub message_id: LocalMessageId,
+    pub remote_id: Option<MessageId>,
+    // Raw body bytes - convert to String only after early checks pass (like old approach)
+    pub body_raw: Option<Vec<u8>>,
+    pub body_decryption_error: Option<String>,
+    pub body_mime_type: Option<i32>, // MIME_TYPE_HTML = 1, MIME_TYPE_PLAIN = 0
+    // Raw metadata strings - parse only when needed
+    pub metadata_raw: Option<RawMetadataStrings>,
+    pub has_local_draft: bool,
+    pub stored_content_hash: Option<String>,
 }
 
 /// Message metadata for search indexing
@@ -90,19 +151,28 @@ impl MessageMetadata {
     ///
     /// This hash represents the searchable content of a message (body + metadata).
     /// If the hash matches a previously indexed message, we can skip re-indexing.
+    ///
+    /// Uses SHA256 directly on the raw bytes. Deterministic across toolchain versions
+    /// (unlike `DefaultHasher`), which is required since hashes are persisted to `SQLite`.
     #[must_use]
     pub fn compute_content_hash(body: &str, metadata: Option<&Self>) -> String {
         use sha2::{Digest, Sha256};
-        use std::hash::{Hash, Hasher};
 
         let mut sha256 = Sha256::new();
         sha256.update(body.as_bytes());
 
         if let Some(meta) = metadata {
-            let mut hasher = std::hash::DefaultHasher::new();
-            meta.hash(&mut hasher);
-            let hash_value = hasher.finish();
-            sha256.update(hash_value.to_le_bytes());
+            // Feed metadata fields directly into SHA256. Separators prevent collisions
+            // from concatenation (e.g. "a" + "b" vs "ab").
+            sha256.update(meta.subject.as_bytes());
+            sha256.update(METADATA_HASH_SEPARATOR);
+            sha256.update(meta.from.as_bytes());
+            sha256.update(METADATA_HASH_SEPARATOR);
+            sha256.update(meta.to.as_bytes());
+            sha256.update(METADATA_HASH_SEPARATOR);
+            sha256.update(meta.cc.as_bytes());
+            sha256.update(METADATA_HASH_SEPARATOR);
+            sha256.update(meta.bcc.as_bytes());
         }
 
         hex::encode(sha256.finalize())

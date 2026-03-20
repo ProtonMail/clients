@@ -27,8 +27,12 @@ sql = [
 proton_mail_error_log = []
 events-v6 = ["mail-core-common/events-v6"]
 # Foundation Search: Local body text search indexing
-# When enabled, message bodies are indexed locally for offline full-text search.
-foundation_search = ["dep:proton-foundation-search", "dep:mail-search"]
+# When enabled, on mail-common it turns on the optional mail-search dependency.
+foundation_search = ["dep:mail-search"]
+
+# Search indexing timing instrumentation for performance analysis
+# When enabled, measures prep, indexing, and cleanup times during foundation search indexing
+search_index_timing = ["foundation_search", "mail-search/search_index_timing"]
 
 [dependencies]
 anyhow = { workspace = true }
@@ -65,7 +69,6 @@ mail-telemetry = { workspace = true }
 proton-crypto-account = { workspace = true }
 mail-crypto-inbox = { workspace = true }
 core-event-loop = { workspace = true }
-proton-foundation-search = { workspace = true, optional = true }
 mail-search = { workspace = true, optional = true }
 mail-html-transformer = { workspace = true }
 mail-sqlite3 = { workspace = true }

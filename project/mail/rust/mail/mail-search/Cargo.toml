@@ -5,6 +5,10 @@ edition.workspace = true
 rust-version.workspace = true
 description = "Self-contained search engine for Proton Mail local search"
 
+[features]
+# Enable timing instrumentation for indexing operations
+search_index_timing = []
+
 [dependencies]
 # Core dependencies (always needed)
 anyhow = { workspace = true }
@@ -27,18 +31,21 @@ mail-sqlite3 = { workspace = true }
 # Message ID types
 mail-api = { workspace = true }
 
-# HTML to text conversion (for text/html messages)
-mail-html-transformer = { workspace = true }
-
 # Content hashing for duplicate detection
 sha2 = { workspace = true }
 hex = { workspace = true }
 
+flate2 = { workspace = true }
+
 # Foundation Search engine
 proton-foundation-search = { workspace = true }
+
+# HTML-to-text for body indexing (lightweight stripper, no DOM)
+mail-html-transformer = { path = "../mail-html-transformer" }
 
 [lints]
 workspace = true
 
 [dev-dependencies]
+test-case = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }

@@ -3,13 +3,43 @@
 //! This module provides a `BlobStorage` implementation that uses Stash
 //! (`SQLite`) for persisting search index blobs.
 
+use std::io::{Read, Write};
+
 use async_trait::async_trait;
+use flate2::Compression;
+use flate2::read::GzDecoder;
+use flate2::write::GzEncoder;
 use mail_stash::UserDb;
 use mail_stash::stash::Stash;
 use tracing::debug;
 
 use crate::error::SearchError;
 use crate::traits::BlobStorage;
+
+const GZIP_MAGIC: [u8; 2] = [0x1f, 0x8b];
+
+fn compress_gzip(data: &[u8]) -> Result<Vec<u8>, SearchError> {
+    let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
+    encoder
+        .write_all(data)
+        .map_err(|e| SearchError::BlobStorage(format!("Compress failed: {e}")))?;
+    encoder
+        .finish()
+        .map_err(|e| SearchError::BlobStorage(format!("Compress finish failed: {e}")))
+}
+
+fn decompress_gzip(data: &[u8]) -> Result<Vec<u8>, SearchError> {
+    let mut decoder = GzDecoder::new(data);
+    let mut out = Vec::new();
+    decoder
+        .read_to_end(&mut out)
+        .map_err(|e| SearchError::BlobStorage(format!("Decompress failed: {e}")))?;
+    Ok(out)
+}
+
+fn is_gzip(data: &[u8]) -> bool {
+    data.len() >= 2 && data[0] == GZIP_MAGIC[0] && data[1] == GZIP_MAGIC[1]
+}
 
 /// Stash-based implementation of `BlobStorage`
 ///
@@ -58,10 +88,12 @@ impl StashBlobStorage {
         tether
             .tx::<_, (), SE>(async |bond| {
                 for (name, data) in blobs {
+                    let stored = compress_gzip(&data)
+                        .map_err(|e| mail_stash::stash::StashError::Custom(anyhow::anyhow!("{e}")))?;
                     bond.execute(
                         "INSERT OR REPLACE INTO search_index_blobs (blob_name, blob_data, updated_at)
                          VALUES (?1, ?2, ?3)",
-                        params![name, data, timestamp],
+                        params![name, stored, timestamp],
                     )
                     .await?;
                 }
@@ -85,7 +117,7 @@ impl BlobStorage for StashBlobStorage {
             .await
             .map_err(|e| SearchError::BlobStorage(format!("Failed to get connection: {e}")))?;
 
-        let blob = tether
+        let raw = tether
             .sync_query(move |conn| {
                 use mail_stash::rusqlite::OptionalExtension;
                 conn.query_row(
@@ -105,6 +137,11 @@ impl BlobStorage for StashBlobStorage {
             .await
             .map_err(|e| SearchError::BlobStorage(format!("Query failed: {e}")))?;
 
+        let blob = match raw {
+            Some(data) if is_gzip(&data) => Some(decompress_gzip(&data)?),
+            other => other,
+        };
+
         debug!(
             "Loaded blob '{}' ({} bytes)",
             name,
@@ -119,7 +156,8 @@ impl BlobStorage for StashBlobStorage {
 
         let data_len = data.len();
         let name_owned = name.to_owned();
-        let data_owned = data.to_vec();
+        let data_owned = compress_gzip(data)?;
+        let compressed_len = data_owned.len();
         let timestamp = chrono::Utc::now().timestamp();
 
         let mut tether = self
@@ -141,7 +179,10 @@ impl BlobStorage for StashBlobStorage {
             .await
             .map_err(|e| SearchError::BlobStorage(format!("Transaction failed: {e}")))?;
 
-        debug!("Saved blob '{}' ({} bytes)", name, data_len);
+        debug!(
+            "Saved blob '{}' ({} bytes -> {} compressed)",
+            name, data_len, compressed_len
+        );
         Ok(())
     }
 

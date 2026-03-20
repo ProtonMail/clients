@@ -51,11 +51,14 @@ pub mod traits;
 mod watcher;
 mod worker;
 
+#[cfg(feature = "search_index_timing")]
+pub mod indexing_timing;
+
 // Core types
 pub use engine::{CleanupResult, IndexResult, SearchStats};
 pub use error::SearchError;
 pub use intent::{LocalMessageId, SearchIndexIntent, SearchOperation};
-pub use traits::{MessageDataProvider, MessageMetadata};
+pub use traits::{MIME_TYPE_HTML, MIME_TYPE_PLAIN, MessageDataProvider, MessageMetadata};
 
 pub use foundation::FoundationSearchEngine;
 

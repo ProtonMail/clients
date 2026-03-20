@@ -6,6 +6,7 @@
 use async_trait::async_trait;
 use mail_api::services::proton::common::MessageId;
 use mail_core_common::models::{ModelExtension, ModelIdExtension};
+use mail_crypto_inbox::mail_crypto_inbox_mime::ProcessedBodyType;
 use mail_crypto_inbox::message::DecryptedBody;
 use mail_search::MessageDataProvider;
 use mail_stash::UserDb;
@@ -50,19 +51,33 @@ impl MessageDataProvider for StashMessageDataProvider {
         };
 
         // Process the body to extract text content (for MIME messages, this excludes attachments)
-        let processed_body = match raw_body.into_raw_decrypted_body() {
+        let (processed_body, is_html) = match raw_body.into_raw_decrypted_body() {
             Ok(raw_decrypted_body) => {
                 match raw_decrypted_body.processed_body() {
-                    Ok(decrypted_body) => {
-                        // Extract the string directly from the processed body without unnecessary copy
-                        match decrypted_body {
-                            DecryptedBody::Plain(text) => text,
-                            DecryptedBody::Mime(mime) => {
-                                // For MIME, extract text content directly
-                                mime.body
-                            }
+                    Ok(decrypted_body) => match decrypted_body {
+                        DecryptedBody::Plain(text) => {
+                            // For non-MIME messages, MessageBodyMetadata.mime_type is the actual
+                            // content type when present. When missing, treat as plain.
+                            let metadata =
+                                MessageBodyMetadata::for_message(local_id, &tether).await?;
+                            let is_html = metadata
+                                .map(|m| {
+                                    MessageMimeType::from_api(m.mime_type, || {
+                                        MessageMimeType::TextPlain
+                                    })
+                                })
+                                .map(|mime_type| matches!(mime_type, MessageMimeType::TextHtml))
+                                .unwrap_or(false);
+                            (text, is_html)
                         }
-                    }
+                        DecryptedBody::Mime(mime) => {
+                            // For MIME-encrypted messages, MessageBodyMetadata.mime_type
+                            // is "multipart/mixed" — not the actual body content type.
+                            // Use the decoded body's own type instead.
+                            let is_html = matches!(mime.mime_body_type, ProcessedBodyType::Html);
+                            (mime.body, is_html)
+                        }
+                    },
                     Err(e) => {
                         tracing::warn!(
                             "Failed to process body for message {}: {}, skipping index",
@@ -73,20 +88,12 @@ impl MessageDataProvider for StashMessageDataProvider {
                     }
                 }
             }
-            Err(_) => {
-                // Decryption error case - handled here after into_raw_decrypted_body() call
+            Err(e) => {
+                tracing::debug!("Decryption failed for message {}: {}", local_id, e);
                 return Ok(None);
             }
         };
 
-        // Get MIME type from metadata
-        let metadata = MessageBodyMetadata::for_message(local_id, &tether).await?;
-        let mime_type = metadata
-            .map(|m| MessageMimeType::from_api(m.mime_type, || MessageMimeType::TextPlain))
-            .unwrap_or(MessageMimeType::TextPlain);
-
-        // Return body with is_html flag (true for TextHtml, false for TextPlain)
-        let is_html = matches!(mime_type, MessageMimeType::TextHtml);
         Ok(Some((processed_body, is_html)))
     }
 

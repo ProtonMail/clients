@@ -48,6 +48,9 @@ use utm::StrippedUTM;
 
 // NOTE: each new transformation pass should be its own module.
 pub mod css_parser;
+pub mod html_strip;
+
+pub use html_strip::html_to_text_fast;
 pub mod ios;
 pub mod message_detector;
 pub mod proton_schemes;

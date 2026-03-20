@@ -1,5 +1,5 @@
-use crate::client::{Client, Fingerprint};
 use crate::auth::{scope, Auth};
+use crate::client::{Client, Fingerprint};
 use crate::flow::{AuthScopeErr, AuthStateErr, FlowErr, SrpServerProofErr, UserIdErr};
 use crate::http::{HttpReqExt, POST};
 use crate::rest::auth;
@@ -91,7 +91,7 @@ impl LoginFlow {
             client,
             Self::Failed
         );
-        
+
         let res = return_variant_on_error!(client.send(req).await, client, Self::Failed);
         let res = return_variant_on_error!(res.ok(), client, Self::Failed);
         let res: auth::v4::info::PostRes =
@@ -102,7 +102,7 @@ impl LoginFlow {
 
         info!(session = %res.session, "sending auth request");
 
-        // Here we choose fingerprints. If the deprecated api is used we choose the fingerprint passed with LoginExtraInfo (deprecated). 
+        // Here we choose fingerprints. If the deprecated api is used we choose the fingerprint passed with LoginExtraInfo (deprecated).
         // Else we choose the fingerprint passed in with the new api.
         let provider_fingerprint = match client.provider {
             Some(ref provider) => provider.fingerprint().await,
@@ -111,17 +111,22 @@ impl LoginFlow {
 
         let fingerprint = match extra_info {
             Some(info) => match info.fingerprint {
-                Some(fingerprint) => { 
+                Some(fingerprint) => {
                     warn!("Warning: with_fingerprint is deprecated. Pass a provider to the mail_muon client using with_info_provider. Muon will use this provider to ask for the fingerprint when needed.");
-                    Some(fingerprint.to_owned()) 
-                },
-                None => provider_fingerprint
+                    Some(fingerprint.to_owned())
+                }
+                None => provider_fingerprint,
             },
-            None => provider_fingerprint
+            None => provider_fingerprint,
         };
 
         let req = return_variant_on_error!(
-            POST!("/auth/v4").body_json(auth_post_req(username, &res.session, &proofs, fingerprint)),
+            POST!("/auth/v4").body_json(auth_post_req(
+                username,
+                &res.session,
+                &proofs,
+                fingerprint
+            )),
             client,
             Self::Failed
         );
@@ -180,7 +185,7 @@ impl LoginFlow {
         }
 
         info!(uid = ?auth.uid(), "checking for 2FA");
-        if auth.has_scope(scope::TWO_FACTOR) {
+        if !auth.has_scope(scope::FULL) {
             info!(%auth, "auth requires 2FA, continuing flow");
             stores.set_auth(auth).await;
 
@@ -249,7 +254,6 @@ pub struct LoginTwoFactorFlow {
     client: Client,
     totp: bool,
     fido: Option<fido2::Response>,
-
 }
 
 impl LoginTwoFactorFlow {
@@ -258,9 +262,7 @@ impl LoginTwoFactorFlow {
     }
 
     pub(crate) async fn from_totp(client: Client, code: impl AsRef<str>) -> Result<Client> {
-        LoginTwoFactorFlow::new(client, true, None)
-            .totp(code)
-            .await
+        LoginTwoFactorFlow::new(client, true, None).totp(code).await
     }
 
     /// Creates a login flow from the 2FA stage using a FIDO2 device.
@@ -287,7 +289,6 @@ impl LoginTwoFactorFlow {
         self.fido.as_ref()
     }
 
-    
     /// Complete the two-factor authentication flow by providing a TOTP code.
     ///
     /// # Errors
@@ -297,7 +298,11 @@ impl LoginTwoFactorFlow {
         self.totp_inner(code.as_ref()).await
     }
 
-    async fn send_2fa_request(client: Client, request_body: auth::v4::tfa::Post, log_message: &str) -> Result<Client> {
+    async fn send_2fa_request(
+        client: Client,
+        request_body: auth::v4::tfa::Post,
+        log_message: &str,
+    ) -> Result<Client> {
         info!("{}", log_message);
         let req = POST!("/auth/v4/2fa").body_json(request_body)?;
         let res = req.send_with(&client).await?;
@@ -323,7 +328,7 @@ impl LoginTwoFactorFlow {
         let Self { client, .. } = self;
         let request_body = auth_tfa_post_totp_req(code);
         let log_message = format!("sending TOTP request with code: {}", code);
-        
+
         Self::send_2fa_request(client, request_body, &log_message).await
     }
 }
@@ -351,14 +356,14 @@ fn auth_post_req(
     username: &str,
     session: &str,
     proofs: &SRPProofB64,
-    fingerprint: Option<Fingerprint>
+    fingerprint: Option<Fingerprint>,
 ) -> auth::v4::Post {
     auth::v4::Post {
         username: username.to_owned(),
         client_ephemeral: proofs.client_ephemeral.clone(),
         client_proof: proofs.client_proof.clone(),
         session: session.to_owned(),
-        fingerprint: fingerprint.map(|f| { f.0 }).to_owned(),
+        fingerprint: fingerprint.map(|f| f.0).to_owned(),
     }
 }
 

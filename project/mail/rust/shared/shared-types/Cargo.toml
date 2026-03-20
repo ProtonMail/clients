@@ -11,6 +11,8 @@ itertools = { workspace = true }
 jiff = { workspace = true }
 chrono = { workspace = true }
 mail-action-queue = { workspace = true }
+mail-api-event-types = { workspace = true }
 mail-proton-ids = { workspace = true }
 mail-stash = { workspace = true }
 serde = { workspace = true }
+tracing = { workspace = true }

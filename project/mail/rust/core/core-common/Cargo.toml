@@ -24,6 +24,7 @@ include_dir = { workspace = true }
 indexmap = { workspace = true }
 parking_lot = { workspace = true }
 contacts-api = { workspace = true }
+mail-labels-common = { workspace = true }
 mail-shared-types = { workspace = true }
 mail-api-labels = { workspace = true }
 mail-core-api = { workspace = true, features = ["sql"] }
@@ -89,5 +90,6 @@ test-utils = [
   "dep:tempfile",
   "dep:rand",
   "mail-core-api/mocks",
+  "mail-labels-common/test-utils",
 ]
 events-v6 = []

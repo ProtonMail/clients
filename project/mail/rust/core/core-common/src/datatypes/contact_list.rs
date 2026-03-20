@@ -68,7 +68,7 @@ impl GroupedContacts {
         contacts.sort_by_key(|c| c.name.unicode_words().collect::<String>());
         for contact in &contacts {
             for email in &contact.contact_emails {
-                for id in &email.label_ids.0 {
+                for id in email.label_ids.iter() {
                     if let Some((_, emails)) = contact_group_items.get_mut(id) {
                         emails.push(email.clone());
                     }

@@ -69,15 +69,7 @@ declare_proton_id! {
 declare_proton_id! {
     pub SessionId
 }
-declare_proton_id! {
-    pub ContactId
-}
-declare_proton_id! {
-    pub ContactEmailId
-}
-declare_proton_id! {
-    pub ContactUID
-}
+pub use contacts_api::{ContactEmailId, ContactId, ContactUID};
 declare_proton_id! {
     pub SaltId
 }

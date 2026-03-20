@@ -20,7 +20,6 @@
 //! used by both requests and responses.
 //!
 
-use crate::MAX_PAGE_ELEMENT_COUNT;
 use crate::services::proton::prelude::*;
 use mail_api_utils::PaginateOptions;
 use serde::Serialize;
@@ -42,78 +41,7 @@ pub struct GetCaptchaOptions {
     pub token: String,
 }
 
-/// Parameters for getting emails for contacts.
-#[derive(Clone, Debug, Serialize, SmartDefault)]
-#[serde(rename_all = "PascalCase")]
-pub struct GetContactsEmailsOptions {
-    /// Email address to filter on
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub email: Option<PrivateEmail>,
-
-    /// Label ID to filter on.
-    #[serde(rename = "LabelID")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub label_id: Option<LabelId>,
-
-    /// Page index, i.e. the page in the resultset.
-    pub page: u64,
-
-    /// Number of records per page.
-    #[default(MAX_PAGE_ELEMENT_COUNT)]
-    pub page_size: u64,
-}
-impl PaginateOptions for GetContactsEmailsOptions {
-    fn from_zero(page_size: u64) -> Self {
-        Self {
-            page: 0,
-            page_size,
-            ..Default::default()
-        }
-    }
-
-    fn with_page(self, page: u64) -> Self {
-        Self { page, ..self }
-    }
-
-    fn size(&self) -> u64 {
-        self.page_size
-    }
-}
-
-/// Parameters for getting contacts.
-#[derive(Clone, Debug, Serialize, SmartDefault)]
-#[serde(rename_all = "PascalCase")]
-pub struct GetContactsOptions {
-    /// Label ID to filter on.
-    #[serde(rename = "LabelID")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub label_id: Option<LabelId>,
-
-    /// Page index, i.e. the page in the resultset.
-    pub page: u64,
-
-    /// Number of records per page.
-    #[default(MAX_PAGE_ELEMENT_COUNT)]
-    pub page_size: u64,
-}
-
-impl PaginateOptions for GetContactsOptions {
-    fn from_zero(page_size: u64) -> Self {
-        Self {
-            page: 0,
-            page_size,
-            ..Default::default()
-        }
-    }
-
-    fn with_page(self, page: u64) -> Self {
-        Self { page, ..self }
-    }
-
-    fn size(&self) -> u64 {
-        self.page_size
-    }
-}
+pub use contacts_api::{GetContactsEmailsOptions, GetContactsOptions, PutDeleteContacts};
 
 /// Parameters for getting an event.
 #[serde_as]
@@ -193,14 +121,6 @@ pub struct GetImagesLogoOptions {
 
     /// The size of the logo to be returned.
     pub size: Option<u32>,
-}
-
-#[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize, SmartDefault)]
-#[serde(rename_all = "PascalCase")]
-pub struct PutDeleteContacts {
-    #[serde(rename = "IDs")]
-    /// The list of contact IDs to delete.
-    pub ids: Vec<ContactId>,
 }
 
 pub use mail_api_labels::{

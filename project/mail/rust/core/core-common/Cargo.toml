@@ -23,6 +23,7 @@ ical = { workspace = true }
 include_dir = { workspace = true }
 indexmap = { workspace = true }
 parking_lot = { workspace = true }
+contacts-api = { workspace = true }
 mail-api-labels = { workspace = true }
 mail-core-api = { workspace = true, features = ["sql"] }
 mail-api-utils = { workspace = true }

@@ -38,7 +38,6 @@ use serde_with::{BoolFromInt, serde_as};
 #[cfg(feature = "mocks")]
 use serde::Serialize;
 
-use crate::services::proton::common::ApiErrorInfo;
 use crate::services::proton::prelude::*;
 
 /// The response code indicating the status of the request.
@@ -64,63 +63,11 @@ pub struct GetAddressResponse {
     pub address: Address,
 }
 
-/// TODO: Document this struct.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct GetContactResponse {
-    /// TODO: Document this field.
-    pub contact: ContactFull,
-}
-
-/// TODO: Document this struct.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct GetContactsEmailsResponse {
-    /// TODO: Document this field.
-    pub contact_emails: Vec<ContactEmail>,
-
-    /// TODO: Document this field.
-    pub total: u64,
-}
-impl PaginateResponse<ContactEmail> for GetContactsEmailsResponse {
-    fn total(&self) -> u64 {
-        self.total
-    }
-
-    fn items(self) -> Vec<ContactEmail> {
-        self.contact_emails
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct GetContactsResponse {
-    pub contacts: Vec<ContactBasic>,
-
-    pub total: u64,
-}
-impl PaginateResponse<ContactBasic> for GetContactsResponse {
-    fn total(&self) -> u64 {
-        self.total
-    }
-
-    fn items(self) -> Vec<ContactBasic> {
-        self.contacts
-    }
-}
-
-/// TODO: Document this struct.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct GetEventsLatestResponse {
-    /// TODO: Document this field.
-    #[serde(rename = "EventID")]
-    pub event_id: EventId,
-}
+pub use contacts_api::{
+    GetContactResponse, GetContactsEmailsResponse, GetContactsResponse, PutDeleteContactResponse,
+    PutDeleteContactsResponse,
+};
+pub use mail_api_event_types::GetEventsLatestResponse;
 
 /// Available public keys.
 #[serde_as]
@@ -181,26 +128,6 @@ pub struct GetSettingsResponse {
 pub struct GetUsersResponse {
     /// TODO: Document this field.
     pub user: User,
-}
-
-/// The response containing information about deletion of the contacts
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct PutDeleteContactsResponse {
-    /// List of responses.
-    pub responses: Vec<PutDeleteContactResponse>,
-}
-
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct PutDeleteContactResponse {
-    /// Remote ID of the contact.
-    #[serde(rename = "ID")]
-    pub id: ContactId,
-    /// Response data.
-    pub response: ApiErrorInfo,
 }
 
 pub use mail_api_labels::{

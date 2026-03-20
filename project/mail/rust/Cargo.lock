@@ -1118,6 +1118,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7c74b8349d32d297c9134b8c88677813a227df8f779daa29bfc29c183fe3dca6"
 
 [[package]]
+name = "contacts-api"
+version = "0.1.0"
+dependencies = [
+ "mail-api-event-types",
+ "mail-api-labels",
+ "mail-api-shared",
+ "mail-api-utils",
+ "mail-muon",
+ "mail-proton-ids",
+ "mail-stash",
+ "proton-crypto-account",
+ "serde",
+ "serde_repr",
+ "serde_with",
+ "smart-default",
+]
+
+[[package]]
 name = "convert_case"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4090,6 +4108,7 @@ dependencies = [
  "bitflags 2.9.4",
  "bytes",
  "chrono",
+ "contacts-api",
  "cookie",
  "core-feature-flags",
  "derive_more 2.0.1",
@@ -4132,6 +4151,7 @@ dependencies = [
  "bitflags 2.9.4",
  "bytes",
  "chrono",
+ "contacts-api",
  "core-event-loop",
  "derive_more 2.0.1",
  "email_address",

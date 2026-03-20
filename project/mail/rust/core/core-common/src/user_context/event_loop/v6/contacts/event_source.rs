@@ -1,6 +1,7 @@
 use crate::event_loop::event_subscriber::CoreEventSubscriberError;
 use crate::event_loop::v6::CoreEventSourceV6;
 use crate::models::{Contact, Label};
+use contacts_api::ContactApi;
 use core_event_loop::v6::{EventSource, EventSourceDependencyList};
 use futures::StreamExt;
 use futures::future::BoxFuture;
@@ -9,7 +10,7 @@ use itertools::Itertools;
 use mail_api_labels::LabelApi;
 use mail_core_api::consts::General;
 use mail_core_api::service::ApiServiceError;
-use mail_core_api::services::proton::{Action, ContactId, ContactRootEventV6, LabelId, ProtonCore};
+use mail_core_api::services::proton::{Action, ContactId, ContactRootEventV6, LabelId};
 use mail_core_api::session::Session;
 use std::collections::HashMap;
 use tracing::{debug, error};

@@ -8,6 +8,7 @@ categories = ["api-bindings"]
 license.workspace = true
 
 [dependencies]
+contacts-api = { workspace = true }
 core-feature-flags = { workspace = true }
 mail-api-event-types = { workspace = true }
 mail-api-labels = { workspace = true }
@@ -48,11 +49,13 @@ mail-core-api = { path = ".", features = ["mocks"] }
 default = []
 sql = [
   "dep:mail-stash",
+  "contacts-api/sql",
   "mail-proton-ids/sql",
   "mail-api-event-types/sql",
   "mail-api-labels/sql",
 ]
 mocks = [
+  "contacts-api/mocks",
   "core-feature-flags/mocks",
   "mail-api-shared/mocks",
   "mail-api-event-types/mocks",

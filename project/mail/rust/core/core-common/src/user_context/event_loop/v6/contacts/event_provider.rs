@@ -4,8 +4,8 @@ use crate::{
     services::event_loop_service::EventManagerContext,
 };
 use async_trait::async_trait;
+use contacts_api::ContactApi;
 use core_event_loop::{EventProvider, EventProviderError, EventProviderResult, RawEvent};
-use mail_core_api::services::proton::ProtonCore;
 
 #[async_trait]
 impl EventProvider<EventManagerContext> for ContactEventLoopV6Context {

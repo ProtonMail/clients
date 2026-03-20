@@ -4178,6 +4178,7 @@ dependencies = [
  "mail-log-service",
  "mail-network-monitor-service",
  "mail-observability",
+ "mail-shared-types",
  "mail-sqlite3",
  "mail-stash",
  "mail-task-service",
@@ -4521,6 +4522,20 @@ dependencies = [
  "thiserror 2.0.18",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "mail-shared-types"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "indoc",
+ "itertools 0.13.0",
+ "jiff",
+ "mail-action-queue",
+ "mail-proton-ids",
+ "mail-stash",
+ "serde",
 ]
 
 [[package]]

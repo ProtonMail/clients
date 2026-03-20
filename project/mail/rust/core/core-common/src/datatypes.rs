@@ -46,7 +46,6 @@ mod issue_report;
 mod measurement;
 mod push_notifications;
 mod system_label;
-mod timestamp;
 mod timestamp_ms;
 mod user_feature_flags;
 
@@ -58,9 +57,11 @@ pub use self::issue_report::*;
 pub use self::measurement::*;
 pub use self::push_notifications::*;
 pub use self::system_label::*;
-pub use self::timestamp::*;
 pub use self::timestamp_ms::*;
 pub use self::user_feature_flags::*;
+
+use mail_shared_types::declare_local_id;
+pub use mail_shared_types::{InitializationKey, LocalIdActionDepExt, LocalIdMarker, UnixTimestamp};
 
 use bitflags::bitflags;
 use derive_more::Into;
@@ -92,7 +93,6 @@ use mail_stash::exports::{
 };
 use mail_stash::utils::sql_using_serde;
 use proton_crypto_account::keys::{AddressKeys as RealAddressKeys, UserKeys as RealUserKeys};
-use serde::de::DeserializeOwned;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use smart_default::SmartDefault;
 use std::fmt::{self, Debug, Display, Formatter};
@@ -905,25 +905,6 @@ impl From<DeviceEnvironment> for ApiDeviceEnvironment {
     }
 }
 
-/// Key used to distinguish between components in the initialization.
-/// It is a string, not an enum for making it open for additional changes from different BU.
-///
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub struct InitializationKey(pub &'static str);
-
-impl InitializationKey {
-    #[must_use]
-    pub const fn new(s: &'static str) -> Self {
-        Self(s)
-    }
-}
-
-impl From<InitializationKey> for String {
-    fn from(value: InitializationKey) -> Self {
-        value.0.to_owned()
-    }
-}
-
 /// State in which component is in the initialization.
 /// Used to determine if something was already initialized or not.
 ///
@@ -1248,100 +1229,6 @@ impl Deref for Labels {
 }
 
 sql_using_serde!(Labels);
-
-/// Marker trait to signal that this type was declared as a local id.
-pub trait LocalIdMarker: Sized {
-    type Counterpart: Clone + Send + Sync + ToSql + FromSql + Serialize + DeserializeOwned + Debug;
-}
-
-/// Declare a new Local id type that maps to a remote Proton Id.
-///
-/// A local identifier should exist for every remote/proton Id for every resource we store
-/// in the database that we will create/mutate.
-///
-/// # Example
-///
-/// ```
-/// use mail_core_api::declare_proton_id;
-/// use mail_core_common::declare_local_id;
-///
-/// declare_proton_id!(pub MyProtonId);
-/// declare_local_id!(pub MyLocalProtonId => MyProtonId);
-/// ```
-#[macro_export]
-macro_rules! declare_local_id {
-    (
-        $(#[$($attrss:tt)*])*
-        $visibility:vis $name:ident => $remote_id:ident
-    ) => {
-
-        $(#[$($attrss)*])*
-        #[derive(Clone, Copy, Debug, serde::Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, serde::Serialize)]
-        pub struct $name(u64);
-
-        impl $name {
-            /// Represents the internal value as an unsigned 64-bit integer.
-            #[must_use]
-            pub const fn as_u64(&self) -> u64 {
-                self.0
-            }
-        }
-
-        impl AsRef<u64> for $name{
-            fn as_ref(&self) -> &u64 {
-                &self.0
-            }
-        }
-
-        impl ::std::fmt::Display for $name {
-            fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-                write!(f, "{}", self.0)
-            }
-        }
-
-        impl From<u64> for $name{
-            fn from(id: u64) -> Self {
-                Self(id)
-            }
-        }
-
-        impl ::mail_stash::exports::FromSql for $name {
-            fn column_result(value: ::mail_stash::exports::ValueRef<'_>) -> ::mail_stash::exports::FromSqlResult<Self> {
-                u64::column_result(value).map($name)
-            }
-        }
-
-        impl ::mail_stash::exports::ToSql for $name {
-            fn to_sql(&self) -> Result<::mail_stash::exports::ToSqlOutput<'_>, ::mail_stash::exports::SqliteError> {
-                self.0.to_sql()
-            }
-        }
-
-        impl $crate::datatypes::LocalIdMarker for $name {
-            type Counterpart = $remote_id;
-        }
-
-        impl $crate::actions::dependency_builder::LocalIdActionDepExt for $name {
-            fn to_dependency_key(&self) -> ::mail_action_queue::action::ActionDependencyKey {
-                ::mail_action_queue::action::ActionDependencyKey::from(format!("dep-{}-{}",stringify!($name), self.0))
-            }
-
-            fn to_create_dependency_key(&self) -> ::mail_action_queue::action::ActionDependencyKey {
-                ::mail_action_queue::action::ActionDependencyKey::from(format!("create-{}-{}",stringify!($name), self.0))
-            }
-
-            fn to_custom_dependency_key(&self, prefix:&str) -> ::mail_action_queue::action::ActionDependencyKey {
-                ::mail_action_queue::action::ActionDependencyKey::from(format!("{prefix}-{}-{}",stringify!($name), self.0))
-            }
-        }
-
-        impl From<$name> for ::mail_action_queue::rebase::RebaseKey {
-            fn from(id: $name) -> Self {
-                ::mail_action_queue::rebase::RebaseKey::from(format!("{}-{}", stringify!($name), id.0))
-            }
-        }
-    };
-}
 
 declare_local_id!(LocalContactId => ContactId);
 declare_local_id!(LocalContactEmailId => ContactEmailId);

@@ -29,6 +29,8 @@ pub mod test_utils;
 pub use context::*;
 pub use user_context::*;
 
+pub use mail_shared_types::declare_local_id;
+
 pub mod services {
     pub use crate::context::services::*;
     pub use crate::user_context::services::*;

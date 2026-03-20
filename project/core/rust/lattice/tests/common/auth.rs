@@ -51,6 +51,10 @@ async fn login_get_proofs(
     session
         .send_lt(LtAuthPostInfoReq {
             username: Some(username.to_string()),
+            client_secret: None,
+            intent: None,
+            is_testing: None,
+            reauth_scope: None,
         })
         .await
 }

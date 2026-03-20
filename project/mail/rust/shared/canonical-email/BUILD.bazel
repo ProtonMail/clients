@@ -1,0 +1,14 @@
+load("@rules_rust//rust:defs.bzl", "rust_library")
+
+rust_library(
+    name = "mail_canonical_email",
+    srcs = glob(["src/**/*.rs"]),
+    crate_root = "src/lib.rs",
+    edition = "2024",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@mail_crate_index//:serde",
+    ],
+)
+
+exports_files(["Cargo.toml", "Cargo.standalone.toml"])

@@ -1,0 +1,3 @@
+# Mail Rust workspace BUILD file
+
+exports_files(["Cargo.toml", "Cargo.lock"])

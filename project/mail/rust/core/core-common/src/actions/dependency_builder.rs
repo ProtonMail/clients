@@ -1,6 +1,8 @@
 use mail_action_queue::action::{ActionDependencyKey, ActionDependencyKeys};
 use std::fmt::Debug;
 
+pub use mail_shared_types::LocalIdActionDepExt;
+
 /// Helper utility to build action dependency chains.
 ///
 /// By default the builder always depends on the event loop action. To circumvent this use
@@ -158,12 +160,4 @@ impl ActionDependencyKeysBuilder {
     pub fn build(self) -> ActionDependencyKeys {
         self.0
     }
-}
-
-pub trait LocalIdActionDepExt: Debug + Copy + Clone {
-    fn to_dependency_key(&self) -> ActionDependencyKey;
-
-    fn to_create_dependency_key(&self) -> ActionDependencyKey;
-
-    fn to_custom_dependency_key(&self, prefix: &str) -> ActionDependencyKey;
 }

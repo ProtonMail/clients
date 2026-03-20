@@ -306,9 +306,7 @@ pub enum PasswordMode {
 
 /// Defines scopes for the Proton API.
 pub mod scope {
-    /// The `twofactor` scope.
-    pub const TWO_FACTOR: &str = "twofactor";
-
-    /// The `loggedin` scope.
     pub const LOGGED_IN: &str = "loggedin";
+
+    pub const FULL: &str = "full";
 }

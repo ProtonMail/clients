@@ -92,7 +92,6 @@ use mail_core_api::services::proton::{
 use mail_core_common::datatypes::{
     AddressSignedKeyList as RealAddressSignedKeyList, AddressStatus as RealAddressStatus,
     AddressType as RealAddressType, ApiConfig as RealApiConfig, AppDetails as RealAppDetails,
-    BlackFridayWave as RealBlackFridayWave,
     ContactSendingPreferences as RealContactSendingPreferences, DateFormat as RealDateFormat,
     Density as RealDensity, DeviceEnvironment as RealDeviceEnvironment,
     EarlyAccess as RealEarlyAccess, Email as RealEmail, FidoKey as RealFidoKey, Flags as RealFlags,
@@ -2375,32 +2374,15 @@ impl From<RealUpsellEligibility> for UpsellEligibility {
 
 #[derive(UniffiEnum)]
 pub enum UpsellType {
-    Standard,
-    BlackFriday(BlackFridayWave),
+    MailPlus,
+    Unlimited,
 }
 
 impl From<RealUpsellType> for UpsellType {
     fn from(value: RealUpsellType) -> Self {
         match value {
-            RealUpsellType::BlackFriday(wave) => UpsellType::BlackFriday(wave.into()),
-            RealUpsellType::Standard => UpsellType::Standard,
-        }
-    }
-}
-
-#[derive(UniffiEnum)]
-pub enum BlackFridayWave {
-    /// 50% off
-    Wave1,
-    /// 80% off
-    Wave2,
-}
-
-impl From<RealBlackFridayWave> for BlackFridayWave {
-    fn from(wave: RealBlackFridayWave) -> Self {
-        match wave {
-            RealBlackFridayWave::Wave1 => BlackFridayWave::Wave1,
-            RealBlackFridayWave::Wave2 => BlackFridayWave::Wave2,
+            RealUpsellType::MailPlus => UpsellType::MailPlus,
+            RealUpsellType::Unlimited => UpsellType::Unlimited,
         }
     }
 }

@@ -44,8 +44,7 @@ use mail_core_api::session::Session;
 use mail_core_common::CoreEventLoopContext;
 use mail_core_common::actions::event_poll::EVENT_POLL_ACTION_GROUP;
 use mail_core_common::datatypes::{
-    AccountDetails, AddressStatus, BlackFridayWave, LocalAddressId, NotificationSettings,
-    UpsellEligibility, UpsellType,
+    AccountDetails, AddressStatus, LocalAddressId, UpsellEligibility, UpsellType,
 };
 use mail_core_common::event_loop::EventPollMode;
 use mail_core_common::models::{Address, PaidSubscription, Role, User, UserSettings};
@@ -91,8 +90,7 @@ const DEFAULT_SHARE_EXT_QUEUE_POOL_SIZE: usize = 2;
 const DEFAULT_PREFETCH_BOUND: usize = 10;
 
 // Feature flags
-const FF_BLACK_FRIDAY: &str = "MailBlackFriday2025";
-const FF_BLACK_FRIDAY_WAVE2: &str = "MailBlackFriday2025Wave2";
+const FF_UPSELL_UNLIMITED: &str = "MailiosUnlimitedPlanPlacementExperiment";
 
 /// App origin only
 pub struct DefaultQueueExecutor {
@@ -762,40 +760,23 @@ impl MailUserContext {
         if user.subscribed != PaidSubscription::empty() || user.role == Role::Member {
             Ok(UpsellEligibility::NotEligible)
         } else {
-            let upsell_type = self.upsell_type(user).await?;
+            let upsell_type = self.upsell_type().await?;
             Ok(UpsellEligibility::Eligible(upsell_type))
         }
     }
 
-    async fn upsell_type(&self, user: User) -> MailContextResult<UpsellType> {
+    async fn upsell_type(&self) -> MailContextResult<UpsellType> {
         let feature_flags = self.user_context().feature_flags();
-        let black_friday_promo_live = feature_flags
-            .get(FF_BLACK_FRIDAY)
-            .await?
-            .unwrap_or_default();
-        let black_friday_promo_wave2 = feature_flags
-            .get(FF_BLACK_FRIDAY_WAVE2)
-            .await?
-            .unwrap_or_default();
 
-        if black_friday_promo_live {
-            let in_app_notifications_enabled = self
-                .user_settings()
-                .await?
-                .news
-                .contains(NotificationSettings::IN_APP_NOTIFICATIONS);
-
-            if in_app_notifications_enabled && !user.is_delinquent() {
-                let wave = if black_friday_promo_wave2 {
-                    BlackFridayWave::Wave2
-                } else {
-                    BlackFridayWave::Wave1
-                };
-                return Ok(UpsellType::BlackFriday(wave));
-            }
+        if feature_flags
+            .get(FF_UPSELL_UNLIMITED)
+            .await?
+            .unwrap_or_default()
+        {
+            Ok(UpsellType::Unlimited)
+        } else {
+            Ok(UpsellType::MailPlus)
         }
-
-        Ok(UpsellType::Standard)
     }
 
     /// Loads the send preferences of the recipient with the given email address.

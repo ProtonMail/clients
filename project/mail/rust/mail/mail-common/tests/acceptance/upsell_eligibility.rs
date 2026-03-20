@@ -5,10 +5,8 @@ use mail_core_api::services::proton::User as ApiUser;
 use mail_core_api::services::proton::{
     GetLegacyFeaturesResponse, GetUnleashFeaturesResponse, UnleashToggle, UnleashToggleVariant,
 };
-use mail_core_common::datatypes::{
-    BlackFridayWave, NotificationSettings, UpsellEligibility, UpsellType,
-};
-use mail_core_common::models::{DelinquentState, ModelExtension, Role};
+use mail_core_common::datatypes::{UpsellEligibility, UpsellType};
+use mail_core_common::models::{ModelExtension, Role};
 use mail_core_common::models::{PaidSubscription, User};
 use mail_core_common::test_utils::users::DEFAULT_USER;
 use mail_stash::orm::Model;
@@ -16,8 +14,7 @@ use mail_stash::stash::{Bond, StashError};
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, ResponseTemplate};
 
-const FF_BLACK_FRIDAY: &str = "MailBlackFriday2025";
-const FF_BLACK_FRIDAY_WAVE2: &str = "MailBlackFriday2025Wave2";
+const FF_UPSELL_UNLIMITED: &str = "MailiosUnlimitedPlanPlacementExperiment";
 
 const USER: fn() -> ApiUser = || ApiUser {
     subscribed: 0,
@@ -25,7 +22,7 @@ const USER: fn() -> ApiUser = || ApiUser {
 };
 
 #[tokio::test]
-async fn standard_upsell() {
+async fn mail_plus_upsell_when_unlimited_flag_disabled() {
     let ctx = MailTestContext::new().await;
     let params = TestParams::default_basic().with_user(USER());
     ctx.setup_user(params).await;
@@ -36,81 +33,19 @@ async fn standard_upsell() {
 
     assert_eq!(
         eligibility,
-        UpsellEligibility::Eligible(UpsellType::Standard)
+        UpsellEligibility::Eligible(UpsellType::MailPlus)
     );
 }
 
 #[tokio::test]
-async fn black_friday_wave1() {
+async fn unlimited_upsell_when_unlimited_flag_enabled() {
     let ctx = MailTestContext::new().await;
     let params = TestParams::default_basic().with_user(USER());
     ctx.setup_user(params).await;
     setup_feature_flags(
         &ctx,
         TestedFeatureFlags {
-            black_friday_enabled: true,
-            black_friday_wave2_enabled: false,
-        },
-    )
-    .await;
-
-    let user_ctx = ctx.mail_user_context().await;
-
-    let user_stash = user_ctx.user_stash();
-    let mut tether = user_stash.connection().await.unwrap();
-    tether
-        .tx(async |tx| save_news(&user_ctx, NotificationSettings::IN_APP_NOTIFICATIONS, tx).await)
-        .await
-        .unwrap();
-
-    let eligibility = user_ctx.upsell_eligibility().await.unwrap();
-
-    assert_eq!(
-        eligibility,
-        UpsellEligibility::Eligible(UpsellType::BlackFriday(BlackFridayWave::Wave1))
-    );
-}
-
-#[tokio::test]
-async fn black_friday_wave2() {
-    let ctx = MailTestContext::new().await;
-    let params = TestParams::default_basic().with_user(USER());
-    ctx.setup_user(params).await;
-    setup_feature_flags(
-        &ctx,
-        TestedFeatureFlags {
-            black_friday_enabled: true,
-            black_friday_wave2_enabled: true,
-        },
-    )
-    .await;
-
-    let user_ctx = ctx.mail_user_context().await;
-    let user_stash = user_ctx.user_stash();
-    let mut tether = user_stash.connection().await.unwrap();
-    tether
-        .tx(async |tx| save_news(&user_ctx, NotificationSettings::IN_APP_NOTIFICATIONS, tx).await)
-        .await
-        .unwrap();
-
-    let eligibility = user_ctx.upsell_eligibility().await.unwrap();
-
-    assert_eq!(
-        eligibility,
-        UpsellEligibility::Eligible(UpsellType::BlackFriday(BlackFridayWave::Wave2))
-    );
-}
-
-#[tokio::test]
-async fn black_friday_wave2_but_promo_ended() {
-    let ctx = MailTestContext::new().await;
-    let params = TestParams::default_basic().with_user(USER());
-    ctx.setup_user(params).await;
-    setup_feature_flags(
-        &ctx,
-        TestedFeatureFlags {
-            black_friday_enabled: false,
-            black_friday_wave2_enabled: true,
+            upsell_unlimited: true,
         },
     )
     .await;
@@ -120,7 +55,7 @@ async fn black_friday_wave2_but_promo_ended() {
 
     assert_eq!(
         eligibility,
-        UpsellEligibility::Eligible(UpsellType::Standard)
+        UpsellEligibility::Eligible(UpsellType::Unlimited)
     );
 }
 
@@ -186,75 +121,6 @@ async fn member_role_not_eligible() {
     assert_eq!(eligibility, UpsellEligibility::NotEligible);
 }
 
-#[tokio::test]
-async fn black_friday_disabled_notifications() {
-    let ctx = MailTestContext::new().await;
-    let params = TestParams::default_basic().with_user(USER());
-    ctx.setup_user(params).await;
-    setup_feature_flags(
-        &ctx,
-        TestedFeatureFlags {
-            black_friday_enabled: true,
-            black_friday_wave2_enabled: false,
-        },
-    )
-    .await;
-
-    let user_ctx = ctx.mail_user_context().await;
-
-    let user_stash = user_ctx.user_stash();
-    let mut tether = user_stash.connection().await.unwrap();
-    tether
-        .tx(async |tx| save_news(&user_ctx, NotificationSettings::ANNOUNCEMENTS, tx).await)
-        .await
-        .unwrap();
-
-    let eligibility = user_ctx.upsell_eligibility().await.unwrap();
-    assert_eq!(
-        eligibility,
-        UpsellEligibility::Eligible(UpsellType::Standard)
-    );
-}
-
-#[tokio::test]
-async fn black_friday_delinquent_user() {
-    let ctx = MailTestContext::new().await;
-    let params = TestParams::default_basic().with_user(USER());
-    ctx.setup_user(params).await;
-    setup_feature_flags(
-        &ctx,
-        TestedFeatureFlags {
-            black_friday_enabled: true,
-            black_friday_wave2_enabled: false,
-        },
-    )
-    .await;
-
-    let user_ctx = ctx.mail_user_context().await;
-
-    let user_stash = user_ctx.user_stash();
-    let mut tether = user_stash.connection().await.unwrap();
-    tether
-        .tx(async |tx| {
-            save_delinquency(&user_ctx, DelinquentState::Delinquent, tx).await?;
-            save_news(&user_ctx, NotificationSettings::IN_APP_NOTIFICATIONS, tx).await
-        })
-        .await
-        .unwrap();
-
-    let eligibility = user_ctx.upsell_eligibility().await.unwrap();
-    assert_eq!(
-        eligibility,
-        UpsellEligibility::Eligible(UpsellType::Standard)
-    );
-}
-
-#[derive(Default)]
-struct TestedFeatureFlags {
-    black_friday_enabled: bool,
-    black_friday_wave2_enabled: bool,
-}
-
 async fn save_subscription(
     ctx: &MailUserContext,
     subscription: PaidSubscription,
@@ -271,29 +137,6 @@ async fn save_role(ctx: &MailUserContext, role: Role, tx: &Bond<'_>) -> Result<(
     user.save(tx).await
 }
 
-async fn save_delinquency(
-    ctx: &MailUserContext,
-    delinquency: DelinquentState,
-    tx: &Bond<'_>,
-) -> Result<(), StashError> {
-    let mut user = User::find_by_id(ctx.user_id().clone(), tx).await?.unwrap();
-    user.delinquent = delinquency;
-    user.save(tx).await
-}
-
-async fn save_news(
-    ctx: &MailUserContext,
-    news: NotificationSettings,
-    tx: &Bond<'_>,
-) -> Result<(), StashError> {
-    let mut settings =
-        mail_core_common::models::UserSettings::find_by_id(ctx.user_id().clone(), tx)
-            .await?
-            .unwrap();
-    settings.news = news;
-    settings.save(tx).await
-}
-
 fn test_unleash_variant() -> UnleashToggleVariant {
     UnleashToggleVariant {
         name: "enabled".to_string(),
@@ -302,21 +145,17 @@ fn test_unleash_variant() -> UnleashToggleVariant {
     }
 }
 
+#[derive(Default)]
+struct TestedFeatureFlags {
+    upsell_unlimited: bool,
+}
+
 async fn setup_feature_flags(ctx: &MailTestContext, flags: TestedFeatureFlags) {
     let mut toggles = vec![];
 
-    if flags.black_friday_enabled {
+    if flags.upsell_unlimited {
         toggles.push(UnleashToggle {
-            name: FF_BLACK_FRIDAY.to_string(),
-            enabled: true,
-            impression_data: false,
-            variant: test_unleash_variant(),
-        });
-    }
-
-    if flags.black_friday_wave2_enabled {
-        toggles.push(UnleashToggle {
-            name: FF_BLACK_FRIDAY_WAVE2.to_string(),
+            name: FF_UPSELL_UNLIMITED.to_string(),
             enabled: true,
             impression_data: false,
             variant: test_unleash_variant(),

@@ -18,6 +18,7 @@ use crate::models::{ContactCard, ContactEmail, ModelExtension, ModelIdExtension}
 use crate::{ContactError, CoreContextError, CoreContextResult};
 use anyhow::Context;
 use bytes::Buf as _;
+use contacts_api::ContactApi;
 use futures::future::try_join_all;
 use futures::try_join;
 use ical::VcardParser;
@@ -27,7 +28,6 @@ use mail_action_queue::rebase::RebaseChangeSet;
 use mail_core_api::SYNC_CONTACT_PAGE_SIZE;
 use mail_core_api::consts::General;
 use mail_core_api::service::ApiServiceError;
-use mail_core_api::services::proton::ProtonCore;
 use mail_core_api::services::proton::{
     ContactBasic as ApiContactBasic, ContactEmail as ApiContactEmail, ContactFull as ApiContactFull,
 };

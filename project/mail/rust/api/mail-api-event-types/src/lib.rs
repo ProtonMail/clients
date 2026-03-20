@@ -1,5 +1,8 @@
 //! Shared API event types.
 
+use serde::Deserialize;
+#[cfg(feature = "mocks")]
+use serde::Serialize;
 use serde_repr::Deserialize_repr;
 #[cfg(feature = "mocks")]
 use serde_repr::Serialize_repr;
@@ -17,4 +20,14 @@ pub enum Action {
     Create = 1,
     Update = 2,
     UpdateFlags = 3,
+}
+
+/// The response for the latest event endpoint.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[cfg_attr(feature = "mocks", derive(Serialize))]
+#[serde(rename_all = "PascalCase")]
+pub struct GetEventsLatestResponse {
+    /// TODO: Document this field.
+    #[serde(rename = "EventID")]
+    pub event_id: EventId,
 }

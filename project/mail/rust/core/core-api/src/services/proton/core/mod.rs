@@ -12,6 +12,7 @@ pub use self::response_data::*;
 pub use self::responses::*;
 use crate::service::ApiServiceResult;
 use bytes::Bytes;
+use contacts_api::ContactApi;
 use mail_api_labels::LabelApi;
 use mail_muon::common::RetryPolicy;
 use proton_crypto_account::keys::APIPublicAddressKeys;
@@ -25,39 +26,17 @@ pub const CORE_V4: &str = "/core/v4";
 pub const CORE_V5: &str = "/core/v5";
 
 pub const CORE_V6: &str = "/core/v6";
-pub const CONTACTS_V6: &str = "/contacts/v6";
 
 /// Re-export Unleash API base path from core-feature-flags.
 pub use core_feature_flags::UNLEASH_V2;
 
 #[allow(async_fn_in_trait)]
-pub trait ProtonCore: LabelApi {
+pub trait ProtonCore: ContactApi + LabelApi {
     async fn get_addresses(&self) -> ApiServiceResult<GetAddressesResponse>;
 
     async fn get_address_by_id(&self, id: AddressId) -> ApiServiceResult<GetAddressResponse>;
 
     async fn get_captcha(&self, options: GetCaptchaOptions) -> ApiServiceResult<String>;
-
-    /// GETs a single contact.
-    ///
-    /// This returns the full contact record.
-    async fn get_contact(&self, contact_id: ContactId) -> ApiServiceResult<GetContactResponse>;
-
-    /// GETs a list of contacts.
-    ///
-    /// This returns basic information — not the full contact record.
-    async fn get_contacts(
-        &self,
-        options: GetContactsOptions,
-    ) -> ApiServiceResult<GetContactsResponse>;
-
-    /// GETs a list of emails for contacts.
-    ///
-    /// This returns basic information — not the full contact record.
-    async fn get_contacts_emails(
-        &self,
-        options: GetContactsEmailsOptions,
-    ) -> ApiServiceResult<GetContactsEmailsResponse>;
 
     async fn get_event(
         &self,
@@ -85,11 +64,6 @@ pub trait ProtonCore: LabelApi {
     ) -> impl Future<Output = ApiServiceResult<()>> + Send;
 
     async fn get_users(&self) -> ApiServiceResult<GetUsersResponse>;
-
-    async fn put_delete_contacts(
-        &self,
-        ids: Vec<ContactId>,
-    ) -> ApiServiceResult<PutDeleteContactsResponse>;
 
     /// This method is used to register device for push notifications.
     /// The registering will delete any duplicate having the same (User ID, Product, Device Token) from different sessions.
@@ -125,10 +99,6 @@ pub trait ProtonCore: LabelApi {
         flag_name: &str,
         new_value: bool,
     ) -> ApiServiceResult<PutFeatureFlagOverrideResponse>;
-
-    async fn get_contact_event_v6(&self, event_id: EventId) -> ApiServiceResult<String>;
-
-    async fn get_contact_event_latest_v6(&self) -> ApiServiceResult<GetEventsLatestResponse>;
 
     async fn get_core_event_v6(&self, event_id: EventId) -> ApiServiceResult<String>;
 

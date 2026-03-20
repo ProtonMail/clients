@@ -24,7 +24,6 @@
 //!
 
 use crate::services::proton::prelude::*;
-use proton_crypto_account::contacts::ContactCardType;
 use proton_crypto_account::keys::{AddressKeys, UserKeys};
 use serde::Deserialize;
 #[cfg(feature = "mocks")]
@@ -39,6 +38,10 @@ use serde_with::{BoolFromInt, FromInto, serde_as};
 
 mod legacy_feature_flags;
 
+pub use contacts_api::{
+    ContactBasic, ContactCard, ContactEmail, ContactEmailEvent, ContactEvent, ContactEventV6,
+    ContactFull, ContactLabelEventV6, ContactRootEventV6, ContactSendingPreferences,
+};
 pub use core_feature_flags::{
     GetUnleashFeaturesResponse, UnleashToggle, UnleashTogglePayload, UnleashTogglePayloadType,
     UnleashToggleVariant,
@@ -81,18 +84,6 @@ pub enum AddressType {
 
     /// TODO: Document this variant.
     External = 5,
-}
-
-/// TODO: Document this enum.
-#[derive(Clone, Copy, Debug, Deserialize_repr, Eq, Hash, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize_repr))]
-#[repr(u8)]
-pub enum ContactSendingPreferences {
-    /// TODO: Document this variant.
-    Custom = 0,
-
-    /// TODO: Document this variant.
-    Default = 1,
 }
 
 /// TODO: Document this enum.
@@ -423,178 +414,6 @@ pub struct AddressEvent {
 
     /// TODO: Document this field.
     pub address: Option<Address>,
-}
-
-/// Represents partial contact information returned by the API.
-///
-/// The partial contact information does not contain the contact emails and the
-/// v-cards.
-///
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct ContactBasic {
-    #[serde(rename = "ID")]
-    pub id: ContactId,
-
-    /// TODO: Document this field.
-    pub create_time: u64,
-
-    /// TODO: Document this field.
-    #[serde(rename = "LabelIDs")]
-    pub label_ids: Vec<LabelId>,
-
-    /// TODO: Document this field.
-    pub modify_time: u64,
-
-    /// TODO: Document this field.
-    pub name: String,
-
-    /// TODO: Document this field.
-    pub size: u64,
-
-    /// TODO: Document this field.
-    #[serde(rename = "UID")]
-    pub uid: ContactUID,
-}
-
-/// Represents a contact card returned by the API.
-///
-/// Contact cards contain information encoded as a v-card. Cards can be
-/// encrypted or signed with the user keys.
-///
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct ContactCard {
-    /// TODO: Document this field.
-    #[serde(rename = "Type")]
-    pub card_type: ContactCardType,
-
-    /// TODO: Document this field.
-    pub data: String,
-
-    /// TODO: Document this field.
-    pub signature: Option<String>,
-}
-
-/// Models the contact email addresses for a contact returned by the API.
-#[serde_as]
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct ContactEmail {
-    /// TODO: Document this field.
-    #[serde(rename = "ID")]
-    pub id: ContactEmailId,
-
-    /// TODO: Document this field.
-    #[serde(rename = "ContactID")]
-    pub contact_id: ContactId,
-
-    /// TODO: Document this field.
-    pub canonical_email: PrivateEmail,
-
-    /// TODO: Document this field.
-    #[serde(rename = "Type")]
-    pub contact_type: Vec<String>,
-
-    /// TODO: Document this field.
-    pub defaults: ContactSendingPreferences,
-
-    /// TODO: Document this field.
-    pub email: PrivateEmail,
-
-    /// TODO: Document this field.
-    #[serde_as(as = "BoolFromInt")]
-    pub is_proton: bool,
-
-    /// TODO: Document this field.
-    #[serde(rename = "LabelIDs")]
-    pub label_ids: Vec<LabelId>,
-
-    /// TODO: Document this field.
-    pub last_used_time: u64,
-
-    /// TODO: Document this field.
-    pub name: String,
-
-    /// TODO: Document this field.
-    pub order: u32,
-}
-
-/// Data for an event related to a [`ContactEmail`] record.
-#[serde_as]
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct ContactEmailEvent {
-    /// TODO: Document this field.
-    #[serde(rename = "ID")]
-    pub id: ContactEmailId,
-
-    /// TODO: Document this field.
-    pub action: Action,
-
-    /// TODO: Document this field.
-    pub contact_email: Option<ContactEmail>,
-}
-
-/// Data for an event related to a [`ContactBasic`] record.
-#[serde_as]
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct ContactEvent {
-    /// TODO: Document this field.
-    #[serde(rename = "ID")]
-    pub id: ContactId,
-
-    /// TODO: Document this field.
-    pub action: Action,
-
-    /// TODO: Document this field.
-    pub contact: Option<ContactFull>,
-}
-
-/// A complete contact returned by the API.
-///
-/// Compared to the [`ContactBasic`], it additionally includes all associated
-/// contact emails ([`ContactEmail`]) and cards ([`ContactCard`]).
-///
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct ContactFull {
-    /// TODO: Document this field.
-    #[serde(rename = "ID")]
-    pub id: ContactId,
-
-    /// TODO: Document this field.
-    pub cards: Vec<ContactCard>,
-
-    /// TODO: Document this field.
-    pub contact_emails: Vec<ContactEmail>,
-
-    /// TODO: Document this field.
-    pub create_time: u64,
-
-    /// TODO: Document this field.
-    #[serde(rename = "LabelIDs")]
-    pub label_ids: Vec<LabelId>,
-
-    /// TODO: Document this field.
-    pub modify_time: u64,
-
-    /// TODO: Document this field.
-    pub name: String,
-
-    /// TODO: Document this field.
-    pub size: u64,
-
-    /// TODO: Document this field.
-    #[serde(rename = "UID")]
-    pub uid: ContactUID,
 }
 
 /// TODO: Document this struct.
@@ -1077,36 +896,5 @@ pub struct AddressEventV6 {
 pub struct UserSettingsEventV6 {
     #[serde(rename = "ID")]
     pub id: AddressId,
-    pub action: Action,
-}
-
-#[serde_as]
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct ContactRootEventV6 {
-    pub contacts: Option<Vec<ContactEventV6>>,
-    pub labels: Option<Vec<ContactLabelEventV6>>,
-    pub refresh: bool,
-    /// Whether we need to request more events after this.
-    #[serde(rename = "More")]
-    pub has_more: bool,
-}
-
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct ContactEventV6 {
-    #[serde(rename = "ID")]
-    pub id: ContactId,
-    pub action: Action,
-}
-
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct ContactLabelEventV6 {
-    #[serde(rename = "ID")]
-    pub id: LabelId,
     pub action: Action,
 }

@@ -40,50 +40,6 @@ impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> ProtonCore for This {
             .into_body_string()?)
     }
 
-    async fn get_contact(&self, contact_id: ContactId) -> ApiServiceResult<GetContactResponse> {
-        Ok(GET!("/contacts/{contact_id}")
-            .send_with(self)
-            .await?
-            .ok()?
-            .into_body_json()?)
-    }
-
-    async fn get_contacts(
-        &self,
-        options: GetContactsOptions,
-    ) -> ApiServiceResult<GetContactsResponse> {
-        Ok(GET!("/contacts")
-            .query(serde_to_query(options)?)
-            .send_with(self)
-            .await?
-            .ok()?
-            .into_body_json()?)
-    }
-
-    async fn get_contacts_emails(
-        &self,
-        options: GetContactsEmailsOptions,
-    ) -> ApiServiceResult<GetContactsEmailsResponse> {
-        Ok(GET!("/contacts/emails")
-            .query(serde_to_query(options)?)
-            .send_with(self)
-            .await?
-            .ok()?
-            .into_body_json()?)
-    }
-
-    async fn put_delete_contacts(
-        &self,
-        ids: Vec<ContactId>,
-    ) -> ApiServiceResult<PutDeleteContactsResponse> {
-        Ok(PUT!("/contacts/delete")
-            .body_json(PutDeleteContacts { ids })?
-            .send_with(self)
-            .await?
-            .ok()?
-            .into_body_json()?)
-    }
-
     // Event APIs
     // https://protonmail.gitlab-pages.protontech.ch/Slim-API/core/#tag/Events
 
@@ -275,22 +231,6 @@ impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> ProtonCore for This {
             .into_body_json()?;
 
         Ok(response)
-    }
-
-    async fn get_contact_event_v6(&self, event_id: EventId) -> ApiServiceResult<String> {
-        Ok(GET!("{CONTACTS_V6}/events/{event_id}")
-            .send_with(self)
-            .await?
-            .ok()?
-            .into_body_string()?)
-    }
-
-    async fn get_contact_event_latest_v6(&self) -> ApiServiceResult<GetEventsLatestResponse> {
-        Ok(GET!("{CONTACTS_V6}/events/latest")
-            .send_with(self)
-            .await?
-            .ok()?
-            .into_body_json()?)
     }
 
     async fn get_core_event_v6(&self, event_id: EventId) -> ApiServiceResult<String> {

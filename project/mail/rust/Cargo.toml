@@ -41,6 +41,7 @@ members = [
   "shared/stash-macros",
   "shared/task-service",
   "shared/telemetry-service",
+  "contacts/contacts-api",
   "api/mail-api-event-types",
   "api/mail-api-labels",
   "api/mail-api-shared",
@@ -164,6 +165,10 @@ version = "0.2.9"
 features = ["serde"]
 git = "https://github.com/ProtonMail/rust-email_address.git"
 branch = "fix/parse-display-format-without-whitespace"
+
+[workspace.dependencies.contacts-api]
+version = "0.1.0"
+path = "contacts/contacts-api"
 
 [workspace.dependencies.mail-api-event-types]
 version = "0.1.0"

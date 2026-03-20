@@ -19,9 +19,9 @@ use mail_stash::{
 use tokio::{sync::watch, task::JoinHandle};
 
 use crate::{
-    Context, CoreContextError,
+    Context, CoreAccountState, CoreContextError,
     datatypes::{RegisteredDevice, StoredDevicePrivateKey, StoredDevicePublicKey},
-    db::account::CoreSession,
+    db::account::{CoreAccount, CoreSession},
     models::ModelExtension,
 };
 
@@ -144,28 +144,25 @@ pub async fn registered_device_task_step(
 ) -> Result<(), RegisteredDeviceTaskError> {
     tracing::debug!("Device registration task step");
 
-    let sessions = tokio::select! {
+    tokio::select! {
         res = device_rx.changed() => {
             tracing::debug!("Device details changed: {res:?}");
             res?;
-
             state.device.clone_from(&device_rx.borrow_and_update());
             // New device token registered. We need to re-register all sessions.
             state.registered_sessions.clear();
-            let tether = ctx.account_stash().connection().await?;
-            CoreSession::all(&tether).await?
         },
         res = sessions_stream.next() => {
             tracing::debug!("Sessions changed: {res:?}");
             res.ok_or(RegisteredDeviceTaskError::SessionStreamEnded)?;
-
-            let tether = ctx.account_stash().connection().await?;
             // New session has been created. Instead of re-registering everything, we only
             // process unregistered sessions.
-            get_unregistered_sessions(&tether, &state.registered_sessions).await?
         }
     };
 
+    let tether = ctx.account_stash().connection().await?;
+    let sessions =
+        get_unregistered_and_active_sessions(&tether, &state.registered_sessions).await?;
     if sessions.is_empty() {
         tracing::debug!("No sessions to register");
         return Ok(());
@@ -223,7 +220,7 @@ pub async fn registered_device_task_step(
 /// Returns sessions that were not already registered.
 ///
 #[allow(trivial_casts)]
-async fn get_unregistered_sessions(
+async fn get_unregistered_and_active_sessions(
     tether: &Tether<AccountDb>,
     registered_sessions: &HashSet<SessionId>,
 ) -> Result<Vec<CoreSession>, StashError> {
@@ -232,15 +229,49 @@ async fn get_unregistered_sessions(
         .cloned()
         .map(|v| Box::new(v) as Box<dyn ToSql + Send>)
         .collect_vec();
-    CoreSession::find(
-        format!(
-            "WHERE remote_id NOT IN ({})",
-            mail_stash::utils::placeholders_n(params.len())
-        ),
-        params,
-        tether,
-    )
-    .await
+    let sessions = if registered_sessions.is_empty() {
+        CoreSession::all(tether).await?
+    } else {
+        CoreSession::find(
+            format!(
+                "WHERE remote_id NOT IN ({})",
+                mail_stash::utils::placeholders_n(params.len())
+            ),
+            params,
+            tether,
+        )
+        .await?
+    };
+
+    if sessions.is_empty() {
+        return Ok(sessions);
+    }
+
+    // Just becuase there is a session, does not mean it is ready to be used. There is a check for
+    // this later in the code, but this can trigger concurrent writes to the data store
+    // as account refresh is triggered if the session is not 100% ready yet.
+    let mut active_sessions = Vec::with_capacity(sessions.len());
+    for session in sessions {
+        let Some(account) = CoreAccount::find_by_id(session.account_id.clone(), tether).await?
+        else {
+            tracing::warn!("Could not find account for {:?}", session.account_id);
+            continue;
+        };
+
+        if let CoreAccountState::LoggedIn(_) =
+            CoreAccountState::of(&account, std::slice::from_ref(&session))
+        {
+            active_sessions.push(session);
+        } else {
+            tracing::debug!(
+                "{:?} for {:?} skipped as it is not fully logged in",
+                session.remote_id,
+                session.account_id
+            );
+        }
+    }
+
+    Ok(active_sessions)
 }
 
 async fn register_sessions(

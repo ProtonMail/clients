@@ -695,6 +695,8 @@ impl From<ContactError> for ProtonMailError {
             ContactError::ContactDoesNotHaveRemoteId(_local_id) => {
                 Self::Unexpected(Unexpected::Database)
             }
+            ContactError::Api(api_service_error) => Self::from(api_service_error),
+            ContactError::Stash(stash_error) => Self::from(stash_error),
         }
     }
 }

@@ -1167,6 +1167,46 @@ dependencies = [
 ]
 
 [[package]]
+name = "contacts-common"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bytes",
+ "contacts-api",
+ "contacts-common",
+ "derive_more 2.0.1",
+ "flume 0.11.1",
+ "futures",
+ "ical",
+ "include_dir",
+ "indexmap 2.11.0",
+ "indoc",
+ "insta",
+ "itertools 0.13.0",
+ "mail-action-queue",
+ "mail-api-utils",
+ "mail-avatar",
+ "mail-core-api",
+ "mail-labels-common",
+ "mail-shared-types",
+ "mail-sqlite3",
+ "mail-stash",
+ "mail-vcard",
+ "pretty_assertions",
+ "proton-crypto",
+ "proton-crypto-account",
+ "serde",
+ "sqlite-watcher",
+ "test-case",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "unicode-segmentation",
+ "url",
+]
+
+[[package]]
 name = "convert_case"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4195,6 +4235,7 @@ dependencies = [
  "bytes",
  "chrono",
  "contacts-api",
+ "contacts-common",
  "core-event-loop",
  "derive_more 2.0.1",
  "email_address",
@@ -4733,6 +4774,7 @@ dependencies = [
  "mail-log-service",
  "mail-network-monitor-service",
  "mail-stash",
+ "proton-crypto",
  "qrcode",
  "ratatui",
  "ratatui-explorer",
@@ -4788,6 +4830,7 @@ dependencies = [
  "mail-vcard",
  "non-empty-string",
  "parking_lot",
+ "proton-crypto",
  "proton-crypto-account",
  "secrecy",
  "serde",

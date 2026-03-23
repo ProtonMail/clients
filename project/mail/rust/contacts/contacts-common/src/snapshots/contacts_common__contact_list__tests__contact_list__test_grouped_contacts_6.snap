@@ -1,0 +1,19 @@
+---
+source: contacts/contacts-common/src/contact_list.rs
+expression: display_group(groups)
+---
+3 keys:
+
+A (1 item)
+Contact A (#2E8378): Amy Santiago (1 address)
+A (#4E7ABB): amy@99.com <aXX@XXXXXX>
+
+J (1 item)
+Contact J (#9C89FF): Jake Peralta (2 addresses)
+J (#52CD96): jake@99.com <jXXX@XXXXXX>
+J (#51BE50): jake.peralta@work.com <jXXXXXXXXXXX@XXXXXXXX>
+
+S (1 item)
+Group S (#34A48A): Squad (2 addresses)
+J (#52CD96): jake@99.com <jXXX@XXXXXX>
+A (#4E7ABB): amy@99.com <aXX@XXXXXX>

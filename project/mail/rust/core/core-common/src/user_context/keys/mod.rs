@@ -206,11 +206,11 @@ impl UserContext {
             .inspect_err(|e| error!("Failed to force sync contact: {e}"))
         {
             match e {
-                CoreContextError::Api(e) if e.is_network_failure() => match fetch_policy {
+                ContactError::Api(e) if e.is_network_failure() => match fetch_policy {
                     AddressKeysContactFetchPolicy::RequireSync => return Err(e.into()),
                     AddressKeysContactFetchPolicy::AllowCachedFallback => {} // continue
                 },
-                e => return Err(e),
+                e => return Err(CoreContextError::from(e)),
             }
         }
 

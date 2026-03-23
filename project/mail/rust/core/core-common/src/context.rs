@@ -15,7 +15,7 @@ use crate::app_events::{OnEnterForegroundEvent, OnExitForegroundEvent};
 use crate::auth_store::{AuthStore, DecryptExt};
 use crate::core_clock::CoreClock;
 use crate::datatypes::{
-    ApiConfig, AuthScopes, LocalContactId, StoredDevicePrivateKey, StoredDevicePublicKey, TfaStatus,
+    ApiConfig, AuthScopes, StoredDevicePrivateKey, StoredDevicePublicKey, TfaStatus,
 };
 use crate::db::account::{CoreAccount, CoreSession, SessionEncryptionKey};
 use crate::db::migrations::{migrate_account_db, verify_account_db};
@@ -37,8 +37,8 @@ use mail_action_queue::action::{self, Action, WriterGuardError};
 use mail_action_queue::queue::{ActionError as QueueActionError, ActionRequeueReason, QueuedError};
 use mail_core_api::auth::{Auth, Tokens};
 use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::BuildError;
 use mail_core_api::services::proton::mail_muon::client::{Fingerprint, InfoProvider};
-use mail_core_api::services::proton::{BuildError, PrivateEmail};
 use mail_core_api::services::proton::{SessionId, UserId};
 use mail_core_api::session::Config as RealApiConfig;
 use mail_core_api::session::Session as ApiSession;
@@ -158,19 +158,7 @@ impl action::Error for CoreContextError {
     }
 }
 
-#[derive(Debug, Error)]
-pub enum ContactError {
-    #[error("ContactCard not found for email: {0}")]
-    CardNotFound(PrivateEmail),
-    #[error("RemoteId not present for ContactCard for email: {0}")]
-    ContactCardRemoteIdNotPresent(PrivateEmail),
-    #[error("Contact not found for email: {0}")]
-    FullContactNotFound(PrivateEmail),
-    #[error("Validation: {0}")]
-    Validation(#[from] VcardValidationError),
-    #[error("Contact {0} does not have remote id")]
-    ContactDoesNotHaveRemoteId(LocalContactId),
-}
+pub use contacts_common::error::ContactError;
 
 /// Represents the state of an account.
 #[derive(Debug, Clone)]

@@ -1,0 +1,8 @@
+---
+source: contacts/contacts-common/src/contact_list.rs
+expression: display_group(groups)
+---
+1 keys:
+
+B (1 item)
+Contact B (#A1439F): Barbara Lox (0 addresses)

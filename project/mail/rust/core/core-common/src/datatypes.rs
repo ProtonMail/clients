@@ -57,6 +57,8 @@ pub use self::push_notifications::*;
 pub use self::system_label::*;
 pub use self::timestamp_ms::*;
 pub use self::user_feature_flags::*;
+pub use contacts_common::local_ids::{LocalContactEmailId, LocalContactId};
+pub use contacts_common::types::{ContactSendingPreferences, ContactTypes};
 pub use mail_avatar::AvatarInformation;
 
 pub use mail_labels_common::{
@@ -74,8 +76,7 @@ use jiff::civil::Weekday;
 use mail_core_api::services::proton::mail_muon::rt::DynResolver;
 use mail_core_api::services::proton::{
     AddressFlags as ApiAddressFlags, AddressSignedKeyList as ApiAddressSignedKeyList,
-    AddressStatus as ApiAddressStatus, AddressType as ApiAddressType,
-    ContactSendingPreferences as ApiContactSendingPreferences, DateFormat as ApiDateFormat,
+    AddressStatus as ApiAddressStatus, AddressType as ApiAddressType, DateFormat as ApiDateFormat,
     Density as ApiDensity, EarlyAccess as ApiEarlyAccess, Email as ApiEmail, FidoKey as ApiFidoKey,
     Flags as ApiFlags, HighSecurity as ApiHighSecurity, LogAuth as ApiLogAuth,
     Password as ApiPassword, PasswordMode as ApiPasswordMode, Phone as ApiPhone,
@@ -85,7 +86,7 @@ use mail_core_api::services::proton::{
     WeekStart as ApiWeekStart,
 };
 use mail_core_api::services::proton::{
-    AddressId, ContactEmailId, ContactId, DeviceEnvironment as ApiDeviceEnvironment, LabelId,
+    AddressId, DeviceEnvironment as ApiDeviceEnvironment, LabelId,
     LightOrDarkMode as ApiLightOrDarkMode,
 };
 use mail_core_api::session::{Config as RealApiConfig, EnvId};
@@ -280,40 +281,6 @@ impl FromSql for AddressType {
 }
 
 impl ToSql for AddressType {
-    fn to_sql(&self) -> Result<ToSqlOutput<'_>, SqliteError> {
-        Ok(ToSqlOutput::Owned(Value::Integer(*self as i64)))
-    }
-}
-
-/// TODO: Document this enum.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, TryFrom)]
-#[try_from(repr)]
-#[repr(u8)]
-pub enum ContactSendingPreferences {
-    /// TODO: Document this variant.
-    Custom = 0,
-
-    /// TODO: Document this variant.
-    Default = 1,
-}
-
-impl From<ApiContactSendingPreferences> for ContactSendingPreferences {
-    fn from(value: ApiContactSendingPreferences) -> Self {
-        match value {
-            ApiContactSendingPreferences::Custom => Self::Custom,
-            ApiContactSendingPreferences::Default => Self::Default,
-        }
-    }
-}
-
-impl FromSql for ContactSendingPreferences {
-    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        let val = u8::column_result(value)?;
-        Self::try_from(val).map_err(|_| FromSqlError::OutOfRange(i64::from(val)))
-    }
-}
-
-impl ToSql for ContactSendingPreferences {
     fn to_sql(&self) -> Result<ToSqlOutput<'_>, SqliteError> {
         Ok(ToSqlOutput::Owned(Value::Integer(*self as i64)))
     }
@@ -1001,35 +968,6 @@ impl From<ApiConfig> for RealApiConfig {
     }
 }
 
-/// Wrapper type around `Vec<String>` to implement [`FromSql`] and [`ToSql`].
-#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
-pub struct ContactTypes(Vec<String>);
-
-impl ContactTypes {
-    /// Create a new [`ContactTypes`] instance from a list of [`String`]s.
-    ///
-    #[must_use]
-    pub fn new(types: Vec<String>) -> Self {
-        Self(types)
-    }
-
-    /// Convert the [`ContactTypes`] into the inner [`Vec`].
-    #[must_use]
-    pub fn into_inner(self) -> Vec<String> {
-        self.0
-    }
-}
-
-impl Deref for ContactTypes {
-    type Target = Vec<String>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-sql_using_serde!(ContactTypes);
-
 /// TODO: Document this struct.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Email {
@@ -1130,8 +1068,6 @@ impl From<ApiFlags> for Flags {
 
 sql_using_serde!(Flags);
 
-declare_local_id!(LocalContactId => ContactId);
-declare_local_id!(LocalContactEmailId => ContactEmailId);
 declare_local_id!(LocalAddressId => AddressId);
 
 /// TODO: Document this struct.

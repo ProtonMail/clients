@@ -42,6 +42,7 @@ members = [
   "shared/task-service",
   "shared/telemetry-service",
   "contacts/contacts-api",
+  "contacts/contacts-common",
   "core/labels-common",
   "shared/mail-avatar",
   "shared/shared-types",
@@ -172,6 +173,10 @@ branch = "fix/parse-display-format-without-whitespace"
 [workspace.dependencies.contacts-api]
 version = "0.1.0"
 path = "contacts/contacts-api"
+
+[workspace.dependencies.contacts-common]
+version = "0.1.0"
+path = "contacts/contacts-common"
 
 [workspace.dependencies.mail-api-event-types]
 version = "0.1.0"

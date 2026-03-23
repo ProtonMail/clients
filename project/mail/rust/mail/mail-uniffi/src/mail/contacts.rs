@@ -12,7 +12,7 @@ use itertools::Itertools;
 use mail_common::ProtonMailError as RealProtonMailError;
 use mail_common::{MailContextError, MailUserContext};
 use mail_core_common::datatypes::DeviceContact as RealDeviceContact;
-use mail_core_common::models::{AppSettings, Contact as RealContact};
+use mail_core_common::models::{AppSettings, Contact as RealContact, action_delete_contacts};
 use mail_core_common::utils::MapVec as _;
 use std::{
     sync::{
@@ -124,7 +124,7 @@ pub async fn delete_contact(
 ) -> Result<(), ActionError> {
     let user_context = session.ctx()?;
     uniffi_async(async move {
-        RealContact::action_delete(user_context.action_queue(), vec![contact_id.into()])
+        action_delete_contacts(user_context.action_queue(), vec![contact_id.into()])
             .await
             .map_err(MailContextError::from)?;
 

@@ -31,7 +31,7 @@ static TOTAL_MESSAGES_INDEXED: AtomicU64 = AtomicU64::new(0);
 static TOTAL_BATCHES: AtomicU64 = AtomicU64::new(0);
 
 fn add_micros(target: &AtomicU64, duration: Duration) {
-    let micros = duration.as_micros().min(u64::MAX as u128) as u64;
+    let micros = u64::try_from(duration.as_micros().min(u128::from(u64::MAX))).unwrap_or(u64::MAX);
     target.fetch_add(micros, Ordering::Relaxed);
 }
 
@@ -128,41 +128,50 @@ impl IndexingTimingStats {
     }
 
     /// Total measured time (prep + index + cleanup)
+    #[must_use]
     pub fn total_time(&self) -> Duration {
         self.prep_time + self.index_time + self.cleanup_time
     }
 
     /// Average prep time per message
+    #[must_use]
     pub fn avg_prep_per_message(&self) -> Duration {
         if self.total_messages == 0 {
             Duration::ZERO
         } else {
-            let divisor = self.total_messages.min(u32::MAX as u64) as u32;
+            let divisor =
+                u32::try_from(self.total_messages.min(u64::from(u32::MAX))).unwrap_or(u32::MAX);
             self.prep_time / divisor
         }
     }
 
     /// Average index time per message
+    #[must_use]
     pub fn avg_index_per_message(&self) -> Duration {
         if self.total_messages == 0 {
             Duration::ZERO
         } else {
-            let divisor = self.total_messages.min(u32::MAX as u64) as u32;
+            let divisor =
+                u32::try_from(self.total_messages.min(u64::from(u32::MAX))).unwrap_or(u32::MAX);
             self.index_time / divisor
         }
     }
 
     /// Average cleanup time per message
+    #[must_use]
     pub fn avg_cleanup_per_message(&self) -> Duration {
         if self.total_messages == 0 {
             Duration::ZERO
         } else {
-            let divisor = self.total_messages.min(u32::MAX as u64) as u32;
+            let divisor =
+                u32::try_from(self.total_messages.min(u64::from(u32::MAX))).unwrap_or(u32::MAX);
             self.cleanup_time / divisor
         }
     }
 
     /// Average batch size
+    #[must_use]
+    #[allow(clippy::cast_precision_loss)]
     pub fn avg_batch_size(&self) -> f64 {
         if self.total_batches == 0 {
             0.0
@@ -173,6 +182,7 @@ impl IndexingTimingStats {
 }
 
 impl std::fmt::Display for IndexingTimingStats {
+    #[allow(clippy::cast_precision_loss)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let total = self.total_time();
         let prep_pct = if total.as_micros() > 0 {

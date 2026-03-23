@@ -36,11 +36,12 @@ impl TokioUpgrader {
     pub fn new(anchor: DynTrustAnchor, verifier: DynVerifier) -> Result<Self, TokioUpgraderErr> {
         let mut store = rustls::RootCertStore::empty();
 
-        if let Ok(certs) = rustls_native_certs::load_native_certs() {
-            debug!("load {} certificates from system", certs.len());
-            let _ = store.add_parsable_certificates(certs);
+        let native_certs = rustls_native_certs::load_native_certs();
+        if !native_certs.certs.is_empty() {
+            debug!("load {} certificates from system", native_certs.certs.len());
+            let _ = store.add_parsable_certificates(native_certs.certs);
         } else {
-            warn!("can't load system certificates");
+            warn!("can't load system certificates: {:?}",native_certs.errors);
         }
 
         let certs = anchor

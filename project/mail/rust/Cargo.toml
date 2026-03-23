@@ -153,8 +153,8 @@ zeroize = { version = "1.8.1", features = ["zeroize_derive"] }
 libfuzzer-sys = "0.4"
 mockall = "0.13.1"
 quick-xml = "0.38.2"
-reqwest = { version = "0.12.23", features = [
-  "rustls-tls",
+reqwest = { version = "0.13.2", features = [
+  "rustls",
 ], default-features = false }
 criterion = "0.7.0"
 pprof = { version = "0.15.0", features = ["criterion", "flamegraph"] }

@@ -3,7 +3,7 @@ use crate::core::datatypes::AvatarInformation;
 use crate::errors::UserSessionError;
 use crate::mail::MailUserSession;
 use crate::uniffi_async;
-use mail_common::ProtonMailError as RealProtonMailError;
+use mail_common::{MailContextError, ProtonMailError as RealProtonMailError};
 use mail_core_api::services::proton::ContactId;
 use mail_core_common::datatypes::contact_details::ContactDetailAddress as RealAddress;
 use mail_core_common::datatypes::contact_details::ContactDetailsEmail as RealContactDetailsEmail;
@@ -30,8 +30,19 @@ pub async fn get_contact_details(
     uniffi_async(async move {
         let ctx = ctx.user_context();
         let mut tether = ctx.mail_stash().connection().await?;
-        let details =
-            RealContactDetails::get_from_contact(ctx, contact_id.into(), &mut tether).await?;
+        let pgp = proton_crypto::new_pgp_provider();
+        let unlocked_user_keys = ctx
+            .unlocked_user_keys(&pgp, &tether, ctx.session())
+            .await
+            .map_err(|e| RealProtonMailError::from(MailContextError::from(e)))?;
+        let details = RealContactDetails::get_from_contact(
+            ctx.session(),
+            &pgp,
+            &unlocked_user_keys,
+            contact_id.into(),
+            &mut tether,
+        )
+        .await?;
         Ok::<_, RealProtonMailError>(details.into())
     })
     .await

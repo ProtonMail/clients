@@ -1,0 +1,11 @@
+---
+source: contacts/contacts-common/src/contact_list.rs
+expression: display_group(groups)
+---
+2 keys:
+
+🐂 (1 item)
+Contact 🐂 (#4F66DF): 🐂 Barbara Lox (0 addresses)
+
+🦊 (1 item)
+Contact 🦊 (#3F8B8E): 🦊 Barbara Fox (0 addresses)

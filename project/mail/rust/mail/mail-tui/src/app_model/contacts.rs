@@ -369,7 +369,17 @@ impl ContactsModel {
             let ctx = ctx.user_context();
             match async {
                 let mut tether = ctx.mail_stash().connection().await?;
-                InspectableContactDetails::get_from_contact(ctx, contact_id, &mut tether).await
+                let pgp = proton_crypto::new_pgp_provider();
+                let unlocked_user_keys =
+                    ctx.unlocked_user_keys(&pgp, &tether, ctx.session()).await?;
+                InspectableContactDetails::get_from_contact(
+                    ctx.session(),
+                    &pgp,
+                    &unlocked_user_keys,
+                    contact_id,
+                    &mut tether,
+                )
+                .await
             }
             .await
             {

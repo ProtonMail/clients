@@ -7,7 +7,7 @@ use mail_core_api::services::proton::{
 use mail_core_common::datatypes::{
     AvatarInformation, ContactEmailItem, ContactItem, ContactItemType, GroupedContacts,
 };
-use mail_core_common::models::{Contact, ModelIdExtension};
+use mail_core_common::models::{Contact, ModelIdExtension, action_delete_contacts};
 use mail_stash::orm::Model;
 
 #[tokio::test]
@@ -122,7 +122,7 @@ async fn delete_contacts() {
 
     assert!(!contact.deleted);
 
-    Contact::action_delete(user_ctx.action_queue(), vec![contact.id()])
+    action_delete_contacts(user_ctx.action_queue(), vec![contact.id()])
         .await
         .unwrap();
     user_ctx.execute_single_action().await.unwrap();

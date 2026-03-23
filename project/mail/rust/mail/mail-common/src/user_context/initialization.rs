@@ -5,8 +5,8 @@ use crate::{MailContextError, MailContextResult, MailUserContext, NewMailUserCon
 use futures::try_join;
 use mail_core_common::datatypes::{InitializationKey, InitializedComponentState};
 use mail_core_common::models::{
-    Address, Contact, DependencyInitializationError, InitializationError, InitializationWatcher,
-    InitializedComponent, User,
+    Address, DependencyInitializationError, InitializationError, InitializationWatcher,
+    InitializedComponent, User, initialize_contacts,
 };
 
 use core_event_loop::EventLoopError;
@@ -272,7 +272,7 @@ impl InitializationMediator {
             StoreLabelCounters::initialize(watcher, ctx.session(), ctx.user_stash()).await
         });
         let contacts = ctx.spawn_init(&watcher, |ctx, watcher| async move {
-            Contact::initialize(watcher, ctx.session(), ctx.user_stash()).await
+            initialize_contacts(watcher, ctx.session(), ctx.user_stash()).await
         });
         let event_loop = ctx.spawn_init(&watcher, |ctx, watcher| async move {
             initialize_event_loop(watcher, ctx.as_ref()).await

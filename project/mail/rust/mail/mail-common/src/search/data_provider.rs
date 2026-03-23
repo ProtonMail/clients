@@ -89,7 +89,7 @@ impl MessageDataProvider for StashMessageDataProvider {
                 }
             }
             Err(e) => {
-                tracing::debug!("Decryption failed for message {}: {}", local_id, e);
+                tracing::debug!("Decryption failed for message {}: {}", local_id, e.error);
                 return Ok(None);
             }
         };

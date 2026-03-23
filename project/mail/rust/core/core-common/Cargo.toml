@@ -24,6 +24,7 @@ include_dir = { workspace = true }
 indexmap = { workspace = true }
 parking_lot = { workspace = true }
 contacts-api = { workspace = true }
+mail-avatar = { workspace = true }
 mail-labels-common = { workspace = true }
 mail-shared-types = { workspace = true }
 mail-api-labels = { workspace = true }

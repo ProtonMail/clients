@@ -3982,6 +3982,14 @@ name = "mail-api-utils"
 version = "0.1.0"
 
 [[package]]
+name = "mail-avatar"
+version = "0.1.0"
+dependencies = [
+ "test-case",
+ "unicode-segmentation",
+]
+
+[[package]]
 name = "mail-builder"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4200,6 +4208,7 @@ dependencies = [
  "mail-action-queue",
  "mail-api-labels",
  "mail-api-utils",
+ "mail-avatar",
  "mail-core-api",
  "mail-core-common",
  "mail-crypto-notifications",

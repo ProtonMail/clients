@@ -1,0 +1,15 @@
+[package]
+name = "mail-avatar"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+unicode-segmentation = { workspace = true }
+
+[dev-dependencies]
+test-case = { workspace = true }
+
+[lints]
+workspace = true

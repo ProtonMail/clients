@@ -38,7 +38,6 @@
 //!
 
 mod account_details;
-mod avatar;
 pub mod contact_details;
 mod contact_list;
 mod dependencies;
@@ -50,7 +49,6 @@ mod timestamp_ms;
 mod user_feature_flags;
 
 pub use self::account_details::AccountDetails;
-pub use self::avatar::AvatarInformation;
 pub use self::contact_list::*;
 pub use self::dependencies::*;
 pub use self::issue_report::*;
@@ -59,6 +57,7 @@ pub use self::push_notifications::*;
 pub use self::system_label::*;
 pub use self::timestamp_ms::*;
 pub use self::user_feature_flags::*;
+pub use mail_avatar::AvatarInformation;
 
 pub use mail_labels_common::{
     ALL_LABEL_TYPES, CONTACT_LABEL_TYPES, LabelColor, LabelType, Labels, LocalLabelId,

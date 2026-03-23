@@ -1,4 +1,4 @@
-use super::avatar::AvatarInformation;
+use super::AvatarInformation;
 use crate::datatypes::{LabelType, LocalContactId, LocalLabelId, UnixTimestamp};
 use crate::models::{Contact, ContactEmail, Label};
 use crate::utils::MapVec as _;

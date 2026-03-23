@@ -1,4 +1,4 @@
-use super::avatar::AvatarInformation;
+use super::AvatarInformation;
 
 /// Represents detailed information about a user account.
 ///

@@ -28,7 +28,7 @@ impl TestContext {
             total: num_contacts,
         };
         Mock::given(method("GET"))
-            .and(path(r"/api/contacts"))
+            .and(path(r"/api/contacts/v4/contacts"))
             .respond_with(ResponseTemplate::new(200).set_body_json(response))
             .expect(1)
             .named(function_name!())
@@ -48,7 +48,7 @@ impl TestContext {
     ) {
         let contacts = contacts.unwrap_or_default();
         Mock::given(method("GET"))
-            .and(path("/api/contacts"))
+            .and(path("/api/contacts/v4/contacts"))
             .respond_with(
                 ResponseTemplate::new(200).set_body_json(GetContactsResponse {
                     total: contacts.len() as u64,
@@ -63,7 +63,7 @@ impl TestContext {
 
     #[function_name::named]
     pub async fn mock_get_contacts_respond_with(&self, respond_with: impl Fn(MockBuilder) -> Mock) {
-        let mock = Mock::given(method("GET")).and(path("/api/contacts"));
+        let mock = Mock::given(method("GET")).and(path("/api/contacts/v4/contacts"));
         let mock = respond_with(mock);
         mock.named(function_name!()).mount(self.mock_server()).await;
     }
@@ -80,7 +80,7 @@ impl TestContext {
     ) {
         let contact_emails = contact_emails.unwrap_or_default();
         Mock::given(method("GET"))
-            .and(path("/api/contacts/emails"))
+            .and(path("/api/contacts/v4/contacts/emails"))
             .respond_with(
                 ResponseTemplate::new(200).set_body_json(GetContactsEmailsResponse {
                     total: contact_emails.len() as u64,
@@ -103,7 +103,7 @@ impl TestContext {
             total: num_contacts,
         };
         Mock::given(method("GET"))
-            .and(path("/api/contacts/emails"))
+            .and(path("/api/contacts/v4/contacts/emails"))
             .respond_with(ResponseTemplate::new(200).set_body_json(response))
             .expect(1)
             .named(function_name!())
@@ -116,7 +116,7 @@ impl TestContext {
     #[function_name::named]
     pub async fn mock_get_full_contact(&self, contact: ApiContactFull) {
         Mock::given(method("GET"))
-            .and(path(format!("/api/contacts/{}", &contact.id)))
+            .and(path(format!("/api/contacts/v4/contacts/{}", &contact.id)))
             .respond_with(ResponseTemplate::new(200).set_body_json(GetContactResponse { contact }))
             //.expect(1)
             .named(function_name!())
@@ -127,7 +127,7 @@ impl TestContext {
     #[function_name::named]
     pub async fn mock_get_full_contact_does_not_exist(&self, contact_id: ContactId) {
         Mock::given(method("GET"))
-            .and(path(format!("/api/contacts/{contact_id}")))
+            .and(path(format!("/api/contacts/v4/contacts/{contact_id}")))
             .respond_with(ResponseTemplate::new(422).set_body_json(ApiErrorInfo {
                 code: General::NotExists as u32,
                 error: None,
@@ -144,7 +144,7 @@ impl TestContext {
     #[function_name::named]
     pub async fn mock_delete_contacts(&self, contact_ids: Vec<ContactId>) {
         Mock::given(method("PUT"))
-            .and(path("/api/contacts/delete"))
+            .and(path("/api/contacts/v4/contacts/delete"))
             .and(body_json(PutDeleteContacts {
                 ids: contact_ids.clone(),
             }))

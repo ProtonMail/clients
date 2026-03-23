@@ -11,6 +11,7 @@ use mail_muon::http::HttpReqExt;
 use mail_muon::{GET, PUT};
 use mail_muon::{ProtonRequest, ProtonResponse, serde_to_query};
 
+const CONTACTS_V4: &str = "/contacts/v4/contacts";
 const CONTACTS_V6: &str = "/contacts/v6";
 
 #[allow(async_fn_in_trait)]
@@ -48,7 +49,7 @@ pub trait ContactApi {
 
 impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> ContactApi for This {
     async fn get_contact(&self, contact_id: ContactId) -> ApiServiceResult<GetContactResponse> {
-        Ok(GET!("/contacts/{contact_id}")
+        Ok(GET!("{CONTACTS_V4}/{contact_id}")
             .send_with(self)
             .await?
             .ok()?
@@ -59,7 +60,7 @@ impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> ContactApi for This {
         &self,
         options: GetContactsOptions,
     ) -> ApiServiceResult<GetContactsResponse> {
-        Ok(GET!("/contacts")
+        Ok(GET!("{CONTACTS_V4}")
             .query(serde_to_query(options)?)
             .send_with(self)
             .await?
@@ -71,7 +72,7 @@ impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> ContactApi for This {
         &self,
         options: GetContactsEmailsOptions,
     ) -> ApiServiceResult<GetContactsEmailsResponse> {
-        Ok(GET!("/contacts/emails")
+        Ok(GET!("{CONTACTS_V4}/emails")
             .query(serde_to_query(options)?)
             .send_with(self)
             .await?
@@ -83,7 +84,7 @@ impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> ContactApi for This {
         &self,
         ids: Vec<ContactId>,
     ) -> ApiServiceResult<PutDeleteContactsResponse> {
-        Ok(PUT!("/contacts/delete")
+        Ok(PUT!("{CONTACTS_V4}/delete")
             .body_json(PutDeleteContacts { ids })?
             .send_with(self)
             .await?

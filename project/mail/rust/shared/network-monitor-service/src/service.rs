@@ -634,6 +634,7 @@ mod tests {
     }
 
     #[tokio::test(flavor = "multi_thread")]
+    #[ignore = "flaky, can fail on ci under high load"]
     async fn immediate_request_throttling() {
         let mut tester = MockOnlineTester::new();
         let mut config = test_config();

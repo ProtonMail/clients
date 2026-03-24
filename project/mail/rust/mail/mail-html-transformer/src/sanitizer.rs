@@ -545,6 +545,25 @@ struct CssUrlVisitor;
 impl<'i> Visitor<'i> for CssUrlVisitor {
     type Error = Infallible;
 
+    fn visit_rule(
+        &mut self,
+        rule: &mut lightningcss::rules::CssRule<'i>,
+    ) -> Result<(), Self::Error> {
+        rule.visit_children(self)?;
+
+        // Since @import rule automatically calls the URL, it can be used for tracking.
+        // For example:
+        //
+        // @import 'http://my-tracker-url.invalid';
+        //
+        // User does not have to click anything to trigger request.
+        if let lightningcss::rules::CssRule::Import(import) = rule {
+            import.url = "".into();
+        }
+
+        Ok(())
+    }
+
     fn visit_types(&self) -> VisitTypes {
         VisitTypes::all()
     }

@@ -1,8 +1,8 @@
+use crate::challenge::HumanVerificationChallenge;
 use crate::consts::CoreBundle::HumanVerificationRequired;
-use crate::services::proton::HumanVerificationChallenge;
-use crate::services::proton::common::ApiErrorInfo;
 use crate::verification::notifier::ChallengeResponse;
 use crate::verification::{ChallengePayload, ChallengeServer, DynChallengeNotifier};
+use mail_api_shared::ApiErrorInfo;
 use mail_muon::common::{BoxFut, Sender, SenderLayer};
 use mail_muon::util::ProtonRequestExt;
 use mail_muon::{ProtonRequest, ProtonResponse, Result as MuonResult, Status};

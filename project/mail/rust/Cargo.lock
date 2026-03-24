@@ -1186,6 +1186,7 @@ dependencies = [
  "insta",
  "itertools 0.13.0",
  "mail-action-queue",
+ "mail-api-session",
  "mail-api-utils",
  "mail-avatar",
  "mail-core-api",
@@ -4009,6 +4010,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "mail-api-session"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "bytes",
+ "chrono",
+ "cookie",
+ "derive_more 2.0.1",
+ "futures",
+ "mail-api-shared",
+ "mail-muon",
+ "mail-network-monitor-service",
+ "mail-proton-ids",
+ "mail-stash",
+ "mail-task-service",
+ "parking_lot",
+ "proton-crypto-account",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "url",
+ "wiremock",
+]
+
+[[package]]
 name = "mail-api-shared"
 version = "0.1.0"
 dependencies = [
@@ -4204,6 +4234,7 @@ dependencies = [
  "insta",
  "mail-api-event-types",
  "mail-api-labels",
+ "mail-api-session",
  "mail-api-shared",
  "mail-api-utils",
  "mail-core-api",

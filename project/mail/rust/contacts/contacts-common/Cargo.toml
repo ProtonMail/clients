@@ -41,6 +41,7 @@ url = { workspace = true }
 contacts-api = { workspace = true, features = ["mocks"] }
 contacts-common = { path = ".", features = ["test-utils"] }
 insta = { workspace = true }
+mail-api-session = { workspace = true, features = ["mocks"] }
 mail-core-api = { workspace = true, features = ["mocks"] }
 pretty_assertions = { workspace = true }
 proton-crypto-account = { workspace = true }

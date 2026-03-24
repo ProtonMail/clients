@@ -6,12 +6,13 @@ use crate::contact_email::ContactEmail;
 use crate::test_utils::new_contact_test_connection;
 use crate::{AddressKeysContactFetchPolicy, public_address_keys_from_contacts};
 use contacts_api::mocks::ContactsMockServerExt;
+use mail_api_session::mocks::test_session;
+use mail_api_session::session::Session;
 use mail_core_api::services::proton::{
     ContactBasic as ApiContactBasic, ContactCard as ApiContactCard,
     ContactEmail as ApiContactEmail, ContactEmailId, ContactFull as ApiContactFull, ContactId,
     ContactSendingPreferences as ApiContactSendingPreferences, ContactUID, LabelId,
 };
-use mail_core_api::session::{AppVersion, Endpoint, Env, EnvId, Server, Session};
 use mail_labels_common::Labels;
 use mail_shared_types::{ModelExtension, ModelIdExtension};
 use mail_stash::orm::Model;
@@ -21,8 +22,7 @@ use proton_crypto_account::contacts::ContactCardType;
 use proton_crypto_account::keys::{DecryptedUserKey, KeyId, UnlockedUserKey, UnlockedUserKeys};
 use proton_crypto_account::proton_crypto::crypto::{AccessKeyInfo, DataEncoding, PGPProviderSync};
 use proton_crypto_account::proton_crypto::new_pgp_provider;
-use wiremock::matchers::{method, path_regex};
-use wiremock::{Mock, MockServer, ResponseTemplate};
+use wiremock::MockServer;
 
 use crate::types::{ContactSendingPreferences, ContactTypes};
 
@@ -71,51 +71,6 @@ fn unlocked_user_key<P: PGPProviderSync>(pgp: &P) -> UnlockedUserKeys<P> {
     };
 
     UnlockedUserKeys::from(vec![user_key])
-}
-
-// ---------------------------------------------------------------------------
-// Session helper
-// ---------------------------------------------------------------------------
-
-struct MockApiEnv {
-    host: Endpoint,
-}
-
-impl Env for MockApiEnv {
-    fn servers(&self, _: &AppVersion) -> Vec<Server> {
-        vec![Server::new(self.host.clone(), "/api")]
-    }
-}
-
-async fn test_session(mock_server: &MockServer) -> Session {
-    // Muon auto-creates an auth session and refreshes tokens on startup.
-    Mock::given(method("POST"))
-        .and(path_regex(r".*/auth/v4/sessions$"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "ServerProof": "dummy", "UID": "dummy", "AccessToken": "dummy",
-            "RefreshToken": "dummy", "Scopes": ["dummy"],
-            "2FA": { "Enabled": 0 }, "PasswordMode": 1,
-        })))
-        .mount(mock_server)
-        .await;
-    Mock::given(method("POST"))
-        .and(path_regex(r".*/auth/v4/refresh$"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "UID": "dummy", "AccessToken": "dummy",
-            "RefreshToken": "dummy", "Scopes": ["dummy"],
-        })))
-        .mount(mock_server)
-        .await;
-
-    let host: Endpoint = mock_server
-        .uri()
-        .parse()
-        .expect("mock server URI must be valid");
-    Session::builder()
-        .with_env_id(EnvId::new_custom(MockApiEnv { host }))
-        .build()
-        .await
-        .unwrap()
 }
 
 // ---------------------------------------------------------------------------

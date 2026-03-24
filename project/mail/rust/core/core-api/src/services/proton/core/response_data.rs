@@ -29,7 +29,6 @@ use serde::Deserialize;
 #[cfg(feature = "mocks")]
 use serde::Serialize;
 use serde_aux::field_attributes::deserialize_default_from_null;
-use serde_json::Error as JsonError;
 use serde_json::Value as JsonValue;
 use serde_repr::Deserialize_repr;
 #[cfg(feature = "mocks")]
@@ -143,17 +142,7 @@ pub enum LogAuth {
     Advanced = 2,
 }
 
-/// TODO: Document this enum.
-#[derive(Clone, Copy, Debug, Deserialize_repr, Eq, Hash, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize_repr))]
-#[repr(u8)]
-pub enum PasswordMode {
-    /// TODO: Document this variant.
-    One = 1,
-
-    /// TODO: Document this variant.
-    Two = 2,
-}
+pub use mail_api_session::auth::PasswordMode;
 
 /// TODO: Document this enum.
 #[derive(Clone, Copy, Debug, Deserialize_repr, Eq, Hash, PartialEq)]
@@ -518,24 +507,7 @@ pub struct HighSecurity {
     pub value: bool,
 }
 
-/// Information for the human verification challenge.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct HumanVerificationChallenge {
-    pub description: String,
-    pub direct: u8,
-    pub expires_at: u64,
-    pub human_verification_methods: Vec<String>,
-    pub human_verification_token: String,
-    pub web_url: String,
-}
-
-impl HumanVerificationChallenge {
-    pub fn from_value(value: JsonValue) -> Result<Self, JsonError> {
-        serde_json::from_value(value)
-    }
-}
+pub use mail_api_session::challenge::HumanVerificationChallenge;
 
 /// TODO: Document this struct.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]

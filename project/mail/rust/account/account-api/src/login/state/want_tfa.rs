@@ -1,5 +1,5 @@
 use crate::login::state::{HasSessionId, HasUserId, StateData};
-use crate::login::{LoginError, state::State};
+use crate::login::{LoginError, TfaMethods, state::State};
 use crate::shared::SecureString;
 use crate::shared::challenge::get_auth_info;
 use derive_more::From;
@@ -21,6 +21,7 @@ pub struct WantTfa {
     username: String,
     pass: SecureString,
     fido_details: Option<fido2::Response>,
+    totp_available: bool,
 }
 
 impl WantTfa {
@@ -30,6 +31,7 @@ impl WantTfa {
         username: String,
         pass: SecureString,
         fido_details: Option<fido2::Response>,
+        totp_available: bool,
     ) -> Self {
         info!("Login flow wants 2FA");
 
@@ -39,6 +41,16 @@ impl WantTfa {
             username,
             pass,
             fido_details,
+            totp_available,
+        }
+    }
+
+    /// Returns which 2FA methods are available for this login step.
+    pub fn tfa_methods(&self) -> TfaMethods {
+        match (self.totp_available, self.fido_details.is_some()) {
+            (true, true) => TfaMethods::TotpAndFido2,
+            (false, true) => TfaMethods::Fido2,
+            _ => TfaMethods::Totp,
         }
     }
 
@@ -53,6 +65,7 @@ impl WantTfa {
             username,
             pass,
             fido_details: _,
+            totp_available: _,
         } = self;
 
         let result = flow.totp(&code).await;
@@ -91,6 +104,7 @@ impl WantTfa {
             username,
             pass,
             fido_details: _,
+            totp_available: _,
         } = self;
 
         let result = flow.fido(fido_request).await;

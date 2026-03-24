@@ -140,6 +140,17 @@ pub enum LoginError {
 
 impl ServiceError for LoginError {}
 
+/// Represents which 2FA methods are available for the current login flow.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TfaMethods {
+    /// Only TOTP is available.
+    Totp,
+    /// Only FIDO2 is available.
+    Fido2,
+    /// Both TOTP and FIDO2 are available.
+    TotpAndFido2,
+}
+
 /// A login flow that can be used to log in a user.
 ///
 /// The flow is used to guide the user through the login process,
@@ -308,6 +319,14 @@ impl LoginFlow {
         self.transition(|s: State| s.check_host_device_confirmation())
             .await
             .inspect_err(|_| self.try_recover())
+    }
+
+    /// Get which 2FA methods are available for the current login flow.
+    pub fn tfa_methods(&self) -> Result<TfaMethods, LoginError> {
+        match &self.state {
+            State::WantTfa(flow) => Ok(flow.tfa_methods()),
+            _ => Err(LoginError::InvalidState),
+        }
     }
 
     /// Submit TOTP 2FA code.

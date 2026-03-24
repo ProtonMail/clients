@@ -84,6 +84,19 @@ impl LoginFlow {
         .await
     }
 
+    /// Get which 2FA methods are available for the current login flow.
+    pub async fn tfa_methods(&self) -> Result<TfaMethods, LoginError> {
+        let flow = self.flow.clone();
+        uniffi_async::<_, LoginError, _>(async move {
+            let guard = flow.lock().await;
+            guard
+                .tfa_methods()
+                .map(TfaMethods::from)
+                .map_err(LoginError::from)
+        })
+        .await
+    }
+
     /// Submit 2FA fido2 code.
     pub async fn submit_fido(&self, fido_data: Fido2RequestFfi) -> Result<(), LoginError> {
         let flow = self.flow.clone();
@@ -327,6 +340,27 @@ impl LoginFlow {
     #[must_use]
     pub fn inner_flow(&self) -> Arc<Mutex<login_api::LoginFlow>> {
         Arc::clone(&self.flow)
+    }
+}
+
+/// Represents which 2FA methods are available for the current login flow.
+#[derive(Debug, UniffiEnum)]
+pub enum TfaMethods {
+    /// Only TOTP is available.
+    Totp,
+    /// Only FIDO2 is available.
+    Fido2,
+    /// Both TOTP and FIDO2 are available.
+    TotpAndFido2,
+}
+
+impl From<login_api::TfaMethods> for TfaMethods {
+    fn from(value: login_api::TfaMethods) -> Self {
+        match value {
+            login_api::TfaMethods::Totp => TfaMethods::Totp,
+            login_api::TfaMethods::Fido2 => TfaMethods::Fido2,
+            login_api::TfaMethods::TotpAndFido2 => TfaMethods::TotpAndFido2,
+        }
     }
 }
 

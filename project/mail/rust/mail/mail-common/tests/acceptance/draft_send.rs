@@ -1,5 +1,6 @@
 use super::drafts_common::{self, draft_message};
 use chrono::{Days, Local, Months, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
+use contacts_api::mocks::ContactsMockServerExt;
 use indoc::formatdoc;
 use mail_action_queue::queue::{ActionError, AsActionError, QueuedError};
 use mail_api::services::proton::prelude::{MailEvent, MessageEvent, PostCancelSendResponse};
@@ -1843,7 +1844,7 @@ async fn send_external_with_password_even_if_contact_has_pgp_mime_encryption() {
         uid: ContactUID::from("UID"),
     };
 
-    ctx.core_test_context
+    ctx.mock_server()
         .mock_get_full_contact(api_contact.clone())
         .await;
 

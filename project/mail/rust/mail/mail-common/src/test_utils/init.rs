@@ -1,5 +1,6 @@
 use super::attachment::{testdata_attachment_metadata, testdata_attachment_metadata_complete};
 use crate::test_utils::test_context::MailTestContext;
+use contacts_api::mocks::ContactsMockServerExt;
 use mail_api::services::proton::common::{ConversationId, MessageId};
 use mail_api::services::proton::prelude::{GetIncomingDefaultResponse, RunningTasks};
 use mail_api::services::proton::request_data::{PutMobileSettings, PutNextMessageOnMoveRequest};
@@ -230,10 +231,12 @@ impl MailTestContext {
         }
 
         self.core_test_context
+            .mock_server()
             .mock_get_contacts_emails(Some(params.emails), number_of_calls)
             .await;
 
         self.core_test_context
+            .mock_server()
             .mock_get_contacts(Some(params.contacts), number_of_calls)
             .await;
 

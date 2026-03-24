@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use contacts_api::mocks::ContactsMockServerExt;
 use core_event_loop::EventLoopError;
 use mail_action_queue::queue::{ActionError, AsActionError, QueuedError};
 use mail_api::services::proton::prelude::ViewMode;
@@ -67,8 +68,12 @@ async fn setup_mail_refresh_mocks(ctx: &MailTestContext) {
 }
 
 async fn setup_contacts_refresh_mocks(ctx: &MailTestContext, expect: impl Into<Times> + Clone) {
-    ctx.mock_get_contacts(None, expect.clone().into()).await;
-    ctx.mock_get_contacts_emails(None, expect.into()).await;
+    ctx.mock_server()
+        .mock_get_contacts(None, expect.clone().into())
+        .await;
+    ctx.mock_server()
+        .mock_get_contacts_emails(None, expect.into())
+        .await;
     ctx.mock_get_labels_and(vec![], |mock| mock.and(query_param("Type", "2")), 1..)
         .await;
 }
@@ -157,14 +162,15 @@ async fn test_on_refresh_impl_contacts_network_error() {
     setup_contacts_refresh_mocks(&ctx, 0..).await;
     ctx.mock_ping_success().await;
 
-    ctx.mock_get_contacts_respond_with(|mock| {
-        mock.respond_with(
-            ResponseTemplate::new(500)
-                .set_body_json(create_error_response(500, "Internal server error")),
-        )
-        .with_priority(1)
-    })
-    .await;
+    ctx.mock_server()
+        .mock_get_contacts_respond_with(|mock| {
+            mock.respond_with(
+                ResponseTemplate::new(500)
+                    .set_body_json(create_error_response(500, "Internal server error")),
+            )
+            .with_priority(1)
+        })
+        .await;
 
     // Test Refresh::Contacts with network error
     let error = refresh(&user_ctx, Refresh::Contacts).await.unwrap_err();

@@ -93,6 +93,7 @@ test-utils = [
   "dep:rand",
   "mail-core-api/mocks",
   "mail-labels-common/test-utils",
+  "contacts-api/mocks",
   "contacts-common/test-utils",
 ]
 events-v6 = []

@@ -15,6 +15,8 @@ test-utils = [
   "dep:tracing-subscriber",
   "dep:velcro",
   "dep:wiremock-multipart",
+  "dep:contacts-api",
+  "contacts-api/mocks",
   "mail-core-common/test-utils",
 ]
 
@@ -64,6 +66,7 @@ mail-api-labels = { workspace = true }
 mail-core-api = { workspace = true, features = ["sql"] }
 mail-api = { workspace = true, features = ["sql"] }
 mail-canonical-email = { workspace = true }
+contacts-api = { workspace = true, optional = true }
 mail-core-common = { workspace = true }
 mail-telemetry = { workspace = true }
 proton-crypto-account = { workspace = true }

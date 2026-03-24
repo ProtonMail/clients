@@ -1,4 +1,5 @@
 #![allow(clippy::needless_pass_by_value)]
+use contacts_api::mocks::ContactsMockServerExt;
 use core_event_loop::v6::EventSubscriber;
 use mail_core_api::services::proton::{
     Action, ContactBasic as ApiContactBasic, ContactCard as ApiContactCard,
@@ -79,9 +80,11 @@ async fn test_sync_and_load_contacts() {
     let test_contacts_email = create_test_remote_contact_emails();
 
     // Api mock.
-    ctx.mock_get_all_contacts_partial_request(test_contacts.clone())
+    ctx.mock_server()
+        .mock_get_all_contacts_partial_request(test_contacts.clone())
         .await;
-    ctx.mock_get_all_contact_emails_request(test_contacts_email.clone())
+    ctx.mock_server()
+        .mock_get_all_contact_emails_request(test_contacts_email.clone())
         .await;
 
     // Sync contacts
@@ -413,11 +416,15 @@ async fn prepare_sync_test_data_contacts(
 ) {
     let remote_contact_id = test_remote_full_contact.id.clone();
     // Api mock.
-    ctx.mock_get_all_contacts_partial_request(test_remote_contacts)
+    ctx.mock_server()
+        .mock_get_all_contacts_partial_request(test_remote_contacts)
         .await;
-    ctx.mock_get_all_contact_emails_request(test_remote_contacts_email)
+    ctx.mock_server()
+        .mock_get_all_contact_emails_request(test_remote_contacts_email)
         .await;
-    ctx.mock_get_full_contact(test_remote_full_contact).await;
+    ctx.mock_server()
+        .mock_get_full_contact(test_remote_full_contact)
+        .await;
 
     // Sync contacts
     let mut tether = user_ctx.mail_stash().connection().await.unwrap();

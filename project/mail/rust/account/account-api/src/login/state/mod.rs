@@ -307,7 +307,7 @@ impl State {
             observability: PreLoginMetricRecorder::default(),
         };
 
-        Self::want_tfa(client.auth().into(), data, username, pass, None)
+        Self::want_tfa(client.auth().into(), data, username, pass, None, true)
     }
 
     /// Create a `WantMbp` state from a resumed login flow.
@@ -347,8 +347,9 @@ impl State {
         username: String,
         pass: SecureString,
         fido_details: Option<fido2::Response>,
+        totp_available: bool,
     ) -> Self {
-        WantTfa::new(flow, data, username, pass, fido_details).into()
+        WantTfa::new(flow, data, username, pass, fido_details, totp_available).into()
     }
 
     /// Create a `WantMbp` state.

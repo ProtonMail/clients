@@ -246,6 +246,7 @@ impl WantLogin {
                     ))
                     .await?;
 
+                let totp_available = flow.has_totp();
                 let fido_details = flow.fido_details().cloned();
 
                 Ok(State::want_tfa(
@@ -254,6 +255,7 @@ impl WantLogin {
                     username,
                     pass,
                     fido_details,
+                    totp_available,
                 ))
             }
 

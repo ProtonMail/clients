@@ -142,6 +142,16 @@ impl From<VcardValidationError> for CoreContextError {
     }
 }
 
+impl From<contacts_common::ContactCryptoError> for CoreContextError {
+    fn from(e: contacts_common::ContactCryptoError) -> Self {
+        match e {
+            contacts_common::ContactCryptoError::Contact(e) => CoreContextError::ContactError(e),
+            contacts_common::ContactCryptoError::DB(e) => CoreContextError::Stash(e),
+            e => CoreContextError::Other(anyhow::anyhow!(e)),
+        }
+    }
+}
+
 impl From<JoinError> for CoreContextError {
     fn from(e: JoinError) -> Self {
         CoreContextError::Other(anyhow!(e))

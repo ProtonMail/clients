@@ -1198,6 +1198,7 @@ dependencies = [
  "proton-crypto",
  "proton-crypto-account",
  "serde",
+ "serde_json",
  "sqlite-watcher",
  "test-case",
  "thiserror 2.0.18",
@@ -1206,6 +1207,7 @@ dependencies = [
  "tracing-subscriber",
  "unicode-segmentation",
  "url",
+ "wiremock",
 ]
 
 [[package]]

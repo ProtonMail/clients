@@ -38,12 +38,17 @@ unicode-segmentation = { workspace = true }
 url = { workspace = true }
 
 [dev-dependencies]
+contacts-api = { workspace = true, features = ["mocks"] }
 contacts-common = { path = ".", features = ["test-utils"] }
 insta = { workspace = true }
+mail-core-api = { workspace = true, features = ["mocks"] }
 pretty_assertions = { workspace = true }
+proton-crypto-account = { workspace = true }
 test-case = { workspace = true }
 tokio = { workspace = true }
 tracing-subscriber = { workspace = true }
+serde_json = { workspace = true }
+wiremock = { workspace = true }
 
 [features]
 default = ["sql"]

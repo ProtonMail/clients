@@ -1,6 +1,8 @@
 //! Shared API contact types.
 
 mod api;
+#[cfg(feature = "mocks")]
+pub mod mocks;
 mod requests;
 mod responses;
 

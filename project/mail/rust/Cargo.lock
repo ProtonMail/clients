@@ -1164,6 +1164,7 @@ dependencies = [
  "serde_repr",
  "serde_with",
  "smart-default",
+ "wiremock",
 ]
 
 [[package]]
@@ -4106,6 +4107,7 @@ dependencies = [
  "chrono",
  "clap",
  "color-backtrace",
+ "contacts-api",
  "core-event-loop",
  "criterion 0.7.0",
  "derivative",

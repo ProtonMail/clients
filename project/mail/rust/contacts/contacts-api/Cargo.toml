@@ -18,10 +18,12 @@ serde_repr = { workspace = true }
 serde_with = { workspace = true }
 smart-default = { workspace = true }
 mail-stash = { workspace = true, optional = true }
+wiremock = { workspace = true, optional = true }
 
 [features]
 default = []
 mocks = [
+  "dep:wiremock",
   "mail-api-labels/mocks",
   "mail-api-event-types/mocks",
   "mail-api-shared/mocks",

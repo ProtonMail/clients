@@ -1,3 +1,4 @@
+use contacts_api::mocks::ContactsMockServerExt;
 use mail_common::test_utils::init::Params as TestParams;
 use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
 use mail_core_api::services::proton::ContactId;
@@ -107,7 +108,7 @@ async fn delete_contacts() {
     }];
 
     ctx.setup_user(params.clone()).await;
-    ctx.core_test_context
+    ctx.mock_server()
         .mock_delete_contacts(vec!["123".into()])
         .await;
 

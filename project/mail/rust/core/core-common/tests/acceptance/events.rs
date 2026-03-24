@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use contacts_api::mocks::ContactsMockServerExt;
 use core_event_loop::v6::EventSubscriber;
 use mail_core_api::services::proton::{Action, ContactEventV6, ContactId, ContactRootEventV6};
 use mail_core_common::{
@@ -29,7 +30,9 @@ async fn deleted_contact_does_not_fail_event_poll() {
         has_more: false,
     };
 
-    ctx.mock_get_full_contact_does_not_exist(contact_id).await;
+    ctx.mock_server()
+        .mock_get_full_contact_does_not_exist(contact_id)
+        .await;
 
     // Fire event:
     subscriber

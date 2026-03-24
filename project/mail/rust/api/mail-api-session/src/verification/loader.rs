@@ -1,8 +1,8 @@
-use crate::service::ApiServiceError;
-use crate::services::proton::BuildError;
+use crate::build::BuildError;
 use crate::session::{Config, Session};
 use bytes::Bytes;
 use futures::TryFutureExt;
+use mail_api_shared::ApiServiceError;
 use mail_muon::ProtonRequest;
 use mail_muon::common::{Sender, Server};
 use mail_muon::{Method, ProtonResponse};

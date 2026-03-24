@@ -1,4 +1,4 @@
-use crate::services::proton::prelude::*;
+use crate::challenge::HumanVerificationChallenge;
 use async_trait::async_trait;
 use derive_more::Debug;
 use mail_muon::common::{Name, Server};

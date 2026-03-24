@@ -112,6 +112,7 @@ pub struct CookieJarLayer {
 
 impl CookieJarLayer {
     /// Create a new cookie jar layer.
+    #[must_use]
     pub fn new(jar: CookieJar) -> Self {
         Self {
             jar: Arc::new(RwLock::new(jar)),

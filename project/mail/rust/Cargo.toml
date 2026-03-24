@@ -48,6 +48,7 @@ members = [
   "shared/shared-types",
   "api/mail-api-event-types",
   "api/mail-api-labels",
+  "api/mail-api-session",
   "api/mail-api-shared",
   "shared/mail-proton-ids",
   "shared/vcard",
@@ -185,6 +186,10 @@ path = "api/mail-api-event-types"
 [workspace.dependencies.mail-api-labels]
 version = "0.1.0"
 path = "api/mail-api-labels"
+
+[workspace.dependencies.mail-api-session]
+version = "0.1.0"
+path = "api/mail-api-session"
 
 [workspace.dependencies.mail-api-shared]
 version = "0.1.0"

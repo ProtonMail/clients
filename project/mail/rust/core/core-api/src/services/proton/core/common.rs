@@ -52,22 +52,10 @@ pub enum DeviceEnvironment {
     AppleDev = 16,
 }
 
-declare_proton_id! {
-    pub UserId
-}
-
-impl UserId {
-    #[must_use]
-    pub fn short_id(&self) -> String {
-        self.0[..10].to_string()
-    }
-}
+pub use mail_api_session::ids::{SessionId, UserId};
 
 declare_proton_id! {
     pub AddressId
-}
-declare_proton_id! {
-    pub SessionId
 }
 pub use contacts_api::{ContactEmailId, ContactId, ContactUID};
 declare_proton_id! {

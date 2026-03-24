@@ -3,7 +3,6 @@
 /// The `deserialize` function converts `true` to `1` and `false` to `0`,
 /// yielding an error if the value is not `1` or `0`.
 #[cfg(feature = "serde")]
-#[cfg(feature = "core")]
 pub mod bool_int {
     use serde::{Deserialize, Deserializer, Serializer};
 

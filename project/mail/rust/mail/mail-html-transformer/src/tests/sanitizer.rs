@@ -159,3 +159,21 @@ fn sanitize_pasted_content_comprehensive() {
 
     insta::assert_snapshot!(result);
 }
+
+#[test]
+fn sanitize_import_query_in_css() {
+    let html = r"
+        <html>
+            <style>
+                @import 'http://tracking-url.invalid/';
+            </style>
+        </html>
+    ";
+
+    let mut t = Transformer::new(html);
+
+    t.strip_whitelist(StripStyleSheets::No);
+
+    let result = t.to_string();
+    insta::assert_snapshot!(result);
+}

@@ -1,0 +1,8 @@
+---
+source: mail/mail-html-transformer/src/tests/sanitizer.rs
+expression: result
+---
+<html><head><style>@import "";
+</style>
+        </head><body>
+    </body></html>

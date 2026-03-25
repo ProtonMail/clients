@@ -42,9 +42,14 @@ pub trait ContactApi {
         ids: Vec<ContactId>,
     ) -> ApiServiceResult<PutDeleteContactsResponse>;
 
-    async fn get_contact_event_v6(&self, event_id: EventId) -> ApiServiceResult<String>;
+    fn get_contact_event_v6(
+        &self,
+        event_id: EventId,
+    ) -> impl Future<Output = ApiServiceResult<String>> + Send;
 
-    async fn get_contact_event_latest_v6(&self) -> ApiServiceResult<GetEventsLatestResponse>;
+    fn get_contact_event_latest_v6(
+        &self,
+    ) -> impl Future<Output = ApiServiceResult<GetEventsLatestResponse>> + Send;
 }
 
 impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> ContactApi for This {

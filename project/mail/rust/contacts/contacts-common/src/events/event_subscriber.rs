@@ -1,8 +1,3 @@
-use crate::event_loop::event_subscriber::CoreEventSubscriberError;
-use crate::event_loop::v6::ContactEventSourceV6;
-use crate::models::{Contact, Label, ModelExtension};
-use crate::services::event_loop_service::EventManagerContext;
-use crate::{UserContext, join_task};
 use anyhow::Context;
 use async_trait::async_trait;
 use core_event_loop::v6::{EventSource, EventSubscriber};
@@ -10,41 +5,45 @@ use core_event_loop::{EventSubscriberError, EventSubscriberResult, RefreshFlag};
 use mail_action_queue::action::ActionGroup;
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
+use mail_labels_common::Label;
+use mail_shared_types::ModelExtension;
 use std::collections::HashMap;
-use std::sync::Weak;
 use tracing::{debug, error};
 
-#[derive(Clone)]
-pub struct ContactEventV6Subscriber(Weak<UserContext>);
+use crate::contact::Contact;
+use crate::events::{
+    ContactActionQueueContext, ContactEventSessionContext, ContactEventSourceV6,
+    ContactEventStorageContext, ContactEventSubscriberError, ContactIssueReporterContext,
+    ContactTaskSpawnerContext,
+};
 
-impl From<Weak<UserContext>> for ContactEventV6Subscriber {
-    fn from(value: Weak<UserContext>) -> Self {
-        Self(value)
-    }
-}
+#[derive(Clone, Default)]
+pub struct ContactEventV6Subscriber;
 
 #[async_trait]
-impl EventSubscriber<EventManagerContext, ContactEventSourceV6> for ContactEventV6Subscriber {
+impl<Core, Ctx> EventSubscriber<Ctx, ContactEventSourceV6<Core>> for ContactEventV6Subscriber
+where
+    Core: EventSource,
+    Ctx: ContactEventSessionContext
+        + ContactEventStorageContext
+        + ContactIssueReporterContext
+        + ContactTaskSpawnerContext
+        + ContactActionQueueContext,
+{
     fn name(&self) -> &'static str {
         "contact-v6-subscriber"
     }
 
     async fn on_event(
         &self,
-        _: &EventManagerContext,
-        event: &<ContactEventSourceV6 as EventSource>::Event,
-        cache: &mut <ContactEventSourceV6 as EventSource>::Cache,
+        ctx: &Ctx,
+        event: &<ContactEventSourceV6<Core> as EventSource>::Event,
+        cache: &mut <ContactEventSourceV6<Core> as EventSource>::Cache,
     ) -> EventSubscriberResult<()> {
-        let ctx = self
-            .0
-            .upgrade()
-            .context("Context is dead")
-            .map_err(CoreEventSubscriberError::Other)
-            .map_err(|e| -> Box<dyn EventSubscriberError> { Box::new(e) })?;
         async {
-            cache.fetch_event_data(event, ctx.session()).await?;
+            cache.fetch_event_data(event, ctx.get_contact_api()).await?;
 
-            let mut tether = ctx.user_stash.connection().await?;
+            let mut tether = ctx.get_contact_stash().connection().await?;
             let mut changeset = RebaseChangeSet::default();
             tether
                 .tx(async |tx| {
@@ -76,20 +75,20 @@ impl EventSubscriber<EventManagerContext, ContactEventSourceV6> for ContactEvent
                     }
 
                     if let Err(e) = ctx
-                        .queue()
+                        .get_contact_action_queue()
                         .rebase_in(ActionGroup::default(), &changeset, tx)
                         .await
                     {
                         error!("Failed to rebase changes: {e}");
                     }
-                    Ok::<_, CoreEventSubscriberError>(())
+                    Ok::<_, ContactEventSubscriberError>(())
                 })
                 .await
         }
         .await
         .inspect_err(|e| {
             if !e.is_retryable() {
-                ctx.issue_reporter_service().report(
+                ctx.report_contacts_event_issue(
                     IssueLevel::Critical,
                     "Failed to apply contacts (v6) event".into(),
                     issue_report_keys_from_error(e),
@@ -101,19 +100,13 @@ impl EventSubscriber<EventManagerContext, ContactEventSourceV6> for ContactEvent
 
     async fn on_refresh(
         &self,
-        _: &EventManagerContext,
+        ctx: &Ctx,
         _: RefreshFlag,
-        _: &mut <ContactEventSourceV6 as EventSource>::Cache,
+        _: &mut <ContactEventSourceV6<Core> as EventSource>::Cache,
     ) -> EventSubscriberResult<()> {
-        let ctx = self
-            .0
-            .upgrade()
-            .context("Context is dead")
-            .map_err(CoreEventSubscriberError::Other)
-            .map_err(|e| -> Box<dyn EventSubscriberError> { Box::new(e) })?;
-        if let Err(e) = refresh_contacts(&ctx).await {
+        if let Err(e) = refresh_contacts(ctx).await {
             if !e.is_retryable() {
-                ctx.issue_reporter_service().report(
+                ctx.report_contacts_event_issue(
                     IssueLevel::Critical,
                     "Failed to apply refresh contacts (v6)".into(),
                     issue_report_keys_from_error(e.as_ref()),
@@ -124,14 +117,44 @@ impl EventSubscriber<EventManagerContext, ContactEventSourceV6> for ContactEvent
         Ok(())
     }
 }
+
+macro_rules! join_task {
+    ($name:tt, $description: expr) => {{
+        match $name.await {
+            Ok(Ok(value)) => value,
+
+            Ok(Err(err)) => return Err(err.into()),
+
+            Err(err) => {
+                return if err.is_cancelled() {
+                    Err(anyhow::anyhow!(
+                        "The task `{}` was cancelled, we need to run refresh again",
+                        $description
+                    )
+                    .into())
+                } else {
+                    Err(
+                        anyhow::anyhow!("Failed to join download remote {}: `{err}`", $description)
+                            .into(),
+                    )
+                };
+            }
+        }
+    }};
+}
+
 #[tracing::instrument(skip_all)]
-pub async fn refresh_contacts(ctx: &UserContext) -> EventSubscriberResult<()> {
+pub async fn refresh_contacts<Ctx>(ctx: &Ctx) -> EventSubscriberResult<()>
+where
+    Ctx: ContactEventSessionContext + ContactEventStorageContext + ContactTaskSpawnerContext,
+{
     async {
-        let api = ctx.session().clone();
-        let contacts = ctx.spawn(async move { Contact::sync(&api).await });
-        let api = ctx.session().clone();
-        let all_remote_labels = ctx.spawn(async move { Label::fetch_contact_labels(&api).await });
-        let mut tether = ctx.mail_stash().connection().await?;
+        let api = ctx.get_contact_api().clone();
+        let contacts = ctx.spawn_contact_task(async move { Contact::sync(&api).await });
+        let api = ctx.get_contact_api().clone();
+        let all_remote_labels =
+            ctx.spawn_contact_task(async move { Label::fetch_contact_labels(&api).await });
+        let mut tether = ctx.get_contact_stash().connection().await?;
         let mut all_local_labels: HashMap<_, _> = Label::all_contact_groups(&tether)
             .await?
             .into_iter()
@@ -172,7 +195,7 @@ pub async fn refresh_contacts(ctx: &UserContext) -> EventSubscriberResult<()> {
                 error!("Failed to update database entries while refreshing core: {e}");
             })?;
 
-        Ok::<_, CoreEventSubscriberError>(())
+        Ok::<_, ContactEventSubscriberError>(())
     }
     .await
     .map_err(|e| -> Box<dyn EventSubscriberError> { Box::new(e) })

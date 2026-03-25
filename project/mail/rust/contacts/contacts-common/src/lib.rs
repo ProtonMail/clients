@@ -6,6 +6,7 @@ pub mod contact_list;
 pub mod crypto;
 pub mod db;
 pub mod error;
+pub mod events;
 pub mod local_ids;
 pub mod types;
 pub(crate) mod vcard_crypto;

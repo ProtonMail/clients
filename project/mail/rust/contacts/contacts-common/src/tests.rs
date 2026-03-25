@@ -3,20 +3,31 @@
 use crate::contact::Contact;
 use crate::contact_card::ContactCard;
 use crate::contact_email::ContactEmail;
+use crate::contact_list::{ContactEmailItem, ContactItem, ContactItemType, GroupedContacts};
+use crate::events::{
+    ContactActionQueueContext, ContactEventCache, ContactEventSessionContext, ContactEventSourceV6,
+    ContactEventStorageContext, ContactEventV6Subscriber, ContactIssueReporterContext,
+    ContactTaskSpawnerContext,
+};
 use crate::test_utils::new_contact_test_connection;
 use crate::{AddressKeysContactFetchPolicy, public_address_keys_from_contacts};
 use contacts_api::mocks::ContactsMockServerExt;
+use contacts_api::{ContactEventV6, ContactRootEventV6};
+use core_event_loop::v6::{EventSource, EventSubscriber};
+use mail_action_queue::queue::Queue;
 use mail_api_session::mocks::test_session;
 use mail_api_session::session::Session;
+use mail_avatar::AvatarInformation;
 use mail_core_api::services::proton::{
-    ContactBasic as ApiContactBasic, ContactCard as ApiContactCard,
+    Action, ContactBasic as ApiContactBasic, ContactCard as ApiContactCard,
     ContactEmail as ApiContactEmail, ContactEmailId, ContactFull as ApiContactFull, ContactId,
     ContactSendingPreferences as ApiContactSendingPreferences, ContactUID, LabelId,
 };
 use mail_labels_common::Labels;
 use mail_shared_types::{ModelExtension, ModelIdExtension};
 use mail_stash::orm::Model;
-use mail_stash::params;
+use mail_stash::stash::Stash;
+use mail_stash::{UserDb, params};
 use pretty_assertions::assert_eq;
 use proton_crypto_account::contacts::ContactCardType;
 use proton_crypto_account::keys::{DecryptedUserKey, KeyId, UnlockedUserKey, UnlockedUserKeys};
@@ -402,6 +413,42 @@ fn expected_local_contacts() -> Vec<Contact> {
         .collect()
 }
 
+fn create_test_remote_full_modified_contact() -> (ApiContactFull, ApiContactEmail, ApiContactEmail)
+{
+    let mut contact = create_test_remote_full_contact();
+    let removed_mail = contact.contact_emails.pop().unwrap();
+    let new_email = ApiContactEmail {
+        id: ContactEmailId::from("aefew4323jFv0BhScc==".to_owned()),
+        contact_id: ContactId::from("a29olIjFv0rnXxBhSMw==".to_owned()),
+        canonical_email: "contact_email_mod@contact.test".into(),
+        contact_type: vec!["work".to_owned()],
+        defaults: ApiContactSendingPreferences::Default,
+        order: 1,
+        email: "contact_email_mod@contact.test".into(),
+        is_proton: true,
+        label_ids: vec![LabelId::from(
+            "I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==".to_owned(),
+        )],
+        last_used_time: 0,
+        name: "contact_email_name_mod".to_owned(),
+    };
+    contact.modify_time += 1;
+    contact.size += 1;
+    contact.contact_emails.push(new_email.clone());
+    contact.cards = vec![
+        ApiContactCard {
+            card_type: ContactCardType::Signed,
+            data: r"    BEGIN:VCARD\n    VERSION:4.0\n    FN:ProtonMail Features\n    UID:proton-legacy-129892c2-f691-4118-8c29-061196013e04\n    item1.EMAIL;TYPE=work;PREF=1:sdfsdf@protonmail.black\n    item2.EMAIL;TYPE=home;PREF=2:features@protonmail.ch\n    END:VCARD".to_owned(),
+            signature: Some("-----BEGIN PGP SIGNATURE-----.*-----END PGP SIGNATURE-----".to_owned()),
+        },
+        ApiContactCard {
+            card_type: ContactCardType::EncryptedAndSigned,
+            data: "-----BEGIN PGP MESSAGE-----modified.*-----END PGP MESSAGE-----".to_owned(),
+            signature: Some("-----BEGIN PGP SIGNATURE-----modified.*-----END PGP SIGNATURE-----".to_owned()),
+        }
+    ];
+    (contact, removed_mail, new_email)
+}
 // ---------------------------------------------------------------------------
 // Shared sync setup
 // ---------------------------------------------------------------------------
@@ -442,6 +489,94 @@ async fn prepare_sync_test_data(
     Contact::force_sync_with_card(local_id, session, &mut tether)
         .await
         .expect("failed to sync contact card");
+}
+
+async fn prepare_sync_test_data_partial(
+    mock_server: &MockServer,
+    session: &Session,
+    stash: &mail_stash::stash::Stash<mail_stash::UserDb>,
+    test_remote_contacts: Vec<ApiContactBasic>,
+    test_remote_contacts_email: Vec<ApiContactEmail>,
+) {
+    mock_server
+        .mock_get_all_contacts_partial_request(test_remote_contacts)
+        .await;
+    mock_server
+        .mock_get_all_contact_emails_request(test_remote_contacts_email)
+        .await;
+
+    let contacts = Contact::sync(session)
+        .await
+        .expect("failed to download contacts");
+    let mut tether = stash.connection().await.unwrap();
+    tether
+        .sync_tx(move |tx| contacts.store(tx))
+        .await
+        .expect("failed to store contacts");
+}
+
+struct TestEventContext {
+    queue: Queue<UserDb>,
+    session: Session,
+}
+
+impl TestEventContext {
+    async fn new(session: Session, stash: Stash<UserDb>) -> Self {
+        Self {
+            queue: Queue::new(stash).await.unwrap(),
+            session,
+        }
+    }
+}
+
+impl ContactEventStorageContext for TestEventContext {
+    fn get_contact_stash(&self) -> &Stash<UserDb> {
+        self.queue.mail_stash()
+    }
+}
+
+impl ContactEventSessionContext for TestEventContext {
+    fn get_contact_api(&self) -> &Session {
+        &self.session
+    }
+}
+
+impl ContactIssueReporterContext for TestEventContext {
+    fn report_contacts_event_issue(
+        &self,
+        _: mail_issue_reporter_service::IssueLevel,
+        _: String,
+        _: mail_issue_reporter_service::IssueReportKeys,
+    ) {
+        unreachable!();
+    }
+}
+
+impl ContactTaskSpawnerContext for TestEventContext {
+    fn spawn_contact_task<F>(&self, _: F) -> tokio::task::JoinHandle<F::Output>
+    where
+        F: Future<Output: Send> + Send + 'static,
+    {
+        unreachable!()
+    }
+}
+
+impl ContactActionQueueContext for TestEventContext {
+    fn get_contact_action_queue(&self) -> &Queue<UserDb> {
+        &self.queue
+    }
+}
+
+struct TextCoreEventSource;
+
+impl EventSource for TextCoreEventSource {
+    type Event = ();
+
+    type Cache = ();
+
+    fn name() -> &'static str {
+        unreachable!()
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -645,4 +780,245 @@ async fn test_contact_load_public_address_keys() {
     .key_fingerprint();
 
     assert_ne!(preferred_fingerprint_1, preferred_fingerprint_swapped);
+}
+
+#[tokio::test]
+async fn sync_and_delete_event_contact() {
+    let mock_server = MockServer::start().await;
+    let session = test_session(&mock_server).await;
+    let stash = new_contact_test_connection().await;
+
+    let test_event_subscriber = ContactEventV6Subscriber;
+
+    let event_ctx = TestEventContext::new(session.clone(), stash.clone()).await;
+    let test_contacts = create_test_remote_partial_contacts();
+    let test_contacts_email = create_test_remote_contact_emails();
+    let test_full_contact = create_test_remote_full_contact();
+    prepare_sync_test_data(
+        &mock_server,
+        &session,
+        &stash,
+        test_contacts.clone(),
+        test_contacts_email.clone(),
+        test_full_contact.clone(),
+    )
+    .await;
+
+    let contact_to_remove = test_contacts.last().unwrap();
+
+    let delete_contact_event = ContactEventV6 {
+        id: contact_to_remove.id.clone(),
+        action: Action::Delete,
+    };
+    let event = ContactRootEventV6 {
+        contacts: Some(vec![delete_contact_event]),
+        labels: None,
+        refresh: false,
+        has_more: false,
+    };
+
+    let mut cache = ContactEventCache::default();
+    // Fire event:
+    <ContactEventV6Subscriber as EventSubscriber<
+        TestEventContext,
+        ContactEventSourceV6<TextCoreEventSource>,
+    >>::on_event(&test_event_subscriber, &event_ctx, &event, &mut cache)
+    .await
+    .expect("failed to execute event");
+
+    // Were the  deletions successful?
+    let conn = stash.connection().await.unwrap();
+
+    let contacts = Contact::find("LIMIT 100", vec![], &conn)
+        .await
+        .expect("Failed to get contacts");
+    assert_eq!(contacts.len(), test_contacts.len() - 1);
+}
+
+#[tokio::test]
+async fn test_sync_and_modify_event_contact() {
+    let mock_server = MockServer::start().await;
+    let session = test_session(&mock_server).await;
+    let stash = new_contact_test_connection().await;
+
+    let test_event_subscriber = ContactEventV6Subscriber;
+    let event_ctx = TestEventContext::new(session.clone(), stash.clone()).await;
+    let test_contacts = create_test_remote_partial_contacts();
+    let test_contacts_email = create_test_remote_contact_emails();
+    let test_full_contact = create_test_remote_full_contact();
+    prepare_sync_test_data(
+        &mock_server,
+        &session,
+        &stash,
+        test_contacts.clone(),
+        test_contacts_email.clone(),
+        test_full_contact.clone(),
+    )
+    .await;
+
+    let (modified_contact, _, _) = create_test_remote_full_modified_contact();
+
+    mock_server.verify().await;
+    mock_server.reset().await;
+    mock_server
+        .mock_get_full_contact(modified_contact.clone())
+        .await;
+
+    let remote_id = modified_contact.id.clone();
+    let modify_contact_event = ContactEventV6 {
+        id: remote_id.clone(),
+        action: Action::Update,
+    };
+    let event = ContactRootEventV6 {
+        labels: None,
+        contacts: Some(vec![modify_contact_event]),
+        refresh: false,
+        has_more: false,
+    };
+    // Fire event:
+    let mut cache = ContactEventCache::default();
+    // Fire event:
+    <ContactEventV6Subscriber as EventSubscriber<
+        TestEventContext,
+        ContactEventSourceV6<TextCoreEventSource>,
+    >>::on_event(&test_event_subscriber, &event_ctx, &event, &mut cache)
+    .await
+    .expect("failed to execute event");
+
+    let conn = stash.connection().await.unwrap();
+
+    let mut contact = Contact::find_by_remote_id(remote_id, &conn)
+        .await
+        .expect("Failed to load contact")
+        .expect("contact should be found");
+
+    assert_eq!(contact.modify_time, modified_contact.modify_time);
+    assert_eq!(contact.size, modified_contact.size);
+    assert_eq!(
+        contact.contact_emails.len(),
+        modified_contact.contact_emails.len()
+    );
+
+    let expected_cards: Vec<ContactCard> = modified_contact
+        .cards
+        .clone()
+        .into_iter()
+        .map(|c| {
+            let mut c: ContactCard = c.into();
+            c.remote_contact_id = Some(modified_contact.id.clone());
+            c
+        })
+        .collect();
+    contact.cards(&conn).await.expect("Failed to query cards");
+    prune_cards!(contact.cards);
+    assert_eq!(contact.cards, expected_cards);
+}
+
+#[tokio::test]
+async fn deleted_contact_does_not_fail_event_poll() {
+    let mock_server = MockServer::start().await;
+    let session = test_session(&mock_server).await;
+    let stash = new_contact_test_connection().await;
+
+    let test_event_subscriber = ContactEventV6Subscriber;
+    let event_ctx = TestEventContext::new(session.clone(), stash.clone()).await;
+    let mut cache = ContactEventCache::default();
+
+    let contact_id = ContactId::from("my_id");
+
+    let event = ContactEventV6 {
+        id: contact_id.clone(),
+        action: Action::Update,
+    };
+
+    let event = ContactRootEventV6 {
+        contacts: Some(vec![event]),
+        labels: None,
+        refresh: false,
+        has_more: false,
+    };
+
+    mock_server
+        .mock_get_full_contact_does_not_exist(contact_id)
+        .await;
+
+    // Fire event:
+    <ContactEventV6Subscriber as EventSubscriber<
+        TestEventContext,
+        ContactEventSourceV6<TextCoreEventSource>,
+    >>::on_event(&test_event_subscriber, &event_ctx, &event, &mut cache)
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn contact_list() {
+    let mock_server = MockServer::start().await;
+    let session = test_session(&mock_server).await;
+    let stash = new_contact_test_connection().await;
+
+    let test_contacts = vec![ApiContactBasic {
+        id: "123".into(),
+        name: "Mr Banksy".to_string(),
+        uid: "123".into(),
+
+        create_time: 0,
+        label_ids: vec![],
+        modify_time: 0,
+        size: 0,
+    }];
+
+    let test_contacts_email = vec![ApiContactEmail {
+        id: "321".into(),
+        contact_id: "123".into(),
+        email: "banksy@proton.me".into(),
+        name: "Mr Banksy".to_string(),
+        canonical_email: "".into(),
+
+        contact_type: vec![],
+        defaults: ApiContactSendingPreferences::Default,
+        is_proton: true,
+        label_ids: vec![],
+        last_used_time: 0,
+        order: 0,
+    }];
+
+    prepare_sync_test_data_partial(
+        &mock_server,
+        &session,
+        &stash,
+        test_contacts.clone(),
+        test_contacts_email.clone(),
+    )
+    .await;
+
+    let tether = stash.connection().await.unwrap();
+    let contact_list = Contact::contact_list(&tether).await.unwrap();
+
+    assert_eq!(contact_list.len(), 1);
+    assert_eq!(
+        contact_list,
+        vec![GroupedContacts {
+            grouped_by: "M".to_string(),
+            items: vec![ContactItemType::Contact(ContactItem {
+                local_id: 1.into(),
+                name: "Mr Banksy".to_string(),
+                avatar_information: AvatarInformation {
+                    text: "M".to_string(),
+                    color: "#52CD96".to_string()
+                },
+                emails: vec![ContactEmailItem {
+                    name: "Mr Banksy".into(),
+                    avatar_information: AvatarInformation {
+                        text: "M".to_string(),
+                        color: "#52CD96".to_string()
+                    },
+                    local_contact_id: 1.into(),
+                    email: "banksy@proton.me".into(),
+                    is_proton: true,
+                    last_used_time: 0.into()
+                }]
+            })]
+        }]
+    );
 }

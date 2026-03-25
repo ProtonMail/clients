@@ -6,6 +6,7 @@ rust-version.workspace = true
 license.workspace = true
 
 [dependencies]
+async-trait = { workspace = true }
 anyhow = { workspace = true }
 base64 = { workspace = true }
 bytes = { workspace = true }
@@ -36,6 +37,10 @@ tokio = { workspace = true }
 tracing = { workspace = true }
 unicode-segmentation = { workspace = true }
 url = { workspace = true }
+core-event-loop = { workspace = true }
+mail-api-labels = { workspace = true }
+mail-issue-reporter-service = { workspace = true }
+mail-api-session = { workspace = true }
 
 [dev-dependencies]
 contacts-api = { workspace = true, features = ["mocks"] }
@@ -52,9 +57,10 @@ serde_json = { workspace = true }
 wiremock = { workspace = true }
 
 [features]
-default = ["sql"]
+default = ["sql", "mail-compat"]
 sql = ["mail-core-api/sql"]
 test-utils = ["mail-labels-common/test-utils"]
+mail-compat = []
 
 [lints]
 workspace = true

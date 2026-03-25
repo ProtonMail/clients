@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [mail-uniffi-v0.164.5] - 2026-03-25
+
+### Features
+
+- Add TFA Methods available to LoginFlow - proton/clients/monorepo!1508
+- [FOUN-281] Keep the local search index in sync with message events by... - proton/clients/monorepo!1470
+- Add Bazel build infrastructure (Phase 3) - proton/clients/monorepo!1251
+
+### Fixes
+
+- [ET-6001] Sanitize @import CSS rule - proton/clients/monorepo!1507
+- [ET-6017] Remove measurements on API failure - proton/clients/monorepo!1500
+
+
 ## [mail-uniffi-v0.164.4] - 2026-03-20
 
 ### Features

@@ -815,7 +815,7 @@ async fn test_conversation_mail_scroller_has_insufficient_cached_data_to_fill_fi
     data.save_to_database(&mut tether).await;
 
     setup_api_sync_previous_page(&ctx, "myconv_102", None, &remote_label_id, 2).await;
-    let params = setup_api_conversation_pages(&ctx, page_size, 0, &remote_label_id, 2).await;
+    let params = setup_api_conversation_pages(&ctx, page_size, 0, &remote_label_id, 1..=2).await;
     ctx.setup_user(params.clone()).await;
     ctx.initialize_uninitialized_ctx(&user_ctx).await;
 

@@ -264,7 +264,7 @@ impl UserContext {
                 warn!("Nothing to refresh, this may idicate bug in SDK event loop implementation");
             }
             Refresh::Contacts => {
-                if let Err(e) = v6::refresh_contacts(self).await {
+                if let Err(e) = contacts_common::events::refresh_contacts(self).await {
                     if !e.is_retryable() {
                         self.issue_reporter_service().report(
                             IssueLevel::Critical,
@@ -325,7 +325,7 @@ impl UserContext {
             let event_poll = event_loop_service.event_poll();
 
             let core_event_ctx = v6::CoreEventLoopV6Context;
-            let contact_event_ctx = v6::ContactEventLoopV6Context;
+            let contact_event_ctx = contacts_common::events::ContactEventLoopV6Context;
             event_poll
                 .add::<v6::CoreEventSourceV6>(
                     core_event_ctx.clone().boxed(),
@@ -333,7 +333,7 @@ impl UserContext {
                 )
                 .await?;
             event_poll
-                .add::<v6::ContactEventSourceV6>(
+                .add::<contacts_common::events::ContactEventSourceV6<v6::CoreEventSourceV6>>(
                     contact_event_ctx.clone().boxed(),
                     contact_event_ctx.boxed(),
                 )
@@ -412,8 +412,11 @@ impl UserContext {
     #[must_use]
     pub fn contact_event_subscriber_v6(
         self: &Arc<Self>,
-    ) -> impl EventSubscriber<EventManagerContext, v6::ContactEventSourceV6> + 'static {
-        v6::ContactEventV6Subscriber::from(Arc::downgrade(self))
+    ) -> impl EventSubscriber<
+        EventManagerContext,
+        contacts_common::events::ContactEventSourceV6<v6::CoreEventSourceV6>,
+    > + 'static {
+        contacts_common::events::ContactEventV6Subscriber
     }
 
     #[must_use]

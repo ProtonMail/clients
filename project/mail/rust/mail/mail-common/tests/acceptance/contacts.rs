@@ -5,79 +5,10 @@ use mail_core_api::services::proton::ContactId;
 use mail_core_api::services::proton::{
     ContactBasic as ApiContactBasic, ContactEmail as ApiContactEmail, ContactSendingPreferences,
 };
-use mail_core_common::datatypes::{
-    AvatarInformation, ContactEmailItem, ContactItem, ContactItemType, GroupedContacts,
-};
 use mail_core_common::models::{Contact, ModelIdExtension, action_delete_contacts};
 use mail_stash::orm::Model;
 
-#[tokio::test]
-async fn contact_list() {
-    let ctx = MailTestContext::new().await;
-    let mut params = TestParams::default_basic();
-
-    params.contacts = vec![ApiContactBasic {
-        id: "123".into(),
-        name: "Mr Banksy".to_string(),
-        uid: "123".into(),
-
-        create_time: 0,
-        label_ids: vec![],
-        modify_time: 0,
-        size: 0,
-    }];
-
-    params.emails = vec![ApiContactEmail {
-        id: "321".into(),
-        contact_id: "123".into(),
-        email: "banksy@proton.me".into(),
-        name: "Mr Banksy".to_string(),
-        canonical_email: "".into(),
-
-        contact_type: vec![],
-        defaults: ContactSendingPreferences::Default,
-        is_proton: true,
-        label_ids: vec![],
-        last_used_time: 0,
-        order: 0,
-    }];
-
-    ctx.setup_user(params.clone()).await;
-
-    // Initialize Mocking
-    let user_ctx = ctx.mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
-
-    let contact_list = Contact::contact_list(&tether).await.unwrap();
-
-    assert_eq!(contact_list.len(), 1);
-    assert_eq!(
-        contact_list,
-        vec![GroupedContacts {
-            grouped_by: "M".to_string(),
-            items: vec![ContactItemType::Contact(ContactItem {
-                local_id: 1.into(),
-                name: "Mr Banksy".to_string(),
-                avatar_information: AvatarInformation {
-                    text: "M".to_string(),
-                    color: "#52CD96".to_string()
-                },
-                emails: vec![ContactEmailItem {
-                    name: "Mr Banksy".into(),
-                    avatar_information: AvatarInformation {
-                        text: "M".to_string(),
-                        color: "#52CD96".to_string()
-                    },
-                    local_contact_id: 1.into(),
-                    email: "banksy@proton.me".into(),
-                    is_proton: true,
-                    last_used_time: 0.into()
-                }]
-            })]
-        }]
-    );
-}
-
+// This test needs to remain here as it depends on actions
 #[tokio::test]
 async fn delete_contacts() {
     let ctx = MailTestContext::new().await;

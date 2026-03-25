@@ -1,7 +1,5 @@
-use crate::event_loop::event_subscriber::CoreEventSubscriberError;
-use crate::event_loop::v6::CoreEventSourceV6;
-use crate::models::{Contact, Label};
 use contacts_api::ContactApi;
+use core_event_loop::EventSubscriberError;
 use core_event_loop::v6::{EventSource, EventSourceDependencyList};
 use futures::StreamExt;
 use futures::future::BoxFuture;
@@ -12,12 +10,19 @@ use mail_core_api::consts::General;
 use mail_core_api::service::ApiServiceError;
 use mail_core_api::services::proton::{Action, ContactId, ContactRootEventV6, LabelId};
 use mail_core_api::session::Session;
+use mail_labels_common::{Label, LabelError};
+use mail_stash::stash::StashError;
 use std::collections::HashMap;
+use std::marker::PhantomData;
 use tracing::{debug, error};
 
-pub struct ContactEventSourceV6;
+use crate::contact::Contact;
 
-impl EventSource for ContactEventSourceV6 {
+pub struct ContactEventSourceV6<Core: EventSource> {
+    p: PhantomData<Core>,
+}
+
+impl<Core: EventSource> EventSource for ContactEventSourceV6<Core> {
     type Event = ContactRootEventV6;
     type Cache = ContactEventCache;
 
@@ -26,7 +31,44 @@ impl EventSource for ContactEventSourceV6 {
     }
 
     fn dependencies() -> EventSourceDependencyList {
-        EventSourceDependencyList::default().with::<CoreEventSourceV6>()
+        EventSourceDependencyList::default().with::<Core>()
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum ContactEventSubscriberError {
+    #[error(transparent)]
+    Api(#[from] ApiServiceError),
+    #[error(transparent)]
+    Stash(#[from] StashError),
+    #[error(transparent)]
+    Other(#[from] anyhow::Error),
+}
+
+impl From<LabelError> for ContactEventSubscriberError {
+    fn from(err: LabelError) -> Self {
+        match err {
+            LabelError::API(e) => Self::Api(e),
+            LabelError::Stash(e) => Self::Stash(e),
+            err => Self::Other(err.into()),
+        }
+    }
+}
+
+impl EventSubscriberError for ContactEventSubscriberError {
+    fn is_network_failure(&self) -> bool {
+        match self {
+            Self::Api(e) => e.is_network_failure(),
+            Self::Stash(_) | Self::Other(_) => false,
+        }
+    }
+
+    fn is_retryable(&self) -> bool {
+        match self {
+            Self::Api(e) => e.is_network_failure() || e.is_server_failure(),
+            Self::Stash(StashError::ConnectionAcquireTimedOut) => true,
+            Self::Stash(_) | Self::Other(_) => false,
+        }
     }
 }
 
@@ -41,7 +83,7 @@ impl ContactEventCache {
         &mut self,
         event: &ContactRootEventV6,
         session: &Session,
-    ) -> Result<(), CoreEventSubscriberError> {
+    ) -> Result<(), ContactEventSubscriberError> {
         let mut tasks = FuturesUnordered::new();
         if let Some(events) = &event.contacts {
             debug!("Fetching contacts");

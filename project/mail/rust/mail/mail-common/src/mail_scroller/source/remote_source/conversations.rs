@@ -540,19 +540,8 @@ impl RemoteConversationScrollerSource {
             conversation.prune_unresolved_labels(&unresolved_label_ids);
         }
 
-        // Batch check for deleted conversations
-        let remote_ids = conversations
-            .iter()
-            .filter_map(|c| c.remote_id.as_ref().map(|id| id.as_str()));
-        let deleted_ids = DeletedItem::find_deleted_by_remote_ids(
-            remote_ids,
-            DeletedItemType::Conversation,
-            tether,
-        )
-        .await?;
-
         // We do not want to notify the UI about the not visible items
-        // downloaded in the background
+        // downloaded in the background hence `quiet_tx`
         tether
             .quiet_tx(async |tx| {
                 if let Some(label) = Label::find_by_id(local_label_id, tx).await?
@@ -564,6 +553,17 @@ impl RemoteConversationScrollerSource {
                 if !conversation_labels_count.is_empty() {
                     ConversationLabelsCount::upsert(conversation_labels_count.clone(), tx).await?;
                 }
+
+                // Batch check for deleted conversations
+                let remote_ids = conversations
+                    .iter()
+                    .filter_map(|c| c.remote_id.as_ref().map(|id| id.as_str()));
+                let deleted_ids = DeletedItem::find_deleted_by_remote_ids(
+                    remote_ids,
+                    DeletedItemType::Conversation,
+                    tx,
+                )
+                .await?;
 
                 let mut rebase_change_set = RebaseChangeSet::default();
                 // Save all conversations.

@@ -27,6 +27,7 @@ use serde_with::{BoolFromInt, StringWithSeparator, formats::CommaSeparator, serd
 use smart_default::SmartDefault;
 
 use super::DeviceEnvironment;
+pub use core_feature_flags::GetUnleashFeaturesRequest;
 
 /// Parameters for getting Captcha details.
 #[serde_as]

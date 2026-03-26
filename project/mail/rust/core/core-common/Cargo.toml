@@ -68,6 +68,7 @@ tempfile = { workspace = true, optional = true }
 rand = { workspace = true, optional = true }
 jiff = { workspace = true }
 url = { workspace = true }
+velcro = { workspace = true }
 mail-network-monitor-service = { workspace = true, features = ["muon"] }
 mail-observability = { workspace = true }
 mail-telemetry = { workspace = true }

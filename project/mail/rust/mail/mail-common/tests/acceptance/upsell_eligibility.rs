@@ -164,7 +164,7 @@ async fn setup_feature_flags(ctx: &MailTestContext, flags: TestedFeatureFlags) {
 
     let mock_response = GetUnleashFeaturesResponse { toggles };
 
-    Mock::given(method("GET"))
+    Mock::given(method("POST"))
         .and(path("/api/feature/v2/frontend"))
         .respond_with(ResponseTemplate::new(200).set_body_json(mock_response))
         .named("Feature flags setup")

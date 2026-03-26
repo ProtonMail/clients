@@ -541,7 +541,7 @@ dependencies = [
  "bitflags 2.9.4",
  "cexpr",
  "clang-sys",
- "itertools 0.13.0",
+ "itertools 0.10.5",
  "log",
  "prettyplease",
  "proc-macro2",
@@ -2764,9 +2764,9 @@ dependencies = [
 
 [[package]]
 name = "gopenpgp-sys"
-version = "0.3.3"
+version = "0.3.4"
 source = "sparse+https://rust-registry.proton.me/index/"
-checksum = "e81404bf5710b9075990639b5349491b5d476b59b83950d02d939cc354ad4ec3"
+checksum = "0a1821dcf1e022ea098bf01dd96ef877f6300a89d09aeb43328c3e0ffb2e6bfc"
 dependencies = [
  "base64",
  "bindgen 0.72.1",
@@ -3707,7 +3707,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "07033963ba89ebaf1584d767badaa2e8fcec21aedea6b8c0346d487d49c28667"
 dependencies = [
  "cfg-if",
- "windows-targets 0.53.3",
+ "windows-targets 0.48.5",
 ]
 
 [[package]]
@@ -6333,14 +6333,14 @@ dependencies = [
 
 [[package]]
 name = "proton-crypto"
-version = "0.10.0"
+version = "0.12.0"
 source = "sparse+https://rust-registry.proton.me/index/"
-checksum = "a19d1bccfcf132e6627863964ee49eff2eed0e4b90245b473d5280f7eae813ab"
+checksum = "1eb4f0513efcc67c8ebca2cf82b20dafb514a7efbd2a5796b0c010f527702430"
 dependencies = [
  "gopenpgp-sys",
  "hex",
  "parking_lot",
- "proton-srp 0.8.1",
+ "proton-srp 0.8.2",
  "rand 0.8.5",
  "serde",
  "subtle",
@@ -6350,9 +6350,9 @@ dependencies = [
 
 [[package]]
 name = "proton-crypto-account"
-version = "0.15.0"
+version = "0.17.0"
 source = "sparse+https://rust-registry.proton.me/index/"
-checksum = "c26d9b525fede959a0f1d2f4b57e472a1980670b87988cb41d166e047e3d40e2"
+checksum = "02b441df1b39aa2556e3e571a36ed7ed2773af0cc745caeef7be75dd993246b2"
 dependencies = [
  "base64",
  "derive_more 2.0.1",
@@ -6364,6 +6364,7 @@ dependencies = [
  "serde_json",
  "serde_repr",
  "serde_with",
+ "sha2",
  "thiserror 1.0.69",
  "zeroize",
 ]
@@ -6420,13 +6421,15 @@ dependencies = [
 
 [[package]]
 name = "proton-srp"
-version = "0.8.1"
+version = "0.8.2"
 source = "sparse+https://rust-registry.proton.me/index/"
-checksum = "1f778bc9d0e0f96fba5e35ad767033315814be753ab80d47642e909f0015f488"
+checksum = "91efa4e2584cfe6a5aa420dd46c46355c673c68166c13f3d9f230ac0309eea9b"
 dependencies = [
  "base64",
  "bcrypt",
  "crypto-bigint",
+ "getrandom 0.2.16",
+ "getrandom 0.3.3",
  "hex",
  "md-5",
  "rand 0.8.5",

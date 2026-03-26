@@ -104,6 +104,22 @@ impl SystemLabel {
     }
 
     #[must_use]
+    pub fn is_category(&self) -> bool {
+        Self::category_labels().contains(self)
+    }
+
+    #[must_use]
+    pub fn category_labels() -> [Self; 5] {
+        [
+            Self::CategorySocial,
+            Self::CategoryPromotions,
+            Self::CatergoryUpdates,
+            Self::CategoryForums,
+            Self::CategoryDefault,
+        ]
+    }
+
+    #[must_use]
     pub fn is_starred(&self) -> bool {
         *self == Self::Starred
     }

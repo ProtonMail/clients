@@ -1,8 +1,10 @@
 mod alternative_labels;
+mod category_view;
 mod source;
 mod watcher;
 
 pub use self::alternative_labels::*;
+pub use self::category_view::*;
 pub use self::source::*;
 pub use self::watcher::*;
 use crate::datatypes::labels::{ScrollOrderDir, ScrollOrderField};
@@ -500,7 +502,7 @@ where
         debug!(?uuid, "Sending `ChangeFilter` command");
 
         self.commands
-            .send(ScrollerCommand::ChangeFilter {
+            .send(ScrollerCommand::ChangeUnreadFilter {
                 src: ScrollerSource::ScrollEvent(uuid),
                 unread,
             })
@@ -617,6 +619,38 @@ where
             .map_err(|_| MailContextError::Other(anyhow!("Failed to receive synced response")))?
     }
 
+    pub fn change_category_view(
+        &self,
+        category: Option<LocalLabelId>,
+    ) -> Result<(), MailContextError> {
+        let uuid = Uuid::new_v4();
+
+        self.commands
+            .send(ScrollerCommand::ChangeCategoryView {
+                src: ScrollerSource::ScrollEvent(uuid),
+                category,
+            })
+            .map_err(|_| {
+                MailContextError::Other(anyhow!("Failed to send change category view command"))
+            })?;
+
+        Ok(())
+    }
+
+    pub async fn category_view(&self) -> Result<CategoryView, MailContextError> {
+        let (tx, rx) = oneshot::channel();
+
+        self.commands
+            .send(ScrollerCommand::CategoryView(tx))
+            .map_err(|_| {
+                MailContextError::Other(anyhow!("Failed to send category view command"))
+            })?;
+
+        rx.await.map_err(|_| {
+            MailContextError::Other(anyhow!("Failed to receive category view response"))
+        })
+    }
+
     pub async fn supports_include_filter(&self) -> Result<bool, MailContextError> {
         let (tx, rx) = oneshot::channel();
 
@@ -671,6 +705,7 @@ where
     items: Arc<SyncRwLock<Vec<S::Item>>>,
     page_size: usize,
     alternative_labels: AlternativeLabels,
+    category_view: CategoryView,
     update: flume::Sender<ScrollerUpdate<S::Item>>,
     command_rx: flume::Receiver<ScrollerCommand>,
     command_tx: flume::Sender<ScrollerCommand>,
@@ -727,6 +762,7 @@ where
             execute_on_online: None,
             items,
             alternative_labels,
+            category_view: Default::default(),
             update: update_sender,
             command_rx,
             command_tx: command_tx.clone(),
@@ -924,9 +960,9 @@ where
                 }
             }
 
-            ScrollerCommand::ChangeFilter { src, unread } => {
+            ScrollerCommand::ChangeUnreadFilter { src, unread } => {
                 let result = self
-                    .change_filter(src, unread)
+                    .change_unread_filter(src, unread)
                     .await
                     .unwrap_or_else(|e| ScrollerUpdate::Error { src, error: e });
 
@@ -935,6 +971,20 @@ where
                         .send_async(result)
                         .await
                         .map_err(|e| anyhow!("Failed to send change filter update: {e:?}"))?;
+                }
+            }
+
+            ScrollerCommand::ChangeCategoryView { src, category } => {
+                let result = self
+                    .change_category_view(src, category)
+                    .await
+                    .unwrap_or_else(|e| ScrollerUpdate::Error { src, error: e });
+
+                if result.is_some() || result.is_scroll_event() {
+                    self.update
+                        .send_async(result)
+                        .await
+                        .map_err(|e| anyhow!("Failed to send category filter update: {e:?}"))?;
                 }
             }
 
@@ -1005,6 +1055,12 @@ where
             ScrollerCommand::AlternativeLabels(tx) => {
                 tx.send(self.alternative_labels)
                     .map_err(|e| anyhow!("Failed to send alternative label update: {e:?}"))?;
+            }
+
+            ScrollerCommand::CategoryView(tx) => {
+                tx.send(self.category_view.clone()).map_err(|e| {
+                    anyhow!("Failed to send enabled category filters update: {e:?}")
+                })?;
             }
         }
 
@@ -1237,7 +1293,7 @@ where
     }
 
     #[instrument(skip_all, fields(scroller=%self.scroller_id, src=%src))]
-    async fn change_filter(
+    async fn change_unread_filter(
         &mut self,
         src: ScrollerSource,
         unread: ReadFilter,
@@ -1252,6 +1308,17 @@ where
             .change_state(&ctx, Some(unread), None, None)
             .await?;
         self.reset(src).await
+    }
+
+    async fn change_category_view(
+        &mut self,
+        src: ScrollerSource,
+        _category: Option<LocalLabelId>,
+    ) -> Result<ScrollerUpdate<S::Item>, MailContextError> {
+        Ok(ScrollerUpdate::List(ScrollerListUpdate::None {
+            src,
+            scroller_id: self.scroller_id,
+        }))
     }
 
     #[instrument(skip_all, fields(scroller=%self.scroller_id, src=%src))]
@@ -1520,9 +1587,13 @@ enum ScrollerCommand {
     Refresh(ScrollerSource),
     ForceRefresh(ScrollerSource),
     GetItems(ScrollerSource),
-    ChangeFilter {
+    ChangeUnreadFilter {
         src: ScrollerSource,
         unread: ReadFilter,
+    },
+    ChangeCategoryView {
+        src: ScrollerSource,
+        category: Option<LocalLabelId>,
     },
     ChangeLabel {
         src: ScrollerSource,
@@ -1539,6 +1610,7 @@ enum ScrollerCommand {
     },
     Clear(ScrollerSource),
     AlternativeLabels(#[derivative(PartialEq = "ignore")] oneshot::Sender<AlternativeLabels>),
+    CategoryView(#[derivative(PartialEq = "ignore")] oneshot::Sender<CategoryView>),
 }
 
 fn calculate_scroller_update<T>(

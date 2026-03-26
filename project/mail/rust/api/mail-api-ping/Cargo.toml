@@ -1,0 +1,13 @@
+[package]
+name = "mail-api-ping"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+mail-api-shared = { workspace = true }
+mail-muon = { workspace = true }
+
+[lints]
+workspace = true

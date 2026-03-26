@@ -1,9 +1,9 @@
 use crate::password::state::want_tfa::WantTfa;
+use crate::protocol::proton::PostAuthInfoResponse;
 use crate::shared::SecureString;
 use derive_more::{Debug, Display, From};
-use mail_core_api::services::proton::prelude::*;
-use mail_core_api::{auth::KeySecret, session::SessionParts};
-use mail_core_common::datatypes::{PasswordMode, TfaStatus};
+use mail_api_session::auth_mode::{PasswordMode, TfaStatus};
+use mail_api_session::{auth::KeySecret, session::SessionParts};
 use mail_muon::Client;
 use proton_crypto_account::keys::UserKeys;
 

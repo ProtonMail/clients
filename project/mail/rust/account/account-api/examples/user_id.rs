@@ -1,9 +1,9 @@
 #![allow(clippy::print_stdout)]
 
 use mail_account_api::login::LoginFlow;
+use mail_account_api::protocol::proton::ProtonAccount as _;
 use mail_account_api::shared::challenge::ChallengeInfo;
-use mail_core_api::services::proton::ProtonCore;
-use mail_core_api::session::Session;
+use mail_api_session::session::Session;
 use mail_core_common::datatypes::ApiConfig;
 use mail_core_common::db::account::SessionEncryptionKey;
 use mail_core_common::event_loop::EventPollMode;

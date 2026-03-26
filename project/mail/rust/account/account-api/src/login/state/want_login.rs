@@ -9,12 +9,12 @@ use futures::TryFutureExt;
 use mail_muon::client::flow::{AuthFlow, LoginFlow, LoginFlowData, WithCodeFlow};
 use mail_muon::client::{Auth, Tokens};
 
-use mail_core_api::auth::KeySecret;
-use mail_core_api::service::ApiServiceError;
-use mail_core_api::services::observability::ApiServiceObservabilityResponse;
-use mail_core_api::services::proton::{SessionId, UserId};
-use mail_core_api::session::SessionParts;
-use mail_core_api::store::{AuthInfo, TfaMode, UserData};
+use crate::protocol::ApiServiceObservabilityResponse;
+use mail_api_session::auth::KeySecret;
+use mail_api_session::ids::{SessionId, UserId};
+use mail_api_session::session::SessionParts;
+use mail_api_session::store::{AuthInfo, TfaMode, UserData};
+use mail_api_shared::ApiServiceError;
 use mail_observability::metrics::AuthV4RequestMetric;
 use mail_observability::{PreLoginMetricRecorder, metric};
 use proton_crypto_account::proton_crypto::generate_secure_random_bytes;

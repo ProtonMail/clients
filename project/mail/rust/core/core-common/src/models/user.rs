@@ -10,7 +10,7 @@ use mail_core_api::service::ApiServiceError;
 use mail_core_api::services::proton::User as ApiUser;
 use mail_core_api::services::proton::UserId;
 use mail_core_api::services::proton::{
-    DelinquentState as ApiDelinquentState, ProtonCore, Role as ApiRole,
+    DelinquentState as ApiDelinquentState, ProtonAccount, Role as ApiRole,
 };
 use mail_stash::UserDb;
 use mail_stash::exports::{
@@ -128,7 +128,7 @@ impl User {
     /// Download and store user info and settings into the database
     ///
     pub async fn sync_user_and_settings(
-        api: &impl ProtonCore,
+        api: &impl ProtonAccount,
     ) -> Result<SyncedUserSettings, ApiServiceError> {
         let user = User::from(api.get_users().await?.user);
         let mut settings = UserSettings::from(api.get_settings().await?.user_settings);
@@ -150,7 +150,7 @@ impl User {
         mail_stash: &Stash<UserDb>,
     ) -> Result<(), InitializationError<CoreContextError>>
     where
-        API: ProtonCore,
+        API: ProtonAccount,
     {
         InitializedComponent::initialize(
             watcher,

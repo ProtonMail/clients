@@ -1,5 +1,5 @@
 use futures::TryFutureExt;
-use mail_core_api::services::proton::{SessionId, UserId};
+use mail_api_session::ids::{SessionId, UserId};
 use tracing::info;
 
 use crate::login::PostLoginValidator;

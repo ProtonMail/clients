@@ -14,7 +14,7 @@ use crate::{CoreContextError, CoreContextResult, UserContext};
 use indoc::indoc;
 use mail_core_api::consts::CoreBundle;
 use mail_core_api::service::ApiServiceError;
-use mail_core_api::services::proton::ProtonCore;
+use mail_core_api::services::proton::ProtonAccount as _;
 use mail_core_api::services::proton::{AddressId, UserId};
 use mail_core_api::services::proton::{GetKeysAllOptions, PrivateEmailRef};
 use mail_stash::macros::DbRecord;

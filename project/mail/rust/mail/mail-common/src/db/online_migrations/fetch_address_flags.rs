@@ -1,5 +1,5 @@
 use crate::{MailContextError, MailContextResult, MailUserContext};
-use mail_core_api::services::proton::{AddressId, ProtonCore};
+use mail_core_api::services::proton::{AddressId, ProtonAccount as _};
 use mail_core_common::models::{Address, ModelExtension};
 use mail_stash::orm::Model;
 use std::{sync::Weak, time::Duration};

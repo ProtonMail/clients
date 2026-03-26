@@ -1,6 +1,10 @@
 #![allow(clippy::wildcard_imports)]
 #![allow(clippy::similar_names)]
 
+use crate::protocol::proton::SessionId;
+use crate::protocol::{
+    ApiServiceObservabilityResponse, PostLoginValidator, UserCheckResult, UserCheckStatus,
+};
 use crate::requests::*;
 use crate::responses::*;
 use crate::shared::SecureString;
@@ -15,16 +19,11 @@ use crate::signup::state::complete::Complete;
 use crate::{AccountApi, ApiError};
 use derive_more::Display;
 use futures::TryFutureExt;
-use mail_core_api::auth::UserKeySecret;
-use mail_core_api::services::observability::ApiServiceObservabilityResponse;
-use mail_core_api::services::proton::SessionId;
-use mail_core_api::store::AuthInfo;
-use mail_core_api::store::DynStore;
-use mail_core_api::store::TfaMode;
-use mail_core_api::store::UserData;
-use mail_core_common::post_login_check::PostLoginValidator;
-use mail_core_common::post_login_check::UserCheckResult;
-use mail_core_common::post_login_check::UserCheckStatus;
+use mail_api_session::auth::UserKeySecret;
+use mail_api_session::store::AuthInfo;
+use mail_api_session::store::DynStore;
+use mail_api_session::store::TfaMode;
+use mail_api_session::store::UserData;
 use mail_muon::Client;
 #[allow(deprecated)]
 use mail_muon::client::flow::LoginExtraInfo;
@@ -323,9 +322,7 @@ impl UserStatus {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mail_core_api::services::proton::prelude::{
-        PostMetricsRequestData, PostMetricsRequestElement,
-    };
+    use crate::protocol::proton::{PostMetricsRequestData, PostMetricsRequestElement};
     use mail_observability::into_metrics_element;
     use serde_json::{self, json};
 

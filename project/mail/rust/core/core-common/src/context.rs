@@ -1342,6 +1342,17 @@ fn get_account_db_path(path: impl AsRef<Path>) -> PathBuf {
     path.as_ref().join("account.db")
 }
 
+#[async_trait]
+impl mail_account_api::protocol::PassphraseProvider for Context {
+    async fn get_session_passphrase(
+        &self,
+    ) -> Result<SecretSlice<u8>, mail_account_api::protocol::PassphraseAcquireError> {
+        self.get_session_passphrase().await.map_err(|e| {
+            mail_account_api::protocol::PassphraseAcquireError::Other(anyhow::Error::new(e))
+        })
+    }
+}
+
 fn get_user_db_path(path: impl AsRef<Path>, user_id: &UserId) -> PathBuf {
     path.as_ref().join(user_id.to_string()).with_extension("db")
 }

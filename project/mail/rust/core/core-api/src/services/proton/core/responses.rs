@@ -26,7 +26,6 @@
 //! are used by both requests and responses.
 //!
 
-use mail_api_utils::PaginateResponse;
 use proton_crypto_account::keys::{
     APIPublicAddressKeyGroup as PublicAddressKeyGroup,
     APIUnverifiedPublicAddressKeyGroup as UnverifiedPublicAddressKeyGroup, ArmoredPrivateKey,
@@ -38,30 +37,15 @@ use serde_with::{BoolFromInt, serde_as};
 #[cfg(feature = "mocks")]
 use serde::Serialize;
 
-use crate::services::proton::prelude::*;
-
 /// The response code indicating the status of the request.
 /// A value of 1000 typically indicates success.
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 pub struct ResponseCode(i32);
 
-/// The response containing addresses.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct GetAddressesResponse {
-    /// The list of addresses.
-    pub addresses: Vec<Address>,
-}
-
-/// The response containing an address.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct GetAddressResponse {
-    /// The list of addresses.
-    pub address: Address,
-}
+pub use mail_account_api::protocol::proton::{
+    GetAddressResponse, GetAddressesResponse, GetKeysSaltsResponse, GetSettingsResponse,
+    GetUsersResponse,
+};
 
 pub use contacts_api::{
     GetContactResponse, GetContactsEmailsResponse, GetContactsResponse, PutDeleteContactResponse,
@@ -103,33 +87,6 @@ pub struct GetKeysAllResponse {
     pub warnings: Vec<String>,
 }
 
-/// TODO: Document this struct.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct GetKeysSaltsResponse {
-    /// TODO: Document this field.
-    pub key_salts: Vec<Salt>,
-}
-
-/// TODO: Document this struct.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct GetSettingsResponse {
-    /// TODO: Document this field.
-    pub user_settings: UserSettings,
-}
-
-/// TODO: Document this struct.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct GetUsersResponse {
-    /// TODO: Document this field.
-    pub user: User,
-}
-
 pub use mail_api_labels::{
     GetLabelsResponse, PatchLabelResponse, PostLabelsResponse, PutLabelResponse,
 };
@@ -167,30 +124,6 @@ pub struct UserKey {
     /// Signature for the recovery secret.
     #[serde(default)]
     pub flags: u32,
-}
-
-#[derive(Clone, Debug, Deserialize, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct GetLegacyFeaturesResponse {
-    pub total: u64,
-    pub features: Vec<LegacyFeatureFlag>,
-}
-impl PaginateResponse<LegacyFeatureFlag> for GetLegacyFeaturesResponse {
-    fn total(&self) -> u64 {
-        self.total
-    }
-
-    fn items(self) -> Vec<LegacyFeatureFlag> {
-        self.features
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
-#[serde(rename_all = "PascalCase")]
-pub struct PutFeatureFlagOverrideResponse {
-    pub feature: LegacyFeatureFlag,
 }
 
 #[derive(Clone, Debug, PartialEq)]

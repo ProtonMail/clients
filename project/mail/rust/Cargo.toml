@@ -46,8 +46,12 @@ members = [
   "core/labels-common",
   "shared/mail-avatar",
   "shared/shared-types",
+  "api/mail-api-bug-report",
+  "api/mail-api-device",
   "api/mail-api-event-types",
+  "api/mail-api-feature-flags",
   "api/mail-api-labels",
+  "api/mail-api-ping",
   "api/mail-api-session",
   "api/mail-api-shared",
   "shared/mail-proton-ids",
@@ -179,13 +183,29 @@ path = "contacts/contacts-api"
 version = "0.1.0"
 path = "contacts/contacts-common"
 
+[workspace.dependencies.mail-api-bug-report]
+version = "0.1.0"
+path = "api/mail-api-bug-report"
+
+[workspace.dependencies.mail-api-device]
+version = "0.1.0"
+path = "api/mail-api-device"
+
 [workspace.dependencies.mail-api-event-types]
 version = "0.1.0"
 path = "api/mail-api-event-types"
 
+[workspace.dependencies.mail-api-feature-flags]
+version = "0.1.0"
+path = "api/mail-api-feature-flags"
+
 [workspace.dependencies.mail-api-labels]
 version = "0.1.0"
 path = "api/mail-api-labels"
+
+[workspace.dependencies.mail-api-ping]
+version = "0.1.0"
+path = "api/mail-api-ping"
 
 [workspace.dependencies.mail-api-session]
 version = "0.1.0"

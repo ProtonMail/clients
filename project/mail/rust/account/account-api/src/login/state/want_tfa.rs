@@ -1,12 +1,12 @@
 use crate::login::state::{HasSessionId, HasUserId, StateData};
 use crate::login::{LoginError, TfaMethods, state::State};
+use crate::protocol::PostLoginValidator;
+use crate::protocol::proton::{SessionId, UserId};
 use crate::shared::SecureString;
 use crate::shared::challenge::get_auth_info;
 use derive_more::From;
 use futures::TryFutureExt;
-use mail_core_api::service::ApiServiceError;
-use mail_core_api::services::proton::{SessionId, UserId};
-use mail_core_common::post_login_check::PostLoginValidator;
+use mail_api_shared::ApiServiceError;
 use mail_muon::client::flow::{AuthFlow, LoginTwoFactorFlow};
 use mail_muon::common::Sender;
 use mail_muon::rest::auth::v4::fido2;

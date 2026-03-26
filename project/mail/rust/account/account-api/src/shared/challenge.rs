@@ -1,9 +1,7 @@
+use crate::protocol::DeviceInfo;
+use crate::protocol::proton::{PostAuthInfoRequest, PostAuthInfoResponse, ProtonAuth as _};
 use derive_more::From;
-use mail_core_api::{
-    service::ApiServiceResult,
-    services::proton::{PostAuthInfoRequest, PostAuthInfoResponse, ProtonAuth as _},
-};
-use mail_core_common::device::DeviceInfo;
+use mail_api_shared::ApiServiceResult;
 use mail_muon::{ProtonRequest, ProtonResponse, common::Sender};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -161,11 +159,11 @@ pub async fn get_auth_info(
 
 #[cfg(test)]
 mod test {
+    use crate::protocol::DeviceInfo;
     use crate::shared::challenge::{
         Behavior, ChallengeInfo, ChallengePayload, PayloadFrameBehavior, PayloadFrameMetadata,
         PayloadFrameV2_2,
     };
-    use mail_core_common::device::DeviceInfo;
     use std::collections::HashMap;
 
     #[test]

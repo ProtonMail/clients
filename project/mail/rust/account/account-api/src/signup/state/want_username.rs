@@ -1,3 +1,4 @@
+use crate::protocol::ApiServiceObservabilityResponse;
 use crate::shared::challenge::Behavior;
 use crate::signup::SignupError;
 use crate::signup::state::want_password::WantPassword;
@@ -5,7 +6,6 @@ use crate::signup::state::{StateData, StateResult, Username};
 use crate::{AccountApi, ApiError, requests::ParseDomain};
 use derive_more::Display;
 use futures::TryFutureExt;
-use mail_core_api::services::observability::ApiServiceObservabilityResponse;
 use mail_muon::Client;
 use mail_observability::PreLoginMetricRecorder;
 use mail_observability::metric;
@@ -121,9 +121,7 @@ impl UsernameAvailabilityStatus {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mail_core_api::services::proton::prelude::{
-        PostMetricsRequestData, PostMetricsRequestElement,
-    };
+    use crate::protocol::proton::{PostMetricsRequestData, PostMetricsRequestElement};
     use mail_observability::into_metrics_element;
     use serde_json::{self, json};
 

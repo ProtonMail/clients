@@ -2,8 +2,8 @@
 #![allow(clippy::result_large_err)] // TODO(ET-5588): address growing Error size
 
 use crate::prelude::*;
+use crate::protocol::ApiServiceObservabilityResponse;
 use derive_more::Display;
-use mail_core_api::services::observability::ApiServiceObservabilityResponse;
 use mail_muon::{
     ProtonRequest, ProtonResponse, Status, common::Sender, http::HttpReqExt, serde_to_query,
 };
@@ -20,6 +20,7 @@ pub mod countries;
 pub mod login;
 pub mod password;
 pub mod prelude;
+pub mod protocol;
 pub mod requests;
 pub mod responses;
 pub mod shared;

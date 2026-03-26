@@ -7,7 +7,7 @@ use crate::event_loop::events::Action;
 use crate::models::ModelIdExtension;
 use crate::{CoreContextError, CoreContextResult};
 use mail_action_queue::rebase::RebaseChangeSet;
-use mail_core_api::services::proton::{Address as ApiAddress, AddressId, ProtonCore};
+use mail_core_api::services::proton::{Address as ApiAddress, AddressId, ProtonAccount};
 use mail_stash::exports::Transaction;
 use mail_stash::macros::Model;
 use mail_stash::orm::{DbRecord, Model, ModelHooks};
@@ -108,7 +108,7 @@ impl Address {
         mail_stash: &Stash<UserDb>,
     ) -> Result<(), InitializationError<CoreContextError>>
     where
-        API: ProtonCore,
+        API: ProtonAccount,
     {
         InitializedComponent::initialize(
             watcher,
@@ -126,7 +126,7 @@ impl Address {
 
     /// Download user addresses. Returns an object that can be stored in DB.
     ///
-    pub async fn sync(api: &impl ProtonCore) -> CoreContextResult<SyncedAddresses> {
+    pub async fn sync(api: &impl ProtonAccount) -> CoreContextResult<SyncedAddresses> {
         let addresses = api
             .get_addresses()
             .await?

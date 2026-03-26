@@ -61,6 +61,7 @@ pub use contacts_common::local_ids::{LocalContactEmailId, LocalContactId};
 pub use contacts_common::types::{ContactSendingPreferences, ContactTypes};
 pub use mail_avatar::AvatarInformation;
 
+pub use mail_api_session::auth_mode::{PasswordMode, TfaStatus};
 pub use mail_labels_common::{
     ALL_LABEL_TYPES, CONTACT_LABEL_TYPES, LabelColor, LabelType, Labels, LocalLabelId,
     MAIL_LABEL_TYPES,
@@ -79,9 +80,8 @@ use mail_core_api::services::proton::{
     AddressStatus as ApiAddressStatus, AddressType as ApiAddressType, DateFormat as ApiDateFormat,
     Density as ApiDensity, EarlyAccess as ApiEarlyAccess, Email as ApiEmail, FidoKey as ApiFidoKey,
     Flags as ApiFlags, HighSecurity as ApiHighSecurity, LogAuth as ApiLogAuth,
-    Password as ApiPassword, PasswordMode as ApiPasswordMode, Phone as ApiPhone,
-    ProductUsedSpace as ApiProductUsedSpace, Referral as ApiReferral,
-    SettingsFlags as ApiSettingsFlags, TfaStatus as ApiTfaStatus, TimeFormat as ApiTimeFormat,
+    Password as ApiPassword, Phone as ApiPhone, ProductUsedSpace as ApiProductUsedSpace,
+    Referral as ApiReferral, SettingsFlags as ApiSettingsFlags, TimeFormat as ApiTimeFormat,
     TwoFa as ApiTwoFa, UserMnemonicStatus as ApiUserMnemonicStatus, UserType as ApiUserType,
     WeekStart as ApiWeekStart,
 };
@@ -90,8 +90,6 @@ use mail_core_api::services::proton::{
     LightOrDarkMode as ApiLightOrDarkMode,
 };
 use mail_core_api::session::{Config as RealApiConfig, EnvId};
-use mail_core_api::store::{MbpMode, TfaMode};
-use mail_sqlite3::rusqlite::Error as SqlError;
 use mail_stash::exports::{
     FromSql, FromSqlError, FromSqlResult, SqliteError, ToSql, ToSqlOutput, Value, ValueRef,
 };
@@ -472,90 +470,6 @@ impl FromSql for LogAuth {
 }
 
 impl ToSql for LogAuth {
-    fn to_sql(&self) -> Result<ToSqlOutput<'_>, SqliteError> {
-        Ok(ToSqlOutput::Owned(Value::Integer(*self as i64)))
-    }
-}
-
-/// TODO: Document this enum.
-#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize, TryFrom)]
-#[try_from(repr)]
-#[repr(u8)]
-pub enum TfaStatus {
-    /// TODO: Document this variant.
-    #[default]
-    None = 0,
-
-    /// TODO: Document this variant.
-    Totp = 1,
-
-    /// TODO: Document this variant.
-    Fido2 = 2,
-
-    /// TODO: Document this variant.
-    TotpOrFido2 = 3,
-}
-impl TfaStatus {
-    /// Returns true if any type of second factor auth method is active.
-    #[must_use]
-    pub fn has_tfa(self) -> bool {
-        !matches!(self, Self::None)
-    }
-
-    /// Returns true if TOTP is enabled.
-    #[must_use]
-    pub fn has_totp(self) -> bool {
-        matches!(self, Self::Totp | Self::TotpOrFido2)
-    }
-
-    /// Returns true if FIDO2 is enabled.
-    #[must_use]
-    pub fn has_fido(self) -> bool {
-        matches!(self, Self::Fido2 | Self::TotpOrFido2)
-    }
-}
-
-impl From<TfaMode> for TfaStatus {
-    fn from(value: TfaMode) -> Self {
-        match (value.totp, value.fido) {
-            (true, true) => Self::TotpOrFido2,
-            (true, false) => Self::Totp,
-            (false, true) => Self::Fido2,
-            (false, false) => Self::None,
-        }
-    }
-}
-
-impl From<ApiTfaStatus> for TfaStatus {
-    fn from(value: ApiTfaStatus) -> Self {
-        match value {
-            ApiTfaStatus::None => Self::None,
-            ApiTfaStatus::Totp => Self::Totp,
-            ApiTfaStatus::Fido2 => Self::Fido2,
-            ApiTfaStatus::TotpOrFido2 => Self::TotpOrFido2,
-        }
-    }
-}
-
-impl From<TfaStatus> for ApiTfaStatus {
-    fn from(value: TfaStatus) -> Self {
-        match value {
-            TfaStatus::None => Self::None,
-            TfaStatus::Totp => Self::Totp,
-            TfaStatus::Fido2 => Self::Fido2,
-            TfaStatus::TotpOrFido2 => Self::TotpOrFido2,
-        }
-    }
-}
-
-impl FromSql for TfaStatus {
-    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        let val = u8::column_result(value)?;
-        Self::try_from(val).map_err(|_| FromSqlError::OutOfRange(i64::from(val)))
-    }
-}
-
-impl ToSql for TfaStatus {
     fn to_sql(&self) -> Result<ToSqlOutput<'_>, SqliteError> {
         Ok(ToSqlOutput::Owned(Value::Integer(*self as i64)))
     }
@@ -1283,85 +1197,6 @@ impl AuthScopes {
 }
 
 sql_using_serde!(AuthScopes);
-
-/// A compat type for the [`ApiPasswordMode`] enum, enabling it to be used
-/// within the database.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, TryFrom)]
-#[try_from(repr)]
-#[repr(u8)]
-pub enum PasswordMode {
-    #[default]
-    One = 1,
-    Two = 2,
-}
-
-impl PasswordMode {
-    /// Returns true if any type of additional password is active.
-    #[must_use]
-    pub fn has_mbp(self) -> bool {
-        !matches!(self, Self::One)
-    }
-}
-
-impl From<MbpMode> for PasswordMode {
-    fn from(value: MbpMode) -> Self {
-        match value {
-            MbpMode::One => Self::One,
-            MbpMode::Two => Self::Two,
-        }
-    }
-}
-
-impl From<PasswordMode> for MbpMode {
-    fn from(value: PasswordMode) -> Self {
-        match value {
-            PasswordMode::One => MbpMode::One,
-            PasswordMode::Two => MbpMode::Two,
-        }
-    }
-}
-
-impl From<ApiPasswordMode> for PasswordMode {
-    fn from(value: ApiPasswordMode) -> Self {
-        match value {
-            ApiPasswordMode::One => Self::One,
-            ApiPasswordMode::Two => Self::Two,
-        }
-    }
-}
-
-impl From<PasswordMode> for ApiPasswordMode {
-    fn from(value: PasswordMode) -> Self {
-        match value {
-            PasswordMode::One => ApiPasswordMode::One,
-            PasswordMode::Two => ApiPasswordMode::Two,
-        }
-    }
-}
-
-impl ToSql for PasswordMode {
-    fn to_sql(&self) -> Result<ToSqlOutput<'_>, SqlError> {
-        Ok((*self as u8).into())
-    }
-}
-
-impl FromSql for PasswordMode {
-    fn column_result(value: ValueRef) -> FromSqlResult<Self> {
-        let ValueRef::Integer(value) = value else {
-            return Err(FromSqlError::InvalidType);
-        };
-
-        let Ok(value) = u8::try_from(value) else {
-            return Err(FromSqlError::InvalidType);
-        };
-
-        let Ok(value) = Self::try_from(value) else {
-            return Err(FromSqlError::InvalidType);
-        };
-
-        Ok(value)
-    }
-}
 
 /// Wrapper type around [`RealUserKeys`] to implement [`FromSql`] and [`ToSql`].
 #[derive(Clone, Debug, Eq, PartialEq, Into)]

@@ -6,7 +6,7 @@ use itertools::Itertools;
 use mail_api::services::proton::response_data::{
     Conversation as ApiConversation, MessageMetadata as ApiMessageMetadata,
 };
-use mail_core_api::services::proton::{AddressId, LabelId, ProtonCore};
+use mail_core_api::services::proton::{AddressId, LabelId, ProtonAccount as _};
 use mail_core_api::session::Session;
 use mail_core_common::models::{Address, Label, ModelIdExtension};
 use mail_stash::orm::Model;

@@ -1,6 +1,4 @@
-use mail_core_api::services::observability::ApiServiceObservabilityResponse;
-
-use crate::metric;
+use crate::{ApiServiceObservabilityResponse, metric};
 
 metric! {
     #[name = "core_signin_auth_total"]
@@ -30,10 +28,7 @@ metric! {
 
 #[cfg(test)]
 mod tests {
-    use crate::into_metrics_element;
-    use mail_core_api::services::proton::prelude::{
-        PostMetricsRequestData, PostMetricsRequestElement,
-    };
+    use crate::{PostMetricsRequestData, PostMetricsRequestElement, into_metrics_element};
 
     use super::*;
     use serde_json::{self, json};

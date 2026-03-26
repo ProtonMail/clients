@@ -6,7 +6,7 @@ use crate::{Context, services::Service};
 use crate::{CoreContextError, CoreContextResult, Origin};
 use anyhow::{Context as _, Result};
 use mail_core_api::services::proton::{
-    GetUnleashFeaturesContext, GetUnleashFeaturesRequest, ProtonCore as _,
+    FeatureFlagsApi as _, GetUnleashFeaturesContext, GetUnleashFeaturesRequest,
 };
 use mail_core_api::session::Session;
 use mail_stash::stash::WatcherHandle;

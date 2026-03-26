@@ -1,17 +1,13 @@
 use std::sync::Arc;
 
+use crate::protocol::ApiServiceObservabilityResponse;
+use crate::protocol::proton::{ProtonAccount, SessionId};
+use crate::protocol::{PassphraseAcquireError, PassphraseProvider};
 use base64::{Engine as _, engine::general_purpose};
 use futures::TryFutureExt;
-use mail_core_api::{
-    auth::{KeySecret, UserKeySecret},
-    services::{
-        observability::ApiServiceObservabilityResponse,
-        proton::{ProtonCore, SessionId},
-    },
-    session::SessionParts,
-    store::{Store, UserData},
-};
-use mail_core_common::{Context, PassphraseAcquireError};
+use mail_api_session::auth::{KeySecret, UserKeySecret};
+use mail_api_session::session::SessionParts;
+use mail_api_session::store::{Store, UserData};
 use mail_muon::client::flow::{ForkFlowResult, WithCodeFlow, WithCodePollFlow};
 use mail_observability::{PreLoginMetricRecorder, metric};
 use proton_crypto_account::proton_crypto;
@@ -239,7 +235,7 @@ pub enum ProcessTargetDeviceQrError {
 pub async fn process_target_device_qr_code(
     qr_code: &str,
     client: mail_muon::Client,
-    context: Arc<Context>,
+    context: Arc<dyn PassphraseProvider>,
     observability: PreLoginMetricRecorder,
 ) -> Result<(), ProcessTargetDeviceQrError> {
     let qr_data = parse_qr_string(qr_code)

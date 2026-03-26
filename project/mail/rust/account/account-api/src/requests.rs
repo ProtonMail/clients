@@ -424,7 +424,7 @@ mod tests {
     use crate::shared::challenge::{Behavior, ChallengeInfo};
 
     use super::*;
-    use mail_core_common::device::DeviceInfo;
+    use crate::protocol::DeviceInfo;
     use serde_json;
 
     #[test]

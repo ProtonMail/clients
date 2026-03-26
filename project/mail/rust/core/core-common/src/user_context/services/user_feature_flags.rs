@@ -8,9 +8,9 @@ use anyhow::Context as _;
 use mail_core_api::{
     service::ApiServiceError,
     services::proton::{
-        GetLegacyFeatureFlagsOptions, GetLegacyFeaturesResponse, GetUnleashFeaturesRequest,
-        GetUnleashFeaturesResponse, LegacyFeatureFlag, LegacyFeatureFlagType,
-        MAX_LEGACY_FEATURES_PER_PAGE, ProtonCore,
+        FeatureFlagsApi as _, GetLegacyFeatureFlagsOptions, GetLegacyFeaturesResponse,
+        GetUnleashFeaturesRequest, GetUnleashFeaturesResponse, LegacyFeatureFlag,
+        LegacyFeatureFlagType, MAX_LEGACY_FEATURES_PER_PAGE,
     },
     session::Session,
 };

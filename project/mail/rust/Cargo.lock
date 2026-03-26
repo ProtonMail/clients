@@ -3859,17 +3859,28 @@ name = "mail-account-api"
 version = "0.1.0"
 dependencies = [
  "aes-gcm",
+ "anyhow",
  "async-trait",
  "base64",
+ "bytes",
  "derive_more 2.0.1",
  "futures",
+ "hex",
  "itertools 0.13.0",
- "mail-core-api",
+ "mail-api-bug-report",
+ "mail-api-device",
+ "mail-api-feature-flags",
+ "mail-api-ping",
+ "mail-api-session",
+ "mail-api-shared",
+ "mail-api-utils",
  "mail-core-common",
  "mail-issue-reporter-service",
  "mail-log-service",
  "mail-muon",
  "mail-observability",
+ "mail-proton-ids",
+ "mail-stash",
  "mail-task-service",
  "proton-crypto-account",
  "proton-crypto-subtle",
@@ -3881,11 +3892,14 @@ dependencies = [
  "serde_qs",
  "serde_repr",
  "serde_with",
+ "sha2",
+ "smart-default",
  "tempfile",
  "thiserror 2.0.18",
  "tokio",
  "tracing",
  "tracing-subscriber",
+ "url",
  "zeroize",
 ]
 
@@ -3989,6 +4003,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "mail-api-bug-report"
+version = "0.1.0"
+dependencies = [
+ "mail-api-shared",
+ "mail-muon",
+ "serde",
+]
+
+[[package]]
+name = "mail-api-device"
+version = "0.1.0"
+dependencies = [
+ "mail-api-shared",
+ "mail-muon",
+ "serde",
+ "serde_repr",
+]
+
+[[package]]
 name = "mail-api-event-types"
 version = "0.1.0"
 dependencies = [
@@ -3996,6 +4029,21 @@ dependencies = [
  "mail-stash",
  "serde",
  "serde_repr",
+]
+
+[[package]]
+name = "mail-api-feature-flags"
+version = "0.1.0"
+dependencies = [
+ "core-feature-flags",
+ "mail-api-shared",
+ "mail-api-utils",
+ "mail-muon",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "serde_with",
+ "smart-default",
 ]
 
 [[package]]
@@ -4011,6 +4059,14 @@ dependencies = [
  "serde_json",
  "serde_repr",
  "serde_with",
+]
+
+[[package]]
+name = "mail-api-ping"
+version = "0.1.0"
+dependencies = [
+ "mail-api-shared",
+ "mail-muon",
 ]
 
 [[package]]
@@ -4232,12 +4288,16 @@ dependencies = [
  "chrono",
  "contacts-api",
  "cookie",
- "core-feature-flags",
  "derive_more 2.0.1",
  "futures",
  "insta",
+ "mail-account-api",
+ "mail-api-bug-report",
+ "mail-api-device",
  "mail-api-event-types",
+ "mail-api-feature-flags",
  "mail-api-labels",
+ "mail-api-ping",
  "mail-api-session",
  "mail-api-shared",
  "mail-api-utils",
@@ -4290,8 +4350,10 @@ dependencies = [
  "insta",
  "itertools 0.13.0",
  "jiff",
+ "mail-account-api",
  "mail-action-queue",
  "mail-api-labels",
+ "mail-api-session",
  "mail-api-utils",
  "mail-avatar",
  "mail-core-api",
@@ -4626,7 +4688,7 @@ name = "mail-observability"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "mail-core-api",
+ "mail-api-shared",
  "parking_lot",
  "serde",
  "serde_json",

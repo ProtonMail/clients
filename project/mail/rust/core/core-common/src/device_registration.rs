@@ -8,7 +8,7 @@ use futures::StreamExt;
 use itertools::Itertools;
 use mail_core_api::{
     service::ApiServiceError,
-    services::proton::{ProtonCore, SessionId, prelude::RegisterDeviceRequest},
+    services::proton::{DeviceApi as _, SessionId, prelude::RegisterDeviceRequest},
 };
 use mail_stash::AccountDb;
 use mail_stash::{

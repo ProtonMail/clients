@@ -7,7 +7,7 @@ use mail_action_queue::action::{
     Type, WriterGuard,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
-use mail_core_api::services::proton::ProtonCore;
+use mail_core_api::services::proton::FeatureFlagsApi as _;
 use mail_core_api::session::Session;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;

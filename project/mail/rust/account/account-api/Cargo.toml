@@ -10,18 +10,30 @@ license.workspace = true
 # proton deps
 proton-crypto-account = { workspace = true }
 proton-crypto-subtle = { workspace = true }
-mail-core-api = { workspace = true }
-mail-core-common = { workspace = true }
+mail-api-bug-report = { workspace = true }
+mail-api-device = { workspace = true }
+mail-api-feature-flags = { workspace = true }
+mail-api-ping = { workspace = true }
+mail-api-session = { workspace = true }
+mail-api-shared = { workspace = true }
 mail-observability = { workspace = true }
+mail-api-utils = { workspace = true }
+mail-proton-ids = { workspace = true }
+mail-stash = { workspace = true, optional = true }
+smart-default = { workspace = true }
 mail-task-service = { workspace = true }
 mail-muon = { workspace = true }
+url = { workspace = true }
+bytes = { workspace = true }
 
 # crates.io dependencies
 aes-gcm = { workspace = true }
+anyhow = { workspace = true }
 async-trait = { workspace = true }
 base64 = { workspace = true }
 derive_more = { workspace = true }
 futures = { workspace = true }
+hex = { workspace = true }
 itertools = { workspace = true }
 regex = { workspace = true }
 secrecy = { workspace = true }
@@ -31,10 +43,14 @@ serde_json = { workspace = true }
 serde_qs = { workspace = true }
 serde_repr = { workspace = true }
 serde_with = { workspace = true }
+sha2 = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
 zeroize = { workspace = true }
+
+[features]
+sql = ["dep:mail-stash", "mail-proton-ids/sql"]
 
 [lints]
 workspace = true
@@ -43,6 +59,7 @@ workspace = true
 tokio = { workspace = true }
 tracing-subscriber = { workspace = true }
 tempfile = { workspace = true }
+mail-core-common = { workspace = true, features = ["test-utils"] }
 mail-log-service = { workspace = true }
 mail-issue-reporter-service = { workspace = true }
 

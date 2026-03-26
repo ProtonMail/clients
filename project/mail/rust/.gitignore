@@ -22,3 +22,6 @@ devenv.local.nix
 .ruff_cache
 __pycache__
 .cursorrules
+
+# For AI docs generation
+docs/tmp

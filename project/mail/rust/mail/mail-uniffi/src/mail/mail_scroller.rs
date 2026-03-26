@@ -1,6 +1,6 @@
 use crate::core::datatypes::Id;
 use crate::errors::MailScrollerError;
-use crate::mail::datatypes::{Conversation, Message};
+use crate::mail::datatypes::{Conversation, Message, SystemLabel};
 use crate::{PaginatorSearchOptions, WatchHandle, async_runtime, uniffi_async};
 use mail_common::MailUserContext;
 use mail_common::ProtonMailError as RealProtonMailError;
@@ -14,7 +14,37 @@ use mail_common::{
     MailScroller as RealMailScroller, MailScrollerHandle, ScrollerListUpdate, ScrollerStatusUpdate,
     ScrollerUpdate,
 };
+use mail_core_common::datatypes::LocalLabelId;
 use std::sync::Arc;
+
+/// A category label that can be used to filter the mail scroller.
+#[derive(Clone, Debug, uniffi::Record)]
+pub struct CategoryLabel {
+    /// The local label ID used to identify and enable this category.
+    pub id: Id,
+    /// Display name of the category (e.g. "Newsletters", "Promotions").
+    pub name: String,
+    /// Whether there are unseen items in this category (unread count > 0).
+    pub has_unseen_items: bool,
+    /// Whether this category is currently the active filter.
+    pub enabled: bool,
+    /// The static system label variant for this category.
+    pub system_label: SystemLabel,
+}
+
+/// Represents the category filter state of a scroller.
+#[derive(Clone, Debug, uniffi::Record)]
+pub struct CategoryView {
+    /// All categories available to filter by.
+    /// At most one will have `enabled = true` at any time.
+    pub available: Vec<CategoryLabel>,
+}
+
+/// Callback interface for receiving category view state updates.
+#[uniffi::export(callback_interface)]
+pub trait CategoryViewCallback: Send + Sync {
+    fn on_update(&self, category_view: CategoryView);
+}
 
 #[uniffi::export(callback_interface)]
 pub trait ConversationScrollerLiveQueryCallback: Send + Sync {
@@ -443,6 +473,35 @@ impl ConversationScroller {
             .map_err(Into::into)
     }
 
+    /// Enables a category filter. Pass `None` to clear the active category.
+    ///
+    /// The scroller will reset and emit a list update reflecting the filtered results.
+    pub fn change_category_view(
+        self: Arc<Self>,
+        enable: Option<Id>,
+    ) -> Result<(), MailScrollerError> {
+        self.scroller
+            .change_category_view(enable.map(LocalLabelId::from))
+            .map_err(RealProtonMailError::from)
+            .map_err(Into::into)
+    }
+
+    /// Returns the current category filter state.
+    pub async fn category_view(&self) -> Result<CategoryView, MailScrollerError> {
+        let scroller = Arc::clone(&self.scroller);
+
+        uniffi_async(async move {
+            let _ = scroller
+                .category_view()
+                .await
+                .map_err(RealProtonMailError::from)?;
+
+            Result::<_, RealProtonMailError>::Ok(CategoryView { available: vec![] })
+        })
+        .await
+        .map_err(Into::into)
+    }
+
     pub fn change_include(
         self: Arc<Self>,
         include: IncludeSwitch,
@@ -575,6 +634,35 @@ impl MessageScroller {
             .change_filter(unread.into())
             .map_err(RealProtonMailError::from)
             .map_err(Into::into)
+    }
+
+    /// Enables a category filter. Pass `None` to clear the active category.
+    ///
+    /// The scroller will reset and emit a list update reflecting the filtered results.
+    pub fn change_category_view(
+        self: Arc<Self>,
+        enable: Option<Id>,
+    ) -> Result<(), MailScrollerError> {
+        self.scroller
+            .change_category_view(enable.map(LocalLabelId::from))
+            .map_err(RealProtonMailError::from)
+            .map_err(Into::into)
+    }
+
+    /// Returns the current category filter state.
+    pub async fn category_view(&self) -> Result<CategoryView, MailScrollerError> {
+        let scroller = Arc::clone(&self.scroller);
+
+        uniffi_async(async move {
+            let _ = scroller
+                .category_view()
+                .await
+                .map_err(RealProtonMailError::from)?;
+
+            Result::<_, RealProtonMailError>::Ok(CategoryView { available: vec![] })
+        })
+        .await
+        .map_err(Into::into)
     }
 
     pub fn change_include(

@@ -2827,7 +2827,7 @@ dependencies = [
 [[package]]
 name = "gopenpgp-sys"
 version = "0.3.4"
-source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/registry/index/"
+source = "sparse+https://rust-registry.proton.me/index/"
 checksum = "0a1821dcf1e022ea098bf01dd96ef877f6300a89d09aeb43328c3e0ffb2e6bfc"
 dependencies = [
  "base64",
@@ -3868,8 +3868,8 @@ dependencies = [
 [[package]]
 name = "muon"
 version = "2.0.4"
-source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/registry/index/"
-checksum = "64eb40252fa79b9d00e710edb7e6ccb1300ff9736aaa2c3fcddcade46ae4630f"
+source = "sparse+https://rust-registry.proton.me/index/"
+checksum = "72aab46fe759ba7ee90c0798baf16fd8f3cf31adef2c7151493ca390103fde87"
 dependencies = [
  "async-lock",
  "bytes",
@@ -3910,7 +3910,7 @@ dependencies = [
 [[package]]
 name = "muon-rest"
 version = "0.1.0"
-source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/registry/index/"
+source = "sparse+https://rust-registry.proton.me/index/"
 checksum = "d6ee1b56091056f8214e6802d015273a2ae7be8d37d6abdf6cc8c512362f86d8"
 dependencies = [
  "derive_more 2.1.1",
@@ -4727,8 +4727,8 @@ dependencies = [
 [[package]]
 name = "proton-crypto"
 version = "0.12.0"
-source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/registry/index/"
-checksum = "cd46dbf17b42c6e0ac3f2e88118594df2def33c64ef085b5af738e67ea956b6a"
+source = "sparse+https://rust-registry.proton.me/index/"
+checksum = "1eb4f0513efcc67c8ebca2cf82b20dafb514a7efbd2a5796b0c010f527702430"
 dependencies = [
  "facet",
  "gopenpgp-sys",
@@ -4746,8 +4746,8 @@ dependencies = [
 [[package]]
 name = "proton-crypto-account"
 version = "0.17.0"
-source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/registry/index/"
-checksum = "ee38b40b10365c71b0b3b0992791c81e0ffa69f87f5e218e474cb69fc97ca098"
+source = "sparse+https://rust-registry.proton.me/index/"
+checksum = "02b441df1b39aa2556e3e571a36ed7ed2773af0cc745caeef7be75dd993246b2"
 dependencies = [
  "base64",
  "derive_more 2.1.1",
@@ -4767,7 +4767,7 @@ dependencies = [
 [[package]]
 name = "proton-crypto-subtle"
 version = "0.2.1"
-source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/registry/index/"
+source = "sparse+https://rust-registry.proton.me/index/"
 checksum = "0a0d3d11e6f10b8594ef4acf8460ad705cae77873683fee4ae54489c869a7bfc"
 dependencies = [
  "aes-gcm",
@@ -4782,8 +4782,8 @@ dependencies = [
 [[package]]
 name = "proton-os-interface"
 version = "0.2.6"
-source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/registry/index/"
-checksum = "8e4b9d4c0cb1aa4096f9f7bdabc120323c7b6d110efba90d258c0150a65a7e12"
+source = "sparse+https://rust-registry.proton.me/index/"
+checksum = "4c2654d02228a2e4ccb4edf1883cb2838d9640e19012f75e0cad7afcb468f2d5"
 dependencies = [
  "derive_more 1.0.0",
  "futures",
@@ -4796,8 +4796,8 @@ dependencies = [
 [[package]]
 name = "proton-rpgp"
 version = "0.3.1"
-source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/registry/index/"
-checksum = "df784ff7b902e1e5aa390fe38e40b6074aec05b65420dc193857b24312aa0727"
+source = "sparse+https://rust-registry.proton.me/index/"
+checksum = "b93e2cc1d15af7bcaef9c6944f94468efc87a0516fb1fe86f39f785c2e4e7e42"
 dependencies = [
  "hex",
  "kem",
@@ -4815,8 +4815,8 @@ dependencies = [
 [[package]]
 name = "proton-srp"
 version = "0.8.2"
-source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/registry/index/"
-checksum = "9742431fe160b5ed3169404e9153414b756da27622deebea4b990f6943498d1c"
+source = "sparse+https://rust-registry.proton.me/index/"
+checksum = "91efa4e2584cfe6a5aa420dd46c46355c673c68166c13f3d9f230ac0309eea9b"
 dependencies = [
  "base64",
  "bcrypt",

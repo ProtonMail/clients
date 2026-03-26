@@ -6,12 +6,12 @@ use crate::prelude::{
     AuthInput, PutKeysPrivateRequest, PutSettingsPasswordRequest, PutUsersPasswordRequest,
     PutUsersPasswordResponse, UpdateKeyRequest,
 };
+use crate::protocol::proton::PostAuthInfoResponse;
 use crate::shared::SecureString;
 use crate::shared::challenge::get_auth_info;
 use futures::TryFutureExt as _;
-use mail_core_api::auth::UserKeySecret;
-use mail_core_api::services::proton::PostAuthInfoResponse;
-use mail_core_common::datatypes::PasswordMode;
+use mail_api_session::auth::UserKeySecret;
+use mail_api_session::auth_mode::PasswordMode;
 use mail_muon::Client;
 use mail_muon::rest::auth::v4::fido2;
 use proton_crypto_account::proton_crypto::crypto::{DataEncoding::Armor, PGPProviderSync};

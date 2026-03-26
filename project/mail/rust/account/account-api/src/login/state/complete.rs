@@ -1,7 +1,7 @@
 use crate::DelinquentState;
 use crate::login::state::{HasSessionId, HasUserId, StateData};
-use mail_core_api::services::proton::prelude::*;
-use mail_core_api::session::Session;
+use crate::protocol::proton::{SessionId, User, UserId};
+use mail_api_session::session::Session;
 
 /// Represents a completed login flow.
 pub struct Complete {

@@ -1,14 +1,32 @@
-use mail_core_api::services::proton::prelude::{PostMetricsRequestData, PostMetricsRequestElement};
 use std::sync::{Arc, LazyLock};
 
 use chrono::Utc;
 use parking_lot::Mutex;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use store::InMemoryMetricStore;
 use tracing::{error, trace};
 
 pub mod metrics;
+mod observability;
 pub mod store;
+
+pub use observability::ApiServiceObservabilityResponse;
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "PascalCase")]
+pub struct PostMetricsRequestElement {
+    pub name: String,
+    pub version: u64,
+    pub timestamp: i64,
+    pub data: PostMetricsRequestData,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "PascalCase")]
+pub struct PostMetricsRequestData {
+    pub labels: serde_json::Value,
+    pub value: u64,
+}
 
 static PRE_LOGIN_METRIC_STORE: LazyLock<Arc<Mutex<InMemoryMetricStore>>> =
     LazyLock::new(|| Arc::new(Mutex::new(InMemoryMetricStore::default())));

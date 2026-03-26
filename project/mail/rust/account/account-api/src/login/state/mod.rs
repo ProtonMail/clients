@@ -6,19 +6,19 @@ use crate::login::state::want_mbp::WantMbp;
 use crate::login::state::want_new_password::WantNewPassword;
 use crate::login::state::want_tfa::{TfaFlow, WantTfa};
 use crate::prelude::AuthInput;
+use crate::protocol::proton::{
+    Address, AddressId, PasswordMode, ProtonAccount, SessionId, User, UserId,
+};
+use crate::protocol::{UserCheckResult, UserCheckStatus};
 use crate::shared::SecureString;
 use crate::shared::challenge::{Behavior, ChallengeInfo};
 use crate::shared::crypto::{NewAddrKey, NewUserKey, SharedCryptoError};
 use derive_more::{Debug, From};
 use futures::TryFutureExt;
 use itertools::Itertools;
-use mail_core_api::auth::UserKeySecret;
-use mail_core_api::services::proton::{
-    Address, AddressId, PasswordMode, ProtonCore, SessionId, User, UserId,
-};
-use mail_core_api::session::{Session, SessionParts};
-use mail_core_api::store::UserData;
-use mail_core_common::post_login_check::{UserCheckResult, UserCheckStatus};
+use mail_api_session::auth::UserKeySecret;
+use mail_api_session::session::{Session, SessionParts};
+use mail_api_session::store::UserData;
 use mail_muon::rest::auth::v4::fido2;
 use mail_observability::{PreLoginMetricRecorder, metric};
 use proton_crypto_account::keys::{LockedKey, UnlockedUserKey, UserKeys};
@@ -427,7 +427,7 @@ impl State {
         let recorder = PreLoginMetricRecorder::default();
 
         // Fetch user addresses.
-        let mut addr = ProtonCore::get_addresses(&client)
+        let mut addr = ProtonAccount::get_addresses(&client)
             .map_ok(|res| res.addresses)
             .map_err(LoginError::AddressFetch)
             .await?;
@@ -606,7 +606,7 @@ impl State {
             .map_err(LoginError::UserFetch)
             .await?;
 
-        let addresses = ProtonCore::get_addresses(client)
+        let addresses = ProtonAccount::get_addresses(client)
             .map_ok(|res| res.addresses)
             .map_err(LoginError::AddressFetch)
             .await?;
@@ -653,7 +653,7 @@ impl State {
             }
         }
 
-        let addresses = ProtonCore::get_addresses(client)
+        let addresses = ProtonAccount::get_addresses(client)
             .map_ok(|res| res.addresses)
             .map_err(LoginError::AddressFetch)
             .await?;
@@ -770,9 +770,7 @@ enum UnlockUserKeyStatus {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mail_core_api::services::proton::prelude::{
-        PostMetricsRequestData, PostMetricsRequestElement,
-    };
+    use crate::protocol::proton::{PostMetricsRequestData, PostMetricsRequestElement};
     use mail_observability::into_metrics_element;
     use serde_json::{self, json};
 

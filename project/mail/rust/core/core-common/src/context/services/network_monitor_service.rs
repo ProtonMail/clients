@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use mail_action_queue::queue::{OnlineStatusWaiter, OnlineStatusWaiterBuilder};
 use mail_core_api::connection_status::ConnectionStatus;
 use mail_core_api::exports::RetryPolicy;
-use mail_core_api::services::proton::ProtonCore;
+use mail_core_api::services::proton::PingApi as _;
 use mail_core_api::session::Session;
 use mail_network_monitor_service::{
     Config, ConnectionMonitor, NetworkMonitorService as ProtonNetworkMonitorService,

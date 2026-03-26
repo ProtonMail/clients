@@ -9,8 +9,12 @@ license.workspace = true
 
 [dependencies]
 contacts-api = { workspace = true }
+mail-account-api = { workspace = true }
+mail-api-bug-report = { workspace = true }
+mail-api-device = { workspace = true }
+mail-api-feature-flags = { workspace = true }
+mail-api-ping = { workspace = true }
 mail-api-session = { workspace = true }
-core-feature-flags = { workspace = true }
 mail-api-event-types = { workspace = true }
 mail-api-labels = { workspace = true }
 mail-api-shared = { workspace = true }
@@ -51,6 +55,7 @@ default = []
 sql = [
   "dep:mail-stash",
   "contacts-api/sql",
+  "mail-account-api/sql",
   "mail-api-session/sql",
   "mail-proton-ids/sql",
   "mail-api-event-types/sql",
@@ -58,8 +63,8 @@ sql = [
 ]
 mocks = [
   "contacts-api/mocks",
+  "mail-api-feature-flags/mocks",
   "mail-api-session/mocks",
-  "core-feature-flags/mocks",
   "mail-api-shared/mocks",
   "mail-api-event-types/mocks",
   "mail-api-labels/mocks",

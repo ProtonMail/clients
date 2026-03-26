@@ -1,14 +1,15 @@
 use crate::countries::{COUNTRIES, Country};
 use crate::prelude::{Address, User};
+use crate::protocol::{
+    ApiServiceObservabilityResponse, PostLoginValidationError, PostLoginValidator,
+};
 use crate::shared::SecureString;
 use crate::shared::challenge::{Behavior, ChallengeInfo};
 use crate::shared::crypto::SharedCryptoError;
 use crate::signup::state::{Recovery, StateKind, Username};
 use crate::{AccountApi, ApiError};
 use futures::TryFutureExt;
-use mail_core_api::services::observability::ApiServiceObservabilityResponse;
-use mail_core_api::store::{DynStore, StoreError};
-use mail_core_common::post_login_check::{PostLoginValidationError, PostLoginValidator};
+use mail_api_session::store::{DynStore, StoreError};
 use mail_observability::{PreLoginMetricRecorder, metric};
 use proton_crypto_account::errors::{AccountCryptoError, SKLError};
 use proton_crypto_account::{proton_crypto::CryptoError, salts::SaltError};
@@ -324,9 +325,7 @@ impl DomainAvailability {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mail_core_api::services::proton::prelude::{
-        PostMetricsRequestData, PostMetricsRequestElement,
-    };
+    use crate::protocol::proton::{PostMetricsRequestData, PostMetricsRequestElement};
     use mail_observability::into_metrics_element;
     use serde_json::{self, json};
 

@@ -1,12 +1,12 @@
 use crate::login::PostLoginValidator;
 use crate::login::state::{HasSessionId, HasUserId, StateData};
 use crate::login::{LoginError, state::State};
+use crate::protocol::proton::{AddressId, ProtonAccount, SessionId, UserId};
 use crate::requests::{AddressKeyInput, AsyncUserInitialization, SetupKeysRequest};
 use crate::shared::SecureString;
 use crate::shared::crypto::{NewAddrKey, NewUserKey};
 use crate::{AccountApi, prelude::*};
 use futures::TryFutureExt;
-use mail_core_api::services::proton::{AddressId, ProtonCore, SessionId, UserId};
 use proton_crypto_account::proton_crypto;
 use proton_crypto_account::proton_crypto::srp::SRPProvider;
 use std::collections::HashMap;
@@ -36,7 +36,7 @@ impl WantNewPassword {
         let pgp = proton_crypto::new_pgp_provider();
 
         // Fetch user addresses
-        let addr = ProtonCore::get_addresses(&self.client)
+        let addr = ProtonAccount::get_addresses(&self.client)
             .map_ok(|res| res.addresses)
             .map_err(|e| (State::Invalid, LoginError::AddressFetch(e)))
             .await?;

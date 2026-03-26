@@ -28,7 +28,9 @@ contacts-common = { workspace = true }
 mail-avatar = { workspace = true }
 mail-labels-common = { workspace = true }
 mail-shared-types = { workspace = true }
+mail-account-api = { workspace = true }
 mail-api-labels = { workspace = true }
+mail-api-session = { workspace = true, features = ["sql"] }
 mail-core-api = { workspace = true, features = ["sql"] }
 mail-api-utils = { workspace = true }
 mail-action-queue = { workspace = true }

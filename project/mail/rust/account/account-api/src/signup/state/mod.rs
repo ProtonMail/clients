@@ -1,4 +1,5 @@
 use crate::prelude::Address;
+use crate::protocol::PostLoginValidator;
 use crate::shared::SecureString;
 use crate::signup::state::want_create::WantCreate;
 use crate::signup::state::want_password::WantPassword;
@@ -8,8 +9,7 @@ use crate::signup::{Behavior, ChallengeInfo};
 use crate::{prelude::User, signup::SignupError};
 use complete::Complete;
 use derive_more::{Display, From, TryInto};
-use mail_core_api::store::DynStore;
-use mail_core_common::post_login_check::PostLoginValidator;
+use mail_api_session::store::DynStore;
 use mail_muon::Client;
 
 mod complete;

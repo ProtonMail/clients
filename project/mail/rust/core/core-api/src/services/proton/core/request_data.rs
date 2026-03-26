@@ -32,4 +32,4 @@ pub struct HumanVerificationData {
     pub token: String,
 }
 
-pub use core_feature_flags::GetUnleashFeaturesContext;
+pub use mail_api_feature_flags::GetUnleashFeaturesContext;

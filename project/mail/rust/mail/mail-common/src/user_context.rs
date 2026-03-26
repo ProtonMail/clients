@@ -37,7 +37,7 @@ use mail_action_queue::queue::{
 };
 use mail_core_api::connection_status::ConnectionStatus;
 use mail_core_api::crypto_clock;
-use mail_core_api::services::proton::ProtonCore;
+use mail_core_api::services::proton::PingApi as _;
 use mail_core_api::services::proton::{AddressId, PrivateEmailRef, SessionId, UserId};
 use mail_core_api::session::Session;
 #[cfg(not(feature = "events-v6"))]

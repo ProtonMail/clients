@@ -11,7 +11,7 @@ serde_json = { workspace = true }
 chrono = { workspace = true }
 parking_lot = { workspace = true }
 tracing = { workspace = true }
-mail-core-api = { workspace = true }
+mail-api-shared = { workspace = true }
 
 [lints]
 workspace = true

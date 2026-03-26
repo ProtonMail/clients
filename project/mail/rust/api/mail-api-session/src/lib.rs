@@ -1,4 +1,5 @@
 pub mod auth;
+pub mod auth_mode;
 pub mod build;
 pub mod challenge;
 pub mod consts;

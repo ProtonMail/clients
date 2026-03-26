@@ -4,30 +4,14 @@ use crate::datatypes::UserType;
 use crate::models::User as UserTable;
 use crate::{Context, CoreAccountState};
 use async_trait::async_trait;
-use mail_core_api::services::proton::{User, UserId};
-use mail_observability::metric;
+use mail_account_api::protocol::proton::{User, UserId};
 use mail_stash::orm::Model as _;
 use mail_stash::stash::{Stash, StashConfiguration, StashError};
-use serde::{Deserialize, Serialize};
-use thiserror::Error;
 use tracing::{error, trace, warn};
 
-/// This enum defines possible error conditions encountered after a successful login,
-/// focusing on constraints and limits that might prevent further actions.
-#[derive(Debug, Error)]
-pub enum PostLoginValidationError {
-    /// Indicates that the maximum number of free accounts has been exceeded. Contains the max number of free accounts allowed.
-    #[error("The maximum number of free accounts has been exceeded.")]
-    FreeAccountLimitExceeded(u64),
-
-    #[error("Error during post login check: {0}")]
-    Other(#[from] anyhow::Error),
-}
-
-#[async_trait]
-pub trait PostLoginValidator: Send + Sync {
-    async fn validate(&self, user: &User) -> Result<(), PostLoginValidationError>;
-}
+pub use mail_account_api::protocol::post_login::{
+    PostLoginValidationError, PostLoginValidator, UserCheckResult, UserCheckStatus,
+};
 
 #[derive(Clone)]
 pub struct DefaultPostLoginValidator {
@@ -152,28 +136,10 @@ impl DefaultPostLoginValidator {
     }
 }
 
-metric! {
-    #[name = "core_signup_user_check_total"]
-    #[version = 1]
-    #[doc = "Records the outcomes of the post login user checks."]
-    pub struct UserCheckResult {
-        pub status: UserCheckStatus,
-    }
-}
-
-#[derive(PartialEq, Debug, Deserialize, Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum UserCheckStatus {
-    Success,
-    Failure,
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mail_core_api::services::proton::prelude::{
-        PostMetricsRequestData, PostMetricsRequestElement,
-    };
+    use mail_account_api::protocol::proton::{PostMetricsRequestData, PostMetricsRequestElement};
     use mail_observability::into_metrics_element;
     use serde_json::{self, json};
 

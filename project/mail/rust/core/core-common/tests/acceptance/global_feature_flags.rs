@@ -34,7 +34,7 @@ async fn test_feature_flags_cold_start_background_fetch() {
         ],
     };
 
-    Mock::given(method("GET"))
+    Mock::given(method("POST"))
         .and(path("/api/feature/v2/frontend"))
         .respond_with(ResponseTemplate::new(200).set_body_json(mock_response))
         .expect(1)
@@ -105,7 +105,7 @@ async fn test_feature_flags_warm_start_immediate_return() {
         ],
     };
 
-    Mock::given(method("GET"))
+    Mock::given(method("POST"))
         .and(path("/api/feature/v2/frontend"))
         .respond_with(ResponseTemplate::new(200).set_body_json(updated_response))
         .named("Background refresh")
@@ -166,7 +166,7 @@ async fn test_feature_flags_warm_start_background_refresh() {
         ],
     };
 
-    Mock::given(method("GET"))
+    Mock::given(method("POST"))
         .and(path("/api/feature/v2/frontend"))
         .respond_with(ResponseTemplate::new(200).set_body_json(refresh_response))
         .named("Background refresh with new flag")
@@ -239,7 +239,7 @@ async fn test_feature_flags_network_failure_preserves_cache() {
             .unwrap();
     }
 
-    Mock::given(method("GET"))
+    Mock::given(method("POST"))
         .and(path("/api/feature/v2/frontend"))
         .respond_with(ResponseTemplate::new(500).set_body_json(json!({
             "Code": 500,
@@ -271,7 +271,7 @@ async fn test_feature_flags_handle_network_failure() {
         .mount(ctx.mock_server())
         .await;
 
-    Mock::given(method("GET"))
+    Mock::given(method("POST"))
         .and(path("/api/feature/v2/frontend"))
         .respond_with(RespondNthTime::new(
             2,

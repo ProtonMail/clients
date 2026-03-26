@@ -4392,6 +4392,7 @@ dependencies = [
  "tracing-subscriber",
  "unicode-segmentation",
  "url",
+ "velcro",
  "walkdir",
  "wiremock",
  "zeroize",

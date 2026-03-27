@@ -6,7 +6,7 @@ use lattice::{
         LtAuthTwoFactorMethod,
         post_auth_2fa::{LtAuthPost2fa, LtAuthPost2faRes, LtAuthTwoFactorProof},
     },
-    core::get_settings::{LtCoreGetSettingsReq, LtCoreGetSettingsRes},
+    core::user_settings::{LtCoreGetSettingsReq, LtCoreGetSettingsRes},
     details::{
         AccessTokenWithInsufficientScopeErrorDetails, LoginFailedErrorDetails, LoginFailedReason,
     },

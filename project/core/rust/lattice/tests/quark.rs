@@ -2,7 +2,7 @@ mod common;
 
 use lattice::{
     LtApiResponseError, LtApiResponseErrorInfo,
-    core::get_settings::{LtCoreGetSettingsReq, LtCoreGetSettingsRes},
+    core::user_settings::{LtCoreGetSettingsReq, LtCoreGetSettingsRes},
     details::{
         AccessTokenWithInsufficientScopeErrorDetails, LoginFailedErrorDetails, LoginFailedReason,
     },

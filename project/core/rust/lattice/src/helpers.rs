@@ -30,11 +30,9 @@ pub mod bool_int {
     }
 }
 
-/// A module for serializing and deserializing `Option<bool>` as an `i32`.
+/// Serializes and deserializes `Option<bool>` as an `i32`.
 ///
-/// The `deserialize` function converts `1` to `Some(true)` and `0` to `Some(false)`,
-/// None if the value is not present,
-/// yielding an error if the value is present but not `1` or `0`.
+/// Deserializes `1` → `Some(true)`, `0` → `Some(false)`, absent → `None`.
 #[cfg(feature = "serde")]
 #[cfg(feature = "auth")]
 pub mod bool_opt_int {

@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeError, LtContract, LtSlimAPIJSON, core::LtCoreUserSettings};
+use super::LtCoreUserSettings;
+use crate::{AuthReq, LatticeError, LtContract, LtSlimAPIJSON};
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

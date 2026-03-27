@@ -1,29 +1,25 @@
 pub mod get_core_address;
 pub mod get_core_addresses;
 pub mod get_core_domains_available;
-pub mod get_core_settings_2fa_register;
 pub mod get_events;
 pub mod get_key_salts;
 pub mod get_organization_settings;
 pub mod get_organizations_logo;
-pub mod get_settings;
 pub mod get_tests_ping;
 pub mod keys;
 pub mod post_keys_setup;
-pub mod post_settings_2fa_register;
 pub mod post_validate_email;
 pub mod post_validate_phone;
 pub mod put_users_password;
 pub mod user;
+pub mod user_settings;
 
 use derive_more::{From, Into};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 use crate::{
     Sensitive,
-    auth::{
-        LtAuthAddressId, LtAuthFidoKey, LtAuthPasswordMode, LtAuthTwoFactorMethod, LtAuthUserId,
-    },
+    auth::{LtAuthAddressId, LtAuthUserId},
     core::keys::LtCoreSensitiveAddressKeys,
 };
 
@@ -238,28 +234,11 @@ pub enum LtCoreAddressType {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
-pub struct LtCoreUserSettings {
-    pub password: LtCorePasswordSettings,
-    #[cfg_attr(feature = "serde", serde(rename = "2FA"))]
-    pub tfa: LtCoreTwoFactorSettings,
-}
-
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
-pub struct LtCoreTwoFactorSettings {
-    pub enabled: LtAuthTwoFactorMethod,
-    pub allowed: LtAuthTwoFactorMethod,
-    pub registered_keys: Sensitive<Vec<LtAuthFidoKey>>,
-}
-
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
-pub struct LtCorePasswordSettings {
-    pub mode: LtAuthPasswordMode,
+pub struct LtCoreU2FKey {
+    pub label: String,
+    pub key_handle: String,
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub compromised: Option<i32>,
 }
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]

@@ -1,6 +1,7 @@
 use crate::Origin;
 use crate::datatypes::ApiConfig;
 use crate::db::account::{CoreAccount, CoreSession};
+use crate::device::DynDeviceInfoProvider;
 use crate::event_loop::EventPollMode;
 use crate::event_loop::event_source::CoreEventSource;
 use crate::models::ModelExtension;
@@ -145,7 +146,7 @@ impl TestContext {
     }
 
     pub async fn new() -> Arc<Self> {
-        Self::_new(None, None, None, None).await
+        Self::_new(None, None, None, None, None).await
     }
 
     pub async fn with_user_secret_and_user_id(
@@ -153,17 +154,28 @@ impl TestContext {
         user_id: UserId,
         initializers: Option<Vec<Box<dyn UserDatabaseInitializer>>>,
     ) -> Arc<Self> {
-        Self::_new(Some(user_key_secret), Some(user_id), initializers, None).await
+        Self::_new(
+            Some(user_key_secret),
+            Some(user_id),
+            initializers,
+            None,
+            None,
+        )
+        .await
     }
 
     pub async fn with_initializers(
         initializers: Option<Vec<Box<dyn UserDatabaseInitializer>>>,
     ) -> Arc<Self> {
-        Self::_new(None, None, initializers, None).await
+        Self::_new(None, None, initializers, None, None).await
     }
 
     pub async fn with_issue_reporter(reporter: Arc<dyn IssueReporter>) -> Arc<Self> {
-        Self::_new(None, None, None, Some(reporter)).await
+        Self::_new(None, None, None, Some(reporter), None).await
+    }
+
+    pub async fn with_device_info_provider(provider: DynDeviceInfoProvider) -> Arc<Self> {
+        Self::_new(None, None, None, None, Some(provider)).await
     }
 
     async fn _new(
@@ -171,6 +183,7 @@ impl TestContext {
         user_id: Option<UserId>,
         initializers: Option<Vec<Box<dyn UserDatabaseInitializer>>>,
         issue_reporter: Option<Arc<dyn IssueReporter>>,
+        device_info_provider: Option<DynDeviceInfoProvider>,
     ) -> Arc<Self> {
         _ = set_global_default(
             registry()
@@ -217,7 +230,7 @@ impl TestContext {
             all_initializers,
             api_config.clone(),
             None,
-            None,
+            device_info_provider,
             tmp_dir.path().join("core-cache"),
             LogService::new(log_config),
             EventPollMode::Manual,

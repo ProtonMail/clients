@@ -2,8 +2,6 @@ use crate::services::proton::prelude::*;
 use serde::Serialize;
 use serde_with::{BoolFromInt, serde_as};
 
-pub use mail_api_feature_flags::GetUnleashFeaturesRequest;
-
 pub use contacts_api::{GetContactsEmailsOptions, GetContactsOptions, PutDeleteContacts};
 pub use mail_api_labels::{
     GetLabelsByIdsOptions, GetLabelsOptions, PatchLabelRequest, PostLabelsRequest, PutLabelRequest,

@@ -209,11 +209,22 @@ impl LoginFlow {
         session_id: SessionId,
         username: String,
         pass: impl Into<SecureString>,
+        totp_available: bool,
+        fido_available: bool,
         migration_snooper: Box<dyn MigrationSnooper>,
         post_login_validator: Box<dyn PostLoginValidator>,
     ) -> Self {
         let (client, parts) = session.to_parts();
-        let state = State::new_from_tfa(client, parts, user_id, session_id, username, pass.into());
+        let state = State::new_from_tfa(
+            client,
+            parts,
+            user_id,
+            session_id,
+            username,
+            pass.into(),
+            totp_available,
+            fido_available,
+        );
 
         Self {
             session,
@@ -502,9 +513,24 @@ impl LoginFlow {
                 self.state = State::new(client, parts, None);
             }
 
-            State::TfaRetry(user_id, session_id, username, pass) => {
-                self.state =
-                    State::new_from_tfa(client, parts, user_id, session_id, username, pass);
+            State::TfaRetry(
+                user_id,
+                session_id,
+                username,
+                pass,
+                totp_available,
+                fido_available,
+            ) => {
+                self.state = State::new_from_tfa(
+                    client,
+                    parts,
+                    user_id,
+                    session_id,
+                    username,
+                    pass,
+                    totp_available,
+                    fido_available,
+                );
             }
 
             State::MbpRetry(user_id, session_id) => {

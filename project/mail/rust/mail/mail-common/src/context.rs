@@ -527,6 +527,16 @@ impl MailContext {
                     .map(|p| p.expose_secret().to_owned())
                     .ok_or(MailContextError::Other(anyhow!("password not found")))?;
 
+                let totp_available = account
+                    .second_factor_mode
+                    .map(|m| m.has_totp())
+                    .unwrap_or(true);
+
+                let fido_available = account
+                    .second_factor_mode
+                    .map(|m| m.has_fido())
+                    .unwrap_or(false);
+
                 Ok(LoginFlow::new_from_tfa(
                     api_session,
                     user_id,
@@ -535,6 +545,8 @@ impl MailContext {
                         .username
                         .unwrap_or_else(|| account.name_or_addr.clone()),
                     password,
+                    totp_available,
+                    fido_available,
                     migration_snooper,
                     post_login_validator,
                 ))

@@ -24,7 +24,7 @@ FEATURES="${CARGO_FEATURES:-}"
 
 echo "Features = $FEATURES"
 # Build project
-cargo ndk -t "armeabi-v7a" -t "arm64-v8a" -t "x86_64" build --profile $PROFILE -p $TARGET --features "$FEATURES"
+RUSTFLAGS="--cfg forcego" cargo ndk -t "armeabi-v7a" -t "arm64-v8a" -t "x86_64" build --profile $PROFILE -p $TARGET --features "$FEATURES"
 
 # Generate bindings
 cargo run \

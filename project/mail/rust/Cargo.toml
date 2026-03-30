@@ -452,6 +452,7 @@ unused_extern_crates = "warn"
 unused_import_braces = "warn"
 trivial_casts = "warn"
 unused_qualifications = "allow"
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(forcego)"] }
 
 [workspace.lints.clippy]
 pedantic = { level = "warn", priority = -1 }

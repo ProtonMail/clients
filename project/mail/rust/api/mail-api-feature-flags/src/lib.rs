@@ -2,14 +2,14 @@ use mail_api_shared::ApiServiceResult;
 use mail_api_utils::{PaginateOptions, PaginateResponse};
 use mail_muon::common::Sender;
 use mail_muon::http::HttpReqExt;
-use mail_muon::{GET, POST, PUT, ProtonRequest, ProtonResponse, serde_to_query};
+use mail_muon::{GET, PUT, ProtonRequest, ProtonResponse, serde_to_query};
 use serde::{Deserialize, Serialize};
 use serde_with::{StringWithSeparator, formats::CommaSeparator, serde_as};
 use smart_default::SmartDefault;
 
 pub use core_feature_flags::{
-    GetUnleashFeaturesContext, GetUnleashFeaturesRequest, GetUnleashFeaturesResponse, UNLEASH_V2,
-    UnleashToggle, UnleashTogglePayload, UnleashTogglePayloadType, UnleashToggleVariant,
+    GetUnleashFeaturesContext, GetUnleashFeaturesResponse, UNLEASH_V2, UnleashToggle,
+    UnleashTogglePayload, UnleashTogglePayloadType, UnleashToggleVariant,
 };
 
 const CORE_V4: &str = "/core/v4";
@@ -202,7 +202,7 @@ pub struct PutFeatureFlagOverride {
 pub trait FeatureFlagsApi {
     async fn get_unleash_feature_flags(
         &self,
-        request: GetUnleashFeaturesRequest,
+        context: Option<GetUnleashFeaturesContext>,
     ) -> ApiServiceResult<GetUnleashFeaturesResponse>;
 
     async fn get_legacy_feature_flags(
@@ -220,14 +220,13 @@ pub trait FeatureFlagsApi {
 impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> FeatureFlagsApi for This {
     async fn get_unleash_feature_flags(
         &self,
-        request: GetUnleashFeaturesRequest,
+        context: Option<GetUnleashFeaturesContext>,
     ) -> ApiServiceResult<GetUnleashFeaturesResponse> {
-        Ok(POST!("{UNLEASH_V2}/frontend")
-            .body_json(request)?
-            .send_with(self)
-            .await?
-            .ok()?
-            .into_body_json()?)
+        let mut req = GET!("{UNLEASH_V2}/frontend");
+        if let Some(ctx) = context {
+            req = req.query(serde_to_query(ctx)?);
+        }
+        Ok(req.send_with(self).await?.ok()?.into_body_json()?)
     }
 
     async fn get_legacy_feature_flags(

@@ -1,9 +1,11 @@
+use std::sync::Arc;
 use std::time::Duration;
 
 use mail_core_api::services::proton::{
     GetUnleashFeaturesResponse, UnleashToggle, UnleashToggleVariant,
 };
 use mail_core_common::datatypes::UnixTimestamp;
+use mail_core_common::device::{DeviceInfo, DeviceInfoProvider, DynDeviceInfoProvider};
 use mail_core_common::models::FeatureFlag;
 use mail_core_common::services::FeatureFlagsService;
 use mail_core_common::test_utils::test_context::TestContext;
@@ -34,7 +36,7 @@ async fn test_feature_flags_cold_start_background_fetch() {
         ],
     };
 
-    Mock::given(method("POST"))
+    Mock::given(method("GET"))
         .and(path("/api/feature/v2/frontend"))
         .respond_with(ResponseTemplate::new(200).set_body_json(mock_response))
         .expect(1)
@@ -105,7 +107,7 @@ async fn test_feature_flags_warm_start_immediate_return() {
         ],
     };
 
-    Mock::given(method("POST"))
+    Mock::given(method("GET"))
         .and(path("/api/feature/v2/frontend"))
         .respond_with(ResponseTemplate::new(200).set_body_json(updated_response))
         .named("Background refresh")
@@ -166,7 +168,7 @@ async fn test_feature_flags_warm_start_background_refresh() {
         ],
     };
 
-    Mock::given(method("POST"))
+    Mock::given(method("GET"))
         .and(path("/api/feature/v2/frontend"))
         .respond_with(ResponseTemplate::new(200).set_body_json(refresh_response))
         .named("Background refresh with new flag")
@@ -239,7 +241,7 @@ async fn test_feature_flags_network_failure_preserves_cache() {
             .unwrap();
     }
 
-    Mock::given(method("POST"))
+    Mock::given(method("GET"))
         .and(path("/api/feature/v2/frontend"))
         .respond_with(ResponseTemplate::new(500).set_body_json(json!({
             "Code": 500,
@@ -271,7 +273,7 @@ async fn test_feature_flags_handle_network_failure() {
         .mount(ctx.mock_server())
         .await;
 
-    Mock::given(method("POST"))
+    Mock::given(method("GET"))
         .and(path("/api/feature/v2/frontend"))
         .respond_with(RespondNthTime::new(
             2,
@@ -303,6 +305,53 @@ async fn test_feature_flags_handle_network_failure() {
         Some(true)
     );
     assert_eq!(feature_flags.get("NonExistentFeature").await.unwrap(), None);
+}
+
+struct MockDeviceInfoProvider {
+    country: String,
+}
+
+#[async_trait::async_trait]
+impl DeviceInfoProvider for MockDeviceInfoProvider {
+    async fn get_device_info(&self) -> DeviceInfo {
+        DeviceInfo {
+            country: self.country.clone(),
+            language: String::new(),
+            timezone: String::new(),
+            timezone_offset: 0,
+            model: String::new(),
+            brand: String::new(),
+            codename: String::new(),
+            uuid: String::new(),
+            rooted: false,
+            font_scale: String::new(),
+            storage: 0.0,
+            dark_mode: false,
+            keyboards: vec![],
+        }
+    }
+}
+
+#[tokio::test]
+async fn test_feature_flags_request_includes_user_country() {
+    let provider: DynDeviceInfoProvider = Arc::new(MockDeviceInfoProvider {
+        country: "CH".to_string(),
+    });
+    let ctx = TestContext::with_device_info_provider(provider).await;
+
+    Mock::given(method("GET"))
+        .and(path("/api/feature/v2/frontend"))
+        .and(wiremock::matchers::query_param("userCountry", "CH"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(GetUnleashFeaturesResponse { toggles: vec![] }),
+        )
+        .expect(1)
+        .named("Unleash request with userCountry")
+        .mount(ctx.mock_server())
+        .await;
+
+    ctx.context().feature_flags().refresh().await.unwrap();
 }
 
 async fn wait_for_flag(

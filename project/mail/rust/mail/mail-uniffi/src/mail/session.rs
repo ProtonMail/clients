@@ -110,6 +110,9 @@ pub fn create_mail_session(
         Origin::IosShareExt => async_runtime_slim,
     };
 
+    #[cfg(not(forcego))]
+    forcego_cfg_missing();
+
     runtime()
         .block_on(async move {
             create_mail_session_inner(
@@ -1334,4 +1337,9 @@ impl WatchedFeatureFlags {
             ctx, handle, callback,
         ))
     }
+}
+
+#[cfg(not(forcego))]
+fn forcego_cfg_missing() {
+    panic!("Forcego feature is not defined and the application can not be used");
 }

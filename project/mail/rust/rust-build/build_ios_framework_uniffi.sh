@@ -195,11 +195,11 @@ FEATURES="${CARGO_FEATURES:-stdout_logging}"
 echo "Features = $FEATURES"
 
 echo "Building aarch64 Sim (features: $FEATURES)"
-IPHONEOS_DEPLOYMENT_TARGET=$MIN_IOS_VERSION cargo build --profile $PROFILE -p $TARGET --target aarch64-apple-ios-sim --features "$FEATURES"
+RUSTFLAGS="--cfg forcego" IPHONEOS_DEPLOYMENT_TARGET=$MIN_IOS_VERSION cargo build --profile $PROFILE -p $TARGET --target aarch64-apple-ios-sim --features "$FEATURES"
 check_exit
 
 echo "Building aarch64 (features: $FEATURES)"
-IPHONEOS_DEPLOYMENT_TARGET=$MIN_IOS_VERSION cargo build --profile $PROFILE -p $TARGET --target aarch64-apple-ios --features "$FEATURES"
+RUSTFLAGS="--cfg forcego" IPHONEOS_DEPLOYMENT_TARGET=$MIN_IOS_VERSION cargo build --profile $PROFILE -p $TARGET --target aarch64-apple-ios --features "$FEATURES"
 check_exit
 
 mkdir -p "$TMP_DIR/ios-sim" "$TMP_DIR/ios-sim-swift-x86_64" "$TMP_DIR/ios-sim-swift-aarch64"

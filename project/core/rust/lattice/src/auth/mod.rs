@@ -60,6 +60,12 @@ pub struct LtAuthUserId(pub String);
 #[derive(Debug, Display, Clone, PartialEq, Eq, Hash)]
 pub struct LtAuthAddressId(pub String);
 
+#[derive(Into, From, Deref, AsRef)]
+#[cfg_attr(feature = "facet", derive(facet::Facet))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Display, Clone, PartialEq, Eq, Hash)]
+pub struct LtAuthUserKeyId(pub String);
+
 #[derive(Zeroize)]
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

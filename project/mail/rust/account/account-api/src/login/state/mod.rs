@@ -58,7 +58,7 @@ pub enum State {
 
     /// A recoverable error occurred during the `WantTfa` state.
     #[debug("TfaRetry")]
-    TfaRetry(UserId, SessionId, String, SecureString),
+    TfaRetry(UserId, SessionId, String, SecureString, bool, bool),
 
     /// An error occurred during the `WantTfa` state.
     #[debug("TfaError")]
@@ -299,6 +299,8 @@ impl State {
         session_id: SessionId,
         username: String,
         pass: SecureString,
+        totp_available: bool,
+        fido_available: bool,
     ) -> Self {
         let data = StateData {
             parts,
@@ -307,7 +309,15 @@ impl State {
             observability: PreLoginMetricRecorder::default(),
         };
 
-        Self::want_tfa(client.auth().into(), data, username, pass, None, true)
+        Self::want_tfa(
+            client.auth().into(),
+            data,
+            username,
+            pass,
+            None,
+            totp_available,
+            fido_available,
+        )
     }
 
     /// Create a `WantMbp` state from a resumed login flow.
@@ -348,8 +358,18 @@ impl State {
         pass: SecureString,
         fido_details: Option<fido2::Response>,
         totp_available: bool,
+        fido_available: bool,
     ) -> Self {
-        WantTfa::new(flow, data, username, pass, fido_details, totp_available).into()
+        WantTfa::new(
+            flow,
+            data,
+            username,
+            pass,
+            fido_details,
+            totp_available,
+            fido_available,
+        )
+        .into()
     }
 
     /// Create a `WantMbp` state.

@@ -22,6 +22,7 @@ pub struct WantTfa {
     pass: SecureString,
     fido_details: Option<fido2::Response>,
     totp_available: bool,
+    fido_available: bool,
 }
 
 impl WantTfa {
@@ -32,6 +33,7 @@ impl WantTfa {
         pass: SecureString,
         fido_details: Option<fido2::Response>,
         totp_available: bool,
+        fido_available: bool,
     ) -> Self {
         info!("Login flow wants 2FA");
 
@@ -42,12 +44,13 @@ impl WantTfa {
             pass,
             fido_details,
             totp_available,
+            fido_available,
         }
     }
 
     /// Returns which 2FA methods are available for this login step.
     pub fn tfa_methods(&self) -> TfaMethods {
-        match (self.totp_available, self.fido_details.is_some()) {
+        match (self.totp_available, self.fido_available) {
             (true, true) => TfaMethods::TotpAndFido2,
             (false, true) => TfaMethods::Fido2,
             _ => TfaMethods::Totp,
@@ -65,7 +68,8 @@ impl WantTfa {
             username,
             pass,
             fido_details: _,
-            totp_available: _,
+            totp_available,
+            fido_available,
         } = self;
 
         let result = flow.totp(&code).await;
@@ -87,7 +91,14 @@ impl WantTfa {
             }
 
             Err(err) => Err((
-                State::TfaRetry(data.user_id, data.session_id, username, pass),
+                State::TfaRetry(
+                    data.user_id,
+                    data.session_id,
+                    username,
+                    pass,
+                    totp_available,
+                    fido_available,
+                ),
                 LoginError::FlowTotp(err),
             )),
         }
@@ -104,7 +115,8 @@ impl WantTfa {
             username,
             pass,
             fido_details: _,
-            totp_available: _,
+            totp_available,
+            fido_available,
         } = self;
 
         let result = flow.fido(fido_request).await;
@@ -122,7 +134,14 @@ impl WantTfa {
             }
 
             Err(err) => Err((
-                State::TfaRetry(data.user_id, data.session_id, username, pass),
+                State::TfaRetry(
+                    data.user_id,
+                    data.session_id,
+                    username,
+                    pass,
+                    totp_available,
+                    fido_available,
+                ),
                 LoginError::FlowFido(err),
             )),
         }

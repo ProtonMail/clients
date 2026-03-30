@@ -73,13 +73,6 @@ pub struct GetUnleashFeaturesResponse {
 
 #[derive(Clone, Debug, Serialize, Eq, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]
-pub struct GetUnleashFeaturesRequest {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub context: Option<GetUnleashFeaturesContext>,
-}
-
-#[derive(Clone, Debug, Serialize, Eq, PartialEq, Default)]
-#[serde(rename_all = "camelCase")]
 pub struct GetUnleashFeaturesContext {
     /// The name of the application, >=1 character if present
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -89,7 +82,7 @@ pub struct GetUnleashFeaturesContext {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub current_time: Option<String>,
     /// Additional Unleash context properties
-    #[serde(skip_serializing_if = "HashMap::is_empty")]
+    #[serde(flatten, skip_serializing_if = "HashMap::is_empty")]
     pub properties: HashMap<String, String>,
     /// The app's IP address
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -100,4 +93,29 @@ pub struct GetUnleashFeaturesContext {
     /// An identifier for the current user
     #[serde(skip_serializing_if = "Option::is_none")]
     pub user_id: Option<String>,
+}
+
+impl GetUnleashFeaturesContext {
+    pub fn into_query_params(self) -> Vec<(String, String)> {
+        let mut params = Vec::new();
+        if let Some(v) = self.app_name {
+            params.push(("appName".into(), v));
+        }
+        if let Some(v) = self.current_time {
+            params.push(("currentTime".into(), v));
+        }
+        if let Some(v) = self.remote_address {
+            params.push(("remoteAddress".into(), v));
+        }
+        if let Some(v) = self.session_id {
+            params.push(("sessionId".into(), v));
+        }
+        if let Some(v) = self.user_id {
+            params.push(("userId".into(), v));
+        }
+        for (key, value) in self.properties {
+            params.push((key, value));
+        }
+        params
+    }
 }

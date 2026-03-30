@@ -8,9 +8,8 @@ use anyhow::Context as _;
 use mail_core_api::{
     service::ApiServiceError,
     services::proton::{
-        GetLegacyFeatureFlagsOptions, GetLegacyFeaturesResponse, GetUnleashFeaturesRequest,
-        GetUnleashFeaturesResponse, LegacyFeatureFlag, LegacyFeatureFlagType,
-        MAX_LEGACY_FEATURES_PER_PAGE, ProtonCore,
+        GetLegacyFeatureFlagsOptions, GetLegacyFeaturesResponse, GetUnleashFeaturesResponse,
+        LegacyFeatureFlag, LegacyFeatureFlagType, MAX_LEGACY_FEATURES_PER_PAGE, ProtonCore,
     },
     session::Session,
 };
@@ -168,9 +167,7 @@ impl UserFeatureFlagsService {
         modify_time: UnixTimestamp,
     ) -> CoreContextResult<()> {
         let context = FeatureFlagsService::unleash_feature_flags_context(ctx).await;
-        let response = api
-            .get_unleash_feature_flags(GetUnleashFeaturesRequest { context })
-            .await?;
+        let response = api.get_unleash_feature_flags(context).await?;
         let mut tether = mail_stash.connection().await?;
         let mut flags = Self::fetch_from_cache(&tether, UserFeatureFlagSource::Unleash).await;
         for flag in flags.values_mut() {

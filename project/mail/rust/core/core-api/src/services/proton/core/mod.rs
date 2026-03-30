@@ -87,7 +87,7 @@ pub trait ProtonCore: ContactApi + LabelApi {
     /// See: <https://docs.getunleash.io/reference/api/unleash/get-frontend-features/>
     async fn get_unleash_feature_flags(
         &self,
-        request: GetUnleashFeaturesRequest,
+        context: Option<GetUnleashFeaturesContext>,
     ) -> ApiServiceResult<GetUnleashFeaturesResponse>;
 
     /// Gets feature flags defined in our own legacy service.

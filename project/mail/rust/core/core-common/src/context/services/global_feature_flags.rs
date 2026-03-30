@@ -5,9 +5,7 @@ use crate::services::DeviceInfoService;
 use crate::{Context, services::Service};
 use crate::{CoreContextError, CoreContextResult, Origin};
 use anyhow::{Context as _, Result};
-use mail_core_api::services::proton::{
-    GetUnleashFeaturesContext, GetUnleashFeaturesRequest, ProtonCore as _,
-};
+use mail_core_api::services::proton::{GetUnleashFeaturesContext, ProtonCore as _};
 use mail_core_api::session::Session;
 use mail_stash::stash::WatcherHandle;
 use mail_stash::watcher::TableWatcher;
@@ -56,9 +54,7 @@ impl FeatureFlagsService {
         let ctx = self.ctx.upgrade().context("Could not upgrade context")?;
 
         let context = Self::unleash_feature_flags_context(&ctx).await;
-        let response = api
-            .get_unleash_feature_flags(GetUnleashFeaturesRequest { context })
-            .await?;
+        let response = api.get_unleash_feature_flags(context).await?;
         info!("Fetched {} featured flags from API", response.toggles.len());
 
         let mut tether = ctx.account_stash().connection().await?;

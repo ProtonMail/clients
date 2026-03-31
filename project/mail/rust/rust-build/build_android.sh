@@ -10,8 +10,9 @@ export LIBSQLITE3_FLAGS="-DNDEBUG=1 -DSQLITE_POWERSAFE_OVERWRITE=1 -DSQLITE_THRE
 TARGET=$1
 CONFIG_PATH=$2
 OUT_DIR=$3
-PROFILE="android"
+PROFILE="mail-android"
 LIB_NAME="lib$(echo $1 | tr '-' '_').so"
+BUILD_TARGET_DIR="../../../target"
 
 mkdir -p $OUT_DIR/java \
   $OUT_DIR/jniLibs/arm64-v8a \
@@ -30,7 +31,7 @@ RUSTFLAGS="--cfg forcego" cargo ndk -t "armeabi-v7a" -t "arm64-v8a" -t "x86_64" 
 cargo run \
   --release \
   -p mail-uniffi-bindgen generate \
-  --library target/aarch64-linux-android/$PROFILE/${LIB_NAME} \
+  --library $BUILD_TARGET_DIR/aarch64-linux-android/$PROFILE/${LIB_NAME} \
   --language kotlin \
   --config ${CONFIG_PATH} \
   --out-dir $OUT_DIR/java \
@@ -38,13 +39,13 @@ cargo run \
 
 # Strip symbols
 OS_NAME=$(uname -s | tr '[:upper:]' '[:lower:]')
-cp target/aarch64-linux-android/$PROFILE/$LIB_NAME $OUT_DIR/jniLibs/arm64-v8a/$LIB_NAME
-cp target/armv7-linux-androideabi/$PROFILE/$LIB_NAME $OUT_DIR/jniLibs/armeabi-v7a/$LIB_NAME
-cp target/x86_64-linux-android/$PROFILE/$LIB_NAME $OUT_DIR/jniLibs/x86_64/$LIB_NAME
+cp $BUILD_TARGET_DIR/aarch64-linux-android/$PROFILE/$LIB_NAME $OUT_DIR/jniLibs/arm64-v8a/$LIB_NAME
+cp $BUILD_TARGET_DIR/armv7-linux-androideabi/$PROFILE/$LIB_NAME $OUT_DIR/jniLibs/armeabi-v7a/$LIB_NAME
+cp $BUILD_TARGET_DIR/x86_64-linux-android/$PROFILE/$LIB_NAME $OUT_DIR/jniLibs/x86_64/$LIB_NAME
 
 PGP_SYS_LIB="libgopenpgp-sys.so"
 if [[ -f "target/aarch64-linux-android/$PROFILE/$PGP_SYS_LIB" ]]; then
-  cp target/aarch64-linux-android/$PROFILE/$PGP_SYS_LIB $OUT_DIR/jniLibs/arm64-v8a/$PGP_SYS_LIB
-  cp target/armv7-linux-androideabi/$PROFILE/$PGP_SYS_LIB $OUT_DIR/jniLibs/armeabi-v7a/$PGP_SYS_LIB
-  cp target/x86_64-linux-android/$PROFILE/$PGP_SYS_LIB $OUT_DIR/jniLibs/x86_64/$PGP_SYS_LIB
+  cp $BUILD_TARGET_DIR/aarch64-linux-android/$PROFILE/$PGP_SYS_LIB $OUT_DIR/jniLibs/arm64-v8a/$PGP_SYS_LIB
+  cp $BUILD_TARGET_DIR/armv7-linux-androideabi/$PROFILE/$PGP_SYS_LIB $OUT_DIR/jniLibs/armeabi-v7a/$PGP_SYS_LIB
+  cp $BUILD_TARGET_DIR/x86_64-linux-android/$PROFILE/$PGP_SYS_LIB $OUT_DIR/jniLibs/x86_64/$PGP_SYS_LIB
 fi

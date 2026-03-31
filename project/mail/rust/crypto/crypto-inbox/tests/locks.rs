@@ -787,9 +787,14 @@ fn create_send_prefs<P>(
 where
     P: PGPProviderSync,
 {
-    let dummy_key = pgp
-        .public_key_import(common::RECIPIENT_ONE, DataEncoding::Armor)
+    let dummy_key_priv = pgp
+        .private_key_import(
+            common::RECIPIENT_ONE.as_bytes(),
+            "password".as_bytes(),
+            DataEncoding::Armor,
+        )
         .unwrap();
+    let dummy_key = pgp.private_key_to_public_key(&dummy_key_priv).unwrap();
     SendPreferences {
         encrypt,
         sign,
@@ -832,9 +837,14 @@ fn recipient_lock_icon_test_params<P>(
 where
     P: PGPProviderSync,
 {
-    let dummy_key = pgp
-        .public_key_import(common::RECIPIENT_ONE, DataEncoding::Armor)
+    let dummy_key_priv = pgp
+        .private_key_import(
+            common::RECIPIENT_ONE.as_bytes(),
+            "password".as_bytes(),
+            DataEncoding::Armor,
+        )
         .unwrap();
+    let dummy_key = pgp.private_key_to_public_key(&dummy_key_priv).unwrap();
     let verificiation_preferences = if pinned_key {
         VerificationPreferences {
             ownership: KeyOwnership::Other,

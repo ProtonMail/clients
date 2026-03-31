@@ -5,7 +5,7 @@ edition.workspace = true
 rust-version.workspace = true
 keywords = ["proton", "rest", "api"]
 categories = ["api-bindings"]
-license.workspace = true
+license = "AGPL-3.0-only"
 
 [dependencies]
 bitflags = { workspace = true, features = ["serde"] }

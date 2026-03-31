@@ -3,7 +3,7 @@ name = "mail-crypto-inbox-mime"
 version = "0.4.1"
 edition.workspace = true
 rust-version.workspace = true
-license.workspace = true
+license = "AGPL-3.0-only"
 
 [dependencies]
 mail-parser = "0.10.2"
@@ -14,7 +14,7 @@ rand = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 
 [dev-dependencies]
-proton-crypto = { workspace = true, features = ["gopgp"] }
+proton-crypto = { workspace = true }
 
 [lints]
 workspace = true

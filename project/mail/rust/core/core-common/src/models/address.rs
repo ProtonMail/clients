@@ -102,6 +102,7 @@ impl Address {
     ///
     /// This function is idempotent. If successfully initialized in the past.
     ///
+    #[allow(clippy::result_large_err)]
     pub async fn initialize<API>(
         watcher: Arc<InitializationWatcher>,
         api: &API,

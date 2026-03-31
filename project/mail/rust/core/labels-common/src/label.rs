@@ -120,6 +120,7 @@ impl Label {
         Self::fetch_labels(api, &CONTACT_LABEL_TYPES).await
     }
 
+    #[allow(clippy::result_large_err)]
     #[instrument(skip_all)]
     pub async fn fetch_labels<API>(
         api: &API,

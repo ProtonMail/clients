@@ -1,3 +1,4 @@
+#![recursion_limit = "256"]
 mod acceptance {
     mod action_block_sender;
     mod action_label;

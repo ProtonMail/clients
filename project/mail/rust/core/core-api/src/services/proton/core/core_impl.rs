@@ -2,7 +2,6 @@ use std::io::Cursor;
 use std::time::Duration;
 
 use bytes::Bytes;
-use core_feature_flags::GetUnleashFeaturesRequest;
 use mail_muon::common::{RetryPolicy, Sender};
 use mail_muon::util::ProtonRequestExt;
 use mail_muon::{GET, POST, PUT};
@@ -197,12 +196,8 @@ impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> ProtonCore for This {
         })
     }
 
-    async fn get_unleash_feature_flags(
-        &self,
-        request: GetUnleashFeaturesRequest,
-    ) -> ApiServiceResult<GetUnleashFeaturesResponse> {
-        Ok(POST!("{UNLEASH_V2}/frontend")
-            .body_json(request)?
+    async fn get_unleash_feature_flags(&self) -> ApiServiceResult<GetUnleashFeaturesResponse> {
+        Ok(GET!("{UNLEASH_V2}/frontend")
             .send_with(self)
             .await?
             .ok()?

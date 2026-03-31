@@ -4,13 +4,12 @@
 
 use std::{collections::BTreeMap, sync::Weak};
 
-use anyhow::Context as _;
+use anyhow::Context;
 use mail_core_api::{
     service::ApiServiceError,
     services::proton::{
-        GetLegacyFeatureFlagsOptions, GetLegacyFeaturesResponse, GetUnleashFeaturesRequest,
-        GetUnleashFeaturesResponse, LegacyFeatureFlag, LegacyFeatureFlagType,
-        MAX_LEGACY_FEATURES_PER_PAGE, ProtonCore,
+        GetLegacyFeatureFlagsOptions, GetLegacyFeaturesResponse, GetUnleashFeaturesResponse,
+        LegacyFeatureFlag, LegacyFeatureFlagType, MAX_LEGACY_FEATURES_PER_PAGE, ProtonCore,
     },
     session::Session,
 };
@@ -23,10 +22,9 @@ use mail_stash::{
 };
 
 use crate::{
-    Context, CoreContextError, CoreContextResult, UserContext,
+    CoreContextError, CoreContextResult, UserContext,
     datatypes::{UnixTimestamp, UserFeatureFlagSource},
     models::{ModelExtension, UserFeatureFlag},
-    services::FeatureFlagsService,
     utils::Paginatable,
 };
 
@@ -162,15 +160,11 @@ impl UserFeatureFlagsService {
 
     async fn refresh_unleash_flags(
         &self,
-        ctx: &Context,
         api: &Session,
         mail_stash: &Stash<UserDb>,
         modify_time: UnixTimestamp,
     ) -> CoreContextResult<()> {
-        let context = FeatureFlagsService::unleash_feature_flags_context(ctx).await;
-        let response = api
-            .get_unleash_feature_flags(GetUnleashFeaturesRequest { context })
-            .await?;
+        let response = api.get_unleash_feature_flags().await?;
         let mut tether = mail_stash.connection().await?;
         let mut flags = Self::fetch_from_cache(&tether, UserFeatureFlagSource::Unleash).await;
         for flag in flags.values_mut() {
@@ -244,8 +238,7 @@ impl UserFeatureFlagsService {
         let modify_time = UnixTimestamp::now();
 
         let legacy_flags = self.refresh_legacy_flags(api, ctx.mail_stash(), modify_time);
-        let unleash_flags =
-            self.refresh_unleash_flags(&ctx.context, api, ctx.mail_stash(), modify_time);
+        let unleash_flags = self.refresh_unleash_flags(api, ctx.mail_stash(), modify_time);
 
         // We do not use `try_join` here because even if only one endpoint is working, we still want to
         // update those flags.

@@ -2,8 +2,9 @@
 //!
 //! These types mirror the Unleash frontend features API response structure.
 
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use serde::Deserialize;
+#[cfg(feature = "mocks")]
+use serde::Serialize;
 
 /// Unleash API base path (v2).
 pub const UNLEASH_V2: &str = "/feature/v2";
@@ -69,35 +70,4 @@ pub enum UnleashTogglePayloadType {
 #[serde(rename_all = "camelCase")]
 pub struct GetUnleashFeaturesResponse {
     pub toggles: Vec<UnleashToggle>,
-}
-
-#[derive(Clone, Debug, Serialize, Eq, PartialEq, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct GetUnleashFeaturesRequest {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub context: Option<GetUnleashFeaturesContext>,
-}
-
-#[derive(Clone, Debug, Serialize, Eq, PartialEq, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct GetUnleashFeaturesContext {
-    /// The name of the application, >=1 character if present
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub app_name: Option<String>,
-    /// A DateTime or similar data class instance or a string in a RFC3339-compatible
-    /// format. Defaults to the current time if not set by the user
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub current_time: Option<String>,
-    /// Additional Unleash context properties
-    #[serde(skip_serializing_if = "HashMap::is_empty")]
-    pub properties: HashMap<String, String>,
-    /// The app's IP address
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub remote_address: Option<String>,
-    /// An identifier for the current session
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub session_id: Option<String>,
-    /// An identifier for the current user
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub user_id: Option<String>,
 }

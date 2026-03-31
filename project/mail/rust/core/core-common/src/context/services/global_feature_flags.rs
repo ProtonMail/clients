@@ -1,13 +1,10 @@
 use crate::app_events::{OnEnterForegroundEvent, OnUserContextMapChanged};
 use crate::datatypes::UnixTimestamp;
 use crate::models::{FeatureFlag, ModelExtension};
-use crate::services::DeviceInfoService;
 use crate::{Context, services::Service};
 use crate::{CoreContextError, CoreContextResult, Origin};
 use anyhow::{Context as _, Result};
-use mail_core_api::services::proton::{
-    GetUnleashFeaturesContext, GetUnleashFeaturesRequest, ProtonCore as _,
-};
+use mail_core_api::services::proton::ProtonCore as _;
 use mail_core_api::session::Session;
 use mail_stash::stash::WatcherHandle;
 use mail_stash::watcher::TableWatcher;
@@ -37,28 +34,11 @@ impl FeatureFlagsService {
         }
     }
 
-    pub async fn unleash_feature_flags_context(ctx: &Context) -> Option<GetUnleashFeaturesContext> {
-        let device_info_service = ctx.get_service_opt::<DeviceInfoService>()?;
-        let device_info = device_info_service.get_device_info().await?;
-
-        let user_country = device_info.country;
-
-        Some(GetUnleashFeaturesContext {
-            properties: velcro::hash_map! {
-                "userCountry".to_string(): user_country
-            },
-            ..Default::default()
-        })
-    }
-
     #[tracing::instrument(skip_all, name = "FeatureFlagsFetchAndUpdate")]
     async fn fetch_and_update(&self, api: &Session) -> CoreContextResult<()> {
         let ctx = self.ctx.upgrade().context("Could not upgrade context")?;
 
-        let context = Self::unleash_feature_flags_context(&ctx).await;
-        let response = api
-            .get_unleash_feature_flags(GetUnleashFeaturesRequest { context })
-            .await?;
+        let response = api.get_unleash_feature_flags().await?;
         info!("Fetched {} featured flags from API", response.toggles.len());
 
         let mut tether = ctx.account_stash().connection().await?;

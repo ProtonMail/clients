@@ -109,7 +109,15 @@ impl PackageCryptoType {
 
     #[must_use]
     pub fn enum_of(value: u8) -> Option<PackageCryptoType> {
-        Self::try_from(value).ok()
+        match value {
+            1 => Some(Self::ProtonMail),
+            2 => Some(Self::EncryptedOutside),
+            4 => Some(Self::Cleartext),
+            8 => Some(Self::PgpInline),
+            16 => Some(Self::PgpMime),
+            32 => Some(Self::ClearMime),
+            _ => None,
+        }
     }
 
     #[must_use]
@@ -279,7 +287,7 @@ impl<Pub: PublicKey> EncryptionPreferences<Pub> {
     ///
     /// This function may return an [`EncryptionPreferencesError::NoPrimaryKey`] if no valid primary key
     /// is found in the user's address keys that meets the required conditions for encryption.
-    fn from_unlocked_address_keys_and_settings<Priv: PrivateKey>(
+    pub fn from_unlocked_address_keys_and_settings<Priv: PrivateKey>(
         is_address_external: bool,
         address_keys: &[DecryptedAddressKey<Priv, Pub>],
         mail_settings: CryptoMailSettings,

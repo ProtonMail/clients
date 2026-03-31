@@ -9,7 +9,9 @@ members = [
   "calendar/calendar-common",
   "core/core-api",
   "core/core-common",
+  "core/core-key-manager",
   "crypto/crypto-calendar",
+  "crypto/crypto-contact-keys",
   "crypto/crypto-inbox",
   "crypto/crypto-inbox-mime",
   "crypto/crypto-notifications",
@@ -350,7 +352,7 @@ path = "crypto/crypto-inbox-mime"
 registry = "proton"
 
 [workspace.dependencies.proton-crypto-account]
-version = "0.17.0"
+version = "0.18.0"
 features = ["sql"]
 registry = "proton"
 
@@ -397,6 +399,10 @@ registry = "proton"
 version = "0.1"
 path = "crypto/crypto-calendar"
 registry = "proton"
+
+[workspace.dependencies.mail-crypto-contact-keys]
+version = "0.1"
+path = "crypto/crypto-contact-keys"
 
 [workspace.dependencies.mail-html-transformer]
 version = "0.2"

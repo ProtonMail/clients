@@ -1,0 +1,22 @@
+[package]
+name = "mail-crypto-contact-keys"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+proton-crypto-account = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+mail-vcard = { workspace = true }
+ical = { workspace = true }
+base64 = { workspace = true }
+
+[dev-dependencies]
+test-case = { workspace = true }
+pretty_assertions = { workspace = true }
+
+
+[lints]
+workspace = true

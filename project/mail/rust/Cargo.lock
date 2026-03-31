@@ -518,7 +518,7 @@ dependencies = [
  "bitflags 2.9.4",
  "cexpr",
  "clang-sys",
- "itertools 0.12.1",
+ "itertools 0.10.5",
  "lazy_static",
  "lazycell",
  "log",
@@ -1319,6 +1319,24 @@ name = "core-foundation-sys"
 version = "0.8.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "773648b94d0e5d620f64f280777445740e61fe701025087ec8b57f45c791888b"
+
+[[package]]
+name = "core-key-manager"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "base64",
+ "futures",
+ "mail-crypto-contact-keys",
+ "mail-proton-ids",
+ "parking_lot",
+ "proton-crypto-account",
+ "secrecy",
+ "serde",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+]
 
 [[package]]
 name = "core-telemetry"
@@ -3445,15 +3463,6 @@ dependencies = [
 
 [[package]]
 name = "itertools"
-version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
-dependencies = [
- "either",
-]
-
-[[package]]
-name = "itertools"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
@@ -4415,6 +4424,20 @@ dependencies = [
  "serde_repr",
  "thiserror 2.0.18",
  "zeroize",
+]
+
+[[package]]
+name = "mail-crypto-contact-keys"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "ical",
+ "mail-vcard",
+ "pretty_assertions",
+ "proton-crypto-account",
+ "test-case",
+ "thiserror 2.0.18",
+ "tracing",
 ]
 
 [[package]]
@@ -6350,9 +6373,9 @@ dependencies = [
 
 [[package]]
 name = "proton-crypto-account"
-version = "0.17.0"
+version = "0.18.0"
 source = "sparse+https://rust-registry.proton.me/index/"
-checksum = "02b441df1b39aa2556e3e571a36ed7ed2773af0cc745caeef7be75dd993246b2"
+checksum = "6f4fb97a3ded129f7c20ff1e76f37f2a35e82985996a20f998067b3bd0a9b09f"
 dependencies = [
  "base64",
  "derive_more 2.0.1",

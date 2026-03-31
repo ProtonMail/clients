@@ -1,0 +1,19 @@
+[advisories]
+ignore = [
+"RUSTSEC-2023-0071", # Validated with crypto team
+"RUSTSEC-2024-0436", # paste is unmaintained, but still usable
+"RUSTSEC-2025-0057", # ET-4664
+"RUSTSEC-2024-0388", # ET-4663
+"RUSTSEC-2025-0134", # unmaintained (W) - requires muon update
+"RUSTSEC-2026-0002", # Unsound, requires tui update"
+"RUSTSEC-2025-0084", # unic-emoji unmaintained (via proton-foundation-search)
+"RUSTSEC-2025-0090", # unic-emoji-char unmaintained (via proton-foundation-search)
+"RUSTSEC-2025-0098", # unic-ucd-version unmaintained (via proton-foundation-search)
+"RUSTSEC-2025-0081", # unic-char-property unmaintained (via proton-foundation-search)
+"RUSTSEC-2025-0075", # unic-char-range unmaintained (via proton-foundation-search)
+"RUSTSEC-2025-0080", # unic-common unmaintained (via proton-foundation-search)
+"RUSTSEC-2025-0144", # crypto temam is aware of issue
+"RUSTSEC-2024-0370", # unmaintained crux dep (proc-macro-error)
+"RUSTSEC-2021-0153", # unmaintained crux dep (encoding)
+"RUSTSEC-2025-0141", # unmaintained crux dep (bincode)
+]

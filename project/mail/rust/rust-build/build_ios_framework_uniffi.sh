@@ -18,7 +18,8 @@
 #   $0 proton-mail-uniffi ./mail/mail-uniffi/uniffi.toml "./tmp/ios-framework-debug" ios-debug
 
 MIN_IOS_VERSION="17.2"
-PROFILE="${4:-ios}" # Use 4th argument if provided, otherwise default to "ios"
+PROFILE="${4:-mail-ios}" # Use 4th argument if provided, otherwise default to "mail-ios"
+BUILD_TARGET_DIR="../../../target"
 
 export LIBSQLITE3_FLAGS="-DNDEBUG=1 -DSQLITE_THREADSAFE=2\
  -DSQLITE_DEFAULT_FILE_PERMISSIONS=0600 -DSQLITE_SECURE_DELETE"
@@ -215,18 +216,18 @@ echo "Determining crate version"
 CRATE_VERSION=$(cargo metadata --format-version 1 --no-deps | jq --arg target "$TARGET" '.packages[] | select(.name == $target) | .version' | jq -r)
 
 echo "Generating swift bindings"
-cargo run --release -p mail-uniffi-bindgen generate --library "target/aarch64-apple-ios/$PROFILE/lib${TARGET_UNDERSCORE}.a" \
+cargo run --release -p mail-uniffi-bindgen generate --library "$BUILD_TARGET_DIR/aarch64-apple-ios/$PROFILE/lib${TARGET_UNDERSCORE}.a" \
     --config "$CONFIG_PATH" --language swift --out-dir "$TMP_DIR/include"
 check_exit
 
 echo "Generating framework for ios sim aarch64"
-gen_framework "target/aarch64-apple-ios-sim/$PROFILE" $TARGET_UNDERSCORE "$TMP_DIR/include" $CRATE_VERSION iphonesimulator
+gen_framework "$BUILD_TARGET_DIR/aarch64-apple-ios-sim/$PROFILE" $TARGET_UNDERSCORE "$TMP_DIR/include" $CRATE_VERSION iphonesimulator
 
 echo "Generating framework for ios aarch64"
-gen_framework "target/aarch64-apple-ios/$PROFILE" $TARGET_UNDERSCORE "$TMP_DIR/include" $CRATE_VERSION iphoneos
+gen_framework "$BUILD_TARGET_DIR/aarch64-apple-ios/$PROFILE" $TARGET_UNDERSCORE "$TMP_DIR/include" $CRATE_VERSION iphoneos
 
 
-cp target/aarch64-apple-ios/$PROFILE/lib${TARGET_UNDERSCORE}.a "$TMP_DIR/ios-dev/lib${TARGET_UNDERSCORE}_dev.a"
+cp $BUILD_TARGET_DIR/aarch64-apple-ios/$PROFILE/lib${TARGET_UNDERSCORE}.a "$TMP_DIR/ios-dev/lib${TARGET_UNDERSCORE}_dev.a"
 check_exit
 
 
@@ -251,8 +252,8 @@ fi
 echo "Generating xcframework"
 xcodebuild -create-xcframework \
     -output  "$SWIFT_PACKAGE_SOURCES_DIR/${FRAMEWORK_NAME}" \
-    -framework "target/aarch64-apple-ios-sim/$PROFILE/${TARGET_UNDERSCORE}_ffi.framework" \
-    -framework "target/aarch64-apple-ios/$PROFILE/${TARGET_UNDERSCORE}_ffi.framework"
+    -framework "$BUILD_TARGET_DIR/aarch64-apple-ios-sim/$PROFILE/${TARGET_UNDERSCORE}_ffi.framework" \
+    -framework "$BUILD_TARGET_DIR/aarch64-apple-ios/$PROFILE/${TARGET_UNDERSCORE}_ffi.framework"
 check_exit
 
 echo "Changing folder name"

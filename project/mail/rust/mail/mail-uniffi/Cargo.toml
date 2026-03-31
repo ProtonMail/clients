@@ -4,7 +4,7 @@ version = "0.164.6"
 edition.workspace = true
 rust-version.workspace = true
 publish = false
-license.workspace = true
+license = "AGPL-3.0-only"
 
 [lib]
 crate-type = ["lib", "cdylib", "staticlib"]
@@ -50,7 +50,7 @@ tokio = { workspace = true }
 tokio-util = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
-uniffi = { workspace = true }
+uniffi = { version = "0.31.0", features = ["tokio"] }
 mail-uniffi-common = { workspace = true }
 mail-uniffi-macros = { workspace = true }
 mail-uniffi-runtime = { workspace = true }

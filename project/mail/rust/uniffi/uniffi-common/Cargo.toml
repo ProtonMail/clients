@@ -2,13 +2,13 @@
 name = "mail-uniffi-common"
 version = "0.1.0"
 rust-version.workspace = true
-license.workspace = true
+license = "AGPL-3.0-only"
 
 [package.edition]
 workspace = true
 
 [dependencies]
-uniffi.workspace = true
+uniffi = "0.31.0"
 mail-uniffi-macros.workspace = true
 # mail-uniffi-runtime.workspace = true
 mail-core-api = { workspace = true }

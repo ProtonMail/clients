@@ -3,7 +3,7 @@ name = "mail-common"
 version = "0.8.0"
 edition.workspace = true
 rust-version.workspace = true
-license.workspace = true
+license = "AGPL-3.0-only"
 
 [features]
 default = ["sql", "events-v6"]

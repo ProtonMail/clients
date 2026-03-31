@@ -4,11 +4,22 @@
     "project/core/rust/core-*",
     "project/core/rust/lattice",
     "tools/uniffi-bindgen",
+    # mail
+    "project/mail/rust/account/*",
+    "project/mail/rust/api/*",
+    "project/mail/rust/calendar/*",
+    "project/mail/rust/contacts/*",
+    "project/mail/rust/core/*",
+    "project/mail/rust/crypto/*",
+    "project/mail/rust/mail/*",
+    "project/mail/rust/shared/*",
+    "project/mail/rust/uniffi/*",
   ]
   resolver = "3"
 
 [workspace.package]
   edition = "2024"
+  rust-version = "1.93.0"
 
 [workspace.dependencies.account-crux]
   path = "project/account/rust/account-crux"
@@ -108,7 +119,7 @@
 
 [workspace.dependencies.proton-crypto-account]
   # Use experimental version based on rprp instead of gopenpgp-sys.
-  version = "0.17.0"
+  version = "0.18.0"
   default-features = false
   features = ["rustpgp"]
   registry = "proton"
@@ -173,12 +184,442 @@
 
 [workspace.dependencies.secrecy]
   version = "0.10"
+  features = ["serde"]
 
 [workspace.dependencies.num_enum]
   version = "0.7"
 
 [workspace.dependencies]
   flume = "0.12"
+  # mail
+  anyhow = "1.0"
+  async-trait = "0.1"
+  base64 = "0.22"
+  bitflags = "2.8.0"
+  bytes = "1.9"
+  color-backtrace = "0.6.1"
+  cookie = "0.18.1"
+  criterion = "0.7.0"
+  derivative = "=2.2.0"
+  ext-php-rs = "0.15.3"
+  flate2 = "1.1"
+  function_name = "0.3.0"
+  futures = "0.3.31"
+  futures-util = "0.3.31"
+  fxhash = "=0.2.1"
+  hex = "0.4.3"
+  html2text = "=0.16.2"
+  indoc = "2.0.5"
+  itertools = "0.13.0"
+  libfuzzer-sys = "0.4"
+  mime = "0.3.17"
+  mockall = "0.13.1"
+  parking_lot = "0.12.3"
+  paste = "1"
+  percent-encoding = "2.3.2"
+  pin-project = "1"
+  pretty_assertions = "1.4.1"
+  proc-macro2 = "1.0.93"
+  quick-xml = "0.38.2"
+  quote = "1.0.38"
+  rand = "0.8"
+  regex = "1.11.1"
+  rmp = "0.8"
+  rmp-serde = "1.3"
+  serde-aux = "4.5"
+  serde_qs = "0.13.0"
+  sha2 = "0.10.9"
+  slotmap = "1.0.7"
+  smart-default = "0.7.1"
+  strum = "0.26.3"
+  tempfile = "3.21.0"
+  test-case = "3.3.1"
+  topological-sort = "0.2.2"
+  tracing-appender = "0.2"
+  tynm = "0.1"
+  typed-builder = "0.20.0"
+  unicode-segmentation = "1.12.0"
+  utf8-width = "0.1.7"
+  velcro = "0.5.4"
+  walkdir = "2.5.0"
+  wiremock = "0.6.2"
+  wiremock-multipart = "1.0.1"
+  zeroizing-alloc = "0.1.0"
+
+# mail path deps
+[workspace.dependencies.contacts-api]
+  version = "0.1.0"
+  path = "project/mail/rust/contacts/contacts-api"
+
+[workspace.dependencies.contacts-common]
+  version = "0.1.0"
+  path = "project/mail/rust/contacts/contacts-common"
+
+[workspace.dependencies.mail-api-bug-report]
+  version = "0.1.0"
+  path = "project/mail/rust/api/mail-api-bug-report"
+
+[workspace.dependencies.mail-api-device]
+  version = "0.1.0"
+  path = "project/mail/rust/api/mail-api-device"
+
+[workspace.dependencies.mail-api-event-types]
+  version = "0.1.0"
+  path = "project/mail/rust/api/mail-api-event-types"
+
+[workspace.dependencies.mail-api-feature-flags]
+  version = "0.1.0"
+  path = "project/mail/rust/api/mail-api-feature-flags"
+
+[workspace.dependencies.mail-api-labels]
+  version = "0.1.0"
+  path = "project/mail/rust/api/mail-api-labels"
+
+[workspace.dependencies.mail-api-ping]
+  version = "0.1.0"
+  path = "project/mail/rust/api/mail-api-ping"
+
+[workspace.dependencies.mail-api-session]
+  version = "0.1.0"
+  path = "project/mail/rust/api/mail-api-session"
+
+[workspace.dependencies.mail-api-shared]
+  version = "0.1.0"
+  path = "project/mail/rust/api/mail-api-shared"
+
+[workspace.dependencies.mail-proton-ids]
+  version = "0.1.0"
+  path = "project/mail/rust/shared/mail-proton-ids"
+
+[workspace.dependencies.mail-api-utils]
+  version = "0.1.0"
+  path = "project/mail/rust/shared/api-utils"
+
+[workspace.dependencies.mail-account-api]
+  version = "0.1"
+  path = "project/mail/rust/account/account-api"
+  registry = "proton"
+
+[workspace.dependencies.mail-account-common]
+  version = "0.1"
+  path = "project/mail/rust/account/account-common"
+  registry = "proton"
+
+[workspace.dependencies.mail-account-uniffi]
+  path = "project/mail/rust/account/account-uniffi"
+  registry = "proton"
+
+[workspace.dependencies.mail-action-queue]
+  version = "0.7"
+  path = "project/mail/rust/shared/action-queue"
+  registry = "proton"
+
+[workspace.dependencies.mail-core-api]
+  version = "0.8"
+  path = "project/mail/rust/core/core-api"
+  registry = "proton"
+
+[workspace.dependencies.mail-core-key-manager]
+  version = "0.1"
+  path = "project/mail/rust/core/core-key-manager"
+  registry = "proton"
+
+[workspace.dependencies.mail-account-ids]
+  version = "0.1"
+  path = "project/mail/rust/account/account-ids"
+  registry = "proton"
+
+[workspace.dependencies.mail-core-common]
+  version = "0.9"
+  path = "project/mail/rust/core/core-common"
+  registry = "proton"
+  features = ["sql"]
+
+[workspace.dependencies.mail-sqlite3]
+  version = "0.7"
+  path = "project/mail/rust/shared/sqlite3"
+  registry = "proton"
+
+[workspace.dependencies.mail-canonical-email]
+  version = "0.1"
+  path = "project/mail/rust/shared/canonical-email"
+  registry = "proton"
+
+[workspace.dependencies.mail-ical]
+  path = "project/mail/rust/shared/ical"
+
+[workspace.dependencies.mail-ical-cli]
+  path = "project/mail/rust/shared/ical-cli"
+
+[workspace.dependencies.mail-ical-tz]
+  path = "project/mail/rust/shared/ical-tz"
+
+[workspace.dependencies.mail-vcard]
+  version = "0.2"
+  path = "project/mail/rust/shared/vcard"
+  registry = "proton"
+
+[workspace.dependencies.mail-avatar]
+  version = "0.1.0"
+  path = "project/mail/rust/shared/mail-avatar"
+
+[workspace.dependencies.mail-labels-common]
+  version = "0.1.0"
+  path = "project/mail/rust/core/labels-common"
+
+[workspace.dependencies.mail-shared-types]
+  version = "0.1.0"
+  path = "project/mail/rust/shared/shared-types"
+
+[workspace.dependencies.mail-stash]
+  version = "0.2"
+  path = "project/mail/rust/shared/stash"
+  registry = "proton"
+
+[workspace.dependencies.mail-stash-macros]
+  version = "0.2"
+  path = "project/mail/rust/shared/stash-macros"
+  registry = "proton"
+
+[workspace.dependencies.mail-api]
+  version = "0.5"
+  path = "project/mail/rust/mail/mail-api"
+  registry = "proton"
+
+[workspace.dependencies.mail-common]
+  version = "0.8"
+  path = "project/mail/rust/mail/mail-common"
+  registry = "proton"
+  features = ["sql"]
+
+[workspace.dependencies.mail-common-derive]
+  version = "0.1"
+  path = "project/mail/rust/mail/mail-common-derive"
+
+[workspace.dependencies.mail-search]
+  version = "0.1"
+  path = "project/mail/rust/mail/mail-search"
+
+[workspace.dependencies.mail-uniffi]
+  path = "project/mail/rust/mail/mail-uniffi"
+  registry = "proton"
+
+[workspace.dependencies.mail-uniffi-macros]
+  path = "project/mail/rust/uniffi/uniffi-macros"
+
+[workspace.dependencies.mail-uniffi-runtime]
+  path = "project/mail/rust/uniffi/uniffi-runtime"
+
+[workspace.dependencies.mail-uniffi-common]
+  path = "project/mail/rust/uniffi/uniffi-common"
+
+[workspace.dependencies.mail-crypto-inbox]
+  version = "0.9.0"
+  path = "project/mail/rust/crypto/crypto-inbox"
+  registry = "proton"
+
+[workspace.dependencies.mail-crypto-inbox-mime]
+  version = "0.4.1"
+  path = "project/mail/rust/crypto/crypto-inbox-mime"
+  registry = "proton"
+
+[workspace.dependencies.mail-crypto-notifications]
+  version = "0.1"
+  path = "project/mail/rust/crypto/crypto-notifications"
+  registry = "proton"
+
+[workspace.dependencies.mail-crypto-pin-hash]
+  version = "0.1"
+  path = "project/mail/rust/crypto/crypto-pin-hash"
+  registry = "proton"
+
+[workspace.dependencies.mail-log-service]
+  version = "0.1"
+  path = "project/mail/rust/shared/log-service"
+  registry = "proton"
+
+[workspace.dependencies.mail-task-service]
+  version = "0.1"
+  path = "project/mail/rust/shared/task-service"
+  registry = "proton"
+
+[workspace.dependencies.mail-calendar-api-v1]
+  version = "0.1"
+  path = "project/mail/rust/calendar/calendar-api"
+  registry = "proton"
+
+[workspace.dependencies.mail-calendar-common]
+  version = "0.1"
+  path = "project/mail/rust/calendar/calendar-common"
+  registry = "proton"
+
+[workspace.dependencies.mail-crypto-calendar]
+  version = "0.1"
+  path = "project/mail/rust/crypto/crypto-calendar"
+  registry = "proton"
+
+[workspace.dependencies.mail-crypto-contact-keys]
+  version = "0.1"
+  path = "project/mail/rust/crypto/crypto-contact-keys"
+
+[workspace.dependencies.mail-html-transformer]
+  version = "0.2"
+  path = "project/mail/rust/mail/mail-html-transformer"
+  registry = "proton"
+
+[workspace.dependencies.mail-event-service]
+  version = "0.1.0"
+  path = "project/mail/rust/shared/event-service"
+  registry = "proton"
+
+[workspace.dependencies.mail-network-monitor-service]
+  version = "0.1.0"
+  path = "project/mail/rust/shared/network-monitor-service"
+  registry = "proton"
+
+[workspace.dependencies.mail-issue-reporter-service]
+  version = "0.1.0"
+  path = "project/mail/rust/shared/issue-reporter-service"
+  registry = "proton"
+
+[workspace.dependencies.mail-issue-reporter-service-uniffi]
+  version = "0.1.0"
+  path = "project/mail/rust/shared/issue-reporter-service-uniffi"
+  registry = "proton"
+
+[workspace.dependencies.mail-observability]
+  path = "project/mail/rust/shared/observability"
+
+[workspace.dependencies.mail-telemetry]
+  version = "0.1.0"
+  path = "project/mail/rust/shared/telemetry-service"
+  registry = "proton"
+
+[workspace.dependencies.core-telemetry]
+  path = "project/core/rust/core-telemetry"
+  default-features = false
+
+[workspace.dependencies.mail-mailto]
+  path = "project/mail/rust/shared/mailto"
+
+[workspace.dependencies.mail-key-manager]
+  path = "project/mail/rust/core/core-key-manager"
+
+# mail complex deps
+[workspace.dependencies.aes-gcm]
+  version = "0.10"
+  features = ["zeroize", "std"]
+
+[workspace.dependencies.argon2]
+  version = "0.5.3"
+  features = ["default", "std"]
+
+[workspace.dependencies.chrono]
+  version = "0.4"
+  features = ["default", "serde"]
+
+[workspace.dependencies.clap]
+  version = "4.5.27"
+  features = ["derive"]
+
+[workspace.dependencies.common-multipart-rfc7578]
+  version = "0.7.0"
+  default-features = false
+
+[workspace.dependencies.email_address]
+  version = "0.2.9"
+  features = ["serde"]
+  git = "https://github.com/ProtonMail/rust-email_address.git"
+  branch = "fix/parse-display-format-without-whitespace"
+
+[workspace.dependencies.file-format]
+  version = "0.26.0"
+  features = ["reader"]
+
+[workspace.dependencies.ical]
+  version = "0.11"
+  features = ["generator"]
+
+[workspace.dependencies.include_dir]
+  version = "0.7"
+  features = ["glob"]
+
+[workspace.dependencies.indexmap]
+  version = "2.7.1"
+  features = ["serde"]
+
+[workspace.dependencies.insta]
+  version = "1.42.0"
+  features = ["toml"]
+
+[workspace.dependencies.jiff]
+  version = "0.2.4"
+  features = ["serde"]
+
+[workspace.dependencies.mail-muon]
+  version = "1.7.1"
+  registry = "proton"
+  features = ["unsealed"]
+
+[workspace.dependencies.non-empty-string]
+  version = "0.2.5"
+  features = ["serde"]
+
+[workspace.dependencies.pprof]
+  version = "0.15.0"
+  features = ["criterion", "flamegraph"]
+
+[workspace.dependencies.proton-foundation-search]
+  version = "1.1.2"
+  registry = "proton"
+  default-features = false
+
+[workspace.dependencies.reqwest]
+  version = "0.13.2"
+  features = ["rustls"]
+  default-features = false
+
+[workspace.dependencies.rusqlite]
+  version = "0.37"
+  features = ["bundled", "chrono", "functions", "trace", "uuid"]
+
+[workspace.dependencies.sqlite-watcher]
+  version = "0.7.0"
+  features = ["rusqlite"]
+
+[workspace.dependencies.syn]
+  version = "2.0.96"
+  features = ["full"]
+
+[workspace.dependencies.tokio]
+  version = "1"
+  features = ["full"]
+
+[workspace.dependencies.tokio-util]
+  version = "0.7"
+  features = ["rt"]
+
+[workspace.dependencies.url]
+  version = "2.5.4"
+  features = ["serde"]
+
+[workspace.dependencies.uuid]
+  version = "1.12.1"
+  features = ["serde", "v4"]
+
+[workspace.dependencies.tracing-subscriber]
+  version = "0.3"
+  features = ["env-filter"]
+
+[workspace.dependencies.zeroize]
+  version = "1.8.1"
+  features = ["zeroize_derive"]
+
+[patch.proton]
+mail-muon = { path = "project/mail/rust/forks/muon" }
+
+[workspace.lints.rust]
+  unexpected_cfgs = { level = "warn", check-cfg = ["cfg(forcego)"] }
 
 [workspace.lints.clippy]
   all = "deny"
@@ -197,3 +638,42 @@
   lto = true
   incremental = false
   codegen-units = 1
+
+[profile.mail-android]
+  inherits = "release"
+  panic = "abort"
+  opt-level = "s"
+  lto = true
+  incremental = false
+  codegen-units = 1
+
+[profile.mail-ios]
+  inherits = "release"
+  panic = "abort"
+  opt-level = "s"
+  codegen-units = 1
+
+[profile.mail-ios-debug]
+  inherits = "dev"
+  debug = true
+
+[profile.mail-small]
+  inherits = "release"
+  split-debuginfo = "packed"
+  lto = true
+  incremental = false
+
+[profile.mail-darwin-test]
+  inherits = "dev"
+  debug = false
+  incremental = false
+
+[profile.bench]
+  debug = true
+
+[profile.dev.package]
+  insta.opt-level = 3
+  similar.opt-level = 3
+
+[profile.release]
+  panic = "unwind"

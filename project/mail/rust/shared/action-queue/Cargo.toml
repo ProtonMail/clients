@@ -3,7 +3,7 @@ name = "mail-action-queue"
 version = "0.7.29"
 edition.workspace = true
 rust-version.workspace = true
-license.workspace = true
+license = "AGPL-3.0-only"
 
 [dependencies]
 anyhow = { workspace = true }

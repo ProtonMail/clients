@@ -325,6 +325,7 @@ impl MailboxModel {
         })
     }
 
+    #[allow(clippy::result_large_err)]
     fn change_filter(&mut self, unread: ReadFilter) {
         self.unread = unread;
         if let State::Conversations(state) = &mut self.state {
@@ -336,6 +337,7 @@ impl MailboxModel {
         }
     }
 
+    #[allow(clippy::result_large_err)]
     fn scroller_fetch_new(&mut self) {
         debug!("scrolling fetch_new");
         if let State::Conversations(state) = &mut self.state {
@@ -347,6 +349,7 @@ impl MailboxModel {
         }
     }
 
+    #[allow(clippy::result_large_err)]
     fn clear_cursor(&mut self) {
         if let State::Conversations(state) = &mut self.state {
             let _ = state.scroller().clone_inner().clear();

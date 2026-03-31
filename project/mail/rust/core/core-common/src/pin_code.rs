@@ -58,6 +58,7 @@ impl PinCode {
 
     // Note that this method does not verify old PIN if existed - it is up to
     // client to make that verification.
+    #[allow(clippy::result_large_err)]
     #[instrument(skip_all)]
     pub async fn set(ctx: Arc<Context>, pin: Vec<u32>) -> Result<(), PinError> {
         info!("Setting pin");
@@ -108,6 +109,7 @@ impl PinCode {
         Ok(())
     }
 
+    #[allow(clippy::result_large_err)]
     #[instrument(skip_all)]
     pub async fn verify(ctx: Arc<Context>, pin: Vec<u32>) -> Result<(), PinError> {
         info!("Verifying pin");

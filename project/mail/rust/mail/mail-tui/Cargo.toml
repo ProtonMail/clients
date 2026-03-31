@@ -3,7 +3,7 @@ name = "mail-tui"
 version = "0.4.1"
 edition.workspace = true
 rust-version.workspace = true
-license.workspace = true
+license = "AGPL-3.0-only"
 
 [dependencies]
 anyhow = { workspace = true }

@@ -16,6 +16,7 @@ use super::{InitializationError, InitializationWatcher, InitializedComponent, La
 ///
 /// This function is idempotent. If successfully initialized in the past it will
 /// skip re-initialization.
+#[allow(clippy::result_large_err)]
 pub async fn initialize_contacts(
     watcher: Arc<InitializationWatcher>,
     api: &Session,

@@ -3,7 +3,7 @@ name = "mail-api-feature-flags"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
-license.workspace = true
+license = "AGPL-3.0-only"
 
 [dependencies]
 core-feature-flags = { workspace = true }

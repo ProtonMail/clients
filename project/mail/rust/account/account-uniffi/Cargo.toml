@@ -4,7 +4,7 @@ version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
 publish = false
-license.workspace = true
+license = "AGPL-3.0-only"
 
 [lib]
 crate-type = ["lib", "cdylib", "staticlib"]
@@ -17,7 +17,7 @@ mail-core-api.workspace = true
 mail-core-common.workspace = true
 mail-observability.workspace = true
 mail-muon.workspace = true
-uniffi.workspace = true
+uniffi = "0.31.0"
 mail-uniffi-common.workspace = true
 mail-uniffi-macros.workspace = true
 mail-uniffi-runtime.workspace = true

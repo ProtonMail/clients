@@ -3,7 +3,7 @@ name = "mail-sqlite3"
 version = "0.7.15"
 edition.workspace = true
 rust-version.workspace = true
-license.workspace = true
+license = "AGPL-3.0-only"
 
 [dependencies]
 async-trait = { workspace = true }

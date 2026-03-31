@@ -3,7 +3,7 @@ name = "mail-observability"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
-license.workspace = true
+license = "AGPL-3.0-only"
 
 [dependencies]
 serde = { workspace = true }

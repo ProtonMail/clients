@@ -1809,9 +1809,12 @@ async fn send_external_with_password_even_if_contact_has_pgp_mime_encryption() {
 
     let provider = new_pgp_provider();
     let user_keys = user_ctx
-        .unlocked_user_keys(&provider, &tether)
+        .crypto_key_service()
+        .load_with_tether(user_ctx.user_context(), &tether)
+        .user_keys(&provider)
         .await
         .unwrap();
+
     let signature = encrypted_vcard
         .sign_sync(&provider, user_keys.primary().unwrap())
         .unwrap();

@@ -1,10 +1,11 @@
 use std::{fmt::Display, str::FromStr};
 
-use proton_crypto_account::proton_crypto::crypto::{
-    PublicKey, VerificationError, VerificationResult,
+use proton_crypto_account::{
+    keys::VerificationPreferences,
+    proton_crypto::crypto::{PublicKey, VerificationError, VerificationResult},
 };
 
-use crate::keys::{InboxVerificationPreferences, PackageCryptoType, SendPreferences};
+use crate::keys::{PackageCryptoType, SendPreferences};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum LockColor {
@@ -352,7 +353,7 @@ impl UiLock {
         origin_header: XPmOrigin,
         content_encryption_header: XPmContentEncryption,
         message_verification_status: MailVerificationStatus,
-        verification_preferences_opt: Option<&InboxVerificationPreferences<Pub>>,
+        verification_preferences_opt: Option<&VerificationPreferences<Pub>>,
     ) -> Self
     where
         Pub: PublicKey,
@@ -454,7 +455,7 @@ fn determine_recipient_lock_icon<Pub>(
     origin_header: XPmOrigin,
     content_encryption_header: XPmContentEncryption,
     message_verification_status: MailVerificationStatus,
-    verification_preferences_opt: Option<&InboxVerificationPreferences<Pub>>,
+    verification_preferences_opt: Option<&VerificationPreferences<Pub>>,
 ) -> UiLock
 where
     Pub: PublicKey,
@@ -463,10 +464,10 @@ where
         NotSigned, NotVerified, SignedAndInvalid, SignedAndValid, SignedNoPublicKey,
     };
     let pinned =
-        verification_preferences_opt.is_some_and(InboxVerificationPreferences::uses_pinned_keys);
+        verification_preferences_opt.is_some_and(VerificationPreferences::uses_pinned_keys);
 
     let self_owned_keys =
-        verification_preferences_opt.is_some_and(InboxVerificationPreferences::self_owned_keys);
+        verification_preferences_opt.is_some_and(VerificationPreferences::self_owned_keys);
 
     match (origin_header, content_encryption_header) {
         (XPmOrigin::Internal, XPmContentEncryption::EndToEnd) => {

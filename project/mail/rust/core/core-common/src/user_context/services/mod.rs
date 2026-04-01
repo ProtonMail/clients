@@ -1,3 +1,4 @@
+pub mod crypto_key_service;
 pub mod event_loop_service;
 pub mod growth_service;
 pub mod initialization_service;

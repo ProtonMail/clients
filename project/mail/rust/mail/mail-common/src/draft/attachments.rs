@@ -331,18 +331,22 @@ pub async fn build_attachment_key_packets(
                 attachment.local_id.unwrap()
             );
 
-            let unlocked_attachment_keys = ctx
-                .unlocked_address_keys(&pgp, tether, attachment_address_id)
+            let key_selector = ctx
+                .crypto_key_service()
+                .load_with_tether(ctx.user_context(), tether);
+
+            let unlocked_attachment_keys = key_selector
+                .address_keys(&pgp, attachment_address_id)
                 .await
                 .inspect_err(|e| {
                     error!("Failed to unlock attachment address {address_id} keys:{e:?}")
                 })?;
 
-            let unlocked_addr_keys = ctx
-                .unlocked_address_keys(&pgp, tether, address_id)
+            let unlocked_addr_keys = key_selector
+                .address_keys(&pgp, address_id)
                 .await
                 .inspect_err(|e| error!("Failed to unlock address {address_id} keys:{e:?}"))?
-                .primary_for_mail()
+                .primary_address_key_with_pqc()
                 .map_err(|e| {
                     error!("Failed get primary key for {address_id}:{e:?}");
                     MailContextError::Crypto
@@ -350,7 +354,7 @@ pub async fn build_attachment_key_packets(
 
             // Decrypt attachment information using sender's keys
             let attachment_info = attachment
-                .decrypt_attachment_info(&pgp, &unlocked_attachment_keys)
+                .decrypt_attachment_info(&pgp, unlocked_attachment_keys.for_decryption())
                 .map_err(|e| {
                     error!("Failed to decrypt attachment key packets: {e:?}");
                     MailContextError::Crypto

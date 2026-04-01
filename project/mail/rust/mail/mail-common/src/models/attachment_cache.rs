@@ -442,14 +442,16 @@ impl Attachment {
             Vec::with_capacity(self.size.try_into().unwrap_or_default());
 
         let address_keys = ctx
-            .unlocked_address_keys(pgp, tether, remote_address_id)
+            .crypto_key_service()
+            .load_with_tether(ctx.user_context(), tether)
+            .address_keys(pgp, remote_address_id)
             .await?;
 
         // TODO: Load the sender verification keys for correct signature verification.
         let verification_keys: Vec<<P as PGPProvider>::PublicKey> = Vec::new();
 
         let mut decrypting_reader = self
-            .decrypt_from_reader(pgp, address_keys.as_ref(), &verification_keys, data)
+            .decrypt_from_reader(pgp, address_keys.for_decryption(), &verification_keys, data)
             .map_err(AppError::AttachmentDecryption)?;
 
         std::io::copy(&mut decrypting_reader, &mut result_buffer)

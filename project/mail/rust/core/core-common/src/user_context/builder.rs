@@ -14,7 +14,6 @@ use std::sync::{Arc, Weak};
 use tokio_util::sync::CancellationToken;
 
 use super::Context;
-use super::keys::CryptoKeyManager;
 
 enum ServiceUnderConstruction {
     Simple(Box<dyn Any + Send + Sync>),
@@ -68,7 +67,6 @@ impl UserContextBuilder {
         queue: Queue<UserDb>,
         user_id: UserId,
         session_id: SessionId,
-        key_manager: Arc<CryptoKeyManager>,
         cancellation_token: CancellationToken,
         cache_path: PathBuf,
     ) -> Arc<UserContext> {
@@ -95,7 +93,6 @@ impl UserContextBuilder {
                 queue,
                 user_id,
                 session_id,
-                key_manager,
                 cancellation_token,
                 cache_path,
                 services,

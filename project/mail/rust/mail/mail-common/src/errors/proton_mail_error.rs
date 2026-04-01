@@ -23,7 +23,9 @@ use mail_core_common::ContactError;
 use mail_core_common::device_registration::RegisteredDeviceTaskError;
 use mail_core_common::models::LabelError;
 use mail_core_common::pin_code::PinError;
+use mail_core_common::services::crypto_key_service::core_key_manager::error::KeyHandlingError;
 use mail_stash::UserDb;
+use proton_crypto_account::errors::EncryptionPreferencesError;
 
 /// Categories of errors that can be returned by the ProtonMail SDK.
 ///
@@ -216,6 +218,20 @@ impl From<AppError> for ProtonMailError {
     }
 }
 
+impl From<KeyHandlingError> for ProtonMailError {
+    fn from(error: KeyHandlingError) -> Self {
+        let _guard = log_error(&error);
+        Self::Unexpected(Unexpected::Crypto)
+    }
+}
+
+impl From<EncryptionPreferencesError> for ProtonMailError {
+    fn from(error: EncryptionPreferencesError) -> Self {
+        let _guard = log_error(&error);
+        Self::Unexpected(Unexpected::Crypto)
+    }
+}
+
 impl From<MailContextError> for ProtonMailError {
     fn from(error: MailContextError) -> Self {
         let _guard = log_error(&error);
@@ -235,7 +251,11 @@ impl From<MailContextError> for ProtonMailError {
             MailContextError::ActionQueue(queue_error) => Self::from(queue_error),
             MailContextError::Action(action_error) => Self::from(action_error),
             MailContextError::QueuedAction(queued_error) => Self::from(queued_error),
-            MailContextError::PGPKeyAccess(key_handling_error) => Self::from(key_handling_error),
+            MailContextError::PGPKeySelection(encryption_preferences_error) => {
+                Self::from(encryption_preferences_error)
+            }
+
+            MailContextError::KeySelection(key_handling_error) => Self::from(key_handling_error),
             MailContextError::App(app_error) => Self::from(app_error),
             MailContextError::Stash(stash_error) => Self::from(stash_error),
             MailContextError::Api(api_service_error) => Self::from(api_service_error),
@@ -244,9 +264,6 @@ impl From<MailContextError> for ProtonMailError {
             MailContextError::Draft(draft_error) => Self::from(draft_error),
             MailContextError::Build(_parse_app_version_error) => {
                 Self::Unexpected(Unexpected::Config)
-            }
-            MailContextError::PGPKeySelection(_encryption_preferences_error) => {
-                Self::Unexpected(Unexpected::Crypto)
             }
             MailContextError::DuplicateContext(_remote_id) => {
                 Self::reason(ContextErrorReason::DuplicateContext)
@@ -371,6 +388,7 @@ impl From<DraftSendError> for ProtonMailError {
             SendError::BadRequest(err) => Self::Reason(MailErrorReason::DraftSendReason(
                 DraftSendErrorReason::BadRequest(err),
             )),
+            DraftSendError::AddressKeyLoadingError(e) => Self::from(e),
         }
     }
 }

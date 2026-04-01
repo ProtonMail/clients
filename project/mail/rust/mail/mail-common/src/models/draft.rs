@@ -694,7 +694,8 @@ impl DraftSendFailure {
                 | SendError::MetadataNotFound(_)
                 | SendError::LocalDraftWithoutMessage
                 | SendError::DraftDoesNotExistOnServer
-                | SendError::MessageBodyMissing(_) => Self::Internal,
+                | SendError::MessageBodyMissing(_)
+                | SendError::AddressKeyLoadingError(_) => Self::Internal,
                 SendError::ScheduleSendMessageLimitExceeded => {
                     Self::Send(DraftSendFailureSend::ScheduleSendLimitExceeded)
                 }

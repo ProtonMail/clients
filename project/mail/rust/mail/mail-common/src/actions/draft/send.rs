@@ -36,6 +36,7 @@ use mail_crypto_inbox::proton_crypto::new_pgp_provider;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
 use mail_stash::stash::{Bond, StashError};
+use proton_crypto_account::keys::AddressKeySelector;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::sync::Weak;
@@ -437,7 +438,7 @@ impl Send {
         let send_preferences = load_prefs(
             ctx,
             &pgp,
-            guard,
+            guard.tether(),
             &action.recipients,
             mail_settings.crypto_mail_settings(),
             composer_preference,
@@ -447,9 +448,13 @@ impl Send {
 
         // Unlock sender address keys
         let address_keys = ctx
-            .unlocked_address_keys(&pgp, guard.tether(), &message_metadata.remote_address_id)
+            .crypto_key_service()
+            .load_with_tether(ctx.user_context(), guard.tether())
+            .address_keys(&pgp, &message_metadata.remote_address_id)
             .await
-            .inspect_err(|err| error!("Failed to load address key for sending: {err:?}"))?;
+            .map(AddressKeySelector::into_raw_keys)
+            .inspect_err(|err| error!("Failed to load address key for sending: {err:?}"))
+            .map_err(SendError::AddressKeyLoadingError)?;
 
         let attachments =
             DraftAttachmentMetadata::attachment_for_draft(action.metadata_id, guard.tether())

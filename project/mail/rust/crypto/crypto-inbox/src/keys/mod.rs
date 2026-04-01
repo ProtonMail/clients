@@ -1,8 +1,5 @@
 use proton_crypto_account::proton_crypto::CryptoError;
 
-mod verification;
-pub use verification::*;
-
 mod encryption;
 pub use encryption::*;
 

@@ -19,13 +19,18 @@ use mail_core_api::consts::Mail;
 use mail_core_api::service::ApiServiceError;
 use mail_core_api::services::proton::{PrivateEmail, PrivateEmailRef};
 use mail_core_api::session::Session;
-use mail_core_common::AddressKeysContactFetchPolicy;
 use mail_core_common::models::{ModelExtension, User};
 use mail_core_common::services::NetworkMonitorService;
+use mail_core_common::services::crypto_key_service::core_key_manager::error::{
+    KeyHandlingError, LoadingError,
+};
+use mail_core_common::services::crypto_key_service::core_key_manager::{
+    PublicAddressKeyApiFetchPolicy, PublicAddressKeyContactFetchPolicy,
+};
 use mail_crypto_inbox::attachment::DecryptableAttachment;
 use mail_crypto_inbox::eo::Challenge;
 use mail_crypto_inbox::keys::{
-    ComposerPreference, CryptoMailSettings, InboxSessionKey, PackageCryptoType, SendPreferences,
+    ComposerPreference, InboxSessionKey, PackageCryptoType, SendPreferences,
 };
 use mail_crypto_inbox::mail_crypto_inbox_mime::write::InboxMimeBuilder;
 use mail_crypto_inbox::message::packages::{
@@ -36,7 +41,7 @@ use mail_stash::UserDb;
 use mail_stash::orm::Model;
 use mail_stash::stash::{RunTransaction, Tether};
 use proton_crypto_account::keys::{
-    PrimaryUnlockedAddressKey, UnlockedAddressKey, UnlockedAddressKeys,
+    CryptoMailSettings, PrimaryUnlockedAddressKey, UnlockedAddressKey, UnlockedAddressKeys,
 };
 use proton_crypto_account::proton_crypto::crypto::PGPProviderSync;
 use secrecy::{ExposeSecret, SecretString};
@@ -61,7 +66,7 @@ pub struct EoData {
 pub async fn load_prefs<P>(
     context: &MailUserContext,
     pgp: &P,
-    tx: &mut impl RunTransaction,
+    tether: &Tether,
     recipient_emails: &[PrivateEmail],
     crypto_mail_settings: CryptoMailSettings,
     composer_preference: ComposerPreference,
@@ -75,11 +80,12 @@ where
         let send_preference = context
             .recipient_send_preferences(
                 pgp,
-                tx,
+                tether,
                 PrivateEmailRef::new(recipient.as_clear_text_str()),
                 crypto_mail_settings,
                 composer_preference,
-                AddressKeysContactFetchPolicy::RequireSync,
+                PublicAddressKeyApiFetchPolicy::RequireSync,
+                PublicAddressKeyContactFetchPolicy::RequireSync,
             )
             .await
             .map_err(|err| {
@@ -88,7 +94,10 @@ where
                     recipient, err
                 );
 
-                if let MailContextError::Api(err) = &err {
+                if let MailContextError::KeySelection(KeyHandlingError::Loading(
+                    LoadingError::Api(err),
+                )) = &err
+                {
                     match ValidationState::from(err) {
                         ValidationState::InvalidEmail => {
                             return SendError::SendMessage(PackageError::RecipientEmailInvalid(

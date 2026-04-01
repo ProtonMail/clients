@@ -1,19 +1,20 @@
 use common::TEST_VERIFICATION_KEY;
 use mail_crypto_inbox::{
-    keys::{
-        ComposerPreference, CryptoMailSettings, EncryptionPreferencesError,
-        InboxVerificationPreferences, PackageCryptoType, SendPreferences,
-    },
+    keys::{ComposerPreference, PackageCryptoType, SendPreferences, SendPreferencesError},
     message::packages::PackageMimeType,
     proton_crypto::{
         crypto::{AccessKeyInfo, DataEncoding, PGPProviderSync, UnixTimestamp},
         new_pgp_provider,
     },
 };
-use proton_crypto_account::keys::{
-    APIPublicAddressKeyGroup, APIPublicAddressKeys, APIPublicKey, APIPublicKeySource,
-    APIUnverifiedPublicAddressKeyGroup, DecryptedAddressKey, EmailMimeType, KeyFlag, KeyId,
-    PGPScheme, PinnedPublicKeys, PublicAddressKeys, SKLSignature, SignedKeyList,
+use proton_crypto_account::{
+    errors::EncryptionPreferencesError,
+    keys::{
+        APIPublicAddressKeyGroup, APIPublicAddressKeys, APIPublicKey, APIPublicKeySource,
+        APIUnverifiedPublicAddressKeyGroup, CryptoMailSettings, DecryptedAddressKey, EmailMimeType,
+        KeyFlag, KeyId, PGPScheme, PinnedPublicKeys, PublicAddressKeys, SKLSignature,
+        SignedKeyList, VerificationPreferences,
+    },
 };
 
 mod common;
@@ -81,7 +82,7 @@ fn test_verification_preferences() {
     let pinned_keys = create_test_pinned_key(&pgp, TEST_KEY);
     let api_keys = create_test_public_key(&pgp, true);
     let verification_preferences =
-        InboxVerificationPreferences::from_public_keys(api_keys, Some(pinned_keys));
+        VerificationPreferences::from_public_keys(api_keys, Some(pinned_keys));
     assert!(verification_preferences.compromised_fingerprints.is_empty());
     assert!(verification_preferences.uses_pinned_keys());
     assert_eq!(verification_preferences.pinned_keys.len(), 1);
@@ -101,7 +102,7 @@ fn test_verification_preferences_compromised() {
         .flags
         .set_compromised();
     let verification_preferences =
-        InboxVerificationPreferences::from_public_keys(api_keys, Some(pinned_keys));
+        VerificationPreferences::from_public_keys(api_keys, Some(pinned_keys));
     assert!(verification_preferences.pinned_keys.is_empty());
     assert!(verification_preferences.api_keys.is_empty());
     assert_eq!(verification_preferences.compromised_fingerprints.len(), 1);
@@ -112,7 +113,7 @@ fn test_verification_preferences_own() {
     let pgp = new_pgp_provider();
     let address_keys = create_test_decrypted_address_key(&pgp);
     let verification_preferences =
-        InboxVerificationPreferences::from_unlocked_address_keys(&address_keys);
+        VerificationPreferences::from_unlocked_address_keys(&address_keys);
     assert!(verification_preferences.pinned_keys.is_empty());
     assert!(verification_preferences.compromised_fingerprints.is_empty());
     assert_eq!(verification_preferences.api_keys.len(), 1);
@@ -125,7 +126,7 @@ fn test_verification_preferences_own_compromised() {
     let mut address_keys = create_test_decrypted_address_key(&pgp);
     address_keys.first_mut().unwrap().flags.set_compromised();
     let verification_preferences =
-        InboxVerificationPreferences::from_unlocked_address_keys(&address_keys);
+        VerificationPreferences::from_unlocked_address_keys(&address_keys);
     assert!(verification_preferences.pinned_keys.is_empty());
     assert!(verification_preferences.api_keys.is_empty());
     assert_eq!(verification_preferences.compromised_fingerprints.len(), 1);
@@ -403,7 +404,9 @@ fn test_sending_preferences_user_warning() {
 
     assert!(matches!(
         sending_preferences,
-        Err(EncryptionPreferencesError::PinnedKeyNotProvidedByAPI(_))
+        Err(SendPreferencesError::EncryptionPreferences(
+            EncryptionPreferencesError::PinnedKeyNotProvidedByAPI(_)
+        ))
     ));
 
     api_keys.address.keys.clear();
@@ -419,11 +422,8 @@ fn test_sending_preferences_user_warning() {
 
     assert!(matches!(
         sending_preferences,
-        Err(EncryptionPreferencesError::ExternalUserNoValidPinnedKey(
-            _,
-            _,
-            _,
-            _
+        Err(SendPreferencesError::EncryptionPreferences(
+            EncryptionPreferencesError::ExternalUserNoValidPinnedKey(_, _, _, _)
         ))
     ));
 }

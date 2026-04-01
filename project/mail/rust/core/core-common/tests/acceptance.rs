@@ -1,6 +1,6 @@
 mod acceptance {
     mod account;
-    mod crypto_key_manager;
+    mod crypto_key_service;
     mod global_feature_flags;
     mod images_logo;
     mod issue_reporter;

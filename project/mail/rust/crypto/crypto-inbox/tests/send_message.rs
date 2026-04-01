@@ -19,8 +19,8 @@ use mail_crypto_inbox::{
         AttachmentEncryptedSignature, AttachmentSignature, DecryptableAttachment, KeyPackets,
     },
     keys::{
-        ComposerPreference, CryptoMailSettings, InboxSessionKey, KeyPacket, PackageCryptoType,
-        SendPreferences, SessionKeyExposed,
+        ComposerPreference, InboxSessionKey, KeyPacket, PackageCryptoType, SendPreferences,
+        SessionKeyExposed,
     },
     message::{
         DecryptableMessage, DecryptedBody, GettablePGPMessage, SessionKeyAndDataPacketsExtractable,
@@ -541,6 +541,7 @@ mod send_request {
 /// Contains all test domain models.
 mod models {
     use mail_crypto_inbox_mime::Disposition;
+    use proton_crypto_account::keys::CryptoMailSettings;
 
     use super::*;
 
@@ -818,7 +819,7 @@ mod send_logic {
     use std::str::FromStr;
 
     use super::*;
-    use proton_crypto_account::keys::UnlockedAddressKeys;
+    use proton_crypto_account::keys::{CryptoMailSettings, UnlockedAddressKeys};
     use send_request::PackageSignaturesMode;
 
     pub fn setup_test_environment<P>(

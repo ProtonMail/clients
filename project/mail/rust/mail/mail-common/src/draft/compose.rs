@@ -265,10 +265,14 @@ pub(super) async fn encrypt_draft_body(
     let pgp = new_pgp_provider();
 
     let tether = ctx.user_stash().connection().await?;
-    let unlocked_keys = ctx.unlocked_address_keys(&pgp, &tether, address_id).await?;
+    let unlocked_keys = ctx
+        .crypto_key_service()
+        .load_with_tether(ctx.user_context(), &tether)
+        .address_keys(&pgp, address_id)
+        .await?;
 
     let draft_encryption_key = unlocked_keys
-        .primary_for_mail()
+        .primary_address_key_with_pqc()
         .map_err(|_| {
             error!(
                 "Unable to find the primary address key to encrypt the draft for address with id: {address_id}"
@@ -289,8 +293,9 @@ pub(super) async fn encrypt_draft_body(
     // encrypting.
     let encrypted_draft = EncryptedDraftMessage { body: &encrypted };
 
-    let RawDecryptedBody::Plain { signatures, .. } =
-        encrypted_draft.decrypt(&pgp, &unlocked_keys).map_err(|e| {
+    let RawDecryptedBody::Plain { signatures, .. } = encrypted_draft
+        .decrypt(&pgp, unlocked_keys.for_decryption())
+        .map_err(|e| {
             error!("Failed to decrypt draft: {e:?}");
             MailContextError::Crypto
         })?

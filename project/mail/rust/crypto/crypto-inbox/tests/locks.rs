@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use mail_crypto_inbox::{
-    keys::{InboxVerificationPreferences, KeyOwnership, PackageCryptoType, SendPreferences},
+    keys::{PackageCryptoType, SendPreferences},
     lock_icon::{
         LockColor, LockIcon, LockTooltip, MailVerificationStatus, UiLock, XPmContentEncryption,
         XPmOrigin, XPmRecipientAuthentication, XPmRecipientEncryption,
@@ -13,6 +13,7 @@ use mail_crypto_inbox::{
         new_pgp_provider,
     },
 };
+use proton_crypto_account::keys::{KeyOwnership, VerificationPreferences};
 
 mod common;
 
@@ -818,7 +819,7 @@ struct RecipientLockIconTestParams<Pub: PublicKey> {
     origin_header: XPmOrigin,
     content_encryption_header: XPmContentEncryption,
     message_verification_status: MailVerificationStatus,
-    verification_preferences_opt: Option<InboxVerificationPreferences<Pub>>,
+    verification_preferences_opt: Option<VerificationPreferences<Pub>>,
 }
 
 fn recipient_lock_icon_test_params<P>(
@@ -835,7 +836,7 @@ where
         .public_key_import(common::RECIPIENT_ONE, DataEncoding::Armor)
         .unwrap();
     let verificiation_preferences = if pinned_key {
-        InboxVerificationPreferences {
+        VerificationPreferences {
             ownership: KeyOwnership::Other,
             pinned_keys: vec![dummy_key.clone()],
             api_keys: vec![dummy_key],
@@ -843,7 +844,7 @@ where
             key_transparency_verification: Err(VerificationError::Unverified),
         }
     } else {
-        InboxVerificationPreferences {
+        VerificationPreferences {
             ownership: KeyOwnership::Other,
             pinned_keys: vec![],
             api_keys: vec![dummy_key],

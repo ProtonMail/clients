@@ -2,7 +2,6 @@ use mail_account_api::login::SaltError;
 use mail_action_queue::action::FactoryError;
 use mail_action_queue::queue::{Error as QueueError, QueuedError};
 use mail_core_api::store::StoreError;
-use mail_core_common::KeyHandlingError;
 use mail_core_common::os::KeyChainError;
 use mail_crypto_inbox::attachment::AttachmentDecryptionError;
 use mail_crypto_inbox::message::MessageError;
@@ -141,12 +140,6 @@ impl From<FactoryError> for Unexpected {
 
 impl From<KeyChainError> for Unexpected {
     fn from(_error: KeyChainError) -> Self {
-        Self::Crypto
-    }
-}
-
-impl From<KeyHandlingError> for Unexpected {
-    fn from(_error: KeyHandlingError) -> Self {
         Self::Crypto
     }
 }

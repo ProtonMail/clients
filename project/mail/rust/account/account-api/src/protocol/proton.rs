@@ -7,7 +7,6 @@
 
 use mail_api_shared::ApiServiceResult;
 use mail_muon::rest::auth::v4::{fido2, tfa::TFA};
-use mail_proton_ids::{PrivateEmail, declare_proton_id};
 use proton_crypto_account::keys::{APIPublicAddressKeys, AddressKeys, UserKeys};
 use serde::{Deserialize, Serialize};
 use serde_aux::field_attributes::deserialize_default_from_null;
@@ -18,16 +17,8 @@ use serde_with::{BoolFromInt, FromInto, serde_as};
 // ID types
 // ---------------------------------------------------------------------------
 
+pub use mail_account_ids::{AddressId, PrivateEmail, SaltId, SessionId, UserId};
 pub use mail_api_session::auth::PasswordMode;
-pub use mail_api_session::ids::{SessionId, UserId};
-
-declare_proton_id! {
-    pub AddressId
-}
-
-declare_proton_id! {
-    pub SaltId
-}
 
 // ---------------------------------------------------------------------------
 // Auth types (formerly in core-api's services/proton/auth/)

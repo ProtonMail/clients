@@ -18,7 +18,7 @@ mail-api-session = { workspace = true }
 mail-api-shared = { workspace = true }
 mail-observability = { workspace = true }
 mail-api-utils = { workspace = true }
-mail-proton-ids = { workspace = true }
+mail-account-ids = { workspace = true }
 mail-stash = { workspace = true, optional = true }
 smart-default = { workspace = true }
 mail-task-service = { workspace = true }
@@ -50,7 +50,7 @@ tracing = { workspace = true }
 zeroize = { workspace = true }
 
 [features]
-sql = ["dep:mail-stash", "mail-proton-ids/sql"]
+sql = ["dep:mail-stash", "mail-account-ids/sql"]
 
 [lints]
 workspace = true

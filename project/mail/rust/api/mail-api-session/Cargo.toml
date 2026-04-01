@@ -16,7 +16,7 @@ futures = { workspace = true }
 mail-api-shared = { workspace = true }
 mail-muon = { workspace = true }
 mail-network-monitor-service = { workspace = true, features = ["muon"] }
-mail-proton-ids = { workspace = true }
+mail-account-ids = { workspace = true }
 mail-task-service = { workspace = true }
 parking_lot = { workspace = true }
 proton-crypto-account = { workspace = true }
@@ -33,7 +33,7 @@ wiremock = { workspace = true, optional = true }
 [features]
 default = []
 mocks = ["dep:wiremock"]
-sql = ["dep:mail-stash", "mail-proton-ids/sql"]
+sql = ["dep:mail-stash", "mail-account-ids/sql"]
 
 [lints]
 workspace = true

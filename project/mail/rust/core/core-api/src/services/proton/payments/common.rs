@@ -19,8 +19,11 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
 
-use crate::declare_proton_id;
 use crate::services::proton::common::deserialize_bool_from_string;
+pub use mail_account_ids::{
+    BundleId, CustomerId, OrderId, PackageNameId, PaymentMethodId, PlanId, ProductId,
+    SubscriptionId, TransactionId,
+};
 
 //  STRUCTS
 //==============================================================================
@@ -234,34 +237,6 @@ pub enum PaymentVendorState {
     Disabled = 0,
     /// Vendor is enabled.
     Enabled = 1,
-}
-
-declare_proton_id! {
-    pub PlanId
-}
-declare_proton_id! {
-    pub ProductId
-}
-declare_proton_id! {
-    pub CustomerId
-}
-declare_proton_id! {
-    pub BundleId
-}
-declare_proton_id! {
-    pub PackageNameId
-}
-declare_proton_id! {
-    pub TransactionId
-}
-declare_proton_id! {
-    pub OrderId
-}
-declare_proton_id! {
-    pub PaymentMethodId
-}
-declare_proton_id! {
-    pub SubscriptionId
 }
 
 #[serde_as]

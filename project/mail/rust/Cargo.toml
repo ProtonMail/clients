@@ -4,6 +4,7 @@ resolver = "2"
 members = [
   "account/account-api",
   "account/account-common",
+  "account/account-ids",
   "account/account-uniffi",
   "calendar/calendar-api",
   "calendar/calendar-common",
@@ -238,6 +239,10 @@ registry = "proton"
 [workspace.dependencies.mail-account-uniffi]
 path = "account/account-uniffi"
 registry = "proton"
+
+[workspace.dependencies.mail-account-ids]
+version = "0.1.0"
+path = "account/account-ids"
 
 [workspace.dependencies.mail-action-queue]
 version = "0.7"

@@ -69,7 +69,7 @@ mail-canonical-email = { workspace = true }
 contacts-api = { workspace = true, optional = true }
 mail-core-common = { workspace = true }
 mail-telemetry = { workspace = true }
-proton-crypto-account = { workspace = true }
+proton-crypto-account = { workspace = true, features = ["sql"] }
 mail-crypto-inbox = { workspace = true }
 core-event-loop = { workspace = true }
 mail-search = { workspace = true, optional = true }

@@ -8,7 +8,7 @@ license.workspace = true
 
 [dependencies]
 # proton deps
-proton-crypto-account = { workspace = true }
+proton-crypto-account = { workspace = true, features = ["sql"] }
 proton-crypto-subtle = { workspace = true }
 mail-api-bug-report = { workspace = true }
 mail-api-device = { workspace = true }

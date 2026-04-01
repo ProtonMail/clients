@@ -6,7 +6,7 @@ rust-version.workspace = true
 license.workspace = true
 
 [dependencies]
-proton-crypto-account = { workspace = true }
+proton-crypto-account = { workspace = true, features = ["sql"] }
 thiserror = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

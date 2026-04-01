@@ -3,7 +3,7 @@ use mail_calendar_common as cal;
 use mail_core_api::services::proton::AddressId;
 use mail_crypto_inbox::proton_crypto::crypto::PGPProviderSync;
 use mail_stash::stash::Tether;
-use proton_crypto_account::keys::UnlockedAddressKeys;
+use proton_crypto_account::keys::{AddressKeySelector, UnlockedAddressKeys};
 use tracing::error;
 
 pub struct RsvpKeys<'a> {
@@ -29,8 +29,12 @@ impl cal::RsvpKeys for RsvpKeys<'_> {
         P: PGPProviderSync,
     {
         self.ctx
-            .unlocked_address_keys(pgp, self.tether, id)
+            .crypto_key_service()
+            .load_with_tether(self.ctx.user_context(), self.tether)
+            .address_keys(pgp, id)
             .await
+            .map(AddressKeySelector::into_raw_keys)
             .inspect_err(|err| error!("Couldn't unlock address keys: {err:?}"))
+            .map_err(MailContextError::from)
     }
 }

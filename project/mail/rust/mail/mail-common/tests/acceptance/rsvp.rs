@@ -16,6 +16,7 @@ use mail_crypto_calendar::{CalendarEventEncryptor, KeyPacket, UnlockedCalendarKe
 use mail_crypto_inbox::attachment::{EncryptableAttachment, KeyPackets};
 use mail_crypto_inbox::proton_crypto::new_pgp_provider;
 use mail_stash::orm::Model;
+use proton_crypto_account::keys::AddressKeySelector;
 use std::str::FromStr;
 
 const CALENDAR_ID: &str = "yXbOd5cP";
@@ -117,11 +118,13 @@ async fn fetch_and_answer() {
 
     let pgp = new_pgp_provider();
 
-    let address_keys = ctx
-        .mail_user_context()
+    let user_ctx = ctx.mail_user_context().await;
+    let address_keys = user_ctx
+        .crypto_key_service()
+        .load_with_tether(user_ctx.user_context(), &db2)
+        .address_keys(&pgp, &user_address_id)
         .await
-        .unlocked_address_keys(&pgp, &db, &user_address_id)
-        .await
+        .map(AddressKeySelector::into_raw_keys)
         .unwrap();
 
     let calendar_key = UnlockedCalendarKey::generate(&pgp).unwrap();

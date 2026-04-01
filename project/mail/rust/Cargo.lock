@@ -4356,6 +4356,7 @@ dependencies = [
  "contacts-api",
  "contacts-common",
  "core-event-loop",
+ "core-key-manager",
  "derive_more 2.0.1",
  "email_address",
  "flume 0.11.1",

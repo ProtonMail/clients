@@ -13,6 +13,7 @@ use mail_core_common::{
     },
     models::{Contact, ContactListWatcher},
 };
+use mail_crypto_inbox::proton_crypto_account::keys::UserKeySelector;
 use mail_stash::stash::Tether;
 use ratatui::{
     Frame,
@@ -370,8 +371,12 @@ impl ContactsModel {
             match async {
                 let mut tether = ctx.mail_stash().connection().await?;
                 let pgp = proton_crypto::new_pgp_provider();
-                let unlocked_user_keys =
-                    ctx.unlocked_user_keys(&pgp, &tether, ctx.session()).await?;
+                let unlocked_user_keys = ctx
+                    .crypto_key_service()
+                    .load_with_tether(ctx, &tether)
+                    .user_keys(&pgp)
+                    .await
+                    .map(UserKeySelector::into_raw_keys)?;
                 InspectableContactDetails::get_from_contact(
                     ctx.session(),
                     &pgp,

@@ -19,6 +19,7 @@ use mail_core_common::datatypes::contact_details::VcardPropType as RealVcardProp
 use mail_core_common::utils::MapVec as _;
 use mail_vcard::values::date_and_or_time::DateAndOrTimeValue;
 use mail_vcard::values::date_and_or_time::MaybeDateAndOrTime;
+use proton_crypto_account::keys::UserKeySelector;
 
 #[uniffi_export]
 pub async fn get_contact_details(
@@ -32,8 +33,11 @@ pub async fn get_contact_details(
         let mut tether = ctx.mail_stash().connection().await?;
         let pgp = proton_crypto::new_pgp_provider();
         let unlocked_user_keys = ctx
-            .unlocked_user_keys(&pgp, &tether, ctx.session())
+            .crypto_key_service()
+            .load_with_tether(ctx, &tether)
+            .user_keys(&pgp)
             .await
+            .map(UserKeySelector::into_raw_keys)
             .map_err(|e| RealProtonMailError::from(MailContextError::from(e)))?;
         let details = RealContactDetails::get_from_contact(
             ctx.session(),

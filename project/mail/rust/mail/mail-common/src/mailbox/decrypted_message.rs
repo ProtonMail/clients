@@ -18,8 +18,10 @@ use anyhow::Context;
 use mail_action_queue::action::ActionId;
 use mail_calendar_common::{self as cal, RsvpError};
 use mail_core_api::services::proton::AddressId;
-use mail_core_common::AddressKeysContactFetchPolicy;
+
 use mail_core_common::models::{Address, ModelExtension, ModelIdExtension};
+use mail_core_common::services::crypto_key_service::core_key_manager::PublicAddressKeyApiFetchPolicy;
+use mail_core_common::services::crypto_key_service::core_key_manager::PublicAddressKeyContactFetchPolicy;
 use mail_crypto_inbox::lock_icon::{MailVerificationStatus, XPmOrigin};
 use mail_crypto_inbox::lock_icon::{UiLock, XPmContentEncryption, XPmRecipientEncryption};
 use mail_crypto_inbox::mail_crypto_inbox_mime::{ProcessedBodyType, ProcessedMessage};
@@ -750,7 +752,7 @@ impl PrivacyLockBuilder {
             return UiLock::default_incoming();
         };
 
-        let Ok(mut tether) = ctx.user_stash().connection().await else {
+        let Ok(tether) = ctx.user_stash().connection().await else {
             warn!("Could not acquire db connection");
             return UiLock::default_incoming();
         };
@@ -759,9 +761,10 @@ impl PrivacyLockBuilder {
         let verification_prefs = match ctx
             .sender_verification_preferences(
                 &pgp,
-                &mut tether,
+                &tether,
                 message.sender.address.as_ref(),
-                AddressKeysContactFetchPolicy::AllowCachedFallback,
+                PublicAddressKeyApiFetchPolicy::AllowCachedFallback,
+                PublicAddressKeyContactFetchPolicy::AllowCachedFallback,
             )
             .await
         {

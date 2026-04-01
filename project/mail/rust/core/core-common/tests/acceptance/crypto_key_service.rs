@@ -1,8 +1,8 @@
+use core_key_manager::error::{KeyHandlingError, LoadingError};
+use core_key_manager::{PublicAddressKeyApiFetchPolicy, PublicAddressKeyContactFetchPolicy};
 use mail_core_api::services::proton::GetKeysAllResponse;
+use mail_core_common::services::crypto_key_service::PublicAddressKeysResponseCache;
 use mail_core_common::test_utils::test_context::TestContext;
-use mail_core_common::{
-    CoreContextError, PublicAddressKeyFetchPolicy, PublicAddressKeysResponseCache,
-};
 use proton_crypto::new_pgp_provider;
 use proton_crypto_account::keys::{APIPublicAddressKeyGroup, APIPublicAddressKeys};
 use std::io::ErrorKind;
@@ -19,15 +19,24 @@ async fn fetch_public_keys_requires_network_success() {
     let pgp = new_pgp_provider();
     let email = "foo@params.com";
 
+    let tether = user_ctx.mail_stash().connection().await.unwrap();
+
     let result = user_ctx
-        .public_address_keys(
+        .crypto_key_service()
+        .load_with_tether(&user_ctx, &tether)
+        .address_keys_for_email(
             &pgp,
-            email.into(),
+            email,
             true,
-            PublicAddressKeyFetchPolicy::RequireSync,
+            PublicAddressKeyApiFetchPolicy::RequireSync,
+            PublicAddressKeyContactFetchPolicy::AllowCachedFallback,
         )
         .await;
-    assert!(matches!(result, Err(CoreContextError::Api(_))));
+
+    assert!(matches!(
+        result,
+        Err(KeyHandlingError::Loading(LoadingError::Api(_)))
+    ));
 }
 
 #[tokio::test]
@@ -61,17 +70,21 @@ async fn fetch_public_keys_stores_in_cache() {
     )
     .await;
 
+    let tether = user_ctx.mail_stash().connection().await.unwrap();
+
     user_ctx
-        .public_address_keys(
+        .crypto_key_service()
+        .load_with_tether(&user_ctx, &tether)
+        .address_keys_for_email(
             &pgp,
-            email.into(),
+            email,
             true,
-            PublicAddressKeyFetchPolicy::RequireSync,
+            PublicAddressKeyApiFetchPolicy::RequireSync,
+            PublicAddressKeyContactFetchPolicy::AllowCachedFallback,
         )
         .await
         .unwrap();
 
-    let tether = user_ctx.mail_stash().connection().await.unwrap();
     let cached = PublicAddressKeysResponseCache::get(email.to_owned(), true, &tether)
         .await
         .unwrap()
@@ -85,11 +98,8 @@ async fn fetch_public_keys_loads_cached_version_when_network_fails() {
     let user_ctx = ctx.user_context().await;
     mock_keys_failure(ctx.mock_server()).await;
     let email = "foo@params.com";
-    user_ctx
-        .mail_stash()
-        .connection()
-        .await
-        .unwrap()
+    let mut tether = user_ctx.mail_stash().connection().await.unwrap();
+    tether
         .tx(async |tx| {
             let response = APIPublicAddressKeys {
                 address_keys: APIPublicAddressKeyGroup::default(),
@@ -106,11 +116,14 @@ async fn fetch_public_keys_loads_cached_version_when_network_fails() {
 
     let pgp = new_pgp_provider();
     user_ctx
-        .public_address_keys(
+        .crypto_key_service()
+        .load_with_tether(&user_ctx, &tether)
+        .address_keys_for_email(
             &pgp,
-            email.into(),
+            email,
             true,
-            PublicAddressKeyFetchPolicy::AllowCachedFallback,
+            PublicAddressKeyApiFetchPolicy::AllowCachedFallback,
+            PublicAddressKeyContactFetchPolicy::AllowCachedFallback,
         )
         .await
         .unwrap();

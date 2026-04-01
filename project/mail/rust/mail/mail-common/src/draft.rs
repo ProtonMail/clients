@@ -16,6 +16,7 @@ use mail_api::services::proton::response_data::Message as ApiMessage;
 use mail_core_api::service::ApiServiceError;
 use mail_core_api::services::proton::{AddressId, PrivateEmail};
 use mail_core_common::datatypes::{LocalAddressId, UnixTimestamp};
+use mail_core_common::services::crypto_key_service::core_key_manager::error::KeyHandlingError;
 use mail_crypto_inbox::attachment::{AttachmentDecryptionError, AttachmentEncryptionError};
 use mail_crypto_inbox::eo::EoError;
 use mail_crypto_inbox::keys::{PackageCryptoType, SessionKeyError};
@@ -155,6 +156,8 @@ pub enum SendError {
     MessageTooLarge,
     #[error("{0}")]
     BadRequest(String),
+    #[error("Failed to load address key for sending: {0}")]
+    AddressKeyLoadingError(#[from] KeyHandlingError),
 }
 
 impl From<SendError> for MailContextError {

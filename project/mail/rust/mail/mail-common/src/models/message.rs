@@ -40,6 +40,7 @@ use mail_stash::exports::Connection;
 use mail_stash::orm::DbRecord;
 use mail_stash::rusqlite::OptionalExtension;
 use mail_stash::utils::{ConnectionExt, MapToSql, placeholders, placeholders_n};
+use proton_crypto_account::keys::AddressKeySelector;
 use sqlite_watcher::watcher::TableObserver;
 
 use crate::MailContextResult;
@@ -1657,7 +1658,12 @@ impl Message {
         let (result, event) =
             LatencyEvents::measure_latency("mail.any.message", "decrypt_message", async || {
                 let pgp = proton_crypto::new_pgp_provider();
-                let address_keys = ctx.unlocked_address_keys(&pgp, tether, address_id).await?;
+                let address_keys = ctx
+                    .crypto_key_service()
+                    .load_with_tether(ctx.user_context(), tether)
+                    .address_keys(&pgp, address_id)
+                    .await
+                    .map(AddressKeySelector::into_raw_keys)?;
 
                 encrypted_message_body
                     .decrypt_and_store(ctx, address_id, address_keys, pgp, attachment_prefetch)

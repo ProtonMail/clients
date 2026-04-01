@@ -467,18 +467,22 @@ impl Attachment {
 
         let encryptable_attachment = AttachmentData(data.as_ref());
         let pgp = new_pgp_provider();
-        let tether = context.user_stash().connection().await?;
 
-        let unlocked_address_keys = context
-            .unlocked_address_keys(&pgp, &tether, address_id)
-            .await?;
+        let unlocked_address_keys = {
+            let tether = context.user_stash().connection().await?;
+            context
+                .crypto_key_service()
+                .load_with_tether(context.user_context(), &tether)
+                .address_keys(&pgp, address_id)
+                .await?
+        };
 
-        drop(tether);
-
-        let primary_address_key = unlocked_address_keys.primary_for_mail().map_err(|e| {
-            error!("Could not retrieve primary address key: {e:?}");
-            MailContextError::Crypto
-        })?;
+        let primary_address_key = unlocked_address_keys
+            .primary_address_key_with_pqc()
+            .map_err(|e| {
+                error!("Could not retrieve primary address key: {e:?}");
+                MailContextError::Crypto
+            })?;
 
         encryptable_attachment
             .attachment_encrypt_and_sign(&pgp, &primary_address_key)
@@ -772,9 +776,10 @@ impl Attachment {
         let pgp = new_pgp_provider();
 
         let unlocked_address = context
-            .unlocked_address_keys(
+            .crypto_key_service()
+            .load_with_tether(context.user_context(), tether)
+            .address_keys(
                 &pgp,
-                tether,
                 address
                     .remote_id
                     .as_ref()
@@ -784,7 +789,7 @@ impl Attachment {
             .inspect_err(|e| error!("Failed to unlock address: {e:?}"))?;
 
         let mail_key = unlocked_address
-            .primary_for_mail()
+            .primary_address_key_with_pqc()
             .inspect_err(|e| error!("Failed to get primary mail key: {e:?}"))
             .map_err(|_| MailContextError::Crypto)?;
 

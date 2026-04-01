@@ -1,4 +1,3 @@
-pub use self::keys::*;
 use self::services::{EventLoopService, InitializationService};
 
 use crate::actions::event_poll::EventPoll as EventPollAction;
@@ -8,6 +7,7 @@ use crate::datatypes::AccountDetails;
 use crate::db::account::CoreAccount;
 use crate::db::migrations::{migrate_core_db, verify_core_db};
 use crate::models::{Address, InitializationWatcher, Label, User, UserSettings};
+use crate::services::crypto_key_service::CryptoKeyService;
 use crate::services::{AddressService, GrowthService};
 use crate::{Context, CoreContextError, CoreContextResult, OnSessionDeletedResponse, Origin};
 pub use event_loop::CoreEventLoopContext;
@@ -43,7 +43,6 @@ pub mod action_queue;
 pub mod builder;
 pub mod event_loop;
 pub mod images_logo;
-mod keys;
 pub mod nuke;
 pub mod services;
 
@@ -71,7 +70,6 @@ pub struct UserContext {
     session: Session,
     user_stash: Stash<UserDb>,
     queue: Queue<UserDb>,
-    key_manager: Arc<CryptoKeyManager>,
     cancellation_token: CancellationToken,
     services: HashMap<TypeId, Box<dyn Any + Send + Sync>>,
 }
@@ -128,6 +126,7 @@ impl UserContext {
             let deleted_event_polls = queue.delete_all_by_type::<EventPollAction>().await?;
             tracing::info!("Deleted {deleted_event_polls} event actions");
 
+            let user_id_cloned = user_id.clone();
             let this = {
                 let mut builder = builder::UserContextBuilder::new();
                 builder = builder
@@ -155,6 +154,7 @@ impl UserContext {
                         ))
                         .with_cyclic_service(UserMetricService::new)
                         .with_cyclic_service(GrowthService::new)
+                        .with_service(CryptoKeyService::new(user_id_cloned))
                         .with_service(telemetry_service);
                 }
 
@@ -165,7 +165,6 @@ impl UserContext {
                     queue,
                     user_id,
                     session_id,
-                    Arc::new(CryptoKeyManager::new()),
                     cancellation_token,
                     cache_path,
                 )
@@ -496,6 +495,11 @@ impl UserContext {
     #[must_use]
     pub fn feature_flags(&self) -> &UserFeatureFlagsService {
         self.get_service::<UserFeatureFlagsService>()
+    }
+
+    #[must_use]
+    pub fn crypto_key_service(&self) -> &CryptoKeyService {
+        self.get_service::<CryptoKeyService>()
     }
 
     #[must_use]

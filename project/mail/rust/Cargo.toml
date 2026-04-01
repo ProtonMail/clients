@@ -260,6 +260,10 @@ path = "core/core-common"
 registry = "proton"
 features = ["sql"]
 
+[workspace.dependencies.core-key-manager]
+version = "0.1"
+path = "core/core-key-manager"
+
 [workspace.dependencies.core-event-loop]
 version = "0.1"
 path = "../../core/rust/core-event-loop"

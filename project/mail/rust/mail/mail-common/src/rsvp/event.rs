@@ -8,6 +8,7 @@ use mail_core_common::models::{Address, User};
 use mail_crypto_inbox::proton_crypto;
 use mail_stash::orm::Model;
 use mail_stash::stash::Tether;
+use proton_crypto_account::keys::AddressKeySelector;
 use std::ops;
 use tracing::{error, info, instrument};
 
@@ -69,8 +70,12 @@ impl RsvpEvent {
         let keys = RsvpKeys::new(ctx, tether_keys);
 
         let addr_keys = ctx
-            .unlocked_address_keys(&pgp, tether, &self.msg.remote_address_id)
+            .user_context()
+            .crypto_key_service()
+            .load_with_tether(ctx.user_context(), tether_keys)
+            .address_keys(&pgp, &self.msg.remote_address_id)
             .await
+            .map(AddressKeySelector::into_raw_keys)
             .inspect_err(|err| error!(?err, "Couldn't unlock address keys"))?;
 
         let sender = {

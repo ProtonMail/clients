@@ -2,7 +2,9 @@ use mail_common::models::MailSettings;
 use mail_common::test_utils::init::Params as TestParams;
 use mail_common::test_utils::test_context::MailTestContext;
 use mail_core_api::services::proton::PrivateEmailRef;
-use mail_core_common::AddressKeysContactFetchPolicy;
+use mail_core_common::services::crypto_key_service::core_key_manager::{
+    PublicAddressKeyApiFetchPolicy, PublicAddressKeyContactFetchPolicy,
+};
 use mail_crypto_inbox::keys::PackageCryptoType;
 use mail_crypto_inbox::message::packages::PackageMimeType;
 use mail_crypto_inbox::proton_crypto;
@@ -23,7 +25,7 @@ async fn load_sending_preferences() {
         .0
         .as_str();
 
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection().await.unwrap();
 
     let mail_settings = MailSettings::get(&tether)
         .await
@@ -33,11 +35,12 @@ async fn load_sending_preferences() {
     let recipient_preferences = user_ctx
         .recipient_send_preferences(
             &pgp,
-            &mut tether,
+            &tether,
             PrivateEmailRef::new(recipient_email),
             mail_settings.crypto_mail_settings(),
             Default::default(),
-            AddressKeysContactFetchPolicy::RequireSync,
+            PublicAddressKeyApiFetchPolicy::RequireSync,
+            PublicAddressKeyContactFetchPolicy::RequireSync,
         )
         .await
         .unwrap();
@@ -63,7 +66,7 @@ async fn load_sending_preferences_for_self() {
 
     let pgp = proton_crypto::new_pgp_provider();
     let self_address = params.addresses.first().unwrap().email.as_str();
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection().await.unwrap();
 
     let mail_settings = MailSettings::get(&tether)
         .await
@@ -73,11 +76,12 @@ async fn load_sending_preferences_for_self() {
     let recipient_preferences = user_ctx
         .recipient_send_preferences(
             &pgp,
-            &mut tether,
+            &tether,
             PrivateEmailRef::new(self_address),
             mail_settings.crypto_mail_settings(),
             Default::default(),
-            AddressKeysContactFetchPolicy::RequireSync,
+            PublicAddressKeyApiFetchPolicy::RequireSync,
+            PublicAddressKeyContactFetchPolicy::RequireSync,
         )
         .await
         .unwrap();

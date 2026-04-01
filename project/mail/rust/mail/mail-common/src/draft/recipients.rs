@@ -6,14 +6,19 @@ use mail_core_api::consts::CoreBundle;
 use mail_core_api::service::ApiServiceError;
 use mail_core_api::services::proton::{PrivateEmail, PrivateEmailRef, PrivateString};
 use mail_core_common::models::ContactEmail;
-use mail_core_common::{CoreContextError, PublicAddressKeyFetchPolicy};
+use mail_core_common::services::crypto_key_service::core_key_manager::error::{
+    ApiError as KeyManagerApiError, KeyHandlingError, LoadingError,
+};
+use mail_core_common::services::crypto_key_service::core_key_manager::{
+    PublicAddressKeyApiFetchPolicy, PublicAddressKeyContactFetchPolicy,
+};
 use mail_crypto_inbox::keys::ComposerPreference;
 use mail_crypto_inbox::lock_icon::UiLock;
 use mail_crypto_inbox::proton_crypto::new_pgp_provider;
 use mail_stash::orm::Model;
 use mail_stash::stash::Tether;
 use non_empty_string::NonEmptyString;
-use proton_crypto_account::keys::{EmailMimeType, RecipientType};
+use proton_crypto_account::keys::{AddressKeyForEmailSelector, EmailMimeType, RecipientType};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::future::Future;
@@ -108,6 +113,30 @@ impl From<&ApiServiceError> for ValidationState {
         }
 
         ValidationState::Unknown
+    }
+}
+
+impl From<&KeyManagerApiError> for ValidationState {
+    fn from(proton_error: &KeyManagerApiError) -> Self {
+        match proton_error {
+            KeyManagerApiError::Api {
+                code,
+                error: _,
+                details: _,
+            } => {
+                if *code == CoreBundle::KeyGetInputInvalid as u32 {
+                    // 33101 = Invalid email address
+                    ValidationState::InvalidEmail
+                } else if *code == CoreBundle::KeyGetAddressMissing as u32 {
+                    // 33102 = Proton Address does not exist
+                    ValidationState::DoesNotExist
+                } else {
+                    ValidationState::Unknown
+                }
+            }
+            KeyManagerApiError::Network(_) => ValidationState::Unchecked,
+            KeyManagerApiError::Other(_) => ValidationState::Unknown,
+        }
     }
 }
 
@@ -942,10 +971,14 @@ impl<'l, T: OnBackgroundValidationComplete + OnPrivacyLockUpdate> ValidatingReci
             .core_context()
             .task_service()
             .spawn_cancellable(self.cancellation_token.clone(), async move {
-                let mut update_statuses = Vec::with_capacity(to_validate.len());
+                let Ok(tether) = ctx.user_stash().connection().await else {
+                    warn!("Failed to acquire db connection");
+                    return;
+                };
 
+                let mut update_statuses = Vec::with_capacity(to_validate.len());
                 for email in to_validate {
-                    let status = validate_address(&ctx, email.clone()).await;
+                    let status = validate_address(&ctx, email.clone(), &tether).await;
                     update_statuses.push((email, status));
                 }
 
@@ -1000,30 +1033,53 @@ impl<'l, T: OnBackgroundValidationComplete + OnPrivacyLockUpdate> ValidatingReci
 ///
 /// Network failures do not result in errors, but return [`ValidationState::Unchecked`] instead.
 ///
-async fn validate_address(ctx: &MailUserContext, email: PrivateEmail) -> ValidationState {
+async fn validate_address(
+    ctx: &MailUserContext,
+    email: PrivateEmail,
+    tether: &Tether,
+) -> ValidationState {
     let pgp_provider = new_pgp_provider();
+
     let state = match ctx
         .user_context()
-        .public_address_keys(
+        .crypto_key_service()
+        .load_with_tether(ctx.user_context(), tether)
+        .address_keys_for_email(
             &pgp_provider,
-            email.as_ref(),
+            email.as_clear_text_str(),
             false,
-            PublicAddressKeyFetchPolicy::AllowCachedFallback,
+            PublicAddressKeyApiFetchPolicy::AllowCachedFallback,
+            PublicAddressKeyContactFetchPolicy::AllowCachedFallback,
         )
         .await
     {
-        Ok(keys) => ValidationState::Valid {
-            official: keys.is_proton,
-            proton:
-            // if it's a known proton domain we can skip the key check
-            if is_known_proton_domain(email.as_ref()) {
-                true
-            } else {
-                // check whether this domain is actually a proton powered email account
-                keys.into_inbox_keys(true).recipient_type == RecipientType::Internal
+        Ok(keys) => match keys {
+            AddressKeyForEmailSelector::Owned {
+                is_external_address: _,
+                address_keys: _,
+            } => ValidationState::Valid {
+                official: false,
+                proton: true,
             },
+            AddressKeyForEmailSelector::Other {
+                api_keys,
+                vcard_keys: _,
+            } => {
+                ValidationState::Valid {
+                    official: api_keys.is_proton,
+                    proton:
+                    // if it's a known proton domain we can skip the key check
+                    if is_known_proton_domain(email.as_ref()) {
+                        true
+                    } else {
+                        // check whether this domain is actually a proton powered email account
+                        let inbox_keys = api_keys.into_inbox_keys(true);
+                        inbox_keys.recipient_type == RecipientType::Internal
+                    },
+                }
+            }
         },
-        Err(CoreContextError::Api(e)) => ValidationState::from(e),
+        Err(KeyHandlingError::Loading(LoadingError::Api(e))) => ValidationState::from(&e),
         Err(e) => {
             error!("Unknown validation error: {e:?}");
             ValidationState::Unknown
@@ -1040,7 +1096,7 @@ async fn calculate_privacy_locks(
     mime_type: EmailMimeType,
     emails: Vec<PrivateEmail>,
 ) -> RecipientPrivacyLockUpdate {
-    let Ok(mut tether) = ctx.user_stash().connection().await else {
+    let Ok(tether) = ctx.user_stash().connection().await else {
         warn!("Failed to acquire db connection");
         return RecipientPrivacyLockUpdate {
             updates: emails
@@ -1067,17 +1123,17 @@ async fn calculate_privacy_locks(
         composer_body_mime_type: mime_type,
     };
 
+    let emails_copy = emails.clone();
     let mut updates = Vec::with_capacity(emails.len());
-    for email in emails {
+    for email in emails_copy {
         let lock = calculate_privacy_lock(
             ctx,
             email.as_ref(),
             &mail_settings,
             composer_preference,
-            &mut tether,
+            &tether,
         )
         .await;
-
         updates.push((email, lock));
     }
 
@@ -1090,7 +1146,7 @@ async fn calculate_privacy_lock(
     email: PrivateEmailRef<'_>,
     mail_settings: &MailSettings,
     composer_preference: ComposerPreference,
-    tether: &mut Tether,
+    tether: &Tether,
 ) -> PrivacyLockState {
     let pgp_provider = new_pgp_provider();
     match ctx
@@ -1100,7 +1156,8 @@ async fn calculate_privacy_lock(
             email,
             mail_settings.crypto_mail_settings(),
             composer_preference,
-            mail_core_common::AddressKeysContactFetchPolicy::AllowCachedFallback,
+            PublicAddressKeyApiFetchPolicy::AllowCachedFallback,
+            PublicAddressKeyContactFetchPolicy::AllowCachedFallback,
         )
         .await
     {

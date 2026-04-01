@@ -14,12 +14,12 @@ use mail_api::services::proton::response_data::MailSettings as ApiMailSettings;
 use mail_core_api::services::proton::LabelId;
 use mail_core_common::datatypes::{ImageProxy, InitializationKey};
 use mail_core_common::models::{InitializationError, InitializationWatcher, InitializedComponent};
-use mail_crypto_inbox::keys::CryptoMailSettings;
 use mail_stash::UserDb;
 use mail_stash::exports::{Connection, Transaction};
 use mail_stash::macros::Model;
 use mail_stash::orm::{Model, ModelHooks};
 use mail_stash::stash::{Stash, StashError, Tether, WatcherHandle};
+use proton_crypto_account::keys::CryptoMailSettings;
 use smart_default::SmartDefault;
 use sqlite_watcher::watcher::TableObserver;
 

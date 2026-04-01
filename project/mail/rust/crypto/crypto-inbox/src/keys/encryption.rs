@@ -14,8 +14,8 @@ use std::fmt::Display;
 
 use proton_crypto_account::{
     keys::{
-        ContactType, DecryptedAddressKey, EmailMimeType, PGPScheme, PinnedPublicKeys,
-        PublicAddressKeys, RecipientPublicKeyModel,
+        ContactType, CryptoMailSettings, DecryptedAddressKey, EmailMimeType, EncryptionPreferences,
+        PGPScheme, PinnedPublicKeys, PublicAddressKeys, RecipientPublicKeyModel,
     },
     proton_crypto::{
         crypto::{PrivateKey, PublicKey, UnixTimestamp},
@@ -24,20 +24,9 @@ use proton_crypto_account::{
 };
 use serde_repr::Serialize_repr;
 
-use crate::message::packages::PackageMimeType;
+use crate::{keys::SendPreferencesError, message::packages::PackageMimeType};
 
-use super::{CryptoPackageTypeError, EncryptionPreferencesError};
-
-/// A helper type that contains the default PGP preferences
-/// extracted from the user's mailsettings.
-#[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Hash)]
-pub struct CryptoMailSettings {
-    /// The default PGP scheme to use.
-    pub pgp_scheme: PGPScheme,
-
-    /// If mails should be signed by default.
-    pub sign: bool,
-}
+use super::CryptoPackageTypeError;
 
 /// Contains the preferences a user can select in the composer to
 /// change the behavior of email encryption.
@@ -156,260 +145,6 @@ impl TryFrom<u8> for PackageCryptoType {
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         Self::enum_of(value).ok_or(CryptoPackageTypeError::Parse(value))
-    }
-}
-
-/// Represents the encryption preferences for sending an email, including options for encryption, signing,
-/// PGP scheme, MIME type, and selected public key.
-///
-/// This struct encapsulates the settings and choices made when preparing an email for sending,
-/// specifically focusing on whether the email should be encrypted or signed, and which PGP scheme and
-/// MIME type to use. It also includes the selected public key for encryption and additional metadata
-/// about the selection process.
-#[derive(Debug, Clone)]
-#[allow(clippy::struct_excessive_bools, clippy::module_name_repetitions)]
-pub struct EncryptionPreferences<Pub: PublicKey> {
-    /// Indicates whether the email should be encrypted (`true`) or sent unencrypted (`false`).
-    ///
-    /// If `true`, the email content will be encrypted using the selected public key. If `false`,
-    /// the email will be sent in plaintext.
-    pub encrypt: bool,
-
-    /// Indicates whether the email should be signed (`true`) or sent unsigned (`false`).
-    ///
-    /// If `true`, the email will be signed with the sender's private key, allowing the recipient
-    /// to verify the authenticity and integrity of the message.
-    pub sign: bool,
-
-    /// The type of contact, which influences the default encryption and signing behavior.
-    ///
-    /// This field differentiates between internal and external contacts, which may have different
-    /// default settings for encryption and signing. For instance, internal contacts might always
-    /// require encryption, while external contacts might have more flexible settings.
-    pub contact_type: ContactType,
-
-    /// The `OpenPGP` scheme to use when encrypting the email to an external recipient.
-    pub pgp_scheme: PGPScheme,
-
-    /// An optional preference for the MIME type of the body.
-    pub mime_type: Option<EmailMimeType>,
-
-    /// Optionally stores the selected public key for encryption.
-    ///
-    /// This field contains the public key that will be used to encrypt the email content if
-    /// encryption is enabled. It is `None` if encryption is not required or if no suitable
-    /// public key was found.
-    pub selected_key: Option<Pub>,
-
-    /// Indicates whether the selected key is pinned.
-    ///
-    /// A pinned key is one that has been manually selected/trusted and, thus, the security of the key does
-    /// not rely on trusting the server serving the right key.
-    pub is_selected_key_pinned: bool,
-
-    /// Indicates that the receiving address wants encryption disabled although
-    /// being an proton internal address.
-    pub encryption_disabled_mail: bool,
-
-    /// Result of the key transparency verification process for API keys.
-    pub key_transparency_verification: KTVerificationResult,
-}
-
-impl<Pub: PublicKey> EncryptionPreferences<Pub> {
-    /// Creates an instance of [`EncryptionPreferences`] by determining the appropriate encryption and signing
-    /// settings based on the recipient's public key model and the user's cryptographic mail settings.
-    ///
-    /// This function analyzes the recipient's public key information, the type of recipient, and the user's
-    /// default mail settings to decide whether the email should be encrypted and/or signed. It also selects
-    /// the most appropriate PGP scheme and MIME type for the email and identifies the public key to use for
-    /// encryption, if applicable.
-    /// See [confluence](https://confluence.protontech.ch/display/MAILFE/Send+preferences+for+outgoing+email) for more details on the logic.
-    ///
-    /// # Errors
-    ///
-    /// An [`EncryptionPreferencesError`] if the key selection fails.
-    /// An [`EncryptionPreferencesError::ApiKeyNotPinned`] is thrown if there are pinned keys, but none of the fingerprints of the pinned keys matches
-    /// the fingerprint of one of the keys served by the API.
-    /// In this case the client should force the user (via a modal) to trust one of the keys served by the API before sending any email.
-    pub fn from_key_model_and_settings(
-        recipient_key_model: RecipientPublicKeyModel<Pub>,
-        crypto_mail_settings: &CryptoMailSettings,
-    ) -> Result<Self, EncryptionPreferencesError> {
-        // Determine the PGP preferences and fallback to the mail settings if not set.
-        let mut encrypt = recipient_key_model.encrypt.unwrap_or_default();
-        let mut sign = recipient_key_model
-            .sign
-            .unwrap_or(crypto_mail_settings.sign);
-        sign = encrypt || sign;
-        let scheme = recipient_key_model
-            .pgp_scheme
-            .unwrap_or(crypto_mail_settings.pgp_scheme);
-        let mime_type = recipient_key_model.mime_type;
-
-        // Select the `OpenPGP` public key based on the recipient type.
-        let (selected_key, is_selected_key_pinned) = match recipient_key_model.contact_type {
-            ContactType::Internal => {
-                encrypt = true;
-                sign = true;
-                Self::select_key_for_recipient_with_api_keys(&recipient_key_model)?
-            }
-            ContactType::ExternalWithApiKeys => {
-                Self::select_key_for_recipient_with_api_keys(&recipient_key_model)?
-            }
-            ContactType::ExternalWithNoApiKeys => {
-                Self::select_key_for_recipient_without_api_keys(&recipient_key_model, encrypt)?
-            }
-        };
-
-        Ok(EncryptionPreferences {
-            encrypt,
-            sign,
-            contact_type: recipient_key_model.contact_type,
-            pgp_scheme: scheme,
-            mime_type,
-            selected_key: selected_key.cloned(),
-            is_selected_key_pinned,
-            encryption_disabled_mail: recipient_key_model.is_internal_with_disabled_e2ee,
-            key_transparency_verification: recipient_key_model.key_transparency_verification,
-        })
-    }
-
-    /// Creates an instance of `EncryptionPreferences` for sending an email to the user's own address
-    /// by selecting the appropriate encryption and signing settings based on the provided address keys
-    /// and mail settings.
-    ///
-    /// This function determines the encryption and signing preferences by selecting a valid primary key
-    /// from the user's own address keys. The selected key must be capable of encryption, not compromised,
-    /// and not obsolete. The function uses the user's mail settings to configure the PGP scheme and MIME type
-    /// for the email.
-    ///
-    /// # Errors
-    ///
-    /// This function may return an [`EncryptionPreferencesError::NoPrimaryKey`] if no valid primary key
-    /// is found in the user's address keys that meets the required conditions for encryption.
-    pub fn from_unlocked_address_keys_and_settings<Priv: PrivateKey>(
-        is_address_external: bool,
-        address_keys: &[DecryptedAddressKey<Priv, Pub>],
-        mail_settings: CryptoMailSettings,
-        encryption_time: UnixTimestamp,
-    ) -> Result<Self, EncryptionPreferencesError> {
-        // Select a valid primary key in the address.
-        let selected_key_v4_opt = address_keys.iter().find(|address_key| {
-            address_key.primary
-                && !address_key.flags.is_compromised()
-                && !address_key.flags.is_obsolete()
-                && address_key.public_key.can_encrypt(encryption_time)
-                && !address_key.is_v6
-        });
-
-        // If there is a valid v6 primary key, prefer it for encryption.
-        let selected_key_v6_opt = address_keys.iter().find(|address_key| {
-            address_key.primary
-                && !address_key.flags.is_compromised()
-                && !address_key.flags.is_obsolete()
-                && address_key.public_key.can_encrypt(encryption_time)
-                && address_key.is_v6
-        });
-
-        let (selected_key, selected_key_flags) = match (selected_key_v4_opt, selected_key_v6_opt) {
-            (None, None) => return Err(EncryptionPreferencesError::NoPrimaryKey),
-            (None | Some(_), Some(selected_key_v6)) => {
-                (selected_key_v6.public_key.clone(), selected_key_v6.flags)
-            }
-            (Some(selected_key_v4), None) => {
-                (selected_key_v4.public_key.clone(), selected_key_v4.flags)
-            }
-        };
-
-        let encryption_disabled_mail =
-            is_address_external && selected_key_flags.is_email_no_encryption();
-
-        Ok(EncryptionPreferences {
-            encrypt: true,
-            sign: true,
-            contact_type: ContactType::Internal,
-            pgp_scheme: mail_settings.pgp_scheme,
-            mime_type: None,
-            selected_key: Some(selected_key),
-            is_selected_key_pinned: false,
-            encryption_disabled_mail,
-            key_transparency_verification: Ok(()),
-        })
-    }
-
-    /// Helper function to select the encryption key for an internal or external recipient with API keys.
-    fn select_key_for_recipient_with_api_keys(
-        recipient_key_model: &RecipientPublicKeyModel<Pub>,
-    ) -> Result<(Option<&Pub>, bool), EncryptionPreferencesError> {
-        let is_external = recipient_key_model.contact_type != ContactType::Internal;
-        // Take the first API key. They are ordered according to their validity and preference.
-        // Pinned keys (trusted) have higher priority.
-        // For an external user at most one API key (from WKD or KOO) will be returned by the server.
-        // So, we again just take the first one.
-        let Some(selected_key) = recipient_key_model.api_keys.first() else {
-            return if is_external {
-                Err(EncryptionPreferencesError::ExternalUserNoValidApiKey)
-            } else {
-                Err(EncryptionPreferencesError::InternalUserNoApiKeys)
-            };
-        };
-
-        // Check if the key can be used to encrypt and send an email.
-        if !recipient_key_model.is_selected_key_valid_for_sending(selected_key) {
-            return Err(EncryptionPreferencesError::SelectedKeyCannotSend(
-                recipient_key_model.contact_type,
-                selected_key.key_fingerprint(),
-                recipient_key_model.is_selected_key_obsolete(selected_key),
-                recipient_key_model.is_selected_key_compromised(selected_key),
-                recipient_key_model.can_selected_key_encrypt(selected_key),
-            ));
-        }
-
-        // Check for pinned keys.
-        if !recipient_key_model.pinned_keys.is_empty() {
-            // The client should encrypt the email with the first pinned key whose fingerprint matches the fingerprint
-            // of one of the keys served by the API.
-            // The keys in the vCard should be ordered according to their PREF
-            // property if that has not been specified they are taken in the order in which they are written in the vCard.
-            let primary_fingerprint = selected_key.key_fingerprint();
-            if !recipient_key_model.is_selected_key_trusted(selected_key) {
-                return Err(EncryptionPreferencesError::PinnedKeyNotProvidedByAPI(
-                    primary_fingerprint,
-                ));
-            }
-            let pinned_key = recipient_key_model
-                .pinned_keys
-                .iter()
-                .find(|key| key.key_fingerprint() == primary_fingerprint)
-                .unwrap_or(selected_key); // There must always be a match if the primary is trusted.
-            return Ok((Some(pinned_key), true));
-        }
-        Ok((Some(selected_key), false))
-    }
-
-    /// Helper function to select the encryption key for an external
-    /// recipient with no API keys.
-    fn select_key_for_recipient_without_api_keys(
-        recipient_key_model: &RecipientPublicKeyModel<Pub>,
-        encrypt: bool,
-    ) -> Result<(Option<&Pub>, bool), EncryptionPreferencesError> {
-        // Pinned keys are sorted according to their validity.
-        // The first valid one (as stored in the vCard) should be used.
-        let Some(pinned_key) = recipient_key_model.pinned_keys.first() else {
-            return Ok((None, false));
-        };
-        if !encrypt {
-            return Ok((None, false));
-        }
-        if !recipient_key_model.is_selected_key_valid_for_sending(pinned_key) {
-            return Err(EncryptionPreferencesError::ExternalUserNoValidPinnedKey(
-                pinned_key.key_fingerprint(),
-                recipient_key_model.is_selected_key_obsolete(pinned_key),
-                recipient_key_model.is_selected_key_compromised(pinned_key),
-                recipient_key_model.can_selected_key_encrypt(pinned_key),
-            ));
-        }
-        Ok((Some(pinned_key), true))
     }
 }
 
@@ -576,7 +311,7 @@ impl<Pub: PublicKey> SendPreferences<Pub> {
         encryption_time: UnixTimestamp,
         crypto_mail_settings: &CryptoMailSettings,
         composer_preferences: ComposerPreference,
-    ) -> Result<Self, EncryptionPreferencesError> {
+    ) -> Result<Self, SendPreferencesError> {
         let recipient_key_model = RecipientPublicKeyModel::from_public_keys_at_time(
             api_keys,
             pinned_keys,
@@ -606,7 +341,7 @@ impl<Pub: PublicKey> SendPreferences<Pub> {
         encryption_time: UnixTimestamp,
         crypto_mail_settings: CryptoMailSettings,
         composer_preferences: ComposerPreference,
-    ) -> Result<Self, EncryptionPreferencesError> {
+    ) -> Result<Self, SendPreferencesError> {
         let encryption_preferences =
             EncryptionPreferences::from_unlocked_address_keys_and_settings(
                 is_address_external,

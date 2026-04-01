@@ -22,6 +22,7 @@ use mail_core_common::models::{LabelError, ModelExtension};
 use mail_core_common::os::{KeyChain, KeyChainError};
 use mail_core_common::pin_code::{PinCode, PinError};
 use mail_core_common::post_login_check::DefaultPostLoginValidator;
+use mail_core_common::services::crypto_key_service::core_key_manager::error::KeyHandlingError;
 use mail_core_common::services::global_feature_flags::FeatureFlagsBackgroundTask;
 use mail_core_common::services::issue_reporter_service::IssueReporterService;
 
@@ -31,11 +32,10 @@ use mail_core_common::services::{
 };
 use mail_core_common::{
     ContactError, Context, CoreAccountState, CoreContextError, CoreContextResult, CoreSessionState,
-    KeyHandlingError, Origin, UserContext,
+    Origin, UserContext,
 };
 use mail_core_common::{OnSessionDeletedResponse, UserDatabaseInitializer};
 use mail_crypto_inbox::attachment::AttachmentEncryptionError;
-use mail_crypto_inbox::keys::EncryptionPreferencesError;
 use mail_issue_reporter_service::{
     IssueLevel, IssueReportKeys, IssueReporter, TracedIssueReporter,
 };
@@ -45,6 +45,7 @@ use mail_sqlite3::MigratorError;
 use mail_stash::stash::{Stash, StashError, WatcherHandle};
 use mail_stash::{AccountDb, UserDb};
 use mail_task_service::Spawner;
+use proton_crypto_account::errors::EncryptionPreferencesError;
 use secrecy::ExposeSecret;
 use std::collections::HashMap;
 use std::future::Future;
@@ -127,10 +128,10 @@ pub enum MailContextError {
     Action(#[from] MailActionError),
     #[error("QueuedAction: {0}")]
     QueuedAction(#[from] QueuedError),
-    #[error("Failed to access OpenPGP keys: {0}")]
-    PGPKeyAccess(KeyHandlingError),
     #[error("Failed to select OpenPGP keys for encryption: {0}")]
     PGPKeySelection(#[from] EncryptionPreferencesError),
+    #[error("Failed to access OpenPGP keys: {0}")]
+    KeySelection(#[from] KeyHandlingError),
     #[error("Label Error: {0}")]
     Label(#[from] LabelError),
     #[error("App Error: {0}")]
@@ -245,7 +246,6 @@ impl From<CoreContextError> for MailContextError {
             CoreContextError::DBMigration(err) => MailContextError::DBMigration(err),
             CoreContextError::KeyChainHasNoKey => MailContextError::KeyChainHasNoKey,
             CoreContextError::Other(err) => MailContextError::Other(err),
-            CoreContextError::PGPKeyAccess(err) => MailContextError::PGPKeyAccess(err),
             CoreContextError::Stash(err) => MailContextError::Stash(err),
             CoreContextError::ContactError(err) => MailContextError::ContactError(err),
             CoreContextError::DuplicateContext(user_id) => Self::DuplicateContext(user_id),

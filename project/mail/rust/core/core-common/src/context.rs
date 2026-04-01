@@ -27,7 +27,7 @@ use crate::os::{KeyChain, KeyChainError, KeyChainExt, StoreInKeyChain};
 use crate::pin_code::PinCode;
 use crate::services::issue_reporter_service::IssueReporterService;
 use crate::services::{ContextEventService, NetworkMonitorService};
-use crate::{KeyHandlingError, UserContext, UserDatabaseInitializer};
+use crate::{UserContext, UserDatabaseInitializer};
 use anyhow::{Context as _, Error as AnyhowError, anyhow};
 use async_trait::async_trait;
 use core_event_loop::EventLoopError;
@@ -100,8 +100,6 @@ pub enum CoreContextError {
     KeyChainHasNoKey,
     #[error("Event Loop: {0}")]
     EventLoop(#[from] EventLoopError),
-    #[error("Failed to access PGP keys: {0}")]
-    PGPKeyAccess(#[from] KeyHandlingError),
     #[error("Stash Error: {0}")]
     Stash(#[from] StashError),
     #[error("Problem with loading contact: {0}")]
@@ -139,16 +137,6 @@ impl From<WriterGuardError> for CoreContextError {
 impl From<VcardValidationError> for CoreContextError {
     fn from(e: VcardValidationError) -> Self {
         CoreContextError::ContactError(ContactError::Validation(e))
-    }
-}
-
-impl From<contacts_common::ContactCryptoError> for CoreContextError {
-    fn from(e: contacts_common::ContactCryptoError) -> Self {
-        match e {
-            contacts_common::ContactCryptoError::Contact(e) => CoreContextError::ContactError(e),
-            contacts_common::ContactCryptoError::DB(e) => CoreContextError::Stash(e),
-            e => CoreContextError::Other(anyhow::anyhow!(e)),
-        }
     }
 }
 

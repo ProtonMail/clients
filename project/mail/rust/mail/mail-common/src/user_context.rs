@@ -20,9 +20,7 @@ use crate::rsvp::RsvpService;
 use crate::search::MailSearchService;
 use crate::upsell_eligibility_watcher::UpsellEligibilityWatcher;
 use crate::user_context::events::event_source::MailEventSourceV5;
-use crate::{
-    AppError, ImageLoader, MailContext, MailContextError, MailContextResult, TrackerService,
-};
+use crate::{ImageLoader, MailContext, MailContextError, MailContextResult, TrackerService};
 use anyhow::anyhow;
 use attachment_cache::AttachmentCacheState;
 use builder::MailUserContextBuilder;
@@ -37,38 +35,33 @@ use mail_action_queue::queue::{
 };
 use mail_core_api::connection_status::ConnectionStatus;
 use mail_core_api::crypto_clock;
-use mail_core_api::services::proton::PingApi as _;
-use mail_core_api::services::proton::{AddressId, PrivateEmailRef, SessionId, UserId};
+use mail_core_api::services::proton::{PingApi, PrivateEmailRef, SessionId, UserId};
 use mail_core_api::session::Session;
 #[cfg(not(feature = "events-v6"))]
 use mail_core_common::CoreEventLoopContext;
 use mail_core_common::actions::event_poll::EVENT_POLL_ACTION_GROUP;
-use mail_core_common::datatypes::{
-    AccountDetails, AddressStatus, LocalAddressId, UpsellEligibility, UpsellType,
-};
+use mail_core_common::datatypes::{AccountDetails, UpsellEligibility, UpsellType};
 use mail_core_common::event_loop::EventPollMode;
-use mail_core_common::models::{Address, PaidSubscription, Role, User, UserSettings};
+use mail_core_common::models::{PaidSubscription, Role, User, UserSettings};
+use mail_core_common::services::crypto_key_service::CryptoKeyService;
+use mail_core_common::services::crypto_key_service::core_key_manager::{
+    PublicAddressKeyApiFetchPolicy, PublicAddressKeyContactFetchPolicy,
+};
 use mail_core_common::services::event_loop_service::EventManagerContext;
 use mail_core_common::services::{
     EventLoopService, EventPollConfigService, NetworkMonitorService, UserIssueReporterService,
 };
-use mail_core_common::{
-    AddressKeysContactFetchPolicy, ContactError, Context as CoreContext, CoreContextError,
-    KeyHandlingError, Origin, UserContext, services::UserMetricService,
-};
-use mail_crypto_inbox::keys::{
-    ComposerPreference, CryptoMailSettings, InboxVerificationPreferences, SendPreferences,
-};
+use mail_core_common::{Context as CoreContext, Origin, UserContext, services::UserMetricService};
+use mail_crypto_inbox::keys::{ComposerPreference, SendPreferences};
 use mail_crypto_inbox::proton_crypto::CryptoClockProvider;
 use mail_crypto_inbox::proton_crypto::crypto::PGPProviderSync;
-use mail_crypto_inbox::proton_crypto_account::keys::{UnlockedAddressKeys, UnlockedUserKeys};
 use mail_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
-use mail_stash::stash::{RunTransaction, Stash, StashError, Tether, WatcherHandle};
+use mail_stash::stash::{Stash, StashError, Tether, WatcherHandle};
 use mail_task_service::Spawner;
 use parking_lot::Mutex;
-use proton_crypto_account::keys::{PinnedPublicKeys, PublicAddressKeys};
+use proton_crypto_account::keys::{CryptoMailSettings, VerificationPreferences};
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
 use std::future::Future;
@@ -76,10 +69,9 @@ use std::num::NonZeroUsize;
 use std::path::PathBuf;
 use std::sync::{Arc, Weak};
 use std::time::Duration;
-use tokio::join;
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
-use tracing::{debug, error, instrument};
+use tracing::{error, instrument};
 
 const DEFAULT_SEND_QUEUE_POOL_SIZE: usize = 4;
 const DEFAULT_DEFAULT_QUEUE_POOL_SIZE: usize = 1;
@@ -719,37 +711,6 @@ impl MailUserContext {
         Ok(self.user_context.user_settings().await?)
     }
 
-    pub async fn unlocked_user_keys<P>(
-        &self,
-        pgp: &P,
-        conn: &Tether,
-    ) -> MailContextResult<UnlockedUserKeys<P>>
-    where
-        P: PGPProviderSync,
-    {
-        let keys = self
-            .user_context
-            .unlocked_user_keys(pgp, conn, self.session())
-            .await?;
-        Ok(keys)
-    }
-
-    pub async fn unlocked_address_keys<P>(
-        &self,
-        pgp: &P,
-        conn: &Tether,
-        address_id: &AddressId,
-    ) -> MailContextResult<UnlockedAddressKeys<P>>
-    where
-        P: PGPProviderSync,
-    {
-        let keys = self
-            .user_context
-            .unlocked_address_keys(pgp, conn, self.session(), address_id)
-            .await?;
-        Ok(keys)
-    }
-
     pub async fn watch_upsell_eligibility(&self) -> Result<WatcherHandle, StashError> {
         UpsellEligibilityWatcher::watch(self.user_stash()).await
     }
@@ -788,54 +749,38 @@ impl MailUserContext {
     /// This information is collected from the keys returned by the API, contact vCard data,
     /// sender mail settings, and composer preferences.
     ///
+    #[allow(clippy::too_many_arguments)]
     pub async fn recipient_send_preferences<P>(
         &self,
         pgp: &P,
-        tx: &mut impl RunTransaction,
+        tether: &Tether,
         email: PrivateEmailRef<'_>,
         settings: CryptoMailSettings,
         composer_preference: ComposerPreference,
-        fetch_policy: AddressKeysContactFetchPolicy,
+        fetch_policy: PublicAddressKeyApiFetchPolicy,
+        contact_fetch_policy: PublicAddressKeyContactFetchPolicy,
     ) -> MailContextResult<SendPreferences<P::PublicKey>>
     where
         P: PGPProviderSync,
     {
         let encryption_time = crypto_clock::server_crypto_clock().unix_time();
-
-        // If the email is from an owned address by the user and the address is active, use the corresponding keys.
-        if let Some((address, address_keys)) = self
-            .lookup_keys_from_self_owned_address(pgp, tx, email.clone())
-            .await?
-        {
-            debug!("send preferences: loading keys from self-owned address");
-            let send_preferences = SendPreferences::new_for_self(
-                address.address_type.is_external(),
-                &address_keys,
-                encryption_time,
-                settings,
-                composer_preference,
+        let address_key_selector = self
+            .crypto_key_service()
+            .load_with_tether(self.user_context(), tether)
+            .address_keys_for_email(
+                pgp,
+                email.as_clear_text_str(),
+                false,
+                fetch_policy,
+                contact_fetch_policy,
             )
-            .inspect_err(|err| error!("send preferences for self: {err:?}"))?;
-
-            return Ok(send_preferences);
-        }
-
-        debug!("send preferences: loading keys from contacts and key server");
-
-        let user_keys = self.unlocked_user_keys(pgp, tx.tether()).await?;
-
-        let (api_keys, vcard_keys) = self
-            .lookup_keys_from_api_and_contact(pgp, tx, &user_keys, email, false, fetch_policy)
             .await?;
 
-        let send_preferences = SendPreferences::new(
-            api_keys,
-            vcard_keys,
-            encryption_time,
-            &settings,
-            composer_preference,
-        )
-        .inspect_err(|err| error!("send preferences: {err:?}"))?;
+        let encryption_preferences =
+            address_key_selector.for_inbox_encryption(true, settings, encryption_time)?;
+
+        let send_preferences =
+            SendPreferences::from_preferences(encryption_preferences, composer_preference);
 
         Ok(send_preferences)
     }
@@ -850,113 +795,33 @@ impl MailUserContext {
     pub async fn sender_verification_preferences<P>(
         &self,
         pgp: &P,
-        tx: &mut impl RunTransaction,
+        tether: &Tether,
         email: PrivateEmailRef<'_>,
-        fetch_policy: AddressKeysContactFetchPolicy,
-    ) -> MailContextResult<InboxVerificationPreferences<P::PublicKey>>
+        fetch_policy: PublicAddressKeyApiFetchPolicy,
+        contact_fetch_policy: PublicAddressKeyContactFetchPolicy,
+    ) -> MailContextResult<VerificationPreferences<P::PublicKey>>
     where
         P: PGPProviderSync,
     {
-        if let Some((_, address_keys)) = self
-            .lookup_keys_from_self_owned_address(pgp, tx, email.clone())
-            .await?
-        {
-            debug!("verification preferences: loading keys from self-owned address");
-            return Ok(InboxVerificationPreferences::from_unlocked_address_keys(
-                &address_keys,
-            ));
-        }
-
-        debug!("verification preferences: loading keys from contacts and key server");
-        let user_keys = self.unlocked_user_keys(pgp, tx.tether()).await?;
-        // Fetch API keys (internal), and contact-pinned keys concurrently.
-        // Untrusted WKD keys are not used for verification,
-        // and requesting WKD keys leaks to the sender's domain owner that the message has been read.
-        let (api_keys, vcard_keys) = self
-            .lookup_keys_from_api_and_contact(pgp, tx, &user_keys, email, true, fetch_policy)
+        let address_key_selector = self
+            .crypto_key_service()
+            .load_with_tether(self.user_context(), tether)
+            .address_keys_for_email(
+                pgp,
+                email.as_clear_text_str(),
+                true,
+                fetch_policy,
+                contact_fetch_policy,
+            )
             .await?;
 
-        Ok(InboxVerificationPreferences::from_public_keys(
-            api_keys, vcard_keys,
-        ))
+        let verification_preferences = address_key_selector.for_signature_verification();
+
+        Ok(verification_preferences)
     }
 
-    async fn lookup_keys_from_self_owned_address<P>(
-        &self,
-        pgp_provider: &P,
-        tx: &mut impl RunTransaction,
-        email: PrivateEmailRef<'_>,
-    ) -> MailContextResult<Option<(Address, UnlockedAddressKeys<P>)>>
-    where
-        P: PGPProviderSync,
-    {
-        if let Some(address) = Address::by_email(email.as_clear_text_str(), tx.tether())
-            .await
-            .inspect_err(|err| {
-                error!("cryptographic key fetch: failed to search address by email: {err}")
-            })?
-            && address.status == AddressStatus::Enabled
-        {
-            let address_rid = address.remote_id.as_ref().ok_or_else(|| {
-                MailContextError::App(AppError::AddressHasNoRemoteId(
-                    address.local_id.unwrap_or(LocalAddressId::from(0)),
-                ))
-            })?;
-            let address_keys = self
-                .unlocked_address_keys(pgp_provider, tx.tether(), address_rid)
-                .await?;
-            Ok(Some((address, address_keys)))
-        } else {
-            Ok(None)
-        }
-    }
-
-    async fn lookup_keys_from_api_and_contact<P>(
-        &self,
-        pgp: &P,
-        tx: &mut impl RunTransaction,
-        user_keys: &UnlockedUserKeys<P>,
-        email: PrivateEmailRef<'_>,
-        internal_only: bool,
-        fetch_policy: AddressKeysContactFetchPolicy,
-    ) -> MailContextResult<(
-        PublicAddressKeys<P::PublicKey>,
-        Option<PinnedPublicKeys<P::PublicKey>>,
-    )>
-    where
-        P: PGPProviderSync,
-    {
-        let (api_keys_res, vcard_keys_res) = join!(
-            self.user_context.public_address_keys(
-                pgp,
-                email.clone(),
-                internal_only,
-                fetch_policy.into()
-            ),
-            self.user_context.public_address_keys_from_contacts(
-                pgp,
-                tx,
-                user_keys,
-                email,
-                fetch_policy
-            )
-        );
-
-        // Log non-CardNotFound errors for contacts
-        if let Err(err) = &vcard_keys_res
-            && !matches!(
-                err,
-                CoreContextError::ContactError(ContactError::CardNotFound(_))
-            )
-        {
-            error!("cryptographic key fetch: failed to load contact pinned keys: {err}");
-        }
-
-        let vcard_keys = vcard_keys_res.ok().flatten();
-        let api_keys = api_keys_res
-            .inspect_err(|err| error!("cryptographic key fetch: failed to load api keys: {err}"))?;
-
-        Ok((api_keys, vcard_keys))
+    pub fn crypto_key_service(&self) -> &CryptoKeyService {
+        self.user_context().crypto_key_service()
     }
 
     pub async fn new_password_change_flow(&self) -> MailContextResult<PasswordFlow> {
@@ -968,8 +833,7 @@ impl MailUserContext {
 
         let key_secret = (session.expose_key_secret().await)
             .map(|s| s.expose_secret().to_owned())
-            .ok_or(KeyHandlingError::NoUserSecret)
-            .map_err(CoreContextError::PGPKeyAccess)?;
+            .unwrap(); // TODO: handle error
 
         Ok(PasswordFlow::new(
             session,

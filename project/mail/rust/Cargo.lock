@@ -1327,8 +1327,8 @@ dependencies = [
  "async-trait",
  "base64",
  "futures",
+ "mail-account-ids",
  "mail-crypto-contact-keys",
- "mail-proton-ids",
  "parking_lot",
  "proton-crypto-account",
  "secrecy",
@@ -3876,6 +3876,7 @@ dependencies = [
  "futures",
  "hex",
  "itertools 0.13.0",
+ "mail-account-ids",
  "mail-api-bug-report",
  "mail-api-device",
  "mail-api-feature-flags",
@@ -3888,7 +3889,6 @@ dependencies = [
  "mail-log-service",
  "mail-muon",
  "mail-observability",
- "mail-proton-ids",
  "mail-stash",
  "mail-task-service",
  "proton-crypto-account",
@@ -3923,6 +3923,15 @@ dependencies = [
  "thiserror 2.0.18",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "mail-account-ids"
+version = "0.1.0"
+dependencies = [
+ "mail-proton-ids",
+ "mail-stash",
+ "serde",
 ]
 
 [[package]]
@@ -4089,10 +4098,10 @@ dependencies = [
  "cookie",
  "derive_more 2.0.1",
  "futures",
+ "mail-account-ids",
  "mail-api-shared",
  "mail-muon",
  "mail-network-monitor-service",
- "mail-proton-ids",
  "mail-stash",
  "mail-task-service",
  "parking_lot",
@@ -4301,6 +4310,7 @@ dependencies = [
  "futures",
  "insta",
  "mail-account-api",
+ "mail-account-ids",
  "mail-api-bug-report",
  "mail-api-device",
  "mail-api-event-types",

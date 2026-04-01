@@ -18,6 +18,7 @@ mail-api-session = { workspace = true }
 mail-api-event-types = { workspace = true }
 mail-api-labels = { workspace = true }
 mail-api-shared = { workspace = true }
+mail-account-ids = { workspace = true }
 mail-proton-ids = { workspace = true }
 anyhow = { workspace = true }
 async-trait = { workspace = true }
@@ -57,6 +58,7 @@ sql = [
   "contacts-api/sql",
   "mail-account-api/sql",
   "mail-api-session/sql",
+  "mail-account-ids/sql",
   "mail-proton-ids/sql",
   "mail-api-event-types/sql",
   "mail-api-labels/sql",

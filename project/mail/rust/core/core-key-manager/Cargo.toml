@@ -13,7 +13,7 @@ thiserror = { workspace = true }
 parking_lot = { workspace = true }
 tracing = { workspace = true }
 futures = { workspace = true }
-mail-proton-ids = { workspace = true }
+mail-account-ids = { workspace = true }
 mail-crypto-contact-keys = { workspace = true, optional = true }
 serde = { workspace = true }
 
@@ -24,7 +24,7 @@ base64 = { workspace = true }
 [features]
 default = []
 contacts = ["dep:mail-crypto-contact-keys"]
-sql = ["mail-proton-ids/sql", "proton-crypto-account/sql"]
+sql = ["mail-account-ids/sql", "proton-crypto-account/sql"]
 
 [lints]
 workspace = true

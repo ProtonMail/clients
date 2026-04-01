@@ -22,7 +22,7 @@
   derive_more = { workspace = true }
   passkey = { optional = true, version = "0.4" }
   bitflags = { optional = true, version = "2" }
-  proton-crypto-account = { optional = true, workspace = true }
+  proton-crypto-account = { optional = true, workspace = true, features = ["facet"] }
   num_enum = { workspace = true, optional = true }
   muon = { workspace = true, optional = true }
 

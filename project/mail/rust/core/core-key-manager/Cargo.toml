@@ -8,7 +8,7 @@ license.workspace = true
 [dependencies]
 async-trait = { workspace = true }
 secrecy = { workspace = true }
-proton-crypto-account = { workspace = true }
+proton-crypto-account = { workspace = true, features = ["sql"] }
 thiserror = { workspace = true }
 parking_lot = { workspace = true }
 tracing = { workspace = true }

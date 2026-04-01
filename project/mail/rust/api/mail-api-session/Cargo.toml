@@ -19,7 +19,7 @@ mail-network-monitor-service = { workspace = true, features = ["muon"] }
 mail-account-ids = { workspace = true }
 mail-task-service = { workspace = true }
 parking_lot = { workspace = true }
-proton-crypto-account = { workspace = true }
+proton-crypto-account = { workspace = true, features = ["sql"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serde_repr = { workspace = true }

@@ -27,7 +27,7 @@ mail-calendar-common = { workspace = true }
 mail-core-api = { workspace = true }
 mail-core-common = { workspace = true }
 proton-crypto = { workspace = true }
-proton-crypto-account = { workspace = true }
+proton-crypto-account = { workspace = true, features = ["sql"] }
 mail-crypto-inbox = { workspace = true }
 core-event-loop = { workspace = true }
 mail-api = { workspace = true }

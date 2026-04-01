@@ -13,7 +13,7 @@ mail-canonical-email = { workspace = true }
 mail-core-api = { workspace = true }
 mail-core-common = { workspace = true }
 proton-crypto = { workspace = true }
-proton-crypto-account = { workspace = true }
+proton-crypto-account = { workspace = true, features = ["sql"] }
 mail-crypto-calendar = { workspace = true }
 mail-ical = { workspace = true }
 mail-network-monitor-service = { workspace = true }

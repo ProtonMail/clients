@@ -358,7 +358,6 @@ registry = "proton"
 
 [workspace.dependencies.proton-crypto-account]
 version = "0.18.0"
-features = ["sql"]
 registry = "proton"
 
 [workspace.dependencies.proton-crypto]

@@ -31,7 +31,7 @@ futures = { workspace = true }
 mail-muon = { workspace = true }
 parking_lot = { workspace = true }
 mail-api-utils = { workspace = true }
-proton-crypto-account = { workspace = true }
+proton-crypto-account = { workspace = true, features = ["sql"] }
 mail-task-service = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

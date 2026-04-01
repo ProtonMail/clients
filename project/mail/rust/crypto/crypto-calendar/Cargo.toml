@@ -10,7 +10,7 @@ base64 = { workspace = true }
 derive_more = { workspace = true }
 mail-calendar-api-v1 = { workspace = true }
 proton-crypto = { workspace = true }
-proton-crypto-account = { workspace = true }
+proton-crypto-account = { workspace = true, features = ["sql"] }
 serde = { workspace = true }
 serde_repr = { workspace = true }
 thiserror = { workspace = true }

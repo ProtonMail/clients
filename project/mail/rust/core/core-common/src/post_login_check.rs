@@ -48,7 +48,7 @@ impl DefaultPostLoginValidator {
         let has_subscription = user.subscribed > 0;
         if !has_subscription
             && let Some(logged_in_free_account_count) =
-                Self::get_logged_in_free_account_count(&self.ctx).await
+                Self::get_logged_in_free_account_count(&self.ctx, user).await
         {
             trace!("Logged-in free accounts: {logged_in_free_account_count}");
             if let Some(allowed_free_account_count) = self.allowed_free_account_count
@@ -64,7 +64,10 @@ impl DefaultPostLoginValidator {
 
     /// Retrieves the count of logged-in free (non-subscribed, non-credentialless) accounts.
     /// Errors are logged but do not halt execution.
-    async fn get_logged_in_free_account_count(ctx: &Arc<Context>) -> Option<u64> {
+    async fn get_logged_in_free_account_count(
+        ctx: &Arc<Context>,
+        active_user: &User,
+    ) -> Option<u64> {
         let mut logged_in_free_account_count = 0;
 
         let accounts = ctx
@@ -74,7 +77,7 @@ impl DefaultPostLoginValidator {
                 error!("Error during 'get_accounts' call: {err:?}");
             })
             .ok()?;
-        for account in accounts {
+        for account in accounts.iter().filter(|v| v.remote_id != active_user.id) {
             let state = ctx
                 .get_account_state(account.remote_id.clone())
                 .await

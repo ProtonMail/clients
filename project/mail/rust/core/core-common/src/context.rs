@@ -626,36 +626,30 @@ impl Context {
         session: &CoreSession,
     ) -> CoreContextResult<Arc<UserContext>> {
         // Ensure we have an encryption key
+        let key = self.get_encryption_key()?;
+
+        // Ensure the key can be used to decrypt the access token
+        let _ = session
+            .access_token
+            .decrypt_to_string(&key)
+            .inspect_err(|_| tracing::error!("Could not decrypt access token"))
+            .or(Err(CoreContextError::Crypto))?;
+
+        // Ensure the key can be used to decrypt the refresh token
+        let _ = session
+            .refresh_token
+            .decrypt_to_string(&key)
+            .inspect_err(|_| tracing::error!("Could not decrypt refresh token"))
+            .or(Err(CoreContextError::Crypto))?;
 
         let user_id = session.account_id.clone();
         let session_id = session.remote_id.clone();
-        self.new_user_context(
-            user_id,
-            async || {
-                let key = self.get_encryption_key()?;
-                // Ensure the key can be used to decrypt the access token
-                let _ = session
-                    .access_token
-                    .decrypt_to_string(&key)
-                    .inspect_err(|_| tracing::error!("Could not decrypt access token"))
-                    .or(Err(CoreContextError::Crypto))?;
+        let session = self
+            .new_api_session(Some(session))
+            .await
+            .inspect_err(|e| tracing::error!("Could not create api session: {e:?}"))?;
 
-                // Ensure the key can be used to decrypt the refresh token
-                let _ = session
-                    .refresh_token
-                    .decrypt_to_string(&key)
-                    .inspect_err(|_| tracing::error!("Could not decrypt refresh token"))
-                    .or(Err(CoreContextError::Crypto))?;
-
-                let session = self
-                    .new_api_session(Some(session))
-                    .await
-                    .inspect_err(|e| tracing::error!("Could not create api session: {e:?}"))?;
-                Ok(session)
-            },
-            session_id,
-        )
-        .await
+        self.new_user_context(user_id, session, session_id).await
     }
 
     /// Logs out all sessions of an account without deleting the account's data.
@@ -1101,7 +1095,7 @@ impl Context {
     pub async fn new_user_context(
         &self,
         user_id: UserId,
-        mk_session: impl AsyncFnOnce() -> Result<ApiSession, CoreContextError>,
+        session: ApiSession,
         session_id: SessionId,
     ) -> Result<Arc<UserContext>, CoreContextError> {
         let mut active_contexts = self.active_user_contexts.lock().await;
@@ -1134,7 +1128,7 @@ impl Context {
             )));
         };
         let user_context = UserContext::new(
-            mk_session().await?,
+            session,
             context,
             &db_path,
             &self.user_db_initializers,

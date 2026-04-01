@@ -646,7 +646,7 @@ impl MailContext {
 
         let user_ctx = self
             .core_context
-            .new_user_context(user_id, async || Ok(session), session_id)
+            .new_user_context(user_id, session, session_id)
             .await
             .map_err(MailContextError::from)?;
         Arc::clone(self)

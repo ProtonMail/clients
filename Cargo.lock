@@ -1170,6 +1170,7 @@ dependencies = [
  "core-muon-op",
  "core-proc",
  "crux_core",
+ "derive_more 2.1.1",
  "facet",
  "lattice",
  "serde",
@@ -1323,6 +1324,7 @@ dependencies = [
  "muon",
  "serde",
  "serde_json",
+ "test-case",
  "thiserror 2.0.18",
  "tracing",
 ]

@@ -6,10 +6,10 @@ use mail_core_api::consts::CoreBundle;
 use mail_core_api::service::ApiServiceError;
 use mail_core_api::services::proton::{PrivateEmail, PrivateEmailRef, PrivateString};
 use mail_core_common::models::ContactEmail;
-use mail_core_common::services::crypto_key_service::core_key_manager::error::{
+use mail_core_common::services::crypto_key_service::mail_core_key_manager::error::{
     ApiError as KeyManagerApiError, KeyHandlingError, LoadingError,
 };
-use mail_core_common::services::crypto_key_service::core_key_manager::{
+use mail_core_common::services::crypto_key_service::mail_core_key_manager::{
     PublicAddressKeyApiFetchPolicy, PublicAddressKeyContactFetchPolicy,
 };
 use mail_crypto_inbox::keys::ComposerPreference;

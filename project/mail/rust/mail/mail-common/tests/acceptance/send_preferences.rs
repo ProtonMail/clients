@@ -2,7 +2,7 @@ use mail_common::models::MailSettings;
 use mail_common::test_utils::init::Params as TestParams;
 use mail_common::test_utils::test_context::MailTestContext;
 use mail_core_api::services::proton::PrivateEmailRef;
-use mail_core_common::services::crypto_key_service::core_key_manager::{
+use mail_core_common::services::crypto_key_service::mail_core_key_manager::{
     PublicAddressKeyApiFetchPolicy, PublicAddressKeyContactFetchPolicy,
 };
 use mail_crypto_inbox::keys::PackageCryptoType;

@@ -20,8 +20,8 @@ use mail_calendar_common::{self as cal, RsvpError};
 use mail_core_api::services::proton::AddressId;
 
 use mail_core_common::models::{Address, ModelExtension, ModelIdExtension};
-use mail_core_common::services::crypto_key_service::core_key_manager::PublicAddressKeyApiFetchPolicy;
-use mail_core_common::services::crypto_key_service::core_key_manager::PublicAddressKeyContactFetchPolicy;
+use mail_core_common::services::crypto_key_service::mail_core_key_manager::PublicAddressKeyApiFetchPolicy;
+use mail_core_common::services::crypto_key_service::mail_core_key_manager::PublicAddressKeyContactFetchPolicy;
 use mail_crypto_inbox::lock_icon::{MailVerificationStatus, XPmOrigin};
 use mail_crypto_inbox::lock_icon::{UiLock, XPmContentEncryption, XPmRecipientEncryption};
 use mail_crypto_inbox::mail_crypto_inbox_mime::{ProcessedBodyType, ProcessedMessage};

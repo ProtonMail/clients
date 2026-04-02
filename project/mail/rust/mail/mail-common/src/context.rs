@@ -22,7 +22,7 @@ use mail_core_common::models::{LabelError, ModelExtension};
 use mail_core_common::os::{KeyChain, KeyChainError};
 use mail_core_common::pin_code::{PinCode, PinError};
 use mail_core_common::post_login_check::DefaultPostLoginValidator;
-use mail_core_common::services::crypto_key_service::core_key_manager::error::KeyHandlingError;
+use mail_core_common::services::crypto_key_service::mail_core_key_manager::error::KeyHandlingError;
 use mail_core_common::services::global_feature_flags::FeatureFlagsBackgroundTask;
 use mail_core_common::services::issue_reporter_service::IssueReporterService;
 

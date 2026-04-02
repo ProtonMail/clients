@@ -23,7 +23,7 @@ use mail_core_common::ContactError;
 use mail_core_common::device_registration::RegisteredDeviceTaskError;
 use mail_core_common::models::LabelError;
 use mail_core_common::pin_code::PinError;
-use mail_core_common::services::crypto_key_service::core_key_manager::error::KeyHandlingError;
+use mail_core_common::services::crypto_key_service::mail_core_key_manager::error::KeyHandlingError;
 use mail_stash::UserDb;
 use proton_crypto_account::errors::EncryptionPreferencesError;
 

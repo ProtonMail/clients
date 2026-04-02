@@ -21,10 +21,10 @@ use mail_core_api::services::proton::{PrivateEmail, PrivateEmailRef};
 use mail_core_api::session::Session;
 use mail_core_common::models::{ModelExtension, User};
 use mail_core_common::services::NetworkMonitorService;
-use mail_core_common::services::crypto_key_service::core_key_manager::error::{
+use mail_core_common::services::crypto_key_service::mail_core_key_manager::error::{
     KeyHandlingError, LoadingError,
 };
-use mail_core_common::services::crypto_key_service::core_key_manager::{
+use mail_core_common::services::crypto_key_service::mail_core_key_manager::{
     PublicAddressKeyApiFetchPolicy, PublicAddressKeyContactFetchPolicy,
 };
 use mail_crypto_inbox::attachment::DecryptableAttachment;

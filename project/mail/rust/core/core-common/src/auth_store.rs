@@ -119,12 +119,15 @@ impl Store for AuthStore {
     }
 
     async fn set_auth(&mut self, auth: Auth) -> Result<(), StoreError> {
-        // Get the user and session IDs from the incoming auth session.
-        let user_id = UserId::from(auth.user_id().context("missing user ID")?);
-        let session_id = SessionId::from(auth.uid().context("missing session ID")?);
-
         let ptr = format!("{:p}", std::ptr::from_mut::<Self>(self));
-        let span = tracing::debug_span!("SetAuth", ?ptr, ?user_id, ?session_id);
+        let span = match (auth.user_id(), auth.uid()) {
+            (Some(user_id), Some(session_id)) => {
+                tracing::debug_span!("SetAuth", ?ptr, ?user_id, ?session_id)
+            }
+            _ => {
+                tracing::debug_span!("SetAuth (none)", ?ptr)
+            }
+        };
         async {
             match auth {
                 Auth::None => {
@@ -146,6 +149,9 @@ impl Store for AuthStore {
                 }
             }
 
+            // Get the user and session IDs from the incoming auth session.
+            let user_id = UserId::from(auth.user_id().context("missing user ID")?);
+            let session_id = SessionId::from(auth.uid().context("missing session ID")?);
             let tokens = auth.tokens().context("missing tokens")?;
 
             // Get the encryption key.

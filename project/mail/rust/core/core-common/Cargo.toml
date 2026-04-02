@@ -25,7 +25,7 @@ indexmap = { workspace = true }
 parking_lot = { workspace = true }
 contacts-api = { workspace = true }
 contacts-common = { workspace = true }
-core-key-manager = { workspace = true, features = ["contacts"] }
+mail-core-key-manager = { workspace = true, features = ["contacts"] }
 mail-avatar = { workspace = true }
 mail-labels-common = { workspace = true }
 mail-shared-types = { workspace = true }

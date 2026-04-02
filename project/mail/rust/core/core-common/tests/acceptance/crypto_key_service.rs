@@ -1,8 +1,8 @@
-use core_key_manager::error::{KeyHandlingError, LoadingError};
-use core_key_manager::{PublicAddressKeyApiFetchPolicy, PublicAddressKeyContactFetchPolicy};
 use mail_core_api::services::proton::GetKeysAllResponse;
 use mail_core_common::services::crypto_key_service::PublicAddressKeysResponseCache;
 use mail_core_common::test_utils::test_context::TestContext;
+use mail_core_key_manager::error::{KeyHandlingError, LoadingError};
+use mail_core_key_manager::{PublicAddressKeyApiFetchPolicy, PublicAddressKeyContactFetchPolicy};
 use proton_crypto::new_pgp_provider;
 use proton_crypto_account::keys::{APIPublicAddressKeyGroup, APIPublicAddressKeys};
 use std::io::ErrorKind;

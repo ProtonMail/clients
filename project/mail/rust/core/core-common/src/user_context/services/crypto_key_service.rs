@@ -2,7 +2,12 @@ use async_trait::async_trait;
 use contacts_common::{
     contact::Contact, contact_card::ContactCard, contact_email::ContactEmail, error::ContactError,
 };
-use core_key_manager::{
+use mail_core_api::{
+    consts::CoreBundle,
+    service::ApiServiceError,
+    services::proton::{AddressId, GetKeysAllOptions, PrivateEmailRef, ProtonAccount, UserId},
+};
+use mail_core_key_manager::{
     AddressId as KeyManagerAddressId, KeySelector, PublicAddressKeyApiFetchPolicy,
     PublicAddressKeyContactFetchPolicy, UserId as KeyManagerUserId,
     cache::MemoryKeyCache,
@@ -12,11 +17,6 @@ use core_key_manager::{
         AddressWithKeys, CacheAccess, ContactPublicKeyLoader, KeySecretLoader,
         LockedPrivateKeyLoader, PublicKeyLoader, SignedVCard,
     },
-};
-use mail_core_api::{
-    consts::CoreBundle,
-    service::ApiServiceError,
-    services::proton::{AddressId, GetKeysAllOptions, PrivateEmailRef, ProtonAccount, UserId},
 };
 use mail_shared_types::{ModelIdExtension, UnixTimestamp};
 use mail_stash::stash::{Bond, StashError, Tether};
@@ -34,8 +34,8 @@ use indoc::indoc;
 use mail_stash::orm::Model;
 use mail_stash::params;
 
-/// Re-export the `core_key_manager` crate.
-pub use core_key_manager;
+/// Re-export the `mail_core_key_manager` crate.
+pub use mail_core_key_manager;
 
 #[derive(Debug, Error)]
 pub enum CryptoKeyLoadingError {

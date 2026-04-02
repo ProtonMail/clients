@@ -1,5 +1,5 @@
 [package]
-name = "core-key-manager"
+name = "mail-core-key-manager"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true

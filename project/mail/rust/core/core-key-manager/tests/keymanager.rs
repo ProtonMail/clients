@@ -4,7 +4,7 @@ use std::sync::{
 };
 
 use async_trait::async_trait;
-use core_key_manager::{
+use mail_core_key_manager::{
     AddressId, KeyManager, KeyManagerBuilder, PublicAddressKeyApiFetchPolicy,
     PublicAddressKeyContactFetchPolicy, UserId,
     cache::MemoryKeyCache,

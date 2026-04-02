@@ -260,7 +260,7 @@ path = "core/core-common"
 registry = "proton"
 features = ["sql"]
 
-[workspace.dependencies.core-key-manager]
+[workspace.dependencies.mail-core-key-manager]
 version = "0.1"
 path = "core/core-key-manager"
 

@@ -1321,24 +1321,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "773648b94d0e5d620f64f280777445740e61fe701025087ec8b57f45c791888b"
 
 [[package]]
-name = "core-key-manager"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "base64",
- "futures",
- "mail-account-ids",
- "mail-crypto-contact-keys",
- "parking_lot",
- "proton-crypto-account",
- "secrecy",
- "serde",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
-]
-
-[[package]]
 name = "core-telemetry"
 version = "0.1.0"
 dependencies = [
@@ -4356,7 +4338,6 @@ dependencies = [
  "contacts-api",
  "contacts-common",
  "core-event-loop",
- "core-key-manager",
  "derive_more 2.0.1",
  "email_address",
  "flume 0.11.1",
@@ -4378,6 +4359,7 @@ dependencies = [
  "mail-avatar",
  "mail-core-api",
  "mail-core-common",
+ "mail-core-key-manager",
  "mail-crypto-notifications",
  "mail-crypto-pin-hash",
  "mail-event-service",
@@ -4417,6 +4399,24 @@ dependencies = [
  "walkdir",
  "wiremock",
  "zeroize",
+]
+
+[[package]]
+name = "mail-core-key-manager"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "base64",
+ "futures",
+ "mail-account-ids",
+ "mail-crypto-contact-keys",
+ "parking_lot",
+ "proton-crypto-account",
+ "secrecy",
+ "serde",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]

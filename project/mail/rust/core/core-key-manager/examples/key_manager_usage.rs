@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use base64::{Engine as _, engine::general_purpose::STANDARD};
-use core_key_manager::{
+use mail_core_key_manager::{
     AddressId, KeyManager, KeySelector, PublicAddressKeyApiFetchPolicy,
     PublicAddressKeyContactFetchPolicy, UserId,
     cache::MemoryKeyCache,
@@ -288,7 +288,7 @@ struct ExampleSetup {
 
 #[async_trait]
 impl KeySecretLoader for ExampleSetup {
-    async fn key_secret(&self) -> core_key_manager::error::LoadingResult<Option<KeySecret>> {
+    async fn key_secret(&self) -> mail_core_key_manager::error::LoadingResult<Option<KeySecret>> {
         self.raw_secret_loader.key_secret().await
     }
 }
@@ -298,21 +298,21 @@ impl LockedPrivateKeyLoader for ExampleSetup {
     async fn load_user_keys(
         &self,
         id: &UserId,
-    ) -> core_key_manager::error::LoadingResult<Option<UserKeys>> {
+    ) -> mail_core_key_manager::error::LoadingResult<Option<UserKeys>> {
         self.key_loader_impl.load_user_keys(id).await
     }
 
     async fn load_address_keys(
         &self,
         id: &AddressId,
-    ) -> core_key_manager::error::LoadingResult<Option<AddressWithKeys>> {
+    ) -> mail_core_key_manager::error::LoadingResult<Option<AddressWithKeys>> {
         self.key_loader_impl.load_address_keys(id).await
     }
 
     async fn load_address_keys_by_email(
         &self,
         email: &str,
-    ) -> core_key_manager::error::LoadingResult<Option<AddressWithKeys>> {
+    ) -> mail_core_key_manager::error::LoadingResult<Option<AddressWithKeys>> {
         self.key_loader_impl.load_address_keys_by_email(email).await
     }
 }
@@ -324,7 +324,7 @@ impl PublicKeyLoader for ExampleSetup {
         email: &str,
         internal_only: bool,
         fetch_policy: PublicAddressKeyApiFetchPolicy,
-    ) -> core_key_manager::error::LoadingResult<APIPublicAddressKeys> {
+    ) -> mail_core_key_manager::error::LoadingResult<APIPublicAddressKeys> {
         self.public_key_loader_impl
             .load_public_address_keys(email, internal_only, fetch_policy)
             .await
@@ -337,7 +337,7 @@ impl ContactPublicKeyLoader for ExampleSetup {
         &self,
         email: &str,
         fetch_policy: PublicAddressKeyContactFetchPolicy,
-    ) -> core_key_manager::error::LoadingResult<Option<SignedVCard>> {
+    ) -> mail_core_key_manager::error::LoadingResult<Option<SignedVCard>> {
         self.contact_key_loader_impl
             .load_signed_contact_card(email, fetch_policy)
             .await
@@ -484,14 +484,14 @@ impl LockedPrivateKeyLoader for HardcodedKeyLoader {
     async fn load_user_keys(
         &self,
         _: &UserId,
-    ) -> core_key_manager::error::LoadingResult<Option<UserKeys>> {
+    ) -> mail_core_key_manager::error::LoadingResult<Option<UserKeys>> {
         Ok(Some(self.user_keys.clone()))
     }
 
     async fn load_address_keys(
         &self,
         _: &AddressId,
-    ) -> core_key_manager::error::LoadingResult<Option<AddressWithKeys>> {
+    ) -> mail_core_key_manager::error::LoadingResult<Option<AddressWithKeys>> {
         Ok(Some(AddressWithKeys {
             is_external: false,
             email: self.email.clone(),
@@ -504,7 +504,7 @@ impl LockedPrivateKeyLoader for HardcodedKeyLoader {
     async fn load_address_keys_by_email(
         &self,
         email: &str,
-    ) -> core_key_manager::error::LoadingResult<Option<AddressWithKeys>> {
+    ) -> mail_core_key_manager::error::LoadingResult<Option<AddressWithKeys>> {
         if email != self.email {
             return Ok(None);
         }
@@ -523,7 +523,7 @@ struct HardcodedSecretLoader(Vec<u8>);
 
 #[async_trait]
 impl KeySecretLoader for HardcodedSecretLoader {
-    async fn key_secret(&self) -> core_key_manager::error::LoadingResult<Option<KeySecret>> {
+    async fn key_secret(&self) -> mail_core_key_manager::error::LoadingResult<Option<KeySecret>> {
         Ok(Some(KeySecret::new(self.0.clone())))
     }
 }
@@ -537,8 +537,8 @@ impl PublicKeyLoader for HardcodedPublicKeyLoader {
         &self,
         _email: &str,
         _internal_only: bool,
-        _fetch_policy: core_key_manager::PublicAddressKeyApiFetchPolicy,
-    ) -> core_key_manager::error::LoadingResult<APIPublicAddressKeys> {
+        _fetch_policy: mail_core_key_manager::PublicAddressKeyApiFetchPolicy,
+    ) -> mail_core_key_manager::error::LoadingResult<APIPublicAddressKeys> {
         Ok(APIPublicAddressKeys {
             address_keys: APIPublicAddressKeyGroup {
                 keys: vec![APIPublicKey {
@@ -567,7 +567,7 @@ impl ContactPublicKeyLoader for HardcodedContactKeyLoader {
         &self,
         _email: &str,
         _fetch_policy: PublicAddressKeyContactFetchPolicy,
-    ) -> core_key_manager::error::LoadingResult<Option<SignedVCard>> {
+    ) -> mail_core_key_manager::error::LoadingResult<Option<SignedVCard>> {
         Ok(Some(self.0.clone()))
     }
 }

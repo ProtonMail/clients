@@ -371,6 +371,18 @@
   version = "0.1.0"
   path = "project/mail/rust/shared/shared-types"
 
+[workspace.dependencies.mail-db]
+  version = "0.1.0"
+  path = "project/mail/rust/shared/mail-db"
+
+[workspace.dependencies.mail-db-stash]
+  version = "0.1.0"
+  path = "project/mail/rust/shared/mail-db-stash"
+
+[workspace.dependencies.mail-network-error]
+  version = "0.1.0"
+  path = "project/mail/rust/shared/mail-network-error"
+
 [workspace.dependencies.mail-stash]
   version = "0.2"
   path = "project/mail/rust/shared/stash"

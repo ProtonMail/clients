@@ -1,0 +1,18 @@
+[package]
+name = "mail-db-stash"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+mail-stash.workspace = true
+mail-db.workspace = true
+tracing.workspace = true
+
+
+[dev-dependencies]
+tempfile.workspace = true
+tokio = { workspace = true, features = ["rt-multi-thread"] }
+
+[lints]
+workspace = true

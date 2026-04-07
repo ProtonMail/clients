@@ -5907,6 +5907,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "mail-db"
+version = "0.1.0"
+
+[[package]]
+name = "mail-db-stash"
+version = "0.1.0"
+dependencies = [
+ "mail-db",
+ "mail-stash",
+ "tempfile",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "mail-event-service"
 version = "0.1.0"
 dependencies = [
@@ -6125,6 +6140,14 @@ dependencies = [
  "tracing",
  "url",
  "x509-parser 0.16.0",
+]
+
+[[package]]
+name = "mail-network-error"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "thiserror 2.0.18",
 ]
 
 [[package]]

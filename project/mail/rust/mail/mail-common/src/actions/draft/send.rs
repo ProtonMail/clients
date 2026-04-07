@@ -434,16 +434,38 @@ impl Send {
         };
 
         // Load send preferences for each recipient of the message.
-        let send_preferences = load_prefs(
-            ctx,
-            &pgp,
-            guard,
-            &action.recipients,
-            mail_settings.crypto_mail_settings(),
-            composer_preference,
-        )
-        .await
-        .inspect_err(|err| error!("Failed to load send preferences for recipients: {err:?}"))?;
+        // This can unfortunately cause a lot of contacts to load which can
+        // expire the write guard on the executor.
+
+        let recipients = action.recipients.clone();
+        let crypto_mail_settings = mail_settings.crypto_mail_settings();
+        let mut send_prefs_task = ctx.spawn_ex(async move |ctx| {
+            let mut tether = ctx.user_stash().connection().await?;
+            let pgp = new_pgp_provider();
+            load_prefs(
+                &ctx,
+                &pgp,
+                &mut tether,
+                &recipients,
+                crypto_mail_settings,
+                composer_preference,
+            )
+            .await
+            .inspect_err(|err| error!("Failed to load send preferences for recipients: {err:?}"))
+        });
+
+        let send_preferences = loop {
+            tokio::select! {
+                _ = tokio::time::sleep(Duration::from_secs(10)) => {
+                    guard.tx::<_,_,WriterGuardError>(async |_| {
+                        Ok(())
+                    }).await?;
+                }
+                r  = &mut send_prefs_task => {
+                        break r.map_err(MailContextError::from)??;
+                }
+            };
+        };
 
         // Unlock sender address keys
         let address_keys = ctx

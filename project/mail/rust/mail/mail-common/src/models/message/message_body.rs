@@ -109,6 +109,15 @@ impl RawMessageBody {
         }
     }
 
+    /// Create a RawMessageBody from a fixture string (historic-load / perf scaffolding; `foundation_search_lab_harness`).
+    #[cfg(feature = "foundation_search_lab_harness")]
+    pub fn from_fixture(body: &str) -> Self {
+        Self::ok(RawDecryptedBody::Plain {
+            raw_body: body.as_bytes().to_vec(),
+            signatures: vec![],
+        })
+    }
+
     #[instrument(skip_all, fields(id=%id))]
     pub async fn load(id: LocalMessageId, tether: &Tether) -> Result<Option<Self>, StashError> {
         let rows = tether
@@ -203,6 +212,70 @@ impl RawMessageBody {
                     is_body_empty
                 );
             }
+        }
+
+        Ok(())
+    }
+
+    /// Store multiple message bodies in a single transaction with batched search index intents.
+    ///
+    #[instrument(skip_all)]
+    #[cfg(feature = "foundation_search")]
+    pub async fn store_and_consume_batch(
+        items: Vec<(LocalMessageId, Self)>,
+        tx: &Bond<'_>,
+    ) -> Result<(), StashError> {
+        if items.is_empty() {
+            return Ok(());
+        }
+
+        for (id, body) in items.iter() {
+            let id = *id;
+            let body = body.clone();
+            let signatures = body.signatures.clone();
+            let raw_message_id = body.raw_message_id.clone();
+            let decryption_error = body.decryption_error.clone();
+            let raw_type = body.raw_type;
+
+            tx.execute(
+                indoc! {"
+                    INSERT INTO raw_message_body (
+                        message_id,
+                        body,
+                        signatures,
+                        raw_message_id,
+                        decryption_error,
+                        raw_type
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    ON CONFLICT (message_id)
+                    DO UPDATE SET
+                        body = excluded.body,
+                        signatures = excluded.signatures,
+                        decryption_error = excluded.decryption_error,
+                        raw_message_id = excluded.raw_message_id,
+                        raw_type = excluded.raw_type
+                    "},
+                params![
+                    id,
+                    body.body,
+                    signatures,
+                    raw_message_id,
+                    decryption_error,
+                    raw_type
+                ],
+            )
+            .await?;
+        }
+
+        let ids_to_index: Vec<u64> = items
+            .iter()
+            .filter(|(_, body)| body.decryption_error.is_none() && !body.body.is_empty())
+            .map(|(id, _)| id.as_u64())
+            .collect();
+
+        if !ids_to_index.is_empty() {
+            MailSearchService::queue_index_batch(&ids_to_index, tx).await?;
         }
 
         Ok(())

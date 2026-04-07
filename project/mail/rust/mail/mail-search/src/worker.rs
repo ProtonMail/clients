@@ -53,7 +53,7 @@ const BULK_ACCUMULATION_DELAY_MEDIUM: Duration = Duration::from_millis(4000); //
 const BULK_ACCUMULATION_DELAY_LARGE: Duration = Duration::from_millis(10000); // If >= 50 pending
 
 /// Thresholds for bulk accumulation delay
-/// Lower thresholds allow longer delays to kick in sooner, helping batches accumulate to 100
+/// Lower thresholds allow longer delays to kick in sooner, helping batches grow toward `MAX_BATCH_SIZE`
 const BULK_ACCUMULATION_THRESHOLD_MEDIUM: i64 = 20; // Wait 4s if >= 20 pending
 const BULK_ACCUMULATION_THRESHOLD_LARGE: i64 = 50; // Wait 10s if >= 50 pending
 
@@ -62,12 +62,14 @@ const BULK_ACCUMULATION_THRESHOLD_LARGE: i64 = 50; // Wait 10s if >= 50 pending
 const DEFER_DELAY_SECONDS: i64 = 60;
 
 /// Minimum batch size for processing intents
-const MIN_BATCH_SIZE: usize = 100;
+const MIN_BATCH_SIZE: usize = 50;
 
 /// Maximum batch size for bulk loading mode
-/// When many intents are available, use larger batches to reduce Load/Save events
-/// For 1000 messages: 1 batch = 6 Load/Save events vs 10 batches = 60 Load/Save events
-const MAX_BATCH_SIZE: usize = 5000;
+///
+/// Caps how many documents go into one Foundation Search `commit` via `index_message_bodies_batch`.
+/// Lower values trade more Load/Save work for friendlier segment layout (often better query latency
+/// after bulk load); raise to speed up indexing on I/O-bound devices.
+const MAX_BATCH_SIZE: usize = 1000;
 
 /// The search index worker
 ///
@@ -181,10 +183,9 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
     /// Returns `true` if intents were processed, `false` if queue was empty.
     ///
     /// Uses adaptive batch sizing:
-    /// - Fetches up to `MAX_BATCH_SIZE` (5000) when ≥5000 pending
-    /// - Fetches all available when 100–4999 pending
-    /// - Requests `MIN_BATCH_SIZE` (100) when <100 pending (may receive fewer)
-    /// - Reduces Load/Save events: 1 batch of 1000 = 6 events vs 10 batches of 100 = 60 events
+    /// - Fetches up to `MAX_BATCH_SIZE` when at least that many intents are pending
+    /// - Otherwise fetches all available when between `MIN_BATCH_SIZE` and `MAX_BATCH_SIZE`
+    /// - Requests `MIN_BATCH_SIZE` when fewer are pending (may receive fewer)
     ///
     /// When intents are pending, waits before fetching to allow more to accumulate:
     /// - 2s if any pending, 4s if ≥20 pending, 10s if ≥50 pending.
@@ -592,7 +593,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
         let mut intents_to_delete = Vec::new();
 
         let prep_start = Instant::now();
-        #[cfg(feature = "search_index_timing")]
+        #[cfg(feature = "foundation_search_index_timing")]
         let stopwatch = crate::indexing_timing::BatchStopwatch::start();
 
         // Use batch preparation if available (much more efficient)
@@ -631,7 +632,6 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
                         intents_to_defer.push(intent);
                     }
                     PrepareIndexResult::Skip | PrepareIndexResult::SkipDuplicate => {
-                        // Delete intent so pending_count can reach 0 (historic load) or content unchanged
                         intents_to_delete.push(intent);
                     }
                 }
@@ -690,7 +690,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
         }
 
         let prep_elapsed = prep_start.elapsed();
-        #[cfg(feature = "search_index_timing")]
+        #[cfg(feature = "foundation_search_index_timing")]
         let stopwatch = stopwatch.record_prep_done();
         info!(
             "   Batch preparation complete: {} messages ready in {:.2}s",
@@ -717,7 +717,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
             .await;
 
         let index_elapsed = index_start.elapsed();
-        #[cfg(feature = "search_index_timing")]
+        #[cfg(feature = "foundation_search_index_timing")]
         let stopwatch = stopwatch.record_index_done();
         #[allow(clippy::cast_precision_loss)]
         let rate = messages_to_index.len() as f64 / index_elapsed.as_secs_f64();
@@ -758,7 +758,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
                 let batch_elapsed = batch_start.elapsed();
                 let batch_size = messages_to_index.len();
 
-                #[cfg(feature = "search_index_timing")]
+                #[cfg(feature = "foundation_search_index_timing")]
                 stopwatch
                     .record_cleanup_done()
                     .record_batch_complete(batch_size);

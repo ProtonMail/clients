@@ -1049,6 +1049,66 @@ impl Message {
         self.fetch_message_body_impl(ctx, tx, false, false).await
     }
 
+    /// Persist a substitute body so search indexing sees raw storage, then build the decrypted view.
+    ///
+    #[cfg(feature = "foundation_search_lab_harness")]
+    async fn persist_substitute_body_for_indexing(
+        &self,
+        tx: &mut impl RunTransaction,
+        body: String,
+        message_mime_type: crate::models::MessageMimeType,
+    ) -> Result<DecryptedMessageBody, MailContextError> {
+        let message_id = self.id();
+        let address_id = self.remote_address_id.clone();
+        let body_for_store = body.clone();
+        tx.run_tx(async move |bond: &mail_stash::stash::Bond<'_, UserDb>| {
+            let raw_body = RawMessageBody::from_fixture(&body_for_store);
+            raw_body
+                .store_and_consume(message_id, bond)
+                .await
+                .map_err(anyhow::Error::from)
+        })
+        .await?;
+        Ok(DecryptedMessageBody::from_fixture(
+            body,
+            address_id,
+            message_mime_type,
+            message_id,
+        ))
+    }
+
+    /// When search-perf fixtures are installed, loads the substitute body, persists it for indexing,
+    /// and returns the decrypted view. Otherwise returns `Ok(None)`.
+    #[cfg(feature = "foundation_search_lab_harness")]
+    async fn try_fetch_message_body_from_search_perf_fixture(
+        &self,
+        ctx: &MailUserContext,
+        remote_id: &MessageId,
+        tx: &mut impl RunTransaction,
+    ) -> Result<Option<DecryptedMessageBody>, MailContextError> {
+        let Some(sub) = ctx.try_search_perf_substitute_body(remote_id)? else {
+            return Ok(None);
+        };
+        let message_mime_type = match sub.mime {
+            mail_search_perf::DeclaredFixtureMime::TextHtml => MessageMimeType::TextHtml,
+            mail_search_perf::DeclaredFixtureMime::TextPlain => MessageMimeType::TextPlain,
+        };
+        let len = sub.body.len();
+        let decrypted = self
+            .persist_substitute_body_for_indexing(tx, sub.body, message_mime_type)
+            .await
+            .map_err(anyhow::Error::new)
+            .context("Failed to store search perf substitute body")
+            .map_err(MailContextError::Other)?;
+        debug!(
+            "Using search perf substitute body for message {} (remote_id={}, length: {})",
+            self.id(),
+            remote_id,
+            len
+        );
+        Ok(Some(decrypted))
+    }
+
     async fn fetch_message_body_impl(
         &self,
         ctx: &MailUserContext,
@@ -1067,6 +1127,8 @@ impl Message {
             debug!("Found message body in cache for message {}", self.id());
             // Note: Search index intent should have been queued when the body was first stored
             // (in RawMessageBody::store_and_consume). No need to re-queue on every cache load.
+            #[cfg(feature = "foundation_search_lab_harness")]
+            mail_search_perf::prefetch_timing::PrefetchStopwatch::record_cache_hit();
             return Ok(decrypted);
         }
         debug!(
@@ -1085,9 +1147,24 @@ impl Message {
             )));
         }
 
+        // Fixture bypass: when enabled, use pre-loaded bodies instead of HTTP + decrypt
+        #[cfg(feature = "foundation_search_lab_harness")]
+        if let Some(decrypted) = self
+            .try_fetch_message_body_from_search_perf_fixture(ctx, &remote_id, &mut tx)
+            .await?
+        {
+            return Ok(decrypted);
+        }
+
+        #[cfg(feature = "foundation_search_lab_harness")]
+        let prefetch_sw = mail_search_perf::prefetch_timing::PrefetchStopwatch::start();
+
         let (_, encrypted_body) =
             Self::sync_message_and_body(remote_id, ctx.session(), &mut tx, ctx.action_queue())
                 .await?;
+
+        #[cfg(feature = "foundation_search_lab_harness")]
+        let prefetch_sw = prefetch_sw.record_http_done();
 
         trace!("Message successfully downloaded. Decrypting...");
 
@@ -1099,6 +1176,9 @@ impl Message {
             with_attachment_prefetching,
         )
         .await?;
+
+        #[cfg(feature = "foundation_search_lab_harness")]
+        prefetch_sw.record_decrypt_done();
 
         trace!("Message successfully decrypted. Caching...");
         // Note: The raw body is already stored by decrypt_and_store() called in decrypt_message_body()

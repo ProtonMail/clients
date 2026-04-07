@@ -32,6 +32,8 @@ mail-crypto-inbox = { workspace = true }
 core-event-loop = { workspace = true }
 mail-api = { workspace = true }
 mail-common = { workspace = true, features = ["proton_mail_error_log"] }
+mail-historic-search-load = { workspace = true, optional = true }
+mail-search-perf = { workspace = true, optional = true }
 mail-observability = { workspace = true }
 mail-telemetry = { workspace = true }
 mail-task-service = { workspace = true }
@@ -65,9 +67,20 @@ default = []
 # Foundation Search: Local body text search indexing
 # When enabled, message bodies are indexed locally for offline full-text search.
 foundation_search = ["mail-common/foundation_search"]
+foundation_search_historic_load = [
+  "foundation_search",
+  "dep:mail-historic-search-load",
+]
 # Enable stdout logging for iOS (logs appear in Xcode console)
 # Works in both debug and release builds
 stdout_logging = []
+# Lab harness: perf fixtures (`from_fixture` APIs, chunked/JSONL, remote bodies) + historic orchestration on `mail-common`.
+foundation_search_lab_harness = [
+  "mail-common/foundation_search_lab_harness",
+  "foundation_search_historic_load",
+  "dep:mail-search-perf",
+  "mail-historic-search-load/foundation_search_lab_harness",
+]
 
 [dev-dependencies]
 mail-api = { workspace = true }

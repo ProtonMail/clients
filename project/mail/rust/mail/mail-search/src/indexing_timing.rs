@@ -1,11 +1,11 @@
 //! Timing instrumentation for indexing operations.
 //!
 //! This module provides atomic counters for measuring how much time is spent
-//! in various phases of the search indexing process. Enable with the `search_index_timing` feature.
+//! in various phases of the search indexing process. Enable with `mail-common`'s `foundation_search_index_timing` feature.
 //!
 //! Usage:
 //! ```bash
-//! cargo run --example historic_load_test --features foundation_search,search_index_timing
+//! cargo run -p mail-search-perf --example historic_load_test --features foundation_search,foundation_search_index_timing
 //! ```
 //!
 //! Create a `BatchStopwatch` at batch start with `start()`, then call `record_prep_done`,

@@ -18,6 +18,11 @@ use uuid::Uuid;
 
 pub fn current_benchmark(c: &mut Criterion) {
     let runtime = tokio::runtime::Builder::new_multi_thread()
+        .thread_name_fn(|| {
+            use std::sync::atomic::{AtomicUsize, Ordering};
+            static ID: AtomicUsize = AtomicUsize::new(0);
+            format!("tokio-worker-{}", ID.fetch_add(1, Ordering::Relaxed))
+        })
         .enable_all()
         .build()
         .unwrap();

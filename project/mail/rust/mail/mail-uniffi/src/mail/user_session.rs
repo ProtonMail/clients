@@ -48,6 +48,30 @@ impl MailUserSession {
         Arc::new(Self { ctx })
     }
 
+    #[cfg(feature = "foundation_search_lab_harness")]
+    fn initialize_real_bodies_api_from_path_impl(
+        config_path: &str,
+    ) -> Result<(), UserSessionError> {
+        use std::path::Path;
+
+        let file = mail_search_perf::fixture_bodies::load_remote_fixture_config_from_path(
+            Path::new(config_path),
+        )
+        .map_err(|e| {
+            tracing::error!("Failed to load remote fixture config: {}", e);
+            UserSessionError::Other(ProtonError::Unexpected(UnexpectedError::Network))
+        })?;
+        let config = file.chunked_bodies.ok_or_else(|| {
+            tracing::error!("Fixture config has no chunked_bodies section");
+            UserSessionError::Other(ProtonError::Unexpected(UnexpectedError::Network))
+        })?;
+
+        mail_search_perf::fixture_bodies::initialize_real_bodies_api(config).map_err(|e| {
+            tracing::error!("Failed to initialize real bodies from HTTP: {}", e);
+            UserSessionError::Other(ProtonError::Unexpected(UnexpectedError::Network))
+        })
+    }
+
     pub(crate) fn ptr(&self) -> MailUserContextPtr {
         self.ctx.clone()
     }
@@ -91,6 +115,314 @@ impl MailUserSession {
         .map_err(UserSessionError::from)
         .into()
     }
+}
+
+/// Historic load (optional `mail-historic-search-load` dependency).
+#[cfg(feature = "foundation_search_historic_load")]
+#[uniffi_export]
+impl MailUserSession {
+    /// Trigger historic load: fetch messages from server and queue for indexing/prefetch
+    ///
+    /// This is a debug/testing function that fetches messages from the server and queues them
+    /// for indexing (if they have bodies) or prefetch (if they need bodies).
+    ///
+    /// # Arguments
+    /// * `label_id` - Optional label ID string (defaults to All Mail if None)
+    /// * `max_messages` - Optional maximum number of messages to process
+    /// * `page_size` - Optional page size for fetching (default: 100)
+    ///
+    /// # Returns
+    /// A `HistoricLoadResult` with counts of fetched, indexed, and prefetched messages
+    pub async fn historic_load(
+        &self,
+        label_id: Option<String>,
+        max_messages: Option<u64>,
+        page_size: Option<u64>,
+    ) -> Result<crate::mail::datatypes::HistoricLoadResult, UserSessionError> {
+        use mail_core_api::services::proton::LabelId as RealLabelId;
+        use mail_historic_search_load::historic_load_messages;
+
+        let ctx = self.ctx()?;
+
+        let label_id = label_id.map(RealLabelId::from);
+        let max_messages = max_messages.map(|n| usize::try_from(n).unwrap_or(usize::MAX));
+        let page_size = page_size.map(|n| usize::try_from(n).unwrap_or(usize::MAX));
+
+        uniffi_async(async move {
+            let result = historic_load_messages(&ctx, label_id, max_messages, page_size)
+                .await
+                .map_err(RealProtonMailError::from)?;
+
+            Result::<_, RealProtonMailError>::Ok(crate::mail::datatypes::HistoricLoadResult {
+                messages_fetched: result.messages_fetched as u64,
+                messages_indexed: result.messages_indexed as u64,
+                messages_prefetched: result.messages_prefetched as u64,
+            })
+        })
+        .await
+        .map_err(UserSessionError::from)
+    }
+}
+
+/// Real email bodies from S3 chunked bucket (replaces old fixture/Lambda approach)
+#[cfg(feature = "foundation_search_lab_harness")]
+#[uniffi_export]
+impl MailUserSession {
+    /// Start downloading real email bodies from the chunked HTTPS bucket.
+    ///
+    /// Reads `FIXTURE_REMOTE_CONFIG_PATH` (UTF-8 JSON with a `chunked_bodies` block — see
+    /// `fixture_remote.config.example.json`), then downloads `_index.json` and chunk files.
+    /// Bodies stay encrypted in memory; decryption runs lazily during prefetch.
+    ///
+    /// On Android, prefer [`Self::initialize_real_bodies_api_from_path`]: there is no shell
+    /// environment for `FIXTURE_REMOTE_CONFIG_PATH`.
+    pub fn initialize_real_bodies_api(&self) -> Result<(), UserSessionError> {
+        use crate::errors::ProtonError;
+        use crate::errors::unexpected::UnexpectedError;
+
+        let path = std::env::var("FIXTURE_REMOTE_CONFIG_PATH").map_err(|_| {
+            tracing::error!("FIXTURE_REMOTE_CONFIG_PATH is not set");
+            UserSessionError::Other(ProtonError::Unexpected(UnexpectedError::Network))
+        })?;
+        Self::initialize_real_bodies_api_from_path_impl(&path)
+    }
+
+    /// Same as [`Self::initialize_real_bodies_api`], but reads the UTF-8 JSON from `config_path`
+    /// (absolute path). Hosts: same shape as `fixture_remote.config.example.json` (`batch_api`
+    /// optional, `chunked_bodies` required for S3/HTTPS bodies).
+    pub fn initialize_real_bodies_api_from_path(
+        &self,
+        config_path: &str,
+    ) -> Result<(), UserSessionError> {
+        Self::initialize_real_bodies_api_from_path_impl(config_path)
+    }
+
+    /// Check if the real-bodies store has been initialized (loader started)
+    #[must_use]
+    pub fn is_real_bodies_initialized(&self) -> bool {
+        mail_search_perf::fixture_bodies::is_real_bodies_initialized()
+    }
+
+    /// Check if all chunks have finished downloading
+    #[must_use]
+    pub fn is_real_bodies_loading_complete(&self) -> bool {
+        mail_search_perf::fixture_bodies::is_real_bodies_loading_complete()
+    }
+
+    /// Get the number of real bodies currently loaded (encrypted, in memory)
+    #[must_use]
+    pub fn real_bodies_loaded(&self) -> u64 {
+        mail_search_perf::fixture_bodies::real_bodies_loaded() as u64
+    }
+
+    /// Reset the fixture body index to start from the beginning.
+    /// Call before historic_load to ensure bodies are served from the start.
+    pub fn reset_fixture_bodies(&self) {
+        mail_search_perf::fixture_bodies::reset_index();
+    }
+}
+
+/// Database inspection methods for debugging
+#[cfg(feature = "foundation_search")]
+#[uniffi_export]
+impl MailUserSession {
+    /// Get search index blob statistics
+    ///
+    /// Returns a list of blob names and their sizes in bytes
+    pub fn get_search_index_blobs(&self) -> Result<Vec<SearchIndexBlob>, UserSessionError> {
+        let ctx = self.ctx()?;
+        let stash = ctx.user_stash().clone();
+
+        async_runtime().block_on(async {
+            let tether = match stash.connection().await {
+                Ok(t) => t,
+                Err(e) => {
+                    tracing::error!("Failed to get DB connection: {:?}", e);
+                    return Ok(vec![]);
+                }
+            };
+
+            let result = tether
+                .sync_query(|conn| {
+                    let mut stmt = conn.prepare(
+                        "SELECT blob_name, length(blob_data) as size FROM search_index_blobs ORDER BY size DESC",
+                    )?;
+                    let rows = stmt.query_map([], |row| {
+                        Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?))
+                    })?;
+                    let mut results = vec![];
+                    for row in rows {
+                        if let Ok((name, size)) = row {
+                            results.push(SearchIndexBlob {
+                                name,
+                                size: size.cast_unsigned(),
+                            });
+                        }
+                    }
+                    Ok(results)
+                })
+                .await;
+
+            match result {
+                Ok(blobs) => Ok(blobs),
+                Err(e) => {
+                    tracing::error!("Failed to query search index blobs: {:?}", e);
+                    Ok(vec![])
+                }
+            }
+        })
+    }
+
+    /// Get sample message bodies from the database
+    ///
+    /// Returns the first N message bodies with their IDs and a preview
+    pub fn get_message_body_samples(
+        &self,
+        limit: u32,
+    ) -> Result<Vec<MessageBodySample>, UserSessionError> {
+        let ctx = self.ctx()?;
+        let stash = ctx.user_stash().clone();
+
+        async_runtime().block_on(async {
+            let tether = match stash.connection().await {
+                Ok(t) => t,
+                Err(e) => {
+                    tracing::error!("Failed to get DB connection: {:?}", e);
+                    return Ok(vec![]);
+                }
+            };
+
+            let result = tether
+                .sync_query(move |conn| {
+                    // body is BLOB, so we read it as Vec<u8> and convert to string
+                    let mut stmt = conn.prepare(&format!(
+                        "SELECT message_id, length(body), body FROM raw_message_body LIMIT {limit}"
+                    ))?;
+                    let rows = stmt.query_map([], |row| {
+                        let id: i64 = row.get(0)?;
+                        let size: i64 = row.get(1)?;
+                        let body_bytes: Vec<u8> = row.get(2)?;
+                        Ok((id, size, body_bytes))
+                    })?;
+                    let mut results = vec![];
+                    for row in rows {
+                        if let Ok((id, size, body_bytes)) = row {
+                            // Try to convert body to string, take first 100 chars
+                            let preview = if body_bytes.is_empty() {
+                                "(empty)".to_string()
+                            } else {
+                                // Try UTF-8 first, fall back to lossy conversion
+                                let text = String::from_utf8_lossy(&body_bytes);
+                                let preview: String = text.chars().take(100).collect();
+                                if preview.is_empty() {
+                                    format!("(binary: {} bytes)", body_bytes.len())
+                                } else {
+                                    preview
+                                }
+                            };
+                            results.push(MessageBodySample {
+                                message_id: id.cast_unsigned(),
+                                size: size.cast_unsigned(),
+                                preview,
+                            });
+                        }
+                    }
+                    Ok(results)
+                })
+                .await;
+
+            match result {
+                Ok(samples) => Ok(samples),
+                Err(e) => {
+                    tracing::error!("Failed to query message bodies: {:?}", e);
+                    Ok(vec![])
+                }
+            }
+        })
+    }
+
+    /// Get total count of indexed messages
+    pub fn get_indexed_message_count(&self) -> Result<u64, UserSessionError> {
+        let ctx = self.ctx()?;
+        let stash = ctx.user_stash().clone();
+
+        async_runtime().block_on(async {
+            let tether = match stash.connection().await {
+                Ok(t) => t,
+                Err(e) => {
+                    tracing::error!("Failed to get DB connection: {:?}", e);
+                    return Ok(0);
+                }
+            };
+
+            let result = tether
+                .sync_query(|conn| {
+                    Ok(conn.query_row(
+                        "SELECT COUNT(*) FROM search_index_content_hashes",
+                        [],
+                        |row| row.get::<_, i64>(0),
+                    )?)
+                })
+                .await;
+
+            match result {
+                Ok(count) => Ok(count.cast_unsigned()),
+                Err(e) => {
+                    tracing::error!("Failed to count indexed messages: {:?}", e);
+                    Ok(0)
+                }
+            }
+        })
+    }
+
+    /// Get total count of stored message bodies
+    pub fn get_stored_body_count(&self) -> Result<u64, UserSessionError> {
+        let ctx = self.ctx()?;
+        let stash = ctx.user_stash().clone();
+
+        async_runtime().block_on(async {
+            let tether = match stash.connection().await {
+                Ok(t) => t,
+                Err(e) => {
+                    tracing::error!("Failed to get DB connection: {:?}", e);
+                    return Ok(0);
+                }
+            };
+
+            let result = tether
+                .sync_query(|conn| {
+                    Ok(
+                        conn.query_row("SELECT COUNT(*) FROM raw_message_body", [], |row| {
+                            row.get::<_, i64>(0)
+                        })?,
+                    )
+                })
+                .await;
+
+            match result {
+                Ok(count) => Ok(count.cast_unsigned()),
+                Err(e) => {
+                    tracing::error!("Failed to count message bodies: {:?}", e);
+                    Ok(0)
+                }
+            }
+        })
+    }
+}
+
+/// Search index blob info
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct SearchIndexBlob {
+    pub name: String,
+    pub size: u64,
+}
+
+/// Message body sample for debugging
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct MessageBodySample {
+    pub message_id: u64,
+    pub size: u64,
+    pub preview: String,
 }
 
 declare_live_query_tagger!(WatchAddressesMarker);

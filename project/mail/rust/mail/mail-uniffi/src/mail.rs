@@ -15,7 +15,8 @@ pub mod messages;
 mod notifications;
 mod privacy;
 mod rsvp;
-pub mod search_results;
+#[cfg(feature = "foundation_search")]
+mod search_results;
 mod session;
 pub mod settings;
 mod sidebar;

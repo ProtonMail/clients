@@ -2201,7 +2201,3 @@ impl From<LabelDescription> for LabelType {
         }
     }
 }
-
-pub use crate::datatypes::LocalAttachmentId;
-pub use crate::datatypes::LocalConversationId;
-pub use crate::datatypes::LocalMessageId;

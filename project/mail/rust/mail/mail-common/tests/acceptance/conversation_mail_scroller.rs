@@ -180,7 +180,7 @@ async fn test_conversation_mail_scroller_reads_one_item_from_online_scroll_data(
         .alter(|mock| mock.expect(3..=5))
         .respond_with(vec![])
         .await;
-    ctx.mock_get_conversations(conversations, 3..5).await;
+    ctx.mock_get_conversations(conversations, 2..5).await;
     ctx.mock_ping_success().await;
     ctx.setup_user(params.clone()).await;
     let user_ctx = ctx.mail_user_context().await;

@@ -1,3 +1,5 @@
+#[cfg(feature = "foundation_search")]
+mod batch_prefetch;
 mod delete;
 mod delete_all;
 mod ham;
@@ -10,6 +12,8 @@ mod refresh_metadata;
 mod unread;
 mod unsubscribe_newsletter;
 
+#[cfg(feature = "foundation_search")]
+pub use self::batch_prefetch::*;
 pub use self::delete::*;
 pub use self::delete_all::*;
 pub use self::ham::*;

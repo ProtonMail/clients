@@ -1327,3 +1327,15 @@ impl From<mail_core_api::session::Fork> for Fork {
         }
     }
 }
+
+/// Result of a historic load operation
+#[cfg(feature = "foundation_search_historic_load")]
+#[derive(Debug, Clone, Eq, PartialEq, UniffiRecord)]
+pub struct HistoricLoadResult {
+    /// Number of messages fetched from server
+    pub messages_fetched: u64,
+    /// Number of messages queued for indexing (had bodies)
+    pub messages_indexed: u64,
+    /// Number of messages queued for prefetch (needed bodies)
+    pub messages_prefetched: u64,
+}

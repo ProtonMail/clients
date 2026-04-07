@@ -29,12 +29,13 @@ sql = [
 proton_mail_error_log = []
 events-v6 = ["mail-core-common/events-v6"]
 # Foundation Search: Local body text search indexing
-# When enabled, on mail-common it turns on the optional mail-search dependency.
 foundation_search = ["dep:mail-search"]
-
-# Search indexing timing instrumentation for performance analysis
-# When enabled, measures prep, indexing, and cleanup times during foundation search indexing
-search_index_timing = ["foundation_search", "mail-search/search_index_timing"]
+foundation_search_index_timing = [
+  "foundation_search",
+  "mail-search/foundation_search_index_timing",
+]
+# Search perf lab (fixture/real bodies live in `mail-search-perf`; no extra crypto/codec deps here.)
+foundation_search_lab_harness = ["foundation_search", "dep:mail-search-perf"]
 
 [dependencies]
 anyhow = { workspace = true }
@@ -73,6 +74,7 @@ proton-crypto-account = { workspace = true, features = ["sql"] }
 mail-crypto-inbox = { workspace = true }
 core-event-loop = { workspace = true }
 mail-search = { workspace = true, optional = true }
+mail-search-perf = { workspace = true, optional = true }
 mail-html-transformer = { workspace = true }
 mail-sqlite3 = { workspace = true }
 mail-task-service = { workspace = true }

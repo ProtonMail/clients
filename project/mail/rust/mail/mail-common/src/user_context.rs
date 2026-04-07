@@ -7,6 +7,8 @@ pub mod events;
 mod images;
 mod initialization;
 
+#[cfg(feature = "foundation_search_lab_harness")]
+use crate::actions::BATCH_PREFETCH_ACTION_GROUP;
 use crate::actions::PREFETCH_ROLLBACK_ACTION_GROUP;
 use crate::actions::draft::{SEND_ACTION_GROUP, SHARE_EXT_ACTION_GROUP};
 use crate::db::online_migrations;
@@ -71,11 +73,16 @@ use std::sync::{Arc, Weak};
 use std::time::Duration;
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
+#[cfg(feature = "foundation_search")]
+use tracing::Instrument;
 use tracing::{error, instrument};
 
 const DEFAULT_SEND_QUEUE_POOL_SIZE: usize = 4;
 const DEFAULT_DEFAULT_QUEUE_POOL_SIZE: usize = 1;
 
+#[cfg(feature = "foundation_search_lab_harness")]
+const DEFAULT_PREFETCH_ROLLBACK_QUEUE_POOL_SIZE: usize = 6;
+#[cfg(not(feature = "foundation_search_lab_harness"))]
 const DEFAULT_PREFETCH_ROLLBACK_QUEUE_POOL_SIZE: usize = 1;
 const DEFAULT_SHARE_EXT_QUEUE_POOL_SIZE: usize = 2;
 
@@ -88,30 +95,42 @@ const FF_UPSELL_UNLIMITED: &str = "MailiosUnlimitedPlanPlacementExperiment";
 pub struct DefaultQueueExecutor {
     pub default: QueueAutoExecutorPool<UserDb>,
     pub prefetch_rollback: QueueAutoExecutorPool<UserDb>,
+    #[cfg(feature = "foundation_search_lab_harness")]
+    pub batch_prefetch: QueueAutoExecutorPool<UserDb>,
 }
 
 impl DefaultQueueExecutor {
     pub fn pause(&self) {
         self.default.pause();
         self.prefetch_rollback.pause();
+        #[cfg(feature = "foundation_search_lab_harness")]
+        self.batch_prefetch.pause();
     }
 
     pub fn pause_prefetch_rollback(&self) {
         self.prefetch_rollback.pause();
+        #[cfg(feature = "foundation_search_lab_harness")]
+        self.batch_prefetch.pause();
     }
 
     pub fn resume(&self) {
         self.default.resume();
         self.prefetch_rollback.resume();
+        #[cfg(feature = "foundation_search_lab_harness")]
+        self.batch_prefetch.resume();
     }
 
     pub fn resume_prefetch_rollback(&self) {
         self.prefetch_rollback.resume();
+        #[cfg(feature = "foundation_search_lab_harness")]
+        self.batch_prefetch.resume();
     }
 
     pub fn terminate(&self) {
         self.default.terminate();
         self.prefetch_rollback.terminate();
+        #[cfg(feature = "foundation_search_lab_harness")]
+        self.batch_prefetch.terminate();
     }
 }
 
@@ -367,6 +386,16 @@ impl MailUserContext {
                     .with_cyclic_service(ImageLoader::new)
                     .with_cyclic_service(TrackerService::new);
 
+            #[cfg(feature = "foundation_search_lab_harness")]
+            {
+                use mail_search_perf::message_body_cache::{
+                    FixtureBodiesMessageBodyCache, MessageBodyCache,
+                };
+                use std::sync::Arc;
+                let cache: Arc<dyn MessageBodyCache> = Arc::new(FixtureBodiesMessageBodyCache);
+                builder = builder.with_service(cache);
+            }
+
             // Initialize Foundation Search service with Stash connection pool
             // Extract TaskService from the context to ensure proper lifecycle management.
             // The TaskService is extracted from BackgroundAwareTaskService which wraps it.
@@ -403,8 +432,8 @@ impl MailUserContext {
                                 span.clone(),
                             ),
                         })
-                        .with_service(DefaultQueueExecutor {
-                            default: QueueAutoExecutorPool::new(
+                        .with_service({
+                            let default = QueueAutoExecutorPool::new(
                                 user_context.queue(),
                                 &ActionGroup::default(),
                                 NonZeroUsize::new(DEFAULT_DEFAULT_QUEUE_POOL_SIZE).unwrap(),
@@ -412,8 +441,8 @@ impl MailUserContext {
                                 true,
                                 user_context.as_ref(),
                                 span.clone(),
-                            ),
-                            prefetch_rollback: QueueAutoExecutorPool::new(
+                            );
+                            let prefetch_rollback = QueueAutoExecutorPool::new(
                                 user_context.queue(),
                                 &PREFETCH_ROLLBACK_ACTION_GROUP,
                                 NonZeroUsize::new(DEFAULT_PREFETCH_ROLLBACK_QUEUE_POOL_SIZE)
@@ -422,7 +451,23 @@ impl MailUserContext {
                                 true,
                                 user_context.as_ref(),
                                 span.clone(),
-                            ),
+                            );
+                            #[cfg(feature = "foundation_search_lab_harness")]
+                            let batch_prefetch = QueueAutoExecutorPool::new(
+                                user_context.queue(),
+                                &BATCH_PREFETCH_ACTION_GROUP,
+                                NonZeroUsize::new(DEFAULT_PREFETCH_ROLLBACK_QUEUE_POOL_SIZE).unwrap(),
+                                mail_context.core_context().as_ref(),
+                                true,
+                                user_context.as_ref(),
+                                span.clone(),
+                            );
+                            DefaultQueueExecutor {
+                                default,
+                                prefetch_rollback,
+                                #[cfg(feature = "foundation_search_lab_harness")]
+                                batch_prefetch,
+                            }
                         })
                         .with_service(EventPollQueueExecutor {
                             executor: user_context.queue().new_executor_with_group(EVENT_POLL_ACTION_GROUP).into_auto_executor(
@@ -537,6 +582,18 @@ impl MailUserContext {
             .and_then(|service| service.downcast_ref::<T>())
     }
 
+    #[cfg(feature = "foundation_search_lab_harness")]
+    pub(crate) fn try_search_perf_substitute_body(
+        &self,
+        remote_id: &str,
+    ) -> Result<Option<mail_search_perf::SubstituteBody>, anyhow::Error> {
+        use mail_search_perf::message_body_cache::MessageBodyCache;
+        use std::sync::Arc;
+        self.get_service::<Arc<dyn MessageBodyCache>>()
+            .try_substitute_body(remote_id)
+            .map_err(|e| anyhow::anyhow!(e))
+    }
+
     pub fn has_service<T: Any + Send + Sync + 'static>(&self) -> bool {
         self.services.contains_key(&TypeId::of::<T>())
     }
@@ -596,6 +653,8 @@ impl MailUserContext {
     /// - Runs cleanup when the intent queue is empty (idempotent)
     ///
     /// If the worker fails to start, it reports the error to Sentry as a critical issue.
+    /// A root [`tracing::Span`] keeps the task identifiable in Perfetto / tracing captures.
+    /// better observability
     #[cfg(feature = "foundation_search")]
     fn init_search_worker(&self) {
         use crate::search::StashMessageDataProvider;
@@ -603,25 +662,28 @@ impl MailUserContext {
         let search_service = self.search_service().clone();
         let data_provider = Arc::new(StashMessageDataProvider::new(self.user_stash().clone()));
         let ctx_weak = self.this.clone();
+        let span = tracing::info_span!("search_index_worker");
 
-        self.spawn(async move {
-            match search_service.create_worker(data_provider).await {
-                Ok(worker) => {
-                    worker.run().await;
-                }
-                Err(e) => {
-                    error!("Failed to create search index worker: {}", e);
-                    // Report to Sentry as critical issue - search functionality is broken
-                    if let Some(ctx) = ctx_weak.upgrade() {
-                        ctx.issue_reporter_service().report(
-                            IssueLevel::Critical,
-                            format!("Failed to create search index worker: {e}"),
-                            issue_report_keys_from_error(&e),
-                        );
+        self.spawn(
+            async move {
+                match search_service.create_worker(data_provider).await {
+                    Ok(worker) => {
+                        worker.run().await;
+                    }
+                    Err(e) => {
+                        error!("Failed to create search index worker: {}", e);
+                        if let Some(ctx) = ctx_weak.upgrade() {
+                            ctx.issue_reporter_service().report(
+                                IssueLevel::Critical,
+                                format!("Failed to create search index worker: {e}"),
+                                issue_report_keys_from_error(&e),
+                            );
+                        }
                     }
                 }
             }
-        });
+            .instrument(span),
+        );
     }
 
     pub fn session(&self) -> &Session {
@@ -1029,8 +1091,17 @@ impl MailUserContext {
 
 impl Drop for MailUserContext {
     fn drop(&mut self) {
-        self.cancellation_token.cancel();
-        self.queues().terminate();
+        self.cancellation_token.cancel(); //broadcast
+        //Explicit termination of queues to ensure all tasks are cancelled
+        if let Some(service) = self.get_service_opt::<DefaultQueueExecutor>() {
+            service.terminate();
+        }
+        if let Some(service) = self.get_service_opt::<EventPollQueueExecutor>() {
+            service.terminate();
+        }
+        if let Some(service) = self.get_service_opt::<SendQueueExecutorPool>() {
+            service.terminate();
+        }
 
         let user_id = self.user_id();
         let session_id = self.session_id();

@@ -4,6 +4,8 @@
 use crate::ImagePolicy;
 use crate::TrackerService;
 use crate::actions::messages::UnsubscribeNewsletter;
+#[cfg(feature = "foundation_search_lab_harness")]
+use crate::datatypes::LocalMessageId;
 use crate::datatypes::attachment::ContentId;
 use crate::datatypes::message_banner::MessageBanner;
 use crate::datatypes::theme::MailTheme;
@@ -256,6 +258,42 @@ impl DecryptedMessageBody {
             address_id,
             in_flight: Default::default(),
             decryption_error,
+        }
+    }
+
+    /// Create a DecryptedMessageBody from a fixture or historic-load substitute (`foundation_search_lab_harness`).
+    ///
+    /// MIME comes from the **ingest source** (fixture JSON/API field, manifest, etc.) — never from byte sniffing.
+    /// `local_message_id` must match the persisted message row so [`Self::privacy_lock`] can load metadata.
+    #[cfg(feature = "foundation_search_lab_harness")]
+    pub fn from_fixture(
+        body: String,
+        address_id: AddressId,
+        message_mime_type: MessageMimeType,
+        local_message_id: LocalMessageId,
+    ) -> Self {
+        use crate::datatypes::{MimeType, ParsedHeaders};
+        use crate::models::MessageBodyMetadata;
+
+        let mime_type: MimeType = message_mime_type.into();
+
+        Self {
+            body,
+            metadata: MessageBodyMetadata {
+                local_message_id: Some(local_message_id),
+                remote_message_id: None,
+                header: String::new(),
+                mime_type,
+                parsed_headers: ParsedHeaders::default(),
+                attachments: vec![],
+                reply_to: Default::default(),
+                reply_tos: vec![],
+            },
+            mime_type: message_mime_type,
+            pgp_subject: None,
+            address_id,
+            in_flight: Default::default(),
+            decryption_error: None,
         }
     }
 

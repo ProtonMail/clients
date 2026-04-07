@@ -128,7 +128,7 @@ impl BackgroundExecutionContext {
     }
 }
 
-/// Interface for avoiding running prefetch and rollback while background execution is running.
+/// Interface for avoiding running prefetch / batch prefetch / rollback while background execution is running.
 pub struct PausePrefetchRollbackScope<'a> {
     ctxs: &'a [Arc<MailUserContext>],
 }

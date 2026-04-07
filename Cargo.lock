@@ -5643,6 +5643,7 @@ dependencies = [
  "mail-network-monitor-service",
  "mail-observability",
  "mail-search",
+ "mail-search-perf",
  "mail-sqlite3",
  "mail-stash",
  "mail-task-service",
@@ -5915,6 +5916,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "mail-historic-search-load"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "futures",
+ "mail-action-queue",
+ "mail-api",
+ "mail-common",
+ "mail-core-api",
+ "mail-core-common",
+ "mail-stash",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "mail-html-transformer"
 version = "0.2.3"
 dependencies = [
@@ -6181,6 +6198,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "mail-search-perf"
+version = "0.1.0"
+dependencies = [
+ "aes-gcm",
+ "anyhow",
+ "base64",
+ "clap",
+ "flate2",
+ "futures",
+ "hex",
+ "mail-action-queue",
+ "mail-api",
+ "mail-common",
+ "mail-core-api",
+ "mail-core-common",
+ "mail-historic-search-load",
+ "mail-issue-reporter-service",
+ "mail-log-service",
+ "mail-search",
+ "mail-stash",
+ "reqwest 0.13.2",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "mail-shared-types"
 version = "0.1.0"
 dependencies = [
@@ -6359,6 +6407,7 @@ dependencies = [
  "mail-core-api",
  "mail-core-common",
  "mail-crypto-inbox",
+ "mail-historic-search-load",
  "mail-ical",
  "mail-issue-reporter-service-uniffi",
  "mail-log-service",
@@ -6366,6 +6415,7 @@ dependencies = [
  "mail-muon",
  "mail-network-monitor-service",
  "mail-observability",
+ "mail-search-perf",
  "mail-stash",
  "mail-task-service",
  "mail-telemetry",
@@ -8947,6 +8997,8 @@ dependencies = [
  "rustls",
  "rustls-pki-types",
  "rustls-platform-verifier",
+ "serde",
+ "serde_json",
  "sync_wrapper",
  "tokio",
  "tokio-rustls",

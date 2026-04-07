@@ -1,0 +1,62 @@
+[package]
+name = "mail-search-perf"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license = "AGPL-3.0-only"
+description = "Search perf fixtures and instrumentation (FOUN-281)."
+
+[dependencies]
+aes-gcm = { workspace = true }
+base64 = { workspace = true }
+flate2 = { workspace = true }
+futures = { workspace = true }
+hex = { workspace = true }
+reqwest = { workspace = true, features = ["json"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+
+[features]
+default = []
+foundation_search = ["foundation_search_lab_harness"]
+foundation_search_index_timing = []
+foundation_search_lab_harness = []
+
+[dev-dependencies]
+anyhow = { workspace = true }
+clap = { workspace = true }
+mail-api = { workspace = true }
+mail-common = { workspace = true, features = [
+  "foundation_search",
+  "foundation_search_index_timing",
+  "foundation_search_lab_harness",
+] }
+mail-core-api = { workspace = true }
+mail-core-common = { workspace = true, features = ["test-utils"] }
+mail-stash = { workspace = true }
+mail-historic-search-load = { workspace = true, features = [
+  "foundation_search_lab_harness",
+] }
+mail-issue-reporter-service = { workspace = true }
+mail-log-service = { workspace = true }
+mail-search = { workspace = true, features = [
+  "foundation_search_index_timing",
+] }
+mail-action-queue = { workspace = true }
+tempfile = { workspace = true }
+tokio = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
+
+[lints]
+workspace = true
+
+[[example]]
+name = "historic_load_test"
+required-features = ["foundation_search"]
+
+[[example]]
+name = "historic_load_trial"
+required-features = ["foundation_search"]

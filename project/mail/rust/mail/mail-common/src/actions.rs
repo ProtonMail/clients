@@ -66,6 +66,8 @@ use tracing::error;
 
 pub const PREFETCH_ROLLBACK_ACTION_GROUP: ActionGroup = ActionGroup::new("MAIL_PREFETCH_ROLLBACK");
 
+pub const BATCH_PREFETCH_ACTION_GROUP: ActionGroup = ActionGroup::new("MAIL_BATCH_PREFETCH");
+
 #[derive(Debug, thiserror::Error)]
 pub enum MailActionError {
     #[error("Http: {0}")]
@@ -194,6 +196,8 @@ pub(crate) fn register_actions(
             reg(queue, messages::HamHandler { api: api.clone() });
             replace(queue, messages::ReportPhishingHandler { ctx: ctx.clone() });
             replace(queue, messages::PrefetchHandler { ctx: ctx.clone() });
+            #[cfg(feature = "foundation_search_lab_harness")]
+            replace(queue, messages::BatchPrefetchHandler { ctx: ctx.clone() });
             reg(queue, messages::RefreshMetadataHandler { api: api.clone() });
             reg(
                 queue,

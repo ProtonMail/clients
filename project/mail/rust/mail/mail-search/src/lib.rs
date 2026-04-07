@@ -51,7 +51,7 @@ pub mod traits;
 mod watcher;
 mod worker;
 
-#[cfg(feature = "search_index_timing")]
+#[cfg(feature = "foundation_search_index_timing")]
 pub mod indexing_timing;
 
 // Core types

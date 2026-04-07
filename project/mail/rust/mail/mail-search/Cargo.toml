@@ -6,8 +6,8 @@ rust-version.workspace = true
 description = "Self-contained search engine for Proton Mail local search"
 
 [features]
-# Enable timing instrumentation for indexing operations
-search_index_timing = []
+# Enable timing instrumentation for indexing operations (enabled via `mail-common/foundation_search_index_timing`)
+foundation_search_index_timing = []
 
 [dependencies]
 # Core dependencies (always needed)

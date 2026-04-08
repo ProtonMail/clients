@@ -47,6 +47,11 @@ mod keys;
 pub mod nuke;
 pub mod services;
 
+// Arbitrary number: We _temporairly_ increase connection pool from 12 to 50
+// to mitigate issues when there is a very bad network.
+// Should be removed after we uncouple API calls from tether connection.
+const USER_STASH_CONNECTION_POOL_SIZE: u32 = 50;
+
 #[async_trait::async_trait]
 pub trait UserDatabaseInitializer: Send + Sync {
     async fn initialize(&self, mail_stash: &Stash<UserDb>) -> Result<(), MigratorError>;
@@ -342,10 +347,7 @@ impl UserContext {
         let mail_stash = task::spawn_blocking(move || {
             Stash::new(StashConfiguration {
                 path: Some(&path),
-                // Arbitrary number: We _temporairly_ increase connection pool from 12 to 100
-                // to mitigate issues when there is a very bad network.
-                // Should be removed after we uncouple API calls from tether connection.
-                pool_size: Some(100),
+                pool_size: Some(USER_STASH_CONNECTION_POOL_SIZE),
                 ..Default::default()
             })
         })

@@ -301,6 +301,7 @@ impl std::ops::Deref for Context {
     }
 }
 
+const ACCOUNT_STASH_CONNECTION_POOL_SIZE: u32 = 24;
 const SESSION_OBSERVER_BROADCAST_CAPACITY: usize = 8;
 
 impl Context {
@@ -356,10 +357,7 @@ impl Context {
 
             let stash_config = StashConfiguration {
                 path: Some(&account_stash_path),
-                // Arbitrary number: We _temporairly_ increase connection pool from 12 to 100
-                // to mitigate issues when there is a very bad network.
-                // Should be removed after we uncouple API calls from tether connection.
-                pool_size: Some(100),
+                pool_size: Some(ACCOUNT_STASH_CONNECTION_POOL_SIZE),
                 ..Default::default()
             };
 

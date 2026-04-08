@@ -141,6 +141,7 @@ pub struct DraftSendResultWatcher {
 
 /// Create new instance of the watcher for the `session` with `callback`.
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn new_draft_send_watcher(
     session: Arc<MailUserSession>,
     callback: Arc<dyn DraftSendResultCallback>,
@@ -195,6 +196,7 @@ impl Drop for DraftSendResultWatcher {
 
 /// Return all unseen send results for drafts.
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn draft_send_result_unseen(
     session: &MailUserSession,
 ) -> Result<Vec<DraftSendResult>, ProtonError> {
@@ -213,6 +215,7 @@ pub async fn draft_send_result_unseen(
 /// Mark the send results for the `message_ids` as seen.
 #[uniffi_export]
 #[returns(VoidProtonResult)]
+#[tracing::instrument(skip_all)]
 pub async fn draft_send_result_mark_seen(
     session: &MailUserSession,
     message_ids: Vec<Id>,
@@ -239,6 +242,7 @@ pub async fn draft_send_result_mark_seen(
 /// Delete the send results for the `message_ids`.
 #[uniffi_export]
 #[returns(VoidProtonResult)]
+#[tracing::instrument(skip_all)]
 pub async fn draft_send_result_delete(
     session: &MailUserSession,
     message_ids: Vec<Id>,

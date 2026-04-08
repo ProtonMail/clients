@@ -19,6 +19,7 @@ impl MailUserSession {
     ///
     /// Returns a path toward the image file or `None` if no image needs to be displayed.
     #[allow(clippy::too_many_arguments)]
+    #[tracing::instrument(skip_all)]
     pub async fn image_for_sender(
         &self,
         address: String,

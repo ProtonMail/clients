@@ -49,6 +49,7 @@ impl MailUserSession {
     /// Errors returned here are only related to queuing of the action. To get information
     /// about the event loop execution, please use [`MailUserSession::observe_event_loop_errors`].
     #[returns(VoidEventResult)]
+    #[tracing::instrument(skip_all)]
     pub async fn force_event_loop_poll(&self) -> Result<(), EventError> {
         let ctx = self.ctx()?;
         uniffi_async(async move {
@@ -63,6 +64,7 @@ impl MailUserSession {
     }
 
     #[returns(VoidEventResult)]
+    #[tracing::instrument(skip_all)]
     pub async fn force_event_loop_poll_and_wait(&self) -> Result<(), EventError> {
         let ctx = self.ctx()?;
         uniffi_async(async move {

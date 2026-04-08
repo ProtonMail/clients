@@ -356,7 +356,10 @@ impl Context {
 
             let stash_config = StashConfiguration {
                 path: Some(&account_stash_path),
-                pool_size: Some(24),
+                // Arbitrary number: We _temporairly_ increase connection pool from 12 to 100
+                // to mitigate issues when there is a very bad network.
+                // Should be removed after we uncouple API calls from tether connection.
+                pool_size: Some(100),
                 ..Default::default()
             };
 

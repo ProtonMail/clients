@@ -342,6 +342,10 @@ impl UserContext {
         let mail_stash = task::spawn_blocking(move || {
             Stash::new(StashConfiguration {
                 path: Some(&path),
+                // Arbitrary number: We _temporairly_ increase connection pool from 12 to 100
+                // to mitigate issues when there is a very bad network.
+                // Should be removed after we uncouple API calls from tether connection.
+                pool_size: Some(100),
                 ..Default::default()
             })
         })

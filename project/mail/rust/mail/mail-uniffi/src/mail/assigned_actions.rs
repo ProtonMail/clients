@@ -90,6 +90,7 @@ impl From<RealSwipeActionMoveToTarget> for SwipeActionMoveToTarget {
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn assigned_swipe_actions(
     current_folder: Id,
     session: Arc<MailUserSession>,

@@ -79,6 +79,7 @@ impl MailUserSession {
 
     /// Log out a session and delete all user data.
     #[returns(VoidSessionResult)]
+    #[tracing::instrument(skip_all)]
     pub async fn logout(&self) -> Result<(), UserSessionError> {
         let ctx = self.take_ctx()?;
 
@@ -100,6 +101,7 @@ declare_live_query_tagger!(WatchUpsellEligibilityMarker);
 
 #[uniffi_export]
 impl MailUserSession {
+    #[tracing::instrument(skip_all)]
     pub fn watch_addresses(
         &self,
         callback: Arc<dyn AsyncLiveQueryCallback>,
@@ -117,6 +119,7 @@ impl MailUserSession {
         })
     }
 
+    #[tracing::instrument(skip_all)]
     pub fn watch_user(
         &self,
         callback: Arc<dyn AsyncLiveQueryCallback>,
@@ -134,6 +137,7 @@ impl MailUserSession {
         })
     }
 
+    #[tracing::instrument(skip_all)]
     pub fn watch_user_settings(
         &self,
         callback: Arc<dyn AsyncLiveQueryCallback>,
@@ -151,6 +155,7 @@ impl MailUserSession {
         })
     }
 
+    #[tracing::instrument(skip_all)]
     pub fn watch_upsell_eligibility(
         &self,
         callback: Arc<dyn AsyncLiveQueryCallback>,
@@ -167,6 +172,7 @@ impl MailUserSession {
         })
     }
 
+    #[tracing::instrument(skip_all)]
     pub fn watch_user_stream(&self) -> Result<Arc<WatchUserStream>, ProtonError> {
         let ctx = self.ctx()?;
         async_runtime().block_on(async {
@@ -191,6 +197,7 @@ pub struct WatchUserStream {
 
 #[uniffi_export]
 impl WatchUserStream {
+    #[tracing::instrument(skip_all)]
     pub async fn next_async(self: Arc<Self>) -> Result<(), ProtonError> {
         async_runtime()
             .spawn(async move {
@@ -213,6 +220,7 @@ impl WatchUserStream {
 
 #[uniffi_export]
 impl MailUserSession {
+    #[tracing::instrument(skip_all)]
     pub async fn session_uuid(&self) -> Result<String, UserSessionError> {
         let ctx = self.ctx()?;
 
@@ -235,6 +243,7 @@ impl MailUserSession {
     /// session. The child must present an app version that matches the platform
     /// and product.
     ///
+    #[tracing::instrument(skip_all)]
     pub async fn fork(
         &self,
         platform: String,
@@ -252,6 +261,7 @@ impl MailUserSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn new_password_change_flow(&self) -> Result<Arc<PasswordFlow>, UserSessionError> {
         let ctx = self.ctx()?;
 
@@ -304,6 +314,7 @@ impl MailUserSession {
         )))
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn user(&self) -> Result<User, UserSessionError> {
         let ctx = self.ctx()?;
         uniffi_async(async move {
@@ -314,6 +325,7 @@ impl MailUserSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn account_details(&self) -> Result<AccountDetails, UserSessionError> {
         let ctx = self.ctx()?;
         uniffi_async(async move {
@@ -324,6 +336,7 @@ impl MailUserSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn user_settings(&self) -> Result<UserSettings, UserSessionError> {
         let ctx = self.ctx()?;
         uniffi_async(async move {
@@ -335,6 +348,7 @@ impl MailUserSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn record_measurement(
         &self,
         event_type: MeasurementEventType,
@@ -365,6 +379,7 @@ impl MailUserSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn get_attachment(
         &self,
         local_attachment_id: Id,
@@ -381,6 +396,7 @@ impl MailUserSession {
         .map_err(Into::into)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn connection_status(&self) -> Result<ConnectionStatus, UserSessionError> {
         let ctx = self.ctx()?;
         uniffi_async(async move {
@@ -438,6 +454,7 @@ impl MailUserSession {
         });
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn get_payments_status(
         &self,
         vendor: String,
@@ -460,6 +477,7 @@ impl MailUserSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn get_payments_plans(
         &self,
         options: GetPaymentsPlansOptions,
@@ -483,6 +501,7 @@ impl MailUserSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn get_payments_resources_icons(
         &self,
         name: String,
@@ -503,6 +522,7 @@ impl MailUserSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn post_payments_tokens(
         &self,
         amount: u64,
@@ -528,6 +548,7 @@ impl MailUserSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn get_payments_subscription(&self) -> Result<Subscriptions, UserSessionError> {
         let ctx = self.ctx()?;
 
@@ -550,6 +571,7 @@ impl MailUserSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn post_payments_subscription(
         &self,
         subscription: NewSubscription,
@@ -570,6 +592,7 @@ impl MailUserSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn get_payment_method(&self, id: String) -> Result<PaymentMethod, UserSessionError> {
         let ctx = self.ctx()?;
         uniffi_async(async move {
@@ -586,6 +609,7 @@ impl MailUserSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn upsell_eligibility(&self) -> Result<UpsellEligibility, UserSessionError> {
         let ctx = self.ctx()?;
         uniffi_async(async move {
@@ -596,6 +620,7 @@ impl MailUserSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn has_valid_sender_address(&self) -> Result<bool, ProtonError> {
         let ctx = self.ctx()?;
         uniffi_async(async move {
@@ -622,6 +647,7 @@ impl MailUserSession {
     /// * Returns Some(false) if feature is disabled (only legacy, Unleash returns None in that case)
     ///
     /// If there are two features with the same id, coming from unleash and legacy, unleash takes the precedence.
+    #[tracing::instrument(skip_all)]
     pub async fn is_feature_enabled(
         &self,
         feature_id: String,
@@ -643,6 +669,7 @@ impl MailUserSession {
         .into()
     }
 
+    #[tracing::instrument(skip_all)]
     pub fn watch_feature_flags_stream(
         &self,
     ) -> Result<Arc<WatchUserFeatureFlagsStream>, ProtonError> {
@@ -667,6 +694,7 @@ impl MailUserSession {
     /// * Feature is missing
     /// * Feature is not writable
     ///     * All Unleash flags are not writable.
+    #[tracing::instrument(skip_all)]
     pub async fn override_user_feature_flag(
         &self,
         flag_name: String,
@@ -734,6 +762,7 @@ pub struct WatchUserFeatureFlagsStream {
 
 #[uniffi_export]
 impl WatchUserFeatureFlagsStream {
+    #[tracing::instrument(skip_all)]
     pub async fn next_async(self: Arc<Self>) -> Result<(), ProtonError> {
         async_runtime()
             .spawn(async move {

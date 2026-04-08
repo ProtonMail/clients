@@ -24,6 +24,7 @@ use std::{
 use tokio::{task, time::interval};
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn contact_list(
     session: Arc<MailUserSession>,
 ) -> Result<Vec<GroupedContacts>, ActionError> {
@@ -44,6 +45,7 @@ pub async fn contact_list(
 
 // This is not necessary but android wants this.
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn contact_group_by_id(
     session: Arc<MailUserSession>,
     id: Id,
@@ -70,6 +72,7 @@ pub async fn contact_group_by_id(
 /// Contacts from other accounts have lower priority and will appear at the end of the list.
 ///
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn contact_suggestions(
     device_contacts: Vec<DeviceContact>,
     session: Arc<MailUserSession>,
@@ -118,6 +121,7 @@ pub async fn contact_suggestions(
 
 #[uniffi_export]
 #[returns(VoidActionResult)]
+#[tracing::instrument(skip_all)]
 pub async fn delete_contact(
     contact_id: Id,
     session: Arc<MailUserSession>,
@@ -147,6 +151,7 @@ pub struct WatchedContactList {
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn watch_contact_list(
     session: Arc<MailUserSession>,
     callback: Box<dyn ContactsLiveQueryCallback>,

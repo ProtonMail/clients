@@ -4834,7 +4834,7 @@ dependencies = [
 
 [[package]]
 name = "mail-uniffi"
-version = "0.164.11"
+version = "0.164.12"
 dependencies = [
  "anyhow",
  "async-trait",

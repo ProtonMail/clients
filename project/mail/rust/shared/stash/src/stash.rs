@@ -666,6 +666,8 @@ pub struct Tether<Db: DatabaseMarker = crate::marker::UserDb> {
     connection: StashPooledConnection,
     watcher: Arc<Watcher>,
     tx_lock: Arc<Mutex<()>>,
+    acquired_at: Instant,
+    acquired_in: Span,
     _marker: PhantomData<Db>,
 }
 
@@ -1035,6 +1037,8 @@ impl<Db: DatabaseMarker> Tether<Db> {
             connection,
             watcher: mail_stash.watcher.clone(),
             tx_lock: Arc::clone(&mail_stash.tx_lock),
+            acquired_at: Instant::now(),
+            acquired_in: Span::current(),
             _marker: PhantomData,
         })
     }
@@ -1125,6 +1129,15 @@ impl<Db: DatabaseMarker> Debug for Tether<Db> {
 
 impl<Db: DatabaseMarker> Drop for Tether<Db> {
     fn drop(&mut self) {
+        let held_ms = self.acquired_at.elapsed().as_millis();
+        let db = std::any::type_name::<Db>();
+        if held_ms > 5_000 {
+            let _entered = self.acquired_in.enter();
+            error!(held_ms, db, "Tether held for too long");
+        } else if held_ms > 500 {
+            let _entered = self.acquired_in.enter();
+            warn!(held_ms, db, "Tether held for too long");
+        }
         let _ = self.connection.send(Operation::ReturnToPool.into());
     }
 }

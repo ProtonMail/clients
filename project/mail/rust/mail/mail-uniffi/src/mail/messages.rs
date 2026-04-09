@@ -44,7 +44,7 @@ use mail_core_common::utils::MapVec;
 use mail_stash::orm::Model as _;
 use mail_uniffi_runtime::async_runtime;
 use std::sync::Arc;
-use tracing::warn;
+use tracing::{Instrument as _, warn};
 
 #[derive(uniffi::Object)]
 pub struct DecryptedMessage {
@@ -237,12 +237,15 @@ impl DecryptedMessage {
     #[tracing::instrument(skip_all)]
     pub async fn privacy_lock(self: Arc<Self>) -> Option<PrivacyLock> {
         async_runtime()
-            .spawn(async move {
-                let ctx = self.ctx()?;
-                let tether = ctx.user_stash().connection().await?;
-                let builder = self.body.privacy_lock(&tether).await;
-                Ok(builder.build(&ctx).await)
-            })
+            .spawn(
+                async move {
+                    let ctx = self.ctx()?;
+                    let tether = ctx.user_stash().connection().await?;
+                    let builder = self.body.privacy_lock(&tether).await;
+                    Ok(builder.build(&ctx).await)
+                }
+                .in_current_span(),
+            )
             .await
             .map(|r: Result<_, RealProtonMailError>| r.unwrap_or_default())
             .unwrap_or_default()

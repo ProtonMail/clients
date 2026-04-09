@@ -10,7 +10,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 use tempfile::TempDir;
-use tracing::{Span, debug, info};
+use tracing::{Span, debug, info, warn};
 
 #[derive(Debug)]
 enum Source {
@@ -34,6 +34,7 @@ pub struct StashConnectionPool {
     interrupts: Vec<InterruptData>,
     interrupted: Mutex<bool>,
     wait_resume: Condvar,
+    max_connections: usize,
     span: Span,
 }
 
@@ -107,6 +108,7 @@ impl StashConnectionPool {
                 interrupts,
                 interrupted: Default::default(),
                 wait_resume: Condvar::new(),
+                max_connections,
                 span: Span::current(),
             }
         }))
@@ -192,6 +194,16 @@ impl StashConnectionPool {
             }
 
             if let Some(connection) = connections.pop() {
+                let available = connections.len();
+                let in_use = self.max_connections - available - 1;
+                if available < self.max_connections / 4 {
+                    warn!(
+                        in_use,
+                        available,
+                        max = self.max_connections,
+                        "Connection pool running low"
+                    );
+                }
                 return Ok(connection);
             }
         }

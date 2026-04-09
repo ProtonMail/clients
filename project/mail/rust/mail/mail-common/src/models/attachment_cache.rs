@@ -107,6 +107,7 @@ impl Attachment {
     ///     - Save it to disk
     ///     - Return the data.
     /// c. Trigger the [`Self::cleanup_attachment_cache`] background routine
+    #[tracing::instrument(skip_all)]
     pub async fn content_data(
         &self,
         ctx: &MailUserContext,

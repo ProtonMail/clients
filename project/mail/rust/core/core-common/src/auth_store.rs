@@ -15,7 +15,7 @@ use mail_stash::stash::Stash;
 use secrecy::{ExposeSecret, SecretSlice, SecretString};
 use std::ops::Deref;
 use std::sync::Arc;
-use tracing::{error, info, warn};
+use tracing::{Instrument, error, info, warn};
 
 /// Auth store implementation which records the data in the session database.
 pub struct AuthStore {
@@ -119,85 +119,98 @@ impl Store for AuthStore {
     }
 
     async fn set_auth(&mut self, auth: Auth) -> Result<(), StoreError> {
-        match auth {
-            Auth::None => {
-                return self.clear_session().await;
+        let ptr = format!("{:p}", std::ptr::from_mut::<Self>(self));
+        let span = match (auth.user_id(), auth.uid()) {
+            (Some(user_id), Some(session_id)) => {
+                tracing::debug_span!("SetAuth", ?ptr, ?user_id, ?session_id)
+            }
+            _ => {
+                tracing::debug_span!("SetAuth (none)", ?ptr)
+            }
+        };
+        async {
+            match auth {
+                Auth::None => {
+                    return self.clear_session().await;
+                }
+
+                Auth::External { .. } => {
+                    warn!("ignoring external auth");
+                    return Ok(());
+                }
+
+                Auth::Anonymous { .. } => {
+                    info!("ignoring anonymous auth");
+                    return Ok(());
+                }
+
+                Auth::Internal { .. } => {
+                    info!("setting auth in store");
+                }
             }
 
-            Auth::External { .. } => {
-                warn!("ignoring external auth");
-                return Ok(());
-            }
+            // Get the user and session IDs from the incoming auth session.
+            let user_id = UserId::from(auth.user_id().context("missing user ID")?);
+            let session_id = SessionId::from(auth.uid().context("missing session ID")?);
+            let tokens = auth.tokens().context("missing tokens")?;
 
-            Auth::Anonymous { .. } => {
-                info!("ignoring anonymous auth");
-                return Ok(());
-            }
+            // Get the encryption key.
+            let key = self.encryption_key()?;
 
-            Auth::Internal { .. } => {
-                info!("setting auth in store");
-            }
+            // We write twice, so do it in a transaction.
+            self.mail_stash
+                .connection()
+                .await?
+                .tx(async |tx| {
+                    // Load or create the account.
+                    if (CoreAccount::find_by_id(user_id.clone(), tx).await?).is_none() {
+                        info!("creating account for {user_id}");
+
+                        let name_or_addr = self.name_or_addr.take();
+                        // Ensures a non-null value for the name_or_addr field to satisfy database update requirements.
+                        // A default empty string is used when the value is None, as certain mobile callbacks expect this field to be non-null.
+                        let name_or_addr = name_or_addr.unwrap_or_else(|| String::from("Unknown"));
+
+                        CoreAccount::new(user_id.clone(), name_or_addr)
+                            .save(tx)
+                            .inspect_err(|e| error!("failed to save account: {e:?}"))
+                            .await?;
+                    }
+
+                    // Load or create the session.
+                    if let Some(session) = CoreSession::find_by_id(session_id.clone(), tx).await? {
+                        session.with_tokens(tokens, &key)?.save(tx).await?;
+                    } else {
+                        info!("creating session for {user_id}");
+
+                        CoreSession::new(user_id.clone(), session_id.clone(), tokens, &key)?
+                            .save(tx)
+                            .inspect_err(|e| error!("failed to save session: {e:?}"))
+                            .await?;
+                    }
+
+                    // Set the user ID if it's not already set.
+                    if let Some(cur_user_id) = &self.user_id {
+                        assert_eq!(cur_user_id, &user_id);
+                    } else {
+                        info!("setting user ID to {user_id}");
+                        self.user_id = Some(user_id);
+                    }
+
+                    // Set the session ID if it's not already set.
+                    if let Some(cur_session_id) = &self.session_id {
+                        assert_eq!(cur_session_id, &session_id);
+                    } else {
+                        info!("setting session ID to {session_id}");
+                        self.session_id = Some(session_id);
+                    }
+
+                    Ok(())
+                })
+                .await
         }
-
-        // Get the user and session IDs from the incoming auth session.
-        let user_id = UserId::from(auth.user_id().context("missing user ID")?);
-        let session_id = SessionId::from(auth.uid().context("missing session ID")?);
-        let tokens = auth.tokens().context("missing tokens")?;
-
-        // Get the encryption key.
-        let key = self.encryption_key()?;
-
-        // We write twice, so do it in a transaction.
-        self.mail_stash
-            .connection()
-            .await?
-            .tx(async |tx| {
-                // Load or create the account.
-                if (CoreAccount::find_by_id(user_id.clone(), tx).await?).is_none() {
-                    info!("creating account for {user_id}");
-
-                    let name_or_addr = self.name_or_addr.take();
-                    // Ensures a non-null value for the name_or_addr field to satisfy database update requirements.
-                    // A default empty string is used when the value is None, as certain mobile callbacks expect this field to be non-null.
-                    let name_or_addr = name_or_addr.unwrap_or_else(|| String::from("Unknown"));
-
-                    CoreAccount::new(user_id.clone(), name_or_addr)
-                        .save(tx)
-                        .inspect_err(|e| error!("failed to save account: {e:?}"))
-                        .await?;
-                }
-
-                // Load or create the session.
-                if let Some(session) = CoreSession::find_by_id(session_id.clone(), tx).await? {
-                    session.with_tokens(tokens, &key)?.save(tx).await?;
-                } else {
-                    info!("creating session for {user_id}");
-
-                    CoreSession::new(user_id.clone(), session_id.clone(), tokens, &key)?
-                        .save(tx)
-                        .inspect_err(|e| error!("failed to save session: {e:?}"))
-                        .await?;
-                }
-
-                // Set the user ID if it's not already set.
-                if let Some(cur_user_id) = &self.user_id {
-                    assert_eq!(cur_user_id, &user_id);
-                } else {
-                    info!("setting user ID to {user_id}");
-                    self.user_id = Some(user_id);
-                }
-
-                // Set the session ID if it's not already set.
-                if let Some(cur_session_id) = &self.session_id {
-                    assert_eq!(cur_session_id, &session_id);
-                } else {
-                    info!("setting session ID to {session_id}");
-                    self.session_id = Some(session_id);
-                }
-
-                Ok(())
-            })
-            .await
+        .instrument(span)
+        .await
     }
 
     async fn set_auth_info(&mut self, info: AuthInfo) -> Result<(), StoreError> {

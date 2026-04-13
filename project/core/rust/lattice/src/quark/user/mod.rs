@@ -2,6 +2,7 @@ use derive_more::Display;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 pub mod user_create;
+pub mod user_reset;
 
 #[derive(Debug, Display, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]

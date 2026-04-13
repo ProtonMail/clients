@@ -119,7 +119,7 @@
 
 [workspace.dependencies.proton-crypto-account]
   # Use experimental version based on rprp instead of gopenpgp-sys.
-  version = "0.18.0"
+  version = "0.18.1"
   default-features = false
   features = ["rustpgp"]
   registry = "proton"
@@ -130,7 +130,7 @@
 
 [workspace.dependencies.proton-crypto]
   # Use experimental version based on rprp instead of gopenpgp-sys.
-  version = "0.12.0"
+  version = "0.12.1"
   default-features = false
   features = ["rustpgp"]
   registry = "proton"

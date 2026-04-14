@@ -5,13 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [mail-uniffi-v0.164.14] - 2026-04-14
+
+Note: This release combines 0.164.13 with changes from .10, .11, .12
+
+### Fixes
+
+- Align 0.164.x branches - proton/clients/monorepo!1766
+
+## [mail-uniffi-v0.164.13] - 2026-04-13
+
+Note: This release is based on 0.164.9; it does not contain changes from .10, .11, .12
+
+### Fixes
+
+- [ET-6091] Revert uniffi 0.31.0 -> 0.29.1 - proton/clients/monorepo!1745
+
 ## [mail-uniffi-v0.164.12] - 2026-04-09
-
-### Features
-
-- Log db connections that are taking longer than 500ms - proton/clients/monorepo!1697
-
-### Reverts
 
 - revert: "revert: "fix(mail): Potential refresh session bug"" - proton/clients/monorepo!1688
 

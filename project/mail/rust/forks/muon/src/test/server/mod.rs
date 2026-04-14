@@ -13,7 +13,7 @@ use crate::util::ByteSliceExt;
 use crate::{App, Client};
 use anyhow::{anyhow, Result};
 use async_channel::{unbounded, Receiver, Sender};
-use axum::body::Body;
+pub use axum::body::Body;
 use axum::routing::{get, post};
 use axum::Router;
 use derive_more::Debug;
@@ -387,7 +387,7 @@ impl Server {
             .route("/auth/v4/refresh", post(auth::v4::refresh::post))
             .route("/auth/v4/sessions", post(auth::v4::sessions::post))
             .route("/tests/ping", get(tests::ping::get))
-            .route("/mail_muon/bench", post(crate::test::server::mail_muon::bench::post));
+            .route("/mail_muon/bench", post(muon::bench::post));
 
         let auth = Router::new()
             .route("/core/v4/users", get(core::v4::users::get))

@@ -999,6 +999,10 @@ pub async fn move_messages(
     .into()
 }
 
+/// Deprecated: Use [`resolve_message_from_push_notification`] instead when opening
+/// a conversation from a push notification. This function may return stale data
+/// because it skips the API fetch when the message already exists locally.
+///
 /// [`RemoteId`] on its own is useless, because all our UniFFI endpoints operate on
 /// local ids. This method translates remote id into local [`Id`].
 ///
@@ -1019,6 +1023,22 @@ pub async fn resolve_message_id(
     .await
     .map_err(ActionError::from)
     .into()
+}
+
+#[uniffi_export]
+#[tracing::instrument(skip_all)]
+pub async fn resolve_message_from_push_notification(
+    session: Arc<MailUserSession>,
+    remote_id: RemoteId,
+) -> Result<Message, ActionError> {
+    let user_ctx = session.ctx()?;
+    uniffi_async(async move {
+        let message =
+            RealMessage::sync_metadata_from_push_notification(&user_ctx, remote_id.into()).await?;
+        Ok::<_, RealProtonMailError>(message.into())
+    })
+    .await
+    .map_err(ActionError::from)
 }
 
 /// Delete all messages in a label

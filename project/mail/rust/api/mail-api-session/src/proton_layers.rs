@@ -127,7 +127,7 @@ impl CookieJarLayer {
         S: Sender<ProtonRequest, ProtonResponse> + ?Sized,
     {
         for cookie in self.jar.read().await.iter() {
-            req = req.header(("cookie", cookie.value()));
+            req = req.header(("cookie", cookie.to_string()));
         }
 
         let res = inner.send(req).await?;
@@ -151,5 +151,60 @@ impl SenderLayer<ProtonRequest, ProtonResponse> for CookieJarLayer {
         req: ProtonRequest,
     ) -> BoxFut<'a, MuonResult<ProtonResponse>> {
         Box::pin(self.on_send(inner, req))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::proton_layers::CookieJarLayer;
+    use anyhow::Result;
+    use cookie::CookieJar;
+    use mail_muon::GET;
+    use mail_muon::test::server::{HTTP, Response, Server};
+    use tokio::runtime::Handle;
+
+    #[tokio::test]
+    async fn test_cookie_jar_roundtrip() -> Result<()> {
+        let server = Server::new(&Handle::current(), &HTTP)?;
+
+        server.add_handler(|req| {
+            (req.uri().path() == "/tests/cookie-bootstrap").then(|| {
+                Response::builder()
+                    .status(200)
+                    .header("set-cookie", "foo=bar")
+                    .body(Default::default())
+                    .unwrap()
+            })
+        });
+
+        let client = server
+            .builder()
+            .layer_back(CookieJarLayer::new(CookieJar::new()))
+            .build()?;
+
+        client.send(GET!("/tests/cookie-bootstrap")).await?.ok()?;
+
+        let recorder = server.new_recorder();
+
+        client.send(GET!("/tests/ping")).await?.ok()?;
+
+        let request = recorder
+            .take()
+            .into_iter()
+            .find(|req| req.uri().path() == "/tests/ping")
+            .unwrap();
+
+        let cookie = request
+            .headers()
+            .get("cookie")
+            .unwrap()
+            .to_str()?
+            .to_owned();
+
+        assert_eq!(cookie, "foo=bar");
+
+        server.stop().await?;
+
+        Ok(())
     }
 }

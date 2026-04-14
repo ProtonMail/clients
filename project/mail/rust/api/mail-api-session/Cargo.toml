@@ -35,5 +35,8 @@ default = []
 mocks = ["dep:wiremock"]
 sql = ["dep:mail-stash", "mail-account-ids/sql"]
 
+[dev-dependencies]
+mail-muon = { workspace = true, features = ["testing-server"] }
+
 [lints]
 workspace = true

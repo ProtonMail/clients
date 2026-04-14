@@ -1,12 +1,13 @@
 use std::{fs, path::PathBuf};
 
 use futures::future::try_join_all;
+use mail_core_common::datatypes::{LightOrDarkMode, SenderImageSize};
 use mail_core_common::test_utils::test_context::TestContext;
 use pretty_assertions::assert_eq;
 use test_case::test_case;
 use wiremock::{
     Mock, ResponseTemplate,
-    matchers::{method, path},
+    matchers::{method, path, query_param},
 };
 
 fn test_address() -> String {
@@ -18,7 +19,7 @@ async fn get_empty_sender_image() {
     let ctx = TestContext::new().await;
     let user_ctx = ctx.user_context().await;
 
-    ctx.mock_get_images_logo(vec![]).await;
+    ctx.mock_get_images_logo(&test_address(), vec![]).await;
 
     let image_path = user_ctx
         .image_for_sender(
@@ -42,6 +43,7 @@ async fn concurrency() {
 
     Mock::given(method("GET"))
         .and(path("/api/core/v4/images/logo"))
+        .and(query_param("Address", test_address()))
         .respond_with(
             ResponseTemplate::new(200).set_body_bytes("This is a very nice image lol".as_bytes()),
         )
@@ -91,7 +93,8 @@ async fn image_extension(bytes: &[u8], expected: &str) {
     let ctx = TestContext::new().await;
     let user_ctx = ctx.user_context().await;
 
-    ctx.mock_get_images_logo(bytes.to_vec()).await;
+    ctx.mock_get_images_logo(&test_address(), bytes.to_vec())
+        .await;
 
     let image_path = user_ctx
         .image_for_sender(
@@ -123,4 +126,45 @@ async fn image_extension(bytes: &[u8], expected: &str) {
         .expect("failed to get image")
         .unwrap();
     assert_eq!(image_path, image_path_2);
+}
+
+#[test_case(SenderImageSize::S16, "16", "1"; "s16")]
+#[test_case(SenderImageSize::S32, "32", "2"; "s32")]
+#[test_case(SenderImageSize::S64, "64", "3"; "s64")]
+#[test_case(SenderImageSize::S128, "128", "4"; "s128")]
+#[tokio::test]
+async fn sender_image_size_sets_size_and_scale_factor(
+    size: SenderImageSize,
+    expected_size: &str,
+    expected_factor: &str,
+) {
+    let ctx = TestContext::new().await;
+    let user_ctx = ctx.user_context().await;
+
+    Mock::given(method("GET"))
+        .and(path("/api/core/v4/images/logo"))
+        .and(query_param("Address", test_address()))
+        .and(query_param("Format", "png"))
+        .and(query_param("Mode", "light"))
+        .and(query_param("Size", expected_size))
+        .and(query_param("MaxScaleUpFactor", expected_factor))
+        .respond_with(ResponseTemplate::new(200).set_body_bytes(b"image data".as_slice()))
+        .expect(1)
+        .named("get images/logo with address, format, mode, size and scale factor")
+        .mount(ctx.mock_server())
+        .await;
+
+    let image_path = user_ctx
+        .image_for_sender(
+            test_address().into(),
+            None,
+            Some("png".to_owned()),
+            Some(LightOrDarkMode::Light),
+            Some(size),
+            &mut user_ctx.mail_stash().connection().await.unwrap(),
+        )
+        .await
+        .expect("failed to get image");
+
+    assert!(image_path.is_some());
 }

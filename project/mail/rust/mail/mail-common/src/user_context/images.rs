@@ -1,7 +1,7 @@
 use crate::models::MailSettings;
 use crate::{MailContextResult, MailUserContext};
 use mail_core_api::services::proton::PrivateEmail;
-use mail_core_common::datatypes::LightOrDarkMode;
+use mail_core_common::datatypes::{LightOrDarkMode, SenderImageSize};
 
 impl MailUserContext {
     /// Get sender image for an address.
@@ -18,7 +18,7 @@ impl MailUserContext {
     /// * `address`: Email address of the sender.
     /// * `bimi_selector`: BIMI protocol selector.
     /// * `display_sender_image`: Whether this sender would has sender image enabled.
-    /// * `size`: Is used to give the x*x size of the returned image (will default to 32 if none provided).
+    /// * `size`: Determines the image size and the maximum scale-up factor.
     /// * `mode`: Can be used to select if the "light" or "dark" mode of the image is desired (default is light).
     /// * `format`: Desired image format, if none is specified the default format of the image will be used.
     #[allow(clippy::too_many_arguments)]
@@ -27,7 +27,7 @@ impl MailUserContext {
         address: PrivateEmail,
         bimi_selector: Option<String>,
         display_sender_image: bool,
-        size: Option<u32>,
+        size: Option<SenderImageSize>,
         mode: Option<LightOrDarkMode>,
         format: Option<String>,
     ) -> MailContextResult<Option<String>> {

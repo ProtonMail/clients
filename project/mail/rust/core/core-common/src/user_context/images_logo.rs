@@ -1,4 +1,4 @@
-use crate::datatypes::LightOrDarkMode;
+use crate::datatypes::{LightOrDarkMode, SenderImageSize};
 use crate::os::safe_write_async;
 use crate::{CoreContextResult, UserContext};
 use anyhow::Context as _;
@@ -29,8 +29,8 @@ impl UserContext {
     ///   image will be used.
     /// * `mode`          - Can be used to select if the "light" or "dark" mode of the image is
     ///   desired (default is light).
-    /// * `size`          - Is used to give the x*x size of the returned image (will default to 32
-    ///   if none provided).
+    /// * `size`          - Determines the image size and the maximum scale-up factor sent to the
+    ///   API. When `None`, the API defaults apply.
     ///
     pub async fn image_for_sender(
         &self,
@@ -38,11 +38,13 @@ impl UserContext {
         bimi_selector: Option<String>,
         format: Option<String>,
         mode: Option<LightOrDarkMode>,
-        size: Option<u32>,
+        size: Option<SenderImageSize>,
         tether: &mut Tether,
     ) -> CoreContextResult<Option<String>> {
         // FIXME: ET-2209:
         // Cache for sender images older than 1 day must be invalidated, but only when online.
+
+        let raw_size = size.map(SenderImageSize::size);
 
         match find_sender_image_in_cache(
             tether,
@@ -50,7 +52,7 @@ impl UserContext {
             bimi_selector.clone(),
             format.clone(),
             mode,
-            size,
+            raw_size,
         )
         .await
         .with_context(|| format!("Error in finding sender image for {address}"))?
@@ -66,8 +68,9 @@ impl UserContext {
             address: Some(address.clone()),
             bimi_selector: bimi_selector.clone(),
             format: format.clone(),
+            max_scale_up_factor: size.map(SenderImageSize::max_scale_up_factor),
             mode: mode.map(Into::into),
-            size,
+            size: raw_size,
             ..Default::default()
         };
 
@@ -82,7 +85,7 @@ impl UserContext {
                     bimi_selector.clone(),
                     format.clone(),
                     mode,
-                    size,
+                    raw_size,
                 )
                 .await
                 .with_context(|| format!("Error in finding sender image for {address}"))?
@@ -96,7 +99,7 @@ impl UserContext {
 
                 // We don't insert the path as the image doesn't have one.
                 if image.is_empty() {
-                    insert(tx, address, bimi_selector, mode, size, format, None).await?;
+                    insert(tx, address, bimi_selector, mode, raw_size, format, None).await?;
                     return Ok(None);
                 }
 
@@ -109,7 +112,7 @@ impl UserContext {
                 bimi_selector.hash(&mut state);
                 image_format.hash(&mut state);
                 mode.hash(&mut state);
-                size.hash(&mut state);
+                raw_size.hash(&mut state);
                 #[allow(clippy::cast_possible_wrap)]
                 let opts_hash = state.finish() as i64;
 
@@ -135,7 +138,7 @@ impl UserContext {
                     address,
                     bimi_selector,
                     mode,
-                    size,
+                    raw_size,
                     format,
                     Some(path.clone()),
                 )

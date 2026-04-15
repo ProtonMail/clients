@@ -214,7 +214,7 @@ async fn main() -> Result<(), anyhow::Error> {
     {
         const WORKER_BATCH_SIZE: usize = 100; // MAX_BATCH_SIZE in mail-search/src/worker.rs
         if indexed_count > 0 {
-            let expected_batches = (indexed_count + WORKER_BATCH_SIZE - 1) / WORKER_BATCH_SIZE; // Ceiling division
+            let expected_batches = indexed_count.div_ceil(WORKER_BATCH_SIZE); // Ceiling division
             info!(
                 "  Search index intents: {} intents will be processed in {} batches (batch size: {})",
                 indexed_count, expected_batches, WORKER_BATCH_SIZE
@@ -232,7 +232,7 @@ async fn main() -> Result<(), anyhow::Error> {
     let online_waiter = NoopOnlineStatusWaiterBuilder;
     let task_spawner = TokioTaskSpawner;
     let executor_pool = QueueAutoExecutorPool::with_termination_policy(
-        &action_queue,
+        action_queue,
         &PREFETCH_ROLLBACK_ACTION_GROUP,
         NonZeroUsize::new(concurrency).unwrap_or_else(|| {
             warn!("Invalid concurrency value {}, using 1", concurrency);
@@ -534,7 +534,7 @@ async fn main() -> Result<(), anyhow::Error> {
     {
         const WORKER_BATCH_SIZE: usize = 100; // MAX_BATCH_SIZE in mail-search/src/worker.rs
         if indexed_count > 0 {
-            let expected_batches = (indexed_count + WORKER_BATCH_SIZE - 1) / WORKER_BATCH_SIZE; // Ceiling division
+            let expected_batches = indexed_count.div_ceil(WORKER_BATCH_SIZE); // Ceiling division
             info!(
                 "  Search index batching: {} intents processed in {} batches (batch size: {})",
                 indexed_count, expected_batches, WORKER_BATCH_SIZE

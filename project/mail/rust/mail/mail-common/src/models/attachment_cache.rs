@@ -20,7 +20,6 @@ use mail_stash::stash::{Bond, StashError};
 use mail_stash::stash::{RunTransaction, Tether};
 use mail_stash::utils::placeholders_n;
 use mail_stash::{UserDb, params};
-use std::io::Read;
 use std::os::unix::fs::MetadataExt as _;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -422,7 +421,7 @@ impl Attachment {
         &self,
         ctx: &MailUserContext,
         pgp: &P,
-        data: impl Read + Send,
+        data: impl AsRef<[u8]>,
         tether: &Tether,
     ) -> MailContextResult<(Vec<u8>, VerificationResult)>
     where
@@ -439,9 +438,6 @@ impl Attachment {
             return Err(AppError::AttachmentMissingKeyPackets(self.id()).into());
         }
 
-        let mut result_buffer: Vec<u8> =
-            Vec::with_capacity(self.size.try_into().unwrap_or_default());
-
         let address_keys = ctx
             .unlocked_address_keys(pgp, tether, remote_address_id)
             .await?;
@@ -449,16 +445,18 @@ impl Attachment {
         // TODO: Load the sender verification keys for correct signature verification.
         let verification_keys: Vec<<P as PGPProvider>::PublicKey> = Vec::new();
 
-        let mut decrypting_reader = self
-            .decrypt_from_reader(pgp, address_keys.as_ref(), &verification_keys, data)
+        let decrypted_attachment = self
+            .decrypt(
+                pgp,
+                address_keys.as_ref(),
+                &verification_keys,
+                data.as_ref(),
+            )
             .map_err(AppError::AttachmentDecryption)?;
 
-        std::io::copy(&mut decrypting_reader, &mut result_buffer)
-            .map_err(|e| AppError::AttachmentDecryptionIO(e.to_string()))?;
+        let signature_verification = decrypted_attachment.verification_result();
 
-        let signature_verification = decrypting_reader.verification_result();
-
-        Ok((result_buffer, signature_verification))
+        Ok((decrypted_attachment.to_vec(), signature_verification))
     }
 
     /// Based on some heuristics and assumptions it will try to delete the attachments that are less

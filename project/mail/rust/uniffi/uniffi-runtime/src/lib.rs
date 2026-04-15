@@ -1,6 +1,6 @@
 use std::sync::OnceLock;
 use tokio::runtime::{Builder, Runtime};
-use tokio::task::JoinError;
+use tokio::task::{AbortHandle, JoinError};
 
 #[cfg(target_os = "android")]
 mod jni;
@@ -93,7 +93,16 @@ where
     T: Send + 'static,
     F: Future<Output = Result<T, E>> + Send + 'static,
 {
+    struct AbortMe(AbortHandle);
+
+    impl Drop for AbortMe {
+        fn drop(&mut self) {
+            self.0.abort();
+        }
+    }
+
     let handle = async_runtime().spawn(future);
+    let _drop_guard = AbortMe(handle.abort_handle());
     handle.await?
 }
 

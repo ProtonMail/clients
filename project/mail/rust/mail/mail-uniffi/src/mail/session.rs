@@ -98,6 +98,7 @@ pub struct MailSessionParams {
 // constructor.
 #[must_use]
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub fn create_mail_session(
     params: MailSessionParams,
     key_chain: Box<dyn OSKeyChain>,
@@ -300,6 +301,7 @@ impl MailSession {
     }
 
     // This function **does NOT** initialize session itself.
+    #[tracing::instrument(skip_all)]
     pub async fn initialized_user_session_from_stored_session(
         self: Arc<Self>,
         session: Arc<StoredSession>,
@@ -320,6 +322,7 @@ impl MailSession {
         Ok(user_ctx)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn user_session_from_stored_session(
         &self,
         session: Arc<StoredSession>,
@@ -340,6 +343,7 @@ impl MailSession {
         Ok(user_ctx)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn get_accounts(&self) -> Result<Vec<Arc<StoredAccount>>, UserSessionError> {
         let ctx = self.mail_ctx.clone();
 
@@ -361,6 +365,7 @@ impl MailSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn watch_accounts(
         &self,
         callback: Box<dyn LiveQueryCallback>,
@@ -388,6 +393,7 @@ impl MailSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn watch_accounts_async(
         &self,
         callback: Arc<dyn AsyncLiveQueryCallback>,
@@ -415,6 +421,7 @@ impl MailSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn get_sessions(&self) -> Result<Vec<Arc<StoredSession>>, UserSessionError> {
         let ctx = self.mail_ctx.clone();
 
@@ -434,6 +441,7 @@ impl MailSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn watch_sessions(
         &self,
         callback: Box<dyn LiveQueryCallback>,
@@ -459,6 +467,7 @@ impl MailSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn watch_sessions_async(
         &self,
         callback: Arc<dyn AsyncLiveQueryCallback>,
@@ -484,6 +493,7 @@ impl MailSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn get_account_sessions(
         &self,
         account: Arc<StoredAccount>,
@@ -507,6 +517,7 @@ impl MailSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn watch_account_sessions(
         &self,
         account: Arc<StoredAccount>,
@@ -533,6 +544,7 @@ impl MailSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn get_account(
         &self,
         user_id: String,
@@ -555,6 +567,7 @@ impl MailSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn get_session(
         &self,
         session_id: String,
@@ -577,6 +590,7 @@ impl MailSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn get_account_state(
         &self,
         user_id: String,
@@ -595,6 +609,7 @@ impl MailSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn get_session_state(
         &self,
         session_id: String,
@@ -613,6 +628,7 @@ impl MailSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn get_primary_account(
         &self,
     ) -> Result<Option<Arc<StoredAccount>>, UserSessionError> {
@@ -644,6 +660,7 @@ impl MailSession {
     /// This method will recover an empty state of the mail application ready to
     /// log user back in.
     ///
+    #[tracing::instrument(skip_all)]
     pub async fn sign_out_all(&self) -> Result<(), UserSessionError> {
         let Some(user_context) = self.user_ctx.first() else {
             tracing::debug!("No user context found, skipping sign out all");
@@ -662,6 +679,7 @@ impl MailSession {
         .into()
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn app_protection(&self) -> Result<AppProtection, UserSessionError> {
         let ctx = self.mail_ctx.clone();
 
@@ -690,6 +708,7 @@ impl MailSession {
     /// Method will update itself to new access time when returning `true`,
     /// It assumes client will invoke the app protection by themself
     ///
+    #[tracing::instrument(skip_all)]
     pub async fn should_auto_lock(&self) -> Result<bool, UserSessionError> {
         let ctx = self.mail_ctx.clone();
 
@@ -712,6 +731,7 @@ impl MailSession {
         self.mail_ctx.core_context().clock().auto_lock_accessed();
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn set_pin_code(&self, pin: Vec<u32>) -> Result<(), PinSetError> {
         let ctx = self.mail_ctx.core_context().clone();
 
@@ -724,6 +744,7 @@ impl MailSession {
         .map_err(PinSetError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn verify_pin_code(&self, pin: Vec<u32>) -> Result<(), PinAuthError> {
         let mail_ctx = self.mail_ctx.clone();
 
@@ -743,6 +764,7 @@ impl MailSession {
     /// it returns PinAuthError type. If verification is unsuccessful it won't
     /// remove the PIN and return proper Error Reason.
     ///
+    #[tracing::instrument(skip_all)]
     pub async fn delete_pin_code(&self, pin: Vec<u32>) -> Result<(), PinAuthError> {
         let mail_ctx = self.mail_ctx.clone();
 
@@ -761,6 +783,7 @@ impl MailSession {
     /// Method will return None when PIN protection is not set.
     /// Method will return Some(value) when PIN protection is in use.
     ///
+    #[tracing::instrument(skip_all)]
     pub async fn remaining_pin_attempts(&self) -> Result<Option<u32>, UserSessionError> {
         let ctx = self.mail_ctx.core_context().clone();
 
@@ -778,6 +801,7 @@ impl MailSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn set_biometrics_app_protection(&self) -> Result<(), UserSessionError> {
         let ctx = self.mail_ctx.core_context().clone();
 
@@ -794,6 +818,7 @@ impl MailSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn unset_biometrics_app_protection(&self) -> Result<(), UserSessionError> {
         let ctx = self.mail_ctx.core_context().clone();
 
@@ -810,6 +835,7 @@ impl MailSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn get_app_settings(&self) -> Result<AppSettings, UserSessionError> {
         let ctx = self.mail_ctx.core_context().clone();
 
@@ -823,6 +849,7 @@ impl MailSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn change_app_settings(
         &self,
         settings: AppSettingsDiff,
@@ -844,6 +871,7 @@ impl MailSession {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn to_user_session(
         &self,
         ffi_flow: Arc<LoginFlow>,
@@ -870,6 +898,7 @@ impl MailSession {
     ///
     /// This is meant to be used only within extensions - in particular, it
     /// assumes that the primary user is already logged in.
+    #[tracing::instrument(skip_all)]
     pub async fn to_primary_user_session(&self) -> Result<Arc<MailUserSession>, UserSessionError> {
         self.params.origin.guard(Origin::IosShareExt)?;
 
@@ -962,6 +991,7 @@ impl MailSession {
 #[uniffi_export]
 impl MailSession {
     #[returns(VoidSessionResult)]
+    #[tracing::instrument(skip_all)]
     pub async fn set_primary_account(&self, user_id: String) -> Result<(), UserSessionError> {
         let ctx = self.mail_ctx.clone();
         let user_id = user_id.into();
@@ -975,6 +1005,7 @@ impl MailSession {
     }
 
     #[returns(VoidSessionResult)]
+    #[tracing::instrument(skip_all)]
     pub async fn logout_account(&self, user_id: String) -> Result<(), UserSessionError> {
         let mail_ctx = self.mail_ctx.clone();
         let user_ctx = self.user_ctx.clone();
@@ -996,6 +1027,7 @@ impl MailSession {
     }
 
     #[returns(VoidSessionResult)]
+    #[tracing::instrument(skip_all)]
     pub async fn delete_account(&self, user_id: String) -> Result<(), UserSessionError> {
         let mail_ctx = self.mail_ctx.clone();
         let user_ctx = self.user_ctx.clone();
@@ -1020,16 +1052,19 @@ impl MailSession {
 #[uniffi_export]
 impl MailSession {
     #[must_use]
+    #[tracing::instrument(skip_all)]
     pub fn get_accounts_blocking(&self) -> MailSessionGetAccountsResult {
         async_runtime().block_on(self.get_accounts())
     }
 
     #[must_use]
+    #[tracing::instrument(skip_all)]
     pub fn get_account_blocking(&self, user_id: String) -> MailSessionGetAccountResult {
         async_runtime().block_on(self.get_account(user_id))
     }
 
     #[must_use]
+    #[tracing::instrument(skip_all)]
     pub fn get_sessions_blocking(
         &self,
         account: Arc<StoredAccount>,
@@ -1038,16 +1073,19 @@ impl MailSession {
     }
 
     #[must_use]
+    #[tracing::instrument(skip_all)]
     pub fn get_session_blocking(&self, session_id: String) -> MailSessionGetSessionResult {
         async_runtime().block_on(self.get_session(session_id))
     }
 
     #[must_use]
+    #[tracing::instrument(skip_all)]
     pub fn get_account_state_blocking(&self, user_id: String) -> MailSessionGetAccountStateResult {
         async_runtime().block_on(self.get_account_state(user_id))
     }
 
     #[must_use]
+    #[tracing::instrument(skip_all)]
     pub fn get_session_state_blocking(
         &self,
         session_id: String,
@@ -1056,6 +1094,7 @@ impl MailSession {
     }
 
     #[must_use]
+    #[tracing::instrument(skip_all)]
     pub fn get_primary_account_blocking(&self) -> MailSessionGetPrimaryAccountResult {
         async_runtime().block_on(self.get_primary_account())
     }
@@ -1064,6 +1103,7 @@ impl MailSession {
         self.ctx().core_context().on_enter_foreground();
     }
 
+    #[tracing::instrument(skip_all)]
     pub fn on_exit_foreground(&self) {
         async_runtime().block_on(async {
             self.ctx().core_context().on_exit_foreground().await;
@@ -1127,6 +1167,7 @@ impl MailSession {
     /// * Returns None if feature is was never present
     /// * Returns Some(true) if feature is present
     /// * Returns Some(false) if feature was present and enabled but got disabled
+    #[tracing::instrument(skip_all)]
     pub async fn is_feature_enabled(
         &self,
         feature_id: String,
@@ -1148,6 +1189,7 @@ impl MailSession {
         .into()
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn watch_feature_flags(
         &self,
         callback: Box<dyn LiveQueryCallback>,
@@ -1168,6 +1210,7 @@ impl MailSession {
         .map_err(ProtonError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn watch_feature_flags_async(
         &self,
         callback: Arc<dyn AsyncLiveQueryCallback>,

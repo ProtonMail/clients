@@ -480,6 +480,11 @@ codegen-units = 1
 inherits = "dev"
 debug = true
 
+[profile.mail-darwin-test]
+inherits = "dev"
+debug = false
+incremental = false
+
 # This profile gets about a 50% reduction in size compared to the default release profile.
 [profile.small]
 inherits = "release"

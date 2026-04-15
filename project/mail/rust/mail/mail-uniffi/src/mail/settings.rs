@@ -30,6 +30,7 @@ pub async fn mail_settings(ctx: &MailUserSession) -> Result<MailSettings, UserSe
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub fn mail_settings_sync(ctx: &MailUserSession) -> Result<MailSettings, UserSessionError> {
     let mail_stash = ctx.user_stash()?;
 
@@ -52,6 +53,7 @@ pub struct SettingsWatcher {
 declare_live_query_tagger!(WatchMailSettingsMarker);
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn watch_mail_settings(
     ctx: &MailUserSession,
     callback: Box<dyn LiveQueryCallback>,

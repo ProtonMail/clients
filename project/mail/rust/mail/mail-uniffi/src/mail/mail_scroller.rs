@@ -167,6 +167,7 @@ impl From<ScrollerUpdate<RealContextualConversation>> for ConversationScrollerUp
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) fn spawn_conversation_scroller_watcher(
     user_ctx: &MailUserContext,
     handle: MailScrollerHandle<RealContextualConversation>,
@@ -303,6 +304,7 @@ impl From<ScrollerUpdate<RealMessage>> for MessageScrollerUpdate {
     }
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) fn spawn_message_scroller_watcher(
     user_ctx: &MailUserContext,
     handle: MailScrollerHandle<RealMessage>,
@@ -453,6 +455,7 @@ impl ConversationScroller {
             .map_err(Into::into)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn total(&self) -> Result<u64, MailScrollerError> {
         let scroller = Arc::clone(&self.scroller);
 
@@ -461,6 +464,7 @@ impl ConversationScroller {
             .map_err(Into::into)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn has_more(&self) -> Result<bool, MailScrollerError> {
         let scroller = Arc::clone(&self.scroller);
 
@@ -470,6 +474,7 @@ impl ConversationScroller {
     }
 
     #[must_use]
+    #[tracing::instrument(skip_all)]
     pub async fn cursor(
         &self,
         looking_at: Id,
@@ -488,6 +493,7 @@ impl ConversationScroller {
     }
 
     #[must_use]
+    #[tracing::instrument(skip_all)]
     pub async fn supports_include_filter(&self) -> Result<bool, MailScrollerError> {
         let scroller = Arc::clone(&self.scroller);
 
@@ -596,6 +602,7 @@ impl MessageScroller {
             .map_err(Into::into)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn total(&self) -> Result<u64, MailScrollerError> {
         let scroller = Arc::clone(&self.scroller);
 
@@ -604,6 +611,7 @@ impl MessageScroller {
             .map_err(Into::into)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn has_more(&self) -> Result<bool, MailScrollerError> {
         let scroller = Arc::clone(&self.scroller);
 
@@ -613,6 +621,7 @@ impl MessageScroller {
     }
 
     #[must_use]
+    #[tracing::instrument(skip_all)]
     pub async fn cursor(
         &self,
         looking_at: Id,
@@ -631,6 +640,7 @@ impl MessageScroller {
     }
 
     #[must_use]
+    #[tracing::instrument(skip_all)]
     pub async fn supports_include_filter(&self) -> Result<bool, MailScrollerError> {
         let scroller = Arc::clone(&self.scroller);
 
@@ -743,6 +753,7 @@ impl SearchScroller {
             .map_err(Into::into)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn total(&self) -> Result<u64, MailScrollerError> {
         let scroller = Arc::clone(&self.scroller);
 
@@ -751,6 +762,7 @@ impl SearchScroller {
             .map_err(Into::into)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn has_more(&self) -> Result<bool, MailScrollerError> {
         let scroller = Arc::clone(&self.scroller);
 
@@ -760,6 +772,7 @@ impl SearchScroller {
     }
 
     #[must_use]
+    #[tracing::instrument(skip_all)]
     pub async fn cursor(
         &self,
         looking_at: Id,
@@ -778,6 +791,7 @@ impl SearchScroller {
     }
 
     #[must_use]
+    #[tracing::instrument(skip_all)]
     pub async fn supports_include_filter(&self) -> Result<bool, MailScrollerError> {
         let scroller = Arc::clone(&self.scroller);
 
@@ -862,6 +876,7 @@ impl MailConversationCursor {
         }
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn fetch_next(&self) -> Result<Option<Conversation>, MailScrollerError> {
         let cursor = self.cursor.clone();
 
@@ -913,6 +928,7 @@ impl MailMessageCursor {
         }
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn fetch_next(&self) -> Result<Option<Message>, MailScrollerError> {
         let cursor = self.cursor.clone();
 

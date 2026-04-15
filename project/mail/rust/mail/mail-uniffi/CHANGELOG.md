@@ -14,6 +14,20 @@ Note: This release is based on 0.164.9; it does not contain changes from .10, .1
 - [ET-6091] Revert uniffi 0.31.0 -> 0.29.1 - proton/clients/monorepo!1745
 
 
+## [mail-uniffi-v0.164.11] - 2026-04-08
+
+### Fixes
+
+- Dial in number of connections to balance speed vs memory usage - proton/clients/monorepo!1692
+
+
+## [mail-uniffi-v0.164.10] - 2026-04-08
+
+### Fixes
+
+- Workaround - Bump connection pool to 100, add extra traces to detect functions that take longer than 500ms, abort task on drop. - proton/clients/monorepo!1680
+
+
 ## [mail-uniffi-v0.164.8] - 2026-04-01
 
 ### Fixes

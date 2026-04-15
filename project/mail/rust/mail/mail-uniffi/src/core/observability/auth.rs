@@ -17,6 +17,7 @@ metric! {
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub fn record_fido_launch_result(result: FidoLaunchResultStatus) {
     async_runtime().block_on(async move {
         PreLoginMetricRecorder::default().record(SecondFactorFidoLaunchResultTotal::new(result));
@@ -53,6 +54,7 @@ metric! {
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub fn record_fido_sign_result(result: FidoSignResultStatus) {
     async_runtime().block_on(async move {
         PreLoginMetricRecorder::default().record(SecondFactorFidoSignResultTotal::new(result));

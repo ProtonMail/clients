@@ -213,6 +213,7 @@ impl Draft {
         }))
     }
 
+    #[tracing::instrument(skip_all)]
     async fn handle_draft_event(
         state: Weak<RwLock<CachedDraftData>>,
         mut receiver: broadcast::Receiver<DraftEvent>,
@@ -324,6 +325,7 @@ pub struct DraftSenderAddressList {
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn new_draft(
     session: &MailUserSession,
     create_mode: DraftCreateMode,
@@ -374,6 +376,7 @@ pub async fn new_draft(
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn open_draft(
     session: &MailUserSession,
     message_id: Id,
@@ -396,6 +399,7 @@ pub async fn open_draft(
 
 #[uniffi_export]
 impl Draft {
+    #[tracing::instrument(skip_all)]
     pub fn sender(&self) -> String {
         //TODO: Improve in follow up with event updates.
         async_runtime().block_on(async { self.instance.sender().await.unwrap_or_default() })
@@ -413,6 +417,7 @@ impl Draft {
         ComposerRecipientList::new_bcc_list(self.instance.clone(), self.cached.clone())
     }
 
+    #[tracing::instrument(skip_all)]
     pub fn subject(&self) -> String {
         async_runtime().block_on(async { self.cached.read().await.subject.clone() })
     }
@@ -452,6 +457,7 @@ impl Draft {
     /// </html>
     /// ");
     /// ```
+    #[tracing::instrument(skip_all)]
     pub fn composer_content(
         &self,
         theme_opts: ThemeOpts,
@@ -469,11 +475,13 @@ impl Draft {
         })?)
     }
 
+    #[tracing::instrument(skip_all)]
     pub fn body(&self) -> String {
         async_runtime().block_on(async { self.cached.read().await.body.clone() })
     }
 
     #[returns(VoidDraftSaveResult)]
+    #[tracing::instrument(skip_all)]
     pub fn set_subject(&self, subject: String) -> Result<(), DraftSaveError> {
         async_runtime()
             .block_on(async {
@@ -487,6 +495,7 @@ impl Draft {
     }
 
     #[returns(VoidDraftSaveResult)]
+    #[tracing::instrument(skip_all)]
     pub fn set_body(&self, body: String) -> Result<(), DraftSaveError> {
         async_runtime()
             .block_on(async {
@@ -499,6 +508,7 @@ impl Draft {
             .into()
     }
 
+    #[tracing::instrument(skip_all)]
     pub fn mime_type(&self) -> MimeType {
         async_runtime().block_on(async { self.cached.read().await.mime_type.into() })
     }
@@ -525,6 +535,7 @@ impl Draft {
     /// Retrieve the send result associated with draft.
     ///
     /// Note this only loaded with [`open_draft()`].
+    #[tracing::instrument(skip_all)]
     pub fn send_result(&self) -> Option<DraftSendResult> {
         async_runtime()
             .block_on(async { self.cached.read().await.send_result.clone().map(Into::into) })
@@ -547,6 +558,7 @@ impl Draft {
     // NOTE: iOS request we share the same result types between
     //       this function and the DecryptedMessageBody equivalent.
     #[returns(AttachmentDataResult)]
+    #[tracing::instrument(skip_all)]
     pub fn load_image_sync(
         self: Arc<Self>,
         cid: String,
@@ -599,6 +611,7 @@ impl Draft {
 #[uniffi_export]
 impl Draft {
     #[returns(VoidDraftSaveResult)]
+    #[tracing::instrument(skip_all)]
     pub async fn save(self: Arc<Self>) -> Result<(), DraftSaveError> {
         uniffi_async(async move {
             self.instance
@@ -613,6 +626,7 @@ impl Draft {
     }
 
     #[returns(VoidDraftSendResult)]
+    #[tracing::instrument(skip_all)]
     pub async fn send(self: Arc<Self>) -> Result<(), DraftSendError> {
         uniffi_async(async move {
             self.instance
@@ -628,6 +642,7 @@ impl Draft {
     }
 
     #[returns(VoidDraftSendResult)]
+    #[tracing::instrument(skip_all)]
     pub async fn schedule(self: Arc<Self>, timestamp: UnixTimestamp) -> Result<(), DraftSendError> {
         let timestamp = mail_core_common::datatypes::UnixTimestamp::from(timestamp)
             .to_date_time()
@@ -663,6 +678,7 @@ impl Draft {
     }
 
     #[returns(VoidDraftDiscardResult)]
+    #[tracing::instrument(skip_all)]
     pub async fn discard(self: Arc<Self>) -> Result<(), DraftDiscardError> {
         uniffi_async(async move {
             self.instance
@@ -677,6 +693,7 @@ impl Draft {
         .into()
     }
 
+    #[tracing::instrument(skip_all)]
     pub fn is_password_protected(&self) -> Result<bool, ProtonError> {
         Ok(async_runtime().block_on(async move {
             self.instance
@@ -686,6 +703,7 @@ impl Draft {
         })?)
     }
 
+    #[tracing::instrument(skip_all)]
     pub fn get_password(&self) -> Result<Option<DraftPassword>, ProtonError> {
         Ok(async_runtime().block_on(async move {
             self.instance
@@ -697,6 +715,7 @@ impl Draft {
     }
 
     #[returns(VoidDraftPasswordResult)]
+    #[tracing::instrument(skip_all)]
     pub async fn set_password(
         self: Arc<Self>,
         password: String,
@@ -717,6 +736,7 @@ impl Draft {
     }
 
     #[returns(VoidDraftPasswordResult)]
+    #[tracing::instrument(skip_all)]
     pub async fn remove_password(self: Arc<Self>) -> Result<(), DraftPasswordError> {
         uniffi_async(async move {
             self.instance
@@ -732,6 +752,7 @@ impl Draft {
     }
 
     #[returns(VoidDraftExpirationResult)]
+    #[tracing::instrument(skip_all)]
     pub async fn set_expiration_time(
         self: Arc<Self>,
         expiration_time: DraftExpirationTime,
@@ -750,6 +771,7 @@ impl Draft {
         .into()
     }
 
+    #[tracing::instrument(skip_all)]
     pub fn expiration_time(&self) -> Result<DraftExpirationTime, ProtonError> {
         Ok(async_runtime().block_on(async move {
             self.instance
@@ -760,6 +782,7 @@ impl Draft {
         })?)
     }
 
+    #[tracing::instrument(skip_all)]
     pub fn address_validation_result(&self) -> Option<DraftAddressValidationResult> {
         async_runtime().block_on(async move {
             self.instance
@@ -770,6 +793,7 @@ impl Draft {
         })
     }
 
+    #[tracing::instrument(skip_all)]
     pub fn clear_address_validation_error(&self) {
         async_runtime().block_on(async move {
             if let Err(e) = self.instance.clear_address_validation_result().await {
@@ -778,6 +802,7 @@ impl Draft {
         });
     }
 
+    #[tracing::instrument(skip_all)]
     pub fn validate_recipients_expiration_feature(
         &self,
     ) -> Result<DraftRecipientExpirationFeatureReport, ProtonError> {
@@ -816,6 +841,7 @@ impl Draft {
 
 #[uniffi_export]
 #[returns(VoidDraftUndoSendResult)]
+#[tracing::instrument(skip_all)]
 pub async fn draft_undo_send(
     session: &MailUserSession,
     message_id: Id,
@@ -832,6 +858,7 @@ pub async fn draft_undo_send(
 
 #[uniffi_export]
 #[returns(VoidDraftDiscardResult)]
+#[tracing::instrument(skip_all)]
 pub async fn draft_discard(
     session: &MailUserSession,
     message_id: Id,
@@ -854,6 +881,7 @@ pub struct DraftCancelScheduledSendInfo {
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn draft_cancel_schedule_send(
     session: &MailUserSession,
     message_id: Id,

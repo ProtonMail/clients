@@ -206,6 +206,7 @@ impl ComposerRecipientList {
 #[uniffi_export]
 impl ComposerRecipientList {
     /// Set the callback to receive validation updates.
+    #[tracing::instrument(skip_all)]
     pub fn set_callback(&self, cb: Arc<dyn ComposerRecipientValidationCallback>) {
         async_runtime().block_on(async {
             let mut state = self.state.write().await;
@@ -223,6 +224,7 @@ impl ComposerRecipientList {
         });
     }
     /// Get the ordered list of recipients.
+    #[tracing::instrument(skip_all)]
     pub fn recipients(&self) -> Vec<ComposerRecipient> {
         //TODO: change this after the clients change their logic to get updates via the callback
         // rather than right after they modify the list
@@ -247,6 +249,7 @@ impl ComposerRecipientList {
     }
 
     /// Add a new single recipient to the list.
+    #[tracing::instrument(skip_all)]
     pub fn add_single_recipient(&self, recipient: SingleRecipientEntry) -> AddSingleRecipientError {
         async_runtime().block_on(async move {
             match self
@@ -275,6 +278,7 @@ impl ComposerRecipientList {
     ///
     /// Note that `total_contacts_in_group` should be total value of elements in this group. It is
     /// expected that this is retrieved from the contacts api.
+    #[tracing::instrument(skip_all)]
     pub fn add_group_recipient(
         &self,
         group_name: String,
@@ -323,6 +327,7 @@ impl ComposerRecipientList {
     }
 
     /// Remove a single recipient by `email`.
+    #[tracing::instrument(skip_all)]
     pub fn remove_single_recipient(&self, email: &str) -> RemoveRecipientError {
         async_runtime().block_on(async move {
             match self
@@ -345,6 +350,7 @@ impl ComposerRecipientList {
     }
 
     /// Remove a contact group by `group_name`
+    #[tracing::instrument(skip_all)]
     pub fn remove_group(&self, group_name: String) -> RemoveRecipientError {
         let Ok(group_name) = NonEmptyString::new(group_name) else {
             error!("remove_group with empty group name");
@@ -371,6 +377,7 @@ impl ComposerRecipientList {
     }
 
     /// Remove a recipient with `email` from a contact group with `group_name`.
+    #[tracing::instrument(skip_all)]
     pub fn remove_recipient_from_group(
         &self,
         group_name: String,

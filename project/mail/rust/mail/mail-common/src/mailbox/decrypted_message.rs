@@ -656,7 +656,7 @@ pub enum PrivacyLockBuilder {
 }
 
 impl PrivacyLockBuilder {
-    #[tracing::instrument(skip_all)]
+    #[tracing::instrument(skip_all, name = "PrivacyLockBuilder::Build")]
     pub async fn build(self, ctx: &MailUserContext) -> Option<UiLock> {
         match self {
             PrivacyLockBuilder::None => None,

@@ -26,6 +26,7 @@ impl Mailbox {
     ///
     /// Returns an error if the encrypted attachment fetching or decryption fails.
     /// Signature verification failures are not returned as errors.
+    #[tracing::instrument(skip_all)]
     pub async fn get_attachment(
         &self,
         local_attachment_id: Id,

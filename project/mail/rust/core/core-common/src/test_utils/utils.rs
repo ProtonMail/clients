@@ -1,20 +1,19 @@
-use rand::{Rng, distributions::Uniform};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use wiremock::{MockServer, Respond, ResponseTemplate};
 
 #[must_use]
 pub fn random_string(length: usize) -> String {
-    let charset: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
-                           abcdefghijklmnopqrstuvwxyz\
-                           0123456789!@#$%^&*()_+-=[]{}|;:'\",.<>?/\\`~";
+    use rand::distr::SampleString;
+    use rand::distr::slice::Choose;
 
-    let mut rng = rand::thread_rng();
-    (0..length)
-        .map(|_| {
-            let idx = rng.sample(Uniform::new(0, charset.len()));
-            charset[idx] as char
-        })
-        .collect()
+    let charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ\
+                    abcdefghijklmnopqrstuvwxyz\
+                    0123456789!@#$%^&*()_+-=[]{}|;:'\",.<>?/\\`~"
+        .chars()
+        .collect::<Vec<_>>();
+    Choose::new(&charset)
+        .unwrap()
+        .sample_string(&mut rand::rng(), length)
 }
 
 /// Set up mock endpoints for auth sessions and token refresh.

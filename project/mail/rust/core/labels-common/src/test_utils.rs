@@ -40,10 +40,6 @@ pub async fn new_label_test_connection() -> Stash<UserDb> {
 
 #[must_use]
 pub fn random_string(length: usize) -> String {
-    use rand::{Rng, distributions::Uniform};
-    let charset: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    let mut rng = rand::thread_rng();
-    (0..length)
-        .map(|_| charset[rng.sample(Uniform::new(0, charset.len()))] as char)
-        .collect()
+    use rand::distr::{Alphanumeric, SampleString};
+    Alphanumeric.sample_string(&mut rand::rng(), length)
 }

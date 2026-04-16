@@ -46,6 +46,15 @@ pub struct LtCoreSignedKeyList {
     pub signature: Sensitive<String>,
 }
 
+impl From<proton_crypto_account::keys::LocalSignedKeyList> for LtCoreSignedKeyList {
+    fn from(skl: proton_crypto_account::keys::LocalSignedKeyList) -> Self {
+        Self {
+            data: Sensitive::new(skl.data.to_string()),
+            signature: Sensitive::new(skl.signature.to_string()),
+        }
+    }
+}
+
 /// Represents an address key input for key setup.
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

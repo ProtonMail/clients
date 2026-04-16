@@ -4,8 +4,8 @@ mod get_user_settings;
 pub use self::get_user_settings::*;
 mod post_settings_2fa_register;
 pub use self::post_settings_2fa_register::*;
-mod post_settings_device_recovery;
-pub use self::post_settings_device_recovery::*;
+mod post_device_recovery_secret;
+pub use self::post_device_recovery_secret::*;
 mod put_settings_device_recovery;
 pub use self::put_settings_device_recovery::*;
 

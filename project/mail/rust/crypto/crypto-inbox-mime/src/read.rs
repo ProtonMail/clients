@@ -384,7 +384,7 @@ fn generate_file_name(
 // Generates a random content id.
 fn random_content_id() -> String {
     let mut random_data: [u8; 16] = [0; 16];
-    rand::thread_rng().fill_bytes(&mut random_data);
+    rand::rng().fill_bytes(&mut random_data);
     format!("{}@pmcrypto>", hex::encode(random_data))
 }
 

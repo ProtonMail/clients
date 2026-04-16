@@ -19,7 +19,7 @@ pub struct LtQuarkUserResetRes {
     pub id: String,
     pub name: String,
     pub password: String,
-    #[cfg_attr(feature = "serde", serde(rename = "Dec_ID"))]
+    #[cfg_attr(feature = "serde", serde(rename = "UserDecID"))]
     pub dec_id: u64,
 }
 

@@ -87,6 +87,12 @@ impl<T: Zeroize> AsMut<T> for Sensitive<T> {
     }
 }
 
+impl<T: Zeroize> AsRef<Sensitive<T>> for Sensitive<T> {
+    fn as_ref(&self) -> &Sensitive<T> {
+        self
+    }
+}
+
 // String-specific implementations
 impl AsRef<str> for Sensitive<String> {
     fn as_ref(&self) -> &str {

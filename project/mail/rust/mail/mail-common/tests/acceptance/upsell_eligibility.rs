@@ -1,6 +1,9 @@
-use mail_common::MailUserContext;
 use mail_common::test_utils::init::Params as TestParams;
 use mail_common::test_utils::test_context::MailTestContext;
+use mail_common::{
+    FF_UPSELL_UNLIMITED_CHILD, FF_UPSELL_UNLIMITED_PARENT, MailUserContext,
+    UpsellEligibilityService,
+};
 use mail_core_api::services::proton::User as ApiUser;
 use mail_core_api::services::proton::{
     GetLegacyFeaturesResponse, GetUnleashFeaturesResponse, UnleashToggle, UnleashToggleVariant,
@@ -13,8 +16,6 @@ use mail_stash::orm::Model;
 use mail_stash::stash::{Bond, StashError};
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, ResponseTemplate};
-
-const FF_UPSELL_UNLIMITED: &str = "MailiosUnlimitedPlanPlacementExperiment";
 
 const USER: fn() -> ApiUser = || ApiUser {
     subscribed: 0,
@@ -29,7 +30,8 @@ async fn mail_plus_upsell_when_unlimited_flag_disabled() {
     setup_feature_flags(&ctx, TestedFeatureFlags::default()).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let eligibility = user_ctx.upsell_eligibility().await.unwrap();
+    let service = user_ctx.get_service::<UpsellEligibilityService>();
+    let eligibility = service.upsell_eligibility().await.unwrap();
 
     assert_eq!(
         eligibility,
@@ -45,13 +47,15 @@ async fn unlimited_upsell_when_unlimited_flag_enabled() {
     setup_feature_flags(
         &ctx,
         TestedFeatureFlags {
-            upsell_unlimited: true,
+            upsell_unlimited_parent: true,
+            upsell_unlimited_child: true,
         },
     )
     .await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let eligibility = user_ctx.upsell_eligibility().await.unwrap();
+    let service = user_ctx.get_service::<UpsellEligibilityService>();
+    let eligibility = service.upsell_eligibility().await.unwrap();
 
     assert_eq!(
         eligibility,
@@ -75,7 +79,8 @@ async fn paid_user_not_eligible() {
         .await
         .unwrap();
 
-    let eligibility = user_ctx.upsell_eligibility().await.unwrap();
+    let service = user_ctx.get_service::<UpsellEligibilityService>();
+    let eligibility = service.upsell_eligibility().await.unwrap();
     assert_eq!(eligibility, UpsellEligibility::NotEligible);
 }
 
@@ -97,7 +102,8 @@ async fn paid_user_other_services_not_eligible() {
         .await
         .unwrap();
 
-    let eligibility = user_ctx.upsell_eligibility().await.unwrap();
+    let service = user_ctx.get_service::<UpsellEligibilityService>();
+    let eligibility = service.upsell_eligibility().await.unwrap();
     assert_eq!(eligibility, UpsellEligibility::NotEligible);
 }
 
@@ -117,7 +123,8 @@ async fn member_role_not_eligible() {
         .await
         .unwrap();
 
-    let eligibility = user_ctx.upsell_eligibility().await.unwrap();
+    let service = user_ctx.get_service::<UpsellEligibilityService>();
+    let eligibility = service.upsell_eligibility().await.unwrap();
     assert_eq!(eligibility, UpsellEligibility::NotEligible);
 }
 
@@ -147,15 +154,25 @@ fn test_unleash_variant() -> UnleashToggleVariant {
 
 #[derive(Default)]
 struct TestedFeatureFlags {
-    upsell_unlimited: bool,
+    upsell_unlimited_parent: bool,
+    upsell_unlimited_child: bool,
 }
 
 async fn setup_feature_flags(ctx: &MailTestContext, flags: TestedFeatureFlags) {
     let mut toggles = vec![];
 
-    if flags.upsell_unlimited {
+    if flags.upsell_unlimited_parent {
         toggles.push(UnleashToggle {
-            name: FF_UPSELL_UNLIMITED.to_string(),
+            name: FF_UPSELL_UNLIMITED_PARENT.to_string(),
+            enabled: true,
+            impression_data: false,
+            variant: test_unleash_variant(),
+        });
+    }
+
+    if flags.upsell_unlimited_child {
+        toggles.push(UnleashToggle {
+            name: FF_UPSELL_UNLIMITED_CHILD.to_string(),
             enabled: true,
             impression_data: false,
             variant: test_unleash_variant(),

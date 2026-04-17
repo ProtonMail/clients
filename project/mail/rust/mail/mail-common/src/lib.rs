@@ -25,7 +25,7 @@ mod sidebar;
 mod snooze;
 mod tracker_service;
 mod traits;
-mod upsell_eligibility_watcher;
+mod upsell_eligibility;
 mod user_context;
 
 #[cfg(feature = "test-utils")]
@@ -45,7 +45,7 @@ pub use self::sidebar::*;
 pub use self::snooze::*;
 pub use self::tracker_service::*;
 pub use self::traits::*;
-pub use self::upsell_eligibility_watcher::*;
+pub use self::upsell_eligibility::*;
 pub use self::user_context::*;
 use crate::datatypes::{LocalAttachmentId, LocalConversationId, LocalMessageId};
 use datatypes::attachment::ContentId;

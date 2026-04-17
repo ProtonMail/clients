@@ -19,6 +19,7 @@ pub struct DataScrollerSource<T: RemoteSource> {
     local_label_id: LocalLabelId,
     unread: ReadFilter,
     page_size: usize,
+    category: Vec<LocalLabelId>, // empty = no filter
     invalidate: Option<flume::Sender<()>>,
     order_dir: ScrollOrderDir,
     order_field: ScrollOrderField,
@@ -37,11 +38,13 @@ impl<T: RemoteSource> DataScrollerSource<T> {
             local_label_id,
             unread,
             page_size,
+            category: vec![],
             invalidate: None,
             state: MailScrollerState::unsynced(
                 local_label_id,
                 unread,
                 page_size,
+                vec![],
                 order_dir,
                 order_field,
             ),
@@ -163,7 +166,13 @@ impl<T: RemoteSource> DataScrollerSource<T> {
         let old_state = self.state.to_string();
 
         self.state
-            .sync(self.local_label_id, self.unread, self.page_size, tether)
+            .sync(
+                self.local_label_id,
+                self.unread,
+                self.page_size,
+                self.category.clone(),
+                tether,
+            )
             .await?;
 
         let new_state = self.state.to_string();
@@ -283,6 +292,7 @@ impl<T: RemoteSource> DataScrollerSource<T> {
             self.local_label_id,
             self.unread,
             self.page_size,
+            self.category.clone(),
             self.order_dir,
             self.order_field,
         );
@@ -502,9 +512,14 @@ impl<T: RemoteSource> MailScrollerSource for DataScrollerSource<T> {
             self.local_label_id = label;
         }
 
-        self.state =
-            MailScrollerState::synced(self.local_label_id, self.unread, self.page_size, &tether)
-                .await?;
+        self.state = MailScrollerState::synced(
+            self.local_label_id,
+            self.unread,
+            self.page_size,
+            self.category.clone(),
+            &tether,
+        )
+        .await?;
 
         debug!("Changed state, new state: {}, initializing...", self.state);
 
@@ -535,5 +550,9 @@ impl<T: RemoteSource> MailScrollerSource for DataScrollerSource<T> {
 
     fn watched_tables(&self) -> Vec<String> {
         T::watched_tables()
+    }
+
+    fn set_category(&mut self, category_ids: Vec<LocalLabelId>) {
+        self.category = category_ids;
     }
 }

@@ -34,9 +34,11 @@ pub enum SystemLabel {
 
     CategorySocial = 20,
     CategoryPromotions = 21,
-    CatergoryUpdates = 22,
+    CategoryUpdates = 22,
     CategoryForums = 23,
     CategoryDefault = 24,
+    CategoryNewsletter = 25,
+    CategoryTransactions = 26,
 }
 
 impl SystemLabel {
@@ -64,9 +66,11 @@ impl From<RealSystemLabel> for SystemLabel {
             RealSystemLabel::Snoozed => SystemLabel::Snoozed,
             RealSystemLabel::CategorySocial => SystemLabel::CategorySocial,
             RealSystemLabel::CategoryPromotions => SystemLabel::CategoryPromotions,
-            RealSystemLabel::CatergoryUpdates => SystemLabel::CatergoryUpdates,
+            RealSystemLabel::CategoryUpdates => SystemLabel::CategoryUpdates,
             RealSystemLabel::CategoryForums => SystemLabel::CategoryForums,
             RealSystemLabel::CategoryDefault => SystemLabel::CategoryDefault,
+            RealSystemLabel::CategoryNewsletter => SystemLabel::CategoryNewsletter,
+            RealSystemLabel::CategoryTransactions => SystemLabel::CategoryTransactions,
             RealSystemLabel::Blocked => SystemLabel::Blocked,
             RealSystemLabel::Pinned => SystemLabel::Pinned,
         }
@@ -92,9 +96,11 @@ impl From<SystemLabel> for RealSystemLabel {
             SystemLabel::Snoozed => RealSystemLabel::Snoozed,
             SystemLabel::CategorySocial => RealSystemLabel::CategorySocial,
             SystemLabel::CategoryPromotions => RealSystemLabel::CategoryPromotions,
-            SystemLabel::CatergoryUpdates => RealSystemLabel::CatergoryUpdates,
+            SystemLabel::CategoryUpdates => RealSystemLabel::CategoryUpdates,
             SystemLabel::CategoryForums => RealSystemLabel::CategoryForums,
             SystemLabel::CategoryDefault => RealSystemLabel::CategoryDefault,
+            SystemLabel::CategoryNewsletter => RealSystemLabel::CategoryNewsletter,
+            SystemLabel::CategoryTransactions => RealSystemLabel::CategoryTransactions,
             SystemLabel::Blocked => RealSystemLabel::Blocked,
             SystemLabel::Pinned => RealSystemLabel::Pinned,
         }

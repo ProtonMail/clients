@@ -23,7 +23,7 @@ use mail_core_common::app_events::{OnEnterForegroundEvent, OnForceEventPollEvent
 use mail_core_common::datatypes::LocalLabelId;
 use mail_core_common::models::Label;
 use mail_core_common::models::ModelIdExtension;
-use mail_stash::stash::WatcherHandle;
+use mail_stash::stash::{Tether, WatcherHandle};
 use parking_lot::RwLock as SyncRwLock;
 use sqlite_watcher::watcher::DropRemoveTableObserverHandle;
 use std::iter;
@@ -42,6 +42,10 @@ mod message_scroller;
 #[cfg(test)]
 #[path = "tests/mail_scroller/conversation_scroller.rs"]
 mod conversation_scroller;
+
+#[cfg(test)]
+#[path = "tests/mail_scroller/category_view.rs"]
+mod category_view_tests;
 
 const MIN_STATUS_UPDATE_DURATION: Duration = Duration::from_millis(1500);
 
@@ -116,6 +120,10 @@ impl<T> From<ScrollerListUpdate<T>> for ScrollerUpdate<T> {
 pub enum ScrollerUpdate<T> {
     Status(ScrollerStatusUpdate),
     List(ScrollerListUpdate<T>),
+    CategoryViewChanged {
+        src: ScrollerSource,
+        category_view: Vec<CategoryLabel>,
+    },
     Error {
         src: ScrollerSource,
         error: MailContextError,
@@ -152,6 +160,7 @@ impl<T> ScrollerUpdate<T> {
                 ScrollerStatusUpdate::FetchNewStart(src) => src,
                 ScrollerStatusUpdate::FetchNewEnd(src) => src,
             },
+            ScrollerUpdate::CategoryViewChanged { src, .. } => src,
             ScrollerUpdate::Error { src, .. } => src,
         }
     }
@@ -165,7 +174,9 @@ impl<T> ScrollerUpdate<T> {
                 ScrollerListUpdate::ReplaceBefore { scroller_id, .. } => Some(scroller_id),
                 ScrollerListUpdate::ReplaceRange { scroller_id, .. } => Some(scroller_id),
             },
-            ScrollerUpdate::Status(_) | ScrollerUpdate::Error { .. } => None,
+            ScrollerUpdate::Status(_)
+            | ScrollerUpdate::CategoryViewChanged { .. }
+            | ScrollerUpdate::Error { .. } => None,
         }
     }
 
@@ -651,6 +662,20 @@ where
         })
     }
 
+    /// Returns the current category filter state with labels fully resolved.
+    ///
+    /// Combines `category_view()` and `CategoryView::into_labels()` in one call so
+    /// the FFI layer does not need to duplicate the resolution logic.
+    pub async fn resolved_category_view(
+        &self,
+        tether: &Tether,
+    ) -> Result<Vec<CategoryLabel>, MailContextError> {
+        let view = self.category_view().await?;
+        view.into_labels(tether)
+            .await
+            .map_err(MailContextError::Other)
+    }
+
     pub async fn supports_include_filter(&self) -> Result<bool, MailContextError> {
         let (tx, rx) = oneshot::channel();
 
@@ -742,6 +767,7 @@ where
         let tables = source.watched_tables();
         let tether = arc_ctx.user_stash().connection().await?;
         let alternative_labels = AlternativeLabels::new(label, &tether).await?;
+        let category_view = CategoryView::load(&tether).await?;
 
         let WatcherHandle {
             receiver, handle, ..
@@ -762,7 +788,7 @@ where
             execute_on_online: None,
             items,
             alternative_labels,
-            category_view: Default::default(),
+            category_view,
             update: update_sender,
             command_rx,
             command_tx: command_tx.clone(),
@@ -986,6 +1012,28 @@ where
                         .await
                         .map_err(|e| anyhow!("Failed to send category filter update: {e:?}"))?;
                 }
+
+                // Emit CategoryViewChanged with the resolved state.
+                // Errors here are propagated as ScrollerUpdate::Error.
+                let ctx = match self.ctx.upgrade() {
+                    Some(ctx) => ctx,
+                    None => {
+                        error!("Cannot emit CategoryViewChanged: context dropped");
+                        return Ok(());
+                    }
+                };
+                let tether = ctx.user_stash().connection().await.map_err(|e| {
+                    anyhow!("Failed to acquire connection for CategoryViewChanged: {e:?}")
+                })?;
+                let category_view = self
+                    .category_view
+                    .into_labels(&tether)
+                    .await
+                    .map_err(|e| anyhow!("Failed to resolve category labels: {e:?}"))?;
+                self.update
+                    .send_async(ScrollerUpdate::CategoryViewChanged { src, category_view })
+                    .await
+                    .map_err(|e| anyhow!("Failed to send CategoryViewChanged: {e:?}"))?;
             }
 
             ScrollerCommand::ChangeLabel { src, label } => {
@@ -1002,6 +1050,9 @@ where
                         .unwrap_or_else(|e| {
                             error!("Failed to recalculate alternative labels: {e:?}");
                         });
+                    self.recalculate_category_view().await.unwrap_or_else(|e| {
+                        error!("Failed to recalculate category view: {e:?}");
+                    });
                 }
 
                 if result.is_some() || result.is_scroll_event() {
@@ -1313,12 +1364,29 @@ where
     async fn change_category_view(
         &mut self,
         src: ScrollerSource,
-        _category: Option<LocalLabelId>,
+        category: Option<LocalLabelId>,
     ) -> Result<ScrollerUpdate<S::Item>, MailContextError> {
-        Ok(ScrollerUpdate::List(ScrollerListUpdate::None {
-            src,
-            scroller_id: self.scroller_id,
-        }))
+        let ctx = self.ctx.upgrade().ok_or(MailContextError::MissingContext)?;
+        // Expand CategoryDefault to include all display=0 category label IDs.
+        let tether = ctx
+            .user_stash()
+            .connection()
+            .await
+            .map_err(MailContextError::from)?;
+        let filter_ids = self
+            .category_view
+            .enable(category)?
+            .query_filter_ids(&tether)
+            .await
+            .map_err(MailContextError::Other)?;
+        self.category_view.enabled = category;
+        let _ = self.task.take();
+        self.task = {
+            let mut source = self.source.write().await;
+            source.set_category(filter_ids);
+            source.change_state(&ctx, None, None, None).await?
+        };
+        self.reset(src).await
     }
 
     #[instrument(skip_all, fields(scroller=%self.scroller_id, src=%src))]
@@ -1523,8 +1591,15 @@ where
     ) -> Result<(), MailContextError> {
         let ctx = self.ctx.upgrade().ok_or(MailContextError::MissingContext)?;
         let tether = ctx.user_stash().connection().await?;
-        let alternative_labels = AlternativeLabels::new(label, &tether).await?;
-        self.alternative_labels = alternative_labels;
+        self.alternative_labels = AlternativeLabels::new(label, &tether).await?;
+
+        Ok(())
+    }
+
+    async fn recalculate_category_view(&mut self) -> Result<(), MailContextError> {
+        let ctx = self.ctx.upgrade().ok_or(MailContextError::MissingContext)?;
+        let tether = ctx.user_stash().connection().await?;
+        self.category_view = CategoryView::load(&tether).await?;
 
         Ok(())
     }
@@ -1782,6 +1857,12 @@ impl<T: Clone> Clone for ScrollerUpdate<T> {
                 }
                 .into(),
             },
+            ScrollerUpdate::CategoryViewChanged { src, category_view } => {
+                ScrollerUpdate::CategoryViewChanged {
+                    src: *src,
+                    category_view: category_view.clone(),
+                }
+            }
             ScrollerUpdate::Error { .. } => panic!("Cannot clone error update"),
             ScrollerUpdate::Status(update) => match update {
                 ScrollerStatusUpdate::FetchNewStart(src) => {
@@ -1901,6 +1982,7 @@ mod tests {
                     current
                 }
             },
+            ScrollerUpdate::CategoryViewChanged { .. } => current,
             ScrollerUpdate::Error { .. } => current,
             ScrollerUpdate::Status(_) => current,
         }

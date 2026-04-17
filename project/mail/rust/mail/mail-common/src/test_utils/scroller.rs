@@ -559,6 +559,7 @@ where
                     Ok(Some(items))
                 }
             },
+            ScrollerUpdate::CategoryViewChanged { .. } => Ok(None),
             ScrollerUpdate::Error { src, error } => {
                 let err_str = error.to_string();
                 self.updates.push(ScrollerUpdate::Error { src, error });

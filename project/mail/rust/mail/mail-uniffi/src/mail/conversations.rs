@@ -373,7 +373,7 @@ pub async fn scroll_conversations_for_label(
             MailScroller::conversations(context.as_weak(), label_id.into(), 50).await?;
 
         let handle = spawn_conversation_scroller_watcher(&context, handle, callback);
-        let scroller = ConversationScroller::new(scroller, handle);
+        let scroller = ConversationScroller::new(scroller, handle, context.as_weak());
 
         Result::<_, RealProtonMailError>::Ok(Arc::new(scroller))
     })

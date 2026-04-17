@@ -2,28 +2,28 @@ use crate::core::datatypes::Id;
 use crate::errors::MailScrollerError;
 use crate::mail::datatypes::{Conversation, Message, SystemLabel};
 use crate::{PaginatorSearchOptions, WatchHandle, async_runtime, uniffi_async};
+use mail_common::MailContextError;
 use mail_common::MailUserContext;
 use mail_common::ProtonMailError as RealProtonMailError;
 use mail_common::datatypes::{
-    ContextualConversation as RealContextualConversation, IncludeSwitch as RealIncludeSwitch,
-    ReadFilter as RealReadFilter,
+    CategoryLabel as RealCategoryLabel, ContextualConversation as RealContextualConversation,
+    IncludeSwitch as RealIncludeSwitch, ReadFilter as RealReadFilter,
 };
 use mail_common::models::Message as RealMessage;
 use mail_common::{MailCursor as RealMailCursor, NextMailCursorItem};
 use mail_common::{
-    MailScroller as RealMailScroller, MailScrollerHandle, ScrollerListUpdate, ScrollerStatusUpdate,
-    ScrollerUpdate,
+    MailScroller as RealMailScroller, MailScrollerHandle, MailScrollerItem, ScrollerListUpdate,
+    ScrollerStatusUpdate, ScrollerUpdate,
 };
 use mail_core_common::datatypes::LocalLabelId;
-use std::sync::Arc;
+use mail_stash::stash::Tether;
+use std::sync::{Arc, Weak};
 
 /// A category label that can be used to filter the mail scroller.
 #[derive(Clone, Debug, uniffi::Record)]
 pub struct CategoryLabel {
     /// The local label ID used to identify and enable this category.
     pub id: Id,
-    /// Display name of the category (e.g. "Newsletters", "Promotions").
-    pub name: String,
     /// Whether there are unseen items in this category (unread count > 0).
     pub has_unseen_items: bool,
     /// Whether this category is currently the active filter.
@@ -46,6 +46,17 @@ pub trait CategoryViewCallback: Send + Sync {
     fn on_update(&self, category_view: CategoryView);
 }
 
+impl From<RealCategoryLabel> for CategoryLabel {
+    fn from(c: RealCategoryLabel) -> Self {
+        CategoryLabel {
+            id: c.local_id.as_u64().into(),
+            has_unseen_items: c.has_unseen_items,
+            enabled: c.enabled,
+            system_label: c.system_label.into(),
+        }
+    }
+}
+
 #[uniffi::export(callback_interface)]
 pub trait ConversationScrollerLiveQueryCallback: Send + Sync {
     fn on_update(&self, update: ConversationScrollerUpdate);
@@ -55,6 +66,7 @@ pub trait ConversationScrollerLiveQueryCallback: Send + Sync {
 pub enum ConversationScrollerUpdate {
     List(ConversationScrollerListUpdate),
     Status(ConversationScrollerStatusUpdate),
+    CategoryViewChanged { category_view: CategoryView },
     Error { error: MailScrollerError },
 }
 
@@ -193,6 +205,13 @@ impl From<ScrollerUpdate<RealContextualConversation>> for ConversationScrollerUp
                 error: RealProtonMailError::from(error).into(),
             },
             ScrollerUpdate::Status(update) => Self::Status(update.into()),
+            ScrollerUpdate::CategoryViewChanged { category_view, .. } => {
+                Self::CategoryViewChanged {
+                    category_view: CategoryView {
+                        available: category_view.into_iter().map(Into::into).collect(),
+                    },
+                }
+            }
         }
     }
 }
@@ -319,6 +338,7 @@ impl From<ScrollerListUpdate<RealMessage>> for MessageScrollerListUpdate {
 pub enum MessageScrollerUpdate {
     List(MessageScrollerListUpdate),
     Status(MessageScrollerStatusUpdate),
+    CategoryViewChanged { category_view: CategoryView },
     Error { error: MailScrollerError },
 }
 impl From<ScrollerUpdate<RealMessage>> for MessageScrollerUpdate {
@@ -329,6 +349,13 @@ impl From<ScrollerUpdate<RealMessage>> for MessageScrollerUpdate {
             ScrollerUpdate::Error { src: _, error } => MessageScrollerUpdate::Error {
                 error: RealProtonMailError::from(error).into(),
             },
+            ScrollerUpdate::CategoryViewChanged { category_view, .. } => {
+                Self::CategoryViewChanged {
+                    category_view: CategoryView {
+                        available: category_view.into_iter().map(Into::into).collect(),
+                    },
+                }
+            }
         }
     }
 }
@@ -391,10 +418,38 @@ impl From<IncludeSwitch> for RealIncludeSwitch {
     }
 }
 
+/// Resolves the current category view state into FFI types.
+///
+/// Shared by `ConversationScroller::category_view()` and `MessageScroller::category_view()`
+/// so the resolution logic lives in one place.
+async fn ffi_category_view<T: MailScrollerItem>(
+    scroller: Arc<RealMailScroller<T>>,
+    ctx: Weak<MailUserContext>,
+) -> Result<CategoryView, RealProtonMailError> {
+    let ctx = ctx
+        .upgrade()
+        .ok_or(MailContextError::MissingContext)
+        .map_err(RealProtonMailError::from)?;
+    let tether: Tether = ctx
+        .user_stash()
+        .connection()
+        .await
+        .map_err(RealProtonMailError::from)?;
+    let available = scroller
+        .resolved_category_view(&tether)
+        .await
+        .map_err(RealProtonMailError::from)?
+        .into_iter()
+        .map(Into::into)
+        .collect();
+    Ok(CategoryView { available })
+}
+
 #[derive(uniffi::Object)]
 pub struct ConversationScroller {
     scroller: Arc<RealMailScroller<RealContextualConversation>>,
     handle: Arc<WatchHandle>,
+    ctx: Weak<MailUserContext>,
 }
 
 impl ConversationScroller {
@@ -402,10 +457,12 @@ impl ConversationScroller {
     pub(crate) fn new(
         scroller: RealMailScroller<RealContextualConversation>,
         handle: Arc<WatchHandle>,
+        ctx: Weak<MailUserContext>,
     ) -> Self {
         Self {
             scroller: Arc::new(scroller),
             handle,
+            ctx,
         }
     }
 }
@@ -489,17 +546,10 @@ impl ConversationScroller {
     /// Returns the current category filter state.
     pub async fn category_view(&self) -> Result<CategoryView, MailScrollerError> {
         let scroller = Arc::clone(&self.scroller);
-
-        uniffi_async(async move {
-            let _ = scroller
-                .category_view()
-                .await
-                .map_err(RealProtonMailError::from)?;
-
-            Result::<_, RealProtonMailError>::Ok(CategoryView { available: vec![] })
-        })
-        .await
-        .map_err(Into::into)
+        let ctx = Weak::clone(&self.ctx);
+        uniffi_async(ffi_category_view(scroller, ctx))
+            .await
+            .map_err(Into::into)
     }
 
     pub fn change_include(
@@ -569,14 +619,20 @@ impl ConversationScroller {
 pub struct MessageScroller {
     scroller: Arc<RealMailScroller<RealMessage>>,
     handle: Arc<WatchHandle>,
+    ctx: Weak<MailUserContext>,
 }
 
 impl MessageScroller {
     #[must_use]
-    pub(crate) fn new(scroller: RealMailScroller<RealMessage>, handle: Arc<WatchHandle>) -> Self {
+    pub(crate) fn new(
+        scroller: RealMailScroller<RealMessage>,
+        handle: Arc<WatchHandle>,
+        ctx: Weak<MailUserContext>,
+    ) -> Self {
         Self {
             scroller: Arc::new(scroller),
             handle,
+            ctx,
         }
     }
 }
@@ -652,17 +708,10 @@ impl MessageScroller {
     /// Returns the current category filter state.
     pub async fn category_view(&self) -> Result<CategoryView, MailScrollerError> {
         let scroller = Arc::clone(&self.scroller);
-
-        uniffi_async(async move {
-            let _ = scroller
-                .category_view()
-                .await
-                .map_err(RealProtonMailError::from)?;
-
-            Result::<_, RealProtonMailError>::Ok(CategoryView { available: vec![] })
-        })
-        .await
-        .map_err(Into::into)
+        let ctx = Weak::clone(&self.ctx);
+        uniffi_async(ffi_category_view(scroller, ctx))
+            .await
+            .map_err(Into::into)
     }
 
     pub fn change_include(

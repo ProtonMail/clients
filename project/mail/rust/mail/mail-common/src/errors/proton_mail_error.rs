@@ -288,6 +288,7 @@ impl From<MailContextError> for ProtonMailError {
             MailContextError::NonProcessableActions(_) => Self::NonProcessableActions,
             MailContextError::NetworkMonitorService(_) => Self::Unexpected(Unexpected::Internal),
             MailContextError::ImageProxyFailed => Self::Unexpected(Unexpected::Network),
+            MailContextError::CategoryNotSupported => Self::Unexpected(Unexpected::Internal),
         }
     }
 }

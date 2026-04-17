@@ -91,6 +91,9 @@ impl ConversationsState {
                 tracing::error!("{e:?}");
                 e.into()
             }
+            ScrollerUpdate::CategoryViewChanged { .. } => {
+                ConversationMessage::ScrollerFetchNewEnd.into()
+            }
             ScrollerUpdate::Status(update) => match update {
                 ScrollerStatusUpdate::FetchNewStart(_) => {
                     ConversationMessage::ScrollerFetchNewStart.into()

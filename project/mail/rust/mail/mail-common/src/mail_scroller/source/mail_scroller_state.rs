@@ -23,11 +23,14 @@ impl<T: ScrollData> MailScrollerState<T> {
         local_label_id: LocalLabelId,
         unread: ReadFilter,
         page_size: usize,
+        category: Vec<LocalLabelId>,
         tether: &Tether,
     ) -> Result<Self, StashError> {
         info!("Creating new synced state");
 
-        let state = CachedScrollData::new(local_label_id, unread, page_size, tether).await?;
+        let state =
+            CachedScrollData::new(local_label_id, unread, page_size, category.clone(), tether)
+                .await?;
 
         match state {
             Some(state) => Ok(MailScrollerState::Synced(state)),
@@ -40,6 +43,7 @@ impl<T: ScrollData> MailScrollerState<T> {
                     local_label_id,
                     unread,
                     page_size,
+                    category,
                     order_dir,
                     order_field,
                 ))
@@ -52,13 +56,20 @@ impl<T: ScrollData> MailScrollerState<T> {
         local_label_id: LocalLabelId,
         unread: ReadFilter,
         page_size: usize,
+        category: Vec<LocalLabelId>,
         order_dir: ScrollOrderDir,
         order_field: ScrollOrderField,
     ) -> Self {
         info!("Creating new unsynced state");
 
-        let state =
-            CachedScrollData::all(local_label_id, unread, page_size, order_dir, order_field);
+        let state = CachedScrollData::all(
+            local_label_id,
+            unread,
+            page_size,
+            category,
+            order_dir,
+            order_field,
+        );
 
         MailScrollerState::Unsynced(state)
     }
@@ -84,6 +95,7 @@ impl<T: ScrollData> MailScrollerState<T> {
         local_label_id: LocalLabelId,
         unread: ReadFilter,
         page_size: usize,
+        category: Vec<LocalLabelId>,
         tether: &Tether,
     ) -> Result<(), StashError> {
         debug!("Synchronizing state");
@@ -100,7 +112,7 @@ impl<T: ScrollData> MailScrollerState<T> {
         }
 
         let new_state =
-            MailScrollerState::synced(local_label_id, unread, page_size, tether).await?;
+            MailScrollerState::synced(local_label_id, unread, page_size, category, tether).await?;
 
         if new_state.is_synced() {
             *self = new_state;

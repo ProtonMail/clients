@@ -48,9 +48,11 @@ pub enum SystemLabel {
 
     CategorySocial = 20,
     CategoryPromotions = 21,
-    CatergoryUpdates = 22,
-    CategoryForums = 23,
-    CategoryDefault = 24,
+    CategoryUpdates = 22,
+    CategoryForums = 23, // This label is deprecated and should not be displayed to users.
+    CategoryDefault = 24, // Also known as Primary - all other bucket category
+    CategoryNewsletter = 25,
+    CategoryTransactions = 26,
 }
 
 impl SystemLabel {
@@ -109,13 +111,14 @@ impl SystemLabel {
     }
 
     #[must_use]
-    pub fn category_labels() -> [Self; 5] {
+    pub fn category_labels() -> [Self; 6] {
         [
+            Self::CategoryDefault,
             Self::CategorySocial,
             Self::CategoryPromotions,
-            Self::CatergoryUpdates,
-            Self::CategoryForums,
-            Self::CategoryDefault,
+            Self::CategoryUpdates,
+            Self::CategoryNewsletter,
+            Self::CategoryTransactions,
         ]
     }
 

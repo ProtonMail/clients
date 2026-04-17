@@ -1,10 +1,12 @@
 use std::collections::BTreeMap;
 
 use crate as mail_common;
+use crate::CategoryView;
 use crate::datatypes::LocalMessageId;
 use crate::datatypes::ReadFilter;
 use crate::datatypes::labels::ScrollOrderDir;
 use crate::datatypes::labels::ScrollOrderField;
+use crate::mail_scroller::conversation_scroller::save_conversation_with_labels;
 use crate::models::{CachedScrollData, MessageScrollData, ScrollCursor};
 use crate::models::{Message, ScrollData};
 use mail_api::services::proton::common::MessageId;
@@ -239,11 +241,16 @@ async fn test_cashed_scroller_reads_correct_items_within_visible_range() {
 
     let all_count = 50;
     let page_size = 5;
-    let mut cached_scroller =
-        CachedScrollData::<MessageScrollData>::new(local_label_id, unread, page_size, &tether)
-            .await
-            .unwrap()
-            .unwrap();
+    let mut cached_scroller = CachedScrollData::<MessageScrollData>::new(
+        local_label_id,
+        unread,
+        page_size,
+        vec![],
+        &tether,
+    )
+    .await
+    .unwrap()
+    .unwrap();
     cached_scroller.fetch_more(&tether).await.unwrap();
     // Test if the scroller can read visible elements within its own range
     let expected_count = 5_usize;
@@ -338,11 +345,16 @@ async fn test_cashed_scroller_reads_correct_items_within_visible_range() {
     assert_eq!(actual, expected);
 
     // Create a new cached scroller and assert it starts from the beggining
-    let mut cached_scroller =
-        CachedScrollData::<MessageScrollData>::new(local_label_id, unread, page_size, &tether)
-            .await
-            .unwrap()
-            .unwrap();
+    let mut cached_scroller = CachedScrollData::<MessageScrollData>::new(
+        local_label_id,
+        unread,
+        page_size,
+        vec![],
+        &tether,
+    )
+    .await
+    .unwrap()
+    .unwrap();
     cached_scroller.fetch_more(&tether).await.unwrap();
     let expected_count = 5_usize;
     let count = cached_scroller.seen_count(&tether).await.unwrap();
@@ -469,11 +481,16 @@ async fn test_cashed_scroller_reads_last_two_pages_together_when_last_page_is_no
         .unwrap();
 
     let page_size = 2;
-    let mut cached_scroller =
-        CachedScrollData::<MessageScrollData>::new(local_label_id, unread, page_size, &tether)
-            .await
-            .unwrap()
-            .unwrap();
+    let mut cached_scroller = CachedScrollData::<MessageScrollData>::new(
+        local_label_id,
+        unread,
+        page_size,
+        vec![],
+        &tether,
+    )
+    .await
+    .unwrap()
+    .unwrap();
 
     let items = cached_scroller.seen_count(&tether).await.unwrap();
 
@@ -739,4 +756,276 @@ async fn allow_different_filter_types_to_be_stored_in_database() {
     assert_eq!(scroller_all.id, Some(4));
     assert_eq!(scroller_read.id, Some(5));
     assert_eq!(scroller_unread.id, Some(6));
+}
+
+// --- Category filter tests ---
+
+/// Build a CachedScrollData covering all items (cursor at absolute beginning/end)
+/// and advance it by one page so `visible_elements` returns real items.
+async fn cached_cursor_with_categories(
+    label_id: crate::LocalLabelId,
+    category_ids: Vec<crate::LocalLabelId>,
+    tether: &Tether,
+) -> CachedScrollData<MessageScrollData> {
+    let mut cached = CachedScrollData::all(
+        label_id,
+        ReadFilter::All,
+        100, // large page — loads everything in one call
+        category_ids,
+        ScrollOrderDir::Desc,
+        ScrollOrderField::Time,
+    );
+    cached.fetch_more(tether).await.unwrap();
+    cached
+}
+
+#[tokio::test]
+async fn test_category_filter_social_shows_only_matching_messages() {
+    let mail_stash = new_test_connection().await;
+    let mut tether = mail_stash.connection().await.unwrap();
+    let address = create_address(&mut tether).await;
+    let raid = address.remote_id.clone().unwrap();
+    let inbox = SystemLabel::Inbox.load(&tether).await.unwrap().unwrap();
+    let mut social = SystemLabel::CategorySocial
+        .load(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+
+    let mut conversations = [
+        conversation!(remote_id: conv_id!("conv_1"), display_order: 1),
+        conversation!(remote_id: conv_id!("conv_2"), display_order: 2),
+        conversation!(remote_id: conv_id!("conv_3"), display_order: 3),
+        conversation!(remote_id: conv_id!("conv_4"), display_order: 4),
+    ];
+    let mut messages = [
+        message!(
+            display_order: 1,
+            remote_id: msg_id!("msg_1"),
+            local_address_id: address.id(),
+            remote_address_id: raid.clone(),
+            remote_conversation_id: conv_id!("conv_1"),
+            label_ids: vec![SystemLabel::Inbox.remote_id(), SystemLabel::CategorySocial.remote_id()]
+        ),
+        message!(
+            display_order: 2,
+            remote_id: msg_id!("msg_2"),
+            local_address_id: address.id(),
+            remote_address_id: raid.clone(),
+            remote_conversation_id: conv_id!("conv_2"),
+            label_ids: vec![SystemLabel::Inbox.remote_id()]
+        ),
+        message!(
+            display_order: 3,
+            remote_id: msg_id!("msg_3"),
+            local_address_id: address.id(),
+            remote_address_id: raid.clone(),
+            remote_conversation_id: conv_id!("conv_3"),
+            label_ids: vec![SystemLabel::Inbox.remote_id(), SystemLabel::CategorySocial.remote_id()]
+        ),
+        message!(
+            display_order: 4,
+            remote_id: msg_id!("msg_4"),
+            local_address_id: address.id(),
+            remote_address_id: raid.clone(),
+            remote_conversation_id: conv_id!("conv_4"),
+            label_ids: vec![SystemLabel::Inbox.remote_id()]
+        ),
+        message!(
+            display_order: 5,
+            remote_id: msg_id!("msg_5"),
+            local_address_id: address.id(),
+            remote_address_id: raid.clone(),
+            remote_conversation_id: conv_id!("conv_1"),
+            label_ids: vec![SystemLabel::Inbox.remote_id(), SystemLabel::CategorySocial.remote_id()]
+        ),
+    ];
+
+    tether
+        .tx::<_, _, StashError>(async |bond| {
+            social.display = true;
+            social.save(bond).await?;
+            save_conversation_with_labels(&mut conversations[0], &[&inbox, &social], bond).await;
+            save_conversation_with_labels(&mut conversations[1], &[&inbox], bond).await;
+            save_conversation_with_labels(&mut conversations[2], &[&inbox, &social], bond).await;
+            save_conversation_with_labels(&mut conversations[3], &[&inbox], bond).await;
+
+            for msg in messages.iter_mut() {
+                msg.save(bond).await?;
+            }
+
+            Ok(())
+        })
+        .await
+        .unwrap();
+
+    let inbox_id = inbox.id();
+    let social_id = social.id();
+    let cached = cached_cursor_with_categories(inbox_id, vec![social_id], &tether).await;
+    let visible = cached.visible_elements(&tether).await.unwrap();
+
+    assert_eq!(
+        visible.len(),
+        3,
+        "category filter: only social-tagged messages should be visible"
+    );
+    assert_eq!(
+        visible[0].remote_id,
+        msg_id!("msg_5"),
+        "category filter: first visible message should be social-tagged"
+    );
+    assert_eq!(
+        visible[1].remote_id,
+        msg_id!("msg_3"),
+        "category filter: second visible message should be social-tagged"
+    );
+    assert_eq!(
+        visible[2].remote_id,
+        msg_id!("msg_1"),
+        "category filter: second visible message should be social-tagged"
+    );
+}
+
+#[tokio::test]
+async fn test_category_filter_default_shows_all_messages_from_disabled_categories() {
+    let mail_stash = new_test_connection().await;
+    let mut tether = mail_stash.connection().await.unwrap();
+    let address = create_address(&mut tether).await;
+    let raid = address.remote_id.clone().unwrap();
+    let inbox = SystemLabel::Inbox.load(&tether).await.unwrap().unwrap();
+    let primary = SystemLabel::CategoryDefault
+        .load(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+    let mut social = SystemLabel::CategorySocial
+        .load(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+    let mut promotions = SystemLabel::CategoryPromotions
+        .load(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+    let mut newsletter = SystemLabel::CategoryNewsletter
+        .load(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+
+    let mut conversations = [
+        conversation!(remote_id: conv_id!("conv_1"), display_order: 1),
+        conversation!(remote_id: conv_id!("conv_2"), display_order: 2),
+        conversation!(remote_id: conv_id!("conv_3"), display_order: 3),
+        conversation!(remote_id: conv_id!("conv_4"), display_order: 4),
+    ];
+    let mut messages = [
+        message!(
+            display_order: 1,
+            remote_id: msg_id!("msg_1"),
+            local_address_id: address.id(),
+            remote_address_id: raid.clone(),
+            remote_conversation_id: conv_id!("conv_1"),
+            label_ids: vec![SystemLabel::Inbox.remote_id(), SystemLabel::CategoryDefault.remote_id()]
+        ),
+        message!(
+            display_order: 2,
+            remote_id: msg_id!("msg_2"),
+            local_address_id: address.id(),
+            remote_address_id: raid.clone(),
+            remote_conversation_id: conv_id!("conv_2"),
+            label_ids: vec![SystemLabel::Inbox.remote_id(), SystemLabel::CategorySocial.remote_id()]
+        ),
+        message!(
+            display_order: 3,
+            remote_id: msg_id!("msg_3"),
+            local_address_id: address.id(),
+            remote_address_id: raid.clone(),
+            remote_conversation_id: conv_id!("conv_3"),
+            label_ids: vec![SystemLabel::Inbox.remote_id(), SystemLabel::CategoryPromotions.remote_id()]
+        ),
+        message!(
+            display_order: 4,
+            remote_id: msg_id!("msg_4"),
+            local_address_id: address.id(),
+            remote_address_id: raid.clone(),
+            remote_conversation_id: conv_id!("conv_4"),
+            label_ids: vec![SystemLabel::Inbox.remote_id(), SystemLabel::CategoryNewsletter.remote_id()]
+        ),
+        message!(
+            display_order: 5,
+            remote_id: msg_id!("msg_5"),
+            local_address_id: address.id(),
+            remote_address_id: raid.clone(),
+            remote_conversation_id: conv_id!("conv_1"),
+            label_ids: vec![SystemLabel::Inbox.remote_id(), SystemLabel::CategoryDefault.remote_id()]
+        ),
+    ];
+
+    tether
+        .tx::<_, _, StashError>(async |bond| {
+            social.display = true;
+            social.save(bond).await?;
+            promotions.display = false;
+            promotions.save(bond).await?;
+            newsletter.display = false;
+            newsletter.save(bond).await?;
+            // Only social is enabled.
+            save_conversation_with_labels(&mut conversations[0], &[&inbox, &primary], bond).await;
+            save_conversation_with_labels(&mut conversations[1], &[&inbox, &social], bond).await;
+            save_conversation_with_labels(&mut conversations[2], &[&inbox, &promotions], bond)
+                .await;
+            save_conversation_with_labels(&mut conversations[3], &[&inbox, &newsletter], bond)
+                .await;
+
+            for msg in messages.iter_mut() {
+                msg.save(bond).await?;
+            }
+
+            Ok(())
+        })
+        .await
+        .unwrap();
+
+    let mut view = CategoryView::load(&tether).await.unwrap();
+    let categories = view
+        .enable(Some(primary.id()))
+        .unwrap()
+        .query_filter_ids(&tether)
+        .await
+        .unwrap();
+
+    // Make sure all categories are present in the result
+    assert!(categories.contains(&primary.id()));
+    assert!(categories.contains(&promotions.id()));
+    assert!(categories.contains(&newsletter.id()));
+    let cached = cached_cursor_with_categories(inbox.id(), categories, &tether).await;
+    let visible = cached.visible_elements(&tether).await.unwrap();
+
+    assert_eq!(
+        visible.len(),
+        4,
+        "category filter: only non-social-tagged messages should be visible"
+    );
+    assert_eq!(
+        visible[0].remote_id,
+        msg_id!("msg_5"),
+        "category filter: first visible message should be primary-tagged"
+    );
+    assert_eq!(
+        visible[1].remote_id,
+        msg_id!("msg_4"),
+        "category filter: second visible message should be newsletter-tagged"
+    );
+    assert_eq!(
+        visible[2].remote_id,
+        msg_id!("msg_3"),
+        "category filter: second visible message should be promotion-tagged"
+    );
+    assert_eq!(
+        visible[3].remote_id,
+        msg_id!("msg_1"),
+        "category filter: second visible message should be primary-tagged"
+    );
 }

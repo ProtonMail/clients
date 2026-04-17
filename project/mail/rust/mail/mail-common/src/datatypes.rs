@@ -1,5 +1,6 @@
 mod assigned_actions;
 pub mod attachment;
+mod category_label;
 pub(crate) mod contextual_conversation;
 mod deleted_item_type;
 pub mod dependencies;
@@ -23,6 +24,7 @@ use mail_api::services::proton::prelude::ContentDisposition;
 use mail_stash::orm::Model;
 
 pub use assigned_actions::*;
+pub use category_label::CategoryLabel;
 pub use contextual_conversation::*;
 pub use deleted_item_type::DeletedItemType;
 use derive_more::derive::TryFrom;

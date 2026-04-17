@@ -180,6 +180,8 @@ pub enum MailContextError {
     NetworkMonitorService(#[from] NetworkMonitorServiceError),
     #[error("Couldn't load image via the image proxy (got empty response)")]
     ImageProxyFailed,
+    #[error("Category filtering is not supported for the current label")]
+    CategoryNotSupported,
     #[error("{0}")]
     Other(#[from] anyhow::Error),
 }

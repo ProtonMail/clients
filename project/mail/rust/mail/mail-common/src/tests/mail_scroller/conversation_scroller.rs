@@ -1,12 +1,12 @@
 use mail_common::datatypes::SystemLabelId;
 use std::collections::BTreeMap;
 
-use crate as mail_common;
 use crate::datatypes::LocalConversationId;
 use crate::datatypes::labels::{ScrollOrderDir, ScrollOrderField};
 use crate::datatypes::{ContextualConversation, ReadFilter};
 use crate::models::{CachedScrollData, ConversationScrollData, ScrollData};
 use crate::models::{Conversation, ScrollCursor};
+use crate::{self as mail_common, CategoryView};
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::common::ConversationId;
 use mail_common::test_utils::db::new_test_connection;
@@ -28,15 +28,25 @@ fn test_conversations(n: usize, order_shift: u64) -> Vec<Conversation> {
 }
 
 async fn save_single_conversation(label: &Label, conversation: &mut Conversation, bond: &Bond<'_>) {
-    conversation.save(bond).await.unwrap();
-    let mut conv_label = conv_label!(
-        local_conversation_id: conversation.local_id,
-        remote_label_id: label.remote_id.clone(),
-        local_label_id: label.local_id,
-        context_time: conversation.display_order.into()
-    );
+    save_conversation_with_labels(conversation, &[label], bond).await;
+}
 
-    conv_label.save(bond).await.unwrap();
+pub async fn save_conversation_with_labels(
+    conversation: &mut Conversation,
+    labels: &[&Label],
+    bond: &Bond<'_>,
+) {
+    conversation.save(bond).await.unwrap();
+    for label in labels {
+        let mut conv_label = conv_label!(
+            local_conversation_id: conversation.local_id,
+            remote_label_id: label.remote_id.clone(),
+            local_label_id: label.local_id,
+            context_time: conversation.display_order.into()
+        );
+
+        conv_label.save(bond).await.unwrap();
+    }
     conversation.reload(bond).await.unwrap();
 }
 
@@ -253,11 +263,16 @@ async fn test_cashed_scroller_reads_correct_items_within_visible_range() {
     let scroller = ScrollCursor::from(scroller);
     let all_count = 50;
     let page_size = 5;
-    let mut cached_scroller =
-        CachedScrollData::<ConversationScrollData>::new(local_label_id, unread, page_size, &tether)
-            .await
-            .unwrap()
-            .unwrap();
+    let mut cached_scroller = CachedScrollData::<ConversationScrollData>::new(
+        local_label_id,
+        unread,
+        page_size,
+        vec![],
+        &tether,
+    )
+    .await
+    .unwrap()
+    .unwrap();
     cached_scroller.fetch_more(&tether).await.unwrap();
 
     // Test if the scroller can read visible elements within its own range
@@ -346,11 +361,16 @@ async fn test_cashed_scroller_reads_correct_items_within_visible_range() {
     assert_eq!(actual, expected);
 
     // Create a new cached scroller and assert it starts from the beggining
-    let mut cached_scroller =
-        CachedScrollData::<ConversationScrollData>::new(local_label_id, unread, page_size, &tether)
-            .await
-            .unwrap()
-            .unwrap();
+    let mut cached_scroller = CachedScrollData::<ConversationScrollData>::new(
+        local_label_id,
+        unread,
+        page_size,
+        vec![],
+        &tether,
+    )
+    .await
+    .unwrap()
+    .unwrap();
     cached_scroller.fetch_more(&tether).await.unwrap();
 
     let expected_count = 5_usize;
@@ -489,11 +509,16 @@ async fn test_cashed_scroller_reads_last_two_pages_together_when_last_page_is_no
         .unwrap();
 
     let page_size = 2;
-    let mut cached_scroller =
-        CachedScrollData::<ConversationScrollData>::new(local_label_id, unread, page_size, &tether)
-            .await
-            .unwrap()
-            .unwrap();
+    let mut cached_scroller = CachedScrollData::<ConversationScrollData>::new(
+        local_label_id,
+        unread,
+        page_size,
+        vec![],
+        &tether,
+    )
+    .await
+    .unwrap()
+    .unwrap();
     let items = cached_scroller.seen_count(&tether).await.unwrap();
 
     assert_eq!(items, 0);
@@ -864,11 +889,16 @@ async fn test_cashed_scroller_correctly_reads_empty_conversations_from_the_trash
         .unwrap();
 
     let page_size = 4;
-    let mut cached_scroller =
-        CachedScrollData::<ConversationScrollData>::new(trash.id(), unread, page_size, &tether)
-            .await
-            .unwrap()
-            .unwrap();
+    let mut cached_scroller = CachedScrollData::<ConversationScrollData>::new(
+        trash.id(),
+        unread,
+        page_size,
+        vec![],
+        &tether,
+    )
+    .await
+    .unwrap()
+    .unwrap();
     let items = cached_scroller.seen_count(&tether).await.unwrap();
 
     assert_eq!(items, 0);
@@ -918,6 +948,7 @@ async fn test_create_or_get_local_fix_preserves_api_conversations_with_labels() 
         inbox_local_id,
         ReadFilter::All,
         10,
+        vec![],
         ScrollOrderDir::Desc,
         ScrollOrderField::Time,
     );
@@ -1016,4 +1047,171 @@ async fn test_create_or_get_local_fix_preserves_api_conversations_with_labels() 
     // 4. Filtered conversations reach the prefetcher successfully as they have labels
     // 5. Conversations appear in scroller results
     // 6. The circular dependency is broken: labels preserved → passes filter → reaches prefetcher → becomes known
+}
+
+// --- Category filter tests ---
+
+/// Build a CachedScrollData covering all items (cursor at absolute beginning/end)
+/// and advance it by one page so `visible_elements` returns real items.
+async fn cached_cursor_with_categories(
+    label_id: crate::LocalLabelId,
+    category_ids: Vec<crate::LocalLabelId>,
+    tether: &Tether,
+) -> CachedScrollData<ConversationScrollData> {
+    let mut cached = CachedScrollData::<ConversationScrollData>::all(
+        label_id,
+        ReadFilter::All,
+        100, // large page — loads everything in one call
+        category_ids,
+        ScrollOrderDir::Desc,
+        ScrollOrderField::Time,
+    );
+    cached.fetch_more(tether).await.unwrap();
+    cached
+}
+
+#[tokio::test]
+async fn test_category_filter_social_shows_only_matching_conversations() {
+    let mail_stash = new_test_connection().await;
+    let mut tether = mail_stash.connection().await.unwrap();
+    let inbox = SystemLabel::Inbox.load(&tether).await.unwrap().unwrap();
+    let mut social = SystemLabel::CategorySocial
+        .load(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+
+    let mut conversations = [
+        conversation!(remote_id: conv_id!("conv_1"), display_order: 1),
+        conversation!(remote_id: conv_id!("conv_2"), display_order: 2),
+        conversation!(remote_id: conv_id!("conv_3"), display_order: 3),
+        conversation!(remote_id: conv_id!("conv_4"), display_order: 4),
+    ];
+
+    tether
+        .tx::<_, _, StashError>(async |bond| {
+            social.display = true;
+            social.save(bond).await.unwrap();
+            // 2 conversations with inbox AND social labels
+            // and 2 conversations with inbox only
+            save_conversation_with_labels(&mut conversations[0], &[&inbox, &social], bond).await;
+            save_conversation_with_labels(&mut conversations[1], &[&inbox], bond).await;
+            save_conversation_with_labels(&mut conversations[2], &[&inbox, &social], bond).await;
+            save_conversation_with_labels(&mut conversations[3], &[&inbox], bond).await;
+            Ok(())
+        })
+        .await
+        .unwrap();
+
+    let inbox_id = inbox.id();
+    let social_id = social.id();
+    let cached = cached_cursor_with_categories(inbox_id, vec![social_id], &tether).await;
+    let visible = cached.visible_elements(&tether).await.unwrap();
+
+    assert_eq!(
+        visible.len(),
+        2,
+        "category filter: only social-tagged conversations should be visible"
+    );
+    assert_eq!(
+        visible[0].remote_id,
+        conv_id!("conv_3"),
+        "category filter: first visible conversation should be social-tagged"
+    );
+    assert_eq!(
+        visible[1].remote_id,
+        conv_id!("conv_1"),
+        "category filter: second visible conversation should be social-tagged"
+    );
+}
+
+#[tokio::test]
+async fn test_category_filter_default_shows_all_conversations_from_disabled_categories() {
+    let mail_stash = new_test_connection().await;
+    let mut tether = mail_stash.connection().await.unwrap();
+    let inbox = SystemLabel::Inbox.load(&tether).await.unwrap().unwrap();
+    let primary = SystemLabel::CategoryDefault
+        .load(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+    let mut social = SystemLabel::CategorySocial
+        .load(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+    let mut promotions = SystemLabel::CategoryPromotions
+        .load(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+    let mut newsletter = SystemLabel::CategoryNewsletter
+        .load(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+
+    let mut conversations = [
+        conversation!(remote_id: conv_id!("conv_1"), display_order: 1),
+        conversation!(remote_id: conv_id!("conv_2"), display_order: 2),
+        conversation!(remote_id: conv_id!("conv_3"), display_order: 3),
+        conversation!(remote_id: conv_id!("conv_4"), display_order: 4),
+    ];
+
+    tether
+        .tx::<_, _, StashError>(async |bond| {
+            social.display = true;
+            social.save(bond).await?;
+            promotions.display = false;
+            promotions.save(bond).await?;
+            newsletter.display = false;
+            newsletter.save(bond).await?;
+            // Only social is enabled.
+            save_conversation_with_labels(&mut conversations[0], &[&inbox, &primary], bond).await;
+            save_conversation_with_labels(&mut conversations[1], &[&inbox, &social], bond).await;
+            save_conversation_with_labels(&mut conversations[2], &[&inbox, &promotions], bond)
+                .await;
+            save_conversation_with_labels(&mut conversations[3], &[&inbox, &newsletter], bond)
+                .await;
+            Ok(())
+        })
+        .await
+        .unwrap();
+
+    let mut view = CategoryView::load(&tether).await.unwrap();
+    let categories = view
+        .enable(Some(primary.id()))
+        .unwrap()
+        .query_filter_ids(&tether)
+        .await
+        .unwrap();
+
+    // Make sure all categories are present in the result
+    assert!(categories.contains(&primary.id()));
+    assert!(categories.contains(&promotions.id()));
+    assert!(categories.contains(&newsletter.id()));
+
+    let cached = cached_cursor_with_categories(inbox.id(), categories, &tether).await;
+    let visible = cached.visible_elements(&tether).await.unwrap();
+
+    assert_eq!(
+        visible.len(),
+        3,
+        "category filter: only non-social-tagged conversations should be visible"
+    );
+    assert_eq!(
+        visible[0].remote_id,
+        conv_id!("conv_4"),
+        "category filter: first visible conversation should be newsletter-tagged"
+    );
+    assert_eq!(
+        visible[1].remote_id,
+        conv_id!("conv_3"),
+        "category filter: second visible conversation should be promotions-tagged"
+    );
+    assert_eq!(
+        visible[2].remote_id,
+        conv_id!("conv_1"),
+        "category filter: second visible conversation should be primary-tagged"
+    );
 }

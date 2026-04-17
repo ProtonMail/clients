@@ -105,6 +105,10 @@ where
     ) -> impl Future<Output = Result<MailPaginatorJoinHandle, MailContextError>> + Send;
 
     fn watched_tables(&self) -> Vec<String>;
+
+    fn set_category(&mut self, _category_ids: Vec<LocalLabelId>) {
+        // default: no-op for sources that don't support category filtering
+    }
 }
 
 pub trait MailScrollerItem

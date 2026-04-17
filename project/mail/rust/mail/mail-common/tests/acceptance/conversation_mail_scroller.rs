@@ -1896,6 +1896,7 @@ async fn test_conversation_mail_scroller_end_cursor_is_not_pointing_to_any_eleme
         local_label_id,
         ReadFilter::All,
         page_size,
+        vec![],
         &tether,
     )
     .await
@@ -1923,6 +1924,7 @@ async fn test_conversation_mail_scroller_end_cursor_is_not_pointing_to_any_eleme
         local_label_id,
         ReadFilter::All,
         page_size,
+        vec![],
         &tether,
     )
     .await
@@ -2521,6 +2523,7 @@ async fn test_cached_scroller_no_items_lost_with_tied_snooze_and_time() {
         local_label_id,
         ReadFilter::All,
         1, // page_size = 1 puts conv_a / conv_b right at the page boundary
+        vec![],
         ScrollOrderDir::Desc,
         ScrollOrderField::SnoozeTime,
     );

@@ -286,6 +286,7 @@ pub async fn refresh_mail(ctx: &MailUserContext) -> Result<(), MailEventSubscrib
                 all_mail.id(),
                 ReadFilter::All,
                 page_size,
+                vec![],
                 ScrollOrderDir::default(),
                 ScrollOrderField::default(),
             );
@@ -309,6 +310,7 @@ pub async fn refresh_mail(ctx: &MailUserContext) -> Result<(), MailEventSubscrib
                 all_mail.id(),
                 ReadFilter::All,
                 page_size,
+                vec![],
                 ScrollOrderDir::default(),
                 ScrollOrderField::default(),
             );

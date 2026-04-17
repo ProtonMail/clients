@@ -64,6 +64,7 @@ where
         order_field: ScrollOrderField,
         time: UnixTimestamp,
         snooze_time: UnixTimestamp,
+        category: Vec<LocalLabelId>,
     ) -> String;
 
     fn convert(local_id: LocalLabelId, items: Vec<Self::Model>) -> Vec<Self::Item>;
@@ -165,6 +166,7 @@ impl From<MessageScrollData> for ScrollCursor<MessageScrollData> {
             local_id,
             order_dir: data.order_dir,
             order_field: data.order_field,
+            category: vec![],
             _phantom: PhantomData,
         }
     }
@@ -207,6 +209,7 @@ impl ScrollData for MessageScrollData {
         order_field: ScrollOrderField,
         time: UnixTimestamp,
         snooze_time: UnixTimestamp,
+        category: Vec<LocalLabelId>,
     ) -> String {
         //NOTE: we only check the display order for elements with matching time
         // or we will get incorrect query results.
@@ -266,6 +269,19 @@ impl ScrollData for MessageScrollData {
             ReadFilter::Read => {
                 query += " AND messages.unread = 0 ";
             }
+        }
+
+        if !category.is_empty() {
+            let ids_str = category
+                .iter()
+                .map(|id| id.as_u64().to_string())
+                .collect::<Vec<_>>()
+                .join(", ");
+            query += &format!(
+                " AND EXISTS (SELECT 1 FROM message_labels ml_cat \
+                 WHERE ml_cat.local_message_id = messages.local_id \
+                 AND ml_cat.local_label_id IN ({ids_str})) "
+            );
         }
 
         let order_by = format!(
@@ -440,6 +456,7 @@ impl From<ConversationScrollData> for ScrollCursor<ConversationScrollData> {
             local_id,
             order_dir: data.order_dir,
             order_field: data.order_field,
+            category: vec![],
             _phantom: PhantomData,
         }
     }
@@ -482,6 +499,7 @@ impl ScrollData for ConversationScrollData {
         order_field: ScrollOrderField,
         time: UnixTimestamp,
         snooze_time: UnixTimestamp,
+        category: Vec<LocalLabelId>,
     ) -> String {
         let (time_op, display_order_op, local_id_op, sort_op) = if order_dir == ScrollOrderDir::Desc
         {
@@ -537,6 +555,19 @@ impl ScrollData for ConversationScrollData {
             ReadFilter::Read => {
                 query += " AND conversation_labels.context_num_unread = 0 ";
             }
+        }
+
+        if !category.is_empty() {
+            let ids_str = category
+                .iter()
+                .map(|id| id.as_u64().to_string())
+                .collect::<Vec<_>>()
+                .join(", ");
+            query += &format!(
+                " AND EXISTS (SELECT 1 FROM conversation_labels cl_cat \
+                 WHERE cl_cat.local_conversation_id = conversations.local_id \
+                 AND cl_cat.local_label_id IN ({ids_str})) "
+            );
         }
 
         let order_by = format!(
@@ -642,7 +673,17 @@ pub struct ScrollCursor<T: ScrollData> {
     pub order_field: ScrollOrderField,
 
     #[builder(default)]
+    pub category: Vec<LocalLabelId>,
+
+    #[builder(default)]
     pub _phantom: PhantomData<T>,
+}
+
+impl<T: ScrollData> ScrollCursor<T> {
+    pub fn with_category(mut self, category: Vec<LocalLabelId>) -> Self {
+        self.category = category;
+        self
+    }
 }
 
 impl<T: ScrollData> ScrollCursor<T> {
@@ -687,6 +728,7 @@ impl<T: ScrollData> ScrollCursor<T> {
             local_id: i64::MAX as u64,
             order_dir,
             order_field,
+            category: vec![],
             _phantom: PhantomData,
         }
     }
@@ -706,6 +748,7 @@ impl<T: ScrollData> ScrollCursor<T> {
             local_id: 0,
             order_dir,
             order_field,
+            category: vec![],
             _phantom: PhantomData,
         }
     }
@@ -749,6 +792,7 @@ impl<T: ScrollData> CachedScrollData<T> {
         local_label_id: LocalLabelId,
         unread: ReadFilter,
         page_size: usize,
+        category: Vec<LocalLabelId>,
         tether: &Tether<UserDb>,
     ) -> Result<Option<Self>, StashError> {
         let order_dir = ScrollOrderDir::for_local_label(local_label_id, tether).await?;
@@ -758,8 +802,9 @@ impl<T: ScrollData> CachedScrollData<T> {
             return Ok(None);
         };
 
-        let end = end.into();
-        let cursor = ScrollCursor::beginning(local_label_id, unread, order_dir, order_field);
+        let end = end.into().with_category(category.clone());
+        let cursor = ScrollCursor::beginning(local_label_id, unread, order_dir, order_field)
+            .with_category(category);
 
         Ok(Some(Self {
             page_size,
@@ -772,11 +817,14 @@ impl<T: ScrollData> CachedScrollData<T> {
         local_label_id: LocalLabelId,
         unread: ReadFilter,
         page_size: usize,
+        category: Vec<LocalLabelId>,
         order_dir: ScrollOrderDir,
         order_field: ScrollOrderField,
     ) -> Self {
-        let end = ScrollCursor::ending(local_label_id, unread, order_dir, order_field);
-        let cursor = ScrollCursor::beginning(local_label_id, unread, order_dir, order_field);
+        let end = ScrollCursor::ending(local_label_id, unread, order_dir, order_field)
+            .with_category(category.clone());
+        let cursor = ScrollCursor::beginning(local_label_id, unread, order_dir, order_field)
+            .with_category(category);
 
         Self {
             page_size,
@@ -791,7 +839,8 @@ impl<T: ScrollData> CachedScrollData<T> {
             self.cursor.unread,
             self.end.order_dir,
             self.end.order_field,
-        );
+        )
+        .with_category(self.cursor.category.clone());
         self
     }
 
@@ -875,6 +924,7 @@ impl<T: ScrollData> CachedScrollData<T> {
                 .local_id(T::local_id(last))
                 .order_dir(self.end.order_dir)
                 .order_field(self.end.order_field)
+                .category(self.end.category.clone())
                 .build(),
             None => self.end.clone(),
         };
@@ -1214,6 +1264,7 @@ impl<T: ScrollData> ScrollQuery<T> {
             self.cursor.order_field,
             self.cursor.time,
             self.cursor.snooze_time,
+            self.cursor.category.clone(),
         );
 
         let items = T::Model::find(
@@ -1247,6 +1298,7 @@ impl<T: ScrollData> ScrollQuery<T> {
             self.cursor.order_field,
             self.cursor.time,
             self.cursor.snooze_time,
+            self.cursor.category.clone(),
         );
 
         T::Model::count(

@@ -22,7 +22,10 @@ macro_rules! assert_api_ok {
     ($res:expr, $pattern:pat $(if $guard:expr)?) => {
         {
             let res = &$res;
-            assert!(matches!(&res, Ok($pattern) $(if $guard)?), "Expected {:?}, found {res:?}", stringify!($pat $(if $guard)?));
+            match res {
+                Ok($pattern) $(if $guard)? => {}
+                other => panic!("Expected Ok({}), found {other:?}", stringify!($pattern $(if $guard)?)),
+            }
         };
     };
 }

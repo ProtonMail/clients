@@ -7,7 +7,7 @@
   core = ["auth", "dep:passkey", "dep:bitflags", "dep:proton-crypto-account", "dep:num_enum"]
   auth = ["dep:passkey", "dep:bitflags"]
   default = []
-  quark = []
+  quark = ["dep:regex"]
   facet = ["dep:facet"]
   serde = ["dep:serde", "dep:serde_json", "bitflags?/serde"]
   muon = ["dep:muon"]
@@ -25,6 +25,7 @@
   proton-crypto-account = { optional = true, workspace = true, features = ["facet"] }
   num_enum = { workspace = true, optional = true }
   muon = { workspace = true, optional = true }
+  regex = { optional = true, version = "1.10" }
 
 [dev-dependencies]
   muon = { workspace = true, features = ["full-native"] }
@@ -34,6 +35,9 @@
   async-compat = { version = "0.2" }
   lattice = { path = ".", features = ["full"] }
   totp-rs = { version = "5.7" }
+
+  # SSO test dependencies (TLS via rustls; no default-tls/charset/http2/system-proxy)
+  reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
 
 [lints]
   workspace = true

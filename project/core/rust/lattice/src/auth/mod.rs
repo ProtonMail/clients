@@ -11,6 +11,7 @@ pub mod devices;
 pub mod get_auth_modulus;
 pub mod get_auth_sessions_forks;
 pub mod get_auth_sessions_forks_by_id;
+pub mod get_auth_sso;
 pub mod get_password_policy;
 pub mod post_auth;
 pub mod post_auth_2fa;

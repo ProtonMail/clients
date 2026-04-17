@@ -1,6 +1,7 @@
 pub mod encryption;
 pub mod event;
 pub mod jail;
+pub mod payments;
 pub mod user;
 
 use std::str::FromStr;
@@ -27,8 +28,9 @@ pub trait LtQuarkContractExt: LtQuarkContract {
 impl<T: LtQuarkContract> LtQuarkContractExt for T {
     fn to_muon_req(&self) -> Result<::muon::http::HttpReq, LatticeError> {
         let url = format!("/internal/quark/raw::{}", Self::COMMAND_PATH);
-        let http_req = ::muon::http::HttpReq::new(::muon::http::Method::GET, url)
-            .query(("strInput", self.params()?.as_command()));
+        let params = self.params()?.as_command();
+        let http_req =
+            ::muon::http::HttpReq::new(::muon::http::Method::GET, url).query(("strInput", params));
         Ok(http_req)
     }
 
@@ -114,6 +116,10 @@ impl QuarkCommand {
         self
     }
 
+    pub fn query_flag_if(self, cond: bool, k: impl ToString) -> Self {
+        if cond { self.query_flag(k) } else { self }
+    }
+
     pub fn query_if_some(self, k: impl ToString, v: Option<impl ToString>) -> Self {
         if let Some(v) = v {
             self.query(k, v)
@@ -136,7 +142,13 @@ impl QuarkCommand {
 
         if !self.value.is_empty() {
             items.push("--".to_owned());
-            items.extend(self.value.clone());
+            for value in &self.value {
+                if value.contains(['{', '[', ' ', '"']) {
+                    items.push(format!("'{}'", value.clone()));
+                } else {
+                    items.push(value.clone());
+                }
+            }
         }
 
         items.join(" ")

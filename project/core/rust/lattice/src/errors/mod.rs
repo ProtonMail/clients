@@ -52,6 +52,13 @@ pub struct LtApiErrorMetadataTrace {
     pub function: String,
 }
 
+/// Error code: device is not active (device association).
+pub const AUTH_DEVICE_NOT_ACTIVE: u32 = 10301;
+/// Error code: device token is invalid (device association).
+pub const AUTH_DEVICE_TOKEN_INVALID: u32 = 10302;
+/// Error code: device is rejected (device association).
+pub const AUTH_DEVICE_REJECTED: u32 = 10303;
+
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Display)]
 #[cfg_attr(feature = "serde", serde(untagged, rename_all = "PascalCase"))]
@@ -76,8 +83,36 @@ pub enum LtApiResponseError {
     #[display("DeviceAlreadyAssociated")]
     DeviceAlreadyAssociated(LtApiResponseErrorInfo<EnforcedCode<9107>, NullErrorDetails>),
 
+    #[display("DeviceNotActive")]
+    DeviceNotActive(LtApiResponseErrorInfo<EnforcedCode<AUTH_DEVICE_NOT_ACTIVE>, NullErrorDetails>),
+
+    #[display("DeviceTokenInvalid")]
+    DeviceTokenInvalid(
+        LtApiResponseErrorInfo<EnforcedCode<AUTH_DEVICE_TOKEN_INVALID>, NullErrorDetails>,
+    ),
+
     #[display("HumanVerification")]
     HumanVerification(LtApiResponseErrorInfo<EnforcedCode<9001>, HumanVerificationErrorDetails>),
+
+    /// Email domain not found, please sign in with a password
+    /// This is raised on SSO login when the email domain is not found.
+    #[display("EmailDomainNotFound")]
+    EmailDomainNotFound(LtApiResponseErrorInfo<EnforcedCode<8101>, NullErrorDetails>),
+
+    /// Challenge corresponding to token not found
+    /// This is raised on SSO login when the challenge corresponding to the token is not found.
+    #[display("ChallengeNotFound")]
+    ChallengeNotFound(LtApiResponseErrorInfo<EnforcedCode<2501>, NullErrorDetails>),
+
+    /// This application is not supported, please contact your organization administrator.
+    /// This is raised on SSO login when the application is not supported.
+    #[display("ApplicationNotSupported")]
+    ApplicationNotSupported(LtApiResponseErrorInfo<EnforcedCode<10402>, NullErrorDetails>),
+
+    /// Your current plan does not support creating single sign-on domains
+    /// This is raised on SSO login when the current plan does not support creating single sign-on domains.
+    #[display("PlanNotSupported")]
+    PlanNotSupported(LtApiResponseErrorInfo<EnforcedCode<2011>, NullErrorDetails>),
 
     #[display("Other")]
     Other(LtApiResponseErrorInfo<u32, serde_json::Value>),

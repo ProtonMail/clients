@@ -44,7 +44,7 @@ pub fn random_string(length: usize) -> String {
     Alphabetic.sample_string(&mut rand::rng(), length)
 }
 
-async fn login_get_proofs(
+pub async fn login_get_proofs(
     username: &str,
     session: &Session,
 ) -> Result<LtAuthPostInfoRes, LatticeError> {
@@ -158,25 +158,5 @@ pub async fn login_muon_session(
 ) -> Result<(Session, Option<LtAuthTwoFactorOptions>), LatticeError> {
     let (api_session, _password_mode, tfa) =
         srp_handshake(&session, username, password, Some(valid_fingerprint())).await?;
-    let client = session.client().clone();
-    let _ = session.0.remove_auth().await.unwrap();
-
-    let credentials = Auth::internal(
-        api_session.user_id,
-        api_session.id,
-        Tokens::access(
-            api_session.access_token.into_inner(),
-            api_session.refresh_token.into_inner(),
-            api_session.scopes,
-        ),
-    );
-    Ok((
-        Session(
-            client
-                .new_session_with_credentials((), credentials.try_into().unwrap())
-                .await
-                .unwrap(),
-        ),
-        tfa,
-    ))
+    Ok((session.swap_session(api_session).await, tfa))
 }

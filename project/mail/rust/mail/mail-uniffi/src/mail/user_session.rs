@@ -20,9 +20,9 @@ use mail_account_api::login::state::want_qr_confirmation::process_target_device_
 use mail_account_uniffi::login::ProcessTargetDeviceQrError;
 use mail_account_uniffi::password::PasswordFlow;
 use mail_account_uniffi::password_validator::PasswordValidatorService;
-use mail_common::ProtonMailError as RealProtonMailError;
 use mail_common::models::Attachment;
 use mail_common::{MailContextError, MailUserContext};
+use mail_common::{ProtonMailError as RealProtonMailError, UpsellEligibilityService};
 use mail_core_api::services::proton::ProtonAuth;
 use mail_core_common::UserContext;
 use mail_core_common::actions::user_feature_flags::OverrideFlag;
@@ -161,13 +161,14 @@ impl MailUserSession {
         callback: Arc<dyn AsyncLiveQueryCallback>,
     ) -> Result<Arc<WatchHandle>, ProtonError> {
         let ctx = self.ctx()?;
+        let service = ctx.get_service::<UpsellEligibilityService>();
         async_runtime().block_on(async {
             watch_table!(
                 WatchUpsellEligibilityMarker,
-                ctx.as_ref(),
+                service,
                 ctx,
                 callback,
-                MailUserContext::watch_upsell_eligibility
+                UpsellEligibilityService::watch_upsell_eligibility
             )
         })
     }
@@ -613,7 +614,8 @@ impl MailUserSession {
     pub async fn upsell_eligibility(&self) -> Result<UpsellEligibility, UserSessionError> {
         let ctx = self.ctx()?;
         uniffi_async(async move {
-            let upsell_eligibility = ctx.upsell_eligibility().await?;
+            let service = ctx.get_service::<UpsellEligibilityService>();
+            let upsell_eligibility = service.upsell_eligibility().await?;
             Result::<_, RealProtonMailError>::Ok(upsell_eligibility.into())
         })
         .await

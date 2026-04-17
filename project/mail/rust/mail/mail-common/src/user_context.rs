@@ -18,7 +18,7 @@ use crate::prefetch::{Prefetch, PrefetchJob, PrefetchService};
 use crate::rsvp::RsvpService;
 #[cfg(feature = "foundation_search")]
 use crate::search::MailSearchService;
-use crate::upsell_eligibility_watcher::UpsellEligibilityWatcher;
+use crate::upsell_eligibility::UpsellEligibilityService;
 use crate::user_context::events::event_source::MailEventSourceV5;
 use crate::{
     AppError, ImageLoader, MailContext, MailContextError, MailContextResult, TrackerService,
@@ -43,11 +43,9 @@ use mail_core_api::session::Session;
 #[cfg(not(feature = "events-v6"))]
 use mail_core_common::CoreEventLoopContext;
 use mail_core_common::actions::event_poll::EVENT_POLL_ACTION_GROUP;
-use mail_core_common::datatypes::{
-    AccountDetails, AddressStatus, LocalAddressId, UpsellEligibility, UpsellType,
-};
+use mail_core_common::datatypes::{AccountDetails, AddressStatus, LocalAddressId};
 use mail_core_common::event_loop::EventPollMode;
-use mail_core_common::models::{Address, PaidSubscription, Role, User, UserSettings};
+use mail_core_common::models::{Address, User, UserSettings};
 use mail_core_common::services::event_loop_service::EventManagerContext;
 use mail_core_common::services::{
     EventLoopService, EventPollConfigService, NetworkMonitorService, UserIssueReporterService,
@@ -65,7 +63,7 @@ use mail_crypto_inbox::proton_crypto_account::keys::{UnlockedAddressKeys, Unlock
 use mail_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
-use mail_stash::stash::{RunTransaction, Stash, StashError, Tether, WatcherHandle};
+use mail_stash::stash::{RunTransaction, Stash, Tether};
 use mail_task_service::Spawner;
 use parking_lot::Mutex;
 use proton_crypto_account::keys::{PinnedPublicKeys, PublicAddressKeys};
@@ -88,9 +86,6 @@ const DEFAULT_PREFETCH_ROLLBACK_QUEUE_POOL_SIZE: usize = 1;
 const DEFAULT_SHARE_EXT_QUEUE_POOL_SIZE: usize = 2;
 
 const DEFAULT_PREFETCH_BOUND: usize = 10;
-
-// Feature flags
-const FF_UPSELL_UNLIMITED: &str = "MailiosUnlimitedPlanPlacementExperiment";
 
 /// App origin only
 pub struct DefaultQueueExecutor {
@@ -373,7 +368,8 @@ impl MailUserContext {
                     .with_service(AttachmentCacheState::new())
                     .with_service(EventSubscriberList::default())
                     .with_cyclic_service(ImageLoader::new)
-                    .with_cyclic_service(TrackerService::new);
+                    .with_cyclic_service(TrackerService::new)
+                    .with_cyclic_service(UpsellEligibilityService::new);
 
             // Initialize Foundation Search service with Stash connection pool
             // Extract TaskService from the context to ensure proper lifecycle management.
@@ -744,35 +740,6 @@ impl MailUserContext {
             .unlocked_address_keys(pgp, conn, self.session(), address_id)
             .await?;
         Ok(keys)
-    }
-
-    pub async fn watch_upsell_eligibility(&self) -> Result<WatcherHandle, StashError> {
-        UpsellEligibilityWatcher::watch(self.user_stash()).await
-    }
-
-    pub async fn upsell_eligibility(&self) -> MailContextResult<UpsellEligibility> {
-        let user = self.user().await?;
-
-        if user.subscribed != PaidSubscription::empty() || user.role == Role::Member {
-            Ok(UpsellEligibility::NotEligible)
-        } else {
-            let upsell_type = self.upsell_type().await?;
-            Ok(UpsellEligibility::Eligible(upsell_type))
-        }
-    }
-
-    async fn upsell_type(&self) -> MailContextResult<UpsellType> {
-        let feature_flags = self.user_context().feature_flags();
-
-        if feature_flags
-            .get(FF_UPSELL_UNLIMITED)
-            .await?
-            .unwrap_or_default()
-        {
-            Ok(UpsellType::Unlimited)
-        } else {
-            Ok(UpsellType::MailPlus)
-        }
     }
 
     /// Loads the send preferences of the recipient with the given email address.

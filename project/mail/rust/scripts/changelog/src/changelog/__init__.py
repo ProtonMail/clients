@@ -30,7 +30,8 @@ def main(
     path: tuple[Path, ...],
 ) -> None:
     with open_repo(repo) as r:
-        tags = {t.commit: t for t in r.tags}
+        only_re = re.compile(only) if only else None
+        tags = {t.commit: t for t in r.tags if not only_re or only_re.match(t.name)}
         commits, cur_tag = OrderedDict(), None
 
         if path:
@@ -43,7 +44,7 @@ def main(
             if path_commits is None or c in path_commits:
                 commits.setdefault(cur_tag, []).append(c)
 
-        print(render(commits, re.compile(only) if only else None, name))
+        print(render(commits, only_re, name))
 
 
 @contextmanager

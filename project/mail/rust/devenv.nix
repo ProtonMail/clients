@@ -101,6 +101,7 @@ in
 
     python = {
       enable = true; # For changelog
+      package = pkgs.python312;
       uv = {
         enable = true;
       };

@@ -1,4 +1,4 @@
-package uniffi.proton_mail_uniffi
+package uniffi.mail_uniffi
 
 import android.content.Context
 

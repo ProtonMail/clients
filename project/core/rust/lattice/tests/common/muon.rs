@@ -5,6 +5,7 @@ use derive_more::{Debug, Deref};
 use futures::TryFutureExt;
 use muon::{
     Environment,
+    auth::{Auth, Tokens},
     client::builder::Hyper,
     common::{GenericContext, RetryPolicy},
     http::hyper::connector::HyperConnector,
@@ -16,7 +17,8 @@ use muon::{
 };
 
 use lattice::{
-    LatticeError, LtApiResponseError, LtContract, LtSlimAPIJSON,
+    LatticeError, LtApiResponseError, LtContract, LtResponseBody, LtSlimAPIJSON,
+    auth::LtAuthApiSession,
     muon::LtContractExt,
     quark::{LtQuarkContract, LtQuarkContractExt, jail::unban::LtQuarkJailUnban},
 };
@@ -131,7 +133,7 @@ pub fn environment() -> muon::Environment {
 
 pub fn new_client() -> Client {
     let env = environment();
-    let app = muon::App::new("android-mail@99.9.40.0-dev").unwrap();
+    let app = muon::App::new("ios-pass@1.17.0").unwrap();
     let builder = muon::Client::builder_with_transport::<Hyper>(app, env)
         .with_operating_system(MyOperatingSystem::default(), rand::rng())
         .with_multi_thread_executor(TokioExecutor);
@@ -152,14 +154,45 @@ pub async fn generate_muon_session() -> Session {
 pub struct Session(pub(super) muon::Session<MuonCtx>);
 
 impl Session {
+    pub async fn swap_session(self, api_session: LtAuthApiSession) -> Self {
+        let client = self.client().clone();
+        let _ = self.0.remove_auth().await.unwrap();
+
+        let credentials = Auth::internal(
+            api_session.user_id,
+            api_session.id,
+            Tokens::access(
+                api_session.access_token.into_inner(),
+                api_session.refresh_token.into_inner(),
+                api_session.scopes,
+            ),
+        );
+        Session::from_session(
+            client
+                .new_session_with_credentials((), credentials.try_into().unwrap())
+                .await
+                .unwrap(),
+        )
+    }
+    pub fn from_session(session: muon::Session<MuonCtx>) -> Self {
+        Self(session)
+    }
+
+    pub fn into_inner(self) -> muon::Session<MuonCtx> {
+        self.0
+    }
+
     pub async fn clone(&self) -> Self {
         Self(self.0.client().get_session(()).await.unwrap())
     }
 
-    pub async fn send_lt<
-        E: for<'de> Deserialize<'de>,
-        T: LtContract<Response = LtSlimAPIJSON<E>>,
-    >(
+    pub async fn send_lt_raw<T: LtContract>(&self, req: T) -> Result<T::Response, LatticeError> {
+        let http_req = req.to_muon_req()?;
+        let response = self.0.send(http_req).await.map_err(LatticeError::Muon)?;
+        T::from_muon_res(&response)
+    }
+
+    pub async fn send_lt_generic<E: LtResponseBody, T: LtContract<Response = E>>(
         &self,
         req: T,
     ) -> Result<E, LatticeError> {
@@ -183,7 +216,17 @@ impl Session {
         } else {
             response
         };
-        Ok(T::from_muon_res(&response)?.0)
+        T::from_muon_res(&response)
+    }
+
+    pub async fn send_lt<
+        E: for<'de> Deserialize<'de>,
+        T: LtContract<Response = LtSlimAPIJSON<E>>,
+    >(
+        &self,
+        req: T,
+    ) -> Result<E, LatticeError> {
+        self.send_lt_generic(req).await.map(|e| e.0)
     }
 
     pub async fn send_quark<T: LtQuarkContract>(

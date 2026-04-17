@@ -67,7 +67,9 @@ impl<T: LtContract> LtContractExt for T {
     fn from_muon_res(response: &::muon::http::HttpRes) -> Result<Self::Response, LatticeError> {
         let s = response.status().as_u16();
 
-        if (200..300).contains(&s) {
+        // 200-300 are success codes
+        // 300-304 are redirect codes
+        if (200..=304).contains(&s) {
             let body = response.body();
             return T::Response::from_body(body);
         }

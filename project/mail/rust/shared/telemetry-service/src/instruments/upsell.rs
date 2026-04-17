@@ -135,8 +135,52 @@ impl From<bool> for UpsellIsPromotional {
     }
 }
 
+#[derive(Debug, Clone, Copy, strum::Display)]
+pub enum UpsellFlag {
+    #[strum(serialize = "true")]
+    Enabled,
+    #[strum(serialize = "false")]
+    Disabled,
+}
+
+// Two flags are needed because we cannot distinguish "FF disabled" from "FF does not exist".
+// Parent is conditioned by Unleash rules (e.g. user in Nordics). Child splits eligible users
+// into control vs test group for telemetry:
+//
+//  Parent | Child | Result
+//  -------+-------+-------------------------------
+//  false  |   -   | Normal Plus upsell (baseline)
+//  true   | false | Normal Plus upsell (control)
+//  true   | true  | Unlimited upsell   (test)
+#[derive(Debug, Clone)]
+pub struct UpsellFeatureParentFlag(pub UpsellFlag);
+
+impl Dimension for UpsellFeatureParentFlag {
+    const NAME: &str = "upsell_parent_flag";
+}
+
+impl std::fmt::Display for UpsellFeatureParentFlag {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct UpsellFeatureChildFlag(pub UpsellFlag);
+
+impl Dimension for UpsellFeatureChildFlag {
+    const NAME: &str = "upsell_child_flag";
+}
+
+impl std::fmt::Display for UpsellFeatureChildFlag {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
 pub struct UpsellEvents;
 
+#[allow(clippy::too_many_arguments)]
 impl UpsellEvents {
     const MEASUREMENT_GROUP: &str = "mail.any.upsell";
 
@@ -146,6 +190,8 @@ impl UpsellEvents {
         plan_before_upgrade: PlanBeforeUpgrade,
         days_since_account_creation: DaysSinceAccountCreation,
         upsell_modal_variant: UpsellModalVariant,
+        parent_flag: UpsellFeatureParentFlag,
+        child_flag: UpsellFeatureChildFlag,
     ) -> TelemetryEvent {
         Self::build_event(
             "upsell_button_tapped",
@@ -154,6 +200,8 @@ impl UpsellEvents {
                 plan_before_upgrade.to_dimension(),
                 days_since_account_creation.to_dimension(),
                 upsell_modal_variant.to_dimension(),
+                parent_flag.to_dimension(),
+                child_flag.to_dimension(),
             ]),
         )
     }
@@ -195,6 +243,8 @@ impl UpsellEvents {
         selected_plan: SelectedPlan,
         selected_cycle: SelectedCycle,
         upsell_is_promotional: UpsellIsPromotional,
+        parent_flag: UpsellFeatureParentFlag,
+        child_flag: UpsellFeatureChildFlag,
     ) -> TelemetryEvent {
         Self::build_event(
             "upgrade_attempt",
@@ -206,6 +256,8 @@ impl UpsellEvents {
                 selected_plan,
                 selected_cycle,
                 upsell_is_promotional,
+                parent_flag,
+                child_flag,
             ),
         )
     }
@@ -219,6 +271,8 @@ impl UpsellEvents {
         selected_plan: SelectedPlan,
         selected_cycle: SelectedCycle,
         upsell_is_promotional: UpsellIsPromotional,
+        parent_flag: UpsellFeatureParentFlag,
+        child_flag: UpsellFeatureChildFlag,
     ) -> TelemetryEvent {
         Self::build_event(
             "upgrade_error",
@@ -230,6 +284,8 @@ impl UpsellEvents {
                 selected_plan,
                 selected_cycle,
                 upsell_is_promotional,
+                parent_flag,
+                child_flag,
             ),
         )
     }
@@ -243,6 +299,8 @@ impl UpsellEvents {
         selected_plan: SelectedPlan,
         selected_cycle: SelectedCycle,
         upsell_is_promotional: UpsellIsPromotional,
+        parent_flag: UpsellFeatureParentFlag,
+        child_flag: UpsellFeatureChildFlag,
     ) -> TelemetryEvent {
         Self::build_event(
             "upgrade_cancelled_by_user",
@@ -254,6 +312,8 @@ impl UpsellEvents {
                 selected_plan,
                 selected_cycle,
                 upsell_is_promotional,
+                parent_flag,
+                child_flag,
             ),
         )
     }
@@ -267,6 +327,8 @@ impl UpsellEvents {
         selected_plan: SelectedPlan,
         selected_cycle: SelectedCycle,
         upsell_is_promotional: UpsellIsPromotional,
+        parent_flag: UpsellFeatureParentFlag,
+        child_flag: UpsellFeatureChildFlag,
     ) -> TelemetryEvent {
         Self::build_event(
             "upgrade_success",
@@ -278,6 +340,8 @@ impl UpsellEvents {
                 selected_plan,
                 selected_cycle,
                 upsell_is_promotional,
+                parent_flag,
+                child_flag,
             ),
         )
     }
@@ -290,6 +354,8 @@ impl UpsellEvents {
         selected_plan: SelectedPlan,
         selected_cycle: SelectedCycle,
         upsell_is_promotional: UpsellIsPromotional,
+        parent_flag: UpsellFeatureParentFlag,
+        child_flag: UpsellFeatureChildFlag,
     ) -> HashMap<String, String> {
         HashMap::from([
             upsell_entry_point.to_dimension(),
@@ -299,6 +365,8 @@ impl UpsellEvents {
             selected_plan.to_dimension(),
             selected_cycle.to_dimension(),
             upsell_is_promotional.to_dimension(),
+            parent_flag.to_dimension(),
+            child_flag.to_dimension(),
         ])
     }
 
@@ -324,6 +392,8 @@ mod tests {
             PlanBeforeUpgrade::new("free"),
             DaysSinceAccountCreation::FourThroughTen,
             UpsellModalVariant::ComparisonPlus,
+            UpsellFeatureParentFlag(UpsellFlag::Enabled),
+            UpsellFeatureChildFlag(UpsellFlag::Disabled),
         );
 
         assert_eq!(event.measurement_group, "mail.any.upsell");
@@ -333,7 +403,9 @@ mod tests {
         assert_eq!(event.dimensions["plan_before_upgrade"], "free");
         assert_eq!(event.dimensions["days_since_account_creation"], "04-10");
         assert_eq!(event.dimensions["upsell_modal_variant"], "Comparison.Plus");
-        assert_eq!(event.dimensions.len(), 4);
+        assert_eq!(event.dimensions["upsell_parent_flag"], "true");
+        assert_eq!(event.dimensions["upsell_child_flag"], "false");
+        assert_eq!(event.dimensions.len(), 6);
     }
 
     #[test]
@@ -373,6 +445,8 @@ mod tests {
             SelectedPlan::new("plus"),
             SelectedCycle::new("12"),
             UpsellIsPromotional::Yes,
+            UpsellFeatureParentFlag(UpsellFlag::Enabled),
+            UpsellFeatureChildFlag(UpsellFlag::Enabled),
         );
 
         assert_eq!(event.measurement_group, "mail.any.upsell");
@@ -385,7 +459,9 @@ mod tests {
         assert_eq!(event.dimensions["selected_plan"], "plus");
         assert_eq!(event.dimensions["selected_cycle"], "12");
         assert_eq!(event.dimensions["upsell_is_promotional"], "true");
-        assert_eq!(event.dimensions.len(), 7);
+        assert_eq!(event.dimensions["upsell_parent_flag"], "true");
+        assert_eq!(event.dimensions["upsell_child_flag"], "true");
+        assert_eq!(event.dimensions.len(), 9);
     }
 
     #[test]
@@ -398,11 +474,15 @@ mod tests {
             SelectedPlan::new("bundle"),
             SelectedCycle::new("24"),
             UpsellIsPromotional::No,
+            UpsellFeatureParentFlag(UpsellFlag::Disabled),
+            UpsellFeatureChildFlag(UpsellFlag::Disabled),
         );
 
         assert_eq!(event.event, "upgrade_error");
         assert_eq!(event.dimensions["upsell_is_promotional"], "false");
-        assert_eq!(event.dimensions.len(), 7);
+        assert_eq!(event.dimensions["upsell_parent_flag"], "false");
+        assert_eq!(event.dimensions["upsell_child_flag"], "false");
+        assert_eq!(event.dimensions.len(), 9);
     }
 
     #[test]
@@ -415,10 +495,12 @@ mod tests {
             SelectedPlan::new("unlimited"),
             SelectedCycle::new("1"),
             UpsellIsPromotional::No,
+            UpsellFeatureParentFlag(UpsellFlag::Enabled),
+            UpsellFeatureChildFlag(UpsellFlag::Disabled),
         );
 
         assert_eq!(event.event, "upgrade_cancelled_by_user");
-        assert_eq!(event.dimensions.len(), 7);
+        assert_eq!(event.dimensions.len(), 9);
     }
 
     #[test]
@@ -431,11 +513,13 @@ mod tests {
             SelectedPlan::new("plus"),
             SelectedCycle::new("12"),
             UpsellIsPromotional::Yes,
+            UpsellFeatureParentFlag(UpsellFlag::Disabled),
+            UpsellFeatureChildFlag(UpsellFlag::Enabled),
         );
 
         assert_eq!(event.event, "upgrade_success");
         assert_eq!(event.dimensions["days_since_account_creation"], "01-03");
-        assert_eq!(event.dimensions.len(), 7);
+        assert_eq!(event.dimensions.len(), 9);
     }
 
     #[test]
@@ -445,6 +529,8 @@ mod tests {
             PlanBeforeUpgrade::new("free"),
             DaysSinceAccountCreation::NotApplicable,
             UpsellModalVariant::ComparisonPlus,
+            UpsellFeatureParentFlag(UpsellFlag::Disabled),
+            UpsellFeatureChildFlag(UpsellFlag::Disabled),
         );
 
         assert_eq!(event.dimensions["days_since_account_creation"], "n/a");

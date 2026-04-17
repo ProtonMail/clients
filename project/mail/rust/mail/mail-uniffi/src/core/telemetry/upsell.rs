@@ -4,7 +4,8 @@ use mail_core_common::datatypes::UnixTimestamp;
 use mail_core_common::services::TelemetryService;
 use mail_telemetry::{
     DaysSinceAccountCreation, PlanBeforeUpgrade, SelectedCycle, SelectedPlan, TelemetryEvent,
-    UpsellEntryPoint as TelemetryUpsellEntryPoint, UpsellEvents, UpsellIsPromotional,
+    UpsellEntryPoint as TelemetryUpsellEntryPoint, UpsellEvents, UpsellFeatureChildFlag,
+    UpsellFeatureParentFlag, UpsellFlag, UpsellIsPromotional,
     UpsellModalVariant as TelemetryUpsellModalVariant,
 };
 use mail_uniffi_runtime::async_runtime;
@@ -127,6 +128,31 @@ pub struct GeneralDimensions {
     pub upsell_entry_point: UpsellEntryPoint,
     pub plan_before_upgrade: String,
     pub modal_variant: UpsellModalVariant,
+    /// Used by analysts to distinguish between base group and control group.
+    pub upsell_feature_flags: UpsellFeatureFlags,
+}
+
+/// Two flags are needed because we cannot distinguish "FF disabled" from "FF does not exist".
+/// Parent is conditioned by Unleash rules (e.g. user in Nordics). Child splits eligible users
+/// into control vs test group for telemetry:
+///
+///  Parent | Child | Result
+///  -------+-------+-------------------------------
+///  false  |   -   | Normal Plus upsell (baseline)
+///  true   | false | Normal Plus upsell (control)
+///  true   | true  | Unlimited upsell   (test)
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct UpsellFeatureFlags {
+    pub parent_flag_name: String,
+    pub child_flag_name: String,
+}
+
+#[uniffi_export]
+pub fn upsell_feature_flags_for_ios() -> UpsellFeatureFlags {
+    UpsellFeatureFlags {
+        parent_flag_name: mail_common::FF_UPSELL_UNLIMITED_PARENT.to_string(),
+        child_flag_name: mail_common::FF_UPSELL_UNLIMITED_CHILD.to_string(),
+    }
 }
 
 #[derive(Debug, Clone, uniffi::Record)]
@@ -147,6 +173,30 @@ async fn record_telemetry_event(user_context: &MailUserContext, event: Telemetry
     } else {
         error!("TelemetryService not available");
     }
+}
+
+async fn resolve_flag(user_context: &MailUserContext, flag_name: &str) -> UpsellFlag {
+    match user_context
+        .user_context()
+        .feature_flags()
+        .get(flag_name)
+        .await
+    {
+        Ok(Some(true)) => UpsellFlag::Enabled,
+        _ => UpsellFlag::Disabled,
+    }
+}
+
+async fn resolve_upsell_flags(
+    user_context: &MailUserContext,
+    flags: &UpsellFeatureFlags,
+) -> (UpsellFeatureParentFlag, UpsellFeatureChildFlag) {
+    let parent = resolve_flag(user_context, &flags.parent_flag_name).await;
+    let child = resolve_flag(user_context, &flags.child_flag_name).await;
+    (
+        UpsellFeatureParentFlag(parent),
+        UpsellFeatureChildFlag(child),
+    )
 }
 
 #[uniffi_export]
@@ -178,11 +228,16 @@ pub async fn record_upsell_button_tapped(
                 }
             };
 
+            let (parent_flag, child_flag) =
+                resolve_upsell_flags(user_context.as_ref(), &general.upsell_feature_flags).await;
+
             let event = UpsellEvents::upsell_button_tapped(
                 general.upsell_entry_point.into(),
                 PlanBeforeUpgrade::new(general.plan_before_upgrade),
                 days_since_account_creation,
                 general.modal_variant.into(),
+                parent_flag,
+                child_flag,
             );
 
             record_telemetry_event(user_context.as_ref(), event).await;
@@ -353,6 +408,8 @@ async fn record_upgrade_event(
         SelectedPlan,
         SelectedCycle,
         UpsellIsPromotional,
+        UpsellFeatureParentFlag,
+        UpsellFeatureChildFlag,
     ) -> TelemetryEvent,
 ) {
     if let Err(err) = async_runtime()
@@ -378,6 +435,9 @@ async fn record_upgrade_event(
                 }
             };
 
+            let (parent_flag, child_flag) =
+                resolve_upsell_flags(user_context.as_ref(), &general.upsell_feature_flags).await;
+
             let event = build_event(
                 general.upsell_entry_point.into(),
                 PlanBeforeUpgrade::new(general.plan_before_upgrade),
@@ -386,6 +446,8 @@ async fn record_upgrade_event(
                 SelectedPlan::new(plan_specific.selected_plan),
                 SelectedCycle::new(plan_specific.selected_cycle),
                 plan_specific.upsell_is_promotional.into(),
+                parent_flag,
+                child_flag,
             );
 
             record_telemetry_event(user_context.as_ref(), event).await;

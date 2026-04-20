@@ -174,7 +174,7 @@ Android projects that depend on core modules use **composite builds**:
 // Include the core Android project as a composite build
 includeBuild("../../core/android")
 ```
-Note: Make sure all dependencies module follow `group:artefact[:version]` (e.g. module: "core-design-system" + `group = "me.proton"` -> `me.proton:core-design-system`). 
+Note: Make sure all dependencies module follow `group:artefact[:version]` (e.g. module: "core-design-system" + `group = "me.proton.android.core"` -> `me.proton.android.core:core-design-system`). 
 
 #### Using Core Dependencies
 Reference core modules in your `build.gradle.kts`:

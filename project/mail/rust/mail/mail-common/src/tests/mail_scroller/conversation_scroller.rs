@@ -4,7 +4,7 @@ use std::collections::BTreeMap;
 use crate::datatypes::LocalConversationId;
 use crate::datatypes::labels::{ScrollOrderDir, ScrollOrderField};
 use crate::datatypes::{ContextualConversation, ReadFilter};
-use crate::models::{CachedScrollData, ConversationScrollData, ScrollData};
+use crate::models::{CachedScrollData, ConversationScrollData, MailSettings, ScrollData};
 use crate::models::{Conversation, ScrollCursor};
 use crate::{self as mail_common, CategoryView};
 use mail_action_queue::rebase::RebaseChangeSet;
@@ -1166,6 +1166,12 @@ async fn test_category_filter_default_shows_all_conversations_from_disabled_cate
             promotions.save(bond).await?;
             newsletter.display = false;
             newsletter.save(bond).await?;
+            MailSettings {
+                mail_category_view: true,
+                ..Default::default()
+            }
+            .save(bond)
+            .await?;
             // Only social is enabled.
             save_conversation_with_labels(&mut conversations[0], &[&inbox, &primary], bond).await;
             save_conversation_with_labels(&mut conversations[1], &[&inbox, &social], bond).await;

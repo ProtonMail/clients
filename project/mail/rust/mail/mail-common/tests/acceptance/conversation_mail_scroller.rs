@@ -17,7 +17,8 @@ use mail_common::datatypes::{
     labels::{ScrollOrderDir, ScrollOrderField},
 };
 use mail_common::models::{
-    CachedScrollData, ConversationLabel, LabelExt, LabelWithCounters, Message, MessageCounter,
+    CachedScrollData, ConversationLabel, LabelExt, LabelWithCounters, MailSettings, Message,
+    MessageCounter,
 };
 use mail_common::test_utils::{
     init::Params as TestParams,
@@ -2555,6 +2556,138 @@ async fn test_cached_scroller_no_items_lost_with_tied_snooze_and_time() {
     assert!(all_ids.contains(&conv_id!("conv_newest")));
     assert!(all_ids.contains(&conv_id!("conv_a")));
     assert!(all_ids.contains(&conv_id!("conv_b")));
+}
+
+/// End-to-end test for the Category View feature.
+///
+/// Verifies that:
+/// - `category_view()` returns the correct initial state (CategoryDefault auto-enabled, available
+///   categories reflect DB `display` flags).
+/// - `change_category_view` applies the SQL category filter and emits both a list update
+///   (`ReplaceFrom`) and a `CategoryViewChanged` update in that order.
+/// - Switching between categories and clearing the filter (`None`) all produce the correct
+///   conversation counts and update payloads.
+///
+/// # Update ordering
+///
+/// After each `change_category_view` call the scroller emits exactly two updates:
+///   1. `ReplaceFrom` — the filtered list refresh from `reset`.
+///   2. `CategoryViewChanged` — the resolved category labels.
+///
+/// `ConversationCounter.total` for Inbox is zeroed after seeding so that
+/// `try_fetch_first_page` never schedules a spurious background `FetchMore`
+/// (`cant_see_first_page = 0 > 0 = false`). Conversations are still returned
+/// by the SQL label-filter query.
+#[tokio::test]
+async fn test_category_view_filters_conversations_and_emits_updates() {
+    let ctx = MailTestContext::new().await;
+    let user_ctx = ctx.uninitialized_mail_user_context().await;
+    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+
+    // Seed 2 conversations in Inbox + CategorySocial, and 1 in Inbox + CategoryDefault.
+    // Inbox remote ID is "0", CategorySocial is "20", CategoryDefault is "24".
+    let mut data = hash_map! {
+        vec!["0", "20"]: test_conversations(2, 0),
+        vec!["0", "24"]: test_conversations(1, 100),
+    };
+    data.save_to_database(&mut tether).await;
+
+    // Resolve local IDs used for assertions and commands.
+    let inbox_local_id = SystemLabel::Inbox.local_id(&tether).await.unwrap().unwrap();
+    let social_local_id = SystemLabel::CategorySocial
+        .local_id(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+    let default_local_id = SystemLabel::CategoryDefault
+        .local_id(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+
+    // Enable category view: mail_category_view=true and set CategorySocial.display=true so it
+    // appears in `available` and can be selected.
+    // Also zero the Inbox ConversationCounter.total so that try_fetch_first_page never
+    // schedules a spurious background FetchMore (cant_see_first_page = 0 > 0 = false).
+    // Conversations are still found by the SQL label-filter query.
+    let mut social = SystemLabel::CategorySocial
+        .load(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+    tether
+        .tx::<_, _, StashError>(async |bond| {
+            MailSettings {
+                mail_category_view: true,
+                ..Default::default()
+            }
+            .save(bond)
+            .await
+            .unwrap();
+            social.display = true;
+            social.save(bond).await.unwrap();
+            let mut inbox_counter = ConversationCounter::find_by_id(inbox_local_id, bond)
+                .await
+                .unwrap()
+                .unwrap();
+            inbox_counter.total = 0;
+            inbox_counter.save(bond).await.unwrap();
+            Ok(())
+        })
+        .await
+        .unwrap();
+
+    let page_size = 5;
+    let mut test_scroller = TestScroller::conversations(&user_ctx, inbox_local_id, page_size)
+        .await
+        .unwrap();
+
+    // Initial fetch — CategoryDefault is auto-enabled during scroller init, so only the
+    // 1 conversation tagged with CategoryDefault is returned (not all 3 inbox items).
+    test_scroller.fetch_more().unwrap();
+    test_scroller
+        .match_next_update(TestUpdate::Append { items: 1 })
+        .await;
+    assert_eq!(test_scroller.items().len(), 1);
+
+    // CategoryView metadata: CategoryDefault is auto-enabled and both category labels are
+    // available (CategoryDefault always, CategorySocial because display=true).
+    let view = test_scroller.category_view().await.unwrap();
+    assert_eq!(
+        view.enabled,
+        Some(default_local_id),
+        "CategoryDefault should be auto-enabled when mail_category_view is true"
+    );
+    assert!(
+        view.available.contains(&default_local_id),
+        "CategoryDefault should always be in available"
+    );
+    assert!(
+        view.available.contains(&social_local_id),
+        "CategorySocial (display=true) should be in available"
+    );
+
+    // Switch to CategorySocial — only the 2 Social-tagged conversations are shown.
+    test_scroller
+        .change_category_view(Some(social_local_id))
+        .unwrap();
+    test_scroller
+        .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 2 })
+        .await;
+    test_scroller
+        .match_next_update(TestUpdate::CategoryViewChanged { labels: 2 })
+        .await;
+    assert_eq!(test_scroller.items().len(), 2);
+
+    // Clear category filter (None) — all 3 Inbox conversations are visible again.
+    test_scroller.change_category_view(None).unwrap();
+    test_scroller
+        .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 3 })
+        .await;
+    test_scroller
+        .match_next_update(TestUpdate::CategoryViewChanged { labels: 2 })
+        .await;
+    assert_eq!(test_scroller.items().len(), 3);
 }
 
 #[function_name::named]

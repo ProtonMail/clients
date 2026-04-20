@@ -1,5 +1,5 @@
 use crate::MailContextError;
-use crate::models::LabelWithCounters;
+use crate::models::{LabelWithCounters, MailSettings};
 use mail_api_labels::LabelId;
 use mail_core_common::datatypes::{LocalLabelId, SystemLabel};
 use mail_stash::orm::Model;
@@ -15,6 +15,16 @@ pub struct CategoryView {
 
 impl CategoryView {
     pub async fn load(tether: &Tether) -> anyhow::Result<Self> {
+        let mail_category_view = MailSettings::get(tether)
+            .await?
+            .is_some_and(|s| s.mail_category_view);
+
+        if !mail_category_view {
+            return Ok(Self::default());
+        }
+
+        // If the mail_category_view setting is enabled, populate available categories
+        // and auto-enable CategoryDefault (server-authoritative, bypasses enable() guard).
         let remote_ids = SystemLabel::category_labels().map(|sl| sl.remote_id());
         let labels = LabelWithCounters::from_remote_ids(tether, remote_ids).await?;
         let available = labels
@@ -28,10 +38,9 @@ impl CategoryView {
             .filter_map(|lwc| lwc.label.local_id)
             .collect();
 
-        Ok(Self {
-            enabled: None,
-            available,
-        })
+        let enabled = SystemLabel::CategoryDefault.local_id(tether).await?;
+
+        Ok(Self { enabled, available })
     }
 
     pub fn enable(&mut self, enable: Option<LocalLabelId>) -> Result<&Self, MailContextError> {

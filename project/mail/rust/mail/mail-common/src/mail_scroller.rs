@@ -763,11 +763,20 @@ where
         let (command_tx, command_rx) = flume::unbounded();
         let (invalidation_sender, invalidation_receiver) = flume::unbounded();
         let arc_ctx = ctx.upgrade().ok_or(MailContextError::MissingContext)?;
-        let task = source.initialize(&arc_ctx, invalidation_sender).await?;
-        let tables = source.watched_tables();
         let tether = arc_ctx.user_stash().connection().await?;
         let alternative_labels = AlternativeLabels::new(label, &tether).await?;
         let category_view = CategoryView::load(&tether).await?;
+        // Pass the auto-enabled category filter into initialize so that the very first
+        // fetch already returns filtered results (not all inbox items).
+        let initial_category = if category_view.enabled.is_some() {
+            category_view.query_filter_ids(&tether).await?
+        } else {
+            vec![]
+        };
+        let task = source
+            .initialize(&arc_ctx, invalidation_sender, initial_category)
+            .await?;
+        let tables = source.watched_tables();
 
         let WatcherHandle {
             receiver, handle, ..
@@ -1356,7 +1365,7 @@ where
             .source
             .write()
             .await
-            .change_state(&ctx, Some(unread), None, None)
+            .change_state(&ctx, Some(unread), None, None, None)
             .await?;
         self.reset(src).await
     }
@@ -1381,11 +1390,12 @@ where
             .map_err(MailContextError::Other)?;
         self.category_view.enabled = category;
         let _ = self.task.take();
-        self.task = {
-            let mut source = self.source.write().await;
-            source.set_category(filter_ids);
-            source.change_state(&ctx, None, None, None).await?
-        };
+        self.task = self
+            .source
+            .write()
+            .await
+            .change_state(&ctx, None, None, None, Some(filter_ids))
+            .await?;
         self.reset(src).await
     }
 
@@ -1405,7 +1415,7 @@ where
             .source
             .write()
             .await
-            .change_state(&ctx, with_filter, Some(label), None)
+            .change_state(&ctx, with_filter, Some(label), None, None)
             .await?;
 
         self.reset(src).await
@@ -1427,7 +1437,7 @@ where
             .source
             .write()
             .await
-            .change_state(&ctx, None, None, Some(keywords))
+            .change_state(&ctx, None, None, Some(keywords), None)
             .await?;
 
         self.reset(src).await

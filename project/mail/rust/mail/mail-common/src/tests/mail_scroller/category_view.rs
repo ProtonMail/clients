@@ -1,5 +1,6 @@
+use crate::datatypes::MailSettingsId;
 use crate::mail_scroller::category_view::CategoryView;
-use crate::models::{ConversationCounter, MessageCounter};
+use crate::models::{ConversationCounter, MailSettings, MessageCounter};
 use crate::test_utils::utils::test_address;
 use crate::{self as mail_common, MailContextError};
 use mail_common::test_utils::db::new_test_connection;
@@ -8,6 +9,17 @@ use mail_core_common::datatypes::SystemLabel;
 use mail_core_common::models::Label;
 use mail_stash::orm::Model;
 use mail_stash::stash::{Bond, StashError};
+
+async fn enable_category_view_setting(bond: &Bond<'_>) {
+    MailSettings {
+        local_id: MailSettingsId,
+        mail_category_view: true,
+        ..Default::default()
+    }
+    .save(bond)
+    .await
+    .unwrap();
+}
 
 async fn store_single_unseen_in_category(category: &Label, bond: &Bond<'_>) {
     // Inbox and default should be available always
@@ -69,6 +81,7 @@ async fn test_category_label_has_unseen_items_from_db() {
 
     tether
         .tx::<_, _, StashError>(async |bond| {
+            enable_category_view_setting(bond).await;
             social.display = true;
             social.save(bond).await?;
             store_single_unseen_in_category(&social, bond).await;
@@ -111,6 +124,7 @@ async fn test_load_available_filters_display_and_carries_unseen_items_to_primary
 
     tether
         .tx::<_, _, StashError>(async |bond| {
+            enable_category_view_setting(bond).await;
             MessageCounter::new(social.id()).save(bond).await?;
             ConversationCounter::new(social.id())
                 .save(bond)
@@ -177,6 +191,7 @@ async fn test_expanded_filter_ids_category_default() {
 
     tether
         .tx::<_, _, StashError>(async |bond| {
+            enable_category_view_setting(bond).await;
             social.display = false;
             social.save(bond).await.unwrap();
             updates.display = true;
@@ -236,5 +251,21 @@ async fn test_expanded_filter_ids_category_default() {
     assert!(
         ids.contains(&updates_id),
         "CategoryUpdates is enabled category and should only be returned"
+    );
+}
+
+#[tokio::test]
+async fn test_load_returns_empty_when_setting_disabled() {
+    let mail_stash = new_test_connection().await;
+    let tether = mail_stash.connection().await.unwrap();
+    // No MailSettings stored → mail_category_view defaults to false.
+    let view = CategoryView::load(&tether).await.unwrap();
+    assert!(
+        view.available.is_empty(),
+        "available should be empty when mail_category_view is disabled"
+    );
+    assert!(
+        view.enabled.is_none(),
+        "enabled should be None when mail_category_view is disabled"
     );
 }

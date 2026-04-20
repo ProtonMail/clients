@@ -306,6 +306,7 @@ mod tests {
             &mut self,
             _: &MailUserContext,
             _: flume::Sender<()>,
+            _: Vec<LocalLabelId>,
         ) -> Result<MailPaginatorJoinHandle, MailContextError> {
             Ok(None)
         }
@@ -353,6 +354,7 @@ mod tests {
             _: Option<ReadFilter>,
             _: Option<LocalLabelId>,
             _: Option<SearchOptions>,
+            _: Option<Vec<LocalLabelId>>,
         ) -> Result<MailPaginatorJoinHandle, MailContextError> {
             todo!()
         }

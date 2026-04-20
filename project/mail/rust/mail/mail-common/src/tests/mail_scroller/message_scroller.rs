@@ -7,6 +7,7 @@ use crate::datatypes::ReadFilter;
 use crate::datatypes::labels::ScrollOrderDir;
 use crate::datatypes::labels::ScrollOrderField;
 use crate::mail_scroller::conversation_scroller::save_conversation_with_labels;
+use crate::models::MailSettings;
 use crate::models::{CachedScrollData, MessageScrollData, ScrollCursor};
 use crate::models::{Message, ScrollData};
 use mail_api::services::proton::common::MessageId;
@@ -971,6 +972,12 @@ async fn test_category_filter_default_shows_all_messages_from_disabled_categorie
             promotions.save(bond).await?;
             newsletter.display = false;
             newsletter.save(bond).await?;
+            MailSettings {
+                mail_category_view: true,
+                ..Default::default()
+            }
+            .save(bond)
+            .await?;
             // Only social is enabled.
             save_conversation_with_labels(&mut conversations[0], &[&inbox, &primary], bond).await;
             save_conversation_with_labels(&mut conversations[1], &[&inbox, &social], bond).await;

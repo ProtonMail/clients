@@ -360,6 +360,7 @@ impl MailScrollerSource for SearchScrollerSource {
         &mut self,
         ctx: &MailUserContext,
         invalidate: flume::Sender<()>,
+        _category: Vec<LocalLabelId>,
     ) -> Result<MailPaginatorJoinHandle, MailContextError> {
         self.invalidate = Some(invalidate);
         self.initialize_impl(ctx).await
@@ -484,6 +485,7 @@ impl MailScrollerSource for SearchScrollerSource {
         _unread: Option<ReadFilter>,
         label: Option<LocalLabelId>,
         keywords: Option<SearchOptions>,
+        _category: Option<Vec<LocalLabelId>>,
     ) -> Result<MailPaginatorJoinHandle, MailContextError> {
         if let Some(label) = label {
             info!(

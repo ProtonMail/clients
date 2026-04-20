@@ -85,6 +85,9 @@ pub struct MailSettings {
     pub enable_folder_color: bool,
 
     #[DbField]
+    pub mail_category_view: bool,
+
+    #[DbField]
     pub font_face: Option<String>,
 
     #[DbField]
@@ -368,6 +371,7 @@ impl From<ApiMailSettings> for MailSettings {
             display_name: value.display_name,
             draft_mime_type: value.draft_mime_type.into(),
             enable_folder_color: value.enable_folder_color,
+            mail_category_view: value.mail_category_view,
             font_face: value.font_face,
             hide_remote_images: value.hide_remote_images,
             hide_embedded_images: value.hide_embedded_images,

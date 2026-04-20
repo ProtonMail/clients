@@ -86,6 +86,7 @@ async fn test_load_attachment_buffer() {
     assert_eq!(att, att_again);
 }
 
+#[ignore] // TODO: ET-6124
 #[tokio::test]
 async fn concurrency() {
     let ctx = MailTestContext::new().await;

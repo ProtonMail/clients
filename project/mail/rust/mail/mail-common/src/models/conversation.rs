@@ -1889,7 +1889,7 @@ impl Conversation {
                 })
                 .unwrap_or(true);
 
-            let new_conversation = if should_sync_conv {
+            if should_sync_conv {
                 let mut new_conversation: Conversation = conversation_response.conversation.into();
                 new_conversation.local_id = conversation.local_id;
                 new_conversation.has_messages = true;
@@ -1897,11 +1897,7 @@ impl Conversation {
                 debug!("Updating conversation");
                 new_conversation.save(tx).await?;
                 rebase_change_set.add(new_conversation.id());
-
-                new_conversation
-            } else {
-                conversation
-            };
+            }
 
             let message_metadata: Vec<ApiMessageMetadata> = conversation_response.messages;
             if had_messages {
@@ -1934,10 +1930,16 @@ impl Conversation {
                 tracing::error!("Failed to rebase changes: {e}");
             }
 
-            Ok(new_conversation)
+            Ok(())
         })
         .await
-        .map_err(MailContextError::Other)
+        .map_err(MailContextError::Other)?;
+
+        // Re-read from DB to get the conversation with both the API update and
+        // rebase (pending local actions) applied.
+        Self::find_by_id(local_conversation_id, tx.tether())
+            .await?
+            .ok_or_else(|| AppError::ConversationNotFound(local_conversation_id).into())
     }
 
     #[tracing::instrument(skip(tx, session, network_monitor_service, queue))]

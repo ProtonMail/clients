@@ -44,7 +44,7 @@ use mail_core_common::utils::MapVec;
 use mail_stash::orm::Model as _;
 use mail_uniffi_runtime::async_runtime;
 use std::sync::Arc;
-use tracing::warn;
+use tracing::{Instrument as _, warn};
 
 #[derive(uniffi::Object)]
 pub struct DecryptedMessage {
@@ -79,6 +79,7 @@ impl DecryptedMessage {
     /// Gets the message body as an HTML. This does all of the transformations that are
     /// required based on the options and the user settings.
     #[returns(BodyOutputResult)]
+    #[tracing::instrument(skip_all)]
     pub async fn body(self: Arc<Self>, opts: TransformOpts) -> Result<BodyOutput, ProtonError> {
         uniffi_async(async move {
             let ctx = self.ctx()?;
@@ -162,6 +163,7 @@ impl DecryptedMessage {
 #[uniffi_export]
 impl DecryptedMessage {
     #[returns(VoidActionResult)]
+    #[tracing::instrument(skip_all)]
     pub async fn unsubscribe_from_newsletter(self: Arc<Self>) -> Result<(), ProtonError> {
         uniffi_async(async move {
             let u = self.body.unsubscribe_from_newsletter()?;
@@ -177,6 +179,7 @@ impl DecryptedMessage {
     }
 
     #[returns(AttachmentDataResult)]
+    #[tracing::instrument(skip_all)]
     pub async fn load_image(
         self: Arc<Self>,
         url: String,
@@ -201,6 +204,7 @@ impl DecryptedMessage {
     /// [1] TODO (NGC-57) implement support for offline-mode
     ///     (this function probably will probably not have to be adjusted, but
     ///     I'm leaving a comment so that we know to update the docs above)
+    #[tracing::instrument(skip_all)]
     pub async fn identify_rsvp(self: Arc<Self>) -> Option<Arc<RsvpEventServiceProvider>> {
         uniffi_async(async move {
             let ctx = self.ctx()?;
@@ -230,14 +234,18 @@ impl DecryptedMessage {
     ///
     /// Note: this is an expensive operation and should e launched on a background
     /// task.
+    #[tracing::instrument(skip_all)]
     pub async fn privacy_lock(self: Arc<Self>) -> Option<PrivacyLock> {
         async_runtime()
-            .spawn(async move {
-                let ctx = self.ctx()?;
-                let tether = ctx.user_stash().connection().await?;
-                let builder = self.body.privacy_lock(&tether).await;
-                Ok(builder.build(&ctx).await)
-            })
+            .spawn(
+                async move {
+                    let ctx = self.ctx()?;
+                    let tether = ctx.user_stash().connection().await?;
+                    let builder = self.body.privacy_lock(&tether).await;
+                    Ok(builder.build(&ctx).await)
+                }
+                .in_current_span(),
+            )
             .await
             .map(|r: Result<_, RealProtonMailError>| r.unwrap_or_default())
             .unwrap_or_default()
@@ -501,6 +509,7 @@ impl From<RealMessageBanner> for MessageBanner {
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn message(
     session: Arc<MailUserSession>,
     id: Id,
@@ -525,6 +534,7 @@ pub struct WatchedMessage {
 declare_live_query_tagger!(WatchMessageMarker);
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn watch_message(
     session: Arc<MailUserSession>,
     message_id: Id,
@@ -550,6 +560,7 @@ pub async fn watch_message(
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn scroll_messages_for_label(
     mailbox: Arc<Mailbox>,
     callback: Box<dyn MessageScrollerLiveQueryCallback>,
@@ -574,6 +585,7 @@ pub async fn scroll_messages_for_label(
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn scroller_search(
     mailbox: Arc<Mailbox>,
     options: PaginatorSearchOptions,
@@ -595,6 +607,7 @@ pub async fn scroller_search(
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn available_label_as_actions_for_messages(
     mailbox: Arc<Mailbox>,
     ids: Vec<Id>,
@@ -613,6 +626,7 @@ pub async fn available_label_as_actions_for_messages(
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn available_move_to_actions_for_messages(
     mailbox: Arc<Mailbox>,
     ids: Vec<Id>,
@@ -641,6 +655,7 @@ pub async fn available_move_to_actions_for_messages(
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn all_available_list_actions_for_messages(
     mailbox: Arc<Mailbox>,
     message_ids: Vec<Id>,
@@ -662,6 +677,7 @@ pub async fn all_available_list_actions_for_messages(
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn all_available_message_actions_for_message(
     mailbox: Arc<Mailbox>,
     theme: ThemeOpts,
@@ -687,6 +703,7 @@ pub async fn all_available_message_actions_for_message(
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn all_available_message_actions_for_action_sheet(
     mailbox: Arc<Mailbox>,
     theme: ThemeOpts,
@@ -712,6 +729,7 @@ pub async fn all_available_message_actions_for_action_sheet(
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn get_message_body(
     mbox: &Mailbox,
     id: Id,
@@ -735,6 +753,7 @@ pub async fn get_message_body(
 /// Otherwise, it will return `Some(bool)` where `true` means the sender is blocked
 /// and `false` means the sender is not blocked.
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn is_message_sender_blocked(
     mbox: &Mailbox,
     message_id: Id,
@@ -752,6 +771,7 @@ pub async fn is_message_sender_blocked(
 
 #[uniffi_export]
 #[returns(VoidActionResult)]
+#[tracing::instrument(skip_all)]
 pub async fn star_messages(
     session: Arc<MailUserSession>,
     message_ids: Vec<Id>,
@@ -770,6 +790,7 @@ pub async fn star_messages(
 
 #[uniffi_export]
 #[returns(VoidActionResult)]
+#[tracing::instrument(skip_all)]
 pub async fn unstar_messages(
     session: Arc<MailUserSession>,
     message_ids: Vec<Id>,
@@ -788,6 +809,7 @@ pub async fn unstar_messages(
 
 #[uniffi_export]
 #[returns(VoidActionResult)]
+#[tracing::instrument(skip_all)]
 pub async fn mark_messages_read(
     mailbox: Arc<Mailbox>,
     message_ids: Vec<Id>,
@@ -806,6 +828,7 @@ pub async fn mark_messages_read(
 
 #[uniffi_export]
 #[returns(VoidActionResult)]
+#[tracing::instrument(skip_all)]
 pub async fn mark_messages_unread(
     mailbox: Arc<Mailbox>,
     message_ids: Vec<Id>,
@@ -824,6 +847,7 @@ pub async fn mark_messages_unread(
 
 #[uniffi_export]
 #[returns(VoidActionResult)]
+#[tracing::instrument(skip_all)]
 pub async fn delete_messages(
     mailbox: Arc<Mailbox>,
     message_ids: Vec<Id>,
@@ -847,6 +871,7 @@ pub async fn delete_messages(
 
 #[uniffi_export]
 #[returns(VoidActionResult)]
+#[tracing::instrument(skip_all)]
 pub async fn mark_messages_ham(mailbox: Arc<Mailbox>, message_id: Id) -> Result<(), ActionError> {
     let ctx = mailbox.ctx()?;
     uniffi_async(async move {
@@ -862,6 +887,7 @@ pub async fn mark_messages_ham(mailbox: Arc<Mailbox>, message_id: Id) -> Result<
 
 #[uniffi_export]
 #[returns(VoidActionResult)]
+#[tracing::instrument(skip_all)]
 pub async fn block_address(
     session: Arc<MailUserSession>,
     email: String,
@@ -880,6 +906,7 @@ pub async fn block_address(
 
 #[uniffi_export]
 #[returns(VoidActionResult)]
+#[tracing::instrument(skip_all)]
 pub async fn unblock_address(mailbox: Arc<Mailbox>, email: String) -> Result<(), ActionError> {
     let ctx = mailbox.ctx()?;
     uniffi_async(async move {
@@ -896,6 +923,7 @@ pub async fn unblock_address(mailbox: Arc<Mailbox>, email: String) -> Result<(),
 #[allow(unused)]
 #[uniffi_export]
 #[returns(VoidActionResult)]
+#[tracing::instrument(skip_all)]
 pub async fn report_phishing(mailbox: Arc<Mailbox>, message_id: Id) -> Result<(), ActionError> {
     let ctx = mailbox.ctx()?;
 
@@ -921,6 +949,7 @@ pub struct AttachmentData {
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn label_messages_as(
     mailbox: Arc<Mailbox>,
     message_ids: Vec<Id>,
@@ -950,6 +979,7 @@ pub async fn label_messages_as(
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn move_messages(
     mailbox: Arc<Mailbox>,
     destination_id: Id,
@@ -973,6 +1003,10 @@ pub async fn move_messages(
     .into()
 }
 
+/// Deprecated: Use [`resolve_message_from_push_notification`] instead when opening
+/// a conversation from a push notification. This function may return stale data
+/// because it skips the API fetch when the message already exists locally.
+///
 /// [`RemoteId`] on its own is useless, because all our UniFFI endpoints operate on
 /// local ids. This method translates remote id into local [`Id`].
 ///
@@ -980,6 +1014,7 @@ pub async fn move_messages(
 /// database yet. In that case, Rust SDK will fetch necessary information from API before returning the id.
 ///
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn resolve_message_id(
     session: Arc<MailUserSession>,
     remote_id: RemoteId,
@@ -994,6 +1029,22 @@ pub async fn resolve_message_id(
     .into()
 }
 
+#[uniffi_export]
+#[tracing::instrument(skip_all)]
+pub async fn resolve_message_from_push_notification(
+    session: Arc<MailUserSession>,
+    remote_id: RemoteId,
+) -> Result<Message, ActionError> {
+    let user_ctx = session.ctx()?;
+    uniffi_async(async move {
+        let message =
+            RealMessage::sync_metadata_from_push_notification(&user_ctx, remote_id.into()).await?;
+        Ok::<_, RealProtonMailError>(message.into())
+    })
+    .await
+    .map_err(ActionError::from)
+}
+
 /// Delete all messages in a label
 ///
 /// Limited to:
@@ -1006,6 +1057,7 @@ pub async fn resolve_message_id(
 ///
 #[uniffi_export]
 #[returns(VoidActionResult)]
+#[tracing::instrument(skip_all)]
 pub async fn delete_all_messages_in_label(
     session: Arc<MailUserSession>,
     label_id: Id,
@@ -1028,6 +1080,7 @@ pub async fn delete_all_messages_in_label(
 
 #[uniffi_export]
 #[returns(VoidActionResult)]
+#[tracing::instrument(skip_all)]
 pub async fn update_mobile_list_toolbar_actions(
     session: Arc<MailUserSession>,
     actions: Vec<MobileAction>,
@@ -1049,6 +1102,7 @@ pub async fn update_mobile_list_toolbar_actions(
 
 #[uniffi_export]
 #[returns(VoidActionResult)]
+#[tracing::instrument(skip_all)]
 pub async fn update_mobile_message_toolbar_actions(
     session: Arc<MailUserSession>,
     actions: Vec<MobileAction>,
@@ -1070,6 +1124,7 @@ pub async fn update_mobile_message_toolbar_actions(
 
 #[uniffi_export]
 #[returns(MobileActionsResult)]
+#[tracing::instrument(skip_all)]
 pub async fn get_mobile_list_toolbar_actions(
     session: Arc<MailUserSession>,
 ) -> Result<Vec<MobileAction>, ActionError> {
@@ -1091,6 +1146,7 @@ pub async fn get_mobile_list_toolbar_actions(
 
 #[uniffi_export]
 #[returns(MobileActionsResult)]
+#[tracing::instrument(skip_all)]
 pub async fn get_mobile_message_toolbar_actions(
     session: Arc<MailUserSession>,
 ) -> Result<Vec<MobileAction>, ActionError> {
@@ -1138,6 +1194,7 @@ pub fn get_all_mobile_message_actions() -> Vec<MobileAction> {
 ///
 /// This function is designed to work offline-only for iOS push notification clearing.
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn bulk_message_unread_status(
     session: Arc<MailUserSession>,
     remote_ids: Vec<RemoteId>,

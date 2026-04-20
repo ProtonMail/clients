@@ -22,6 +22,7 @@ use mail_vcard::values::date_and_or_time::MaybeDateAndOrTime;
 use proton_crypto_account::keys::UserKeySelector;
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn get_contact_details(
     session: &MailUserSession,
     contact_id: Id,

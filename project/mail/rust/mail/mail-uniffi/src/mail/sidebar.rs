@@ -40,6 +40,7 @@ impl Sidebar {
     }
 
     #[returns(VoidActionResult)]
+    #[tracing::instrument(skip_all)]
     pub async fn collapse_folder(&self, local_id: Id) -> Result<(), ActionError> {
         let ctx = self.ctx()?;
 
@@ -54,6 +55,7 @@ impl Sidebar {
     }
 
     #[returns(VoidActionResult)]
+    #[tracing::instrument(skip_all)]
     pub async fn expand_folder(&self, local_id: Id) -> Result<(), ActionError> {
         let ctx = self.ctx()?;
 
@@ -70,6 +72,7 @@ impl Sidebar {
 
 #[uniffi_export]
 impl Sidebar {
+    #[tracing::instrument(skip_all)]
     pub async fn system_labels(&self) -> Result<Vec<SidebarSystemLabel>, ActionError> {
         let mail_stash = self.user_stash()?;
 
@@ -83,6 +86,7 @@ impl Sidebar {
         .map_err(ActionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn custom_folders(&self) -> Result<Vec<SidebarCustomFolder>, ActionError> {
         let mail_stash = self.user_stash()?;
 
@@ -96,6 +100,7 @@ impl Sidebar {
         .map_err(ActionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn all_custom_folders(&self) -> Result<Vec<SidebarCustomFolder>, ActionError> {
         let mail_stash = self.user_stash()?;
 
@@ -109,6 +114,7 @@ impl Sidebar {
         .map_err(ActionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn custom_labels(&self) -> Result<Vec<SidebarCustomLabel>, ActionError> {
         let mail_stash = self.user_stash()?;
 
@@ -122,6 +128,7 @@ impl Sidebar {
         .map_err(ActionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn watch_labels(
         &self,
         callback: Box<dyn LiveQueryCallback>,

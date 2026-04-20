@@ -49,6 +49,7 @@ impl MailSession {
 }
 impl MailSession {
     /// See [`start_background_execution_with_duration`] for details.
+    #[tracing::instrument(skip_all)]
     fn start_background_execution_with_duration_impl(
         &self,
         duration: Duration,

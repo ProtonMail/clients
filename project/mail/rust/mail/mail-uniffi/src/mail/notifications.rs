@@ -127,6 +127,7 @@ impl From<RealNotificationSender> for NotificationSender {
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn decrypt_push_notification(
     key_chain: Box<dyn OSKeyChain>,
     encrypted: EncryptedPushNotification,
@@ -174,6 +175,7 @@ impl From<PushNotificationQuickAction> for RealPushNotificationQuickAction {
 #[uniffi_export]
 impl MailSession {
     #[returns(VoidActionResult)]
+    #[tracing::instrument(skip_all)]
     pub async fn execute_notification_quick_action(
         &self,
         session: Arc<StoredSession>,

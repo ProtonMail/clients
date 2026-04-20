@@ -10,6 +10,7 @@ use mail_common::test_utils::init::Params as TestParams;
 use mail_common::test_utils::test_context::MailTestContext;
 use mail_core_api::services::proton::Label as ApiLabel;
 use mail_core_api::services::proton::{LabelId, LabelType as ApiLabelType};
+use mail_stash::orm::Model;
 
 #[tokio::test]
 async fn test_new_mailbox_sync_conversations() {
@@ -347,4 +348,55 @@ async fn resolve_message_fetches_missing_dependenceis() {
     Message::find_or_fetch_by_remote_id(&user_ctx, message_id)
         .await
         .unwrap();
+}
+
+#[tokio::test]
+async fn sync_metadata_from_push_notification_always_fetches_from_api() {
+    let ctx = MailTestContext::new().await;
+    let params = TestParams::default_basic();
+
+    let message_id = MessageId::from("m1");
+
+    let initial_messages = vec![ApiMessageMetadata {
+        id: message_id.clone(),
+        conversation_id: params.conversations[0].id.clone(),
+        order: 0,
+        address_id: params.addresses[0].id.clone(),
+        label_ids: vec![LabelId::inbox()],
+        ..ApiMessageMetadata::test_default()
+    }];
+
+    ctx.setup_user(params.clone()).await;
+    // First call: message doesn't exist locally, fetch from API
+    ctx.mock_get_message_metadata(initial_messages, 1).await;
+
+    let user_ctx = ctx.mail_user_context().await;
+
+    let msg = Message::sync_metadata_from_push_notification(&user_ctx, message_id.clone())
+        .await
+        .unwrap();
+
+    assert!(msg.label_ids.contains(&LabelId::inbox()));
+
+    // Second call: message already exists locally.
+    // Unlike find_or_fetch_by_remote_id, this should still hit the API.
+    ctx.mock_server().reset().await;
+    ctx.mock_get_message_metadata(
+        vec![ApiMessageMetadata {
+            id: message_id.clone(),
+            conversation_id: params.conversations[0].id.clone(),
+            order: 0,
+            address_id: params.addresses[0].id.clone(),
+            label_ids: vec![LabelId::inbox()],
+            ..ApiMessageMetadata::test_default()
+        }],
+        1,
+    )
+    .await;
+
+    let msg2 = Message::sync_metadata_from_push_notification(&user_ctx, message_id)
+        .await
+        .unwrap();
+
+    assert_eq!(msg.id(), msg2.id());
 }

@@ -29,6 +29,7 @@ pub async fn get_privacy_info_for_message(
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn watch_privacy_info_stream(
     session: &MailUserSession,
     message_id: Id,

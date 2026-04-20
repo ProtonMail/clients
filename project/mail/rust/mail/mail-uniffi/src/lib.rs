@@ -1,3 +1,4 @@
+#![recursion_limit = "256"]
 #![allow(clippy::doc_markdown)]
 
 //! UniFFI bindings for Proton Mail.

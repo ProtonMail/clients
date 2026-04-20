@@ -44,6 +44,7 @@ pub trait MailboxBackgroundResult: Send + Sync {
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub fn new_mailbox(ctx: &MailUserSession, label_id: Id) -> Result<Arc<Mailbox>, UserSessionError> {
     let ptr = ctx.ptr();
     let ctx = ctx.ctx()?;
@@ -61,6 +62,7 @@ pub fn new_mailbox(ctx: &MailUserSession, label_id: Id) -> Result<Arc<Mailbox>, 
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub fn new_inbox_mailbox(ctx: &MailUserSession) -> Result<Arc<Mailbox>, UserSessionError> {
     let ptr = ctx.ptr();
     let ctx = ctx.ctx()?;
@@ -78,6 +80,7 @@ pub fn new_inbox_mailbox(ctx: &MailUserSession) -> Result<Arc<Mailbox>, UserSess
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub fn new_all_mail_mailbox(ctx: &MailUserSession) -> Result<Arc<Mailbox>, UserSessionError> {
     let ptr = ctx.ptr();
     let ctx = ctx.ctx()?;
@@ -111,6 +114,7 @@ impl Mailbox {
         self.mbox.recipient_display_mode().into()
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn unread_count(&self) -> Result<u64, UserSessionError> {
         let mail_stash = self.user_stash()?;
         let mbox = self.mbox.clone();
@@ -125,6 +129,7 @@ impl Mailbox {
         .map_err(UserSessionError::from)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn watch_unread_count(
         &self,
         callback: Box<dyn LiveQueryCallback>,

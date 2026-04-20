@@ -1,13 +1,16 @@
+use chrono::{Duration, Local};
 use mail_api::services::proton::common::MessageId;
 use mail_api::services::proton::response_data::ConversationLabel as ApiConversationLabel;
 use mail_api::services::proton::response_data::MessageMetadata as ApiMessageMetadata;
 use mail_common::Mailbox;
+use mail_common::actions::conversations::Snooze;
 use mail_common::datatypes::{ContextualConversation, ConversationViewOptions, SystemLabelId};
 use mail_common::models::Conversation;
 use mail_common::test_utils::init::Params as TestParams;
 use mail_common::test_utils::test_context::MailTestContext;
 use mail_core_api::services::proton::Label as ApiLabel;
 use mail_core_api::services::proton::{LabelId, LabelType as ApiLabelType};
+use mail_core_common::datatypes::{SystemLabel, UnixTimestamp};
 use mail_core_common::models::Label;
 use mail_core_common::models::ModelExtension;
 use mail_core_common::models::ModelIdExtension;
@@ -764,6 +767,88 @@ async fn conversation_and_messages_from_push_notification_fetches_missing_depend
     .await
     .unwrap()
     .unwrap();
+}
+
+#[tokio::test]
+async fn push_notification_sync_returns_post_rebase_conversation() {
+    let ctx = MailTestContext::new().await;
+    let params = TestParams::default_basic();
+
+    let message_id1 = MessageId::from("m1");
+
+    let messages = vec![ApiMessageMetadata {
+        id: message_id1.clone(),
+        conversation_id: params.conversations[0].id.clone(),
+        order: 0,
+        address_id: params.addresses[0].id.clone(),
+        label_ids: vec![LabelId::inbox()],
+        ..ApiMessageMetadata::test_default()
+    }];
+
+    // Server returns conversation with only the inbox label (server hasn't seen the snooze)
+    let server_conversation = params.conversations[0].clone();
+
+    ctx.setup_user(params.clone()).await;
+    ctx.mock_get_conversations(params.conversations.clone(), 1_u64)
+        .await;
+    ctx.mock_get_conversation_messages(params.conversations[0].clone(), messages.clone(), 1_u64)
+        .await;
+
+    let user_ctx = ctx.mail_user_context().await;
+
+    let mailbox = Mailbox::with_remote_id(
+        &user_ctx.user_stash().connection().await.unwrap(),
+        LabelId::inbox(),
+    )
+    .await
+    .unwrap();
+
+    mailbox
+        .sync(
+            &mut user_ctx.user_stash().connection().await.unwrap(),
+            user_ctx.session(),
+            10,
+        )
+        .await
+        .unwrap();
+
+    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let conversation = Conversation::find_first("", vec![], &tether)
+        .await
+        .unwrap()
+        .unwrap();
+
+    let inbox = SystemLabel::Inbox.load(&tether).await.unwrap().unwrap();
+    let snoozed = SystemLabel::Snoozed.load(&tether).await.unwrap().unwrap();
+
+    // Snooze the conversation locally (queued, not executed remotely)
+    let snooze_time = UnixTimestamp::from(Local::now() + Duration::hours(1));
+    let action = Snooze::new(inbox.id(), vec![conversation.id()], snooze_time);
+    user_ctx.action_queue().queue_action(action).await.unwrap();
+
+    // Verify the conversation is now in snoozed locally
+    let conversations_in_snoozed = Conversation::in_label(snoozed.id(), &tether).await.unwrap();
+    assert_eq!(conversations_in_snoozed.len(), 1);
+
+    // Reset mock and set up server to return conversation still in inbox only
+    ctx.mock_server().reset().await;
+    ctx.mock_get_conversation_messages(server_conversation, messages, 1_u64)
+        .await;
+
+    let result = ContextualConversation::conversation_and_messages_from_push_notification(
+        user_ctx.network_monitor_service(),
+        conversation.id(),
+        snoozed.id(),
+        ConversationViewOptions::All,
+        user_ctx.user_stash(),
+        user_ctx.session(),
+        user_ctx.action_queue(),
+    )
+    .await
+    .unwrap()
+    .unwrap();
+
+    assert_eq!(result.conversation.local_id, conversation.id());
 }
 
 // #[test]

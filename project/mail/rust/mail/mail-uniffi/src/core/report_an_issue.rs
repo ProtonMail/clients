@@ -12,6 +12,7 @@ use mail_core_common::datatypes::report_an_issue as real_report_an_issue;
 
 #[uniffi_export]
 #[returns(VoidSessionResult)]
+#[tracing::instrument(skip_all)]
 pub async fn report_an_issue(
     session: Arc<MailUserSession>,
     issue_report: IssueReport,

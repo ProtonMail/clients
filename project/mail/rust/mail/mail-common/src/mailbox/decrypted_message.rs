@@ -45,7 +45,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 use tokio::fs;
 use tokio::task::JoinHandle;
-use tracing::{debug, trace, warn};
+use tracing::{Instrument as _, debug, trace, warn};
 
 /// What to do with the body. If in any of the fields `None` is specified it will read the relevant
 /// value from the user setttings. If all are set, the db query will be elided.
@@ -222,9 +222,13 @@ impl DecryptedMessageBody {
                 let id = att.id();
                 let att = att.clone();
 
-                let fut = ctx.spawn_ex(async move |ctx| {
-                    let tether = &mut ctx.user_stash().connection().await?;
-                    att.content_data(&ctx, tether).await
+                let span = tracing::Span::current();
+                let fut = ctx.spawn_ex(move |ctx| {
+                    async move {
+                        let tether = &mut ctx.user_stash().connection().await?;
+                        att.content_data(&ctx, tether).await
+                    }
+                    .instrument(span)
                 });
 
                 (id, fut)
@@ -421,6 +425,7 @@ impl DecryptedMessageBody {
     /// Load or fetch an embedded attachment with `cid` for this message.
     ///
     /// If the attachment is not in the cache it will be downloaded from the server.
+    #[tracing::instrument(skip_all)]
     pub async fn get_embedded_attachment(
         &self,
         ctx: &MailUserContext,
@@ -646,6 +651,7 @@ impl DecryptedMessageBody {
         self.decryption_error.is_some()
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn privacy_lock(&self, tether: &Tether) -> PrivacyLockBuilder {
         let Ok(Some(message)) = Message::find_by_id(
             self.metadata.local_message_id.expect("should be set"),
@@ -696,7 +702,7 @@ pub enum PrivacyLockBuilder {
 }
 
 impl PrivacyLockBuilder {
-    #[tracing::instrument(skip_all)]
+    #[tracing::instrument(skip_all, name = "PrivacyLockBuilder::Build")]
     pub async fn build(self, ctx: &MailUserContext) -> Option<UiLock> {
         match self {
             PrivacyLockBuilder::None => None,

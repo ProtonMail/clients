@@ -1289,6 +1289,7 @@ pub struct Undo(Mutex<Option<RealUndo>>);
 
 #[uniffi_export]
 impl Undo {
+    #[tracing::instrument(skip_all)]
     async fn undo(&self, ctx: Arc<MailUserSession>) -> Result<(), ActionError> {
         let Some(output) = self.0.lock().take() else {
             warn!("already undone");

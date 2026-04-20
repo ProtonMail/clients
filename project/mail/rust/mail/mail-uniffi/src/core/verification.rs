@@ -228,6 +228,7 @@ pub struct ChallengeLoader {
 
 /// Create a new `ChallengeLoader`.
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn new_challenge_loader(
     cfg: ApiConfig,
     app: AppDetails,
@@ -251,6 +252,7 @@ pub async fn new_challenge_loader(
 #[uniffi_export]
 impl ChallengeLoader {
     /// Send a GET request to the server and return the response.
+    #[tracing::instrument(skip_all)]
     pub async fn get(
         &self,
         base: String,
@@ -278,6 +280,7 @@ impl ChallengeLoader {
     }
 
     /// Send a POST request to the server and return the response.
+    #[tracing::instrument(skip_all)]
     pub async fn post(
         &self,
         base: String,
@@ -306,6 +309,7 @@ impl ChallengeLoader {
     }
 
     /// Send a PUT request to the server and return the response.
+    #[tracing::instrument(skip_all)]
     pub async fn put(
         &self,
         base: String,

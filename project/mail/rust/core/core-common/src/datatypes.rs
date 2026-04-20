@@ -415,6 +415,47 @@ impl From<ApiLightOrDarkMode> for LightOrDarkMode {
     }
 }
 
+/// Sender image size, determining both the requested image size and the
+/// maximum scale-up factor sent to the API.
+///
+/// | Variant | Size (px) | MaxScaleUpFactor |
+/// |---------|-----------|------------------|
+/// | S16     | 16        | 1                |
+/// | S32     | 32        | 2                |
+/// | S64     | 64        | 3                |
+/// | S128    | 128       | 4                |
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum SenderImageSize {
+    S16,
+    S32,
+    S64,
+    S128,
+}
+
+impl SenderImageSize {
+    /// The pixel size to request from the API.
+    #[must_use]
+    pub fn size(self) -> u32 {
+        match self {
+            Self::S16 => 16,
+            Self::S32 => 32,
+            Self::S64 => 64,
+            Self::S128 => 128,
+        }
+    }
+
+    /// The maximum scale-up factor to request from the API.
+    #[must_use]
+    pub fn max_scale_up_factor(self) -> u8 {
+        match self {
+            Self::S16 => 1,
+            Self::S32 => 2,
+            Self::S64 => 3,
+            Self::S128 => 4,
+        }
+    }
+}
+
 impl From<LightOrDarkMode> for ApiLightOrDarkMode {
     fn from(value: LightOrDarkMode) -> Self {
         match value {

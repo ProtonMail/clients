@@ -40,6 +40,7 @@ impl Drop for RegisterDeviceTaskHandle {
 #[uniffi_export]
 impl RegisterDeviceTaskHandle {
     #[returns(VoidActionResult)]
+    #[tracing::instrument(skip_all)]
     pub fn update_device(&self, device: RegisteredDevice) -> Result<(), ActionError> {
         tracing::debug!("Uniffi: Updating device registration");
         self.sender
@@ -63,6 +64,8 @@ impl MailSession {
     /// In order to provide device registration details, this function returns an object [`RegisterDeviceTaskHandle`]
     /// that has a method [`RegisterDeviceTaskHandle::update_device`].
     ///
+
+    #[tracing::instrument(skip_all)]
     pub fn register_device_task(&self) -> Result<Arc<RegisterDeviceTaskHandle>, ActionError> {
         async_runtime().block_on(async {
             tracing::debug!("Uniffi: Spawning device registration task");

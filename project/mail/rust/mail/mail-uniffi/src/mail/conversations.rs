@@ -31,6 +31,7 @@ use std::sync::Arc;
 
 #[uniffi_export]
 #[returns(VoidActionResult)]
+#[tracing::instrument(skip_all)]
 pub async fn delete_conversations(
     mailbox: Arc<Mailbox>,
     conversation_ids: Vec<Id>,
@@ -54,6 +55,7 @@ pub async fn delete_conversations(
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn available_label_as_actions_for_conversations(
     mailbox: Arc<Mailbox>,
     ids: Vec<Id>,
@@ -72,6 +74,7 @@ pub async fn available_label_as_actions_for_conversations(
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn available_move_to_actions_for_conversations(
     mailbox: Arc<Mailbox>,
     ids: Vec<Id>,
@@ -96,6 +99,7 @@ pub async fn available_move_to_actions_for_conversations(
 #[allow(unused_variables)]
 #[allow(clippy::needless_pass_by_value)]
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn available_snooze_actions_for_conversation(
     session: Arc<MailUserSession>,
     week_start: NonDefaultWeekStart,
@@ -126,6 +130,7 @@ pub async fn available_snooze_actions_for_conversation(
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn snooze_conversations(
     session: Arc<MailUserSession>,
     label_id: Id,
@@ -149,6 +154,7 @@ pub async fn snooze_conversations(
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn unsnooze_conversations(
     session: Arc<MailUserSession>,
     label_id: Id,
@@ -170,6 +176,7 @@ pub async fn unsnooze_conversations(
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn all_available_list_actions_for_conversations(
     mailbox: Arc<Mailbox>,
     conversation_ids: Vec<Id>,
@@ -192,6 +199,7 @@ pub async fn all_available_list_actions_for_conversations(
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn all_available_conversation_actions_for_action_sheet(
     mailbox: Arc<Mailbox>,
     conversation_id: Id,
@@ -214,6 +222,7 @@ pub async fn all_available_conversation_actions_for_action_sheet(
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn all_available_conversation_actions_for_conversation(
     mailbox: Arc<Mailbox>,
     conversation_id: Id,
@@ -236,6 +245,7 @@ pub async fn all_available_conversation_actions_for_conversation(
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn conversation(
     mailbox: Arc<Mailbox>,
     id: Id,
@@ -299,6 +309,7 @@ impl From<ContextualConversationAndMessages> for ConversationAndMessages {
 
 #[uniffi_export]
 #[returns(VoidActionResult)]
+#[tracing::instrument(skip_all)]
 pub async fn mark_conversations_as_read(
     mailbox: Arc<Mailbox>,
     ids: Vec<Id>,
@@ -321,6 +332,7 @@ pub async fn mark_conversations_as_read(
 
 #[uniffi_export]
 #[returns(VoidActionResult)]
+#[tracing::instrument(skip_all)]
 pub async fn mark_conversations_as_unread(
     mailbox: Arc<Mailbox>,
     ids: Vec<Id>,
@@ -342,6 +354,7 @@ pub async fn mark_conversations_as_unread(
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn move_conversations(
     mailbox: Arc<Mailbox>,
     label_id: Id,
@@ -361,6 +374,7 @@ pub async fn move_conversations(
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn scroll_conversations_for_label(
     mailbox: Arc<Mailbox>,
     callback: Box<dyn ConversationScrollerLiveQueryCallback>,
@@ -383,6 +397,7 @@ pub async fn scroll_conversations_for_label(
 
 #[uniffi_export]
 #[returns(VoidActionResult)]
+#[tracing::instrument(skip_all)]
 pub async fn star_conversations(
     session: Arc<MailUserSession>,
     ids: Vec<Id>,
@@ -401,6 +416,7 @@ pub async fn star_conversations(
 
 #[uniffi_export]
 #[returns(VoidActionResult)]
+#[tracing::instrument(skip_all)]
 pub async fn unstar_conversations(
     session: Arc<MailUserSession>,
     ids: Vec<Id>,
@@ -425,7 +441,7 @@ pub struct WatchedConversation {
     pub handle: Arc<WatchHandle>,
 }
 
-#[derive(Default, uniffi::Enum)]
+#[derive(Default, uniffi::Enum, Debug)]
 pub enum OpenConversationOrigin {
     #[default]
     Default,
@@ -457,6 +473,7 @@ impl From<OpenConversationOrigin> for RealOpenConversationOrigin {
 declare_live_query_tagger!(WatchConversationMarker);
 
 #[uniffi_export]
+#[tracing::instrument(skip(mailbox, callback))]
 pub async fn watch_conversation(
     mailbox: Arc<Mailbox>,
     id: Id,
@@ -513,6 +530,7 @@ pub struct WatchedConversations {
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn label_conversations_as(
     mailbox: Arc<Mailbox>,
     conversation_ids: Vec<Id>,
@@ -542,6 +560,7 @@ pub async fn label_conversations_as(
 }
 
 #[uniffi_export]
+#[tracing::instrument(skip_all)]
 pub async fn get_auto_delete_banner(
     session: Arc<MailUserSession>,
     label_id: Id,
@@ -557,6 +576,7 @@ pub async fn get_auto_delete_banner(
 
 #[uniffi_export]
 #[returns(VoidActionResult)]
+#[tracing::instrument(skip_all)]
 pub async fn update_mobile_conversation_toolbar_actions(
     session: Arc<MailUserSession>,
     actions: Vec<MobileAction>,
@@ -578,6 +598,7 @@ pub async fn update_mobile_conversation_toolbar_actions(
 
 #[uniffi_export]
 #[returns(MobileActionsResult)]
+#[tracing::instrument(skip_all)]
 pub async fn get_mobile_conversation_toolbar_actions(
     session: Arc<MailUserSession>,
 ) -> Result<Vec<MobileAction>, ActionError> {

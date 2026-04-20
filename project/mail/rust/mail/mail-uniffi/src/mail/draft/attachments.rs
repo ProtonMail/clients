@@ -403,6 +403,7 @@ pub struct DraftAttachmentListUpdateStream {
 #[uniffi_export]
 impl DraftAttachmentListUpdateStream {
     #[returns(VoidProtonResult)]
+    #[tracing::instrument(skip_all)]
     pub async fn next_async(self: Arc<Self>) -> Result<(), ProtonError> {
         async_runtime()
             .spawn(async move {

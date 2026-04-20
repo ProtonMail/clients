@@ -289,6 +289,7 @@ impl std::ops::Deref for Context {
     }
 }
 
+const ACCOUNT_STASH_CONNECTION_POOL_SIZE: u32 = 24;
 const SESSION_OBSERVER_BROADCAST_CAPACITY: usize = 8;
 
 impl Context {
@@ -344,7 +345,7 @@ impl Context {
 
             let stash_config = StashConfiguration {
                 path: Some(&account_stash_path),
-                pool_size: Some(24),
+                pool_size: Some(ACCOUNT_STASH_CONNECTION_POOL_SIZE),
                 ..Default::default()
             };
 

@@ -41,6 +41,7 @@ impl RsvpEventServiceProvider {
     /// Note that this might return `None` - this will be the case e.g. for
     /// reminders when there's no network connection available (since we need
     /// network connection in order to fetch reminder details from the API).
+    #[tracing::instrument(skip_all)]
     pub async fn event_service(self: Arc<Self>) -> Option<Arc<RsvpEventService>> {
         uniffi_async(async move {
             let ctx = self.ctx()?;
@@ -92,6 +93,7 @@ impl RsvpEventService {
     /// After returned `Future` succeeds, call [`Self::details()`] to get an
     /// updated event object (with refreshed attendee status).
     #[returns(VoidAnswerRsvpResult)]
+    #[tracing::instrument(skip_all)]
     pub async fn answer(self: Arc<Self>, answer: RsvpAnswer) -> Result<(), ProtonError> {
         uniffi_async(async move {
             let ctx = self.ctx()?;

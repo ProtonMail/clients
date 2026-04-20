@@ -1841,6 +1841,78 @@ impl Message {
         Ok(result[0].id())
     }
 
+    #[tracing::instrument(skip(ctx))]
+    pub async fn sync_metadata_from_push_notification(
+        ctx: &MailUserContext,
+        remote_id: MessageId,
+    ) -> MailContextResult<Self> {
+        let remote_msgs = Self::fetch_metadata(
+            GetMessagesOptions {
+                ids: Some(vec![remote_id]),
+                ..Default::default()
+            },
+            ctx.session(),
+        )
+        .await?
+        .messages;
+
+        if remote_msgs.is_empty() {
+            return Err(MailContextError::Other(anyhow!(
+                "Message not found on server"
+            )));
+        }
+
+        let mut dep_fetcher = DependencyFetcher::new();
+        let mut tether = ctx.user_stash().connection().await?;
+        for msg in &remote_msgs {
+            dep_fetcher
+                .check_api_message_metadata(msg, tether.tether())
+                .await?;
+        }
+
+        dep_fetcher
+            .fetch_and_store(ctx.session(), &mut tether)
+            .await
+            .inspect_err(|e| {
+                tracing::error!("Failed to sync message dependencies: {e}");
+            })?;
+
+        let local_id = tether
+            .run_tx::<_, _>(async |tx| {
+                let msg = remote_msgs
+                    .into_iter()
+                    .next()
+                    .expect("already checked non-empty");
+                let sync_decision = Message::sync_decision(&msg, None, tx).await?;
+                let mut remote_msg = Message::from_api_metadata(msg, tx).await?;
+                if sync_decision == MessageSyncDecision::Apply {
+                    remote_msg.save(tx).await?;
+                }
+                let local_id = remote_msg.id();
+
+                let rebase_change_set = RebaseChangeSet::from(local_id);
+                if let Err(e) = ctx
+                    .action_queue()
+                    .rebase_in(ActionGroup::default(), &rebase_change_set, tx)
+                    .await
+                {
+                    tracing::error!("Failed to rebase: {e}");
+                }
+
+                Ok(local_id)
+            })
+            .await
+            .map_err(MailContextError::Other)?;
+
+        // Re-read from DB to get the message with both the API update and
+        // rebase (pending local actions) applied.
+        Self::find_by_id(local_id, tether.tether())
+            .await?
+            .ok_or_else(|| {
+                MailContextError::Other(anyhow!("Message not found after sync and rebase"))
+            })
+    }
+
     /// Bulk check unread status for messages by remote IDs.
     ///
     /// Returns a Vec<bool> where each boolean corresponds to the unread status

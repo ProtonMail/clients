@@ -196,6 +196,53 @@ fn with_microsoft_timezone() {
     );
 }
 
+#[test]
+fn with_microsoft_timezone_display_name() {
+    let out = VCalendar::from_str(&ics! {"
+        BEGIN:VCALENDAR
+        METHOD:REQUEST
+        PRODID:Microsoft Exchange Server 2010
+        VERSION:2.0
+        BEGIN:VTIMEZONE
+        TZID:(UTC+01:00) Brussels\\, Copenhagen\\, Madrid\\, Paris
+        BEGIN:STANDARD
+        DTSTART:16010101T030000
+        TZOFFSETFROM:+0200
+        TZOFFSETTO:+0100
+        RRULE:FREQ=YEARLY;INTERVAL=1;BYDAY=-1SU;BYMONTH=10
+        END:STANDARD
+        BEGIN:DAYLIGHT
+        DTSTART:16010101T020000
+        TZOFFSETFROM:+0100
+        TZOFFSETTO:+0200
+        RRULE:FREQ=YEARLY;INTERVAL=1;BYDAY=-1SU;BYMONTH=3
+        END:DAYLIGHT
+        END:VTIMEZONE
+        BEGIN:VEVENT
+        UID:1234
+        SUMMARY:outlook
+        DTSTAMP;TZID=\"(UTC+01:00) Brussels, Copenhagen, Madrid, Paris\":20180101T123000
+        DTSTART;TZID=\"(UTC+01:00) Brussels, Copenhagen, Madrid, Paris\":20180101T123000
+        DTEND;TZID=\"(UTC+01:00) Brussels, Copenhagen, Madrid, Paris\":20180101T130000
+        END:VEVENT
+        END:VCALENDAR
+    "})
+    .unwrap();
+
+    let dtstart: Zoned = out.cal.events[0]
+        .dtstart
+        .clone()
+        .unwrap()
+        .value
+        .try_into()
+        .unwrap();
+
+    assert_eq!(
+        "2018-01-01T12:30:00+01:00[Europe/Paris]",
+        dtstart.to_string()
+    );
+}
+
 /// Make sure we can parse various atypical and funny cases.
 ///
 /// Fixtures here were taken (mostly) from the surgery dataset, but since we

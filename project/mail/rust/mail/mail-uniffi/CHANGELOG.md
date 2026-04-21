@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [mail-uniffi-v0.164.18] - 2026-04-21
+
+### Fixes
+
+- iCal - make sure we parse TZID even if non-standard - proton/clients/monorepo!1838
+- Format cookie in headers properly - proton/clients/monorepo!1754
+- [ET-6033] Do not expire when sending to large contact groups - proton/clients/monorepo!1659
+- [ET-6131] Clear account if inspect_user fails - proton/clients/monorepo!1917
+
+
 ## [mail-uniffi-v0.164.17] - 2026-04-15
 
 Note: This release merges 0.164.16 to main 0.164 release branch

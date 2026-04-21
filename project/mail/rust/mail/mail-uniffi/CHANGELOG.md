@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [mail-uniffi-v0.165.0] - 2026-04-21
+
+### Changed
+
+- Rename key-manager - proton/clients/monorepo!1620
+
+### Features
+
+- [ET-6098] Implement category view support in the scrollers - proton/clients/monorepo!1874
+- [ET-6086] Use two flags for upsell eligibility - proton/clients/monorepo!1846
+- [ET-6092] Implement Category View interfaces
+- [FOUN-281] fixture perf - proton/clients/monorepo!1501
+- Move the mail app to the new key manager - proton/clients/monorepo!1539
+
+### Fixes
+
+- iCal - make sure we parse TZID even if non-standard - proton/clients/monorepo!1838
+- [ET-6119] runtime crash in RustInit.kt due to package mismatch - proton/clients/monorepo!1851
+- Move to the non-streaming API in attachment decryption - proton/clients/monorepo!1803
+- Address issues with mail-clippy, mail-audit, account-crux-ffi tests, ... - proton/clients/monorepo!1808
+- Format cookie in headers properly - proton/clients/monorepo!1754
+- [ET-6033] Do not expire when sending to large contact groups - proton/clients/monorepo!1659
+- Do not accidentally early exit when resetting auth - proton/clients/monorepo!1621
+- remove unused Bazel workspace - proton/clients/monorepo!1610
+- Revert to using GET for fetching unleash flags - proton/clients/monorepo!1558
+- Fix 2FA for resumed LoginFlow - proton/clients/monorepo!1536
+
+
 ## [mail-uniffi-v0.164.17] - 2026-04-15
 
 Note: This release merges 0.164.16 to main 0.164 release branch

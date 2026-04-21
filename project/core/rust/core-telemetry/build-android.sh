@@ -40,7 +40,7 @@ function build() {
 
   echo "Generating Kotlin bindings from debug arm .so file..."
   cargo ndk -t "arm64-v8a" build --features "$FEATURES" --target-dir "$TARGET_DIR" --profile "dev"
-  cargo run -p uniffi-bindgen --target-dir "$TARGET_DIR" -- \
+  cargo run --package uniffi-bindgen --target-dir "$TARGET_DIR" -- \
     generate \
     --library "$TARGET_DIR/aarch64-linux-android/debug/${LIB_NAME}" \
     --language kotlin \

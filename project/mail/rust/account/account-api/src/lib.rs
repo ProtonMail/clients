@@ -5,16 +5,14 @@ use crate::prelude::*;
 use derive_more::Display;
 use mail_core_api::services::observability::ApiServiceObservabilityResponse;
 use mail_muon::{
-    ProtonRequest, ProtonResponse, Status, common::Sender, http::HttpReqExt, serde_to_query,
+    GET, POST, PUT, ProtonRequest, ProtonResponse, Status, common::Sender, http::HttpReqExt,
+    serde_to_query,
 };
 use serde::Deserialize;
 use serde_json::Value;
 
 #[macro_use]
 extern crate tracing;
-
-#[macro_use]
-extern crate mail_muon;
 
 pub mod countries;
 pub mod login;

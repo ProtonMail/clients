@@ -136,7 +136,12 @@ impl WantTfa {
     ) -> Result<State, LoginError> {
         data.parts.store.write().await.clear_pass().await?;
 
-        State::inspect_user(client, data, pass, post_login_validator).await
+        let store = data.parts.store.clone();
+        let result = State::inspect_user(client, data, pass, post_login_validator).await;
+        if result.is_err() {
+            let _ = store.write().await.clear_account().await;
+        }
+        result
     }
 
     pub async fn fido_details(

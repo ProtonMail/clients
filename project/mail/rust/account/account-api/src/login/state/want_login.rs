@@ -209,13 +209,18 @@ impl WantLogin {
                     .set_auth_info(get_auth_info(&user_id, &session_id, false, false))
                     .await?;
 
-                State::inspect_user(
+                let store = self.parts.store.clone();
+                let result = State::inspect_user(
                     client,
                     get_state_data(&user_id, &session_id, self.parts),
                     pass,
                     post_login_validator,
                 )
-                .await
+                .await;
+                if result.is_err() {
+                    let _ = store.write().await.clear_account().await;
+                }
+                result
             }
 
             LoginFlow::TwoFactor(flow, data) => {

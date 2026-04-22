@@ -79,10 +79,26 @@ pub struct LtCoreUserSettings {
         )
     )]
     pub device_recovery: Option<bool>,
-    #[cfg_attr(feature = "serde", serde(default))]
-    pub telemetry: Option<i32>,
-    #[cfg_attr(feature = "serde", serde(default))]
-    pub crash_reports: Option<i32>,
+    #[cfg_attr(
+        feature = "serde",
+        serde(
+            default,
+            rename = "Telemetry",
+            skip_serializing_if = "Option::is_none",
+            with = "crate::helpers::bool_opt_int"
+        )
+    )]
+    pub telemetry: Option<bool>,
+    #[cfg_attr(
+        feature = "serde",
+        serde(
+            default,
+            rename = "CrashReports",
+            skip_serializing_if = "Option::is_none",
+            with = "crate::helpers::bool_opt_int"
+        )
+    )]
+    pub crash_reports: Option<bool>,
     #[cfg_attr(feature = "serde", serde(default))]
     pub invoice_text: Option<String>,
     #[cfg_attr(feature = "serde", serde(default))]

@@ -102,7 +102,7 @@ async fn main() {
         .get_conversations(GetConversationsOptions {
             page: 0,
             page_size: 10,
-            label_id: LabelId::from("0".to_owned()).into(),
+            label_id: Some(vec![LabelId::from("0".to_owned())]),
             desc: Some(true),
             ..Default::default()
         })

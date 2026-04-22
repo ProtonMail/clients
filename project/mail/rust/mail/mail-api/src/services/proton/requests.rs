@@ -96,9 +96,9 @@ pub struct GetConversationsOptions {
     /// Keyword search of `To`, `CC`, `BCC`, `From`, and `Subject` fields.
     pub keyword: Option<String>,
 
-    /// Label ID to filter on.
+    /// Label IDs to filter on.
     #[serde(rename = "LabelID")]
-    pub label_id: Option<LabelId>,
+    pub label_id: Option<Vec<LabelId>>,
 
     /// The number of conversations to return.
     #[serde_as(as = "Option<DisplayFromStr>")]

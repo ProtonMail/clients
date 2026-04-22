@@ -3449,7 +3449,7 @@ impl Conversation {
 
         let response = api
             .get_conversations(GetConversationsOptions {
-                label_id: Some(label_id),
+                label_id: Some(vec![label_id]),
                 page: 0,
                 page_size: count.min(MAX_PAGE_ELEMENT_COUNT) as u64,
                 desc: Some(true),

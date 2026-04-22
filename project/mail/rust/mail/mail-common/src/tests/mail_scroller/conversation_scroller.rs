@@ -1184,7 +1184,7 @@ async fn test_category_filter_default_shows_all_conversations_from_disabled_cate
         .await
         .unwrap();
 
-    let mut view = CategoryView::load(&tether).await.unwrap();
+    let mut view = CategoryView::load(inbox.id(), &tether).await.unwrap();
     let categories = view
         .enable(Some(primary.id()))
         .unwrap()

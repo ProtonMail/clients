@@ -765,7 +765,7 @@ where
         let arc_ctx = ctx.upgrade().ok_or(MailContextError::MissingContext)?;
         let tether = arc_ctx.user_stash().connection().await?;
         let alternative_labels = AlternativeLabels::new(label, &tether).await?;
-        let category_view = CategoryView::load(&tether).await?;
+        let category_view = CategoryView::load(label, &tether).await?;
         // Pass the auto-enabled category filter into initialize so that the very first
         // fetch already returns filtered results (not all inbox items).
         let initial_category = if category_view.enabled.is_some() {
@@ -1046,6 +1046,8 @@ where
             }
 
             ScrollerCommand::ChangeLabel { src, label } => {
+                // Compute the category view and filter for the new label BEFORE the state
+                // change so the source filter is applied atomically with the label switch.
                 let result = self
                     .change_label(src, label, Some(ReadFilter::All))
                     .await
@@ -1059,9 +1061,6 @@ where
                         .unwrap_or_else(|e| {
                             error!("Failed to recalculate alternative labels: {e:?}");
                         });
-                    self.recalculate_category_view().await.unwrap_or_else(|e| {
-                        error!("Failed to recalculate category view: {e:?}");
-                    });
                 }
 
                 if result.is_some() || result.is_scroll_event() {
@@ -1409,14 +1408,23 @@ where
         debug!("Changing label to `{label}`");
 
         let ctx = self.ctx.upgrade().ok_or(MailContextError::MissingContext)?;
+        let (category_view, category_ids) = {
+            let tether = ctx.user_stash().connection().await?;
+            let view = CategoryView::load(label, &tether).await?;
+            let ids = view.query_filter_ids(&tether).await?;
+
+            (view, ids)
+        };
+
         let _ = self.task.take();
 
         self.task = self
             .source
             .write()
             .await
-            .change_state(&ctx, with_filter, Some(label), None, None)
+            .change_state(&ctx, with_filter, Some(label), None, Some(category_ids))
             .await?;
+        self.category_view = category_view;
 
         self.reset(src).await
     }
@@ -1466,6 +1474,7 @@ where
         if self.alternative_labels.supports_include_filter() {
             Self::abort_task(&mut self.task);
             let label = self.include_to_label(include).await;
+
             self.change_label(src, label, None).await
         } else {
             Ok(ScrollerListUpdate::None {
@@ -1602,14 +1611,6 @@ where
         let ctx = self.ctx.upgrade().ok_or(MailContextError::MissingContext)?;
         let tether = ctx.user_stash().connection().await?;
         self.alternative_labels = AlternativeLabels::new(label, &tether).await?;
-
-        Ok(())
-    }
-
-    async fn recalculate_category_view(&mut self) -> Result<(), MailContextError> {
-        let ctx = self.ctx.upgrade().ok_or(MailContextError::MissingContext)?;
-        let tether = ctx.user_stash().connection().await?;
-        self.category_view = CategoryView::load(&tether).await?;
 
         Ok(())
     }

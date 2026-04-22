@@ -14,7 +14,18 @@ pub struct CategoryView {
 }
 
 impl CategoryView {
-    pub async fn load(tether: &Tether) -> anyhow::Result<Self> {
+    /// Load the category view for the given label.
+    ///
+    /// Returns `CategoryView::default()` (empty) when:
+    /// - `label` is not the Inbox (only Inbox supports category filtering), or
+    /// - `mail_category_view = false` in `MailSettings`.
+    pub async fn load(label: LocalLabelId, tether: &Tether) -> anyhow::Result<Self> {
+        // Category filtering is only supported for the Inbox label.
+        let inbox_local_id = SystemLabel::Inbox.local_id(tether).await?;
+        if inbox_local_id != Some(label) {
+            return Ok(Self::default());
+        }
+
         let mail_category_view = MailSettings::get(tether)
             .await?
             .is_some_and(|s| s.mail_category_view);

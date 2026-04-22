@@ -90,7 +90,8 @@ async fn test_category_label_has_unseen_items_from_db() {
         .await
         .unwrap();
 
-    let view = CategoryView::load(&tether).await.unwrap();
+    let inbox_id = SystemLabel::Inbox.local_id(&tether).await.unwrap().unwrap();
+    let view = CategoryView::load(inbox_id, &tether).await.unwrap();
     let labels = view.into_labels(&tether).await.unwrap();
     let social_label = labels
         .iter()
@@ -140,7 +141,8 @@ async fn test_load_available_filters_display_and_carries_unseen_items_to_primary
         .await
         .unwrap();
 
-    let view = CategoryView::load(&tether).await.unwrap();
+    let inbox_id = SystemLabel::Inbox.local_id(&tether).await.unwrap().unwrap();
+    let view = CategoryView::load(inbox_id, &tether).await.unwrap();
     let social_id = social.id();
     let promotions_id = promotions.id();
     let default_id = default.id();
@@ -206,7 +208,8 @@ async fn test_expanded_filter_ids_category_default() {
     let social_id = social.id();
     let updates_id = updates.id();
 
-    let mut view = CategoryView::load(&tether).await.unwrap();
+    let inbox_id = SystemLabel::Inbox.local_id(&tether).await.unwrap().unwrap();
+    let mut view = CategoryView::load(inbox_id, &tether).await.unwrap();
     let ids = view
         .enable(Some(default_id))
         .unwrap()
@@ -259,7 +262,8 @@ async fn test_load_returns_empty_when_setting_disabled() {
     let mail_stash = new_test_connection().await;
     let tether = mail_stash.connection().await.unwrap();
     // No MailSettings stored → mail_category_view defaults to false.
-    let view = CategoryView::load(&tether).await.unwrap();
+    let inbox_id = SystemLabel::Inbox.local_id(&tether).await.unwrap().unwrap();
+    let view = CategoryView::load(inbox_id, &tether).await.unwrap();
     assert!(
         view.available.is_empty(),
         "available should be empty when mail_category_view is disabled"

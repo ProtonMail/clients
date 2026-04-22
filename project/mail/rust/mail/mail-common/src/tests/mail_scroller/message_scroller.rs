@@ -995,7 +995,7 @@ async fn test_category_filter_default_shows_all_messages_from_disabled_categorie
         .await
         .unwrap();
 
-    let mut view = CategoryView::load(&tether).await.unwrap();
+    let mut view = CategoryView::load(inbox.id(), &tether).await.unwrap();
     let categories = view
         .enable(Some(primary.id()))
         .unwrap()

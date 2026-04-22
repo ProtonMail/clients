@@ -44,7 +44,7 @@ cp $BUILD_TARGET_DIR/armv7-linux-androideabi/$PROFILE/$LIB_NAME $OUT_DIR/jniLibs
 cp $BUILD_TARGET_DIR/x86_64-linux-android/$PROFILE/$LIB_NAME $OUT_DIR/jniLibs/x86_64/$LIB_NAME
 
 PGP_SYS_LIB="libgopenpgp-sys.so"
-if [[ -f "target/aarch64-linux-android/$PROFILE/$PGP_SYS_LIB" ]]; then
+if [[ -f "$BUILD_TARGET_DIR/aarch64-linux-android/$PROFILE/$PGP_SYS_LIB" ]]; then
   cp $BUILD_TARGET_DIR/aarch64-linux-android/$PROFILE/$PGP_SYS_LIB $OUT_DIR/jniLibs/arm64-v8a/$PGP_SYS_LIB
   cp $BUILD_TARGET_DIR/armv7-linux-androideabi/$PROFILE/$PGP_SYS_LIB $OUT_DIR/jniLibs/armeabi-v7a/$PGP_SYS_LIB
   cp $BUILD_TARGET_DIR/x86_64-linux-android/$PROFILE/$PGP_SYS_LIB $OUT_DIR/jniLibs/x86_64/$PGP_SYS_LIB

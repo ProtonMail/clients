@@ -22,6 +22,25 @@ use std::marker::PhantomData;
 use std::ops::Deref;
 use typed_builder::TypedBuilder;
 
+pub fn canonical_category(ids: &[LocalLabelId]) -> String {
+    let mut sorted = ids.to_vec();
+    sorted.sort_unstable();
+    sorted
+        .iter()
+        .map(|id| id.to_string())
+        .collect::<Vec<_>>()
+        .join(",")
+}
+
+fn parse_category(s: &str) -> Vec<LocalLabelId> {
+    if s.is_empty() {
+        return vec![];
+    }
+    s.split(',')
+        .filter_map(|part| part.parse::<u64>().ok().map(LocalLabelId::from))
+        .collect()
+}
+
 pub trait ScrollData
 where
     Self: Model<Database = UserDb> + Into<ScrollCursor<Self>>,
@@ -34,12 +53,13 @@ where
         local_label_id: LocalLabelId,
         unread: ReadFilter,
         order_dir: ScrollOrderDir,
+        category: String,
         tether: &Tether<UserDb>,
     ) -> impl Future<Output = Result<Option<Self>, StashError>> + Send {
         async move {
             Self::find_first(
-                "WHERE local_label_id=? AND unread=? AND order_dir=?",
-                params![local_label_id, unread, order_dir],
+                "WHERE local_label_id=? AND unread=? AND order_dir=? AND category=?",
+                params![local_label_id, unread, order_dir, category],
                 tether,
             )
             .await
@@ -119,12 +139,22 @@ pub struct MessageScrollData {
 
     #[DbField]
     pub order_field: ScrollOrderField,
+
+    #[DbField]
+    #[builder(default)]
+    pub category: String,
 }
 
 impl MessageScrollData {
     pub async fn save(&mut self, tx: &WriteTx<'_>) -> Result<(), StashError> {
-        if let Some(existing) =
-            Self::find_with_key(self.local_label_id, self.unread, self.order_dir, tx).await?
+        if let Some(existing) = Self::find_with_key(
+            self.local_label_id,
+            self.unread,
+            self.order_dir,
+            self.category.clone(),
+            tx,
+        )
+        .await?
         {
             self.id = existing.id;
         } else {
@@ -166,7 +196,7 @@ impl From<MessageScrollData> for ScrollCursor<MessageScrollData> {
             local_id,
             order_dir: data.order_dir,
             order_field: data.order_field,
-            category: vec![],
+            category: parse_category(&data.category),
             _phantom: PhantomData,
         }
     }
@@ -407,12 +437,28 @@ pub struct ConversationScrollData {
 
     #[DbField]
     pub order_field: ScrollOrderField,
+
+    #[DbField]
+    #[builder(default)]
+    pub category: String,
 }
 
 impl ConversationScrollData {
+<<<<<<< HEAD
     pub async fn save(&mut self, tx: &WriteTx<'_>) -> Result<(), StashError> {
         if let Some(existing) =
             Self::find_with_key(self.local_label_id, self.unread, self.order_dir, tx).await?
+=======
+    pub async fn save(&mut self, tx: &Bond<'_>) -> Result<(), StashError> {
+        if let Some(existing) = Self::find_with_key(
+            self.local_label_id,
+            self.unread,
+            self.order_dir,
+            self.category.clone(),
+            tx,
+        )
+        .await?
+>>>>>>> c322923efa (feat(ET-6145): Scroller makes multilabel requests to the API including categories)
         {
             self.id = existing.id;
         } else {
@@ -456,7 +502,7 @@ impl From<ConversationScrollData> for ScrollCursor<ConversationScrollData> {
             local_id,
             order_dir: data.order_dir,
             order_field: data.order_field,
-            category: vec![],
+            category: parse_category(&data.category),
             _phantom: PhantomData,
         }
     }
@@ -797,12 +843,15 @@ impl<T: ScrollData> CachedScrollData<T> {
     ) -> Result<Option<Self>, StashError> {
         let order_dir = ScrollOrderDir::for_local_label(local_label_id, tether).await?;
         let order_field = ScrollOrderField::for_local_label(local_label_id, tether).await?;
+        let category_str = canonical_category(&category);
 
-        let Some(end) = T::find_with_key(local_label_id, unread, order_dir, tether).await? else {
+        let Some(end) =
+            T::find_with_key(local_label_id, unread, order_dir, category_str, tether).await?
+        else {
             return Ok(None);
         };
 
-        let end = end.into().with_category(category.clone());
+        let end: ScrollCursor<T> = end.into();
         let cursor = ScrollCursor::beginning(local_label_id, unread, order_dir, order_field)
             .with_category(category);
 
@@ -1006,23 +1055,27 @@ impl<T: ScrollData> CachedScrollData<T> {
     }
 
     pub async fn load_end_cursor(&self, tether: &Tether<UserDb>) -> Result<T, StashError> {
-        // Due to nature of primary key of the underlying table
-        // It does not really matter if we take end or cursor as
-        // they should be the same however `end` var is just shorter.
         let end = &self.end;
+        let category_str = canonical_category(&end.category);
 
-        T::find_with_key(end.local_label_id, end.unread, end.order_dir, tether)
-            .await
-            .and_then(|op| {
-                op.ok_or_else(|| {
-                    StashError::Critical(anyhow!(
-                        "Non-generic ScrollData not found for label_id: {}, \
+        T::find_with_key(
+            end.local_label_id,
+            end.unread,
+            end.order_dir,
+            category_str,
+            tether,
+        )
+        .await
+        .and_then(|op| {
+            op.ok_or_else(|| {
+                StashError::Critical(anyhow!(
+                    "Non-generic ScrollData not found for label_id: {}, \
                      unread: {:?}. This is serious issue.",
-                        end.local_label_id,
-                        end.unread
-                    ))
-                })
+                    end.local_label_id,
+                    end.unread
+                ))
             })
+        })
     }
 }
 

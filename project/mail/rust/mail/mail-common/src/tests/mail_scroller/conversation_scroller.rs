@@ -4,7 +4,9 @@ use std::collections::BTreeMap;
 use crate::datatypes::LocalConversationId;
 use crate::datatypes::labels::{ScrollOrderDir, ScrollOrderField};
 use crate::datatypes::{ContextualConversation, ReadFilter};
-use crate::models::{CachedScrollData, ConversationScrollData, MailSettings, ScrollData};
+use crate::models::{
+    CachedScrollData, ConversationScrollData, MailSettings, ScrollData, canonical_category,
+};
 use crate::models::{Conversation, ScrollCursor};
 use crate::{self as mail_common, CategoryView};
 use mail_action_queue::rebase::RebaseChangeSet;
@@ -154,6 +156,7 @@ async fn test_scroller_reads_correct_items_within_visible_range() {
         local_label_id,
         unread,
         ScrollOrderDir::Desc,
+        String::new(),
         &tether,
     )
     .await
@@ -1223,5 +1226,251 @@ async fn test_category_filter_default_shows_all_conversations_from_disabled_cate
         visible[2].remote_id,
         conv_id!("conv_1"),
         "category filter: second visible conversation should be primary-tagged"
+    );
+}
+
+// --- Cursor composite-key / category persistence tests ---
+
+#[tokio::test]
+async fn test_category_round_trip_with_composite_key() {
+    let mail_stash = new_test_connection().await;
+    let mut tether = mail_stash.connection().await.unwrap();
+
+    let inbox = SystemLabel::Inbox.load(&tether).await.unwrap().unwrap();
+    let social = SystemLabel::CategorySocial
+        .load(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+
+    let category_str = canonical_category(&[social.id()]);
+
+    // Build and save the cursor with a non-empty category.
+    let mut scroller = ConversationScrollData::builder()
+        .local_label_id(inbox.id())
+        .unread(ReadFilter::All)
+        .remote_conversation_id(ConversationId::from("anchor_1"))
+        .conversation_time(1000.into())
+        .snooze_time(0.into())
+        .display_order(1)
+        .order_dir(ScrollOrderDir::Desc)
+        .order_field(ScrollOrderField::Time)
+        .category(category_str.clone())
+        .build();
+
+    tether
+        .tx::<_, _, StashError>(async |bond| scroller.save(bond).await)
+        .await
+        .unwrap();
+
+    let original_id = scroller.id;
+
+    // find_with_key must locate the exact same row.
+    let loaded = ConversationScrollData::find_with_key(
+        inbox.id(),
+        ReadFilter::All,
+        ScrollOrderDir::Desc,
+        category_str.clone(),
+        &tether,
+    )
+    .await
+    .unwrap()
+    .expect("cursor row should exist");
+
+    assert_eq!(loaded.id, original_id);
+    assert_eq!(loaded.category, category_str);
+    assert_eq!(
+        loaded.remote_conversation_id,
+        ConversationId::from("anchor_1")
+    );
+
+    // Saving again (upsert) must not create a second row.
+    let mut scroller2 = ConversationScrollData::builder()
+        .local_label_id(inbox.id())
+        .unread(ReadFilter::All)
+        .remote_conversation_id(ConversationId::from("anchor_2"))
+        .conversation_time(2000.into())
+        .snooze_time(0.into())
+        .display_order(2)
+        .order_dir(ScrollOrderDir::Desc)
+        .order_field(ScrollOrderField::Time)
+        .category(category_str.clone())
+        .build();
+
+    tether
+        .tx::<_, _, StashError>(async |bond| scroller2.save(bond).await)
+        .await
+        .unwrap();
+
+    let loaded2 = ConversationScrollData::find_with_key(
+        inbox.id(),
+        ReadFilter::All,
+        ScrollOrderDir::Desc,
+        category_str,
+        &tether,
+    )
+    .await
+    .unwrap()
+    .expect("cursor row should still exist");
+
+    // Same primary key → same id, updated anchor.
+    assert_eq!(loaded2.id, original_id);
+    assert_eq!(
+        loaded2.remote_conversation_id,
+        ConversationId::from("anchor_2")
+    );
+}
+
+#[tokio::test]
+async fn test_unsorted_category_normalizes_to_canonical_form() {
+    let mail_stash = new_test_connection().await;
+    let mut tether = mail_stash.connection().await.unwrap();
+
+    let inbox = SystemLabel::Inbox.load(&tether).await.unwrap().unwrap();
+    let social = SystemLabel::CategorySocial
+        .load(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+    let promotions = SystemLabel::CategoryPromotions
+        .load(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+
+    // Provide IDs in reverse order; canonical_category must sort them.
+    let ids_unsorted = if social.id() > promotions.id() {
+        vec![social.id(), promotions.id()]
+    } else {
+        vec![promotions.id(), social.id()]
+    };
+    let ids_sorted = {
+        let mut v = ids_unsorted.clone();
+        v.sort_unstable();
+        v
+    };
+
+    let stored = canonical_category(&ids_unsorted);
+    let expected = canonical_category(&ids_sorted);
+
+    assert_eq!(
+        stored, expected,
+        "canonical_category must sort IDs regardless of input order"
+    );
+
+    // Verify the key round-trips through the DB.
+    let mut scroller = ConversationScrollData::builder()
+        .local_label_id(inbox.id())
+        .unread(ReadFilter::All)
+        .remote_conversation_id(ConversationId::from("anchor_sort"))
+        .conversation_time(1000.into())
+        .snooze_time(0.into())
+        .display_order(1)
+        .order_dir(ScrollOrderDir::Desc)
+        .order_field(ScrollOrderField::Time)
+        .category(stored.clone())
+        .build();
+
+    tether
+        .tx::<_, _, StashError>(async |bond| scroller.save(bond).await)
+        .await
+        .unwrap();
+
+    let loaded = ConversationScrollData::find_with_key(
+        inbox.id(),
+        ReadFilter::All,
+        ScrollOrderDir::Desc,
+        expected,
+        &tether,
+    )
+    .await
+    .unwrap()
+    .expect("cursor with sorted category key should be found");
+
+    assert_eq!(loaded.category, stored);
+}
+
+#[tokio::test]
+async fn test_cached_scroller_with_category_does_not_collide_with_empty_category() {
+    let mail_stash = new_test_connection().await;
+    let mut tether = mail_stash.connection().await.unwrap();
+
+    let inbox = SystemLabel::Inbox.load(&tether).await.unwrap().unwrap();
+    let social = SystemLabel::CategorySocial
+        .load(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+    let category_str = canonical_category(&[social.id()]);
+
+    // Save a cursor for the empty-category slot.
+    let mut scroller_no_cat = ConversationScrollData::builder()
+        .local_label_id(inbox.id())
+        .unread(ReadFilter::All)
+        .remote_conversation_id(ConversationId::from("anchor_no_cat"))
+        .conversation_time(1000.into())
+        .snooze_time(0.into())
+        .display_order(1)
+        .order_dir(ScrollOrderDir::Desc)
+        .order_field(ScrollOrderField::Time)
+        .build(); // category defaults to ""
+
+    tether
+        .tx::<_, _, StashError>(async |bond| scroller_no_cat.save(bond).await)
+        .await
+        .unwrap();
+
+    // Save a cursor for the social-category slot.
+    let mut scroller_with_cat = ConversationScrollData::builder()
+        .local_label_id(inbox.id())
+        .unread(ReadFilter::All)
+        .remote_conversation_id(ConversationId::from("anchor_with_cat"))
+        .conversation_time(2000.into())
+        .snooze_time(0.into())
+        .display_order(2)
+        .order_dir(ScrollOrderDir::Desc)
+        .order_field(ScrollOrderField::Time)
+        .category(category_str.clone())
+        .build();
+
+    tether
+        .tx::<_, _, StashError>(async |bond| scroller_with_cat.save(bond).await)
+        .await
+        .unwrap();
+
+    // Both rows must coexist — different composite keys.
+    let row_no_cat = ConversationScrollData::find_with_key(
+        inbox.id(),
+        ReadFilter::All,
+        ScrollOrderDir::Desc,
+        String::new(),
+        &tether,
+    )
+    .await
+    .unwrap()
+    .expect("empty-category row should exist");
+
+    let row_with_cat = ConversationScrollData::find_with_key(
+        inbox.id(),
+        ReadFilter::All,
+        ScrollOrderDir::Desc,
+        category_str,
+        &tether,
+    )
+    .await
+    .unwrap()
+    .expect("social-category row should exist");
+
+    assert_ne!(
+        row_no_cat.id, row_with_cat.id,
+        "distinct categories must produce distinct cursor rows"
+    );
+    assert_eq!(
+        row_no_cat.remote_conversation_id,
+        ConversationId::from("anchor_no_cat")
+    );
+    assert_eq!(
+        row_with_cat.remote_conversation_id,
+        ConversationId::from("anchor_with_cat")
     );
 }

@@ -8,7 +8,7 @@ use crate::prefetch::PrefetchJob;
 use crate::{
     MailContextError, MailUserContext,
     datatypes::ReadFilter,
-    models::{Message, MessageScrollData},
+    models::{Message, MessageScrollData, canonical_category},
 };
 use anyhow::anyhow;
 use itertools::Itertools;
@@ -35,7 +35,8 @@ impl RemoteSource for MessageScrollData {
     fn sync_first_page(
         ctx: &MailUserContext,
         local_label_id: LocalLabelId,
-        remote_label_id: LabelId,
+        remote_label_ids: Vec<LabelId>,
+        category: Vec<LocalLabelId>,
         unread: ReadFilter,
         page_size: usize,
         order_dir: ScrollOrderDir,
@@ -46,7 +47,8 @@ impl RemoteSource for MessageScrollData {
             let items = RemoteMessageScrollerSource::sync_first_page(
                 &ctx,
                 local_label_id,
-                remote_label_id.clone(),
+                remote_label_ids,
+                category,
                 unread,
                 page_size,
                 order_dir,
@@ -82,7 +84,8 @@ impl RemoteSource for MessageScrollData {
         ctx: &MailUserContext,
         local_label_id: LocalLabelId,
         scroller: &Self,
-        remote_label_id: LabelId,
+        remote_label_ids: Vec<LabelId>,
+        category: Vec<LocalLabelId>,
         unread: ReadFilter,
         page_size: usize,
         order_dir: ScrollOrderDir,
@@ -92,7 +95,8 @@ impl RemoteSource for MessageScrollData {
             ctx,
             scroller,
             local_label_id,
-            remote_label_id,
+            remote_label_ids,
+            category,
             unread,
             page_size,
             order_dir,
@@ -104,7 +108,8 @@ impl RemoteSource for MessageScrollData {
         ctx: &MailUserContext,
         local_label_id: LocalLabelId,
         scroller: &Self,
-        remote_label_id: LabelId,
+        remote_label_ids: Vec<LabelId>,
+        _category: Vec<LocalLabelId>,
         unread: ReadFilter,
         page_size: usize,
         order_dir: ScrollOrderDir,
@@ -118,7 +123,7 @@ impl RemoteSource for MessageScrollData {
             let items = RemoteMessageScrollerSource::sync_previous_page(
                 &ctx,
                 local_label_id,
-                remote_label_id,
+                remote_label_ids,
                 remote_id,
                 context_time,
                 unread,
@@ -151,7 +156,8 @@ impl RemoteMessageScrollerSource {
         ctx: &MailUserContext,
         scroller: &MessageScrollData,
         local_label_id: LocalLabelId,
-        remote_label_id: LabelId,
+        remote_label_ids: Vec<LabelId>,
+        category: Vec<LocalLabelId>,
         unread: ReadFilter,
         page_size: usize,
         order_dir: ScrollOrderDir,
@@ -164,9 +170,10 @@ impl RemoteMessageScrollerSource {
             Self::sync_next_page(
                 &ctx,
                 local_label_id,
-                remote_label_id,
+                remote_label_ids,
                 remote_id,
                 context_time,
+                category,
                 unread,
                 page_size,
                 order_dir,
@@ -185,7 +192,8 @@ impl RemoteMessageScrollerSource {
     pub(super) async fn sync_first_page(
         ctx: &MailUserContext,
         local_label_id: LocalLabelId,
-        remote_label_id: LabelId,
+        remote_label_ids: Vec<LabelId>,
+        category: Vec<LocalLabelId>,
         unread: ReadFilter,
         page_size: usize,
         order_dir: ScrollOrderDir,
@@ -193,7 +201,7 @@ impl RemoteMessageScrollerSource {
     ) -> Result<Vec<Message>, MailContextError> {
         info!(
             ?local_label_id,
-            ?remote_label_id,
+            ?remote_label_ids,
             ?unread,
             ?page_size,
             ?order_dir,
@@ -204,7 +212,7 @@ impl RemoteMessageScrollerSource {
         let response = ctx
             .session()
             .get_messages(GetMessagesOptions {
-                label_id: Some(vec![remote_label_id.clone()]),
+                label_id: Some(remote_label_ids.clone()),
                 page_size: page_size as u64,
                 unread: unread.into(),
                 desc: order_dir.as_api_desc(),
@@ -222,7 +230,7 @@ impl RemoteMessageScrollerSource {
         let ControlFlow::Continue(()) = utils::ensure_label_is_idle(
             &mut tether,
             local_label_id,
-            &remote_label_id,
+            &remote_label_ids[0],
             &response.tasks_running,
         )
         .await?
@@ -243,6 +251,7 @@ impl RemoteMessageScrollerSource {
             true,
             order_dir,
             order_field,
+            category,
             vec![],
             ctx.session(),
             &mut tether,
@@ -256,9 +265,10 @@ impl RemoteMessageScrollerSource {
     async fn sync_next_page(
         ctx: &MailUserContext,
         local_label_id: LocalLabelId,
-        remote_label_id: LabelId,
+        remote_label_ids: Vec<LabelId>,
         last_element_id: MessageId,
         last_element_time: UnixTimestamp,
+        category: Vec<LocalLabelId>,
         unread: ReadFilter,
         page_size: usize,
         order_dir: ScrollOrderDir,
@@ -266,7 +276,7 @@ impl RemoteMessageScrollerSource {
     ) -> Result<Vec<Message>, MailContextError> {
         info!(
             ?local_label_id,
-            ?remote_label_id,
+            ?remote_label_ids,
             ?unread,
             ?page_size,
             ?order_dir,
@@ -279,7 +289,7 @@ impl RemoteMessageScrollerSource {
             .get_messages(GetMessagesOptions {
                 anchor: Some(last_element_time.as_u64()),
                 anchor_id: Some(last_element_id.clone()),
-                label_id: Some(vec![remote_label_id.clone()]),
+                label_id: Some(remote_label_ids.clone()),
                 page_size: page_size as u64 + 1_u64,
                 unread: unread.into(),
                 desc: order_dir.as_api_desc(),
@@ -308,7 +318,7 @@ impl RemoteMessageScrollerSource {
         let ControlFlow::Continue(()) = utils::ensure_label_is_idle(
             &mut tether,
             local_label_id,
-            &remote_label_id,
+            &remote_label_ids[0],
             &response.tasks_running,
         )
         .await?
@@ -329,6 +339,7 @@ impl RemoteMessageScrollerSource {
             true,
             order_dir,
             order_field,
+            category,
             vec![],
             ctx.session(),
             &mut tether,
@@ -342,7 +353,7 @@ impl RemoteMessageScrollerSource {
     async fn sync_previous_page(
         ctx: &MailUserContext,
         local_label_id: LocalLabelId,
-        remote_label_id: LabelId,
+        remote_label_ids: Vec<LabelId>,
         first_element_id: MessageId,
         first_element_time: UnixTimestamp,
         unread: ReadFilter,
@@ -352,7 +363,7 @@ impl RemoteMessageScrollerSource {
     ) -> Result<Vec<Message>, MailContextError> {
         info!(
             ?local_label_id,
-            ?remote_label_id,
+            ?remote_label_ids,
             ?unread,
             ?page_size,
             ?order_dir,
@@ -365,7 +376,7 @@ impl RemoteMessageScrollerSource {
             .get_messages(GetMessagesOptions {
                 anchor: Some(first_element_time.as_u64()),
                 anchor_id: Some(first_element_id.clone()),
-                label_id: Some(vec![remote_label_id.clone()]),
+                label_id: Some(remote_label_ids.clone()),
                 page_size: page_size as u64 + 1_u64,
                 unread: unread.into(),
                 desc: order_dir.reverse().as_api_desc(),
@@ -383,7 +394,7 @@ impl RemoteMessageScrollerSource {
         let ControlFlow::Continue(()) = utils::ensure_label_is_idle(
             &mut tether,
             local_label_id,
-            &remote_label_id,
+            &remote_label_ids[0],
             &response.tasks_running,
         )
         .await?
@@ -399,7 +410,7 @@ impl RemoteMessageScrollerSource {
 
         let message_label_counts = ctx
             .session()
-            .get_messages_count_for_labels(vec![remote_label_id.clone()])
+            .get_messages_count_for_labels(vec![remote_label_ids[0].clone()])
             .await?;
 
         let messages = Self::save_messages(
@@ -409,6 +420,7 @@ impl RemoteMessageScrollerSource {
             false,
             order_dir,
             order_field,
+            vec![],
             message_label_counts.counts.into_iter().map_into().collect(),
             ctx.session(),
             &mut tether,
@@ -427,6 +439,7 @@ impl RemoteMessageScrollerSource {
         update_scroller: bool,
         order_dir: ScrollOrderDir,
         order_field: ScrollOrderField,
+        category: Vec<LocalLabelId>,
         message_labels_count: Vec<MessageLabelsCount>,
         api: &Session,
         tether: &mut Tether,
@@ -496,6 +509,7 @@ impl RemoteMessageScrollerSource {
                         display_order,
                         order_dir,
                         order_field,
+                        &category,
                         tx,
                     )
                     .await?;
@@ -528,6 +542,7 @@ impl RemoteMessageScrollerSource {
         display_order: u64,
         order_dir: ScrollOrderDir,
         order_field: ScrollOrderField,
+        category: &[LocalLabelId],
         bond: &WriteTx<'_>,
     ) -> Result<MessageScrollData, MailContextError> {
         debug!(
@@ -543,6 +558,7 @@ impl RemoteMessageScrollerSource {
             .display_order(display_order)
             .order_dir(order_dir)
             .order_field(order_field)
+            .category(canonical_category(category))
             .build();
 
         msg_paginator.save(bond).await?;

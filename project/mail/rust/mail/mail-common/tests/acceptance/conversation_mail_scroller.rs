@@ -18,7 +18,7 @@ use mail_common::datatypes::{
 };
 use mail_common::models::{
     CachedScrollData, ConversationLabel, LabelExt, LabelWithCounters, MailSettings, Message,
-    MessageCounter,
+    MessageCounter, ScrollData, canonical_category,
 };
 use mail_common::test_utils::{
     init::Params as TestParams,
@@ -2847,6 +2847,375 @@ async fn test_category_view_clears_on_change_label_to_all_mail() {
         view.available.contains(&social_local_id),
         "CategorySocial (display=true) should be in available"
     );
+}
+
+/// Verifies that when CategorySocial is the active category filter, `sync_first_page` sends
+/// both `LabelID[0]=0` (Inbox) **and** `LabelID[1]=20` (CategorySocial) in a single GET
+/// /conversations request.
+///
+/// `reset()` (called from within the `ChangeCategoryView` command handler) awaits the
+/// first-page API task synchronously via `wait_for_request()`.  This means by the time
+/// `change_category_view` returns `ReplaceFrom`, the API task has already committed 2 Social
+/// conversations to the DB and the conversations are immediately visible.
+///
+/// Update sequence after `change_category_view`:
+///   1. `ReplaceFrom { items: 2 }` — reset awaits the first-page API task (strict mock fires),
+///      saves 2 Social convs, then `refresh(true)` reads 2 visible items → `ReplaceFrom{2}`.
+///   2. `CategoryViewChanged` — resolved category labels.
+///
+/// Cursor assertion is performed after the update sequence; the quiet_tx inside the API task
+/// has already committed before `reset()` returns `ReplaceFrom`.
+#[tokio::test]
+async fn test_category_view_first_page_sends_multi_label_ids_to_api() {
+    let ctx = MailTestContext::new().await;
+    let user_ctx = ctx.uninitialized_mail_user_context().await;
+    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+
+    // Seed 1 CategoryDefault conversation so the scroller has something to show
+    let mut data = hash_map! {
+        vec!["0", "24"]: test_conversations(1, 0),
+    };
+    data.save_to_database(&mut tether).await;
+
+    let inbox_local_id = SystemLabel::Inbox.local_id(&tether).await.unwrap().unwrap();
+    let social_local_id = SystemLabel::CategorySocial
+        .local_id(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+
+    let mut social = SystemLabel::CategorySocial
+        .load(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+    tether
+        .tx::<_, _, StashError>(async |bond| {
+            MailSettings {
+                mail_category_view: true,
+                ..Default::default()
+            }
+            .save(bond)
+            .await
+            .unwrap();
+            social.display = true;
+            social.save(bond).await.unwrap();
+            // Zero the counter so the initial CategoryDefault fetch_more() never hits the API
+            // (check_for_total=true, total=0 → branch skipped).
+            let mut counter = ConversationCounter::find_by_id(inbox_local_id, bond)
+                .await
+                .unwrap()
+                .unwrap();
+            counter.total = 0;
+            counter.save(bond).await.unwrap();
+            Ok(())
+        })
+        .await
+        .unwrap();
+
+    // Strict first-page mock: matches only when the request carries BOTH LabelID[0]
+    // (Inbox) AND LabelID[1] (CategorySocial) AND has no AnchorID (i.e. first page).
+    // The conversations include the Social label so the scroller's category filter
+    // (EXISTS cl_cat.local_label_id IN (social_local_id)) finds them after save.
+    let inbox_remote_id = SystemLabel::Inbox.remote_id().to_string();
+    let social_remote_id = SystemLabel::CategorySocial.remote_id().to_string();
+    let social_api_convs: Vec<ApiConversation> = create_api_conversation_page(0..2, 200)
+        .into_iter()
+        .map(|mut conv| {
+            conv.labels.push(ApiConversationLabel {
+                id: LabelId::from(social_remote_id.as_str()),
+                context_num_unread: 0,
+                context_num_messages: 1,
+                context_time: 0,
+                context_size: 12,
+                context_num_attachments: 0,
+                context_expiration_time: 0,
+                context_snooze_time: 0,
+            });
+            conv
+        })
+        .collect();
+    let social_api_convs_clone = social_api_convs.clone();
+
+    ctx.mock_get_conversations_with(move |builder| {
+        builder
+            .and(query_param_contains("LabelID[0]", inbox_remote_id.as_str()))
+            .and(query_param_contains(
+                "LabelID[1]",
+                social_remote_id.as_str(),
+            ))
+            .and(query_param_is_missing("AnchorID"))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(GetConversationsResponse {
+                    conversations: social_api_convs_clone,
+                    tasks_running: RunningTasks::none(),
+                    stale: false,
+                    total: 2,
+                }),
+            )
+            .with_priority(1)
+            .expect(1)
+    })
+    .await;
+
+    // fetch_conversations_and_messages always calls GET /messages after saving conversations.
+    ctx.mock_get_messages()
+        .alter(|mock| mock.expect(0..=2))
+        .respond_with(vec![])
+        .await;
+    ctx.mock_ping_success().await;
+
+    let page_size = 5;
+    let mut test_scroller = TestScroller::conversations(&user_ctx, inbox_local_id, page_size)
+        .await
+        .unwrap();
+
+    // Initial fetch: counter=0 → CategoryDefault sync skipped, 1 item returned from local DB.
+    test_scroller.fetch_more().unwrap();
+    test_scroller
+        .match_next_update(TestUpdate::Append { items: 1 })
+        .await;
+    assert_eq!(test_scroller.items().len(), 1);
+
+    // Switch to CategorySocial.  reset() inside the command handler awaits the first-page
+    // API task synchronously (via wait_for_request → sync_next → wait_for_request).
+    // The strict 2-label mock fires, 2 Social convs are committed to DB, and refresh(true)
+    // reads 2 visible items → ReplaceFrom{2}.
+    test_scroller
+        .change_category_view(Some(social_local_id))
+        .unwrap();
+    test_scroller
+        .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 2 })
+        .await;
+    test_scroller
+        .match_next_update(TestUpdate::CategoryViewChanged { labels: 2 })
+        .await;
+    assert_eq!(test_scroller.items().len(), 2);
+
+    // Cursor assertion: wait_for_request() above guaranteed the quiet_tx completed, so the
+    // ConversationScrollData row is already in the DB.
+    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let category_str = canonical_category(&[social_local_id]);
+    let cursor = ConversationScrollData::find_with_key(
+        inbox_local_id,
+        ReadFilter::All,
+        ScrollOrderDir::Desc,
+        category_str.clone(),
+        &tether,
+    )
+    .await
+    .unwrap()
+    .expect("ConversationScrollData cursor must exist for Inbox+CategorySocial after sync");
+
+    assert_eq!(
+        cursor.category, category_str,
+        "cursor.category must equal canonical_category(&[social_local_id])"
+    );
+}
+
+/// Verifies that the **next-page** GET /conversations request for CategorySocial also carries
+/// both `LabelID[0]=0` (Inbox) and `LabelID[1]=20` (CategorySocial), along with the
+/// `AnchorID` of the last conversation from the first page.
+///
+/// `reset()` awaits the first-page API task synchronously, so both pages' conversations must
+/// include the Social label to pass the scroller's EXISTS category filter.
+///
+/// Update sequence:
+///   1. `change_category_view` → `ReplaceFrom{2}` + `CategoryViewChanged`
+///      (reset() awaits strict first-page mock; 2 Social convs committed; next-page task queued)
+///   2. `fetch_more()` → awaits next-page task → strict AnchorID + 2-label mock fires →
+///      sync() reloads end cursor → `Append{2}` (Social second page)
+///
+/// The strict next-page mock's `.expect(1)` fires at teardown if the request never arrives or
+/// arrives without the required params.
+#[tokio::test]
+async fn test_category_view_next_page_sends_multi_label_ids_to_api() {
+    let ctx = MailTestContext::new().await;
+    let user_ctx = ctx.uninitialized_mail_user_context().await;
+    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+
+    // Same seed strategy as the first-page test: 1 CategoryDefault conv locally,
+    // counter zeroed so the initial fetch_more() doesn't hit the API.
+    let mut data = hash_map! {
+        vec!["0", "24"]: test_conversations(1, 0),
+    };
+    data.save_to_database(&mut tether).await;
+
+    let inbox_local_id = SystemLabel::Inbox.local_id(&tether).await.unwrap().unwrap();
+    let social_local_id = SystemLabel::CategorySocial
+        .local_id(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+
+    let mut social = SystemLabel::CategorySocial
+        .load(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+    tether
+        .tx::<_, _, StashError>(async |bond| {
+            MailSettings {
+                mail_category_view: true,
+                ..Default::default()
+            }
+            .save(bond)
+            .await
+            .unwrap();
+            social.display = true;
+            social.save(bond).await.unwrap();
+            let mut counter = ConversationCounter::find_by_id(inbox_local_id, bond)
+                .await
+                .unwrap()
+                .unwrap();
+            counter.total = 0;
+            counter.save(bond).await.unwrap();
+            Ok(())
+        })
+        .await
+        .unwrap();
+
+    let inbox_remote_id = SystemLabel::Inbox.remote_id().to_string();
+    let social_remote_id = SystemLabel::CategorySocial.remote_id().to_string();
+
+    // create_api_conversation_page(0..2, 200) produces [myconv_201, myconv_200] in DESC order.
+    // The last element (myconv_200) becomes the AnchorID stored in ConversationScrollData.
+    // Both pages include the Social label so the scroller's category filter finds them.
+    let first_page_convs: Vec<ApiConversation> = create_api_conversation_page(0..2, 200)
+        .into_iter()
+        .map(|mut conv| {
+            conv.labels.push(ApiConversationLabel {
+                id: LabelId::from(social_remote_id.as_str()),
+                context_num_unread: 0,
+                context_num_messages: 1,
+                context_time: 0,
+                context_size: 12,
+                context_num_attachments: 0,
+                context_expiration_time: 0,
+                context_snooze_time: 0,
+            });
+            conv
+        })
+        .collect();
+    let anchor_id = first_page_convs.last().unwrap().id.to_string();
+    let first_page_clone = first_page_convs.clone();
+
+    // Strict first-page mock: matches requests without AnchorID (initial page) that carry
+    // both label IDs.  Priority=2 so it takes precedence over any lenient fallback.
+    let inbox_remote_id_clone = inbox_remote_id.clone();
+    let social_remote_id_clone = social_remote_id.clone();
+    ctx.mock_get_conversations_with(move |builder| {
+        builder
+            .and(query_param_contains(
+                "LabelID[0]",
+                inbox_remote_id_clone.as_str(),
+            ))
+            .and(query_param_contains(
+                "LabelID[1]",
+                social_remote_id_clone.as_str(),
+            ))
+            .and(query_param_is_missing("AnchorID"))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(GetConversationsResponse {
+                    conversations: first_page_clone,
+                    tasks_running: RunningTasks::none(),
+                    stale: false,
+                    total: 4,
+                }),
+            )
+            .with_priority(2)
+            .expect(1)
+    })
+    .await;
+
+    // Strict next-page mock: matches requests with AnchorID=myconv_200 that carry both
+    // label IDs.  sync_next_page fires once the local cursor is exhausted (has_next_page=false).
+    let second_page_convs: Vec<ApiConversation> = create_api_conversation_page(0..2, 100)
+        .into_iter()
+        .map(|mut conv| {
+            conv.labels.push(ApiConversationLabel {
+                id: LabelId::from(social_remote_id.as_str()),
+                context_num_unread: 0,
+                context_num_messages: 1,
+                context_time: 0,
+                context_size: 12,
+                context_num_attachments: 0,
+                context_expiration_time: 0,
+                context_snooze_time: 0,
+            });
+            conv
+        })
+        .collect();
+    let second_page_clone = second_page_convs.clone();
+    let inbox_remote_id_clone2 = inbox_remote_id.clone();
+    let social_remote_id_clone2 = social_remote_id.clone();
+    let anchor_id_clone = anchor_id.clone();
+    ctx.mock_get_conversations_with(move |builder| {
+        builder
+            .and(query_param_contains(
+                "LabelID[0]",
+                inbox_remote_id_clone2.as_str(),
+            ))
+            .and(query_param_contains(
+                "LabelID[1]",
+                social_remote_id_clone2.as_str(),
+            ))
+            .and(query_param_contains("AnchorID", anchor_id_clone.as_str()))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(GetConversationsResponse {
+                    conversations: second_page_clone,
+                    tasks_running: RunningTasks::none(),
+                    stale: false,
+                    total: 4,
+                }),
+            )
+            .with_priority(2)
+            .expect(1)
+    })
+    .await;
+
+    ctx.mock_get_messages()
+        .alter(|mock| mock.expect(0..=4))
+        .respond_with(vec![])
+        .await;
+    ctx.mock_ping_success().await;
+
+    let page_size = 5;
+    let mut test_scroller = TestScroller::conversations(&user_ctx, inbox_local_id, page_size)
+        .await
+        .unwrap();
+
+    // Initial fetch: counter=0 → no API call, 1 CategoryDefault item from local DB.
+    test_scroller.fetch_more().unwrap();
+    test_scroller
+        .match_next_update(TestUpdate::Append { items: 1 })
+        .await;
+
+    // Switch to CategorySocial.  reset() awaits the first-page API task synchronously:
+    // strict first-page mock fires (LabelID[0] + LabelID[1], no AnchorID), 2 Social
+    // convs are committed to DB, and refresh(true) returns ReplaceFrom{2}.
+    // reset() also leaves a next-page background task stored in self.task.
+    test_scroller
+        .change_category_view(Some(social_local_id))
+        .unwrap();
+    test_scroller
+        .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 2 })
+        .await;
+    test_scroller
+        .match_next_update(TestUpdate::CategoryViewChanged { labels: 2 })
+        .await;
+    assert_eq!(test_scroller.items().len(), 2);
+
+    // fetch_more(): wait_for_request awaits the next-page background task.
+    // The strict next-page mock fires (LabelID[0] + LabelID[1] + AnchorID=myconv_200).
+    // After the task completes, sync() reloads the end cursor, scroller reads 2 more
+    // Social items from local DB → Append{2}.
+    test_scroller.fetch_more().unwrap();
+    test_scroller
+        .match_next_update(TestUpdate::Append { items: 2 })
+        .await;
+    assert_eq!(test_scroller.items().len(), 4);
+    // wiremock teardown (ctx drop) verifies both strict mocks received exactly 1 request each.
 }
 
 #[function_name::named]

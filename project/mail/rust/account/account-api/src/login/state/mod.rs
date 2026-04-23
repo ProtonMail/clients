@@ -542,6 +542,10 @@ impl State {
             .set_user_data(user_data)
             .await?;
 
+        // During migration we set the access token to "" so that the next API call refreshes it.
+        // To ensure we have control over when that API call happens, we make that call now.
+        let _ = client.get_users().await;
+
         Ok(Complete::new(client, data, None).into())
     }
 

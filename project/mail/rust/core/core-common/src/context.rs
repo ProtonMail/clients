@@ -392,7 +392,8 @@ impl Context {
                     .with_service(DeviceInfoService::new(device_info_provider))
                     .with_service(EventPollConfigService::new(event_poll_mode));
             }
-            builder
+
+            let ctx = builder
                 .build(
                     origin,
                     user_db_path,
@@ -404,7 +405,14 @@ impl Context {
                     initializers,
                     background_task_service,
                 )
-                .await
+                .await?;
+
+            #[allow(deprecated)]
+            let _ = recover_stuck_migration_sessions(Arc::clone(&ctx))
+                .inspect_err(|e| error!(?e, "failed to recover stuck migration sessions"))
+                .await;
+
+            Ok(ctx)
         }
         .await
         .inspect_err(|e| {
@@ -1404,4 +1412,43 @@ impl InfoProvider for MuonInfoProvider {
 
         Some(fingerprint)
     }
+}
+
+#[deprecated = "temporary auto-heal for ET-6131, do not use"]
+async fn recover_stuck_migration_sessions(ctx: Arc<Context>) -> Result<(), CoreContextError> {
+    use mail_core_api::services::proton::ProtonCore;
+
+    let sessions = {
+        let tether = ctx
+            .account_stash()
+            .connection()
+            .inspect_err(|e| error!(?e, "failed to get account stash connection"))
+            .await?;
+
+        CoreSession::all(&tether)
+            .inspect_err(|e| error!(?e, "failed to list sessions"))
+            .await?
+    };
+
+    for session in sessions {
+        if session.auth_scopes.is_empty() {
+            match ctx.user_context_from_session(&session).await {
+                Ok(user_ctx) => {
+                    // Nudge the session by making an API request.
+                    // This will trigger auth refresh and populate the scopes.
+                    warn!(?session.remote_id, "found stuck migration session");
+                    let _ = user_ctx.session().get_users().await;
+                }
+
+                Err(error) => {
+                    // We can't get the user context so the session is unusable.
+                    // Logout locally so the user may log back in cleanly.
+                    error!(?session.remote_id, ?error, "clearing stuck migration session");
+                    let _ = ctx.force_logout_account_locally(session.account_id).await;
+                }
+            }
+        }
+    }
+
+    Ok(())
 }

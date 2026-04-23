@@ -69,8 +69,7 @@ use mail_shared_types::declare_local_id;
 pub use mail_shared_types::{InitializationKey, LocalIdActionDepExt, LocalIdMarker, UnixTimestamp};
 
 use bitflags::bitflags;
-use derive_more::Into;
-use derive_more::derive::TryFrom;
+use derive_more::{Deref, Into, TryFrom};
 use itertools::Itertools;
 use jiff::civil::Weekday;
 use mail_core_api::services::proton::mail_muon::rt::DynResolver;
@@ -1292,7 +1291,7 @@ sql_using_serde!(TwoFa);
 /// Wrapper type around `Vec<String>` to hold the auth scope(s) of a session.
 ///
 /// TODO: Use a `HashSet`?
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, Deref)]
 pub struct AuthScopes(Vec<String>);
 
 impl AuthScopes {
@@ -1301,6 +1300,7 @@ impl AuthScopes {
     pub fn full_scope() -> String {
         "full".into()
     }
+
     /// Create a new [`AuthScopes`] instance from a list of [`String`]s.
     ///
     /// TODO: Might be better to have a `From<Vec<String>>` implementation.

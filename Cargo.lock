@@ -61,7 +61,7 @@ dependencies = [
  "num_enum",
  "parking_lot",
  "passkey",
- "proton-crypto",
+ "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
  "proton-crypto-account",
  "proton-crypto-subtle",
  "public-suffix",
@@ -113,7 +113,7 @@ dependencies = [
  "image",
  "itertools 0.14.0",
  "lattice",
- "muon",
+ "muon 2.3.0",
  "num_enum",
  "passkey",
  "public-suffix",
@@ -1540,6 +1540,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "color-eyre"
+version = "0.6.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e5920befb47832a6d61ee3a3a846565cfa39b331331e68a3b1d1116630f2f26d"
+dependencies = [
+ "backtrace",
+ "color-spantrace",
+ "eyre",
+ "indenter",
+ "once_cell",
+ "owo-colors",
+ "tracing-error",
+]
+
+[[package]]
+name = "color-spantrace"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b8b88ea9df13354b55bc7234ebcce36e6ef896aca2e42a15de9e10edce01b427"
+dependencies = [
+ "once_cell",
+ "owo-colors",
+ "tracing-core",
+ "tracing-error",
+]
+
+[[package]]
 name = "color_quant"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1704,7 +1731,7 @@ dependencies = [
  "mail-stash",
  "mail-vcard",
  "pretty_assertions",
- "proton-crypto",
+ "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
  "proton-crypto-account",
  "serde",
  "serde_json",
@@ -2042,7 +2069,7 @@ dependencies = [
  "facet",
  "futures",
  "lattice",
- "muon",
+ "muon 2.3.0",
  "serde",
  "serde_json",
  "test-case",
@@ -3487,6 +3514,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "eyre"
+version = "0.6.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7cd915d99f24784cdc19fd37ef22b97e3ff0ae756c7e492e9fbfe897d61e2aec"
+dependencies = [
+ "indenter",
+ "once_cell",
+]
+
+[[package]]
 name = "facet"
 version = "0.31.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3898,7 +3935,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f2f12607f92c69b12ed746fabf9ca4f5c482cba46679c1a75b874ed7c26adb"
 dependencies = [
  "futures-io",
- "rustls",
+ "rustls 0.23.38",
  "rustls-pki-types",
 ]
 
@@ -4088,9 +4125,9 @@ dependencies = [
 
 [[package]]
 name = "gopenpgp-sys"
-version = "0.3.4"
+version = "0.3.5"
 source = "sparse+https://rust-registry.proton.me/index/"
-checksum = "0a1821dcf1e022ea098bf01dd96ef877f6300a89d09aeb43328c3e0ffb2e6bfc"
+checksum = "52136c2eb4a3663c77250f92d7571fbf9b9055097cdcfc48d475acf151b5af16"
 dependencies = [
  "base64",
  "bindgen 0.72.1",
@@ -4218,6 +4255,25 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "hickory-client"
+version = "0.24.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "156579a5cd8d1fc6f0df87cc21b6ee870db978a163a1ba484acd98a4eff5a6de"
+dependencies = [
+ "cfg-if",
+ "data-encoding",
+ "futures-channel",
+ "futures-util",
+ "hickory-proto 0.24.4",
+ "once_cell",
+ "radix_trie",
+ "rand 0.8.5",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "hickory-client"
 version = "0.25.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c466cd63a4217d5b2b8e32f23f58312741ce96e3c84bf7438677d2baff0fc555"
@@ -4226,13 +4282,37 @@ dependencies = [
  "data-encoding",
  "futures-channel",
  "futures-util",
- "hickory-proto",
+ "hickory-proto 0.25.2",
  "once_cell",
  "radix_trie",
  "rand 0.9.4",
  "thiserror 2.0.18",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "hickory-proto"
+version = "0.24.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "92652067c9ce6f66ce53cc38d1169daa36e6e7eb7dd3b63b5103bd9d97117248"
+dependencies = [
+ "async-trait",
+ "cfg-if",
+ "data-encoding",
+ "enum-as-inner",
+ "futures-channel",
+ "futures-io",
+ "futures-util",
+ "idna",
+ "ipnet",
+ "once_cell",
+ "rand 0.8.5",
+ "thiserror 1.0.69",
+ "tinyvec",
+ "tokio",
+ "tracing",
+ "url",
 ]
 
 [[package]]
@@ -4419,9 +4499,9 @@ dependencies = [
  "http",
  "hyper",
  "hyper-util",
- "rustls",
+ "rustls 0.23.38",
  "tokio",
- "tokio-rustls",
+ "tokio-rustls 0.26.4",
  "tower-service",
  "webpki-roots",
 ]
@@ -4712,6 +4792,12 @@ name = "indent"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d9f1a0777d972970f204fdf8ef319f1f4f8459131636d7e3c96c5d59570d0fa6"
+
+[[package]]
+name = "indenter"
+version = "0.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "964de6e86d545b246d84badc0fef527924ace5134f30641c203ef52ba83f58d5"
 
 [[package]]
 name = "indexmap"
@@ -5108,7 +5194,7 @@ dependencies = [
  "facet",
  "futures",
  "lattice",
- "muon",
+ "muon 2.3.0",
  "num_enum",
  "passkey",
  "proton-crypto-account",
@@ -5687,7 +5773,7 @@ dependencies = [
  "mail-ical",
  "mail-network-monitor-service",
  "pretty_assertions",
- "proton-crypto",
+ "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
  "proton-crypto-account",
  "serde_json",
  "test-case",
@@ -5893,7 +5979,7 @@ dependencies = [
  "mail-vcard",
  "parking_lot",
  "pretty_assertions",
- "proton-crypto",
+ "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
  "proton-crypto-account",
  "rand 0.9.4",
  "secrecy",
@@ -5945,7 +6031,7 @@ dependencies = [
  "indoc",
  "mail-calendar-api-v1",
  "pretty_assertions",
- "proton-crypto",
+ "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
  "proton-crypto-account",
  "serde",
  "serde_json",
@@ -5989,7 +6075,7 @@ dependencies = [
  "hex",
  "mail-builder",
  "mail-parser",
- "proton-crypto",
+ "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
  "rand 0.9.4",
  "serde",
  "thiserror 2.0.18",
@@ -6220,8 +6306,8 @@ dependencies = [
  "futures-timer",
  "getrandom 0.2.17",
  "h2",
- "hickory-client",
- "hickory-proto",
+ "hickory-client 0.25.2",
+ "hickory-proto 0.25.2",
  "http",
  "http-body",
  "hyper",
@@ -6233,12 +6319,12 @@ dependencies = [
  "num",
  "num_cpus",
  "pin-project",
- "proton-srp 0.7.1",
+ "proton-srp 0.7.1 (git+https://github.com/ProtonMail/proton-crypto-rs.git?rev=33d22de54c578408108f580d6cafae06f656da9a)",
  "rand 0.8.5",
  "rcgen",
  "regex",
  "reqwest 0.12.28",
- "rustls-native-certs",
+ "rustls-native-certs 0.8.3",
  "rustls-platform-verifier",
  "semver",
  "serde",
@@ -6249,7 +6335,7 @@ dependencies = [
  "tempfile",
  "thiserror 1.0.69",
  "tokio",
- "tokio-rustls",
+ "tokio-rustls 0.26.4",
  "totp-rs",
  "tower 0.4.13",
  "tracing",
@@ -6506,9 +6592,9 @@ dependencies = [
  "mail-log-service",
  "mail-network-monitor-service",
  "mail-stash",
- "proton-crypto",
+ "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
  "qrcode",
- "ratatui",
+ "ratatui 0.28.1",
  "ratatui-explorer",
  "secrecy",
  "sqlite-watcher",
@@ -6564,7 +6650,7 @@ dependencies = [
  "mail-vcard",
  "non-empty-string",
  "parking_lot",
- "proton-crypto",
+ "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
  "proton-crypto-account",
  "secrecy",
  "serde",
@@ -6937,8 +7023,65 @@ dependencies = [
 
 [[package]]
 name = "muon"
+version = "1.7.0"
+source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/"
+checksum = "9669220821c7d056c27b7c0b4803c2360a555db18c56281cc4f5609d216cfc3f"
+dependencies = [
+ "anyhow",
+ "async-channel",
+ "async-executor",
+ "async-io",
+ "async-lock",
+ "async-net",
+ "async-trait",
+ "bindgen 0.69.5",
+ "bytes",
+ "camino",
+ "cfg-if",
+ "common-multipart-rfc7578",
+ "ctor 0.2.9",
+ "data-encoding",
+ "derive_more 1.0.0",
+ "futures",
+ "futures-rustls",
+ "futures-timer",
+ "getrandom 0.2.17",
+ "h2",
+ "hickory-client 0.24.4",
+ "hickory-proto 0.24.4",
+ "http",
+ "http-body",
+ "hyper",
+ "itertools 0.13.0",
+ "jni",
+ "lazy_static",
+ "muon-proc",
+ "num",
+ "num_cpus",
+ "pin-project",
+ "proton-srp 0.7.1 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
+ "rand 0.8.5",
+ "reqwest 0.12.28",
+ "rustls-native-certs 0.7.3",
+ "rustls-platform-verifier",
+ "semver",
+ "serde",
+ "serde_json",
+ "serde_qs 0.13.0",
+ "serde_repr",
+ "sha2",
+ "thiserror 1.0.69",
+ "tokio",
+ "tokio-rustls 0.25.0",
+ "tracing",
+ "url",
+ "x509-parser 0.16.0",
+]
+
+[[package]]
+name = "muon"
 version = "2.3.0"
-source = "sparse+https://rust-registry.proton.me/index/"
+source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/"
 checksum = "e5183e77cb59655c45a40c7954dd3ffe04ed8cb988d35df19bc982918253cd89"
 dependencies = [
  "async-lock",
@@ -6953,7 +7096,7 @@ dependencies = [
  "getrandom 0.2.17",
  "getrandom 0.3.4",
  "h2",
- "hickory-proto",
+ "hickory-proto 0.25.2",
  "http",
  "http-body",
  "hyper",
@@ -6981,7 +7124,7 @@ dependencies = [
 [[package]]
 name = "muon-proc"
 version = "0.5.0"
-source = "sparse+https://rust-registry.proton.me/index/"
+source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/"
 checksum = "b3a4cd79ae857be25a6d8f2d5f4d897f76e1733c57e609adc4341e06955acd81"
 dependencies = [
  "cfg-if",
@@ -7038,7 +7181,7 @@ dependencies = [
  "libc",
  "log",
  "openssl",
- "openssl-probe",
+ "openssl-probe 0.2.1",
  "openssl-sys",
  "schannel",
  "security-framework 3.7.0",
@@ -7508,6 +7651,12 @@ dependencies = [
 
 [[package]]
 name = "openssl-probe"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d05e27ee213611ffe7d6348b942e8f942b37114c00cc03cec254295a4a17852e"
+
+[[package]]
+name = "openssl-probe"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7c87def4c32ab89d880effc9e097653c8da5d6ef28e6b539d313baaacfbafcbe"
@@ -7547,6 +7696,12 @@ checksum = "36820e9051aca1014ddc75770aab4d68bc1e9e632f0f5627c4086bc216fb583b"
 dependencies = [
  "ttf-parser",
 ]
+
+[[package]]
+name = "owo-colors"
+version = "4.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d211803b9b6b570f68772237e415a029d5a50c65d382910b879fb19d3271f94d"
 
 [[package]]
 name = "p256"
@@ -7740,6 +7895,115 @@ name = "pathdiff"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "df94ce210e5bc13cb6651479fa48d14f601d9858cfe0467f43ae157023b938d3"
+
+[[package]]
+name = "payment-api"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "serde_with",
+]
+
+[[package]]
+name = "payment-core"
+version = "0.1.0"
+dependencies = [
+ "async-channel",
+ "async-trait",
+ "parking_lot",
+ "payment-api",
+ "payment-http",
+ "payment-observability",
+ "serde",
+ "serde_json",
+ "serde_urlencoded",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "payment-ffi"
+version = "0.1.0"
+dependencies = [
+ "async-channel",
+ "async-trait",
+ "core-logging",
+ "core-logging-op",
+ "parking_lot",
+ "payment-core",
+ "payment-http",
+ "payment-observability",
+ "thiserror 2.0.18",
+ "tracing",
+ "tracing-subscriber",
+ "uniffi 0.30.0",
+]
+
+[[package]]
+name = "payment-http"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "serde",
+ "serde_urlencoded",
+ "thiserror 2.0.18",
+ "url",
+]
+
+[[package]]
+name = "payment-observability"
+version = "0.1.0"
+dependencies = [
+ "async-channel",
+ "core-observability-impl",
+ "core-observability-proc",
+ "payment-http",
+ "serde",
+ "serde_json",
+ "tracing",
+]
+
+[[package]]
+name = "payment-telemetry"
+version = "0.1.0"
+dependencies = [
+ "async-channel",
+ "async-trait",
+ "core-telemetry",
+ "payment-http",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "payment-tui"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "color-eyre",
+ "crossterm",
+ "futures",
+ "muon 1.7.0",
+ "parking_lot",
+ "payment-core",
+ "payment-http",
+ "payment-observability",
+ "ratatui 0.29.0",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
 
 [[package]]
 name = "pbkdf2"
@@ -8467,9 +8731,28 @@ dependencies = [
 
 [[package]]
 name = "proton-crypto"
-version = "0.12.1"
+version = "0.12.2"
 source = "sparse+https://rust-registry.proton.me/index/"
-checksum = "45ed742b872603e08d6ddff3fb67095fa28b37e177e8ec03f77c167dc8c02449"
+checksum = "e2020ef41050dd8a6b9dd554fe95a65db13b3ddb05e6a863996aa44c77e6c877"
+dependencies = [
+ "facet",
+ "gopenpgp-sys",
+ "hex",
+ "parking_lot",
+ "proton-rpgp",
+ "proton-srp 0.8.2",
+ "rand 0.8.5",
+ "serde",
+ "subtle",
+ "thiserror 1.0.69",
+ "web-time",
+]
+
+[[package]]
+name = "proton-crypto"
+version = "0.12.2"
+source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/"
+checksum = "e2020ef41050dd8a6b9dd554fe95a65db13b3ddb05e6a863996aa44c77e6c877"
 dependencies = [
  "facet",
  "gopenpgp-sys",
@@ -8486,16 +8769,16 @@ dependencies = [
 
 [[package]]
 name = "proton-crypto-account"
-version = "0.18.1"
-source = "sparse+https://rust-registry.proton.me/index/"
-checksum = "91c918ab7959ef47b4eaac0dfc906d5b9684727ac888afba5aea00758fa4de21"
+version = "0.18.2"
+source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/"
+checksum = "1e6f5577db56fed91c78d064391410359bc43603ee3a109b9ac6b31787190820"
 dependencies = [
  "base64",
  "derive_more 2.1.1",
  "facet",
  "futures",
  "hex",
- "proton-crypto",
+ "proton-crypto 0.12.2 (sparse+https://rust-registry.proton.me/index/)",
  "rusqlite",
  "serde",
  "serde_json",
@@ -8509,7 +8792,7 @@ dependencies = [
 [[package]]
 name = "proton-crypto-subtle"
 version = "0.2.1"
-source = "sparse+https://rust-registry.proton.me/index/"
+source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/"
 checksum = "0a0d3d11e6f10b8594ef4acf8460ad705cae77873683fee4ae54489c869a7bfc"
 dependencies = [
  "aes-gcm",
@@ -8524,7 +8807,7 @@ dependencies = [
 [[package]]
 name = "proton-foundation-search"
 version = "1.1.2"
-source = "sparse+https://rust-registry.proton.me/index/"
+source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/"
 checksum = "3d310b964eec12570343d55a886b0528cc5fc0a0e7fa151cf7e6cb88dad560d4"
 dependencies = [
  "ciborium",
@@ -8559,9 +8842,9 @@ dependencies = [
 
 [[package]]
 name = "proton-rpgp"
-version = "0.3.1"
+version = "0.3.3"
 source = "sparse+https://rust-registry.proton.me/index/"
-checksum = "b93e2cc1d15af7bcaef9c6944f94468efc87a0516fb1fe86f39f785c2e4e7e42"
+checksum = "8fd78d8715403fe5c12a092ac1799edeb040034af6729b805ff87e4fa20b4a21"
 dependencies = [
  "hex",
  "kem",
@@ -8573,6 +8856,22 @@ dependencies = [
  "smallvec",
  "thiserror 1.0.69",
  "web-time",
+ "zeroize",
+]
+
+[[package]]
+name = "proton-srp"
+version = "0.7.1"
+source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/"
+checksum = "2be7a723cbcf580757fb53e7152c70336def958cdd0436a601a06c52ed233a3c"
+dependencies = [
+ "base64",
+ "bcrypt",
+ "crypto-bigint",
+ "pgp 0.16.0",
+ "rand 0.8.5",
+ "sha2",
+ "thiserror 1.0.69",
  "zeroize",
 ]
 
@@ -8723,7 +9022,7 @@ dependencies = [
  "quinn-proto",
  "quinn-udp",
  "rustc-hash 2.1.2",
- "rustls",
+ "rustls 0.23.38",
  "socket2",
  "thiserror 2.0.18",
  "tokio",
@@ -8744,7 +9043,7 @@ dependencies = [
  "rand 0.9.4",
  "ring",
  "rustc-hash 2.1.2",
- "rustls",
+ "rustls 0.23.38",
  "rustls-pki-types",
  "slab",
  "thiserror 2.0.18",
@@ -8947,6 +9246,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "ratatui"
+version = "0.29.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eabd94c2f37801c20583fc49dd5cd6b0ba68c716787c2dd6ed18571e1e63117b"
+dependencies = [
+ "bitflags 2.11.1",
+ "cassowary",
+ "compact_str",
+ "crossterm",
+ "indoc",
+ "instability",
+ "itertools 0.13.0",
+ "lru",
+ "paste",
+ "strum 0.26.3",
+ "unicode-segmentation",
+ "unicode-truncate",
+ "unicode-width 0.2.0",
+]
+
+[[package]]
 name = "ratatui-explorer"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8954,7 +9274,7 @@ checksum = "bde42516edac6d3f0b92bacc47644adda0d1c6cd0aefc4ac1f4ffb80c094999e"
 dependencies = [
  "crossterm",
  "derivative",
- "ratatui",
+ "ratatui 0.28.1",
 ]
 
 [[package]]
@@ -9155,7 +9475,7 @@ dependencies = [
  "percent-encoding",
  "pin-project-lite",
  "quinn",
- "rustls",
+ "rustls 0.23.38",
  "rustls-pki-types",
  "serde",
  "serde_json",
@@ -9163,7 +9483,7 @@ dependencies = [
  "sync_wrapper",
  "tokio",
  "tokio-native-tls",
- "tokio-rustls",
+ "tokio-rustls 0.26.4",
  "tower 0.5.3",
  "tower-http",
  "tower-service",
@@ -9195,14 +9515,14 @@ dependencies = [
  "percent-encoding",
  "pin-project-lite",
  "quinn",
- "rustls",
+ "rustls 0.23.38",
  "rustls-pki-types",
  "rustls-platform-verifier",
  "serde",
  "serde_json",
  "sync_wrapper",
  "tokio",
- "tokio-rustls",
+ "tokio-rustls 0.26.4",
  "tokio-util",
  "tower 0.5.3",
  "tower-http",
@@ -9386,6 +9706,20 @@ dependencies = [
 
 [[package]]
 name = "rustls"
+version = "0.22.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bf4ef73721ac7bcd79b2b315da7779d8fc09718c6b3d2d1b2d94850eb8c18432"
+dependencies = [
+ "log",
+ "ring",
+ "rustls-pki-types",
+ "rustls-webpki 0.102.8",
+ "subtle",
+ "zeroize",
+]
+
+[[package]]
+name = "rustls"
 version = "0.23.38"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "69f9466fb2c14ea04357e91413efb882e2a6d4a406e625449bc0a5d360d53a21"
@@ -9395,9 +9729,22 @@ dependencies = [
  "once_cell",
  "ring",
  "rustls-pki-types",
- "rustls-webpki",
+ "rustls-webpki 0.103.13",
  "subtle",
  "zeroize",
+]
+
+[[package]]
+name = "rustls-native-certs"
+version = "0.7.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e5bfb394eeed242e909609f56089eecfe5fda225042e8b171791b9c95f5931e5"
+dependencies = [
+ "openssl-probe 0.1.6",
+ "rustls-pemfile",
+ "rustls-pki-types",
+ "schannel",
+ "security-framework 2.11.1",
 ]
 
 [[package]]
@@ -9406,10 +9753,19 @@ version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "612460d5f7bea540c490b2b6395d8e34a953e52b491accd6c86c8164c5932a63"
 dependencies = [
- "openssl-probe",
+ "openssl-probe 0.2.1",
  "rustls-pki-types",
  "schannel",
  "security-framework 3.7.0",
+]
+
+[[package]]
+name = "rustls-pemfile"
+version = "2.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dce314e5fee3f39953d46bb63bb8a46d40c2f8fb7cc5a3b6cab2bde9721d6e50"
+dependencies = [
+ "rustls-pki-types",
 ]
 
 [[package]]
@@ -9433,10 +9789,10 @@ dependencies = [
  "jni",
  "log",
  "once_cell",
- "rustls",
- "rustls-native-certs",
+ "rustls 0.23.38",
+ "rustls-native-certs 0.8.3",
  "rustls-platform-verifier-android",
- "rustls-webpki",
+ "rustls-webpki 0.103.13",
  "security-framework 3.7.0",
  "security-framework-sys",
  "webpki-root-certs",
@@ -9448,6 +9804,17 @@ name = "rustls-platform-verifier-android"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f87165f0995f63a9fbeea62b64d10b4d9d8e78ec6d7d51fb2125fda7bb36788f"
+
+[[package]]
+name = "rustls-webpki"
+version = "0.102.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "64ca1bc8749bd4cf37b5ce386cc146580777b4e8572c7b97baf22c83f444bee9"
+dependencies = [
+ "ring",
+ "rustls-pki-types",
+ "untrusted",
+]
 
 [[package]]
 name = "rustls-webpki"
@@ -10627,7 +10994,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "46994acd1137e3e5b78d9b9112d91596b20e64fc6ec788dfc0f2430a2e965633"
 dependencies = [
  "rand 0.8.5",
- "ratatui",
+ "ratatui 0.28.1",
 ]
 
 [[package]]
@@ -10753,11 +11120,22 @@ dependencies = [
 
 [[package]]
 name = "tokio-rustls"
+version = "0.25.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "775e0c0f0adb3a2f22a00c4745d728b479985fc15ee7ca6a2608388c5569860f"
+dependencies = [
+ "rustls 0.22.4",
+ "rustls-pki-types",
+ "tokio",
+]
+
+[[package]]
+name = "tokio-rustls"
 version = "0.26.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1729aa945f29d91ba541258c8df89027d5792d85a8841fb65e8bf0f4ede4ef61"
 dependencies = [
- "rustls",
+ "rustls 0.23.38",
  "tokio",
 ]
 
@@ -10987,6 +11365,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "tracing-error"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8b1581020d7a273442f5b45074a6a57d5757ad0a47dac0e9f0bd57b81936f3db"
+dependencies = [
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "tracing-log"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -11081,7 +11469,7 @@ version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bd137780d743c103a391e06fe952487f914b299a4fe2c3626677f6a6339a7c6b"
 dependencies = [
- "ratatui",
+ "ratatui 0.28.1",
  "unicode-width 0.1.14",
 ]
 
@@ -11096,7 +11484,7 @@ dependencies = [
  "lazy_static",
  "log",
  "parking_lot",
- "ratatui",
+ "ratatui 0.28.1",
  "tracing",
  "tracing-subscriber",
 ]
@@ -11108,7 +11496,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "29c07084342a575cea919eea996b9658a358c800b03d435df581c1d7c60e065a"
 dependencies = [
  "crossterm",
- "ratatui",
+ "ratatui 0.28.1",
  "unicode-width 0.1.14",
 ]
 
@@ -11304,6 +11692,7 @@ dependencies = [
  "cargo_metadata 0.19.2",
  "clap",
  "uniffi_bindgen 0.30.0",
+ "uniffi_build",
  "uniffi_core 0.30.0",
  "uniffi_macros 0.30.0",
  "uniffi_pipeline 0.30.0",
@@ -11382,6 +11771,17 @@ dependencies = [
  "uniffi_meta 0.31.1",
  "uniffi_pipeline 0.31.1",
  "uniffi_udl 0.31.1",
+]
+
+[[package]]
+name = "uniffi_build"
+version = "0.30.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3e55c05228f4858bb258f651d21d743fcc1fe5a2ec20d3c0f9daefddb105ee4d"
+dependencies = [
+ "anyhow",
+ "camino",
+ "uniffi_bindgen 0.30.0",
 ]
 
 [[package]]

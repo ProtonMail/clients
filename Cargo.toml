@@ -136,8 +136,7 @@
   registry = "proton"
 
 [workspace.dependencies.crux_core]
-  git = "https://github.com/redbadger/crux"
-  rev = "cb3cc8f7807d3fe4c6e13ffe774367859af8cdaa"
+  version = "0.17.0"
   features = ["facet_typegen"]
 
 [workspace.dependencies.facet]

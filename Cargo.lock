@@ -61,7 +61,7 @@ dependencies = [
  "num_enum",
  "parking_lot",
  "passkey",
- "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
+ "proton-crypto",
  "proton-crypto-account",
  "proton-crypto-subtle",
  "public-suffix",
@@ -1731,7 +1731,7 @@ dependencies = [
  "mail-stash",
  "mail-vcard",
  "pretty_assertions",
- "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
+ "proton-crypto",
  "proton-crypto-account",
  "serde",
  "serde_json",
@@ -5773,7 +5773,7 @@ dependencies = [
  "mail-ical",
  "mail-network-monitor-service",
  "pretty_assertions",
- "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
+ "proton-crypto",
  "proton-crypto-account",
  "serde_json",
  "test-case",
@@ -5979,7 +5979,7 @@ dependencies = [
  "mail-vcard",
  "parking_lot",
  "pretty_assertions",
- "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
+ "proton-crypto",
  "proton-crypto-account",
  "rand 0.9.4",
  "secrecy",
@@ -6031,7 +6031,7 @@ dependencies = [
  "indoc",
  "mail-calendar-api-v1",
  "pretty_assertions",
- "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
+ "proton-crypto",
  "proton-crypto-account",
  "serde",
  "serde_json",
@@ -6075,7 +6075,7 @@ dependencies = [
  "hex",
  "mail-builder",
  "mail-parser",
- "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
+ "proton-crypto",
  "rand 0.9.4",
  "serde",
  "thiserror 2.0.18",
@@ -6592,7 +6592,7 @@ dependencies = [
  "mail-log-service",
  "mail-network-monitor-service",
  "mail-stash",
- "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
+ "proton-crypto",
  "qrcode",
  "ratatui 0.28.1",
  "ratatui-explorer",
@@ -6650,7 +6650,7 @@ dependencies = [
  "mail-vcard",
  "non-empty-string",
  "parking_lot",
- "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
+ "proton-crypto",
  "proton-crypto-account",
  "secrecy",
  "serde",
@@ -7024,7 +7024,7 @@ dependencies = [
 [[package]]
 name = "muon"
 version = "1.7.0"
-source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/"
+source = "sparse+https://rust-registry.proton.me/index/"
 checksum = "9669220821c7d056c27b7c0b4803c2360a555db18c56281cc4f5609d216cfc3f"
 dependencies = [
  "anyhow",
@@ -7059,7 +7059,7 @@ dependencies = [
  "num",
  "num_cpus",
  "pin-project",
- "proton-srp 0.7.1 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
+ "proton-srp 0.7.1 (sparse+https://rust-registry.proton.me/index/)",
  "rand 0.8.5",
  "reqwest 0.12.28",
  "rustls-native-certs 0.7.3",
@@ -7081,7 +7081,7 @@ dependencies = [
 [[package]]
 name = "muon"
 version = "2.3.0"
-source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/"
+source = "sparse+https://rust-registry.proton.me/index/"
 checksum = "e5183e77cb59655c45a40c7954dd3ffe04ed8cb988d35df19bc982918253cd89"
 dependencies = [
  "async-lock",
@@ -7124,7 +7124,7 @@ dependencies = [
 [[package]]
 name = "muon-proc"
 version = "0.5.0"
-source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/"
+source = "sparse+https://rust-registry.proton.me/index/"
 checksum = "b3a4cd79ae857be25a6d8f2d5f4d897f76e1733c57e609adc4341e06955acd81"
 dependencies = [
  "cfg-if",
@@ -8749,28 +8749,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "proton-crypto"
-version = "0.12.2"
-source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/"
-checksum = "e2020ef41050dd8a6b9dd554fe95a65db13b3ddb05e6a863996aa44c77e6c877"
-dependencies = [
- "facet",
- "gopenpgp-sys",
- "hex",
- "parking_lot",
- "proton-rpgp",
- "proton-srp 0.8.2",
- "rand 0.8.5",
- "serde",
- "subtle",
- "thiserror 1.0.69",
- "web-time",
-]
-
-[[package]]
 name = "proton-crypto-account"
 version = "0.18.2"
-source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/"
+source = "sparse+https://rust-registry.proton.me/index/"
 checksum = "1e6f5577db56fed91c78d064391410359bc43603ee3a109b9ac6b31787190820"
 dependencies = [
  "base64",
@@ -8778,7 +8759,7 @@ dependencies = [
  "facet",
  "futures",
  "hex",
- "proton-crypto 0.12.2 (sparse+https://rust-registry.proton.me/index/)",
+ "proton-crypto",
  "rusqlite",
  "serde",
  "serde_json",
@@ -8792,7 +8773,7 @@ dependencies = [
 [[package]]
 name = "proton-crypto-subtle"
 version = "0.2.1"
-source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/"
+source = "sparse+https://rust-registry.proton.me/index/"
 checksum = "0a0d3d11e6f10b8594ef4acf8460ad705cae77873683fee4ae54489c869a7bfc"
 dependencies = [
  "aes-gcm",
@@ -8807,7 +8788,7 @@ dependencies = [
 [[package]]
 name = "proton-foundation-search"
 version = "1.1.2"
-source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/"
+source = "sparse+https://rust-registry.proton.me/index/"
 checksum = "3d310b964eec12570343d55a886b0528cc5fc0a0e7fa151cf7e6cb88dad560d4"
 dependencies = [
  "ciborium",
@@ -8862,7 +8843,7 @@ dependencies = [
 [[package]]
 name = "proton-srp"
 version = "0.7.1"
-source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/"
+source = "sparse+https://rust-registry.proton.me/index/"
 checksum = "2be7a723cbcf580757fb53e7152c70336def958cdd0436a601a06c52ed233a3c"
 dependencies = [
  "base64",

@@ -73,6 +73,7 @@ dependencies = [
  "serde_json",
  "serde_repr",
  "serde_with",
+ "sha2",
  "strum 0.26.3",
  "tempfile",
  "test-case",

@@ -14,6 +14,7 @@
     "project/mail/rust/mail/*",
     "project/mail/rust/shared/*",
     "project/mail/rust/uniffi/*",
+    "project/payment/rust/payment*",
   ]
   resolver = "3"
 
@@ -633,6 +634,19 @@
 [workspace.dependencies.zeroize]
   version = "1.8.1"
   features = ["zeroize_derive"]
+
+# payment path deps
+[workspace.dependencies.payment-core]
+  path = "project/payment/rust/payment-core"
+
+[workspace.dependencies.payment-api]
+  path = "project/payment/rust/payment-api"
+
+[workspace.dependencies.payment-http]
+  path = "project/payment/rust/payment-http"
+
+[workspace.dependencies.payment-observability]
+  path = "project/payment/rust/payment-observability"
 
 [patch.proton]
 mail-muon = { path = "project/mail/rust/forks/muon" }

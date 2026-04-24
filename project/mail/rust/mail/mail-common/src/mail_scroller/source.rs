@@ -34,10 +34,14 @@ where
     /// You can return an optional join handle that [`MailScroller`] will use on the first
     /// call to [`MailScroller::fetch_more()`] if you want to preload some data in
     /// a background task.
+    ///
+    /// `category` is the initial set of label IDs to filter by. Pass an empty `Vec` for
+    /// no category filter. Sources that don't support category filtering (e.g. search) ignore it.
     fn initialize(
         &mut self,
         ctx: &MailUserContext,
         invalidate: flume::Sender<()>,
+        category: Vec<LocalLabelId>,
     ) -> impl Future<Output = Result<MailPaginatorJoinHandle, MailContextError>> + Send;
 
     /// Return the items that fall into range of the synced data.
@@ -91,12 +95,18 @@ where
         ctx: &MailUserContext,
     ) -> impl Future<Output = Result<MailPaginatorJoinHandle, MailContextError>> + Send;
 
+    /// Atomically update one or more state dimensions and re-initialize the source.
+    ///
+    /// Pass `None` for any dimension that should remain unchanged.
+    /// `category` replaces the active label filter; sources that don't support
+    /// category filtering (e.g. search) ignore it.
     fn change_state(
         &mut self,
         ctx: &MailUserContext,
         unread: Option<ReadFilter>,
         label: Option<LocalLabelId>,
         keywords: Option<SearchOptions>,
+        category: Option<Vec<LocalLabelId>>,
     ) -> impl Future<Output = Result<MailPaginatorJoinHandle, MailContextError>> + Send;
 
     fn clear(
@@ -105,10 +115,6 @@ where
     ) -> impl Future<Output = Result<MailPaginatorJoinHandle, MailContextError>> + Send;
 
     fn watched_tables(&self) -> Vec<String>;
-
-    fn set_category(&mut self, _category_ids: Vec<LocalLabelId>) {
-        // default: no-op for sources that don't support category filtering
-    }
 }
 
 pub trait MailScrollerItem

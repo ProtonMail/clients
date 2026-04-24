@@ -1,5 +1,5 @@
 ---
-source: mail/mail-api/tests/mail_events.rs
+source: project/mail/rust/mail/mail-api/tests/mail_events.rs
 expression: mail_event
 ---
 MailEvent {
@@ -196,6 +196,7 @@ MailEvent {
             submission_access: false,
             swipe_left: Archive,
             swipe_right: Trash,
+            mail_category_view: false,
             theme: "<CSS>",
             view_layout: Column,
             view_mode: Conversations,

@@ -5,73 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [mail-uniffi-v0.164.17] - 2026-04-15
+## [mail-uniffi-v0.165.1] - 2026-04-24
 
-Note: This release merges 0.164.16 to main 0.164 release branch
+### Features
 
-### Fixes
-
-- [ET-4901] pass scale up factor when fetching sender images - proton/clients/monorepo!1787
-
-## [mail-uniffi-v0.164.16] - 2026-04-15
+- [ET-6126] Obey Mail Settings for Category View in Scrollers
 
 ### Fixes
 
-- Use non-streaming API in attachment decryption - proton/clients/monorepo!1805
-- cargo-audit - Bump rustls-webpki - proton/clients/monorepo!1809
+- [ET-6131] Eager auth refresh for migrated sessions + autoheal - proton/clients/monorepo!1961
+- Change-label scroller's command should modify the category view state
+- Android .apk contains libgopenpgp-sys.so - proton/clients/monorepo!1922
 
-## [mail-uniffi-v0.164.15] - 2026-04-14
 
-### Fixes
+## [mail-uniffi-v0.165.0] - 2026-04-21
 
-- [ET-6100] Force sync message metadata for push notification - proton/clients/monorepo!1782
+### Changed
 
-## [mail-uniffi-v0.164.14] - 2026-04-14
+- Rename key-manager - proton/clients/monorepo!1620
 
-Note: This release combines 0.164.13 with changes from .10, .11, .12
+### Features
 
-### Fixes
-
-- Align 0.164.x branches - proton/clients/monorepo!1766
-
-## [mail-uniffi-v0.164.13] - 2026-04-13
-
-Note: This release is based on 0.164.9; it does not contain changes from .10, .11, .12
+- [ET-6098] Implement category view support in the scrollers - proton/clients/monorepo!1874
+- [ET-6086] Use two flags for upsell eligibility - proton/clients/monorepo!1846
+- [ET-6092] Implement Category View interfaces
+- [FOUN-281] fixture perf - proton/clients/monorepo!1501
+- Move the mail app to the new key manager - proton/clients/monorepo!1539
 
 ### Fixes
 
-- [ET-6091] Revert uniffi 0.31.0 -> 0.29.1 - proton/clients/monorepo!1745
-
-## [mail-uniffi-v0.164.12] - 2026-04-09
-
-- revert: "revert: "fix(mail): Potential refresh session bug"" - proton/clients/monorepo!1688
-
-## [mail-uniffi-v0.164.11] - 2026-04-08
-
-### Fixes
-
-- Dial in number of connections to balance speed vs memory usage - proton/clients/monorepo!1692
-
-
-## [mail-uniffi-v0.164.10] - 2026-04-08
-
-### Fixes
-
-- Workaround - Bump connection pool to 100, add extra traces to detect functions that take longer than 500ms, abort task on drop. - proton/clients/monorepo!1680
-
-
-## [mail-uniffi-v0.164.8] - 2026-04-01
-
-### Fixes
-
+- iCal - make sure we parse TZID even if non-standard - proton/clients/monorepo!1838
+- [ET-6119] runtime crash in RustInit.kt due to package mismatch - proton/clients/monorepo!1851
+- Move to the non-streaming API in attachment decryption - proton/clients/monorepo!1803
+- Address issues with mail-clippy, mail-audit, account-crux-ffi tests, ... - proton/clients/monorepo!1808
+- Format cookie in headers properly - proton/clients/monorepo!1754
+- [ET-6033] Do not expire when sending to large contact groups - proton/clients/monorepo!1659
+- Do not accidentally early exit when resetting auth - proton/clients/monorepo!1621
+- remove unused Bazel workspace - proton/clients/monorepo!1610
 - [ET-6057] When checking for free accounts, skip self
-
-
-## [mail-uniffi-v0.164.7] - 2026-03-31
-
-### Fixes
-
 - Potential refresh session bug
+- Revert to using GET for fetching unleash flags - proton/clients/monorepo!1558
+- Fix 2FA for resumed LoginFlow - proton/clients/monorepo!1536
 
 
 ## [mail-uniffi-v0.164.6] - 2026-03-26

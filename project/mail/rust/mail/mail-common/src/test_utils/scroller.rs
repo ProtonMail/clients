@@ -28,7 +28,7 @@ use super::utils::{create_address, test_address};
 use crate::mail_scroller::ScrollerListUpdate;
 use crate::{
     MailContextError, MailUserContext,
-    mail_scroller::{MailScroller, MailScrollerHandle, ScrollerUpdate},
+    mail_scroller::{CategoryView, MailScroller, MailScrollerHandle, ScrollerUpdate},
 };
 
 pub const UNIQUE_CONV_ID: &str = "unique_conv_id_for_storing_messages";
@@ -356,6 +356,17 @@ where
         self.scroller.change_label(label)
     }
 
+    pub fn change_category_view(
+        &self,
+        category: Option<LocalLabelId>,
+    ) -> Result<(), MailContextError> {
+        self.scroller.change_category_view(category)
+    }
+
+    pub async fn category_view(&self) -> Result<CategoryView, MailContextError> {
+        self.scroller.category_view().await
+    }
+
     pub fn change_include(&self, include: IncludeSwitch) -> Result<(), MailContextError> {
         self.scroller.change_include(include)
     }
@@ -516,6 +527,12 @@ where
                     && actual_to == expected_to
                     && actual_items.len() == *expected_items
             }
+            (
+                ScrollerUpdate::CategoryViewChanged { category_view, .. },
+                TestUpdate::CategoryViewChanged {
+                    labels: expected_labels,
+                },
+            ) => category_view.len() == *expected_labels,
             (ScrollerUpdate::Error { src: _, error }, TestUpdate::Error(expected_error)) => {
                 tracing::error!(
                     "Comparing error,\nactual: {},\nexpected: {}",
@@ -640,6 +657,9 @@ pub enum TestUpdate {
         from: usize,
         to: usize,
         items: usize,
+    },
+    CategoryViewChanged {
+        labels: usize,
     },
     Error(String),
 }

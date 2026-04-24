@@ -31,6 +31,7 @@ async fn test_mail_settings_store_read() {
         receive_mime_type: Default::default(),
         show_mime_type: Default::default(),
         enable_folder_color: Default::default(),
+        mail_category_view: Default::default(),
         inherit_parent_folder_color: Default::default(),
         submission_access: Default::default(),
         right_to_left: Default::default(),

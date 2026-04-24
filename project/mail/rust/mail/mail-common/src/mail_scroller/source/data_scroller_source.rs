@@ -307,8 +307,11 @@ impl<T: RemoteSource> MailScrollerSource for DataScrollerSource<T> {
         &mut self,
         ctx: &MailUserContext,
         invalidate: flume::Sender<()>,
+        category: Vec<LocalLabelId>,
     ) -> Result<MailPaginatorJoinHandle, MailContextError> {
         self.invalidate = Some(invalidate);
+        self.category = category;
+        self.clear_state();
         self.initialize_impl(ctx, false).await
     }
 
@@ -493,6 +496,7 @@ impl<T: RemoteSource> MailScrollerSource for DataScrollerSource<T> {
         unread: Option<ReadFilter>,
         label: Option<LocalLabelId>,
         _keywords: Option<SearchOptions>,
+        category: Option<Vec<LocalLabelId>>,
     ) -> Result<MailPaginatorJoinHandle, MailContextError> {
         let tether = ctx.user_stash().connection().await?;
 
@@ -510,6 +514,10 @@ impl<T: RemoteSource> MailScrollerSource for DataScrollerSource<T> {
                 current = self.local_label_id
             );
             self.local_label_id = label;
+        }
+
+        if let Some(cat) = category {
+            self.category = cat;
         }
 
         self.state = MailScrollerState::synced(
@@ -550,9 +558,5 @@ impl<T: RemoteSource> MailScrollerSource for DataScrollerSource<T> {
 
     fn watched_tables(&self) -> Vec<String> {
         T::watched_tables()
-    }
-
-    fn set_category(&mut self, category_ids: Vec<LocalLabelId>) {
-        self.category = category_ids;
     }
 }

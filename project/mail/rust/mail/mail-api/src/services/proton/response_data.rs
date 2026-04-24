@@ -852,6 +852,9 @@ pub struct MailSettings {
     #[serde(default)]
     pub swipe_right: SwipeAction,
 
+    #[serde(default)]
+    pub mail_category_view: bool,
+
     /// TODO: Document this field.
     pub theme: String,
 

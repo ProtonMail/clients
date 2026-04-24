@@ -632,6 +632,7 @@ pub static DEFAULT_MAIL_SETTINGS: LazyLock<ApiMailSettings> = LazyLock::new(|| A
     receive_mime_type: MimeType::default(),
     show_mime_type: MimeType::default(),
     enable_folder_color: false,
+    mail_category_view: false,
     inherit_parent_folder_color: false,
     submission_access: false,
     right_to_left: ComposerDirection::default(),

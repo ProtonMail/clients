@@ -7147,10 +7147,14 @@ dependencies = [
 [[package]]
 name = "mail-uniffi"
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "0.165.2"
 =======
 version = "0.165.0"
 >>>>>>> 3bbd1430a5 (chore: mail-uniffi v0.165.0)
+=======
+version = "0.165.1"
+>>>>>>> aaeff806d2 (chore: mail-uniffi v0.165.1)
 dependencies = [
  "anyhow",
  "async-trait",

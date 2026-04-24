@@ -599,8 +599,8 @@
   default-features = false
 
 [workspace.dependencies.rusqlite]
-  version = "0.37"
-  features = ["bundled", "chrono", "functions", "trace", "uuid"]
+  version = "0.38"
+  features = ["bundled", "chrono", "functions", "trace", "uuid", "fallible_uint"]
 
 [workspace.dependencies.sqlite-watcher]
   version = "0.7.0"

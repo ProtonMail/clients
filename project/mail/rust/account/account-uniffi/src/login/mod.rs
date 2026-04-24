@@ -1,5 +1,6 @@
 use crate::{password_validator::PasswordValidatorService, user_behavior::UserBehavior};
 use datatypes::{Fido2RequestFfi, Fido2ResponseFfi, MigrationData};
+use futures::TryFutureExt;
 use mail_account_api::login as login_api;
 use mail_account_api::login::state::want_qr_confirmation::ProcessTargetDeviceQrError as RealProcessTargetDeviceQrError;
 use mail_account_api::responses as responses_api;
@@ -10,7 +11,7 @@ use mail_uniffi_common::errors::UserApiServiceError;
 use mail_uniffi_runtime::{async_runtime, uniffi_async};
 use std::sync::Arc;
 use tokio::{sync::Mutex, task::JoinError};
-use tracing::warn;
+use tracing::{debug, warn};
 use uniffi::Enum as UniffiEnum;
 
 pub mod datatypes;
@@ -131,16 +132,33 @@ impl LoginFlow {
                     data.mobile_signature.take(),
                     data.mobile_signature_enabled,
                 )
-                .await
-                .inspect_err(|err| warn!("{err:?}"))
-                .map_err(|_| LoginError::Other("Couldn't process migration data".into()))?;
+                .inspect_ok(|()| debug!("migration snooper run succeeded"))
+                .inspect_err(|e| warn!(?e, "migration snooper run failed"))
+                .map_err(|_| LoginError::Other("Couldn't process migration data".into()))
+                .await?;
 
             let (user_id, session_id, user_data, refresh_token) = data.into_parts();
 
-            guard
-                .migrate(user_id.into(), session_id.into(), user_data, refresh_token)
-                .await
+            let migrate_result = guard
+                .migrate(
+                    user_id.clone().into(),
+                    session_id.into(),
+                    user_data,
+                    refresh_token,
+                )
+                .inspect_ok(|()| debug!("migration succeeded"))
+                .inspect_err(|e| warn!(?e, "migration failed"))
                 .map_err(LoginError::from)
+                .await;
+
+            let _ = guard
+                .migration_snooper()
+                .run_post(&user_id)
+                .inspect_ok(|()| debug!("migration snooper post run succeeded"))
+                .inspect_err(|e| warn!(?e, "migration snooper post run failed"))
+                .await;
+
+            migrate_result
         })
         .await
         .into()

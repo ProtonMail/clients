@@ -1,13 +1,14 @@
 use anyhow::Error;
 use async_trait::async_trait;
-use mail_core_api::services::proton::UserId;
+use futures::TryFutureExt;
+use mail_core_api::services::proton::{ProtonCore, UserId};
 use mail_core_common::{Context, migration_snooper::MigrationSnooper};
 use mail_stash::AccountDb;
 use mail_stash::macros::Model;
 use mail_stash::orm::Model;
 use mail_stash::stash::{Bond, StashError, Tether};
 use std::sync::Arc;
-use tracing::instrument;
+use tracing::{error, info, instrument, warn};
 
 pub struct MailMigrationSnooper {
     ctx: Arc<Context>,
@@ -43,6 +44,38 @@ impl MigrationSnooper for MailMigrationSnooper {
                 .await
             })
             .await?;
+
+        Ok(())
+    }
+
+    async fn run_post(&self, user_id: &str) -> Result<(), Error> {
+        let sessions = self
+            .ctx
+            .get_account_sessions(user_id.into())
+            .inspect_ok(|s| info!(n = s.len(), "loaded migrated sessions"))
+            .inspect_err(|e| error!(?e, "failed to get account sessions"))
+            .await?;
+
+        // ET-6131: ensure migrated sessions have correct scopes.
+        for s in sessions {
+            if s.auth_scopes.is_empty() {
+                match self.ctx.user_context_from_session(&s).await {
+                    Ok(user_ctx) => {
+                        // Nudge the session by making an API request.
+                        // This will trigger auth refresh and populate the scopes.
+                        warn!(?s.remote_id, "found stuck migration session");
+                        let _ = user_ctx.session().get_users().await;
+                    }
+
+                    Err(error) => {
+                        // We can't get the user context so the session is unusable.
+                        // Logout locally so the user may log back in cleanly.
+                        error!(?s.remote_id, ?error, "clearing stuck migration session");
+                        let _ = self.ctx.force_logout_account_locally(s.account_id).await;
+                    }
+                }
+            }
+        }
 
         Ok(())
     }

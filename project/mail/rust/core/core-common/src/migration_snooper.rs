@@ -10,6 +10,8 @@ pub trait MigrationSnooper: Send + Sync {
         mobile_signature: Option<String>,
         mobile_signature_enabled: Option<bool>,
     ) -> Result<(), Error>;
+
+    async fn run_post(&self, user_id: &str) -> Result<(), Error>;
 }
 
 pub struct NoopMigrationSnooper;
@@ -23,6 +25,10 @@ impl MigrationSnooper for NoopMigrationSnooper {
         _: Option<String>,
         _: Option<bool>,
     ) -> Result<(), Error> {
+        Ok(())
+    }
+
+    async fn run_post(&self, _: &str) -> Result<(), Error> {
         Ok(())
     }
 }

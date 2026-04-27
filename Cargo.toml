@@ -15,6 +15,7 @@
     "project/mail/rust/shared/*",
     "project/mail/rust/uniffi/*",
     "project/payment/rust/payment*",
+    "project/contacts/rust/contacts-*",
   ]
   resolver = "3"
 
@@ -697,6 +698,11 @@ mail-muon = { path = "project/mail/rust/forks/muon" }
   incremental = false
 
 [profile.mail-darwin-test]
+  inherits = "dev"
+  debug = false
+  incremental = false
+
+[profile.contacts-darwin-test]
   inherits = "dev"
   debug = false
   incremental = false

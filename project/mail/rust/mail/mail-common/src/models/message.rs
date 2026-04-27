@@ -1107,6 +1107,7 @@ impl Message {
         Ok(decrypted)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn delete_expired(tether: &mut Tether) -> Result<(), AppError> {
         let ids = Self::find_ids(
             r"

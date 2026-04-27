@@ -5,6 +5,7 @@ mod v016_proton_mail_new_system_labels;
 mod v019_proton_mail_draft_send_result_refactor;
 mod v045_proton_mail_draft_send_result;
 mod v046_proton_mail_android_signatures;
+mod v061_proton_mail_restore_non_expired_messages;
 
 use include_dir::{Dir, include_dir};
 use mail_sqlite3::{Migrator, MigratorError, file::embedded_migrations};
@@ -36,6 +37,9 @@ pub async fn run(mail_stash: &Stash<UserDb>) -> Result<usize, MigratorError> {
     ));
     migrations.push(Box::new(
         v046_proton_mail_android_signatures::AndroidSignaturesMigration,
+    ));
+    migrations.push(Box::new(
+        v061_proton_mail_restore_non_expired_messages::RestoreNonExpiredMessages,
     ));
     let mut tether = mail_stash.connection().await?;
 

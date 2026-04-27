@@ -4,6 +4,7 @@ use super::{
 };
 use crate::datatypes::SearchOptions;
 use crate::datatypes::labels::{ScrollOrderDir, ScrollOrderField};
+use crate::mail_scroller::CategoryView;
 use crate::{AppError, MailContextError, MailUserContext, datatypes::ReadFilter};
 use anyhow::anyhow;
 use mail_core_api::services::proton::LabelId;
@@ -19,7 +20,7 @@ pub struct DataScrollerSource<T: RemoteSource> {
     local_label_id: LocalLabelId,
     unread: ReadFilter,
     page_size: usize,
-    category: Vec<LocalLabelId>, // empty = no filter
+    category_view: CategoryView,
     invalidate: Option<flume::Sender<()>>,
     order_dir: ScrollOrderDir,
     order_field: ScrollOrderField,
@@ -38,7 +39,7 @@ impl<T: RemoteSource> DataScrollerSource<T> {
             local_label_id,
             unread,
             page_size,
-            category: vec![],
+            category_view: CategoryView::default(),
             invalidate: None,
             state: MailScrollerState::unsynced(
                 local_label_id,
@@ -66,7 +67,13 @@ impl<T: RemoteSource> DataScrollerSource<T> {
         let remote_label_ids = self
             .build_remote_label_ids(label.remote_id.clone().unwrap(), &tether)
             .await?;
-        let total = T::total(self.local_label_id, self.unread, &tether).await?;
+        let total = T::total(
+            self.local_label_id,
+            self.unread,
+            self.category_view.enabled,
+            &tether,
+        )
+        .await?;
         let is_offline = ctx.network_monitor_service().is_os_offline();
         let is_online = !is_offline;
 
@@ -177,7 +184,7 @@ impl<T: RemoteSource> DataScrollerSource<T> {
                 self.local_label_id,
                 self.unread,
                 self.page_size,
-                self.category.clone(),
+                self.category_view.filter_ids.clone(),
                 tether,
             )
             .await?;
@@ -214,11 +221,11 @@ impl<T: RemoteSource> DataScrollerSource<T> {
     ) -> Result<Vec<LabelId>, MailContextError> {
         let mut ids = vec![primary];
 
-        if self.category.is_empty() {
+        if self.category_view.filter_ids.is_empty() {
             return Ok(ids);
         }
 
-        for &local_id in &self.category {
+        for &local_id in &self.category_view.filter_ids {
             if let Some(label) = Label::find_by_id(local_id, tether).await? {
                 if let Some(remote_id) = label.remote_id {
                     ids.push(remote_id);
@@ -227,6 +234,7 @@ impl<T: RemoteSource> DataScrollerSource<T> {
                 }
             }
         }
+
         Ok(ids)
     }
 
@@ -249,7 +257,7 @@ impl<T: RemoteSource> DataScrollerSource<T> {
         let local_label_id = self.local_label_id;
         let unread = self.unread;
         let page_size = self.page_size;
-        let category = self.category.clone();
+        let category = self.category_view.filter_ids.clone();
 
         T::sync_first_page(
             ctx,
@@ -276,7 +284,7 @@ impl<T: RemoteSource> DataScrollerSource<T> {
         let local_label_id = self.local_label_id;
         let unread = self.unread;
         let page_size = self.page_size;
-        let category = self.category.clone();
+        let category = self.category_view.filter_ids.clone();
 
         T::sync_next_page(
             ctx,
@@ -304,7 +312,7 @@ impl<T: RemoteSource> DataScrollerSource<T> {
         let local_label_id = self.local_label_id;
         let unread = self.unread;
         let page_size = self.page_size;
-        let category = self.category.clone();
+        let category = self.category_view.filter_ids.clone();
 
         T::sync_previous_page(
             ctx,
@@ -328,7 +336,7 @@ impl<T: RemoteSource> DataScrollerSource<T> {
             self.local_label_id,
             self.unread,
             self.page_size,
-            self.category.clone(),
+            self.category_view.filter_ids.clone(),
             self.order_dir,
             self.order_field,
         );
@@ -343,10 +351,10 @@ impl<T: RemoteSource> MailScrollerSource for DataScrollerSource<T> {
         &mut self,
         ctx: &MailUserContext,
         invalidate: flume::Sender<()>,
-        category: Vec<LocalLabelId>,
+        category_view: CategoryView,
     ) -> Result<MailPaginatorJoinHandle, MailContextError> {
         self.invalidate = Some(invalidate);
-        self.category = category;
+        self.category_view = category_view;
         self.clear_state();
         self.initialize_impl(ctx, false).await
     }
@@ -383,7 +391,13 @@ impl<T: RemoteSource> MailScrollerSource for DataScrollerSource<T> {
 
     async fn all_total(&self, ctx: &MailUserContext) -> Result<u64, MailContextError> {
         let tether = ctx.user_stash().connection().await?;
-        let total = T::total(self.local_label_id, self.unread, &tether).await?;
+        let total = T::total(
+            self.local_label_id,
+            self.unread,
+            self.category_view.enabled,
+            &tether,
+        )
+        .await?;
 
         Ok(total)
     }
@@ -402,7 +416,13 @@ impl<T: RemoteSource> MailScrollerSource for DataScrollerSource<T> {
     ) -> Result<(Vec<Self::Item>, MailPaginatorJoinHandle), MailContextError> {
         let tether = ctx.user_stash().connection().await?;
         let label = self.get_label(&tether).await?;
-        let total = T::total(self.local_label_id, self.unread, &tether).await?;
+        let total = T::total(
+            self.local_label_id,
+            self.unread,
+            self.category_view.enabled,
+            &tether,
+        )
+        .await?;
         let is_offline = ctx.network_monitor_service().is_os_offline();
         let is_online = !is_offline;
 
@@ -541,10 +561,8 @@ impl<T: RemoteSource> MailScrollerSource for DataScrollerSource<T> {
         unread: Option<ReadFilter>,
         label: Option<LocalLabelId>,
         _keywords: Option<SearchOptions>,
-        category: Option<Vec<LocalLabelId>>,
+        category_view: Option<CategoryView>,
     ) -> Result<MailPaginatorJoinHandle, MailContextError> {
-        let tether = ctx.user_stash().connection().await?;
-
         if let Some(unread) = unread {
             info!(
                 "Changing unread filter from {current:?} to {unread:?}",
@@ -561,15 +579,16 @@ impl<T: RemoteSource> MailScrollerSource for DataScrollerSource<T> {
             self.local_label_id = label;
         }
 
-        if let Some(cat) = category {
-            self.category = cat;
+        if let Some(view) = category_view {
+            self.category_view = view;
         }
 
+        let tether = ctx.user_stash().connection().await?;
         self.state = MailScrollerState::synced(
             self.local_label_id,
             self.unread,
             self.page_size,
-            self.category.clone(),
+            self.category_view.filter_ids.clone(),
             &tether,
         )
         .await?;
@@ -603,5 +622,9 @@ impl<T: RemoteSource> MailScrollerSource for DataScrollerSource<T> {
 
     fn watched_tables(&self) -> Vec<String> {
         T::watched_tables()
+    }
+
+    fn category_view(&self) -> &CategoryView {
+        &self.category_view
     }
 }

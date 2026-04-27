@@ -11,7 +11,7 @@ use crate::prefetch::PrefetchJob;
 use crate::{
     MailContextError, MailUserContext,
     datatypes::{ContextualConversation, ReadFilter},
-    models::{Conversation, ConversationScrollData, canonical_category},
+    models::{CanonicalCategory, Conversation, ConversationScrollData},
 };
 use anyhow::anyhow;
 use itertools::Itertools;
@@ -117,7 +117,7 @@ impl RemoteSource for ConversationScrollData {
         local_label_id: LocalLabelId,
         scroller: &Self,
         remote_label_ids: Vec<LabelId>,
-        _category: Vec<LocalLabelId>,
+        category: Vec<LocalLabelId>,
         unread: ReadFilter,
         page_size: usize,
         order_dir: ScrollOrderDir,
@@ -135,6 +135,7 @@ impl RemoteSource for ConversationScrollData {
                 remote_id,
                 context_time,
                 unread,
+                category,
                 page_size,
                 order_dir,
                 order_field,
@@ -236,13 +237,9 @@ impl RemoteConversationScrollerSource {
 
         // ---
 
-        let ControlFlow::Continue(()) = utils::ensure_label_is_idle(
-            &mut tether,
-            local_label_id,
-            &remote_label_ids[0],
-            &response.tasks_running,
-        )
-        .await?
+        let ControlFlow::Continue(()) =
+            utils::ensure_labels_are_idle(&mut tether, &remote_label_ids, &response.tasks_running)
+                .await?
         else {
             return Ok(vec![]);
         };
@@ -293,6 +290,7 @@ impl RemoteConversationScrollerSource {
         first_element_id: ConversationId,
         first_element_time: UnixTimestamp,
         unread: ReadFilter,
+        category: Vec<LocalLabelId>,
         page_size: usize,
         order_dir: ScrollOrderDir,
         order_field: ScrollOrderField,
@@ -330,13 +328,9 @@ impl RemoteConversationScrollerSource {
 
         // ---
 
-        let ControlFlow::Continue(()) = utils::ensure_label_is_idle(
-            &mut tether,
-            local_label_id,
-            &remote_label_ids[0],
-            &response.tasks_running,
-        )
-        .await?
+        let ControlFlow::Continue(()) =
+            utils::ensure_labels_are_idle(&mut tether, &remote_label_ids, &response.tasks_running)
+                .await?
         else {
             return Ok(vec![]);
         };
@@ -351,7 +345,7 @@ impl RemoteConversationScrollerSource {
         // as they are not displayed in conversation view mode.
         let conversation_label_counts = ctx
             .session()
-            .get_conversations_count_for_labels(vec![remote_label_ids[0].clone()])
+            .get_conversations_count_for_labels(remote_label_ids.clone())
             .await?;
 
         let context_time = Self::context_time(&response, unread);
@@ -377,7 +371,7 @@ impl RemoteConversationScrollerSource {
             false,
             order_dir,
             order_field,
-            vec![],
+            category,
             conversation_counts,
             ctx.session(),
             &mut tether,
@@ -447,13 +441,9 @@ impl RemoteConversationScrollerSource {
             }
         }
 
-        let ControlFlow::Continue(()) = utils::ensure_label_is_idle(
-            &mut tether,
-            local_label_id,
-            &remote_label_ids[0],
-            &response.tasks_running,
-        )
-        .await?
+        let ControlFlow::Continue(()) =
+            utils::ensure_labels_are_idle(&mut tether, &remote_label_ids, &response.tasks_running)
+                .await?
         else {
             return Ok(vec![]);
         };
@@ -699,7 +689,7 @@ impl RemoteConversationScrollerSource {
             .display_order(display_order)
             .order_dir(order_dir)
             .order_field(order_field)
-            .category(canonical_category(category))
+            .category(CanonicalCategory::new(category.to_vec()))
             .build();
 
         conv_paginator.save(bond).await?;

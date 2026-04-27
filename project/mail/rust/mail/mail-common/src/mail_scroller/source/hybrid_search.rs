@@ -1,7 +1,7 @@
 use super::MailPaginatorJoinHandle;
 use crate::AppError;
 use crate::datatypes::SearchOptions;
-use crate::mail_scroller::MailScrollerSource;
+use crate::mail_scroller::{CategoryView, MailScrollerSource};
 use crate::models::{MailBusyLabel, Message, MessageCounter, MessageLabel, SearchScrollData};
 use crate::{MailContextError, MailUserContext};
 use mail_core_api::services::proton::LabelId;
@@ -89,6 +89,7 @@ pub struct HybridSearchScrollerSource {
     first_sync_done: bool,
     total: Arc<Mutex<u64>>,
     invalidate: Option<flume::Sender<()>>,
+    category_view: CategoryView,
 }
 
 impl HybridSearchScrollerSource {
@@ -101,6 +102,7 @@ impl HybridSearchScrollerSource {
             first_sync_done: false,
             total: Arc::new(Mutex::new(0)),
             invalidate: None,
+            category_view: CategoryView::default(),
         }
     }
 
@@ -282,9 +284,10 @@ impl MailScrollerSource for HybridSearchScrollerSource {
         &mut self,
         ctx: &MailUserContext,
         invalidate: flume::Sender<()>,
-        _category: Vec<LocalLabelId>,
+        _category_view: CategoryView,
     ) -> Result<MailPaginatorJoinHandle, MailContextError> {
         self.invalidate = Some(invalidate);
+        self.category_view = _category_view;
         self.initialize_impl(ctx).await
     }
 
@@ -442,7 +445,7 @@ impl MailScrollerSource for HybridSearchScrollerSource {
         _unread: Option<crate::datatypes::ReadFilter>,
         label: Option<LocalLabelId>,
         keywords: Option<SearchOptions>,
-        _category: Option<Vec<LocalLabelId>>,
+        _category_view: Option<CategoryView>,
     ) -> Result<MailPaginatorJoinHandle, MailContextError> {
         if let Some(label) = label {
             info!(
@@ -457,8 +460,16 @@ impl MailScrollerSource for HybridSearchScrollerSource {
             self.options = keywords;
         }
 
+        if let Some(v) = _category_view {
+            self.category_view = v;
+        }
+
         self.state = HybridSourceState::Uninitialized;
         self.first_sync_done = false;
         self.initialize_impl(ctx).await
+    }
+
+    fn category_view(&self) -> &CategoryView {
+        &self.category_view
     }
 }

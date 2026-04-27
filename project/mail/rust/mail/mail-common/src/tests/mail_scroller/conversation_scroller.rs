@@ -5,7 +5,7 @@ use crate::datatypes::LocalConversationId;
 use crate::datatypes::labels::{ScrollOrderDir, ScrollOrderField};
 use crate::datatypes::{ContextualConversation, ReadFilter};
 use crate::models::{
-    CachedScrollData, ConversationScrollData, MailSettings, ScrollData, canonical_category,
+    CachedScrollData, CanonicalCategory, ConversationScrollData, MailSettings, ScrollData,
 };
 use crate::models::{Conversation, ScrollCursor};
 use crate::{self as mail_common, CategoryView};
@@ -156,7 +156,7 @@ async fn test_scroller_reads_correct_items_within_visible_range() {
         local_label_id,
         unread,
         ScrollOrderDir::Desc,
-        String::new(),
+        CanonicalCategory::default(),
         &tether,
     )
     .await
@@ -1192,12 +1192,8 @@ async fn test_category_filter_default_shows_all_conversations_from_disabled_cate
         .unwrap();
 
     let mut view = CategoryView::load(inbox.id(), &tether).await.unwrap();
-    let categories = view
-        .enable(Some(primary.id()))
-        .unwrap()
-        .query_filter_ids(&tether)
-        .await
-        .unwrap();
+    view.enable(Some(primary.id()), &tether).await.unwrap();
+    let categories = view.filter_ids;
 
     // Make sure all categories are present in the result
     assert!(categories.contains(&primary.id()));
@@ -1243,7 +1239,7 @@ async fn test_category_round_trip_with_composite_key() {
         .unwrap()
         .unwrap();
 
-    let category_str = canonical_category(&[social.id()]);
+    let category = CanonicalCategory::new(vec![social.id()]);
 
     // Build and save the cursor with a non-empty category.
     let mut scroller = ConversationScrollData::builder()
@@ -1255,7 +1251,7 @@ async fn test_category_round_trip_with_composite_key() {
         .display_order(1)
         .order_dir(ScrollOrderDir::Desc)
         .order_field(ScrollOrderField::Time)
-        .category(category_str.clone())
+        .category(category.clone())
         .build();
 
     tether
@@ -1270,7 +1266,7 @@ async fn test_category_round_trip_with_composite_key() {
         inbox.id(),
         ReadFilter::All,
         ScrollOrderDir::Desc,
-        category_str.clone(),
+        category.clone(),
         &tether,
     )
     .await
@@ -1278,7 +1274,7 @@ async fn test_category_round_trip_with_composite_key() {
     .expect("cursor row should exist");
 
     assert_eq!(loaded.id, original_id);
-    assert_eq!(loaded.category, category_str);
+    assert_eq!(loaded.category, category);
     assert_eq!(
         loaded.remote_conversation_id,
         ConversationId::from("anchor_1")
@@ -1294,7 +1290,7 @@ async fn test_category_round_trip_with_composite_key() {
         .display_order(2)
         .order_dir(ScrollOrderDir::Desc)
         .order_field(ScrollOrderField::Time)
-        .category(category_str.clone())
+        .category(category.clone())
         .build();
 
     tether
@@ -1306,7 +1302,7 @@ async fn test_category_round_trip_with_composite_key() {
         inbox.id(),
         ReadFilter::All,
         ScrollOrderDir::Desc,
-        category_str,
+        category,
         &tether,
     )
     .await
@@ -1338,7 +1334,7 @@ async fn test_unsorted_category_normalizes_to_canonical_form() {
         .unwrap()
         .unwrap();
 
-    // Provide IDs in reverse order; canonical_category must sort them.
+    // Provide IDs in reverse order; CanonicalCategory must sort them.
     let ids_unsorted = if social.id() > promotions.id() {
         vec![social.id(), promotions.id()]
     } else {
@@ -1350,12 +1346,12 @@ async fn test_unsorted_category_normalizes_to_canonical_form() {
         v
     };
 
-    let stored = canonical_category(&ids_unsorted);
-    let expected = canonical_category(&ids_sorted);
+    let stored = CanonicalCategory::new(ids_unsorted);
+    let expected = CanonicalCategory::new(ids_sorted);
 
     assert_eq!(
         stored, expected,
-        "canonical_category must sort IDs regardless of input order"
+        "CanonicalCategory must sort IDs regardless of input order"
     );
 
     // Verify the key round-trips through the DB.
@@ -1401,7 +1397,7 @@ async fn test_cached_scroller_with_category_does_not_collide_with_empty_category
         .await
         .unwrap()
         .unwrap();
-    let category_str = canonical_category(&[social.id()]);
+    let category = CanonicalCategory::new(vec![social.id()]);
 
     // Save a cursor for the empty-category slot.
     let mut scroller_no_cat = ConversationScrollData::builder()
@@ -1413,7 +1409,7 @@ async fn test_cached_scroller_with_category_does_not_collide_with_empty_category
         .display_order(1)
         .order_dir(ScrollOrderDir::Desc)
         .order_field(ScrollOrderField::Time)
-        .build(); // category defaults to ""
+        .build(); // category defaults to empty
 
     tether
         .tx::<_, _, StashError>(async |bond| scroller_no_cat.save(bond).await)
@@ -1430,7 +1426,7 @@ async fn test_cached_scroller_with_category_does_not_collide_with_empty_category
         .display_order(2)
         .order_dir(ScrollOrderDir::Desc)
         .order_field(ScrollOrderField::Time)
-        .category(category_str.clone())
+        .category(category.clone())
         .build();
 
     tether
@@ -1443,7 +1439,7 @@ async fn test_cached_scroller_with_category_does_not_collide_with_empty_category
         inbox.id(),
         ReadFilter::All,
         ScrollOrderDir::Desc,
-        String::new(),
+        CanonicalCategory::default(),
         &tether,
     )
     .await
@@ -1454,7 +1450,7 @@ async fn test_cached_scroller_with_category_does_not_collide_with_empty_category
         inbox.id(),
         ReadFilter::All,
         ScrollOrderDir::Desc,
-        category_str,
+        category,
         &tether,
     )
     .await

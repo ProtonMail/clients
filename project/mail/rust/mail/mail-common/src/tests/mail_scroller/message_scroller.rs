@@ -8,7 +8,7 @@ use crate::datatypes::labels::ScrollOrderDir;
 use crate::datatypes::labels::ScrollOrderField;
 use crate::mail_scroller::conversation_scroller::save_conversation_with_labels;
 use crate::models::MailSettings;
-use crate::models::{CachedScrollData, MessageScrollData, ScrollCursor};
+use crate::models::{CachedScrollData, CanonicalCategory, MessageScrollData, ScrollCursor};
 use crate::models::{Message, ScrollData};
 use mail_api::services::proton::common::MessageId;
 use mail_common::test_utils::db::new_test_connection;
@@ -128,7 +128,7 @@ async fn test_scroller_reads_correct_items_within_visible_range() {
         local_label_id,
         unread,
         ScrollOrderDir::Desc,
-        String::new(),
+        CanonicalCategory::default(),
         &tether,
     )
     .await
@@ -1001,12 +1001,8 @@ async fn test_category_filter_default_shows_all_messages_from_disabled_categorie
         .unwrap();
 
     let mut view = CategoryView::load(inbox.id(), &tether).await.unwrap();
-    let categories = view
-        .enable(Some(primary.id()))
-        .unwrap()
-        .query_filter_ids(&tether)
-        .await
-        .unwrap();
+    view.enable(Some(primary.id()), &tether).await.unwrap();
+    let categories = view.filter_ids.clone();
 
     // Make sure all categories are present in the result
     assert!(categories.contains(&primary.id()));

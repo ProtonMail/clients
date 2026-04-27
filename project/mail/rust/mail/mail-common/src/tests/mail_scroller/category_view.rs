@@ -210,49 +210,39 @@ async fn test_expanded_filter_ids_category_default() {
 
     let inbox_id = SystemLabel::Inbox.local_id(&tether).await.unwrap().unwrap();
     let mut view = CategoryView::load(inbox_id, &tether).await.unwrap();
-    let ids = view
-        .enable(Some(default_id))
-        .unwrap()
-        .query_filter_ids(&tether)
-        .await
-        .unwrap();
+    view.enable(Some(default_id), &tether).await.unwrap();
 
     assert!(
-        ids.contains(&default_id),
+        view.filter_ids.contains(&default_id),
         "CategoryDefault itself must be in expanded filter"
     );
     assert!(
-        ids.contains(&social_id),
+        view.filter_ids.contains(&social_id),
         "display=false CategorySocial must be in CategoryDefault expansion"
     );
     assert!(
-        !ids.contains(&updates_id),
+        !view.filter_ids.contains(&updates_id),
         "CategoryUpdates cannot be in CategoryDefault expansion"
     );
 
-    let err = view.enable(Some(social_id)).unwrap_err();
+    let err = view.enable(Some(social_id), &tether).await.unwrap_err();
     assert!(
         matches!(err, MailContextError::CategoryNotSupported),
         "display=false CategorySocial cannot be enabled for a non-default category"
     );
 
-    let ids = view
-        .enable(Some(updates_id))
-        .unwrap()
-        .query_filter_ids(&tether)
-        .await
-        .unwrap();
+    view.enable(Some(updates_id), &tether).await.unwrap();
 
     assert!(
-        !ids.contains(&default_id),
+        !view.filter_ids.contains(&default_id),
         "CategoryDefault cannot be in expanded filter for non-default category"
     );
     assert!(
-        !ids.contains(&social_id),
+        !view.filter_ids.contains(&social_id),
         "display=false CategorySocial cannot be in expanded filter for non-default category"
     );
     assert!(
-        ids.contains(&updates_id),
+        view.filter_ids.contains(&updates_id),
         "CategoryUpdates is enabled category and should only be returned"
     );
 }

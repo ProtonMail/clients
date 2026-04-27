@@ -253,8 +253,8 @@ mod tests {
         MailContextError, MailUserContext,
         datatypes::{ReadFilter, SearchOptions},
         mail_scroller::{
-            MailPaginatorJoinHandle, MailScrollerHandle, MailScrollerSource, ScrollerListUpdate,
-            ScrollerUpdate,
+            CategoryView, MailPaginatorJoinHandle, MailScrollerHandle, MailScrollerSource,
+            ScrollerListUpdate, ScrollerUpdate,
         },
         test_utils::test_context::MailTestContext,
     };
@@ -285,12 +285,14 @@ mod tests {
     #[derive(Clone, Debug)]
     struct FakeSource {
         items: Arc<RwLock<Vec<FakeItem>>>,
+        category_view: CategoryView,
     }
 
     impl FakeSource {
         fn new(items: Vec<FakeItem>) -> Self {
             Self {
                 items: Arc::new(RwLock::new(items)),
+                category_view: CategoryView::default(),
             }
         }
 
@@ -306,7 +308,7 @@ mod tests {
             &mut self,
             _: &MailUserContext,
             _: flume::Sender<()>,
-            _: Vec<LocalLabelId>,
+            _: CategoryView,
         ) -> Result<MailPaginatorJoinHandle, MailContextError> {
             Ok(None)
         }
@@ -354,7 +356,7 @@ mod tests {
             _: Option<ReadFilter>,
             _: Option<LocalLabelId>,
             _: Option<SearchOptions>,
-            _: Option<Vec<LocalLabelId>>,
+            _: Option<CategoryView>,
         ) -> Result<MailPaginatorJoinHandle, MailContextError> {
             todo!()
         }
@@ -368,6 +370,10 @@ mod tests {
 
         fn watched_tables(&self) -> Vec<String> {
             Vec::new()
+        }
+
+        fn category_view(&self) -> &CategoryView {
+            &self.category_view
         }
     }
 

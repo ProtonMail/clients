@@ -6,7 +6,7 @@ use crate::models::MailBusyLabel;
 use crate::{
     MailContextError, MailUserContext,
     datatypes::{ReadFilter, SearchOptions},
-    mail_scroller::MailScrollerSource,
+    mail_scroller::{CategoryView, MailScrollerSource},
     models::{Message, MessageCounter, MessageLabel, SearchScrollData},
 };
 use mail_action_queue::queue::Queue;
@@ -36,6 +36,7 @@ pub struct SearchScrollerSource {
     total: Arc<Mutex<u64>>,
     last: Option<SearchScrollData>,
     invalidate: Option<flume::Sender<()>>,
+    category_view: CategoryView,
 }
 
 impl SearchScrollerSource {
@@ -48,6 +49,7 @@ impl SearchScrollerSource {
             total: Arc::new(Mutex::new(0)),
             last: None,
             invalidate: None,
+            category_view: CategoryView::default(),
         }
     }
 
@@ -360,9 +362,10 @@ impl MailScrollerSource for SearchScrollerSource {
         &mut self,
         ctx: &MailUserContext,
         invalidate: flume::Sender<()>,
-        _category: Vec<LocalLabelId>,
+        category_view: CategoryView,
     ) -> Result<MailPaginatorJoinHandle, MailContextError> {
         self.invalidate = Some(invalidate);
+        self.category_view = category_view;
         self.initialize_impl(ctx).await
     }
 
@@ -485,7 +488,7 @@ impl MailScrollerSource for SearchScrollerSource {
         _unread: Option<ReadFilter>,
         label: Option<LocalLabelId>,
         keywords: Option<SearchOptions>,
-        _category: Option<Vec<LocalLabelId>>,
+        _category_view: Option<CategoryView>,
     ) -> Result<MailPaginatorJoinHandle, MailContextError> {
         if let Some(label) = label {
             info!(
@@ -505,5 +508,9 @@ impl MailScrollerSource for SearchScrollerSource {
         let task = self.initialize_impl(ctx).await?;
 
         Ok(task)
+    }
+
+    fn category_view(&self) -> &CategoryView {
+        &self.category_view
     }
 }

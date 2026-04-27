@@ -1656,63 +1656,6 @@ impl Conversation {
         .await
     }
 
-    pub async fn delete_expired(tether: &mut Tether) -> Result<usize, AppError> {
-        let ids = Self::find_ids(
-            r"
-        WHERE
-          expiration_time < STRFTIME('%s', 'NOW')
-          AND expiration_time != 0
-          AND deleted = 0
-        ",
-            vec![],
-            tether,
-        )
-        .await?;
-
-        let len = ids.len();
-
-        if len != 0 {
-            let label_id = SystemLabel::AllMail
-                .local_id(tether)
-                .await?
-                .ok_or_else(|| StashError::IdNotSet)?;
-            tether
-                .tx(async |tx| Self::mark_deleted(label_id, ids, tx).await)
-                .await?;
-        }
-
-        Ok(len)
-    }
-
-    #[cfg(test)]
-    pub async fn set_expiration_time_in(
-        id: LocalConversationId,
-        expire_in: i64,
-        tether: &mut Tether,
-    ) -> Result<(), StashError> {
-        let affected = tether
-            .tx(async |tx| {
-                tx.execute(
-                    r"
-            UPDATE
-                conversations
-            SET
-                expiration_time = (STRFTIME('%s', 'NOW') + ?)
-            WHERE
-                local_id = ?
-            ",
-                    params![expire_in, id],
-                )
-                .await
-            })
-            .await?;
-        if affected != 1 {
-            Err(StashError::Custom(anyhow::anyhow!("No conversation found")))
-        } else {
-            Ok(())
-        }
-    }
-
     pub fn label_impl(
         label_id: LocalLabelId,
         conversation_id: LocalConversationId,

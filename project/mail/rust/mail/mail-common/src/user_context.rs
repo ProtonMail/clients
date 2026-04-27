@@ -15,7 +15,7 @@ use crate::db::online_migrations;
 use crate::draft::attachments::DraftStagingAreaCleaner;
 #[cfg(feature = "events-v6")]
 use crate::events::v6;
-use crate::models::{Conversation, Message};
+use crate::models::Message;
 use crate::prefetch::{Prefetch, PrefetchJob, PrefetchService};
 use crate::rsvp::RsvpService;
 #[cfg(feature = "foundation_search")]
@@ -627,14 +627,10 @@ impl MailUserContext {
                 let Some(ctx) = ctx.upgrade() else {
                     return;
                 };
-                if let Ok(mut tether) = ctx.user_stash().connection().await {
-                    if let Err(e) = Conversation::delete_expired(&mut tether).await {
-                        error!("Error in background task deleting expired conversations: {e:?}");
-                    }
-
-                    if let Err(e) = Message::delete_expired(&mut tether).await {
-                        error!("Error in background task deleting expired messages: {e:?}");
-                    }
+                if let Ok(mut tether) = ctx.user_stash().connection().await
+                    && let Err(e) = Message::delete_expired(&mut tether).await
+                {
+                    error!("Error in background task deleting expired messages: {e:?}");
                 }
                 drop(ctx);
                 interval.tick().await;

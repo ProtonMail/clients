@@ -7,6 +7,6 @@ license = "AGPL-3.0-only"
 
 [dependencies]
 mail-issue-reporter-service = { workspace = true }
-uniffi = "0.31.0"
+uniffi = "0.29.5"
 [lints]
 workspace = true

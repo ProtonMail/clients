@@ -8,7 +8,7 @@ license = "AGPL-3.0-only"
 workspace = true
 
 [dependencies]
-uniffi = "0.31.0"
+uniffi = "0.29.5"
 mail-uniffi-macros.workspace = true
 # mail-uniffi-runtime.workspace = true
 mail-core-api = { workspace = true }

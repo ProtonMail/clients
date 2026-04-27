@@ -17,8 +17,8 @@ use mail_common::datatypes::{
     labels::{ScrollOrderDir, ScrollOrderField},
 };
 use mail_common::models::{
-    CachedScrollData, ConversationLabel, LabelExt, LabelWithCounters, MailSettings, Message,
-    MessageCounter, ScrollData, canonical_category,
+    CachedScrollData, CanonicalCategory, ConversationLabel, LabelExt, LabelWithCounters,
+    MailSettings, Message, MessageCounter, ScrollData,
 };
 use mail_common::test_utils::{
     init::Params as TestParams,
@@ -2619,9 +2619,9 @@ async fn test_category_view_filters_conversations_and_emits_updates() {
 
     // Enable category view: mail_category_view=true and set CategorySocial.display=true so it
     // appears in `available` and can be selected.
-    // Also zero the Inbox ConversationCounter.total so that try_fetch_first_page never
-    // schedules a spurious background FetchMore (cant_see_first_page = 0 > 0 = false).
-    // Conversations are still found by the SQL label-filter query.
+    // Zero all category ConversationCounter.total values so try_fetch_first_page never
+    // schedules a spurious FetchMore (cant_see_first_page = total>0 && seen<total = false).
+    // Item counts are still asserted via DB SQL queries, not via these counters.
     let mut social = SystemLabel::CategorySocial
         .load(&tether)
         .await
@@ -2638,16 +2638,24 @@ async fn test_category_view_filters_conversations_and_emits_updates() {
             .unwrap();
             social.display = true;
             social.save(bond).await.unwrap();
-            let mut inbox_counter = ConversationCounter::find_by_id(inbox_local_id, bond)
-                .await
-                .unwrap()
-                .unwrap();
-            inbox_counter.total = 0;
-            inbox_counter.save(bond).await.unwrap();
+            for label_id in [inbox_local_id, social_local_id, default_local_id] {
+                let mut counter = ConversationCounter::find_by_id(label_id, bond)
+                    .await
+                    .unwrap()
+                    .unwrap();
+                counter.total = 0;
+                counter.save(bond).await.unwrap();
+            }
             Ok(())
         })
         .await
         .unwrap();
+
+    drop(tether);
+
+    // Block all API conversation calls so background syncs cannot restore the zeroed inbox
+    // counter and trigger spurious FetchMore events during the category-switch assertions.
+    mock_api_forbidden(&ctx).await;
 
     let page_size = 5;
     let mut test_scroller = TestScroller::conversations(&user_ctx, inbox_local_id, page_size)
@@ -2995,12 +3003,12 @@ async fn test_category_view_first_page_sends_multi_label_ids_to_api() {
     // Cursor assertion: wait_for_request() above guaranteed the quiet_tx completed, so the
     // ConversationScrollData row is already in the DB.
     let tether = user_ctx.user_stash().connection().await.unwrap();
-    let category_str = canonical_category(&[social_local_id]);
+    let category = CanonicalCategory::new(vec![social_local_id]);
     let cursor = ConversationScrollData::find_with_key(
         inbox_local_id,
         ReadFilter::All,
         ScrollOrderDir::Desc,
-        category_str.clone(),
+        category.clone(),
         &tether,
     )
     .await
@@ -3008,8 +3016,8 @@ async fn test_category_view_first_page_sends_multi_label_ids_to_api() {
     .expect("ConversationScrollData cursor must exist for Inbox+CategorySocial after sync");
 
     assert_eq!(
-        cursor.category, category_str,
-        "cursor.category must equal canonical_category(&[social_local_id])"
+        cursor.category, category,
+        "cursor.category must match CanonicalCategory for social_local_id"
     );
 }
 
@@ -3216,6 +3224,108 @@ async fn test_category_view_next_page_sends_multi_label_ids_to_api() {
         .await;
     assert_eq!(test_scroller.items().len(), 4);
     // wiremock teardown (ctx drop) verifies both strict mocks received exactly 1 request each.
+}
+
+/// Verifies that `total()` returns the category-scoped counter after `change_category_view`.
+///
+/// Seed: 2 conversations in Inbox + CategorySocial, 5 conversations in Inbox + CategoryDefault.
+/// After enabling CategorySocial the scroller's `total()` must return the Social counter (2),
+/// not the Inbox counter (7).
+#[tokio::test]
+async fn test_total_reflects_active_category_after_change_category_view() {
+    let ctx = MailTestContext::new().await;
+    let user_ctx = ctx.uninitialized_mail_user_context().await;
+    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+
+    let mut data = hash_map! {
+        vec!["0", "20"]: test_conversations(2, 0),
+        vec!["0", "24"]: test_conversations(5, 100),
+    };
+    data.save_to_database(&mut tether).await;
+
+    let inbox_local_id = SystemLabel::Inbox.local_id(&tether).await.unwrap().unwrap();
+    let social_local_id = SystemLabel::CategorySocial
+        .local_id(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+
+    let mut social = SystemLabel::CategorySocial
+        .load(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+
+    tether
+        .tx::<_, _, StashError>(async |bond| {
+            MailSettings {
+                mail_category_view: true,
+                ..Default::default()
+            }
+            .save(bond)
+            .await
+            .unwrap();
+            social.display = true;
+            social.save(bond).await.unwrap();
+            // Zero Inbox counter to prevent background API fetches.
+            let mut inbox_counter = ConversationCounter::find_by_id(inbox_local_id, bond)
+                .await
+                .unwrap()
+                .unwrap();
+            inbox_counter.total = 0;
+            inbox_counter.save(bond).await.unwrap();
+            ConversationCounter {
+                local_label_id: social_local_id,
+                total: 2,
+                unread: 0,
+            }
+            .save(bond)
+            .await
+            .unwrap();
+            Ok(())
+        })
+        .await
+        .unwrap();
+
+    let social_total_in_db = {
+        let counter = ConversationCounter::find_by_id(social_local_id, &tether)
+            .await
+            .unwrap()
+            .unwrap();
+        counter.total
+    };
+    assert_eq!(
+        social_total_in_db, 2,
+        "seed sanity: social counter should be 2"
+    );
+
+    drop(tether);
+
+    let page_size = 10;
+    let mut test_scroller = TestScroller::conversations(&user_ctx, inbox_local_id, page_size)
+        .await
+        .unwrap();
+
+    test_scroller.fetch_more().unwrap();
+    test_scroller
+        .match_next_update(TestUpdate::Append { items: 5 })
+        .await;
+
+    test_scroller
+        .change_category_view(Some(social_local_id))
+        .unwrap();
+    test_scroller
+        .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 2 })
+        .await;
+    test_scroller
+        .match_next_update(TestUpdate::CategoryViewChanged { labels: 2 })
+        .await;
+
+    let total = test_scroller.total().await.unwrap();
+    assert_eq!(
+        total, 2,
+        "total() must reflect the Social category counter after change_category_view"
+    );
 }
 
 #[function_name::named]

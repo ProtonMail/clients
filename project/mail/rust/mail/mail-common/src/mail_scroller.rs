@@ -730,7 +730,6 @@ where
     items: Arc<SyncRwLock<Vec<S::Item>>>,
     page_size: usize,
     alternative_labels: AlternativeLabels,
-    category_view: CategoryView,
     update: flume::Sender<ScrollerUpdate<S::Item>>,
     command_rx: flume::Receiver<ScrollerCommand>,
     command_tx: flume::Sender<ScrollerCommand>,
@@ -766,15 +765,8 @@ where
         let tether = arc_ctx.user_stash().connection().await?;
         let alternative_labels = AlternativeLabels::new(label, &tether).await?;
         let category_view = CategoryView::load(label, &tether).await?;
-        // Pass the auto-enabled category filter into initialize so that the very first
-        // fetch already returns filtered results (not all inbox items).
-        let initial_category = if category_view.enabled.is_some() {
-            category_view.query_filter_ids(&tether).await?
-        } else {
-            vec![]
-        };
         let task = source
-            .initialize(&arc_ctx, invalidation_sender, initial_category)
+            .initialize(&arc_ctx, invalidation_sender, category_view)
             .await?;
         let tables = source.watched_tables();
 
@@ -797,7 +789,6 @@ where
             execute_on_online: None,
             items,
             alternative_labels,
-            category_view,
             update: update_sender,
             command_rx,
             command_tx: command_tx.clone(),
@@ -1034,8 +1025,8 @@ where
                 let tether = ctx.user_stash().connection().await.map_err(|e| {
                     anyhow!("Failed to acquire connection for CategoryViewChanged: {e:?}")
                 })?;
-                let category_view = self
-                    .category_view
+                let view = self.source.read().await.category_view().clone();
+                let category_view = view
                     .into_labels(&tether)
                     .await
                     .map_err(|e| anyhow!("Failed to resolve category labels: {e:?}"))?;
@@ -1117,9 +1108,9 @@ where
             }
 
             ScrollerCommand::CategoryView(tx) => {
-                tx.send(self.category_view.clone()).map_err(|e| {
-                    anyhow!("Failed to send enabled category filters update: {e:?}")
-                })?;
+                let view = self.source.read().await.category_view().clone();
+                tx.send(view)
+                    .map_err(|e| anyhow!("Failed to send category view: {e:?}"))?;
             }
         }
 
@@ -1375,25 +1366,18 @@ where
         category: Option<LocalLabelId>,
     ) -> Result<ScrollerUpdate<S::Item>, MailContextError> {
         let ctx = self.ctx.upgrade().ok_or(MailContextError::MissingContext)?;
-        // Expand CategoryDefault to include all display=0 category label IDs.
-        let tether = ctx
-            .user_stash()
-            .connection()
-            .await
-            .map_err(MailContextError::from)?;
-        let filter_ids = self
-            .category_view
-            .enable(category)?
-            .query_filter_ids(&tether)
-            .await
-            .map_err(MailContextError::Other)?;
-        self.category_view.enabled = category;
+        let view = {
+            let tether = ctx.user_stash().connection().await?;
+            let mut view = self.source.read().await.category_view().clone();
+            view.enable(category, &tether).await?;
+            view
+        };
         let _ = self.task.take();
         self.task = self
             .source
             .write()
             .await
-            .change_state(&ctx, None, None, None, Some(filter_ids))
+            .change_state(&ctx, None, None, None, Some(view))
             .await?;
         self.reset(src).await
     }
@@ -1408,12 +1392,9 @@ where
         debug!("Changing label to `{label}`");
 
         let ctx = self.ctx.upgrade().ok_or(MailContextError::MissingContext)?;
-        let (category_view, category_ids) = {
+        let category_view = {
             let tether = ctx.user_stash().connection().await?;
-            let view = CategoryView::load(label, &tether).await?;
-            let ids = view.query_filter_ids(&tether).await?;
-
-            (view, ids)
+            CategoryView::load(label, &tether).await?
         };
 
         let _ = self.task.take();
@@ -1422,9 +1403,8 @@ where
             .source
             .write()
             .await
-            .change_state(&ctx, with_filter, Some(label), None, Some(category_ids))
+            .change_state(&ctx, with_filter, Some(label), None, Some(category_view))
             .await?;
-        self.category_view = category_view;
 
         self.reset(src).await
     }

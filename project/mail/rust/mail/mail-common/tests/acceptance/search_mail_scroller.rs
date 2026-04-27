@@ -7,6 +7,7 @@ use mail_common::models::{MailSettings, Message};
 use mail_common::msg_id;
 use mail_common::test_utils::scroller::{TestScroller, TestUpdate, save_single_message};
 use mail_common::test_utils::{init::Params as TestParams, test_context::MailTestContext};
+use mail_common::{CategoryView, MailScrollerSource, SearchScrollerSource};
 use mail_core_api::services::proton::LabelId;
 use mail_core_common::datatypes::SystemLabel;
 use mail_stash::orm::Model;
@@ -716,6 +717,44 @@ async fn change_keywords_multiple_times_in_a_row() {
     test_scroller
         .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 1 })
         .await;
+}
+
+/// Verifies that a `SearchScrollerSource` accepts a non-empty `CategoryView` in `initialize`
+/// and that `visible_elements` returns an empty list without panicking.
+///
+/// The search source ignores the category view, so this is purely a smoke test for the
+/// updated `MailScrollerSource::initialize` signature.
+#[tokio::test]
+async fn search_scroller_accepts_non_empty_category_view_without_panic() {
+    let ctx = MailTestContext::new().await;
+    let params = TestParams::default_basic();
+
+    ctx.mock_get_messages().respond_with(vec![]).await;
+    ctx.mock_ping_success().await;
+    ctx.setup_user(params).await;
+
+    let user_ctx = ctx.mail_user_context().await;
+    let tether = user_ctx.user_stash().connection().await.unwrap();
+
+    let inbox_local_id = SystemLabel::Inbox.local_id(&tether).await.unwrap().unwrap();
+    let category_view = CategoryView::load(inbox_local_id, &tether).await.unwrap();
+    drop(tether);
+
+    let options = SearchOptions::from("test");
+    let page_size = 5;
+    let mut source = SearchScrollerSource::new(inbox_local_id, options, page_size);
+
+    let (invalidate_tx, _invalidate_rx) = flume::unbounded();
+    source
+        .initialize(&user_ctx, invalidate_tx, category_view)
+        .await
+        .unwrap();
+
+    let visible = source.visible_elements(&user_ctx).await.unwrap();
+    assert!(
+        visible.is_empty(),
+        "no data was loaded, visible_elements must be empty"
+    );
 }
 
 async fn setup_api_message_pages(

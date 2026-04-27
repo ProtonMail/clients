@@ -8,7 +8,7 @@ use crate::prefetch::PrefetchJob;
 use crate::{
     MailContextError, MailUserContext,
     datatypes::ReadFilter,
-    models::{Message, MessageScrollData, canonical_category},
+    models::{CanonicalCategory, Message, MessageScrollData},
 };
 use anyhow::anyhow;
 use itertools::Itertools;
@@ -109,7 +109,7 @@ impl RemoteSource for MessageScrollData {
         local_label_id: LocalLabelId,
         scroller: &Self,
         remote_label_ids: Vec<LabelId>,
-        _category: Vec<LocalLabelId>,
+        category: Vec<LocalLabelId>,
         unread: ReadFilter,
         page_size: usize,
         order_dir: ScrollOrderDir,
@@ -127,6 +127,7 @@ impl RemoteSource for MessageScrollData {
                 remote_id,
                 context_time,
                 unread,
+                category,
                 page_size,
                 order_dir,
                 order_field,
@@ -227,13 +228,9 @@ impl RemoteMessageScrollerSource {
 
         // ---
 
-        let ControlFlow::Continue(()) = utils::ensure_label_is_idle(
-            &mut tether,
-            local_label_id,
-            &remote_label_ids[0],
-            &response.tasks_running,
-        )
-        .await?
+        let ControlFlow::Continue(()) =
+            utils::ensure_labels_are_idle(&mut tether, &remote_label_ids, &response.tasks_running)
+                .await?
         else {
             return Ok(vec![]);
         };
@@ -315,13 +312,9 @@ impl RemoteMessageScrollerSource {
             }
         }
 
-        let ControlFlow::Continue(()) = utils::ensure_label_is_idle(
-            &mut tether,
-            local_label_id,
-            &remote_label_ids[0],
-            &response.tasks_running,
-        )
-        .await?
+        let ControlFlow::Continue(()) =
+            utils::ensure_labels_are_idle(&mut tether, &remote_label_ids, &response.tasks_running)
+                .await?
         else {
             return Ok(vec![]);
         };
@@ -357,6 +350,7 @@ impl RemoteMessageScrollerSource {
         first_element_id: MessageId,
         first_element_time: UnixTimestamp,
         unread: ReadFilter,
+        category: Vec<LocalLabelId>,
         page_size: usize,
         order_dir: ScrollOrderDir,
         order_field: ScrollOrderField,
@@ -391,13 +385,9 @@ impl RemoteMessageScrollerSource {
 
         // ---
 
-        let ControlFlow::Continue(()) = utils::ensure_label_is_idle(
-            &mut tether,
-            local_label_id,
-            &remote_label_ids[0],
-            &response.tasks_running,
-        )
-        .await?
+        let ControlFlow::Continue(()) =
+            utils::ensure_labels_are_idle(&mut tether, &remote_label_ids, &response.tasks_running)
+                .await?
         else {
             return Ok(vec![]);
         };
@@ -410,7 +400,7 @@ impl RemoteMessageScrollerSource {
 
         let message_label_counts = ctx
             .session()
-            .get_messages_count_for_labels(vec![remote_label_ids[0].clone()])
+            .get_messages_count_for_labels(remote_label_ids.clone())
             .await?;
 
         let messages = Self::save_messages(
@@ -420,7 +410,7 @@ impl RemoteMessageScrollerSource {
             false,
             order_dir,
             order_field,
-            vec![],
+            category,
             message_label_counts.counts.into_iter().map_into().collect(),
             ctx.session(),
             &mut tether,
@@ -558,7 +548,7 @@ impl RemoteMessageScrollerSource {
             .display_order(display_order)
             .order_dir(order_dir)
             .order_field(order_field)
-            .category(canonical_category(category))
+            .category(CanonicalCategory::new(category.to_vec()))
             .build();
 
         msg_paginator.save(bond).await?;

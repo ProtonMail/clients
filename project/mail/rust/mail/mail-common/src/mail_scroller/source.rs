@@ -12,6 +12,7 @@ pub use self::local_search::*;
 pub use self::remote_source::*;
 use crate::datatypes::SearchOptions;
 use crate::datatypes::{ContextualConversation, LocalConversationId, LocalMessageId, ReadFilter};
+use crate::mail_scroller::CategoryView;
 use crate::models::Message;
 use crate::traits::ScrollerEq;
 use crate::{MailContextError, MailUserContext};
@@ -34,14 +35,11 @@ where
     /// You can return an optional join handle that [`MailScroller`] will use on the first
     /// call to [`MailScroller::fetch_more()`] if you want to preload some data in
     /// a background task.
-    ///
-    /// `category` is the initial set of label IDs to filter by. Pass an empty `Vec` for
-    /// no category filter. Sources that don't support category filtering (e.g. search) ignore it.
     fn initialize(
         &mut self,
         ctx: &MailUserContext,
         invalidate: flume::Sender<()>,
-        category: Vec<LocalLabelId>,
+        category_view: CategoryView,
     ) -> impl Future<Output = Result<MailPaginatorJoinHandle, MailContextError>> + Send;
 
     /// Return the items that fall into range of the synced data.
@@ -98,15 +96,14 @@ where
     /// Atomically update one or more state dimensions and re-initialize the source.
     ///
     /// Pass `None` for any dimension that should remain unchanged.
-    /// `category` replaces the active label filter; sources that don't support
-    /// category filtering (e.g. search) ignore it.
+    /// Sources that don't support category filtering (e.g. search) ignore `category_view`.
     fn change_state(
         &mut self,
         ctx: &MailUserContext,
         unread: Option<ReadFilter>,
         label: Option<LocalLabelId>,
         keywords: Option<SearchOptions>,
-        category: Option<Vec<LocalLabelId>>,
+        category_view: Option<CategoryView>,
     ) -> impl Future<Output = Result<MailPaginatorJoinHandle, MailContextError>> + Send;
 
     fn clear(
@@ -115,6 +112,8 @@ where
     ) -> impl Future<Output = Result<MailPaginatorJoinHandle, MailContextError>> + Send;
 
     fn watched_tables(&self) -> Vec<String>;
+
+    fn category_view(&self) -> &CategoryView;
 }
 
 pub trait MailScrollerItem

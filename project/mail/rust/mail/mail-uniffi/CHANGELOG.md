@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [mail-uniffi-v0.165.2] - 2026-04-27
+
+### Fixes
+
+- Downgrade uniffi to 0.29.5 - proton/clients/monorepo!2001
+
+
 ## [mail-uniffi-v0.165.1] - 2026-04-24
 
 ### Features

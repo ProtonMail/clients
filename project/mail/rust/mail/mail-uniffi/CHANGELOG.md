@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [mail-uniffi-v0.164.20] - 2026-04-27
+
+### Fixes
+
+- [ET-6131] Use migration snooper for eager auth refresh
+
+
 ## [mail-uniffi-v0.164.19] - 2026-04-23
 
 ### Fixes
@@ -22,20 +29,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [ET-6131] Clear account if inspect_user fails - proton/clients/monorepo!1917
 
 
-## [mail-uniffi-v0.164.17] - 2026-04-15
-
-Note: This release merges 0.164.16 to main 0.164 release branch
-
-### Fixes
-
-- [ET-4901] pass scale up factor when fetching sender images - proton/clients/monorepo!1787
-
 ## [mail-uniffi-v0.164.16] - 2026-04-15
 
 ### Fixes
 
 - Use non-streaming API in attachment decryption - proton/clients/monorepo!1805
 - cargo-audit - Bump rustls-webpki - proton/clients/monorepo!1809
+- [ET-4901] pass scale up factor when fetching sender images - proton/clients/monorepo!1787
+
 
 ## [mail-uniffi-v0.164.15] - 2026-04-14
 
@@ -43,25 +44,27 @@ Note: This release merges 0.164.16 to main 0.164 release branch
 
 - [ET-6100] Force sync message metadata for push notification - proton/clients/monorepo!1782
 
-## [mail-uniffi-v0.164.14] - 2026-04-14
 
-Note: This release combines 0.164.13 with changes from .10, .11, .12
+## [mail-uniffi-v0.164.14] - 2026-04-14
 
 ### Fixes
 
 - Align 0.164.x branches - proton/clients/monorepo!1766
 
-## [mail-uniffi-v0.164.13] - 2026-04-13
 
-Note: This release is based on 0.164.9; it does not contain changes from .10, .11, .12
+## [mail-uniffi-v0.164.13] - 2026-04-13
 
 ### Fixes
 
 - [ET-6091] Revert uniffi 0.31.0 -> 0.29.1 - proton/clients/monorepo!1745
 
+
 ## [mail-uniffi-v0.164.12] - 2026-04-09
 
-- revert: "revert: "fix(mail): Potential refresh session bug"" - proton/clients/monorepo!1688
+### Features
+
+- Log db connections that are taking longer than 500ms - proton/clients/monorepo!1697
+
 
 ## [mail-uniffi-v0.164.11] - 2026-04-08
 

@@ -52,7 +52,7 @@ tokio = { workspace = true }
 tokio-util = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
-uniffi = { version = "0.31.0", features = ["tokio"] }
+uniffi = { version = "0.29.5", features = ["tokio"] }
 mail-uniffi-common = { workspace = true }
 mail-uniffi-macros = { workspace = true }
 mail-uniffi-runtime = { workspace = true }

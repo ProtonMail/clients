@@ -11,6 +11,7 @@ pub use crate::datatypes::CategoryLabel;
 pub struct CategoryView {
     pub enabled: Option<LocalLabelId>,
     pub available: Vec<LocalLabelId>,
+    pub filter_ids: Vec<LocalLabelId>,
 }
 
 impl CategoryView {
@@ -39,7 +40,7 @@ impl CategoryView {
         let remote_ids = SystemLabel::category_labels().map(|sl| sl.remote_id());
         let labels = LabelWithCounters::from_remote_ids(tether, remote_ids).await?;
         let available = labels
-            .into_iter()
+            .iter()
             .filter(|lwc| {
                 // CategoryDefault is the bin for display=0 labels — always include it.
                 // For all other categories, only include if display=1.
@@ -50,11 +51,20 @@ impl CategoryView {
             .collect();
 
         let enabled = SystemLabel::CategoryDefault.local_id(tether).await?;
+        let filter_ids = Self::resolve_filter_ids(enabled, &labels);
 
-        Ok(Self { enabled, available })
+        Ok(Self {
+            enabled,
+            available,
+            filter_ids,
+        })
     }
 
-    pub fn enable(&mut self, enable: Option<LocalLabelId>) -> Result<&Self, MailContextError> {
+    pub async fn enable(
+        &mut self,
+        enable: Option<LocalLabelId>,
+        tether: &Tether,
+    ) -> Result<&Self, MailContextError> {
         if let Some(cat) = enable
             && !self.available.contains(&cat)
         {
@@ -62,28 +72,31 @@ impl CategoryView {
         }
         self.enabled = enable;
 
-        Ok(self)
-    }
+        if enable.is_none() {
+            self.filter_ids = vec![];
+            return Ok(self);
+        }
 
-    /// Returns the SQL filter IDs for the active category selection.
-    ///
-    /// - `None` → empty vec (no category filter applied)
-    /// - `CategoryDefault` → CategoryDefault's local ID + all category labels with `display=false`
-    /// - Any other category → `vec![enabled_id]`
-    pub async fn query_filter_ids(&self, tether: &Tether) -> anyhow::Result<Vec<LocalLabelId>> {
-        let enabled_id = match self.enabled {
-            None => return Ok(vec![]),
-            Some(id) => id,
-        };
-
-        // Load all known category labels to classify the enabled ID and find display=0 labels.
         let remote_ids: Vec<LabelId> = SystemLabel::category_labels()
             .into_iter()
             .map(|l| l.remote_id())
             .collect();
-        let labels = LabelWithCounters::from_remote_ids(tether, remote_ids).await?;
+        let labels = LabelWithCounters::from_remote_ids(tether, remote_ids)
+            .await
+            .map_err(MailContextError::Other)?;
+        self.filter_ids = Self::resolve_filter_ids(enable, &labels);
 
-        // Determine if the enabled label is CategoryDefault.
+        Ok(self)
+    }
+
+    fn resolve_filter_ids(
+        enabled: Option<LocalLabelId>,
+        labels: &[LabelWithCounters],
+    ) -> Vec<LocalLabelId> {
+        let Some(enabled_id) = enabled else {
+            return vec![];
+        };
+
         let enabled_is_default = labels.iter().any(|lwc| {
             lwc.label.local_id == Some(enabled_id)
                 && SystemLabel::from_opt_rid(lwc.label.remote_id.as_ref())
@@ -91,20 +104,17 @@ impl CategoryView {
         });
 
         if !enabled_is_default {
-            return Ok(vec![enabled_id]);
+            return vec![enabled_id];
         }
 
-        // CategoryDefault: include its own ID + all display=0 category labels.
-        let ids = labels
-            .into_iter()
+        labels
+            .iter()
             .filter(|lwc| {
                 let system_label = SystemLabel::from_opt_rid(lwc.label.remote_id.as_ref());
                 system_label == Some(SystemLabel::CategoryDefault) || !lwc.label.display
             })
             .filter_map(|lwc| lwc.label.local_id)
-            .collect();
-
-        Ok(ids)
+            .collect()
     }
 
     /// Returns fully-resolved category labels, including live unread counts and

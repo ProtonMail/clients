@@ -2,7 +2,7 @@ use super::MailPaginatorJoinHandle;
 use crate::{
     MailContextError, MailUserContext,
     datatypes::SearchOptions,
-    mail_scroller::MailScrollerSource,
+    mail_scroller::{CategoryView, MailScrollerSource},
     models::{MailBusyLabel, Message, MessageCounter, MessageLabel, SearchScrollData},
 };
 use mail_core_common::datatypes::LocalLabelId;
@@ -24,6 +24,7 @@ pub struct LocalSearchScrollerSource {
     /// `messages.deleted = 0`, and CASCADE-deleted rows don't affect the cached display_order value.
     last: Option<SearchScrollData>,
     invalidate: Option<flume::Sender<()>>,
+    category_view: CategoryView,
 }
 
 impl LocalSearchScrollerSource {
@@ -35,6 +36,7 @@ impl LocalSearchScrollerSource {
             initialized: false,
             last: None,
             invalidate: None,
+            category_view: CategoryView::default(),
         }
     }
 
@@ -174,9 +176,10 @@ impl MailScrollerSource for LocalSearchScrollerSource {
         &mut self,
         ctx: &MailUserContext,
         invalidate: flume::Sender<()>,
-        _category: Vec<LocalLabelId>,
+        _category_view: CategoryView,
     ) -> Result<MailPaginatorJoinHandle, MailContextError> {
         self.invalidate = Some(invalidate);
+        self.category_view = _category_view;
         self.initialize_impl(ctx).await
     }
 
@@ -277,7 +280,7 @@ impl MailScrollerSource for LocalSearchScrollerSource {
         _unread: Option<crate::datatypes::ReadFilter>,
         label: Option<LocalLabelId>,
         keywords: Option<SearchOptions>,
-        _category: Option<Vec<LocalLabelId>>,
+        _category_view: Option<CategoryView>,
     ) -> Result<MailPaginatorJoinHandle, MailContextError> {
         if let Some(label) = label {
             info!(
@@ -292,8 +295,16 @@ impl MailScrollerSource for LocalSearchScrollerSource {
             self.options = keywords;
         }
 
+        if let Some(v) = _category_view {
+            self.category_view = v;
+        }
+
         self.initialized = false;
         self.last = None;
         self.initialize_impl(ctx).await
+    }
+
+    fn category_view(&self) -> &CategoryView {
+        &self.category_view
     }
 }

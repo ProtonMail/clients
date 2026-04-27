@@ -11,6 +11,8 @@ use mail_api::services::proton::prelude::{ConversationId, MessageId};
 use mail_core_api::services::proton::ProtonIdMarker;
 use mail_core_common::datatypes::{LocalLabelId, UnixTimestamp};
 use mail_core_common::models::ModelExtension;
+use mail_sqlite3::rusqlite::types::{FromSql, FromSqlResult, ToSqlOutput, Value, ValueRef};
+use mail_sqlite3::rusqlite::{Error as SqliteError, ToSql};
 use mail_stash::UserDb;
 use mail_stash::macros::Model;
 use mail_stash::orm::Model;
@@ -22,23 +24,44 @@ use std::marker::PhantomData;
 use std::ops::Deref;
 use typed_builder::TypedBuilder;
 
-pub fn canonical_category(ids: &[LocalLabelId]) -> String {
-    let mut sorted = ids.to_vec();
-    sorted.sort_unstable();
-    sorted
-        .iter()
-        .map(|id| id.to_string())
-        .collect::<Vec<_>>()
-        .join(",")
+#[derive(Debug, Clone, Eq, PartialEq, Default)]
+pub struct CanonicalCategory(Vec<LocalLabelId>);
+
+impl CanonicalCategory {
+    pub fn new(mut labels: Vec<LocalLabelId>) -> Self {
+        labels.sort_unstable();
+        Self(labels)
+    }
+
+    pub fn into_labels(self) -> Vec<LocalLabelId> {
+        self.0
+    }
 }
 
-fn parse_category(s: &str) -> Vec<LocalLabelId> {
-    if s.is_empty() {
-        return vec![];
+impl ToSql for CanonicalCategory {
+    fn to_sql(&self) -> Result<ToSqlOutput<'_>, SqliteError> {
+        let s = self
+            .0
+            .iter()
+            .map(|id| id.to_string())
+            .collect::<Vec<_>>()
+            .join(",");
+        Ok(ToSqlOutput::Owned(Value::Text(s)))
     }
-    s.split(',')
-        .filter_map(|part| part.parse::<u64>().ok().map(LocalLabelId::from))
-        .collect()
+}
+
+impl FromSql for CanonicalCategory {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        let s = String::column_result(value)?;
+        if s.is_empty() {
+            return Ok(Self::default());
+        }
+        let labels = s
+            .split(',')
+            .filter_map(|part| part.parse::<u64>().ok().map(LocalLabelId::from))
+            .collect();
+        Ok(Self(labels))
+    }
 }
 
 pub trait ScrollData
@@ -53,7 +76,7 @@ where
         local_label_id: LocalLabelId,
         unread: ReadFilter,
         order_dir: ScrollOrderDir,
-        category: String,
+        category: CanonicalCategory,
         tether: &Tether<UserDb>,
     ) -> impl Future<Output = Result<Option<Self>, StashError>> + Send {
         async move {
@@ -71,6 +94,7 @@ where
     fn total(
         local_label_id: LocalLabelId,
         unread: ReadFilter,
+        category: Option<LocalLabelId>,
         tether: &Tether<UserDb>,
     ) -> impl Future<Output = Result<u64, AppError>> + Send;
 
@@ -142,7 +166,7 @@ pub struct MessageScrollData {
 
     #[DbField]
     #[builder(default)]
-    pub category: String,
+    pub category: CanonicalCategory,
 }
 
 impl MessageScrollData {
@@ -196,7 +220,7 @@ impl From<MessageScrollData> for ScrollCursor<MessageScrollData> {
             local_id,
             order_dir: data.order_dir,
             order_field: data.order_field,
-            category: parse_category(&data.category),
+            category: data.category.into_labels(),
             _phantom: PhantomData,
         }
     }
@@ -214,19 +238,17 @@ impl ScrollData for MessageScrollData {
     async fn total(
         local_label_id: LocalLabelId,
         unread: ReadFilter,
+        category: Option<LocalLabelId>,
         tether: &Tether<UserDb>,
     ) -> Result<u64, AppError> {
-        // HACK MessageCounters get updated by event loop even if the label is
-        //      busy - for our purposes, we need to short-circuit that to zero,
-        //      though
         if MailBusyLabel::load(local_label_id, tether).await?.is_some() {
             return Ok(0);
         }
 
-        let Some(counters) = MessageCounter::find_by_id(local_label_id, tether).await? else {
-            return Err(AppError::LocalLabelHasNoCounters(local_label_id));
+        let counter_label_id = category.unwrap_or(local_label_id);
+        let Some(counters) = MessageCounter::find_by_id(counter_label_id, tether).await? else {
+            return Err(AppError::LocalLabelHasNoCounters(counter_label_id));
         };
-
         Ok(counters.total(unread))
     }
 
@@ -440,7 +462,7 @@ pub struct ConversationScrollData {
 
     #[DbField]
     #[builder(default)]
-    pub category: String,
+    pub category: CanonicalCategory,
 }
 
 impl ConversationScrollData {
@@ -502,7 +524,7 @@ impl From<ConversationScrollData> for ScrollCursor<ConversationScrollData> {
             local_id,
             order_dir: data.order_dir,
             order_field: data.order_field,
-            category: parse_category(&data.category),
+            category: data.category.into_labels(),
             _phantom: PhantomData,
         }
     }
@@ -520,19 +542,18 @@ impl ScrollData for ConversationScrollData {
     async fn total(
         local_label_id: LocalLabelId,
         unread: ReadFilter,
+        category: Option<LocalLabelId>,
         tether: &Tether<UserDb>,
     ) -> Result<u64, AppError> {
-        // HACK ConversationCounters get updated by event loop even if the label
-        //      is busy - for our purposes, we need to short-circuit that to
-        //      zero, though
         if MailBusyLabel::load(local_label_id, tether).await?.is_some() {
             return Ok(0);
         }
 
-        let Some(counters) = ConversationCounter::find_by_id(local_label_id, tether).await? else {
-            return Err(AppError::LocalLabelHasNoCounters(local_label_id));
+        let counter_label_id = category.unwrap_or(local_label_id);
+        let Some(counters) = ConversationCounter::find_by_id(counter_label_id, tether).await?
+        else {
+            return Err(AppError::LocalLabelHasNoCounters(counter_label_id));
         };
-
         Ok(counters.total(unread))
     }
 
@@ -843,10 +864,14 @@ impl<T: ScrollData> CachedScrollData<T> {
     ) -> Result<Option<Self>, StashError> {
         let order_dir = ScrollOrderDir::for_local_label(local_label_id, tether).await?;
         let order_field = ScrollOrderField::for_local_label(local_label_id, tether).await?;
-        let category_str = canonical_category(&category);
-
-        let Some(end) =
-            T::find_with_key(local_label_id, unread, order_dir, category_str, tether).await?
+        let Some(end) = T::find_with_key(
+            local_label_id,
+            unread,
+            order_dir,
+            CanonicalCategory::new(category.clone()),
+            tether,
+        )
+        .await?
         else {
             return Ok(None);
         };
@@ -1056,13 +1081,12 @@ impl<T: ScrollData> CachedScrollData<T> {
 
     pub async fn load_end_cursor(&self, tether: &Tether<UserDb>) -> Result<T, StashError> {
         let end = &self.end;
-        let category_str = canonical_category(&end.category);
 
         T::find_with_key(
             end.local_label_id,
             end.unread,
             end.order_dir,
-            category_str,
+            CanonicalCategory::new(end.category.clone()),
             tether,
         )
         .await

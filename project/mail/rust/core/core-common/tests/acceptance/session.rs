@@ -4,7 +4,7 @@ use mail_core_common::db::account::CoreSession;
 use mail_core_common::models::ModelExtension;
 use mail_core_common::services::SessionObserverService;
 use mail_core_common::test_utils::test_context::TestContext;
-use mail_stash::stash::{Bond, StashError};
+use mail_stash::stash::{StashError, WriteTx};
 use mail_stash::{AccountDb, UserDb};
 use std::time::Duration;
 
@@ -57,7 +57,7 @@ async fn test_session_delete_subscriber() {
         .connection()
         .await
         .unwrap()
-        .tx(async |tx: &Bond<'_, AccountDb>| {
+        .write_tx(async |tx: &WriteTx<'_, AccountDb>| {
             assert_eq!(CoreSession::all(tx).await.unwrap().len(), 1);
             assert!(
                 CoreSession::delete_by_id(user_ctx.session_id().clone(), tx)
@@ -136,7 +136,7 @@ async fn test_session_observer_triggers_full_logout_on_session_deletion() {
         .connection()
         .await
         .unwrap()
-        .tx(async |tx: &Bond<'_, AccountDb>| {
+        .write_tx(async |tx: &WriteTx<'_, AccountDb>| {
             CoreSession::delete_by_id(session_id.clone(), tx).await?;
             Ok::<_, StashError>(())
         })

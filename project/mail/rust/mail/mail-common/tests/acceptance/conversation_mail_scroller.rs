@@ -132,7 +132,7 @@ async fn test_conversation_mail_scroller_reads_correct_items_within_visible_rang
         .build();
 
     tether
-        .tx(async |bond| scroller.save(bond).await)
+        .write_tx(async |bond| scroller.save(bond).await)
         .await
         .unwrap();
 
@@ -358,7 +358,7 @@ async fn test_conversation_mail_scroller_try_to_read_one_item_from_api_when_it_d
     let mut counters = ConversationCounter::new(local_label_id);
     counters.total = 1;
     tether
-        .tx(async |bond| counters.save(bond).await)
+        .write_tx(async |bond| counters.save(bond).await)
         .await
         .unwrap();
 
@@ -396,7 +396,7 @@ async fn test_conversation_mail_scroller_reads_two_pages_from_online_scroll_data
     let mut counters = ConversationCounter::new(local_label_id);
     counters.total = page_size as u64 * 2;
     tether
-        .tx(async |bond| counters.save(bond).await)
+        .write_tx(async |bond| counters.save(bond).await)
         .await
         .unwrap();
 
@@ -471,7 +471,7 @@ async fn test_conversation_mail_scroller_reads_online_folder_for_the_first_time_
     let mut counters = ConversationCounter::new(local_label_id);
     counters.total = 1;
     tether
-        .tx(async |bond| counters.save(bond).await)
+        .write_tx(async |bond| counters.save(bond).await)
         .await
         .unwrap();
 
@@ -545,7 +545,7 @@ async fn test_conversation_mail_scroller_reads_offline_folder_for_the_first_time
     let mut counters = ConversationCounter::new(local_label_id);
     counters.total = 1;
     tether
-        .tx(async |bond| counters.save(bond).await)
+        .write_tx(async |bond| counters.save(bond).await)
         .await
         .unwrap();
 
@@ -597,7 +597,7 @@ async fn test_conversation_mail_scroller_reads_offline_folder_for_the_first_time
     let mut counters = ConversationCounter::new(local_label_id);
     counters.total = 10;
     tether
-        .tx(async |bond| counters.save(bond).await)
+        .write_tx(async |bond| counters.save(bond).await)
         .await
         .unwrap();
 
@@ -643,7 +643,7 @@ async fn test_conversation_mail_scroller_reads_offline_folder_for_the_first_time
     let mut counters = ConversationCounter::new(local_label_id);
     counters.total = 15;
     tether
-        .tx(async |bond| counters.save(bond).await)
+        .write_tx(async |bond| counters.save(bond).await)
         .await
         .unwrap();
 
@@ -768,7 +768,7 @@ async fn test_conversation_mail_scroller_reads_cached_data_and_return_error_on_o
     let mut counters = ConversationCounter::new(local_label_id);
     counters.total = 150;
     tether
-        .tx(async |bond| counters.save(bond).await)
+        .write_tx(async |bond| counters.save(bond).await)
         .await
         .unwrap();
 
@@ -843,7 +843,7 @@ async fn test_conversation_mail_scroller_has_insufficient_cached_data_to_fill_fi
         .build();
 
     tether
-        .tx(async |bond| {
+        .write_tx(async |bond| {
             scroller_cursor.save(bond).await?;
             counters.save(bond).await
         })
@@ -977,7 +977,7 @@ async fn test_conversation_mail_scroller_database_refresh_will_not_triggers_fetc
     let mut counters = ConversationCounter::new(local_label_id);
     counters.total = 3; // Less than page_size (10)
     tether
-        .tx(async |bond| counters.save(bond).await)
+        .write_tx(async |bond| counters.save(bond).await)
         .await
         .unwrap();
 
@@ -992,7 +992,7 @@ async fn test_conversation_mail_scroller_database_refresh_will_not_triggers_fetc
     let label = Label::load(local_label_id, &tether).await.unwrap().unwrap();
     let new_conversation = test_conversations(1, order).pop().unwrap();
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             save_single_conversation(&[label], &mut new_conversation.clone(), bond).await;
             Ok(())
         })
@@ -1036,7 +1036,7 @@ async fn test_conversation_mail_scroller_database_refresh_triggers_fetch_for_sma
     let mut counters = ConversationCounter::new(local_label_id);
     counters.total = 3; // Less than page_size (10)
     tether
-        .tx(async |bond| counters.save(bond).await)
+        .write_tx(async |bond| counters.save(bond).await)
         .await
         .unwrap();
 
@@ -1051,7 +1051,7 @@ async fn test_conversation_mail_scroller_database_refresh_triggers_fetch_for_sma
     let label = Label::load(local_label_id, &tether).await.unwrap().unwrap();
     let new_conversation = test_conversations(1, order).pop().unwrap();
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             save_single_conversation(&[label], &mut new_conversation.clone(), bond).await;
             Ok(())
         })
@@ -1097,7 +1097,7 @@ async fn test_conversation_mail_scroller_database_refresh_triggers_fetch_for_lar
     let mut counters = ConversationCounter::new(local_label_id);
     counters.total = 15;
     tether
-        .tx(async |bond| counters.save(bond).await)
+        .write_tx(async |bond| counters.save(bond).await)
         .await
         .unwrap();
 
@@ -1113,7 +1113,7 @@ async fn test_conversation_mail_scroller_database_refresh_triggers_fetch_for_lar
     let label = Label::load(local_label_id, &tether).await.unwrap().unwrap();
     let new_conversation = test_conversations(1, order).pop().unwrap();
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             save_single_conversation(&[label], &mut new_conversation.clone(), bond).await;
             Ok(())
         })
@@ -1162,7 +1162,10 @@ async fn snoozed_conversations() {
 
     for (conv, conv_snooze_time) in data.values_mut().flatten().zip(snooze_times) {
         conv.labels[0].context_snooze_time = conv_snooze_time.into();
-        tether.tx(async |tx| conv.save(tx).await).await.unwrap();
+        tether
+            .write_tx(async |tx| conv.save(tx).await)
+            .await
+            .unwrap();
     }
 
     // ---
@@ -1218,7 +1221,10 @@ async fn test_conversation_snooze_time_ordering_with_same_snooze_time_different_
         conv.labels[0].context_snooze_time = same_snooze_time.into();
         conv.labels[0].context_time = (*context_time).into();
         conv.display_order = *order;
-        tether.tx(async |tx| conv.save(tx).await).await.unwrap();
+        tether
+            .write_tx(async |tx| conv.save(tx).await)
+            .await
+            .unwrap();
     }
     let mut cursor_scroller = ConversationScrollData::builder()
         .local_label_id(local_label_id)
@@ -1233,7 +1239,7 @@ async fn test_conversation_snooze_time_ordering_with_same_snooze_time_different_
     let mut counters = ConversationCounter::new(local_label_id);
     counters.total = 3;
     tether
-        .tx(async |bond| {
+        .write_tx(async |bond| {
             cursor_scroller.save(bond).await?;
             counters.save(bond).await
         })
@@ -1286,7 +1292,10 @@ async fn test_conversation_snooze_time_ordering_with_same_snooze_time_different_
         }],
         display_order: 5
     );
-    tether.tx(async |tx| last.save(tx).await).await.unwrap();
+    tether
+        .write_tx(async |tx| last.save(tx).await)
+        .await
+        .unwrap();
 
     test_scroller.wait_for_update().await.unwrap().unwrap();
 
@@ -1366,7 +1375,7 @@ async fn test_conversation_snooze_time_pagination_fix_works() {
     );
 
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             let label = Label::load(local_label_id, bond).await.unwrap().unwrap();
             save_single_conversation(&[label], &mut new_conversation, bond).await;
             Ok(())
@@ -1500,7 +1509,7 @@ async fn conversation_mail_scroller_reacts_to_creat_conversation_event() {
     let mut counters = ConversationCounter::new(local_label_id);
     counters.total = 1;
     tether
-        .tx(async |bond| counters.save(bond).await)
+        .write_tx(async |bond| counters.save(bond).await)
         .await
         .unwrap();
 
@@ -1624,7 +1633,7 @@ async fn test_conversation_mail_scroller_reads_non_empty_folder_for_the_first_ti
     let mut counters = ConversationCounter::new(local_label_id);
     counters.total = 10;
     tether
-        .tx(async |bond| counters.save(bond).await)
+        .write_tx(async |bond| counters.save(bond).await)
         .await
         .unwrap();
 
@@ -1720,7 +1729,7 @@ async fn test_conversation_mail_scroller_change_label() {
     inbox_counters.total = 10;
     rid2_counters.total = 50;
     tether
-        .tx(async |bond| {
+        .write_tx(async |bond| {
             inbox_counters.save(bond).await?;
             rid2_counters.save(bond).await
         })
@@ -1814,7 +1823,7 @@ async fn test_conversation_mail_scroller_change_include() {
     almost_all_mail_counters.total = 10;
     all_mail_counters.total = 50;
     tether
-        .tx(async |bond| {
+        .write_tx(async |bond| {
             almost_all_mail_counters.save(bond).await?;
             all_mail_counters.save(bond).await
         })
@@ -1886,7 +1895,7 @@ async fn test_conversation_mail_scroller_end_cursor_is_not_pointing_to_any_eleme
         .remote_conversation_id("this_does_not_exist".into())
         .build();
     tether
-        .tx(async |bond| {
+        .write_tx(async |bond| {
             counters.save(bond).await?;
             cursor.save(bond).await
         })
@@ -2014,12 +2023,12 @@ async fn delete_all() {
     };
 
     tether
-        .tx(async |tx| msg_counter.save(tx).await)
+        .write_tx(async |tx| msg_counter.save(tx).await)
         .await
         .unwrap();
 
     tether
-        .tx(async |tx| conv_counter.save(tx).await)
+        .write_tx(async |tx| conv_counter.save(tx).await)
         .await
         .unwrap();
 
@@ -2189,7 +2198,7 @@ async fn delete_all() {
     conv_counter.total = 50;
 
     tether
-        .tx(async |tx| {
+        .write_tx(async |tx| {
             msg_counter.save(tx).await.unwrap();
             conv_counter.save(tx).await
         })
@@ -2472,7 +2481,10 @@ async fn test_cached_scroller_no_items_lost_with_tied_snooze_and_time() {
     let mut tether = mail_stash.connection().await.unwrap();
 
     let mut lbl = label!(remote_id: lbl_id!("test_label"));
-    tether.tx(async |bond| lbl.save(bond).await).await.unwrap();
+    tether
+        .write_tx(async |bond| lbl.save(bond).await)
+        .await
+        .unwrap();
 
     let mut newest = conversation!(remote_id: conv_id!("conv_newest"), display_order: 0);
     let mut conv_a = conversation!(remote_id: conv_id!("conv_a"), display_order: 0);
@@ -2480,7 +2492,7 @@ async fn test_cached_scroller_no_items_lost_with_tied_snooze_and_time() {
     let mut conv_b = conversation!(remote_id: conv_id!("conv_b"), display_order: 0);
 
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             newest.save(bond).await.unwrap();
             let mut l = conv_label!(
                 local_conversation_id: newest.local_id,
@@ -2616,7 +2628,7 @@ async fn test_category_view_filters_conversations_and_emits_updates() {
         .unwrap()
         .unwrap();
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             MailSettings {
                 mail_category_view: true,
                 ..Default::default()
@@ -2738,7 +2750,7 @@ async fn test_category_view_clears_on_change_label_to_all_mail() {
         .unwrap()
         .unwrap();
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             MailSettings {
                 mail_category_view: true,
                 ..Default::default()

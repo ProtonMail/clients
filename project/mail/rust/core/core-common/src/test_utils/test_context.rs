@@ -283,7 +283,7 @@ impl TestContext {
             // Create a temporary mail_stash just to insert the fake data.
             let mut tether = context.account_stash().connection().await.unwrap();
             tether
-                .tx::<_, _, StashError>(async |tx| {
+                .write_tx::<_, _, StashError>(async |tx| {
                     // Create
                     let account = CoreAccount::new(user_id.clone(), Self::test_user_mail())
                         .with_insert(tx)

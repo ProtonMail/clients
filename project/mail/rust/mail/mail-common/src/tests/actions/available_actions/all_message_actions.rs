@@ -479,7 +479,7 @@ async fn message_actions(test_case: &TestCase<Message>) {
     });
 
     let message = tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             settings.save(tx).await.unwrap();
 
             let mut conversation = Conversation::test_default();

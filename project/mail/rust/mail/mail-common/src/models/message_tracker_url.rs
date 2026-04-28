@@ -1,7 +1,7 @@
 use crate::datatypes::LocalMessageId;
 use mail_stash::macros::Model;
 use mail_stash::orm::Model;
-use mail_stash::stash::{Bond, StashError, Tether};
+use mail_stash::stash::{StashError, Tether, WriteTx};
 use mail_stash::{UserDb, params};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Model)]
@@ -36,7 +36,7 @@ impl MessageTrackerUrl {
 
     pub async fn delete_by_message(
         message_id: LocalMessageId,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         tx.execute(
             "DELETE FROM message_tracker_urls WHERE local_message_id = ?",

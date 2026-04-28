@@ -12,7 +12,7 @@ use mail_stash::exports::Transaction;
 use mail_stash::macros::Model;
 use mail_stash::orm::{DbRecord, Model, ModelHooks};
 use mail_stash::rusqlite::params_from_iter;
-use mail_stash::stash::{Bond, Stash, StashError, StashResult, Tether};
+use mail_stash::stash::{Stash, StashError, StashResult, Tether, WriteTx};
 use mail_stash::{UserDb, params};
 use std::sync::Arc;
 use tracing::{error, warn};
@@ -159,7 +159,7 @@ impl Address {
     }
 
     pub async fn handle_event(
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
         id: &AddressId,
         action: Action,
         address: Option<&mut Address>,

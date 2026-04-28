@@ -46,7 +46,7 @@ where
             let mut tether = ctx.get_contact_stash().connection().await?;
             let mut changeset = RebaseChangeSet::default();
             tether
-                .tx(async |tx| {
+                .write_tx(async |tx| {
                     if let Some(events) = &event.labels {
                         debug!("Handling contact label event");
                         for event in events {
@@ -176,7 +176,7 @@ where
         let contacts = join_task!(contacts, "contacts");
 
         tether
-            .sync_tx(move |tx| {
+            .sync_write_tx(move |tx| {
                 Label::store_labels(tx, all_remote_labels).context("Failed to sync labels")?;
 
                 for local_label_to_remove in all_local_labels.into_values() {

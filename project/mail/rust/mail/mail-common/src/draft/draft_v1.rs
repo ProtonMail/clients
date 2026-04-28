@@ -156,7 +156,7 @@ impl Draft {
                 DraftMetadata::with_ids(message.id(), message.local_conversation_id.unwrap());
 
             tether
-                .tx::<_, _, MailContextError>(async |tx| {
+                .write_tx::<_, _, MailContextError>(async |tx| {
                     metadata
                         .save(tx)
                         .await
@@ -193,7 +193,7 @@ impl Draft {
                     debug!("Message synced, updating attachment metadata.");
 
                     tether
-                        .tx(async |tx| {
+                        .write_tx(async |tx| {
                             DraftAttachmentMetadata::reset_draft_attachments_after_sync(
                                 metadata.id.unwrap(),
                                 &decrypted.metadata,
@@ -357,7 +357,7 @@ impl Draft {
         let custom_settings = CustomSettings::get_or_default(&tether).await?;
 
         let metadata = tether
-            .tx::<_, _, MailContextError>(async |tx| {
+            .write_tx::<_, _, MailContextError>(async |tx| {
                 let metadata = DraftMetadata::empty(tx)
                     .await
                     .inspect_err(|e| error!("Failed to create new empty draft metadata: {e:?}"))?;
@@ -518,7 +518,7 @@ impl Draft {
         };
 
         let draft = tether
-            .tx::<_, _, MailContextError>(async |tx| {
+            .write_tx::<_, _, MailContextError>(async |tx| {
                 let metadata = DraftMetadata::reply(
                     reply_mode,
                     source_message.local_id.unwrap(),
@@ -1421,7 +1421,7 @@ impl Draft {
 
         metadata.password = Some(encrypted_password);
         metadata.password_hint = hint;
-        tether.tx(async |tx| metadata.save(tx).await).await?;
+        tether.write_tx(async |tx| metadata.save(tx).await).await?;
 
         info!("Password protection applied to draft {metadata_id}");
 
@@ -1443,7 +1443,7 @@ impl Draft {
         if metadata.password.is_some() {
             metadata.password = None;
             metadata.password_hint = None;
-            tether.tx(async |tx| metadata.save(tx).await).await?;
+            tether.write_tx(async |tx| metadata.save(tx).await).await?;
 
             info!("Password protection removed from draft {metadata_id}");
         }
@@ -1492,7 +1492,7 @@ impl Draft {
             .ok_or(ExpirationError::MetadataNotFound(metadata_id))?;
 
         metadata.set_expiration_time(expiration_time);
-        tether.tx(async |tx| metadata.save(tx).await).await?;
+        tether.write_tx(async |tx| metadata.save(tx).await).await?;
 
         if let DraftExpirationTime::Never = expiration_time {
             info!("Expiration removed from draft {metadata_id}");

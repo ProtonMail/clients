@@ -6,7 +6,7 @@ use mail_stash::{
     UserDb,
     macros::Model,
     orm::Model,
-    stash::{Bond, Tether},
+    stash::{Tether, WriteTx},
 };
 use tracing::{info, instrument};
 
@@ -19,8 +19,8 @@ pub trait LabelExt {
         tether: &Tether,
     ) -> impl Future<Output = Result<Option<MailBusyLabel>, LabelError>>;
 
-    fn mark_busy(&self, bond: &Bond<'_>) -> impl Future<Output = Result<(), LabelError>>;
-    fn mark_idle(&self, bond: &Bond<'_>) -> impl Future<Output = Result<(), LabelError>>;
+    fn mark_busy(&self, bond: &WriteTx<'_>) -> impl Future<Output = Result<(), LabelError>>;
+    fn mark_idle(&self, bond: &WriteTx<'_>) -> impl Future<Output = Result<(), LabelError>>;
 }
 
 impl LabelExt for Label {
@@ -40,7 +40,7 @@ impl LabelExt for Label {
     }
 
     #[instrument(skip_all)]
-    async fn mark_busy(&self, bond: &Bond<'_>) -> Result<(), LabelError> {
+    async fn mark_busy(&self, bond: &WriteTx<'_>) -> Result<(), LabelError> {
         let id = self.id();
 
         info!(?id, "Marking label as busy");
@@ -51,7 +51,7 @@ impl LabelExt for Label {
     }
 
     #[instrument(skip_all)]
-    async fn mark_idle(&self, bond: &Bond<'_>) -> Result<(), LabelError> {
+    async fn mark_idle(&self, bond: &WriteTx<'_>) -> Result<(), LabelError> {
         info!(id = ?self.id(), "Marking label as idle");
 
         if let Some(busy) = self.as_busy(bond).await? {
@@ -98,7 +98,7 @@ mod tests {
         let mut label = Label::from(api_label(&label.remote_id(), None));
 
         tether
-            .tx(async |bond| label.save(bond).await)
+            .write_tx(async |bond| label.save(bond).await)
             .await
             .unwrap();
 
@@ -130,7 +130,7 @@ mod tests {
         // ---
 
         tether
-            .tx(async |bond| trash.mark_busy(bond).await)
+            .write_tx(async |bond| trash.mark_busy(bond).await)
             .await
             .unwrap();
 
@@ -143,7 +143,7 @@ mod tests {
         // ---
 
         tether
-            .tx(async |bond| {
+            .write_tx(async |bond| {
                 inbox.mark_idle(bond).await.unwrap();
                 trash.mark_idle(bond).await
             })

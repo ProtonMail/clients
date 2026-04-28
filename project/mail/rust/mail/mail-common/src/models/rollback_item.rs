@@ -17,7 +17,7 @@ use mail_core_api::session::Session;
 use mail_core_common::models::Label;
 use mail_stash::macros::Model;
 use mail_stash::orm::Model;
-use mail_stash::stash::{Bond, RunTransaction, StashError, Tether};
+use mail_stash::stash::{RunTransaction, StashError, Tether, WriteTx};
 use mail_stash::{UserDb, params};
 use std::fmt::Display;
 use tracing::{debug, error, warn};
@@ -46,7 +46,7 @@ impl RollbackItem {
     }
 
     pub async fn save_many(
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
         items: impl IntoIterator<Item = impl Display>,
         item_type: RollbackItemType,
     ) -> Result<(), StashError> {
@@ -60,7 +60,7 @@ impl RollbackItem {
     ///
     /// It's imperative that you use this method over [`Model::save()`] to
     /// ensure that the information is update correctly in the database.
-    pub async fn save(&mut self, bond: &Bond<'_>) -> Result<(), StashError> {
+    pub async fn save(&mut self, bond: &WriteTx<'_>) -> Result<(), StashError> {
         if RollbackItem::find_first(
             "WHERE remote_id=? AND item_type=?",
             params![self.remote_id.clone(), self.item_type],
@@ -172,7 +172,7 @@ impl RollbackItem {
     async fn delete_by_rid_and_kind(
         remote_id: Option<String>,
         kind: RollbackItemType,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         bond.execute(
             format!(
@@ -231,7 +231,7 @@ impl RollbackItem {
 
             let mut changeset = RebaseChangeSet::default();
             tx_runner
-                .run_tx(async |tx| {
+                .run_write_tx(async |tx| {
                     H::store_items(items, &mut changeset, tx)
                         .await
                         .inspect_err(|e| {
@@ -292,7 +292,7 @@ trait RollbackHandler: 'static + Send + Sync {
     fn store_items(
         items: Vec<Self::Item>,
         changeset: &mut RebaseChangeSet,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> impl Future<Output = Result<(), MailContextError>>;
 }
 
@@ -346,7 +346,7 @@ impl RollbackHandler for MessageRollbackHandler {
     async fn store_items(
         items: Vec<Self::Item>,
         changeset: &mut RebaseChangeSet,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), MailContextError> {
         for item in items {
             if Message::sync_decision(&item, None, tx).await? == MessageSyncDecision::Skip {
@@ -437,7 +437,7 @@ impl RollbackHandler for ConversationRollbackHandler {
     async fn store_items(
         items: Vec<Self::Item>,
         changeset: &mut RebaseChangeSet,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), MailContextError> {
         for item in items {
             let mut c = Conversation::from(item.conversation);
@@ -512,7 +512,7 @@ impl RollbackHandler for LabelRollbackHandler {
     async fn store_items(
         items: Vec<Self::Item>,
         changeset: &mut RebaseChangeSet,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), MailContextError> {
         for item in items {
             let mut l = Label::from(item);

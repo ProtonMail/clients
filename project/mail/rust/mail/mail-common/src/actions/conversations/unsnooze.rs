@@ -12,7 +12,7 @@ use mail_core_common::datatypes::{LocalLabelId, SystemLabel, UnixTimestamp};
 use mail_core_common::models::ModelIdExtension;
 use mail_stash::exports::ToSql;
 use mail_stash::orm::Model;
-use mail_stash::stash::Bond;
+use mail_stash::stash::WriteTx;
 use mail_stash::utils::placeholders;
 use mail_stash::{UserDb, params};
 use serde::{self, Deserialize, Serialize};
@@ -61,7 +61,7 @@ impl Handler<UserDb> for UnsnoozeHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::LocalOutput,
         <Self::Action as Action<UserDb>>::Error,
@@ -110,7 +110,7 @@ impl Handler<UserDb> for UnsnoozeHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         for (conv_id, snoozed_until) in action.conv_snooze_time.iter() {
             // we don't want to validate the previous snoozed state.
@@ -185,7 +185,7 @@ impl Handler<UserDb> for UnsnoozeHandler {
         _: ActionId,
         action: &mut Self::Action,
         changeset: &RebaseChangeSet,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         for id in &action.action_data.data.target_ids {
             let rebase_key: RebaseKey = (*id).into();

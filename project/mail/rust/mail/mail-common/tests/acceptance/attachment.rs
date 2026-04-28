@@ -188,7 +188,7 @@ async fn load_attachment_content_first_time() {
     let user_ctx = ctx.uninitialized_mail_user_context().await;
     let mut tether = user_ctx.user_stash().connection().await.unwrap();
     tether
-        .tx(async |tx| attachment.save(tx).await)
+        .write_tx(async |tx| attachment.save(tx).await)
         .await
         .unwrap();
 

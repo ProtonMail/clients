@@ -21,7 +21,7 @@ use mail_core_api::service::ApiServiceError;
 use mail_core_api::services::proton::AddressId;
 use mail_core_common::models::{ModelExtension, ModelIdExtension};
 use mail_stash::orm::Model;
-use mail_stash::stash::{Bond, Tether};
+use mail_stash::stash::{Tether, WriteTx};
 use mail_stash::{UserDb, params};
 use serde::{Deserialize, Serialize};
 use std::sync::Weak;
@@ -125,7 +125,7 @@ impl Handler<UserDb> for AttachmentUploadHandler {
         &self,
         this_id: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::LocalOutput,
         <Self::Action as Action<UserDb>>::Error,
@@ -236,7 +236,7 @@ impl Handler<UserDb> for AttachmentUploadHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         if let Some(message_id) = action.local_message_id {
             // remove attachment from message.
@@ -299,7 +299,7 @@ impl Handler<UserDb> for AttachmentUploadHandler {
         _: ActionId,
         _: &mut Self::Action,
         _: &RebaseChangeSet,
-        _: &Bond<'_>,
+        _: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         Ok(())
     }
@@ -487,7 +487,7 @@ async fn encrypt_and_upload_attachment(
 
     debug!("Updating database state");
     writer_guard
-        .tx::<_, _, MailContextError>(async |tx: &Bond<'_>| {
+        .tx::<_, _, MailContextError>(async |tx: &WriteTx<'_>| {
             let Some(mut draft_attachment_metadata) =
                 DraftAttachmentMetadata::find_by_id(attachment.id(), tx).await?
             else {

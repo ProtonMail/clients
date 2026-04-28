@@ -3,7 +3,7 @@ use mail_stash::{
     macros::Model,
     orm::Model,
     params,
-    stash::{Bond, StashError, Tether},
+    stash::{StashError, Tether, WriteTx},
     utils::{IterMapToSql, placeholders_n},
 };
 
@@ -81,7 +81,7 @@ impl UserFeatureFlag {
         .await
     }
 
-    pub async fn save_all(new: Vec<Self>, tx: &Bond<'_>) -> Result<(), StashError> {
+    pub async fn save_all(new: Vec<Self>, tx: &WriteTx<'_>) -> Result<(), StashError> {
         for mut flag in new {
             Self::save(&mut flag, tx).await?;
         }
@@ -92,7 +92,7 @@ impl UserFeatureFlag {
     pub async fn delete_batch_from_source(
         names: Vec<String>,
         source: UserFeatureFlagSource,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         tx.execute(
             format!(

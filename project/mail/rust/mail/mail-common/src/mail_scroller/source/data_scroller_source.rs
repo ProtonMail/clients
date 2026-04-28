@@ -107,7 +107,7 @@ impl<T: RemoteSource> DataScrollerSource<T> {
                 debug!("Cursor points to empty scroll data, will sync first page instead");
 
                 tether
-                    .tx(async |bond| end_cursor.delete(bond).await)
+                    .write_tx(async |bond| end_cursor.delete(bond).await)
                     .await?;
             };
         }
@@ -546,7 +546,7 @@ impl<T: RemoteSource> MailScrollerSource for DataScrollerSource<T> {
             let mut tether = ctx.user_stash().connection().await?;
             let cursor = scroller.load_end_cursor(&tether).await?;
 
-            tether.tx(async |tx| cursor.delete(tx).await).await?;
+            tether.write_tx(async |tx| cursor.delete(tx).await).await?;
         }
 
         self.clear_state();

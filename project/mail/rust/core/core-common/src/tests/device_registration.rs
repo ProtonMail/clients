@@ -150,7 +150,7 @@ async fn skip_registration_when_session_rotated_but_old_context_still_alive() {
 
     let mut tether = core_ctx.account_stash().connection().await.unwrap();
     tether
-        .tx(async |tx| {
+        .write_tx(async |tx| {
             let _ = mail_core_common::db::account::CoreSession::delete_by_id(
                 old_session_id.clone(),
                 tx,

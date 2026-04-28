@@ -32,7 +32,7 @@ pub use exclusive_location::ExclusiveLocation;
 pub use ids::*;
 pub use include_switch::IncludeSwitch;
 use mail_core_common::models::Label;
-use mail_stash::stash::{Bond, StashError, StashResult, Tether};
+use mail_stash::stash::{StashError, StashResult, Tether, WriteTx};
 pub use privacy_info::{PrivacyInfo, PrivacyInfoStatus};
 pub use read_filter::ReadFilter;
 pub use rollback_item_type::RollbackItemType;
@@ -874,7 +874,7 @@ impl From<ApiConversationCount> for ConversationLabelsCount {
 }
 
 impl ConversationLabelsCount {
-    pub async fn upsert(counts: Vec<Self>, bond: &Bond<'_>) -> Result<(), StashError> {
+    pub async fn upsert(counts: Vec<Self>, bond: &WriteTx<'_>) -> Result<(), StashError> {
         bond.sync_bridge(move |tx| Self::upsert_sync(counts, tx))
             .await
     }
@@ -908,7 +908,7 @@ impl ConversationLabelsCount {
     //TODO(ET-5589): This should be removed
     pub(crate) async fn fake_update(
         label_id: LocalLabelId,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         tx.execute(
             "UPDATE conversation_counters SET total=total, unread=unread WHERE local_label_id=?",
@@ -966,7 +966,7 @@ impl EncryptedMessageBody {
                     MailContextError::Crypto
                 })?;
                 tether
-                    .tx::<_, _, MailContextError>(async |tx| {
+                    .write_tx::<_, _, MailContextError>(async |tx| {
                         raw_decrypted_body
                             .store_and_consume(
                                 self.metadata.local_message_id.expect("Should be set"),
@@ -1033,7 +1033,7 @@ impl EncryptedMessageBody {
                     self.metadata.remote_message_id, error.error
                 );
                 tether
-                    .tx(async move |tx| {
+                    .write_tx(async move |tx| {
                         raw_decrypted_body
                             .store_and_consume(
                                 self.metadata.local_message_id.expect("Should be set"),
@@ -1461,7 +1461,7 @@ impl From<ApiMessageCount> for MessageLabelsCount {
 }
 
 impl MessageLabelsCount {
-    pub async fn upsert(counts: Vec<Self>, bond: &Bond<'_>) -> Result<(), StashError> {
+    pub async fn upsert(counts: Vec<Self>, bond: &WriteTx<'_>) -> Result<(), StashError> {
         bond.sync_bridge(move |tx| Self::upsert_sync(counts, tx))
             .await
     }
@@ -1496,7 +1496,7 @@ impl MessageLabelsCount {
     //TODO(ET-5589): This should be removed
     pub(crate) async fn fake_update(
         label_id: LocalLabelId,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         tx.execute(
             "UPDATE message_counters SET total=total, unread=unread WHERE local_label_id=?",

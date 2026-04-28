@@ -69,7 +69,7 @@ async fn test_user_feature_flags_warm_start_immediate_return() {
         let mut cached_y = UserFeatureFlag::unleash("CachedFeatureY", past);
 
         tether
-            .tx(async move |tx| {
+            .write_tx(async move |tx| {
                 cached_x.save(tx).await?;
                 cached_y.save(tx).await
             })
@@ -140,7 +140,7 @@ async fn test_user_feature_flags_warm_start_background_refresh() {
         let mut existing_flag = UserFeatureFlag::unleash("ExistingFeature", past);
 
         tether
-            .tx(async move |tx| existing_flag.save(tx).await)
+            .write_tx(async move |tx| existing_flag.save(tx).await)
             .await
             .unwrap();
     }
@@ -220,7 +220,7 @@ async fn test_user_feature_flags_network_failure_preserves_cache() {
         let mut cached_flag = UserFeatureFlag::unleash("CachedFlag", past);
 
         tether
-            .tx(async move |tx| cached_flag.save(tx).await)
+            .write_tx(async move |tx| cached_flag.save(tx).await)
             .await
             .unwrap();
     }
@@ -390,7 +390,7 @@ async fn test_legacy_feature_flags_disappearing_gets_removed() {
             UserFeatureFlag::legacy("DisappearingFlag", true, FlagMutability::Mutable, past);
 
         tether
-            .tx(async move |tx| existing_flag.save(tx).await)
+            .write_tx(async move |tx| existing_flag.save(tx).await)
             .await
             .unwrap();
     }
@@ -560,7 +560,7 @@ async fn test_legacy_feature_flag_becomes_expired_disabled() {
             UserFeatureFlag::legacy("BecomingExpiredFlag", true, FlagMutability::Mutable, past);
 
         tether
-            .tx(async move |tx| existing_flag.save(tx).await)
+            .write_tx(async move |tx| existing_flag.save(tx).await)
             .await
             .unwrap();
     }
@@ -1545,7 +1545,7 @@ async fn test_override_flag_api_failure_preserves_existing_override() {
         existing_flag.overridden_to = Some(false);
 
         tether
-            .tx(async move |tx| existing_flag.save(tx).await)
+            .write_tx(async move |tx| existing_flag.save(tx).await)
             .await
             .unwrap();
     }

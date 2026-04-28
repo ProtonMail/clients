@@ -19,7 +19,7 @@ use mail_core_key_manager::{
     },
 };
 use mail_shared_types::{ModelIdExtension, UnixTimestamp};
-use mail_stash::stash::{Bond, StashError, Tether};
+use mail_stash::stash::{StashError, Tether, WriteTx};
 use mail_stash::{macros::DbRecord, sql_using_serde};
 use proton_crypto_account::keys::{APIPublicAddressKeyGroup, APIPublicAddressKeys, UserKeys};
 use proton_crypto_account::{contacts::ContactCardType, errors::EncryptionPreferencesError};
@@ -219,7 +219,7 @@ impl<'a> KeyLoader<'a> {
         };
 
         match tether
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 PublicAddressKeysResponseCache::store(
                     email.as_clear_text_str().to_owned(),
                     internal_only,
@@ -522,7 +522,7 @@ impl PublicAddressKeysResponseCache {
         email: String,
         internal_only: bool,
         response: APIPublicAddressKeys,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         tx.execute(
             indoc! {"

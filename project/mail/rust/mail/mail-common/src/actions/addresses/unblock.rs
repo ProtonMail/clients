@@ -15,7 +15,7 @@ use mail_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;
 use mail_core_common::models::ModelExtension;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
-use mail_stash::stash::Bond;
+use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -62,7 +62,7 @@ impl Handler<UserDb> for UnblockHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         tracing::info!("Unblocking {}", action.email);
 
@@ -94,7 +94,7 @@ impl Handler<UserDb> for UnblockHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         tracing::info!("Restoring block for {}", action.email);
 
@@ -152,7 +152,7 @@ impl Handler<UserDb> for UnblockHandler {
         _: ActionId,
         _: &mut Self::Action,
         _: &RebaseChangeSet,
-        _: &Bond<'_>,
+        _: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         Ok(())
     }

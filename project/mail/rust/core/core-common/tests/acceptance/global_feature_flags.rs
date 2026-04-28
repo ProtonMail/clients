@@ -82,7 +82,7 @@ async fn test_feature_flags_warm_start_immediate_return() {
         };
 
         tether
-            .tx(async move |tx| {
+            .write_tx(async move |tx| {
                 cached_x.save(tx).await?;
                 cached_y.save(tx).await
             })
@@ -146,7 +146,7 @@ async fn test_feature_flags_warm_start_background_refresh() {
         };
 
         tether
-            .tx(async move |tx| existing_flag.save(tx).await)
+            .write_tx(async move |tx| existing_flag.save(tx).await)
             .await
             .unwrap();
     }
@@ -236,7 +236,7 @@ async fn test_feature_flags_network_failure_preserves_cache() {
         };
 
         tether
-            .tx(async move |tx| cached_flag.save(tx).await)
+            .write_tx(async move |tx| cached_flag.save(tx).await)
             .await
             .unwrap();
     }

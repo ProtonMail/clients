@@ -15,7 +15,7 @@ use bitflags::bitflags;
 use chrono::DateTime;
 use mail_sqlite3::MigratorError;
 use mail_stash::orm::Model;
-use mail_stash::stash::{Bond, Stash, StashError, Tether};
+use mail_stash::stash::{Stash, StashError, Tether, WriteTx};
 use parking_lot::RwLock;
 use std::collections::HashSet;
 use std::fmt;
@@ -360,7 +360,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> Queue<Db> {
     pub async fn delete_all_in_group(this: &Self, action_group: ActionGroup) -> QueuedResult<()> {
         let mut tether = this.shared.mail_stash.connection().await?;
         tether
-            .tx(async |tx| StoredAction::delete_all_in_group(tx, action_group).await)
+            .write_tx(async |tx| StoredAction::delete_all_in_group(tx, action_group).await)
             .await?;
         Ok(())
     }
@@ -372,7 +372,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> Queue<Db> {
     pub async fn delete_all_by_type<T: Action<Db>>(&self) -> QueuedResult<usize> {
         let mut tether = self.shared.mail_stash.connection().await?;
         Ok(tether
-            .tx(async |tx| StoredAction::delete_by_type(tx, &T::TYPE).await)
+            .write_tx(async |tx| StoredAction::delete_by_type(tx, &T::TYPE).await)
             .await?)
     }
 
@@ -398,7 +398,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> Queue<Db> {
             .mail_stash
             .connection()
             .await?
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 let mut res: Vec<QueuedActionOutput<T, Db>> = vec![];
 
                 for action in actions {
@@ -429,7 +429,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> Queue<Db> {
             .mail_stash
             .connection()
             .await?
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 self.queue_action_with_metadata_in_tx(action, metadata, tx)
                     .await
             })
@@ -441,7 +441,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> Queue<Db> {
         &self,
         mut action: T,
         metadata: Metadata,
-        tx: &Bond<'_, Db>,
+        tx: &WriteTx<'_, Db>,
     ) -> LocalOutput<Db, T> {
         let span = tracing::debug_span!("queue::queue", type=T::TYPE.0);
 
@@ -511,7 +511,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> Queue<Db> {
                 .mail_stash
                 .connection()
                 .await?
-                .tx(async |tx| {
+                .write_tx(async |tx| {
                     execute_action_local(&mut action, &handler, metadata, Some(existing_id), tx)
                         .await
                 })
@@ -544,7 +544,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> Queue<Db> {
     pub async fn delete_action(&self, action_id: ActionId) -> QueuedResult<()> {
         let mut tether = self.shared.mail_stash.connection().await?;
         let existing_action_type = tether
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 // Safety: It's safe to perform this check without an executor guard as sqlite's
                 // single write transactions give us the freedom to safely validate this.
                 if ExecutionGuard::has_executor(action_id, tx).await? {
@@ -595,7 +595,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> Queue<Db> {
     pub async fn cancel(&self, action_id: ActionId) -> QueuedResult<Vec<ActionId>> {
         let mut tether = self.shared.mail_stash.connection().await?;
         let cancelled_actions = tether
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 // Safety: It's safe to perform this check without an executor guard as sqlite's
                 // single write transactions give us the freedom to safely validate this.
                 if ExecutionGuard::has_executor(action_id, tx).await? {
@@ -658,7 +658,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> Queue<Db> {
     ) -> QueuedResult<()> {
         let mut tether = self.shared.mail_stash.connection().await?;
         tether
-            .tx(async |tx| self.rebase_in(action_group, change_set, tx).await)
+            .write_tx(async |tx| self.rebase_in(action_group, change_set, tx).await)
             .await
     }
 
@@ -666,7 +666,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> Queue<Db> {
         &self,
         action_group: ActionGroup,
         change_set: &RebaseChangeSet,
-        tx: &Bond<'_, Db>,
+        tx: &WriteTx<'_, Db>,
     ) -> QueuedResult<()> {
         let ids = StoredAction::rebase_action_order(action_group.as_ref(), tx).await?;
         if ids.is_empty() {
@@ -718,7 +718,7 @@ pub(crate) trait ErasedQueuedAction<Db: mail_stash::marker::DatabaseMarker>: Sen
 
     fn cancel<'a>(
         &'a mut self,
-        tx: &'a Bond<'_, Db>,
+        tx: &'a WriteTx<'_, Db>,
         metadata: Arc<QueuedMetadata>,
     ) -> Pin<Box<dyn Future<Output = QueuedResult<()>> + 'a + Send>>;
 
@@ -727,7 +727,7 @@ pub(crate) trait ErasedQueuedAction<Db: mail_stash::marker::DatabaseMarker>: Sen
         action: StoredAction<Db>,
         metadata: Arc<QueuedMetadata>,
         change_set: &'a RebaseChangeSet,
-        tx: &'a Bond<'_, Db>,
+        tx: &'a WriteTx<'_, Db>,
     ) -> Pin<Box<dyn Future<Output = QueuedResult<()>> + 'a + Send>>;
 }
 
@@ -768,7 +768,7 @@ impl<T: Action<Db>, Db: mail_stash::marker::DatabaseMarker> ErasedQueuedAction<D
 
     fn cancel<'a>(
         &'a mut self,
-        tx: &'a Bond<'_, Db>,
+        tx: &'a WriteTx<'_, Db>,
         metadata: Arc<QueuedMetadata>,
     ) -> Pin<Box<dyn Future<Output = QueuedResult<()>> + 'a + Send>> {
         let span = tracing::debug_span!("queue::revert", id=self.id.0, type=T::TYPE.0);
@@ -804,7 +804,7 @@ impl<T: Action<Db>, Db: mail_stash::marker::DatabaseMarker> ErasedQueuedAction<D
         mut action: StoredAction<Db>,
         metadata: Arc<QueuedMetadata>,
         change_set: &'a RebaseChangeSet,
-        tx: &'a Bond<'_, Db>,
+        tx: &'a WriteTx<'_, Db>,
     ) -> Pin<Box<dyn Future<Output = QueuedResult<()>> + 'a + Send>> {
         let span = tracing::debug_span!("queue::rebase", id=self.id.0, type=T::TYPE.0);
         Box::pin(
@@ -945,7 +945,9 @@ impl<Db: mail_stash::marker::DatabaseMarker> QueueExecutor<Db> {
                     // Release execution guard if decode failed.
                     {
                         if let Err(e) = async {
-                            tether.tx(async |tx| exec_guard.release(tx).await).await?;
+                            tether
+                                .write_tx(async |tx| exec_guard.release(tx).await)
+                                .await?;
                             Ok::<_, StashError>(())
                         }
                         .await
@@ -1311,7 +1313,7 @@ async fn execute_action_local<T: Action<Db>, Db: mail_stash::marker::DatabaseMar
     handler: &T::Handler,
     metadata: Metadata,
     existing_id: Option<ActionId>,
-    tx: &Bond<'_, Db>,
+    tx: &WriteTx<'_, Db>,
 ) -> Result<(T::LocalOutput, StoredAction<Db>), ActionError<T, Db>> {
     let mut stored_action = StoredAction::without_state::<T>(action.dependency_keys(), metadata);
     if let Some(exising_id) = existing_id {
@@ -1467,7 +1469,7 @@ async fn execute_action_remote<T: Action<Db>, Db: mail_stash::marker::DatabaseMa
 
 async fn cancel_action_with_dependees<Db: mail_stash::marker::DatabaseMarker>(
     shared: &Shared<Db>,
-    bond: &Bond<'_, Db>,
+    bond: &WriteTx<'_, Db>,
     action_id: ActionId,
 ) -> QueuedResult<Vec<Arc<QueuedMetadata>>> {
     let mut remaining_actions = vec![action_id];
@@ -1544,7 +1546,7 @@ macro_rules! enqueue {
         use $crate::action::{ActionId, Metadata};
         use ::anyhow::anyhow;
 
-        $queue.tether().await?.tx::<_,_, MultiActionError>(async |tx| {
+        $queue.tether().await?.write_tx::<_,_, MultiActionError>(async |tx| {
             let mut last = None;
             $(
                 let meta = if let Some(last) = last {

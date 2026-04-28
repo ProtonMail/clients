@@ -687,7 +687,7 @@ impl DraftAddressChangeRequest {
                 tracing::info!("Public key for new address is not present, attaching");
 
                 tether
-                    .tx::<_, _, MailContextError>(async |tx| {
+                    .write_tx::<_, _, MailContextError>(async |tx| {
                         let attachment = public_key_attachment.store(context, tx).await?;
 
                         DraftAttachmentMetadata::pending(

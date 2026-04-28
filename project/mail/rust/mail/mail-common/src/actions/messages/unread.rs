@@ -12,7 +12,7 @@ use mail_core_api::consts::General;
 use mail_core_api::session::Session;
 use mail_core_common::models::ModelIdExtension;
 use mail_stash::UserDb;
-use mail_stash::stash::{Bond, RunTransaction};
+use mail_stash::stash::{RunTransaction, WriteTx};
 use serde::{Deserialize, Serialize};
 use tracing::{error, info};
 
@@ -51,7 +51,7 @@ impl Handler<UserDb> for UnreadHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         action
             .0
@@ -65,7 +65,7 @@ impl Handler<UserDb> for UnreadHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         Message::mark_read_async(action.0.target_ids_with_modifications(), tx).await?;
         Ok(())
@@ -101,7 +101,7 @@ impl Handler<UserDb> for UnreadHandler {
             error!("Unread messages failed for: {failed_ids:?} ");
 
             guard
-                .run_tx_sync(move |tx| {
+                .run_write_tx_sync(move |tx| {
                     GenericActionData::<Message>::mark_rollback_sync(
                         &failed_ids,
                         RollbackItemType::Message,
@@ -126,7 +126,7 @@ impl Handler<UserDb> for UnreadHandler {
         _: ActionId,
         action: &mut Self::Action,
         changeset: &RebaseChangeSet,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         action
             .0

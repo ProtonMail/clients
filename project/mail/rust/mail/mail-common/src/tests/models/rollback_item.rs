@@ -108,7 +108,7 @@ async fn test_store_and_delete_remote_items(
     let mut tether = mail_stash.connection().await.unwrap();
     let queue = Queue::new(mail_stash.clone()).await.unwrap();
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             if let Some(items) = &mut expected {
                 for item in items {
                     item.save(tx).await.unwrap();
@@ -158,7 +158,7 @@ async fn setup_database(tether: &mut Tether) {
     let mut remote_conversation_id = None;
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             for conversation in conversations.iter_mut() {
                 conversation.save(tx).await.unwrap();
                 local_conversation_id = conversation.local_id;
@@ -172,7 +172,7 @@ async fn setup_database(tether: &mut Tether) {
     let mut labels = labels(tether).await;
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             for label in labels.iter_mut() {
                 label.save(tx).await.unwrap();
             }
@@ -184,7 +184,7 @@ async fn setup_database(tether: &mut Tether) {
     let mut messages = messages(local_conversation_id, remote_conversation_id, tether).await;
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             for message in messages.iter_mut() {
                 message.save(tx).await.unwrap();
             }
@@ -391,7 +391,7 @@ async fn test_rollback_skips_nonexistent_conversation() {
     let another_existing_id = "existing_conv_789";
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             RollbackItem::new(existing_conv_id.to_string(), RollbackItemType::Conversation)
                 .save(tx)
                 .await
@@ -486,7 +486,7 @@ async fn test_label_rollback_with_parent_dependencies() {
 
     // Only the child label is marked for rollback
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             RollbackItem::new(child_id.to_string(), RollbackItemType::Label)
                 .save(tx)
                 .await
@@ -644,7 +644,7 @@ async fn test_label_rollback_with_circular_parent_reference() {
 
     // Both labels are marked for rollback
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             RollbackItem::new(parent_id.to_string(), RollbackItemType::Label)
                 .save(tx)
                 .await

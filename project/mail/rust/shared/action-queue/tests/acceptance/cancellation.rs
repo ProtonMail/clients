@@ -6,7 +6,7 @@ use mail_action_queue::action::{
 use mail_action_queue::queue::{ActionError, Error, QueuedError};
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_action_queue::tests::common::TestDb;
-use mail_stash::stash::Bond;
+use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
 
 #[tokio::test]
@@ -75,7 +75,7 @@ async fn cancel_causes_revert_with_dependees() {
 
     {
         let mut conn = queue.mail_stash().connection().await.unwrap();
-        conn.tx(async |tx| tx.ext_insert_value(key, value).await)
+        conn.write_tx(async |tx| tx.ext_insert_value(key, value).await)
             .await
             .unwrap();
     }
@@ -179,7 +179,7 @@ async fn accidental_cyclic_dependency_with_replace() {
 
     {
         let mut conn = queue.mail_stash().connection().await.unwrap();
-        conn.tx(async |tx| tx.ext_insert_value("foo", 0).await)
+        conn.write_tx(async |tx| tx.ext_insert_value("foo", 0).await)
             .await
             .unwrap();
     }
@@ -228,7 +228,7 @@ async fn cancel_causes_revert_to_only_direct_dependees() {
 
     {
         let mut conn = queue.mail_stash().connection().await.unwrap();
-        conn.tx(async |tx| tx.ext_insert_value(key, value).await)
+        conn.write_tx(async |tx| tx.ext_insert_value(key, value).await)
             .await
             .unwrap();
     }
@@ -307,7 +307,7 @@ impl Handler<TestDb> for CancelActionHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_, TestDb>,
+        tx: &WriteTx<'_, TestDb>,
     ) -> Result<(), <Self::Action as Action<TestDb>>::Error> {
         Ok(tx.ext_insert_value(&action.key, action.value).await?)
     }
@@ -316,7 +316,7 @@ impl Handler<TestDb> for CancelActionHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_, TestDb>,
+        tx: &WriteTx<'_, TestDb>,
     ) -> Result<(), <Self::Action as Action<TestDb>>::Error> {
         Ok(tx.ext_delete_value(&action.key).await?)
     }
@@ -337,7 +337,7 @@ impl Handler<TestDb> for CancelActionHandler {
         _: ActionId,
         _: &mut Self::Action,
         _: &RebaseChangeSet,
-        _: &Bond<'_, TestDb>,
+        _: &WriteTx<'_, TestDb>,
     ) -> Result<(), <Self::Action as Action<TestDb>>::Error> {
         Ok(())
     }
@@ -371,7 +371,7 @@ impl Handler<TestDb> for ChainCancelActionHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_, TestDb>,
+        tx: &WriteTx<'_, TestDb>,
     ) -> Result<(), <Self::Action as Action<TestDb>>::Error> {
         let old_value = tx.ext_get_value(&action.key).await?.unwrap();
         action.old_value = old_value;
@@ -382,7 +382,7 @@ impl Handler<TestDb> for ChainCancelActionHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_, TestDb>,
+        tx: &WriteTx<'_, TestDb>,
     ) -> Result<(), <Self::Action as Action<TestDb>>::Error> {
         Ok(tx.ext_insert_value(&action.key, action.old_value).await?)
     }
@@ -403,7 +403,7 @@ impl Handler<TestDb> for ChainCancelActionHandler {
         _: ActionId,
         _: &mut Self::Action,
         _: &RebaseChangeSet,
-        _: &Bond<'_, TestDb>,
+        _: &WriteTx<'_, TestDb>,
     ) -> Result<(), <Self::Action as Action<TestDb>>::Error> {
         Ok(())
     }

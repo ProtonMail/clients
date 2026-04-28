@@ -55,7 +55,7 @@ async fn draft_undo_send() {
         .unwrap();
 
     tether
-        .tx(async |tx| local_sent_message.save(tx).await)
+        .write_tx(async |tx| local_sent_message.save(tx).await)
         .await
         .unwrap();
 
@@ -124,7 +124,7 @@ async fn draft_undo_send_failure() {
         .unwrap();
 
     tether
-        .tx(async |tx| local_sent_message.save(tx).await)
+        .write_tx(async |tx| local_sent_message.save(tx).await)
         .await
         .unwrap();
 

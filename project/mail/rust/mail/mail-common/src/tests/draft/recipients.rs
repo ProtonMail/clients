@@ -426,7 +426,7 @@ async fn contact_group_resolution_from_message_recipients() {
         ..ContactEmail::test_default()
     };
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             contact_group.save(tx).await.unwrap();
             contact1.save(tx).await.unwrap();
             contact2.save(tx).await.unwrap();

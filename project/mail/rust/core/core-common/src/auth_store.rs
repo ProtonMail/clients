@@ -161,7 +161,7 @@ impl Store for AuthStore {
             self.mail_stash
                 .connection()
                 .await?
-                .tx(async |tx| {
+                .write_tx(async |tx| {
                     // Load or create the account.
                     if (CoreAccount::find_by_id(user_id.clone(), tx).await?).is_none() {
                         info!("creating account for {user_id}");
@@ -225,7 +225,7 @@ impl Store for AuthStore {
         self.mail_stash
             .connection()
             .await?
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 // Load or create the account.
                 if let Some(account) = CoreAccount::find_by_id(user_id.clone(), tx).await? {
                     info!("updating account info for {user_id}");
@@ -270,7 +270,7 @@ impl Store for AuthStore {
         self.mail_stash
             .connection()
             .await?
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 let key = self.encryption_key()?;
 
                 let Some(user_id) = self.user_id.clone() else {
@@ -294,7 +294,7 @@ impl Store for AuthStore {
         self.mail_stash
             .connection()
             .await?
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 let Some(user_id) = self.user_id.clone() else {
                     bail!("failed to set pass: no user ID");
                 };
@@ -316,7 +316,7 @@ impl Store for AuthStore {
         self.mail_stash
             .connection()
             .await?
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 let Some(user_id) = self.user_id.clone() else {
                     bail!("failed to set temp pass: no user ID");
                 };
@@ -340,7 +340,7 @@ impl Store for AuthStore {
         self.mail_stash
             .connection()
             .await?
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 let Some(user_id) = self.user_id.clone() else {
                     bail!("failed to set user data: no user ID");
                 };
@@ -380,7 +380,7 @@ impl Store for AuthStore {
         // We write twice, so do it in a transaction.
         let mut tether = self.mail_stash.connection().await?;
         tether
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 let Some(user_id) = self.user_id.clone() else {
                     bail!("failed to set user data: no user ID");
                 };
@@ -412,7 +412,7 @@ impl Store for AuthStore {
             self.mail_stash
                 .connection()
                 .await?
-                .tx(async |tx| CoreSession::delete_by_id(id.to_owned(), tx).await)
+                .write_tx(async |tx| CoreSession::delete_by_id(id.to_owned(), tx).await)
                 .await?;
         }
 
@@ -433,7 +433,7 @@ impl Store for AuthStore {
             self.mail_stash
                 .connection()
                 .await?
-                .tx(async |tx| CoreAccount::delete_by_id(id.to_owned(), tx).await)
+                .write_tx(async |tx| CoreAccount::delete_by_id(id.to_owned(), tx).await)
                 .await?;
         }
 

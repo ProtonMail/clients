@@ -51,7 +51,7 @@ async fn test_mail_settings_store_read() {
         hide_sender_images: Default::default(),
     };
     tether
-        .tx::<_, _, StashError>(async |tx| settings.save(tx).await)
+        .write_tx::<_, _, StashError>(async |tx| settings.save(tx).await)
         .await
         .unwrap();
     let db_settings = MailSettings::get(&tether).await.unwrap().unwrap();
@@ -71,7 +71,7 @@ async fn test_mail_settings_updated() {
     };
     // Save once
     tether
-        .tx::<_, _, StashError>(async |tx| settings.save(tx).await)
+        .write_tx::<_, _, StashError>(async |tx| settings.save(tx).await)
         .await
         .unwrap();
 
@@ -84,7 +84,7 @@ async fn test_mail_settings_updated() {
     };
     // Save second time
     tether
-        .tx::<_, _, StashError>(async |tx| settings.save(tx).await)
+        .write_tx::<_, _, StashError>(async |tx| settings.save(tx).await)
         .await
         .unwrap();
 

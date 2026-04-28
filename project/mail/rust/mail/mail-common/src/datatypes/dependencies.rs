@@ -106,7 +106,7 @@ impl DependencyFetcher {
                 })
                 .collect::<HashSet<_>>();
 
-            tx.run_tx(async |tx| {
+            tx.run_write_tx(async |tx| {
                 Label::store_labels_async(tx, missing_labels.clone())
                     .await
                     .context("Failed to store missing labels")?;
@@ -141,7 +141,7 @@ impl DependencyFetcher {
                 let address = api.get_address_by_id(address_id.clone()).await?.address;
                 addresses.push(Address::from(address));
             }
-            tx.run_tx(async |tx| {
+            tx.run_write_tx(async |tx| {
                 for mut address in addresses {
                     address.save(tx).await?;
                 }

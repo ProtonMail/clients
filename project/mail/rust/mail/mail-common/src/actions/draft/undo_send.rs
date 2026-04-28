@@ -20,7 +20,7 @@ use mail_core_common::datatypes::UnixTimestamp;
 use mail_core_common::models::ModelExtension;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
-use mail_stash::stash::Bond;
+use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
 use tracing::{error, info, warn};
 
@@ -71,7 +71,7 @@ impl Handler<UserDb> for UndoSendHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         // Check if message is in sent folder or outbox + sent flag
         info!("Undo send for {:?}", action.id);
@@ -129,7 +129,7 @@ impl Handler<UserDb> for UndoSendHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         let Some(mut message) = Message::find_by_id(action.id, tx).await? else {
             warn!("Message not found: {}", action.id);
@@ -211,7 +211,7 @@ impl Handler<UserDb> for UndoSendHandler {
         _: ActionId,
         _: &mut Self::Action,
         _: &RebaseChangeSet,
-        _: &Bond<'_>,
+        _: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         Ok(())
     }

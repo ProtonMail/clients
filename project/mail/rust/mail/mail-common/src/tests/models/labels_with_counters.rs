@@ -35,7 +35,7 @@ async fn label_with_counters() {
     let mut local_label = Label::from(label.clone());
 
     let local_id = tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             local_label.save(tx).await.unwrap();
 
             ConversationLabelsCount::upsert(

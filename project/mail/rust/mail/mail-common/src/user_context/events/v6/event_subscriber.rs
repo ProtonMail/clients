@@ -66,7 +66,7 @@ impl EventSubscriber<EventManagerContext, MailEventSourceV6> for MailEventV6Subs
             let mut changeset = RebaseChangeSet::default();
             let mut post_event_data = PostEventSyncData::default();
             tether
-                .tx(async |tx| {
+                .write_tx(async |tx| {
                     if let Some(mail_setting) = cache.get_settings_mut() {
                         debug!("Handling mail settings event");
                         mail_setting.save(tx).await?;
@@ -233,7 +233,7 @@ pub async fn refresh_mail(ctx: &MailUserContext) -> Result<(), MailEventSubscrib
     }
 
     tether
-        .sync_tx(move |tx| {
+        .sync_write_tx(move |tx| {
             tx.execute_batch(&formatdoc! {"
                 DELETE from {};
                 DELETE from {};

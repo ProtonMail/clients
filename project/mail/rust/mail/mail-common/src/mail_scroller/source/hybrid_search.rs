@@ -111,7 +111,7 @@ impl HybridSearchScrollerSource {
         let mut tether = ctx.user_stash().connection().await?;
 
         tether
-            .tx(async |tx| SearchScrollData::clear_all_search_data(tx).await)
+            .write_tx(async |tx| SearchScrollData::clear_all_search_data(tx).await)
             .await?;
 
         let Some(remote_label_id) =

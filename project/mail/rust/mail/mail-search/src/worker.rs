@@ -285,7 +285,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
         if !dead_letter_intents.is_empty() {
             let mut tether = self.mail_stash.connection().await?;
             tether
-                .tx::<_, (), StashError>(async |bond| {
+                .write_tx::<_, (), StashError>(async |bond| {
                     for intent in &dead_letter_intents {
                         intent.delete(bond).await?;
                     }
@@ -328,7 +328,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
                 // Success - delete the intent (content_hash was already saved to separate table in index_message)
                 let mut tether = self.mail_stash.connection().await?;
                 tether
-                    .tx::<_, (), StashError>(async |bond| {
+                    .write_tx::<_, (), StashError>(async |bond| {
                         intent.delete(bond).await?;
                         debug!(
                             "Deleted intent: {} for message {}",
@@ -353,7 +353,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
                         );
                         let mut tether = self.mail_stash.connection().await?;
                         tether
-                            .tx::<_, (), StashError>(async |bond| {
+                            .write_tx::<_, (), StashError>(async |bond| {
                                 intent.defer(bond, DEFER_DELAY_SECONDS).await
                             })
                             .await?;
@@ -368,7 +368,9 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
                         let mut intent = intent;
                         let mut tether = self.mail_stash.connection().await?;
                         tether
-                            .tx::<_, (), StashError>(async |bond| intent.mark_failed(bond).await)
+                            .write_tx::<_, (), StashError>(async |bond| {
+                                intent.mark_failed(bond).await
+                            })
                             .await?;
                     }
                 }
@@ -667,7 +669,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
             let to_delete = std::mem::take(&mut intents_to_delete);
             let mut tether = self.mail_stash.connection().await?;
             tether
-                .tx::<_, (), StashError>(async |bond| {
+                .write_tx::<_, (), StashError>(async |bond| {
                     for intent in &to_delete {
                         intent.delete(bond).await?;
                     }
@@ -680,7 +682,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
         if !intents_to_defer.is_empty() {
             let mut tether = self.mail_stash.connection().await?;
             tether
-                .tx::<_, (), StashError>(async |bond| {
+                .write_tx::<_, (), StashError>(async |bond| {
                     for intent in &intents_to_defer {
                         intent.defer(bond, DEFER_DELAY_SECONDS).await?;
                     }
@@ -738,7 +740,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
                 let cleanup_start = Instant::now();
                 let mut tether = self.mail_stash.connection().await?;
                 tether
-                    .tx::<_, (), StashError>(async |bond| {
+                    .write_tx::<_, (), StashError>(async |bond| {
                         for (intent, _, _, _, content_hash) in &messages_to_index {
                             // Save content hash to separate table before deleting intent
                             // This persists the hash even after intent deletion, enabling
@@ -784,7 +786,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
                 );
                 let mut tether = self.mail_stash.connection().await?;
                 tether
-                    .tx::<_, (), StashError>(async |bond| {
+                    .write_tx::<_, (), StashError>(async |bond| {
                         for (mut intent, _, _, _, _) in messages_to_index {
                             intent.mark_failed(bond).await?;
                         }
@@ -834,7 +836,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
                 // This persists the hash even after intent deletion, enabling future duplicate detection
                 let mut tether = self.mail_stash.connection().await?;
                 tether
-                    .tx::<_, (), StashError>(async |bond| {
+                    .write_tx::<_, (), StashError>(async |bond| {
                         SearchIndexIntent::save_content_hash(message_id, &content_hash, bond).await
                     })
                     .await?;
@@ -849,7 +851,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
             PrepareIndexResult::Skip => {
                 let mut tether = self.mail_stash.connection().await?;
                 tether
-                    .tx::<_, (), StashError>(async |bond| {
+                    .write_tx::<_, (), StashError>(async |bond| {
                         SearchIndexIntent {
                             message_id,
                             operation: SearchOperation::Index,
@@ -866,7 +868,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
                 // Delete intent since content hasn't changed
                 let mut tether = self.mail_stash.connection().await?;
                 tether
-                    .tx::<_, (), StashError>(async |bond| {
+                    .write_tx::<_, (), StashError>(async |bond| {
                         SearchIndexIntent {
                             message_id,
                             operation: SearchOperation::Index,
@@ -907,7 +909,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
         // Delete content hash when message is removed from index
         let mut tether = self.mail_stash.connection().await?;
         tether
-            .tx::<_, (), StashError>(async |bond| {
+            .write_tx::<_, (), StashError>(async |bond| {
                 SearchIndexIntent::delete_content_hash(message_id, bond).await
             })
             .await?;

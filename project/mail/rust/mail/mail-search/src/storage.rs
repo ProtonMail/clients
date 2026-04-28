@@ -86,7 +86,7 @@ impl StashBlobStorage {
         let timestamp = chrono::Utc::now().timestamp();
         let count = blobs.len();
         tether
-            .tx::<_, (), SE>(async |bond| {
+            .write_tx::<_, (), SE>(async |bond| {
                 for (name, data) in blobs {
                     let stored = compress_gzip(&data)
                         .map_err(|e| mail_stash::stash::StashError::Custom(anyhow::anyhow!("{e}")))?;
@@ -167,7 +167,7 @@ impl BlobStorage for StashBlobStorage {
             .map_err(|e| SearchError::BlobStorage(format!("Failed to get connection: {e}")))?;
 
         tether
-            .tx::<_, (), SE>(async |bond| {
+            .write_tx::<_, (), SE>(async |bond| {
                 bond.execute(
                     "INSERT OR REPLACE INTO search_index_blobs (blob_name, blob_data, updated_at)
                      VALUES (?1, ?2, ?3)",
@@ -199,7 +199,7 @@ impl BlobStorage for StashBlobStorage {
             .map_err(|e| SearchError::BlobStorage(format!("Failed to get connection: {e}")))?;
 
         let deleted = tether
-            .tx::<_, bool, SE>(async |bond| {
+            .write_tx::<_, bool, SE>(async |bond| {
                 let rows = bond
                     .execute(
                         "DELETE FROM search_index_blobs WHERE blob_name = ?1",
@@ -228,7 +228,7 @@ impl BlobStorage for StashBlobStorage {
             .map_err(|e| SearchError::BlobStorage(format!("Failed to get connection: {e}")))?;
 
         let deleted_count = tether
-            .tx::<_, usize, SE>(async |bond| {
+            .write_tx::<_, usize, SE>(async |bond| {
                 let count = bond
                     .execute("DELETE FROM search_index_blobs", vec![])
                     .await?;

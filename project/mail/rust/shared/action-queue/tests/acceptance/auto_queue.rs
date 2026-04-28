@@ -9,7 +9,7 @@ use mail_action_queue::queue::{
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_action_queue::tests::common::TestDb;
-use mail_stash::stash::Bond;
+use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use tokio::time::sleep;
@@ -258,7 +258,7 @@ impl Handler<TestDb> for SuccessActionHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: &Bond<'_, TestDb>,
+        _: &WriteTx<'_, TestDb>,
     ) -> Result<(), <Self::Action as Action<TestDb>>::Error> {
         Ok(())
     }
@@ -267,7 +267,7 @@ impl Handler<TestDb> for SuccessActionHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: &Bond<'_, TestDb>,
+        _: &WriteTx<'_, TestDb>,
     ) -> Result<(), <Self::Action as Action<TestDb>>::Error> {
         panic!("should not be called");
     }
@@ -289,7 +289,7 @@ impl Handler<TestDb> for SuccessActionHandler {
         _: ActionId,
         _: &mut Self::Action,
         _: &RebaseChangeSet,
-        _: &Bond<'_, TestDb>,
+        _: &WriteTx<'_, TestDb>,
     ) -> Result<(), <Self::Action as Action<TestDb>>::Error> {
         Ok(())
     }
@@ -319,7 +319,7 @@ impl Handler<TestDb> for ErrorActionHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: &Bond<'_, TestDb>,
+        _: &WriteTx<'_, TestDb>,
     ) -> Result<(), <Self::Action as Action<TestDb>>::Error> {
         Ok(())
     }
@@ -328,7 +328,7 @@ impl Handler<TestDb> for ErrorActionHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: &Bond<'_, TestDb>,
+        _: &WriteTx<'_, TestDb>,
     ) -> Result<(), <Self::Action as Action<TestDb>>::Error> {
         panic!("should not be called");
     }
@@ -349,7 +349,7 @@ impl Handler<TestDb> for ErrorActionHandler {
         _: ActionId,
         _: &mut Self::Action,
         _: &RebaseChangeSet,
-        _: &Bond<'_, TestDb>,
+        _: &WriteTx<'_, TestDb>,
     ) -> Result<(), <Self::Action as Action<TestDb>>::Error> {
         Ok(())
     }
@@ -378,7 +378,7 @@ impl Handler<TestDb> for WriterGuardExpiredActionHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: &Bond<'_, TestDb>,
+        _: &WriteTx<'_, TestDb>,
     ) -> Result<(), <Self::Action as Action<TestDb>>::Error> {
         Ok(())
     }
@@ -387,7 +387,7 @@ impl Handler<TestDb> for WriterGuardExpiredActionHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: &Bond<'_, TestDb>,
+        _: &WriteTx<'_, TestDb>,
     ) -> Result<(), <Self::Action as Action<TestDb>>::Error> {
         panic!("should not be called");
     }
@@ -408,7 +408,7 @@ impl Handler<TestDb> for WriterGuardExpiredActionHandler {
         _: ActionId,
         _: &mut Self::Action,
         _: &RebaseChangeSet,
-        _: &Bond<'_, TestDb>,
+        _: &WriteTx<'_, TestDb>,
     ) -> Result<(), <Self::Action as Action<TestDb>>::Error> {
         Ok(())
     }

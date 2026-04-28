@@ -50,7 +50,7 @@ use mail_crypto_inbox::proton_crypto_account::keys::{
 };
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
-use mail_stash::stash::{Bond, StashError};
+use mail_stash::stash::{StashError, WriteTx};
 use proton_crypto_account::contacts::{ContactCardType, EncryptableAndSignableCard};
 use proton_crypto_account::keys::{ArmoredPrivateKey, EncryptedKeyToken, KeyTokenSignature};
 use proton_crypto_account::proton_crypto::new_pgp_provider;
@@ -824,7 +824,7 @@ async fn cancel_schedule_send_on_non_scheduled_message() {
     let mut tether = user_ctx.user_stash().connection().await.unwrap();
 
     let message = tether
-        .tx::<_, _, MailContextError>(async |tx: &Bond<'_>| {
+        .write_tx::<_, _, MailContextError>(async |tx: &WriteTx<'_>| {
             let mut message = Message::from_api_metadata(message.metadata, tx).await?;
             message.save(tx).await?;
             Ok(message)
@@ -975,7 +975,7 @@ async fn cancel_schedule_send_after_api_request_succeeded() {
     let mut tether = user_ctx.user_stash().connection().await.unwrap();
 
     let message = tether
-        .tx::<_, _, MailContextError>(async |tx: &Bond<'_>| {
+        .write_tx::<_, _, MailContextError>(async |tx: &WriteTx<'_>| {
             let mut message = Message::from_api_metadata(api_message.metadata, tx).await?;
             message.save(tx).await?;
             Ok(message)
@@ -1031,7 +1031,7 @@ async fn cancel_schedule_send_on_already_sent_message() {
     let mut tether = user_ctx.user_stash().connection().await.unwrap();
 
     let message = tether
-        .tx::<_, _, MailContextError>(async |tx: &Bond<'_>| {
+        .write_tx::<_, _, MailContextError>(async |tx: &WriteTx<'_>| {
             let mut message = Message::from_api_metadata(api_message.metadata, tx).await?;
             message.save(tx).await?;
             Ok(message)
@@ -1852,7 +1852,7 @@ async fn send_external_with_password_even_if_contact_has_pgp_mime_encryption() {
         .await;
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             let mut contact = Contact::from(api_contact.clone());
             contact.save(tx).await?;
             for email in &mut contact.contact_emails {

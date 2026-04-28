@@ -14,7 +14,7 @@ use mail_core_common::datatypes::LocalLabelId;
 use mail_core_common::models::Label;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
-use mail_stash::stash::Bond;
+use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, info};
 
@@ -75,7 +75,7 @@ impl Handler<UserDb> for ExpandHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         let mut label = Label::load(action.local_id, tx)
             .await?
@@ -116,7 +116,7 @@ impl Handler<UserDb> for ExpandHandler {
         &self,
         id: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         let Some(original_state) = action
             .original_state
@@ -193,7 +193,7 @@ impl Handler<UserDb> for ExpandHandler {
         this_id: ActionId,
         action: &mut Self::Action,
         _: &RebaseChangeSet,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         //TODO(ET-5183): Test me!
         self.apply_local(this_id, action, tx).await?;

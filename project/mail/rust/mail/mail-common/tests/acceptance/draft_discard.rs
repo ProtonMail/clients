@@ -438,7 +438,7 @@ async fn discard_reply_draft_after_cancelled_or_failed_save_action_only_deletes_
             .unwrap();
 
     tether
-        .tx(async |tx| existing_message.save(tx).await)
+        .write_tx(async |tx| existing_message.save(tx).await)
         .await
         .unwrap();
 
@@ -543,7 +543,7 @@ async fn delete_reply_draft_after_cancelled_or_failed_save_action_only_deletes_m
             .unwrap();
 
     tether
-        .tx(async |tx| existing_message.save(tx).await)
+        .write_tx(async |tx| existing_message.save(tx).await)
         .await
         .unwrap();
 

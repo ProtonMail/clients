@@ -2,7 +2,7 @@ use mail_stash::{
     AccountDb,
     macros::Model,
     orm::Model,
-    stash::{Bond, StashError, Tether},
+    stash::{StashError, Tether, WriteTx},
 };
 use smart_default::SmartDefault;
 
@@ -31,7 +31,7 @@ impl FeatureFlag {
         Self::find_by_id(name.into(), tether).await
     }
 
-    pub async fn save_all(new: Vec<Self>, tx: &Bond<'_, AccountDb>) -> Result<(), StashError> {
+    pub async fn save_all(new: Vec<Self>, tx: &WriteTx<'_, AccountDb>) -> Result<(), StashError> {
         for mut flag in new {
             Self::save(&mut flag, tx).await?;
         }

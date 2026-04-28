@@ -80,7 +80,9 @@ async fn action_store_and_retrieve() {
     let mut conn = mail_stash.connection().await.unwrap();
     let mut stored = StoredAction::new::<TestAction>(&state, Metadata::default()).unwrap();
 
-    conn.tx(async |tx| stored.save(tx).await).await.unwrap();
+    conn.write_tx(async |tx| stored.save(tx).await)
+        .await
+        .unwrap();
 
     let first_action_id = stored.id.unwrap();
 
@@ -93,7 +95,9 @@ async fn action_store_and_retrieve() {
 
     let mut stored = StoredAction::new::<TestAction>(&state, metadata.clone()).unwrap();
 
-    conn.tx(async |tx| stored.save(tx).await).await.unwrap();
+    conn.write_tx(async |tx| stored.save(tx).await)
+        .await
+        .unwrap();
 
     let id = stored.id.unwrap();
     let db_action = StoredAction::load(id, &conn).await.unwrap().unwrap();
@@ -101,7 +105,7 @@ async fn action_store_and_retrieve() {
     assert_eq!(stored, db_action);
 
     // delete action should delete both actions
-    conn.tx(async |tx| StoredAction::delete(tx, first_action_id).await)
+    conn.write_tx(async |tx| StoredAction::delete(tx, first_action_id).await)
         .await
         .unwrap();
 
@@ -133,7 +137,9 @@ async fn action_store_with_non_existent_action_dependency_is_accepted() {
 
     let mut stored = StoredAction::new::<TestAction>(&state, metadata.clone()).unwrap();
 
-    conn.tx(async |tx| stored.save(tx).await).await.unwrap();
+    conn.write_tx(async |tx| stored.save(tx).await)
+        .await
+        .unwrap();
 }
 
 #[tokio::test]
@@ -149,7 +155,7 @@ async fn action_execution_lock() {
     let mut stored = StoredAction::new::<TestAction>(&state, Metadata::default()).unwrap();
 
     let (first_action_id, second_action_id, third_action_id) = conn
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             stored.save(tx).await.unwrap();
 
             let first_action_id = stored.id.unwrap();
@@ -177,7 +183,7 @@ async fn action_execution_lock() {
         .await
         .unwrap();
 
-    conn.tx::<_, _, StashError>(async |tx: &Bond<'_, TestDb>| {
+    conn.write_tx::<_, _, StashError>(async |tx: &WriteTx<'_, TestDb>| {
         let next_action = StoredAction::next(ActionGroup::default().as_ref(), tx)
             .await
             .unwrap()
@@ -285,7 +291,7 @@ async fn leftover_execution_lock() {
     let mut stored1 = StoredAction::new::<TestAction>(&state, Metadata::default()).unwrap();
     let mut stored2 = StoredAction::new::<TestAction>(&state, Metadata::default()).unwrap();
 
-    conn.tx::<_, _, StashError>(async |tx| {
+    conn.write_tx::<_, _, StashError>(async |tx| {
         stored1.save(tx).await?;
         stored2.save(tx).await?;
         // Simulate locking and never releasing.
@@ -325,9 +331,11 @@ async fn action_execution_group_selection() {
     let mut conn = mail_stash.connection().await.unwrap();
     let mut stored = StoredAction::new::<TestAction>(&state, Metadata::default()).unwrap();
 
-    conn.tx(async |tx| stored.save(tx).await).await.unwrap();
+    conn.write_tx(async |tx| stored.save(tx).await)
+        .await
+        .unwrap();
 
-    conn.tx::<_, _, StashError>(async |tx| {
+    conn.write_tx::<_, _, StashError>(async |tx| {
         // Action has default group, so it should show up.
         let action = StoredAction::next(ActionGroup::default().as_ref(), tx)
             .await
@@ -374,7 +382,9 @@ async fn action_replace_or_queue() {
     let mut conn = mail_stash.connection().await.unwrap();
     let mut stored = StoredAction::new::<TestAction>(&state, Metadata::default()).unwrap();
 
-    conn.tx(async |tx| stored.save(tx).await).await.unwrap();
+    conn.write_tx(async |tx| stored.save(tx).await)
+        .await
+        .unwrap();
 
     let first_action_id = stored.id.unwrap();
 
@@ -387,7 +397,7 @@ async fn action_replace_or_queue() {
 
     // Simulate same action update.
     let mut updated = StoredAction::new::<TestAction>(&state, metadata.clone()).unwrap();
-    conn.tx(async |tx| updated.create_or_update(first_action_id, tx).await)
+    conn.write_tx(async |tx| updated.create_or_update(first_action_id, tx).await)
         .await
         .unwrap();
     assert_eq!(stored.id(), updated.id());
@@ -402,7 +412,7 @@ async fn action_replace_or_queue() {
     // Simulate update with different type
     let mut updated = StoredAction::new::<TestAction>(&state, metadata.clone()).unwrap();
     updated.action_type = "unknown_action_type".to_owned();
-    conn.tx(async |tx| updated.create_or_update(first_action_id, tx).await)
+    conn.write_tx(async |tx| updated.create_or_update(first_action_id, tx).await)
         .await
         .unwrap();
     assert_ne!(stored.id, updated.id);
@@ -448,7 +458,9 @@ async fn action_store_records_all_dependencies() {
     // Create first action, which registers the first dependency key
     let mut stored =
         StoredAction::new::<TestAction>(&create_direct_key_action, Metadata::default()).unwrap();
-    conn.tx(async |tx| stored.save(tx).await).await.unwrap();
+    conn.write_tx(async |tx| stored.save(tx).await)
+        .await
+        .unwrap();
 
     let first_action_id = stored.id.unwrap();
 
@@ -468,7 +480,9 @@ async fn action_store_records_all_dependencies() {
     // not exist.
     let mut stored =
         StoredAction::new::<TestAction>(&use_direct_key_action, Metadata::default()).unwrap();
-    conn.tx(async |tx| stored.save(tx).await).await.unwrap();
+    conn.write_tx(async |tx| stored.save(tx).await)
+        .await
+        .unwrap();
 
     let second_action_id = stored.id.unwrap();
 
@@ -489,7 +503,9 @@ async fn action_store_records_all_dependencies() {
     // any keys.
     let mut stored =
         StoredAction::new::<TestAction>(&use_sequential_key_action, Metadata::default()).unwrap();
-    conn.tx(async |tx| stored.save(tx).await).await.unwrap();
+    conn.write_tx(async |tx| stored.save(tx).await)
+        .await
+        .unwrap();
 
     let third_action_id = stored.id.unwrap();
 
@@ -545,7 +561,7 @@ async fn clear_all_actions_in_chosen_action_group() {
     let mut stored_share_2 = StoredAction::new::<TestAction>(&state, metadata).unwrap();
 
     // Save all actions in a single transaction.
-    conn.tx::<_, _, StashError>(async |tx| {
+    conn.write_tx::<_, _, StashError>(async |tx| {
         stored_default_1.save(tx).await?;
         stored_default_2.save(tx).await?;
         stored_share_1.save(tx).await?;
@@ -560,7 +576,7 @@ async fn clear_all_actions_in_chosen_action_group() {
     assert_eq!(total, 4);
 
     // Delete only the share extension group.
-    conn.tx::<_, _, StashError>(async |tx| {
+    conn.write_tx::<_, _, StashError>(async |tx| {
         StoredAction::delete_all_in_group(tx, share_group.clone()).await?;
         Ok(())
     })
@@ -573,14 +589,14 @@ async fn clear_all_actions_in_chosen_action_group() {
 
     // The share extension group should have no actions.
     let action_in_share_group = conn
-        .tx::<_, _, StashError>(async |tx| StoredAction::next(share_group.as_ref(), tx).await)
+        .write_tx::<_, _, StashError>(async |tx| StoredAction::next(share_group.as_ref(), tx).await)
         .await
         .unwrap();
     assert!(action_in_share_group.is_none());
 
     // Default group should still have at least one action.
     let action_in_default = conn
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             StoredAction::next(ActionGroup::default().as_ref(), tx).await
         })
         .await
@@ -629,7 +645,7 @@ async fn rebase_action_id_order() {
     let mut stored_other = StoredAction::new::<TestAction>(&state, metadata.clone()).unwrap();
 
     // Save all actions in a single transaction.
-    conn.tx::<_, _, StashError>(async |tx| {
+    conn.write_tx::<_, _, StashError>(async |tx| {
         stored_default_1.save(tx).await?;
         stored_default_2.save(tx).await?;
         stored_default_3.save(tx).await?;
@@ -645,7 +661,7 @@ async fn rebase_action_id_order() {
 
     // Delete only the share extension group.
     let rebase_order = conn
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             StoredAction::rebase_action_order(TestAction::GROUP.as_ref(), tx).await
         })
         .await

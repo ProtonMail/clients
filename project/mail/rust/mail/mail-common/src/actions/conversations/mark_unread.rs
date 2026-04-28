@@ -16,7 +16,7 @@ use mail_core_common::datatypes::LocalLabelId;
 use mail_core_common::models::ModelIdExtension;
 use mail_stash::UserDb;
 use mail_stash::exports::Transaction;
-use mail_stash::stash::{Bond, RunTransaction};
+use mail_stash::stash::{RunTransaction, WriteTx};
 use serde::{Deserialize, Serialize};
 use tracing::error;
 
@@ -56,7 +56,7 @@ impl Handler<UserDb> for MarkUnreadHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         let label_id = action.0.label_id;
         action
@@ -72,7 +72,7 @@ impl Handler<UserDb> for MarkUnreadHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         let modified_message_ids = action.0.modified_message_ids();
         Message::mark_read_async(modified_message_ids, tx).await?;
@@ -109,7 +109,7 @@ impl Handler<UserDb> for MarkUnreadHandler {
         if !failed_ids.is_empty() {
             error!("Mark unread operation failed for: {:?}", failed_ids);
             guard
-                .run_tx_sync(move |tx: &Transaction<'_>| {
+                .run_write_tx_sync(move |tx: &Transaction<'_>| {
                     GenericActionData::<Conversation>::mark_rollback_sync(
                         &failed_ids,
                         RollbackItemType::Conversation,
@@ -131,7 +131,7 @@ impl Handler<UserDb> for MarkUnreadHandler {
         _: ActionId,
         action: &mut Self::Action,
         changeset: &RebaseChangeSet,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         let label_id = action.0.label_id;
         action

@@ -60,7 +60,7 @@ impl TrackerService {
         if MessageUtmLink::load(message_id, &tether).await?.is_none() {
             tracing::info!("Storing UTM info ({}) in cache", utm_stripped.len());
             tether
-                .tx(async |tx| {
+                .write_tx(async |tx| {
                     MessageUtmLink {
                         local_message_id: message_id,
                     }
@@ -122,7 +122,7 @@ impl TrackerService {
         tracing::info!("Found {} trackers", found_trackers.len());
 
         tether
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 MessageTracker {
                     local_message_id: message_id,
                     last_checked_at: now,

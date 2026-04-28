@@ -11,7 +11,7 @@ use mail_core_common::db::migrations::migrate_core_db;
 use mail_core_common::models::{Address, Label, ModelExtension};
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
-use mail_stash::stash::{Bond, Stash, StashConfiguration, StashError};
+use mail_stash::stash::{Stash, StashConfiguration, StashError, WriteTx};
 use std::string::ToString;
 use tempfile::TempDir;
 use uuid::Uuid;
@@ -41,7 +41,7 @@ pub fn current_benchmark(c: &mut Criterion) {
             runtime.block_on(async {
                 let mut tether = mail_stash.connection().await.unwrap();
                 tether
-                    .tx::<_, _, StashError>(async |tx| {
+                    .write_tx::<_, _, StashError>(async |tx| {
                         create_messages(tx, label_id.clone(), address_id.clone(), 100).await;
                         Ok(())
                     })
@@ -99,7 +99,7 @@ async fn setup_db(mail_stash: &Stash<UserDb>) -> (LabelId, AddressId) {
     let mut tether = mail_stash.connection().await.unwrap();
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             let mut address = Address {
                 local_id: None,
                 remote_id: Some(address_id.clone()),
@@ -146,7 +146,7 @@ async fn setup_db(mail_stash: &Stash<UserDb>) -> (LabelId, AddressId) {
 }
 
 async fn create_messages(
-    tx: &Bond<'_>,
+    tx: &WriteTx<'_>,
     label_id: LabelId,
     address_id: AddressId,
     message_count: usize,
@@ -161,7 +161,7 @@ async fn setup_and_create_messages(mail_stash: &Stash<UserDb>, message_count: us
     let (label_id, address_id) = setup_db(mail_stash).await;
     let mut tether = mail_stash.connection().await.unwrap();
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             for order in 0..message_count {
                 new_message_random_message(tx, address_id.clone(), label_id.clone(), order + 1)
                     .await;
@@ -173,7 +173,7 @@ async fn setup_and_create_messages(mail_stash: &Stash<UserDb>, message_count: us
 }
 
 async fn new_message_random_message(
-    tx: &Bond<'_>,
+    tx: &WriteTx<'_>,
     address_id: AddressId,
     label_id: LabelId,
     order: usize,

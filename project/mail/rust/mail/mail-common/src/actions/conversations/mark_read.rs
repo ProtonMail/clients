@@ -14,7 +14,7 @@ use mail_core_api::session::Session;
 use mail_core_common::datatypes::LocalLabelId;
 use mail_core_common::models::ModelIdExtension;
 use mail_stash::UserDb;
-use mail_stash::stash::Bond;
+use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
 use tracing::error;
 
@@ -59,7 +59,7 @@ impl Handler<UserDb> for MarkReadHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         let conversations =
             Conversation::find_by_ids(action.data.data.target_ids.clone(), tx).await?;
@@ -81,7 +81,7 @@ impl Handler<UserDb> for MarkReadHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         if !action.snooze_remind_ids.is_empty() {
             Conversation::set_display_snooze_reminder(&action.snooze_remind_ids, tx).await?;
@@ -147,7 +147,7 @@ impl Handler<UserDb> for MarkReadHandler {
         _: ActionId,
         action: &mut Self::Action,
         changeset: &RebaseChangeSet,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         action
             .data

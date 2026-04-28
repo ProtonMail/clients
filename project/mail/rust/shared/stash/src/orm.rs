@@ -14,7 +14,7 @@
 
 use crate::marker::DatabaseMarker;
 use crate::params;
-use crate::stash::{Bond, StashError, StashResult, Tether};
+use crate::stash::{StashError, StashResult, Tether, WriteTx};
 use crate::utils::ConnectionExt;
 use core::any::Any;
 use core::fmt::{Debug, Display};
@@ -468,7 +468,7 @@ where
         Ok(())
     }
 
-    async fn save(&mut self, bond: &Bond<'_, Self::Database>) -> Result<(), StashError> {
+    async fn save(&mut self, bond: &WriteTx<'_, Self::Database>) -> Result<(), StashError> {
         let mut this = self.clone();
         *self = bond
             .sync_bridge(move |tx| {
@@ -479,7 +479,7 @@ where
         Ok(())
     }
 
-    async fn update(&mut self, bond: &Bond<'_, Self::Database>) -> Result<(), StashError> {
+    async fn update(&mut self, bond: &WriteTx<'_, Self::Database>) -> Result<(), StashError> {
         let mut this = self.clone();
         *self = bond
             .sync_bridge(move |tx| {
@@ -491,7 +491,7 @@ where
     }
 
     /// Forcefully insert, even if it has the ID set.
-    async fn insert(&mut self, bond: &Bond<'_, Self::Database>) -> Result<(), StashError> {
+    async fn insert(&mut self, bond: &WriteTx<'_, Self::Database>) -> Result<(), StashError> {
         let mut this = self.clone();
         *self = bond
             .sync_bridge(move |tx| {

@@ -13,7 +13,7 @@ use mail_core_common::models::{ModelExtension, Role};
 use mail_core_common::models::{PaidSubscription, User};
 use mail_core_common::test_utils::users::DEFAULT_USER;
 use mail_stash::orm::Model;
-use mail_stash::stash::{Bond, StashError};
+use mail_stash::stash::{StashError, WriteTx};
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, ResponseTemplate};
 
@@ -75,7 +75,7 @@ async fn paid_user_not_eligible() {
     let user_stash = user_ctx.user_stash();
     let mut tether = user_stash.connection().await.unwrap();
     tether
-        .tx(async |tx| save_subscription(&user_ctx, PaidSubscription::MAIL, tx).await)
+        .write_tx(async |tx| save_subscription(&user_ctx, PaidSubscription::MAIL, tx).await)
         .await
         .unwrap();
 
@@ -98,7 +98,7 @@ async fn paid_user_other_services_not_eligible() {
     let user_stash = user_ctx.user_stash();
     let mut tether = user_stash.connection().await.unwrap();
     tether
-        .tx(async |tx| save_subscription(&user_ctx, PaidSubscription::VPN, tx).await)
+        .write_tx(async |tx| save_subscription(&user_ctx, PaidSubscription::VPN, tx).await)
         .await
         .unwrap();
 
@@ -119,7 +119,7 @@ async fn member_role_not_eligible() {
     let user_stash = user_ctx.user_stash();
     let mut tether = user_stash.connection().await.unwrap();
     tether
-        .tx(async |tx| save_role(&user_ctx, Role::Member, tx).await)
+        .write_tx(async |tx| save_role(&user_ctx, Role::Member, tx).await)
         .await
         .unwrap();
 
@@ -131,14 +131,14 @@ async fn member_role_not_eligible() {
 async fn save_subscription(
     ctx: &MailUserContext,
     subscription: PaidSubscription,
-    tx: &Bond<'_>,
+    tx: &WriteTx<'_>,
 ) -> Result<(), StashError> {
     let mut user = User::find_by_id(ctx.user_id().clone(), tx).await?.unwrap();
     user.subscribed = subscription;
     user.save(tx).await
 }
 
-async fn save_role(ctx: &MailUserContext, role: Role, tx: &Bond<'_>) -> Result<(), StashError> {
+async fn save_role(ctx: &MailUserContext, role: Role, tx: &WriteTx<'_>) -> Result<(), StashError> {
     let mut user = User::find_by_id(ctx.user_id().clone(), tx).await?.unwrap();
     user.role = role;
     user.save(tx).await

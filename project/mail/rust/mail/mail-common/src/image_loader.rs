@@ -375,7 +375,7 @@ mod tests {
         let mut tether = uctx.user_stash().connection().await.unwrap();
 
         tether
-            .tx(async |bond| {
+            .write_tx(async |bond| {
                 MailSettings {
                     image_proxy: case.given_cfg,
                     ..MailSettings::get_or_default(bond).await

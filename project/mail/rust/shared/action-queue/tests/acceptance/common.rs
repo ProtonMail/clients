@@ -4,7 +4,7 @@ pub use mail_action_queue::tests::common::DefaultError;
 use mail_action_queue::tests::common::TestDb;
 use mail_stash::exports::SqliteError;
 use mail_stash::params;
-use mail_stash::stash::{Bond, Stash, StashConfiguration, StashError, Tether};
+use mail_stash::stash::{Stash, StashConfiguration, StashError, Tether, WriteTx};
 
 pub async fn new_queue(factory: Factory<TestDb>) -> Queue<TestDb> {
     Queue::with_factory(new_stash().await, factory)
@@ -23,7 +23,7 @@ pub async fn new_stash() -> Stash<TestDb> {
     let mail_stash = Stash::new(StashConfiguration::test()).unwrap();
     let mut conn = mail_stash.connection().await.unwrap();
 
-    conn.tx(async |tx| tx.ext_create_table().await)
+    conn.write_tx(async |tx| tx.ext_create_table().await)
         .await
         .unwrap();
 
@@ -75,7 +75,7 @@ impl TestReadExtension for Tether<TestDb> {
     }
 }
 
-impl TestReadExtension for Bond<'_, TestDb> {
+impl TestReadExtension for WriteTx<'_, TestDb> {
     async fn ext_get_value(&self, key: &str) -> Result<Option<u32>, StashError> {
         match self
             .query_value::<_, u32>(
@@ -99,7 +99,7 @@ impl TestReadExtension for Bond<'_, TestDb> {
     }
 }
 
-impl TestWriteExtension for Bond<'_, TestDb> {
+impl TestWriteExtension for WriteTx<'_, TestDb> {
     async fn ext_create_table(&self) -> Result<(), StashError> {
         self.execute(
             "CREATE TABLE ext (key TEXT PRIMARY KEY, value INTEGER NOT NULL)",

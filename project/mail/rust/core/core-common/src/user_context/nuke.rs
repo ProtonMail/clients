@@ -26,7 +26,7 @@ pub async fn drop_database_tables(mut tether: Tether) -> Result<(), StashError> 
         .await?;
 
     let result = tether
-        .tx(async |tx| -> Result<(), StashError> {
+        .write_tx(async |tx| -> Result<(), StashError> {
             for table in tables {
                 if DB_SYSTEM_TABLES.contains(&table.as_str()) {
                     continue;

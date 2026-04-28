@@ -34,7 +34,7 @@ pub struct TestDBStateMap {
 
 pub async fn prepare_db_state_core(tether: &mut Tether, env: &mut [Address]) {
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             for address in env.iter_mut() {
                 address.save(tx).await.unwrap();
             }
@@ -61,7 +61,7 @@ pub async fn prepare_and_patch_db_state_and_skip(
         ..Default::default()
     };
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             // create labels
             let mut local_label_ids = vec![];
             for label in &mut env.labels {
@@ -202,7 +202,7 @@ pub async fn prepare_and_patch_db_state_and_skip(
     }
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             // create conversations
             let local_conversation_ids =
                 Conversation::create_or_update_conversations(env.conversations.clone(), tx)
@@ -358,7 +358,7 @@ pub async fn msg_counts_as_map(tether: &Tether) -> BTreeMap<LocalLabelId, Messag
 pub async fn create_address(tether: &mut Tether) -> Address {
     let mut address = test_address();
     tether
-        .tx::<_, _, StashError>(async |tx| address.save(tx).await)
+        .write_tx::<_, _, StashError>(async |tx| address.save(tx).await)
         .await
         .unwrap();
     address

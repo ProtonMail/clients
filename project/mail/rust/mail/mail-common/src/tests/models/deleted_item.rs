@@ -18,7 +18,7 @@ async fn test_deleted_item_save() {
     let mut tether = mail_stash.connection().await.unwrap();
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             let mut item = DeletedItem::new("msg_123".to_string(), DeletedItemType::Message);
             item.save(tx).await.unwrap();
 
@@ -47,7 +47,7 @@ async fn test_deleted_item_save_duplicate() {
     let mut tether = mail_stash.connection().await.unwrap();
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             // Save the same item twice
             let mut item1 = DeletedItem::new("msg_123".to_string(), DeletedItemType::Message);
             item1.save(tx).await.unwrap();
@@ -79,7 +79,7 @@ async fn test_find_deleted_by_remote_ids(
     let mut tether = mail_stash.connection().await.unwrap();
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             for id in deleted_ids {
                 let mut item = DeletedItem::new(id.to_string(), DeletedItemType::Message);
                 item.save(tx).await.unwrap();
@@ -107,7 +107,7 @@ async fn test_find_deleted_by_remote_ids_different_types() {
     let mut tether = mail_stash.connection().await.unwrap();
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             // Add deleted items of different types with the same ID
             let mut msg = DeletedItem::new("123".to_string(), DeletedItemType::Message);
             msg.save(tx).await.unwrap();
@@ -160,7 +160,7 @@ async fn test_verify_and_cleanup_removes_stale_items() {
     let old_timestamp = now.saturating_sub(90000); // Older than 1 day
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             // Create old item (should be removed)
             let mut old_item = DeletedItem {
                 remote_id: "old_msg".to_string(),
@@ -176,7 +176,7 @@ async fn test_verify_and_cleanup_removes_stale_items() {
 
     // Run cleanup
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             DeletedItem::verify_and_cleanup(tx).await.unwrap();
             Ok(())
         })
@@ -195,7 +195,7 @@ async fn test_verify_and_cleanup_removes_re_added_messages() {
     let address = create_address(&mut tether).await;
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             // Create a deleted item tombstone for a message
             let mut deleted_item =
                 DeletedItem::new("msg_123".to_string(), DeletedItemType::Message);
@@ -227,7 +227,7 @@ async fn test_verify_and_cleanup_removes_re_added_messages() {
 
     // Run cleanup - should delete the message from messages table (tombstone is authoritative)
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             DeletedItem::verify_and_cleanup(tx).await.unwrap();
             Ok(())
         })
@@ -259,7 +259,7 @@ async fn test_verify_and_cleanup_removes_re_added_conversations() {
     let mut tether = mail_stash.connection().await.unwrap();
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             // Create a deleted item tombstone for a conversation
             let mut deleted_item =
                 DeletedItem::new("conv_123".to_string(), DeletedItemType::Conversation);
@@ -285,7 +285,7 @@ async fn test_verify_and_cleanup_removes_re_added_conversations() {
 
     // Run cleanup - should delete the conversation from conversations table (tombstone is authoritative)
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             DeletedItem::verify_and_cleanup(tx).await.unwrap();
             Ok(())
         })
@@ -317,7 +317,7 @@ async fn test_verify_and_cleanup_keeps_valid_tombstones() {
     let mut tether = mail_stash.connection().await.unwrap();
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             // Create a recent deleted item that is NOT in the messages table
             let mut deleted_item =
                 DeletedItem::new("msg_456".to_string(), DeletedItemType::Message);
@@ -330,7 +330,7 @@ async fn test_verify_and_cleanup_keeps_valid_tombstones() {
 
     // Run cleanup - should keep the item since it's recent and not re-added
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             DeletedItem::verify_and_cleanup(tx).await.unwrap();
             Ok(())
         })
@@ -353,7 +353,7 @@ async fn test_verify_and_cleanup_mixed_scenario() {
     let address = create_address(&mut tether).await;
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             // 1. Old deleted item (should be removed - stale)
             let mut old_item = DeletedItem {
                 remote_id: "old_msg".to_string(),
@@ -403,7 +403,7 @@ async fn test_verify_and_cleanup_mixed_scenario() {
 
     // Run cleanup
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             DeletedItem::verify_and_cleanup(tx).await.unwrap();
             Ok(())
         })
@@ -449,7 +449,7 @@ async fn test_conversation_delete_tracks_all_messages() {
     let address = create_address(&mut tether).await;
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             // Create a conversation with 3 messages
             let mut conv = conversation!(remote_id: Some("conv_to_delete".into()));
             conv.save(tx).await.unwrap();
@@ -526,7 +526,7 @@ async fn test_conversation_delete_skips_null_remote_id_messages() {
     let address = create_address(&mut tether).await;
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             // Create a conversation with both synced and local-only messages
             let mut conv = conversation!(remote_id: Some("conv_mixed_messages".into()));
             conv.save(tx).await.unwrap();

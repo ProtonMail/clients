@@ -286,7 +286,7 @@ async fn integration() -> anyhow::Result<()> {
         ..Conversation::test_default()
     };
     let addr = create_address(tether).await;
-    tether.tx(async |tx| conv.save(tx).await).await?;
+    tether.write_tx(async |tx| conv.save(tx).await).await?;
 
     // Evil hack to stop cleanup
     user_ctx
@@ -295,7 +295,7 @@ async fn integration() -> anyhow::Result<()> {
         .store(true, Ordering::SeqCst);
 
     tether
-        .tx::<_, _, MailContextError>(async |tx| {
+        .write_tx::<_, _, MailContextError>(async |tx| {
             for var in comprehensive() {
                 let (mut at_cache, mut at, mut msg) = var.unpack(now);
                 msg.local_conversation_id = conv.local_id;

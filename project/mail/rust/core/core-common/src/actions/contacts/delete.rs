@@ -9,7 +9,7 @@ use mail_action_queue::rebase::RebaseChangeSet;
 use mail_core_api::services::proton::ContactId;
 use mail_core_api::session::Session;
 use mail_stash::UserDb;
-use mail_stash::stash::Bond;
+use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -56,7 +56,7 @@ impl Handler<UserDb> for DeleteHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         let contacts = Contact::find_by_ids(action.local_ids.clone(), tx).await?;
 
@@ -76,7 +76,7 @@ impl Handler<UserDb> for DeleteHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         let contacts = Contact::find_by_ids(action.local_ids.clone(), tx).await?;
 
@@ -122,7 +122,7 @@ impl Handler<UserDb> for DeleteHandler {
         this_id: ActionId,
         action: &mut Self::Action,
         _: &RebaseChangeSet,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         //TODO(ET-5183): Test me!
         self.apply_local(this_id, action, tx).await

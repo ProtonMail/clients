@@ -115,7 +115,7 @@ async fn label_as_without_archive() {
         .unwrap();
 
     let (label1, label2) = tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             let label1 = Label::find_first("WHERE remote_id = ?", params!["selected"], tx)
                 .await
                 .unwrap()
@@ -298,7 +298,7 @@ async fn label_as_with_archive() {
         .unwrap();
 
     let (label1, label2) = tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             let label1 = Label::find_first("WHERE remote_id = ?", params!["selected"], tx)
                 .await
                 .unwrap()
@@ -565,7 +565,7 @@ mod rebase {
 
         // simulate state reset.
         tether
-            .tx(async |tx| original_message.save(tx).await)
+            .write_tx(async |tx| original_message.save(tx).await)
             .await
             .unwrap();
 
@@ -687,7 +687,7 @@ mod rebase {
         };
 
         tether
-            .tx(async |tx| updated_message.save(tx).await)
+            .write_tx(async |tx| updated_message.save(tx).await)
             .await
             .unwrap();
 
@@ -752,7 +752,7 @@ mod rebase {
 
         // simulate state reset.
         tether
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 original_message1.save(tx).await?;
                 original_message2.save(tx).await
             })

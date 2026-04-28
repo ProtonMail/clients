@@ -330,7 +330,7 @@ async fn test_on_refresh_leaves_messages_without_remote_id_untouched() {
     local_msg.remote_id = None;
 
     tether
-        .tx(async |tx| local_msg.save(tx).await)
+        .write_tx(async |tx| local_msg.save(tx).await)
         .await
         .unwrap();
 
@@ -377,7 +377,7 @@ async fn test_on_refresh_leaves_local_draft_messages_untouched() {
         .unwrap();
 
     tether
-        .tx(async |tx| {
+        .write_tx(async |tx| {
             let mut draft = DraftMetadata::empty(tx).await.unwrap();
             draft.local_message_id = msg.local_id;
             draft.local_conversation_id = msg.local_conversation_id;
@@ -431,7 +431,7 @@ async fn test_on_refresh_leaves_local_draft_messages_in_converstation_untouched(
     no_remote_id_msg.remote_id = None;
 
     tether
-        .tx(async |tx| {
+        .write_tx(async |tx| {
             no_remote_id_msg.save(tx).await?;
             let mut draft = DraftMetadata::empty(tx).await.unwrap();
             draft.local_message_id = draft_msg.local_id;
@@ -480,7 +480,7 @@ async fn test_on_refresh_leaves_conversation_without_remote_id_untouched() {
         .unwrap();
     local_conv.remote_id = None;
     tether
-        .tx(async |tx| local_conv.save(tx).await)
+        .write_tx(async |tx| local_conv.save(tx).await)
         .await
         .unwrap();
     assert!(local_conv.remote_id.is_none());

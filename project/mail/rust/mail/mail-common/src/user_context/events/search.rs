@@ -10,7 +10,7 @@
 use crate::AppError;
 use mail_api::services::proton::common::MessageId;
 use mail_core_common::event_loop::events::Action;
-use mail_stash::stash::Bond;
+use mail_stash::stash::WriteTx;
 
 #[cfg(feature = "foundation_search")]
 use crate::search::MailSearchService;
@@ -32,7 +32,7 @@ use crate::search::MailSearchService;
 /// Returns `Ok(())` on success, or an `AppError` if indexing operations fail.
 #[cfg(feature = "foundation_search")]
 pub async fn handle_search_indexing_for_message(
-    tx: &Bond<'_>,
+    tx: &WriteTx<'_>,
     remote_id: &MessageId,
     action: Action,
     local_id: Option<u64>,
@@ -90,7 +90,7 @@ pub async fn handle_search_indexing_for_message(
 /// No-op implementation when foundation_search feature is disabled
 #[cfg(not(feature = "foundation_search"))]
 pub async fn handle_search_indexing_for_message(
-    _tx: &Bond<'_>,
+    _tx: &WriteTx<'_>,
     _remote_id: &MessageId,
     _action: Action,
     _local_id: Option<u64>,

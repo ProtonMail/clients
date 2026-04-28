@@ -16,8 +16,8 @@ use mail_crypto_inbox::proton_crypto::new_pgp_provider;
 use mail_stash::exports::{SqliteError, ToSql};
 use mail_stash::macros::Model;
 use mail_stash::orm::Model as _;
-use mail_stash::stash::{Bond, StashError};
 use mail_stash::stash::{RunTransaction, Tether};
+use mail_stash::stash::{StashError, WriteTx};
 use mail_stash::utils::placeholders_n;
 use mail_stash::{UserDb, params};
 use std::os::unix::fs::MetadataExt as _;
@@ -86,7 +86,7 @@ impl Attachment {
         // While we were downlaoding, did someone win the race?
         // If so return it. Else store it.
         // TODO(orion): Replace this
-        tx.run_tx(async |tx| {
+        tx.run_write_tx(async |tx| {
             if let Some(path) = Self::path_from_cache_and_update_metadata(self.id(), tx).await? {
                 debug!("Someone else won the race");
                 return Ok(path);
@@ -121,7 +121,7 @@ impl Attachment {
         // While we were downlaoding, did someone win the race?
         // If so return it. Else store it.
         // TODO(orion): Replace this
-        tx.run_tx(async |tx| {
+        tx.run_write_tx(async |tx| {
             if let Some(path) = Self::path_from_cache_and_update_metadata(self.id(), tx).await? {
                 return Ok(fs::read(path).await?);
             };
@@ -188,7 +188,7 @@ impl Attachment {
         tx: &mut impl RunTransaction,
     ) -> MailContextResult<Option<PathBuf>> {
         let res = tx
-            .run_tx(async |tx| {
+            .run_write_tx(async |tx| {
                 if let Some(path) = Self::path_from_cache_and_update_metadata(id, tx).await? {
                     return Ok(Some(path));
                 };
@@ -213,7 +213,7 @@ impl Attachment {
     #[tracing::instrument(skip(tx))]
     pub async fn path_from_cache_and_update_metadata(
         id: LocalAttachmentId,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<Option<PathBuf>, StashError> {
         let path = tx
             .query_value::<_, String>(
@@ -268,7 +268,7 @@ impl Attachment {
         name: &str,
         id: LocalAttachmentId,
         data: Vec<u8>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> MailContextResult<PathBuf> {
         tracing::debug!("Storing attachment in cache");
         let (path, path_string) = Self::attachment_cache_file_path(ctx, id, name).await?;
@@ -298,7 +298,7 @@ impl Attachment {
         name: &str,
         id: LocalAttachmentId,
         attachment_path: &Path,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> MailContextResult<PathBuf> {
         let metadata = tokio::fs::metadata(attachment_path).await?;
         let data_size = metadata.size();
@@ -557,7 +557,9 @@ impl Attachment {
             "DELETE FROM attachment_cache WHERE attachment_id IN ({})",
             placeholders_n(ids.len())
         );
-        tether.tx(async |tx| tx.execute(query, ids).await).await?;
+        tether
+            .write_tx(async |tx| tx.execute(query, ids).await)
+            .await?;
 
         Ok(())
     }

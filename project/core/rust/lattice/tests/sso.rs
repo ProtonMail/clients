@@ -1,133 +1,11 @@
 mod common;
 mod common_sso;
 
-use std::num::NonZeroU32;
+use lattice::auth::{LtAuthPasswordMode, LtAuthTwoFactorMethod};
+use lattice::core::user_settings::{LtCoreGetSettingsReq, LtCoreGetSettingsRes};
+use lattice::{LtApiResponseError, LtApiResponseErrorInfo};
 
-use lattice::{
-    LtApiResponseError, LtApiResponseErrorInfo,
-    auth::{LtAuthPasswordMode, LtAuthTwoFactorMethod},
-    core::{
-        LtCoreDomainId, LtCoreDomainVerifyState, LtCoreSsoType,
-        get_domain::{LtCoreGetDomainReq, LtCoreGetDomainRes},
-        get_domains::{LtCoreGetDomainsReq, LtCoreGetDomainsRes},
-        get_members::{LtCoreGetMembersReq, LtCoreGetMembersRes},
-        post_domains::LtCoreDomainOutput,
-        post_saml_setup_fields::{LtCorePostSamlSetupFieldsReq, LtCorePostSamlSetupFieldsRes},
-        user_settings::{LtCoreGetSettingsReq, LtCoreGetSettingsRes},
-    },
-    quark::{
-        payments::subscribed_user_seed::{
-            LtQuarkNewPaymentsSeedSubscribedUser, LtQuarkNewPaymentsSeedSubscribedUserRes,
-        },
-        user::{
-            domain_create::{LtQuarkOrganizationCreateDomain, LtQuarkOrganizationCreateDomainRes},
-            organization_create::{
-                LtQuarkUserCreateOrganization, LtQuarkUserCreateOrganizationRes,
-            },
-        },
-    },
-};
-
-use crate::common::{Session, login_muon_session, random_string};
-
-async fn purchase_pass_business_plan(
-    session: &Session,
-    username: &str,
-    password: &str,
-) -> LtQuarkNewPaymentsSeedSubscribedUserRes {
-    session
-        .send_quark(LtQuarkNewPaymentsSeedSubscribedUser {
-            username: username.to_string(),
-            password: password.to_string(),
-            plan: Some(r#"{"passbiz2024":1,"1member-passbiz2024":9}"#.to_string()),
-            currency: Some("EUR".to_string()),
-            cycle: Some("12".to_string()),
-            ..Default::default()
-        })
-        .await
-        .unwrap()
-}
-
-async fn create_organization(
-    session: &Session,
-    user_id: u64,
-    password: &str,
-) -> LtQuarkUserCreateOrganizationRes {
-    session
-        .send_quark(LtQuarkUserCreateOrganization {
-            user_id,
-            password: password.to_string(),
-            ..Default::default()
-        })
-        .await
-        .unwrap()
-        .0
-}
-
-async fn get_domains_lt(session: &Session) -> LtCoreGetDomainsRes {
-    session
-        .send_lt(LtCoreGetDomainsReq {
-            page_size: Some(NonZeroU32::new(150).expect("150 is valid page size")),
-            page: Some(0),
-        })
-        .await
-        .unwrap()
-}
-
-async fn create_domain_quark(
-    session: &Session,
-    domain_name: &str,
-    organization_id: u64,
-) -> LtQuarkOrganizationCreateDomainRes {
-    session
-        .send_quark(LtQuarkOrganizationCreateDomain {
-            organization_id,
-            domain_name: Some(domain_name.to_string()),
-            // flags: Some(2),
-            ..Default::default()
-        })
-        .await
-        .unwrap()
-}
-
-async fn get_domain_by_id_lt(session: &Session, domain_id: &LtCoreDomainId) -> LtCoreGetDomainRes {
-    session
-        .send_lt(LtCoreGetDomainReq {
-            domain_id: domain_id.clone(),
-            refresh: Some(true),
-        })
-        .await
-        .unwrap()
-}
-
-async fn set_sso_domain(
-    session: &Session,
-    domain_id: &LtCoreDomainId,
-) -> LtCorePostSamlSetupFieldsRes {
-    session
-        .send_lt(LtCorePostSamlSetupFieldsReq {
-            domain_id: domain_id.clone(),
-            sso_url: "https://sso.protonauth.com/sso/saml".to_string(),
-            sso_entity_id: "https://sso.protonauth.com/identifier".to_string(),
-            certificate: include_str!("sso_cert.pem").to_string(),
-            saml_type: LtCoreSsoType::Default,
-        })
-        .await
-        .unwrap()
-}
-
-async fn get_domain_lt(session: &Session, domain_name: &str) -> LtCoreDomainOutput {
-    let domains = get_domains_lt(session).await;
-    domains
-        .domains
-        .into_iter()
-        .find(|d| d.domain_name == domain_name)
-        .unwrap()
-}
-
-async fn get_members(session: &Session) -> LtCoreGetMembersRes {
-    session.send_lt(LtCoreGetMembersReq).await.unwrap()
-}
+use crate::common::{Session, login_muon_session, random_string, sso_setup};
 
 async fn get_user_settings(session: &Session) -> LtCoreGetSettingsRes {
     session.send_lt(LtCoreGetSettingsReq).await.unwrap()
@@ -146,9 +24,11 @@ async fn test_sso_login_end_to_end() {
     let username = format!("ssoa_{}", random_string(8));
     let password = random_string(34);
 
-    let admin_user = purchase_pass_business_plan(&session_init, &username, &password).await;
+    let admin_user =
+        sso_setup::purchase_pass_business_plan(&session_init, &username, &password).await;
 
-    let org_res = create_organization(&session_init, admin_user.user_id, &password).await;
+    let org_res =
+        sso_setup::create_organization(&session_init, admin_user.user_id, &password).await;
 
     let random_suffix = random_string(6).to_lowercase();
 
@@ -158,7 +38,8 @@ async fn test_sso_login_end_to_end() {
         .await
         .unwrap();
 
-    let domain = create_domain_quark(&session_init, &domain_name, org_res.organization_id).await;
+    let domain =
+        sso_setup::create_domain_quark(&session_init, &domain_name, org_res.organization_id).await;
 
     assert_eq!(
         domain.organization_id, org_res.organization_id,
@@ -169,11 +50,11 @@ async fn test_sso_login_end_to_end() {
         "Domain name is not correct"
     );
 
-    let domain_lt = get_domain_lt(&session_init, &domain_name).await;
+    let domain_lt = sso_setup::get_domain_lt(&session_init, &domain_name).await;
 
     assert_eq!(
         domain_lt.verify_state,
-        LtCoreDomainVerifyState::Default,
+        lattice::core::LtCoreDomainVerifyState::Default,
         "Domain verify state is not Default (0)"
     );
     assert_eq!(
@@ -181,11 +62,11 @@ async fn test_sso_login_end_to_end() {
         "Domain name is not correct"
     );
 
-    let sso_fields = set_sso_domain(&session_init, &domain_lt.id).await;
+    let sso_fields = sso_setup::set_sso_domain(&session_init, &domain_lt.id).await;
     assert!(sso_fields.sso.enabled, "SSO is not enabled");
     assert_eq!(
         sso_fields.sso.saml_type,
-        LtCoreSsoType::Default,
+        lattice::core::LtCoreSsoType::Default,
         "SAML type is not Default (1)"
     );
     assert_eq!(
@@ -203,12 +84,8 @@ async fn test_sso_login_end_to_end() {
     );
 
     // This is necessary to refresh the domain data after setting up SSO
-    let domain_lt = get_domain_by_id_lt(&session_init, &domain_lt.id).await;
-    assert_eq!(
-        domain_lt.domain.verify_state,
-        LtCoreDomainVerifyState::Good,
-        "Domain verify state is not Good (2)"
-    );
+    let domain_lt = sso_setup::refresh_domain_good(&session_init, &domain_lt.id).await;
+    sso_setup::assert_domain_verify_good(&domain_lt);
 
     let subuser_username = format!("ssou_{}", random_string(8));
 
@@ -240,7 +117,7 @@ async fn test_sso_login_end_to_end() {
     );
 
     // Checks the members
-    let users = get_members(&session_init).await;
+    let users = sso_setup::get_members(&session_init).await;
     assert_eq!(
         users.members.len(),
         2,

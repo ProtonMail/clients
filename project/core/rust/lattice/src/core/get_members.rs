@@ -1,10 +1,13 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeError, LtContract, LtSlimAPIJSON};
+use crate::{AuthReq, LatticeError, LtContract, LtSlimAPIJSON, Sensitive};
 
 use super::account_enums::{LtCoreMemberOrgKeyStatus, LtCoreMemberState};
-use super::get_members_me_unprivatize::LtCoreUnprivatizationState;
 use super::ids::LtCoreMemberEncId;
+use super::unpriv_types::{
+    LtCoreUnprivActivationToken, LtCoreUnprivArmoredPrivateKey, LtCoreUnprivInvitationData,
+    LtCoreUnprivInvitationSignature, LtCoreUnprivState,
+};
 use super::user::LtCoreMemberRole;
 
 /// Request to list all members of the authenticated user's organization
@@ -135,20 +138,20 @@ pub struct LtCoreMemberListAddress {
 )]
 pub struct LtCoreMemberListUnprivatization {
     #[cfg_attr(feature = "serde", serde(default))]
-    pub state: Option<LtCoreUnprivatizationState>,
+    pub state: Option<LtCoreUnprivState>,
     #[cfg_attr(feature = "serde", serde(default))]
-    pub invitation_data: Option<String>,
+    pub invitation_data: Option<LtCoreUnprivInvitationData>,
     #[cfg_attr(feature = "serde", serde(default))]
-    pub invitation_signature: Option<String>,
+    pub invitation_signature: Option<LtCoreUnprivInvitationSignature>,
     #[cfg_attr(feature = "serde", serde(default))]
     pub invitation_email: Option<String>,
+    /// First split key; duplicate of `private_keys[0]` when both are set (Account).
     #[cfg_attr(feature = "serde", serde(default))]
-    pub private_key: Option<String>,
-    /// Shape depends on backend; use JSON value when not a plain string.
+    pub private_key: Option<LtCoreUnprivArmoredPrivateKey>,
     #[cfg_attr(feature = "serde", serde(default))]
-    pub private_keys: Option<serde_json::Value>,
+    pub private_keys: Option<Vec<Sensitive<String>>>,
     #[cfg_attr(feature = "serde", serde(default))]
-    pub activation_token: Option<String>,
+    pub activation_token: Option<LtCoreUnprivActivationToken>,
     #[cfg_attr(feature = "serde", serde(default))]
     pub private_intent: Option<bool>,
 }

@@ -23,6 +23,7 @@ pub struct HumanVerificationErrorDetails {
 #[cfg_attr(feature = "serde", serde(rename_all = "lowercase"))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Display)]
 #[repr(C)]
+#[allow(dead_code)] // wire/API value (e.g. from serde); not constructed in this crate
 pub enum HumanVerificationMethod {
     #[display("captcha")]
     Captcha,

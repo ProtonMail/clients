@@ -1,5 +1,6 @@
 use derive_more::Display;
 
+#[cfg(feature = "serde")]
 use crate::LtApiResponseError;
 
 /// An error type for Lattice operations.
@@ -27,6 +28,7 @@ pub enum LatticeError {
 }
 
 impl LatticeError {
+    #[cfg(feature = "serde")]
     pub fn as_api_error(&self) -> Option<&LtApiResponseError> {
         if let Self::ApiError(_, error) = self {
             Some(error)

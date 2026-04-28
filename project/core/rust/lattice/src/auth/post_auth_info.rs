@@ -16,6 +16,17 @@ pub enum LtAuthPostInfoIntent {
     Auto,
 }
 
+/// `ReauthScope` on `POST /auth/v4/info` when a session is present: `password` or `locked` (lowercase in JSON).
+#[repr(C)]
+#[cfg_attr(feature = "facet", derive(facet::Facet))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", serde(rename_all = "lowercase"))]
+pub enum LtAuthReauthScope {
+    Password,
+    Locked,
+}
+
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -29,7 +40,7 @@ pub struct LtAuthPostInfoReq {
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub is_testing: Option<bool>,
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
-    pub reauth_scope: Option<String>,
+    pub reauth_scope: Option<LtAuthReauthScope>,
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

@@ -3,6 +3,8 @@
 
 mod auth;
 mod muon;
+pub mod sso_setup;
+pub mod unprivatize_admin;
 
 pub use auth::*;
 pub use muon::*;

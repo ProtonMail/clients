@@ -25,7 +25,9 @@ async fn test_attachment_create_without_metadata() {
         .unwrap();
     let api_attachment = test_attachment();
     let mut attachment = Attachment::from(api_attachment.clone());
-    conn.tx(async |tx| attachment.save(tx).await).await.unwrap();
+    conn.write_tx(async |tx| attachment.save(tx).await)
+        .await
+        .unwrap();
     let local_id = attachment.id();
     assert!(attachment.has_complete_metadata());
     let mut expected = Attachment::from(api_attachment);
@@ -59,7 +61,9 @@ async fn test_attachment_create_with_metadata() {
     assert!(!db_attachment.has_complete_metadata());
 
     let mut attachment = Attachment::from(api_attachment.clone());
-    conn.tx(async |tx| attachment.save(tx).await).await.unwrap();
+    conn.write_tx(async |tx| attachment.save(tx).await)
+        .await
+        .unwrap();
     let local_id = attachment.local_id;
     assert!(attachment.has_complete_metadata());
     let mut expected = attachment.clone();
@@ -115,7 +119,7 @@ async fn create_attachment_dependencies(
 ) -> Result<(AddressId, LocalConversationId, LocalMessageId), AppError> {
     let metadata = metadata.map(|v| vec![v]).unwrap_or_default();
     tether
-        .tx(async |tx| {
+        .write_tx(async |tx| {
             Address {
                 local_id: None,
                 remote_id: Some(address_id()),

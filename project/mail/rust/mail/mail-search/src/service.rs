@@ -12,7 +12,7 @@ use std::sync::Arc;
 
 use mail_api::services::proton::common::MessageId;
 use mail_stash::UserDb;
-use mail_stash::stash::{Bond, Stash, StashError};
+use mail_stash::stash::{Stash, StashError, WriteTx};
 use tokio::sync::RwLock;
 use tracing::{debug, info, warn};
 
@@ -289,7 +289,7 @@ impl MailSearchService {
     /// transaction commits, eliminating race conditions and supporting multi-account scenarios.
     pub async fn queue_index(
         message_id: LocalMessageId,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         // Create intent (content hash check happens in worker using separate table)
         // The table watcher will automatically notify the worker after commit
@@ -313,7 +313,7 @@ impl MailSearchService {
     /// transaction commits, eliminating race conditions and supporting multi-account scenarios.
     pub async fn queue_index_batch(
         message_ids: &[LocalMessageId],
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         if message_ids.is_empty() {
             return Ok(());
@@ -337,7 +337,7 @@ impl MailSearchService {
     /// transaction commits, eliminating race conditions and supporting multi-account scenarios.
     pub async fn queue_remove(
         message_id: LocalMessageId,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         // Remove operations don't need content hash (always remove regardless of content)
         // The table watcher will automatically notify the worker after commit

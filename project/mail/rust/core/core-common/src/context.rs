@@ -610,7 +610,7 @@ impl Context {
             .ok_or(CoreContextError::AccountMissing(user_id))?;
 
         tether
-            .tx(async |tx| account.with_primary_seq(seq_max + 1).save(tx).await)
+            .write_tx(async |tx| account.with_primary_seq(seq_max + 1).save(tx).await)
             .await?;
 
         Ok(())
@@ -702,7 +702,7 @@ impl Context {
 
             let mut tether = self.account_stash().connection().await?;
             tether
-                .tx(async |tx| CoreSession::delete_by_ids(orphaned_sessions, tx).await)
+                .write_tx(async |tx| CoreSession::delete_by_ids(orphaned_sessions, tx).await)
                 .await?;
         }
 
@@ -846,7 +846,7 @@ impl Context {
         tracing::info!("Remove account");
         let mut tether = self.account_stash().connection().await?;
         tether
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 CoreAccount::delete_by_id(user_id, tx)
                     .await
                     .inspect_err(|e| tracing::error!("Failed to delete account from db: {e:?}"))

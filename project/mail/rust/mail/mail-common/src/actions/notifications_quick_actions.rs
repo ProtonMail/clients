@@ -18,7 +18,7 @@ use mail_core_common::models::{LabelError, ModelIdExtension};
 use mail_api::services::proton::ProtonMail;
 use mail_api::services::proton::common::MessageId;
 use mail_stash::UserDb;
-use mail_stash::stash::{Bond, Tether};
+use mail_stash::stash::{Tether, WriteTx};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::Duration;
@@ -258,7 +258,7 @@ impl Handler<UserDb> for PushNotificationActionHandler {
         &self,
         action_id: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), MailActionError> {
         let remote_id = action.state.remote_id().clone();
         // There might be a rare case where the push notification arrived after the message was already synced via the event poll.
@@ -298,7 +298,7 @@ impl Handler<UserDb> for PushNotificationActionHandler {
         &self,
         action_id: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), MailActionError> {
         match &mut action.state {
             PushNotificationActionState::MarkAsRead {
@@ -340,7 +340,7 @@ impl Handler<UserDb> for PushNotificationActionHandler {
         _: ActionId,
         _: &mut Self::Action,
         _: &RebaseChangeSet,
-        _: &Bond<'_>,
+        _: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         Ok(())
     }

@@ -14,7 +14,7 @@ use mail_core_api::services::proton::LabelId;
 use mail_core_api::session::Session;
 use mail_core_common::models::{ModelExtension, ModelIdExtension};
 use mail_stash::UserDb;
-use mail_stash::stash::Bond;
+use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, error, info};
 
@@ -63,7 +63,7 @@ impl Handler<UserDb> for DiscardHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::LocalOutput,
         <Self::Action as Action<UserDb>>::Error,
@@ -101,7 +101,7 @@ impl Handler<UserDb> for DiscardHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         // Only undo the delete of the message. The draft metadata can be re-created on
         // the next draft open call.
@@ -192,7 +192,7 @@ impl Handler<UserDb> for DiscardHandler {
         _: ActionId,
         _: &mut Self::Action,
         _: &RebaseChangeSet,
-        _: &Bond<'_>,
+        _: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         Ok(())
     }

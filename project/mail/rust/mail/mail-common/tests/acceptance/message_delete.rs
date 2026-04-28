@@ -163,7 +163,7 @@ async fn rebase() {
     // ---
 
     tether
-        .tx(async |tx| {
+        .write_tx(async |tx| {
             MessageCounter {
                 local_label_id: label.id(),
                 total: new_messages.len() as u64,
@@ -263,7 +263,7 @@ async fn setup(
         .collect_vec();
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             for message in &mut messages {
                 message.save(tx).await?;
                 message.reload(tx).await?;
@@ -285,7 +285,10 @@ async fn msg_counter(label: &Label, tether: &mut Tether) -> MessageCounter {
         unread: 8,
     };
 
-    tether.tx(async |tx| counter.save(tx).await).await.unwrap();
+    tether
+        .write_tx(async |tx| counter.save(tx).await)
+        .await
+        .unwrap();
 
     counter
 }
@@ -297,7 +300,10 @@ async fn conv_counter(label: &Label, tether: &mut Tether) -> ConversationCounter
         unread: 2,
     };
 
-    tether.tx(async |tx| counter.save(tx).await).await.unwrap();
+    tether
+        .write_tx(async |tx| counter.save(tx).await)
+        .await
+        .unwrap();
 
     counter
 }

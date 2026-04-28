@@ -108,7 +108,10 @@ async fn test_labeling_conversation_with_custom_label() {
         ..Message::test_default()
     };
 
-    tether.tx(async |tx| message.save(tx).await).await.unwrap();
+    tether
+        .write_tx(async |tx| message.save(tx).await)
+        .await
+        .unwrap();
 
     // Apply label action
     Conversation::action_apply_label(
@@ -256,7 +259,10 @@ async fn test_labeling_conversation_with_starred_label() {
         ..Message::test_default()
     };
 
-    tether.tx(async |tx| message.save(tx).await).await.unwrap();
+    tether
+        .write_tx(async |tx| message.save(tx).await)
+        .await
+        .unwrap();
 
     // Apply label action
     Conversation::action_apply_label(

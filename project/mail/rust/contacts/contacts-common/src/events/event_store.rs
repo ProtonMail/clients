@@ -34,7 +34,7 @@ impl<T: ContactEventStorageContext> EventStore<T> for ContactEventLoopV6Context 
     async fn store(&self, ctx: &T, id: core_event_loop::EventId) -> anyhow::Result<()> {
         let mut tether = ctx.get_contact_stash().connection().await?;
         tether
-            .tx::<_, _, StashError>(async |tx| {
+            .write_tx::<_, _, StashError>(async |tx| {
                 // Also update old mail location in case of v5 revert
                 #[cfg(feature = "mail-compat")]
                 tx.execute(

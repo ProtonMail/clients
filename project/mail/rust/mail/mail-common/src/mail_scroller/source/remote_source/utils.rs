@@ -24,7 +24,9 @@ pub async fn ensure_label_is_idle(
 
             Ok(ControlFlow::Break(()))
         } else {
-            tether.tx(async |bond| label.mark_idle(bond).await).await?;
+            tether
+                .write_tx(async |bond| label.mark_idle(bond).await)
+                .await?;
 
             Ok(ControlFlow::Continue(()))
         }

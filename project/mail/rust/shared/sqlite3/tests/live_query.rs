@@ -57,7 +57,7 @@ async fn test_tracker() {
         let stash_clone = mail_stash.clone();
         let h = spawn_async(async move {
             let mut conn = stash_clone.connection().await.unwrap();
-            conn.tx(async |tx| {
+            conn.write_tx(async |tx| {
                 tx.execute("INSERT INTO foo VALUES (null, 10)", vec![])
                     .await
             })

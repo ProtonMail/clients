@@ -195,7 +195,7 @@ async fn change_sender_address_with_alias() {
     };
 
     tether
-        .tx(async |tx| {
+        .write_tx(async |tx| {
             message.save(tx).await.unwrap();
             message_body_metadata.save(tx).await.unwrap();
 

@@ -31,7 +31,7 @@ use mail_core_common::datatypes::{LocalLabelId, UnixTimestamp};
 use mail_core_common::models::Label;
 use mail_core_common::models::ModelExtension;
 use mail_stash::UserDb;
-use mail_stash::stash::{Bond, Tether};
+use mail_stash::stash::{Tether, WriteTx};
 use std::ops::ControlFlow;
 use tracing::{debug, error, info, instrument};
 
@@ -543,7 +543,7 @@ impl RemoteConversationScrollerSource {
         // We do not want to notify the UI about the not visible items
         // downloaded in the background hence `quiet_tx`
         tether
-            .quiet_tx(async |tx| {
+            .quiet_write_tx(async |tx| {
                 if let Some(label) = Label::find_by_id(local_label_id, tx).await?
                     && label.is_busy(tx).await?
                 {
@@ -648,7 +648,7 @@ impl RemoteConversationScrollerSource {
         // Fake update to trigger the counters again in a tracking tx to see updates
         if !conversation_labels_count.is_empty()
             && let Err(e) = tether
-                .tx(async |tx| ConversationLabelsCount::fake_update(local_label_id, tx).await)
+                .write_tx(async |tx| ConversationLabelsCount::fake_update(local_label_id, tx).await)
                 .await
         {
             error!("Failed to trigger fake label counters update: {e}");
@@ -667,7 +667,7 @@ impl RemoteConversationScrollerSource {
         display_order: u64,
         order_dir: ScrollOrderDir,
         order_field: ScrollOrderField,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<ConversationScrollData, MailContextError> {
         debug!(
             "New conversation cursor {remote_conv_id} at time={context_time}, snooze_time={snooze_time}, order={display_order}"

@@ -58,7 +58,7 @@ async fn setup_test_label(label_id: LocalLabelId, tether: &mut Tether) -> TestDa
     inbox_conv_counter.total = 1;
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             inbox_conv_counter.save(tx).await?;
 
             // Important: we need to apply the labels to the messages to be able to snooze conversation
@@ -203,7 +203,7 @@ async fn unsnooze_conversation_from_snoozed_to_inbox() {
 
     // Set up the conversation with snooze time manually
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             let mut label =
                 ConversationLabel::find_by_conversation_and_label_id(conv.id(), snoozed.id(), tx)
                     .await?
@@ -227,7 +227,7 @@ async fn unsnooze_conversation_from_snoozed_to_inbox() {
 
     // Action: Unsnooze the conversation
     tether
-        .tx(async |tx| Conversation::unsnooze(snoozed.id(), &[conv.id()], tx).await)
+        .write_tx(async |tx| Conversation::unsnooze(snoozed.id(), &[conv.id()], tx).await)
         .await
         .unwrap();
 
@@ -302,7 +302,7 @@ async fn action_unsnooze_conversation_from_snoozed_to_inbox() {
     } = setup_test_label(inbox.id(), &mut tether).await;
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             // Apply snooze to set the snooze time
             Conversation::snooze(inbox.id(), &[conv.id()], snooze_timestamp, tx)
                 .await
@@ -444,7 +444,7 @@ async fn snooze_and_unsnooze_are_perfect_counterparts() {
 
     // Snooze the conversation
     tether
-        .tx(async |tx| {
+        .write_tx(async |tx| {
             Conversation::snooze(inbox.id(), &[expected_conv.id()], snooze_timestamp, tx).await
         })
         .await
@@ -452,7 +452,7 @@ async fn snooze_and_unsnooze_are_perfect_counterparts() {
 
     // Unsnooze the conversation
     tether
-        .tx(async |tx| Conversation::unsnooze(snoozed.id(), &[expected_conv.id()], tx).await)
+        .write_tx(async |tx| Conversation::unsnooze(snoozed.id(), &[expected_conv.id()], tx).await)
         .await
         .unwrap();
 
@@ -555,7 +555,7 @@ mod rebase {
 
         // simulate update to conversation
         tether
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 actual.save(tx).await?;
                 actual_message.save(tx).await
             })

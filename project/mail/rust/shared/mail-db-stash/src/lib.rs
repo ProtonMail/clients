@@ -4,7 +4,7 @@ use mail_db::{Database, Transaction};
 use mail_stash::{
     marker::DatabaseMarker,
     params,
-    stash::{Bond, Stash, StashError, Tether},
+    stash::{Stash, StashError, Tether, WriteTx as StashWriteTx},
 };
 
 pub struct ReadTx<'t, M: DatabaseMarker>(&'t Tether<M>);
@@ -23,10 +23,10 @@ impl<M: DatabaseMarker> Transaction for ReadTx<'_, M> {
 
 impl<M: DatabaseMarker> mail_db::ReadTx for ReadTx<'_, M> {}
 
-pub struct WriteTx<'t, M: DatabaseMarker>(&'t Bond<'t, M>);
+pub struct WriteTx<'t, M: DatabaseMarker>(&'t StashWriteTx<'t, M>);
 
 impl<'t, M: DatabaseMarker> Deref for WriteTx<'t, M> {
-    type Target = Bond<'t, M>;
+    type Target = StashWriteTx<'t, M>;
 
     fn deref(&self) -> &Self::Target {
         self.0
@@ -84,7 +84,7 @@ impl<M: DatabaseMarker> Database for StashDb<M> {
     ) -> Result<T, E> {
         let mut tether = self.stash.connection().await?;
         tether
-            .tx(async move |tx| {
+            .write_tx(async move |tx| {
                 let tx = WriteTx(tx);
                 closure(tx).await
             })

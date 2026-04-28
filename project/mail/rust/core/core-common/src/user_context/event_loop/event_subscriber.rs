@@ -12,7 +12,7 @@ use core_event_loop::{EventLoopError, RefreshFlag};
 use mail_core_api::services::proton::UserId;
 use mail_stash::{
     orm::Model,
-    stash::{Bond, StashError},
+    stash::{StashError, WriteTx},
 };
 use tracing::{debug, error, info, warn};
 
@@ -153,7 +153,7 @@ impl EventSubscriber<EventManagerContext, CoreEventSource> for CoreEventSubscrib
 
             let mut rebase_change_set = RebaseChangeSet::default();
 
-            conn.tx::<_, _, StashError>(async |tx| {
+            conn.write_tx::<_, _, StashError>(async |tx| {
                 handle_event(event, tx, &user_id, &mut rebase_change_set).await?;
 
                 ctx.queue()
@@ -195,7 +195,7 @@ impl EventSubscriber<EventManagerContext, CoreEventSource> for CoreEventSubscrib
 
 async fn handle_event(
     event: &<CoreEventSource as EventSource>::Event,
-    tx: &Bond<'_>,
+    tx: &WriteTx<'_>,
     user_id: &UserId,
     rebase_change_set: &mut RebaseChangeSet,
 ) -> Result<(), StashError> {
@@ -435,7 +435,7 @@ impl UserContext {
 }
 
 async fn handle_address_event(
-    tx: &Bond<'_>,
+    tx: &WriteTx<'_>,
     address_events: &mut [AddressEvent],
     changeset: &mut RebaseChangeSet,
 ) -> Result<(), StashError> {
@@ -454,7 +454,7 @@ async fn handle_address_event(
 }
 
 async fn handle_contact_event(
-    tx: &Bond<'_>,
+    tx: &WriteTx<'_>,
     contact_events: &mut [ContactEvent],
     changeset: &mut RebaseChangeSet,
 ) -> Result<(), StashError> {
@@ -472,7 +472,7 @@ async fn handle_contact_event(
 }
 
 pub async fn handle_label_events(
-    tx: &Bond<'_>,
+    tx: &WriteTx<'_>,
     label_events: &mut [LabelEvent],
     changeset: &mut RebaseChangeSet,
 ) -> Result<(), StashError> {

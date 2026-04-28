@@ -7,7 +7,7 @@ use mail_stash::UserDb;
 use mail_stash::exports::Transaction;
 use mail_stash::macros::Model;
 use mail_stash::orm::Model;
-use mail_stash::stash::{Bond, Stash, StashError, Tether, WatcherHandle};
+use mail_stash::stash::{Stash, StashError, Tether, WatcherHandle, WriteTx};
 use sqlite_watcher::watcher::TableObserver;
 use tracing::{debug, info, trace};
 
@@ -157,7 +157,7 @@ impl InitializedComponent {
         trace!("Storing. Creating a transaction");
         let t1 = Instant::now();
         let res: Result<(), InitializationError<E>> = tether
-            .sync_tx_returning(move |tx| {
+            .sync_write_tx_returning(move |tx| {
                 trace!("Storing");
 
                 match store(tx, fetched) {
@@ -196,7 +196,7 @@ impl InitializedComponent {
         tether: &mut Tether,
     ) -> Result<(), StashError> {
         tether
-            .tx(async |tx| Self::set_state_tx(key, state, tx).await)
+            .write_tx(async |tx| Self::set_state_tx(key, state, tx).await)
             .await?;
 
         Ok(())
@@ -205,7 +205,7 @@ impl InitializedComponent {
     pub async fn set_state_tx(
         key: InitializationKey,
         state: InitializedComponentState,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         Self {
             key: key.into(),

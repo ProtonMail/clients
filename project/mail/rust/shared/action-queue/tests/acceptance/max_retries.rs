@@ -8,7 +8,7 @@ use mail_action_queue::queue::{
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_action_queue::tests::common::{DefaultError, TestDb};
-use mail_stash::stash::Bond;
+use mail_stash::stash::WriteTx;
 
 #[tokio::test]
 async fn execute_action_with_max_retries_on_network_failure() {
@@ -107,7 +107,7 @@ impl Handler<TestDb> for TestHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: &Bond<'_, TestDb>,
+        _: &WriteTx<'_, TestDb>,
     ) -> Result<(), <Self::Action as Action<TestDb>>::Error> {
         Ok(())
     }
@@ -116,7 +116,7 @@ impl Handler<TestDb> for TestHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: &Bond<'_, TestDb>,
+        _: &WriteTx<'_, TestDb>,
     ) -> Result<(), <Self::Action as Action<TestDb>>::Error> {
         // do nothing
         Ok(())
@@ -141,7 +141,7 @@ impl Handler<TestDb> for TestHandler {
         _: ActionId,
         _: &mut Self::Action,
         _: &RebaseChangeSet,
-        _: &Bond<'_, TestDb>,
+        _: &WriteTx<'_, TestDb>,
     ) -> Result<(), <Self::Action as Action<TestDb>>::Error> {
         Ok(())
     }

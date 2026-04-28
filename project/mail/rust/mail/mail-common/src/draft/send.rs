@@ -863,7 +863,9 @@ pub async fn cancel_schedule_send(
     // Put message back into drafts
     let mut updated_message = Message::from_api_metadata(response.message, tether).await?;
 
-    tether.tx(async |tx| updated_message.save(tx).await).await?;
+    tether
+        .write_tx(async |tx| updated_message.save(tx).await)
+        .await?;
 
     Ok(original_dt)
 }

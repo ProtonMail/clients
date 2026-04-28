@@ -15,13 +15,13 @@ use mail_core_common::datatypes::{AddressFlags, AddressStatus, AddressType};
 use mail_core_common::models::Address;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
-use mail_stash::stash::{Bond, StashError};
+use mail_stash::stash::{StashError, WriteTx};
 #[tokio::test]
 async fn draft_send_observer_only_triggers_for_new_items_empty_db() {
     let (mail_stash, _db_dir) = new_test_connection_file().await;
 
     let mut conn = mail_stash.connection().await.unwrap();
-    conn.tx::<_, _, StashError>(async |tx| {
+    conn.write_tx::<_, _, StashError>(async |tx| {
         create_test_messages(2, tx).await;
         Ok(())
     })
@@ -45,7 +45,7 @@ async fn draft_send_observer_only_triggers_for_new_items_empty_db() {
     );
 
     // insert first record
-    conn.tx::<_, _, StashError>(async |tx| {
+    conn.write_tx::<_, _, StashError>(async |tx| {
         v1.save(tx).await.unwrap();
         Ok(())
     })
@@ -59,7 +59,7 @@ async fn draft_send_observer_only_triggers_for_new_items_empty_db() {
     assert_eq!(new_values, vec![v1.clone()]);
 
     // insert second record
-    conn.tx::<_, _, StashError>(async |tx| {
+    conn.write_tx::<_, _, StashError>(async |tx| {
         v2.save(tx).await.unwrap();
         Ok(())
     })
@@ -73,7 +73,7 @@ async fn draft_send_observer_only_triggers_for_new_items_empty_db() {
     assert_eq!(new_values, vec![v2.clone()]);
 
     // Mark first record as seen.
-    conn.tx::<_, _, StashError>(async |tx| {
+    conn.write_tx::<_, _, StashError>(async |tx| {
         v1.seen = true;
         v1.save(tx).await.unwrap();
         Ok(())
@@ -92,7 +92,7 @@ async fn draft_send_observer_only_triggers_for_new_items_with_existing() {
     let (mail_stash, _db_dir) = new_test_connection_file().await;
 
     let mut conn = mail_stash.connection().await.unwrap();
-    conn.tx::<_, _, StashError>(async |tx| {
+    conn.write_tx::<_, _, StashError>(async |tx| {
         create_test_messages(5, tx).await;
 
         for i in 1..3_u64 {
@@ -126,7 +126,7 @@ async fn draft_send_observer_only_triggers_for_new_items_with_existing() {
     );
 
     // insert first record
-    conn.tx::<_, _, StashError>(async |tx| {
+    conn.write_tx::<_, _, StashError>(async |tx| {
         v1.save(tx).await.unwrap();
         Ok(())
     })
@@ -140,7 +140,7 @@ async fn draft_send_observer_only_triggers_for_new_items_with_existing() {
     assert_eq!(new_values, vec![v1.clone()]);
 
     // insert second record
-    conn.tx::<_, _, StashError>(async |tx| {
+    conn.write_tx::<_, _, StashError>(async |tx| {
         v2.save(tx).await.unwrap();
         Ok(())
     })
@@ -154,7 +154,7 @@ async fn draft_send_observer_only_triggers_for_new_items_with_existing() {
     assert_eq!(new_values, vec![v2.clone()]);
 
     // Mark first record as seen.
-    conn.tx::<_, _, StashError>(async |tx| {
+    conn.write_tx::<_, _, StashError>(async |tx| {
         DraftSendResult::mark_seen(std::iter::once(v1.local_message_id), tx)
             .await
             .unwrap();
@@ -169,7 +169,7 @@ async fn draft_send_observer_only_triggers_for_new_items_with_existing() {
         .unwrap_err();
 
     // Delete second record
-    conn.tx::<_, _, StashError>(async |tx| {
+    conn.write_tx::<_, _, StashError>(async |tx| {
         DraftSendResult::mark_seen(std::iter::once(v2.local_message_id), tx)
             .await
             .unwrap();
@@ -189,7 +189,7 @@ async fn draft_send_observer_re_triggers_for_same_message_with_different_error()
     let (mail_stash, _db_dir) = new_test_connection_file().await;
 
     let mut conn = mail_stash.connection().await.unwrap();
-    conn.tx::<_, _, StashError>(async |tx| {
+    conn.write_tx::<_, _, StashError>(async |tx| {
         create_test_messages(2, tx).await;
         Ok(())
     })
@@ -213,7 +213,7 @@ async fn draft_send_observer_re_triggers_for_same_message_with_different_error()
     );
 
     // insert first record
-    conn.tx::<_, _, StashError>(async |tx| {
+    conn.write_tx::<_, _, StashError>(async |tx| {
         v1.save(tx).await.unwrap();
         Ok(())
     })
@@ -227,7 +227,7 @@ async fn draft_send_observer_re_triggers_for_same_message_with_different_error()
     assert_eq!(new_values, vec![v1.clone()]);
 
     // insert second record
-    conn.tx::<_, _, StashError>(async |tx| {
+    conn.write_tx::<_, _, StashError>(async |tx| {
         v2.save(tx).await.unwrap();
         Ok(())
     })
@@ -265,7 +265,7 @@ async fn draft_send_observer_only_triggers_when_send_action_is_queued() {
     let mut draft_metadata = DraftMetadata::builder()
         .local_message_id(LocalMessageId::from(2))
         .build();
-    conn.tx::<_, _, StashError>(async |tx| {
+    conn.write_tx::<_, _, StashError>(async |tx| {
         create_test_messages(2, tx).await;
         action.save(tx).await.unwrap();
         draft_metadata.send_action_id = action.id;
@@ -292,7 +292,7 @@ async fn draft_send_observer_only_triggers_when_send_action_is_queued() {
     );
 
     // insert first record
-    conn.tx::<_, _, StashError>(async |tx| {
+    conn.write_tx::<_, _, StashError>(async |tx| {
         v1.save(tx).await.unwrap();
         Ok(())
     })
@@ -305,7 +305,7 @@ async fn draft_send_observer_only_triggers_when_send_action_is_queued() {
         .unwrap_err();
 
     // insert second record, which will trigger since there is now a send action
-    conn.tx::<_, _, StashError>(async |tx| {
+    conn.write_tx::<_, _, StashError>(async |tx| {
         v2.save(tx).await.unwrap();
         Ok(())
     })
@@ -321,7 +321,7 @@ async fn draft_send_observer_only_triggers_when_send_action_is_queued() {
     // Save before send failures should also be reported.
     v1.origin = DraftSendResultOrigin::SaveBeforeSend;
 
-    conn.tx::<_, _, StashError>(async |tx| {
+    conn.write_tx::<_, _, StashError>(async |tx| {
         v1.save(tx).await.unwrap();
         Ok(())
     })
@@ -364,7 +364,7 @@ async fn draft_attachment_observer_updates_when_attachment_is_removed() {
         image_height: None,
     };
     let metadata = conn
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             attachment.save(tx).await.unwrap();
             DraftMetadata::empty(tx).await
         })
@@ -378,7 +378,7 @@ async fn draft_attachment_observer_updates_when_attachment_is_removed() {
     let mut attachment_metadata =
         DraftAttachmentMetadata::new(metadata.id.unwrap(), attachment.id(), 0, false);
     // Create metadata.
-    conn.tx::<_, _, StashError>(async |tx| {
+    conn.write_tx::<_, _, StashError>(async |tx| {
         attachment_metadata.save(tx).await.unwrap();
         Ok(())
     })
@@ -392,7 +392,7 @@ async fn draft_attachment_observer_updates_when_attachment_is_removed() {
         .unwrap();
 
     // Simulate delete
-    conn.tx::<_, _, StashError>(async |tx| {
+    conn.write_tx::<_, _, StashError>(async |tx| {
         attachment_metadata.deleted = true;
         attachment_metadata.save(tx).await.unwrap();
         Ok(())
@@ -407,7 +407,7 @@ async fn draft_attachment_observer_updates_when_attachment_is_removed() {
         .unwrap();
 }
 
-async fn create_test_messages(count: usize, bond: &Bond<'_>) {
+async fn create_test_messages(count: usize, bond: &WriteTx<'_>) {
     let mut address = Address {
         local_id: None,
         remote_id: Some(AddressId::from("addr-id".to_owned())),

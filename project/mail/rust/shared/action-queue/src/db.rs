@@ -21,7 +21,7 @@ use mail_stash::macros::{DbRecord, Model};
 use mail_stash::orm::{DbRecord, Model, ModelHooks};
 use mail_stash::params;
 use mail_stash::rusqlite::{OptionalExtension, params_from_iter};
-use mail_stash::stash::{Bond, StashError, Tether};
+use mail_stash::stash::{StashError, Tether, WriteTx};
 use mail_stash::utils::{ConnectionExt, placeholders, placeholders_n};
 use std::collections::HashSet;
 use std::hash::RandomState;
@@ -191,7 +191,10 @@ impl<Db: mail_stash::marker::DatabaseMarker> StoredAction<Db> {
     }
 
     /// Update the action state for this stored action.
-    pub(crate) async fn update_action_state(&self, bond: &Bond<'_, Db>) -> Result<(), StashError> {
+    pub(crate) async fn update_action_state(
+        &self,
+        bond: &WriteTx<'_, Db>,
+    ) -> Result<(), StashError> {
         bond.execute(
             format!("UPDATE {} SET state=? WHERE id = ?", Self::table_name()),
             params![self.state.clone(), self.id.unwrap()],
@@ -205,7 +208,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> StoredAction<Db> {
     /// Should be called only when it can be "requeued".
     ///
     pub(crate) async fn update_retries(
-        bond: &Bond<'_, Db>,
+        bond: &WriteTx<'_, Db>,
         id: ActionId,
     ) -> Result<(), StashError> {
         bond.execute(
@@ -288,7 +291,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> StoredAction<Db> {
     /// This operation does not operate within execution guards. It is intended to be used
     /// before queue executor is resumed (during app initialization). Use with caution.
     pub async fn delete_all_in_group(
-        bond: &Bond<'_, Db>,
+        bond: &WriteTx<'_, Db>,
         group: ActionGroup,
     ) -> Result<(), StashError> {
         bond.execute(
@@ -302,7 +305,10 @@ impl<Db: mail_stash::marker::DatabaseMarker> StoredAction<Db> {
     /// Delete action with `id` from the database.
     ///
     /// Returns the type of the deleted action if it still exists.
-    pub async fn delete(bond: &Bond<'_, Db>, id: ActionId) -> Result<Option<String>, StashError> {
+    pub async fn delete(
+        bond: &WriteTx<'_, Db>,
+        id: ActionId,
+    ) -> Result<Option<String>, StashError> {
         match bond
             .query_value::<_, String>(
                 "DELETE FROM action_queue WHERE id = ? RETURNING action_type",
@@ -317,7 +323,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> StoredAction<Db> {
     }
 
     pub async fn delete_by_type(
-        bond: &Bond<'_, Db>,
+        bond: &WriteTx<'_, Db>,
         action_type: &Type,
     ) -> Result<usize, StashError> {
         bond.execute(
@@ -423,7 +429,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> StoredAction<Db> {
     pub async fn create_or_update(
         &mut self,
         existing_id: ActionId,
-        bond: &Bond<'_, Db>,
+        bond: &WriteTx<'_, Db>,
     ) -> Result<(), StashError> {
         if let Some(existing) =
             StoredAction::find_first("WHERE id = ?", params![existing_id], bond).await?
@@ -457,7 +463,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> StoredAction<Db> {
         tether: &mut Tether<Db>,
     ) -> Result<Option<(ExecutionGuard, StoredAction<Db>)>, StashError> {
         tether
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 ExecutionGuard::clear_slate_state(executor_id.clone(), tx).await?;
                 let next_action = Self::next(action_group, tx).await?;
 
@@ -477,7 +483,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> StoredAction<Db> {
     // while we are processing this query.
     pub async fn rebase_action_order(
         action_group: &str,
-        tx: &Bond<'_, Db>,
+        tx: &WriteTx<'_, Db>,
     ) -> Result<Vec<ActionId>, StashError> {
         tx.query_values::<_, ActionId>(
             "SELECT id FROM action_queue WHERE action_group = ? ORDER BY created ASC, rowid ASC",
@@ -609,7 +615,7 @@ impl ExecutionGuard {
     /// Check whether the action with `action_id` is being executed.
     pub async fn has_executor<Db: mail_stash::marker::DatabaseMarker>(
         action_id: ActionId,
-        bond: &Bond<'_, Db>,
+        bond: &WriteTx<'_, Db>,
     ) -> Result<bool, StashError> {
         // While this function could be written to accept a Tether instead, it would bypass
         // the exclusive writer access, which is required for this to work.
@@ -639,7 +645,7 @@ impl ExecutionGuard {
     pub async fn acquire<Db: mail_stash::marker::DatabaseMarker>(
         action_id: ActionId,
         executor_id: impl Into<String>,
-        bond: &Bond<'_, Db>,
+        bond: &WriteTx<'_, Db>,
     ) -> Result<Self, StashError> {
         Self::acquire_with_timestamp(action_id, executor_id, Utc::now(), bond).await
     }
@@ -649,7 +655,7 @@ impl ExecutionGuard {
         action_id: ActionId,
         executor_id: impl Into<String>,
         timestamp: DateTime<Utc>,
-        bond: &Bond<'_, Db>,
+        bond: &WriteTx<'_, Db>,
     ) -> Result<Self, StashError> {
         let executor_id = executor_id.into();
         let permit_id = bond
@@ -677,7 +683,7 @@ impl ExecutionGuard {
     /// is aborted or if for some reason we never managed to properly release our previous lock.
     pub(crate) async fn clear_slate_state<Db: mail_stash::marker::DatabaseMarker>(
         executor_id: String,
-        bond: &Bond<'_, Db>,
+        bond: &WriteTx<'_, Db>,
     ) -> Result<(), StashError> {
         bond.execute(
             "DELETE FROM action_queue_lock WHERE executor_id= ?",
@@ -690,7 +696,7 @@ impl ExecutionGuard {
     /// Release the current access privileges.
     pub async fn release<Db: mail_stash::marker::DatabaseMarker>(
         self,
-        bond: &Bond<'_, Db>,
+        bond: &WriteTx<'_, Db>,
     ) -> Result<(), StashError> {
         bond.execute(
             indoc! {"
@@ -716,10 +722,10 @@ impl ExecutionGuard {
     pub async fn tx<Db, F, T, E>(&self, tether: &mut Tether<Db>, closure: F) -> Result<T, E>
     where
         Db: mail_stash::marker::DatabaseMarker,
-        F: AsyncFnOnce(&Bond<'_, Db>) -> Result<T, E>,
+        F: AsyncFnOnce(&WriteTx<'_, Db>) -> Result<T, E>,
         E: From<WriterGuardError> + From<StashError>,
     {
-        tether.tx(async |tx| {
+        tether.write_tx(async |tx| {
                 let changed = tx
                     .execute(
                         "UPDATE action_queue_lock SET acquired_at=? WHERE action_id=? AND permit_id =?",
@@ -741,10 +747,10 @@ impl ExecutionGuard {
     ) -> Result<T, WriterGuardError>
     where
         Db: mail_stash::marker::DatabaseMarker,
-        F: AsyncFnOnce(&Bond<'_, Db>) -> Result<T, StashError>,
+        F: AsyncFnOnce(&WriteTx<'_, Db>) -> Result<T, StashError>,
     {
         tether
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 let changed = tx
                 .execute(
                     "UPDATE action_queue_lock SET acquired_at=? WHERE action_id=? AND permit_id =?",
@@ -824,7 +830,7 @@ impl ActionDependencyKeysTable {
     pub async fn store_dependency_keys<Db: mail_stash::marker::DatabaseMarker>(
         keys: Vec<ActionDependencyKey>,
         action_id: ActionId,
-        bond: &Bond<'_, Db>,
+        bond: &WriteTx<'_, Db>,
     ) -> Result<(), StashError> {
         bond.sync_bridge(move |tx| Self::store_dependency_keys_sync(keys, action_id, tx))
             .await
@@ -832,7 +838,7 @@ impl ActionDependencyKeysTable {
 
     pub async fn delete_for_action_id<Db: mail_stash::marker::DatabaseMarker>(
         action_id: ActionId,
-        bond: &Bond<'_, Db>,
+        bond: &WriteTx<'_, Db>,
     ) -> Result<(), StashError> {
         bond.execute(
             format!("DELETE FROM {KEY_DEPENDENCIES_TABLE_NAME} WHERE action_id = ?"),

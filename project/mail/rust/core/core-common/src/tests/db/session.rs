@@ -36,7 +36,7 @@ async fn new_test_connection() -> Stash<AccountDb> {
 
 async fn new_test_account(tether: &mut Tether<AccountDb>) -> Result<CoreAccount> {
     Ok(tether
-        .tx(async |tx| {
+        .write_tx(async |tx| {
             CoreAccount::new(UserId::from("user_id"), String::from("name_or_addr"))
                 .with_save(tx)
                 .await
@@ -76,7 +76,7 @@ async fn test_session_store_load() {
     let mut session = CoreSession::new(account.remote_id, session_id, &tokens, &key).unwrap();
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             session.save(tx).await.expect("failed to store session");
 
             let db_session = CoreSession::find_first(
@@ -109,7 +109,7 @@ async fn test_session_update() {
         .unwrap();
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             session.save(tx).await.expect("failed to store session");
 
             // Back up the original session
@@ -157,7 +157,7 @@ async fn test_session_delete_user_id() {
     let mut session = CoreSession::new(account.remote_id, session_id, &tokens, &key).unwrap();
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             session.save(tx).await.expect("failed to store session");
 
             tx.execute(
@@ -192,7 +192,7 @@ async fn test_session_delete_session_id() {
     let mut session = CoreSession::new(account.remote_id, session_id, &tokens, &key).unwrap();
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             session.save(tx).await.expect("failed to store session");
 
             tx.execute(
@@ -230,7 +230,7 @@ async fn multiple_sessions_per_account_is_an_error() {
     let mut session2 = CoreSession::new(account.remote_id, session_id2, &tokens, &key).unwrap();
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             session1.save(tx).await.expect("failed to store session");
             session2.save(tx).await.expect_err("Should fail to store.");
             Ok(())
@@ -250,7 +250,7 @@ async fn test_session_observer() {
     let user_id2 = UserId::from("user-2");
 
     tether
-        .tx(async |tx| {
+        .write_tx(async |tx| {
             CoreAccount::new(user_id1.clone(), String::from("name_or_addr"))
                 .save(tx)
                 .await?;
@@ -271,7 +271,7 @@ async fn test_session_observer() {
         CoreSession::new(user_id1.clone(), session_id1.clone(), &tokens, &key).unwrap();
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             session.save(tx).await.expect("failed to store session");
             Ok(())
         })
@@ -295,7 +295,7 @@ async fn test_session_observer() {
     let mut session =
         CoreSession::new(user_id2.clone(), session_id2.clone(), &tokens, &key).unwrap();
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             session.save(tx).await.expect("failed to store session");
             Ok(())
         })
@@ -317,7 +317,7 @@ async fn test_session_observer() {
 
     // Remove a session
     tether
-        .tx(async |tx| CoreSession::delete_by_id(session_id2.clone(), tx).await)
+        .write_tx(async |tx| CoreSession::delete_by_id(session_id2.clone(), tx).await)
         .await
         .unwrap();
 
@@ -336,7 +336,7 @@ async fn test_session_observer() {
 
     // Remove the other session
     tether
-        .tx(async |tx| CoreSession::delete_by_id(session_id1.clone(), tx).await)
+        .write_tx(async |tx| CoreSession::delete_by_id(session_id1.clone(), tx).await)
         .await
         .unwrap();
 

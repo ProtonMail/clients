@@ -332,7 +332,10 @@ async fn bulk_unread_status_ignores_deleted_messages() {
         .unwrap()
         .unwrap();
     msg.deleted = true;
-    tether.tx(async |bond| msg.save(bond).await).await.unwrap();
+    tether
+        .write_tx(async |bond| msg.save(bond).await)
+        .await
+        .unwrap();
 
     let remote_ids = vec![MessageId::from("msg1")];
     let result = Message::bulk_unread_status_by_remote_ids(remote_ids, &tether)

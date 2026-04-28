@@ -53,7 +53,7 @@ impl TelemetryDbEx for TelemetryDb {
             .map_err(|e| TelemetryError::Database { msg: e.to_string() })?;
 
         tether
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 for event in events {
                     let id = event.id.clone();
                     let event_data = serde_json::to_string(&event).map_err(|e| {
@@ -80,7 +80,7 @@ impl TelemetryDbEx for TelemetryDb {
             .map_err(|e| TelemetryError::Database { msg: e.to_string() })?;
 
         tether
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 let query = format!(
                     "DELETE FROM {} WHERE {} IN ({})",
                     TelemetryEventRow::table_name(),

@@ -142,9 +142,9 @@ async fn fetch_and_answer() {
         ..Contact::test_default()
     };
 
-    db.tx(async |tx| sb.save(tx).await).await.unwrap();
+    db.write_tx(async |tx| sb.save(tx).await).await.unwrap();
 
-    db.tx(async |tx| sb.contact_emails[0].save(tx).await)
+    db.write_tx(async |tx| sb.contact_emails[0].save(tx).await)
         .await
         .unwrap();
 
@@ -220,7 +220,7 @@ async fn fetch_and_answer() {
         .await
         .unwrap();
 
-    db.tx(async |tx| msg.save(tx).await).await.unwrap();
+    db.write_tx(async |tx| msg.save(tx).await).await.unwrap();
 
     let msg_body = msg.fetch_message_body(&user_ctx, &mut db).await.unwrap();
 
@@ -235,7 +235,7 @@ async fn fetch_and_answer() {
         .unwrap()
         .unwrap();
 
-    db.tx(async |tx| {
+    db.write_tx(async |tx| {
         address.flags = Some(AddressFlags::BYOE);
         address.save(tx).await
     })
@@ -244,7 +244,7 @@ async fn fetch_and_answer() {
 
     assert!(msg_body.identify_rsvp(&user_ctx).await.unwrap().is_none());
 
-    db.tx(async |tx| {
+    db.write_tx(async |tx| {
         address.flags = Some(AddressFlags::default());
         address.save(tx).await
     })

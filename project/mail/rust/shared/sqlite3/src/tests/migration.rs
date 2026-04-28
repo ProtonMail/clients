@@ -141,7 +141,7 @@ impl Migration<UserDb> for M1 {
         "002_m1"
     }
 
-    async fn migrate(&self, tx: &Bond<'_>) -> Result<(), StashError> {
+    async fn migrate(&self, tx: &WriteTx<'_>) -> Result<(), StashError> {
         tx.execute("CREATE TABLE test1 (ID INTEGER)", vec![])
             .await?;
 
@@ -157,7 +157,7 @@ impl Migration<UserDb> for M2 {
         "003_m2"
     }
 
-    async fn migrate(&self, tx: &Bond<'_>) -> Result<(), StashError> {
+    async fn migrate(&self, tx: &WriteTx<'_>) -> Result<(), StashError> {
         tx.execute("CREATE TABLE test2 (ID INTEGER)", vec![])
             .await?;
 

@@ -14,7 +14,7 @@ use mail_core_common::datatypes::LocalLabelId;
 use mail_core_common::models::{Label, LabelError, ModelExtension};
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
-use mail_stash::stash::{Bond, Tether};
+use mail_stash::stash::{Tether, WriteTx};
 use serde::{Deserialize, Serialize};
 use std::mem;
 use std::sync::Weak;
@@ -119,7 +119,7 @@ impl DeleteAllMessagesInLabelHandler {
     /// we can just set the counters to zero up-front.
     async fn reset_counters(
         &self,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
         mut action: Option<&mut DeleteAllMessagesInLabel>,
         label: &Label,
     ) -> Result<(), MailActionError> {
@@ -156,7 +156,7 @@ impl Handler<UserDb> for DeleteAllMessagesInLabelHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         let label = self.label(action, tx).await?;
 
@@ -179,7 +179,7 @@ impl Handler<UserDb> for DeleteAllMessagesInLabelHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         let label = self.label(action, tx).await?;
 
@@ -255,7 +255,7 @@ impl Handler<UserDb> for DeleteAllMessagesInLabelHandler {
         _: ActionId,
         action: &mut Self::Action,
         _: &RebaseChangeSet,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         let label = self.label(action, tx).await?;
 

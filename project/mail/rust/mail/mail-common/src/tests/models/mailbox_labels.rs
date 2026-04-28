@@ -11,7 +11,7 @@ use mail_stash::stash::StashError;
 async fn test_mark_labels_as_initialized() {
     let mut tether = new_test_connection().await.connection().await.unwrap();
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             let mut new_label = Label {
                 local_id: None,
                 remote_id: Some("MyLabel".into()),

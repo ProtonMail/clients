@@ -335,7 +335,7 @@ mod message {
             ..Default::default()
         });
         let messages = tether
-            .tx::<_, _, StashError>(async |tx| {
+            .write_tx::<_, _, StashError>(async |tx| {
                 settings.save(tx).await.unwrap();
 
                 let mut conversation = Conversation::test_default();
@@ -817,7 +817,7 @@ mod conversation {
             ..Default::default()
         });
         let conversations = tether
-            .tx::<_, _, StashError>(async |tx| {
+            .write_tx::<_, _, StashError>(async |tx| {
                 settings.save(tx).await.unwrap();
 
                 let mut conversations = test_case.test_item.clone();

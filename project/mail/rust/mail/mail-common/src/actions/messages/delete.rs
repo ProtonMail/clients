@@ -16,7 +16,7 @@ use mail_core_common::datatypes::LocalLabelId;
 use mail_core_common::models::{ModelExtension, ModelIdExtension};
 use mail_stash::exports::SqliteError;
 use mail_stash::orm::Model;
-use mail_stash::stash::{Bond, StashError};
+use mail_stash::stash::{StashError, WriteTx};
 use mail_stash::{UserDb, params};
 use serde::{Deserialize, Serialize};
 use tracing::{error, info};
@@ -59,7 +59,7 @@ impl Handler<UserDb> for DeleteHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         if action.0.data.target_ids.is_empty() {
             return Err(MailActionError::NoInput);
@@ -79,7 +79,7 @@ impl Handler<UserDb> for DeleteHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         let message_ids = action.0.data.target_ids.clone();
         Message::mark_undeleted(message_ids, tx).await?;
@@ -215,7 +215,7 @@ impl Handler<UserDb> for DeleteHandler {
         _: ActionId,
         action: &mut Self::Action,
         changeset: &RebaseChangeSet,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         for id in &action.0.data.target_ids {
             let rebase_key: RebaseKey = (*id).into();

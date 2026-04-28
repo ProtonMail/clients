@@ -10,7 +10,7 @@ use mail_api::services::proton::{ProtonMail, request_data::PutNextMessageOnMoveR
 use mail_core_api::session::Session;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
-use mail_stash::stash::{Bond, RunTransaction};
+use mail_stash::stash::{RunTransaction, WriteTx};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -49,7 +49,7 @@ impl Handler<UserDb> for UpdateNextMessageOnMoveHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         let mut mail_settings = match MailSettings::get(bond.tether()).await? {
             Some(ms) => ms,
@@ -75,7 +75,7 @@ impl Handler<UserDb> for UpdateNextMessageOnMoveHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         let mut mail_settings = match MailSettings::get(bond.tether()).await? {
             Some(ms) => ms,
@@ -116,7 +116,7 @@ impl Handler<UserDb> for UpdateNextMessageOnMoveHandler {
         _: ActionId,
         _: &mut Self::Action,
         _: &RebaseChangeSet,
-        _: &Bond<'_>,
+        _: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         Ok(())
     }

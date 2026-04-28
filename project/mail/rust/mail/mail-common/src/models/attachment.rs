@@ -36,7 +36,7 @@ use mail_stash::exports::{SqliteError, ToSql};
 use mail_stash::macros::Model;
 use mail_stash::orm::Model;
 use mail_stash::orm::ModelHooks;
-use mail_stash::stash::{Bond, StashError, Tether};
+use mail_stash::stash::{StashError, Tether, WriteTx};
 use mail_stash::{params, sql_using_serde};
 use serde::{Deserialize, Serialize};
 use std::os::unix::fs::MetadataExt;
@@ -291,7 +291,9 @@ impl Attachment {
         tracing::info!("Syncing attachment metadata for {remote_id:?}");
         let mut attachment = Self::from(Self::fetch_metadata(remote_id, api).await?.attachment);
         attachment.local_id = self.local_id;
-        tether.tx(async |tx| attachment.save(tx).await).await?;
+        tether
+            .write_tx(async |tx| attachment.save(tx).await)
+            .await?;
         *self = attachment;
         Ok(Some(()))
     }
@@ -495,7 +497,7 @@ impl Attachment {
     #[tracing::instrument(skip(ctx, bond, att))]
     pub async fn create(
         ctx: &MailUserContext,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
         att: EncryptedAttachment,
         filename: &str,
         mime_type: attachment::MimeType,
@@ -609,7 +611,7 @@ impl Attachment {
         };
 
         tether
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 trace!("Saving new attachment record");
                 attachment.save(tx).await?;
 
@@ -712,7 +714,7 @@ impl Attachment {
         ctx: &MailUserContext,
         address_id: AddressId,
         attachment_id: LocalAttachmentId,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<Attachment, MailContextError> {
         let Some(attachment) = Self::find_by_id(attachment_id, bond).await? else {
             return Err(AppError::AttachmentMissing(attachment_id).into());
@@ -728,7 +730,7 @@ impl Attachment {
         ctx: &MailUserContext,
         address_id: AddressId,
         attachment: Attachment,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<Attachment, MailContextError> {
         let mut new_attachment = attachment;
         let attachment_id = new_attachment.id();
@@ -832,7 +834,7 @@ impl Attachment {
     pub async fn create_public_key(
         context: &MailUserContext,
         address: &Address,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<Attachment, MailContextError> {
         let attachment = Self::gen_public_key(context, address, tx).await?;
         attachment.store(context, tx).await
@@ -855,7 +857,10 @@ impl Attachment {
             && Self::is_public_key_attachment_filename(&self.filename)
     }
 
-    pub async fn update_after_draft_address_change(&self, tx: &Bond<'_>) -> Result<(), StashError> {
+    pub async fn update_after_draft_address_change(
+        &self,
+        tx: &WriteTx<'_>,
+    ) -> Result<(), StashError> {
         tx.execute(
             formatdoc!(
                 "
@@ -896,7 +901,7 @@ impl Attachment {
         msg_id: LocalMessageId,
         conversation_id: LocalConversationId,
         remote_conversation_id: ConversationId,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         tx.execute(
             format!(
@@ -1087,7 +1092,7 @@ impl PublicKeyAttachment {
     pub async fn store(
         mut self,
         context: &MailUserContext,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<Attachment, MailContextError> {
         self.attachment.save(tx).await?;
         Attachment::store_in_cache(

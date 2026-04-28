@@ -9,7 +9,7 @@ use mail_core_common::datatypes::LocalLabelId;
 use mail_core_common::models::ModelIdExtension;
 use mail_api::services::proton::ProtonMail;
 use serde::{Deserialize, Serialize};
-use mail_stash::stash::Bond;
+use mail_stash::stash::WriteTx;
 use tracing::{error, info};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -50,7 +50,7 @@ impl Handler<UserDb> for UnlabelHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         action.0.resolve_ids(tx).await?;
         Message::remove_label(action.0.label_id, action.0.data.target_ids.clone(), tx).await?;
@@ -61,7 +61,7 @@ impl Handler<UserDb> for UnlabelHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         Message::apply_label(action.0.label_id, action.0.data.target_ids.clone(), tx).await?;
         action

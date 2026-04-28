@@ -10,7 +10,7 @@ use mail_action_queue::queue::Queue;
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_core_api::session::Session;
 use mail_stash::UserDb;
-use mail_stash::stash::{Bond, Tether};
+use mail_stash::stash::{Tether, WriteTx};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -49,7 +49,7 @@ impl Handler<UserDb> for MoveHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<Self::Action, <Self::Action as Action<UserDb>>::Error> {
         let mut action_2 = action.clone();
         let action_2 = tx
@@ -66,7 +66,7 @@ impl Handler<UserDb> for MoveHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         action.0.revert_local(tx).await?;
         Ok(())
@@ -89,7 +89,7 @@ impl Handler<UserDb> for MoveHandler {
         _: ActionId,
         action: &mut Self::Action,
         rebase_change_set: &RebaseChangeSet,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         action.0.rebase_local(rebase_change_set, tx).await?;
         Ok(())

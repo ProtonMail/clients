@@ -1,4 +1,4 @@
-use mail_stash::stash::{Bond, StashError};
+use mail_stash::stash::{StashError, WriteTx};
 use mail_stash::{UserDb, params};
 
 use mail_sqlite3::Migration;
@@ -13,7 +13,7 @@ impl Migration<UserDb> for MessageCountersMigration {
         "v007_proton_mail_message_counters"
     }
 
-    async fn migrate(&self, tx: &Bond<'_>) -> Result<(), StashError> {
+    async fn migrate(&self, tx: &WriteTx<'_>) -> Result<(), StashError> {
         tx.execute(
             r#"
             CREATE TABLE message_counters (

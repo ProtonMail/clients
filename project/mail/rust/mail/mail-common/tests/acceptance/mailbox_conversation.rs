@@ -608,7 +608,10 @@ async fn test_new_mailbox_syncs_new_conversation_if_total_does_not_add_up() {
     .unwrap();
 
     conv.num_messages = 3;
-    tether.tx(async |tx| conv.save(tx).await).await.unwrap();
+    tether
+        .write_tx(async |tx| conv.save(tx).await)
+        .await
+        .unwrap();
 
     // Get messages again, should have new message
     let result = ContextualConversation::open_conversation_and_messages(
@@ -678,7 +681,7 @@ async fn conversation_and_messages_fetches_missing_dependenceis() {
 
     let mut tether = user_ctx.user_stash().connection().await.unwrap();
     tether
-        .tx(async |tx| conversation.save(tx).await)
+        .write_tx(async |tx| conversation.save(tx).await)
         .await
         .unwrap();
 
@@ -741,7 +744,7 @@ async fn conversation_and_messages_from_push_notification_fetches_missing_depend
 
     let mut tether = user_ctx.user_stash().connection().await.unwrap();
     tether
-        .tx(async |tx| conversation.save(tx).await)
+        .write_tx(async |tx| conversation.save(tx).await)
         .await
         .unwrap();
 

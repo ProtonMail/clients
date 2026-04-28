@@ -14,7 +14,7 @@ use proton_crypto_account::keys::{ArmoredPrivateKey, KeyId, LockedKey, UserKeys 
 async fn test_core_store_and_load_user() {
     let mut tether = new_core_test_connection().await.connection().await.unwrap();
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             let mut user = new_test_user();
             user.save(tx).await.expect("failed to store user");
             let db_user = User::load(user.remote_id.clone().unwrap(), tx)
@@ -33,7 +33,7 @@ async fn test_core_user_space_updates() {
     let mut tether = new_core_test_connection().await.connection().await.unwrap();
     let mut user = new_test_user();
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             user.save(tx).await.expect("failed to store user");
 
             user.used_space = 912_314_142;
@@ -116,7 +116,7 @@ async fn test_core_store_and_load_user_settings() {
     };
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             settings.save(tx).await.expect("failed to store settings");
             let db_settings = UserSettings::load(user_id.clone(), tx)
                 .await

@@ -83,7 +83,7 @@ use mail_stash::exports::ToSql;
 use mail_stash::macros::{DbRecord, Model};
 use mail_stash::orm::{Model, ModelHooks};
 use mail_stash::params;
-use mail_stash::stash::{Bond, RunTransaction, Stash, StashError, Tether, WatcherHandle};
+use mail_stash::stash::{RunTransaction, Stash, StashError, Tether, WatcherHandle, WriteTx};
 use mail_telemetry::LatencyEvents;
 use std::collections::HashSet;
 use std::collections::hash_map::Entry as HmEntry;
@@ -309,7 +309,7 @@ impl Message {
 
     pub async fn mark_multiple_as_read(
         ids: impl IntoIterator<Item = LocalMessageId>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         for id in ids {
             if let Some(mut message) = Message::load(id, bond).await? {
@@ -626,7 +626,7 @@ impl Message {
     pub async fn create_or_get_local(
         &mut self,
         rebase_change_set: &mut RebaseChangeSet,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         self.save(bond).await?;
         rebase_change_set.add(self.id());
@@ -655,7 +655,7 @@ impl Message {
     pub async fn create_or_update_messages_from_metadata_vec(
         metadata: Vec<ApiMessageMetadata>,
         event_action: Option<Action>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<Vec<Message>, AppError> {
         let mut messages = Vec::with_capacity(metadata.len());
 
@@ -676,7 +676,7 @@ impl Message {
     pub async fn create_or_update_messages_from_metadata(
         metadata: Vec<ApiMessageMetadata>,
         event_action: Option<Action>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<Vec<LocalMessageId>, AppError> {
         Ok(
             Self::create_or_update_messages_from_metadata_vec(metadata, event_action, bond)
@@ -687,7 +687,10 @@ impl Message {
         )
     }
 
-    pub async fn mark_deleted(ids: Vec<LocalMessageId>, bond: &Bond<'_>) -> Result<(), AppError> {
+    pub async fn mark_deleted(
+        ids: Vec<LocalMessageId>,
+        bond: &WriteTx<'_>,
+    ) -> Result<(), AppError> {
         info!("Marking {ids:?} as deleted");
         let (query, params) = find_in_query!("WHERE deleted = 0 AND local_id IN ({})", ids);
         let messages = Message::find(query, params, bond).await?;
@@ -742,7 +745,10 @@ impl Message {
         Ok(())
     }
 
-    pub async fn mark_undeleted(ids: Vec<LocalMessageId>, bond: &Bond<'_>) -> Result<(), AppError> {
+    pub async fn mark_undeleted(
+        ids: Vec<LocalMessageId>,
+        bond: &WriteTx<'_>,
+    ) -> Result<(), AppError> {
         info!("Unmarking {ids:?} as deleted");
         let (query, params) = find_in_query!("WHERE deleted = 1 AND local_id IN ({})", ids);
         let messages = Message::find(query, params, bond).await?;
@@ -859,7 +865,7 @@ impl Message {
         );
 
         tether
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 Self::create_or_update_messages_from_metadata(response.messages, None, tx).await
             })
             .await?;
@@ -1061,7 +1067,7 @@ impl Message {
         let message_id = self.id();
         let address_id = self.remote_address_id.clone();
         let body_for_store = body.clone();
-        tx.run_tx(async move |bond: &mail_stash::stash::Bond<'_, UserDb>| {
+        tx.run_write_tx(async move |bond: &mail_stash::stash::WriteTx<'_, UserDb>| {
             let raw_body = RawMessageBody::from_fixture(&body_for_store);
             raw_body
                 .store_and_consume(message_id, bond)
@@ -1203,7 +1209,7 @@ impl Message {
 
         if !ids.is_empty() {
             tether
-                .tx(async |tx| Self::mark_deleted(ids, tx).await)
+                .write_tx(async |tx| Self::mark_deleted(ids, tx).await)
                 .await?;
         }
 
@@ -1535,7 +1541,7 @@ impl Message {
         conversation_id: LocalConversationId,
         label_id: LocalLabelId,
         snooze_time: UnixTimestamp,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<Vec<LocalMessageId>, StashError> {
         bond.query_values::<_, LocalMessageId>(
             indoc! {
@@ -1557,7 +1563,7 @@ impl Message {
 
     pub async fn update_message_counters_after_soft_delete(
         messages: impl IntoIterator<Item = Message>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<HashMap<LocalLabelId, MessageLabelStats>, StashError> {
         let label_stats = MessageLabelStats::build(messages, bond).await?;
         for (label_id, stats) in label_stats.iter() {
@@ -1573,7 +1579,7 @@ impl Message {
 
     pub async fn update_message_counters_after_soft_undelete(
         messages: impl IntoIterator<Item = Message>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<HashMap<LocalLabelId, MessageLabelStats>, StashError> {
         let label_stats = MessageLabelStats::build(messages, bond).await?;
         for (label_id, stats) in label_stats.iter() {
@@ -1638,7 +1644,7 @@ impl Message {
                 tracing::error!("Failed to sync message dependencies: {e}");
             })?;
 
-        tx.run_tx(async |tx| {
+        tx.run_write_tx(async |tx| {
             for msg in remote_msgs {
                 let sync_decision = Message::sync_decision(&msg, None, tx).await?;
                 let mut remote_msg = Message::from_api_metadata(msg, tx).await?;
@@ -1695,7 +1701,7 @@ impl Message {
                 error!("Failed to convert message from api: {e:?}");
             })?;
 
-        tx.run_tx(async |tx| {
+        tx.run_write_tx(async |tx| {
             message.save(tx).await.inspect_err(|e| {
                 error!("Failed to save message metadata: {e:?}");
             })?;
@@ -1878,7 +1884,7 @@ impl Message {
             })?;
 
         let local_id = tether
-            .run_tx::<_, _>(async |tx| {
+            .run_write_tx::<_, _>(async |tx| {
                 let msg = remote_msgs
                     .into_iter()
                     .next()
@@ -1968,7 +1974,7 @@ impl Message {
     pub async fn set_flags(
         local_id: LocalMessageId,
         flags: MessageFlags,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         bond.execute(
             indoc! {
@@ -1983,7 +1989,7 @@ impl Message {
     pub async fn unset_flags(
         local_id: LocalMessageId,
         flags: MessageFlags,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         bond.execute(
             indoc! {
@@ -2052,7 +2058,7 @@ impl Message {
         display_order: u64,
         message_id: MessageId,
         conversation_id: ConversationId,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         tx.execute(
             formatdoc! {"
@@ -2086,7 +2092,7 @@ impl Message {
 
     pub async fn mark_unread_async(
         ids: impl IntoIterator<Item = LocalMessageId>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<Vec<LocalMessageId>, StashError> {
         let ids = Vec::from_iter(ids);
         bond.sync_bridge(move |tx| Self::mark_read_or_unread(false, &ids, tx))
@@ -2112,7 +2118,7 @@ impl Message {
         api_messages: Vec<ApiMessageMetadata>,
         rebase_change_set: &mut RebaseChangeSet,
         unresoled_label_ids: &HashSet<LabelId>,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<Vec<Message>, MailContextError> {
         let remote_ids = api_messages.iter().map(|m| m.id.as_str());
         let deleted_ids = DeletedItem::find_deleted_by_remote_ids(
@@ -2153,7 +2159,7 @@ impl Message {
     pub(crate) async fn sync_decision(
         metadata: &ApiMessageMetadata,
         event_action: Option<Action>,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<MessageSyncDecision, StashError> {
         // Here the following cases can happen:
         // 1. It's a draft, we don't have it open: Treat it as a normal message, update.
@@ -2217,7 +2223,7 @@ impl Message {
     }
 
     pub async fn handle_event(
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
         id: &MessageId,
         action: Action,
         message: Option<&MessageMetadata>,
@@ -2962,7 +2968,7 @@ impl MessageBodyMetadata {
 
     pub async fn update_fields_after_draft_create_or_update(
         &self,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         bond.execute(
             formatdoc! {"

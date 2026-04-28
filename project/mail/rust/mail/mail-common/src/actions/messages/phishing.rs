@@ -12,7 +12,7 @@ use mail_api::services::proton::ProtonMail;
 use mail_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;
 use mail_core_common::models::ModelIdExtension;
 use mail_stash::UserDb;
-use mail_stash::stash::Bond;
+use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
 use std::sync::Weak;
 use tracing::info;
@@ -61,7 +61,7 @@ impl Handler<UserDb> for ReportPhishingHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         Message::set_flags(action.message_id, MessageFlags::PHISHING_MANUAL, bond).await?;
 
@@ -72,7 +72,7 @@ impl Handler<UserDb> for ReportPhishingHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         Message::unset_flags(action.message_id, MessageFlags::PHISHING_MANUAL, bond).await?;
 
@@ -116,7 +116,7 @@ impl Handler<UserDb> for ReportPhishingHandler {
         _: ActionId,
         action: &mut Self::Action,
         changeset: &RebaseChangeSet,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         let rebase_key: RebaseKey = action.message_id.into();
         if changeset.contains(&rebase_key) {

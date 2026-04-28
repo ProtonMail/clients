@@ -11,7 +11,7 @@ use mail_stash::exports::{
     ValueRef,
 };
 use mail_stash::sql_using_serde;
-use mail_stash::stash::{Bond, RunTransaction, StashError, Tether};
+use mail_stash::stash::{RunTransaction, StashError, Tether, WriteTx};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::any::Any;
@@ -331,7 +331,7 @@ impl<'t, Db: mail_stash::marker::DatabaseMarker> WriterGuard<'t, Db> {
 
     pub async fn tx<F, T, E>(&mut self, closure: F) -> Result<T, E>
     where
-        F: AsyncFnOnce(&Bond<'_, Db>) -> Result<T, E>,
+        F: AsyncFnOnce(&WriteTx<'_, Db>) -> Result<T, E>,
         E: From<WriterGuardError> + From<StashError>,
     {
         self.execution_guard.tx(self.tether, closure).await
@@ -350,25 +350,25 @@ impl<Db: mail_stash::marker::DatabaseMarker> RunTransaction<Db> for WriterGuard<
     }
 
     #[allow(clippy::manual_async_fn)]
-    fn run_tx<T, F>(&mut self, closure: F) -> impl Future<Output = anyhow::Result<T>>
+    fn run_write_tx<T, F>(&mut self, closure: F) -> impl Future<Output = anyhow::Result<T>>
     where
-        F: AsyncFnOnce(&Bond<'_, Db>) -> Result<T, anyhow::Error>,
+        F: AsyncFnOnce(&WriteTx<'_, Db>) -> Result<T, anyhow::Error>,
     {
         async {
             self.tether
-                .tx(closure)
+                .write_tx(closure)
                 .await
                 .context("Could not create transaction for writerguard")
         }
     }
 
-    async fn run_tx_sync<T, F>(&mut self, closure: F) -> anyhow::Result<T>
+    async fn run_write_tx_sync<T, F>(&mut self, closure: F) -> anyhow::Result<T>
     where
         F: FnOnce(&Transaction<'_>) -> mail_stash::stash::StashResult<T> + Send + 'static,
         T: Send + 'static,
     {
         self.tether
-            .sync_tx_returning(closure)
+            .sync_write_tx_returning(closure)
             .await
             .context("Could not create transaction for writerguard")
     }
@@ -398,7 +398,7 @@ pub trait Handler<Db: mail_stash::marker::DatabaseMarker>: Send + Sync {
         &self,
         this_id: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_, Db>,
+        tx: &WriteTx<'_, Db>,
     ) -> impl Future<
         Output = Result<
             <Self::Action as Action<Db>>::LocalOutput,
@@ -415,7 +415,7 @@ pub trait Handler<Db: mail_stash::marker::DatabaseMarker>: Send + Sync {
         &self,
         this_id: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_, Db>,
+        tx: &WriteTx<'_, Db>,
     ) -> impl Future<Output = Result<(), <Self::Action as Action<Db>>::Error>> + Send;
 
     /// Apply the `action` on the server.
@@ -454,7 +454,7 @@ pub trait Handler<Db: mail_stash::marker::DatabaseMarker>: Send + Sync {
         this_id: ActionId,
         action: &mut Self::Action,
         change_set: &RebaseChangeSet,
-        tx: &Bond<'_, Db>,
+        tx: &WriteTx<'_, Db>,
     ) -> impl Future<Output = Result<(), <Self::Action as Action<Db>>::Error>> + Send;
 }
 

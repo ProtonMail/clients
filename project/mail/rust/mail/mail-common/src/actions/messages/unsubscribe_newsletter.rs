@@ -11,7 +11,7 @@ use mail_core_api::service::ApiServiceError;
 use mail_core_api::session::Session;
 use mail_core_common::models::ModelIdExtension;
 use mail_stash::UserDb;
-use mail_stash::stash::Bond;
+use mail_stash::stash::WriteTx;
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, warn};
@@ -102,7 +102,7 @@ impl Handler<UserDb> for UnsubscribeNewsletterHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         Message::set_flags(action.id, MessageFlags::UNSUBSCRIBED, tx).await?;
         Ok(())
@@ -112,7 +112,7 @@ impl Handler<UserDb> for UnsubscribeNewsletterHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         Message::unset_flags(action.id, MessageFlags::UNSUBSCRIBED, tx).await?;
         Ok(())
@@ -159,7 +159,7 @@ impl Handler<UserDb> for UnsubscribeNewsletterHandler {
         _: ActionId,
         _: &mut Self::Action,
         _: &RebaseChangeSet,
-        _: &Bond<'_>,
+        _: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         Ok(())
     }

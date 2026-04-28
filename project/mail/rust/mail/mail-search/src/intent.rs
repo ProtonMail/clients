@@ -12,7 +12,7 @@ use mail_stash::rusqlite::OptionalExtension;
 use mail_stash::rusqlite::types::{
     FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef,
 };
-use mail_stash::stash::{Bond, StashError, Tether};
+use mail_stash::stash::{StashError, Tether, WriteTx};
 use tracing::{debug, warn};
 
 /// Local message ID type (u64 wrapped for type safety)
@@ -90,10 +90,10 @@ impl SearchIndexIntent {
     pub async fn create_or_ignore(
         message_id: LocalMessageId,
         operation: SearchOperation,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<bool, StashError> {
         // Note: Content hash check happens in the worker, not here, because
-        // we can't query within a Bond transaction. The worker will check
+        // we can't query within a WriteTx transaction. The worker will check
         // the separate content_hashes table and skip if hash matches.
         let timestamp = chrono::Utc::now().timestamp();
 
@@ -101,7 +101,7 @@ impl SearchIndexIntent {
         // Note: This uses IGNORE, so if intent exists, it won't create a duplicate.
         let rows_affected = bond
             .execute(
-                "INSERT OR IGNORE INTO search_index_intents (message_id, operation, retry_count, created_at) 
+                "INSERT OR IGNORE INTO search_index_intents (message_id, operation, retry_count, created_at)
                  VALUES (?1, ?2, 0, ?3)",
                 params![message_id, operation, timestamp],
             )
@@ -132,7 +132,7 @@ impl SearchIndexIntent {
     pub async fn create_or_ignore_batch(
         message_ids: &[LocalMessageId],
         operation: SearchOperation,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         // Build a batch INSERT statement with multiple VALUES clauses
         // SQLite supports up to 999 parameters, so we need to batch if needed
@@ -158,7 +158,7 @@ impl SearchIndexIntent {
                 .collect();
 
             let query = format!(
-                "INSERT OR IGNORE INTO search_index_intents (message_id, operation, retry_count, created_at) 
+                "INSERT OR IGNORE INTO search_index_intents (message_id, operation, retry_count, created_at)
                  VALUES {}",
                 placeholders.join(", ")
             );
@@ -193,9 +193,9 @@ impl SearchIndexIntent {
         tether
             .sync_query(|conn| {
                 conn.query_row(
-                    "SELECT message_id, operation, retry_count, created_at 
-                     FROM search_index_intents 
-                     ORDER BY created_at ASC 
+                    "SELECT message_id, operation, retry_count, created_at
+                     FROM search_index_intents
+                     ORDER BY created_at ASC
                      LIMIT 1",
                     [],
                     |row| {
@@ -226,9 +226,9 @@ impl SearchIndexIntent {
         tether
             .sync_query(move |conn| {
                 let mut stmt = conn.prepare(
-                    "SELECT message_id, operation, retry_count, created_at 
-                     FROM search_index_intents 
-                     ORDER BY created_at ASC 
+                    "SELECT message_id, operation, retry_count, created_at
+                     FROM search_index_intents
+                     ORDER BY created_at ASC
                      LIMIT ?1",
                 )?;
                 let rows = stmt.query_map([limit_i64], |row| {
@@ -253,7 +253,7 @@ impl SearchIndexIntent {
     ///
     /// The increment is done in SQL with RETURNING to get the accurate count,
     /// avoiding race conditions with concurrent updates.
-    pub async fn mark_failed(&mut self, bond: &Bond<'_>) -> Result<(), StashError> {
+    pub async fn mark_failed(&mut self, bond: &WriteTx<'_>) -> Result<(), StashError> {
         use mail_stash::utils::ConnectionExt;
 
         // Safe cast: LocalMessageId (u64) to i64 for SQLite
@@ -289,7 +289,7 @@ impl SearchIndexIntent {
     }
 
     /// Delete this intent (after successful processing)
-    pub async fn delete(&self, bond: &Bond<'_>) -> Result<(), StashError> {
+    pub async fn delete(&self, bond: &WriteTx<'_>) -> Result<(), StashError> {
         bond.execute(
             "DELETE FROM search_index_intents WHERE message_id = ?1 AND operation = ?2",
             params![self.message_id, self.operation],
@@ -321,7 +321,7 @@ impl SearchIndexIntent {
     /// This pushes the intent to the back of the queue, allowing other intents
     /// to be processed first. Useful when an intent can't be processed yet but
     /// will likely be processable later (e.g., message waiting for remote ID).
-    pub async fn defer(&self, bond: &Bond<'_>, delay_seconds: i64) -> Result<(), StashError> {
+    pub async fn defer(&self, bond: &WriteTx<'_>, delay_seconds: i64) -> Result<(), StashError> {
         use mail_stash::params;
 
         // Safe cast: LocalMessageId (u64) to i64 for SQLite
@@ -332,7 +332,7 @@ impl SearchIndexIntent {
         let new_timestamp = chrono::Utc::now().timestamp() + delay_seconds;
 
         bond.execute(
-            "UPDATE search_index_intents SET created_at = ?1 
+            "UPDATE search_index_intents SET created_at = ?1
              WHERE message_id = ?2 AND operation = ?3",
             params![new_timestamp, message_id, operation],
         )
@@ -360,12 +360,12 @@ impl SearchIndexIntent {
     pub async fn save_content_hash(
         message_id: LocalMessageId,
         content_hash: &str,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         let timestamp = chrono::Utc::now().timestamp();
         let hash = content_hash.to_string();
         bond.execute(
-            "INSERT OR REPLACE INTO search_index_content_hashes (message_id, content_hash, updated_at) 
+            "INSERT OR REPLACE INTO search_index_content_hashes (message_id, content_hash, updated_at)
              VALUES (?1, ?2, ?3)",
             params![message_id, hash, timestamp],
         )
@@ -415,7 +415,7 @@ impl SearchIndexIntent {
     /// to clean up the hash record.
     pub async fn delete_content_hash(
         message_id: LocalMessageId,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         bond.execute(
             "DELETE FROM search_index_content_hashes WHERE message_id = ?1",

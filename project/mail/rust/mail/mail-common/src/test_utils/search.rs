@@ -149,7 +149,7 @@ macro_rules! api_conversation {
 pub async fn create_labels(tether: &mut Tether) -> Vec<LocalLabelId> {
     let mut labels = [test_label1(), test_label2()];
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             for label in &mut labels {
                 label.save(tx).await.expect("failed to create labels");
                 assert!(

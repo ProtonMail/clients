@@ -8,7 +8,7 @@ use mail_action_queue::action::{
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;
 use mail_stash::UserDb;
-use mail_stash::stash::Bond;
+use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
 use std::sync::Weak;
 
@@ -50,7 +50,7 @@ impl Handler<UserDb> for RollbackActionHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: &Bond<'_>,
+        _: &WriteTx<'_>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::LocalOutput,
         <Self::Action as Action<UserDb>>::Error,
@@ -62,7 +62,7 @@ impl Handler<UserDb> for RollbackActionHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: &Bond<'_>,
+        _: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         Ok(())
     }
@@ -96,7 +96,7 @@ impl Handler<UserDb> for RollbackActionHandler {
         _: ActionId,
         _: &mut Self::Action,
         _: &RebaseChangeSet,
-        _: &Bond<'_>,
+        _: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         Ok(())
     }

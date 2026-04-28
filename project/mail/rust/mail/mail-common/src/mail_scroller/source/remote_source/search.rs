@@ -58,7 +58,7 @@ impl SearchScrollerSource {
         let mut tether = ctx.user_stash().connection().await?;
 
         tether
-            .tx(async |tx| SearchScrollData::clear_all_search_data(tx).await)
+            .write_tx(async |tx| SearchScrollData::clear_all_search_data(tx).await)
             .await?;
 
         let Some(remote_label_id) =
@@ -291,7 +291,7 @@ impl SearchScrollerSource {
         // downloaded in the background
 
         tether
-            .quiet_tx(async |tx| {
+            .quiet_write_tx(async |tx| {
                 let mut rebase_change_set = RebaseChangeSet::default();
                 // Append after existing rows (no display_order interleaving). Skip messages
                 // already in SearchScrollData (from local search) to merge/dedup local+remote.

@@ -94,7 +94,7 @@ async fn move_between_folders() {
     let mut source_msg = MessageCounter::new(source.id());
     source_msg.total = 1;
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             source_conv.save(tx).await.unwrap();
             source_msg.save(tx).await.unwrap();
             Ok(())
@@ -194,7 +194,7 @@ async fn move_between_folders_and_undo() {
     let mut source_msg = MessageCounter::new(source.id());
     source_msg.total = 1;
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             source_conv.save(tx).await.unwrap();
             source_msg.save(tx).await.unwrap();
             Ok(())
@@ -575,7 +575,7 @@ async fn move_out_of_spam_set_almost_all_mail() {
     let mut spam_msg = MessageCounter::new(spam.id());
     spam_msg.total = 1;
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             spam_conv.save(tx).await.unwrap();
             spam_msg.save(tx).await.unwrap();
             Ok(())
@@ -670,7 +670,7 @@ async fn move_from_spam_to_trash_do_not_remove_almost_all_mail_label() {
     );
     all_mail.total = 1;
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             spam_conv.save(tx).await.unwrap();
             spam_msg.save(tx).await.unwrap();
             all_mail.save(tx).await.unwrap();
@@ -967,7 +967,7 @@ async fn move_conversation_between_folders_and_undo() {
 
     // Create a dummy message, this is required for undo to work correctly now
     tether
-        .tx(async |tx| {
+        .write_tx(async |tx| {
             let addr_id = ApiAddress::test_address().id;
             let local_addr_id = Address::remote_id_counterpart(addr_id.clone(), tx)
                 .await?
@@ -1508,7 +1508,7 @@ mod rebase_messages {
 
         // simulate state reset.
         tether
-            .tx(async |tx| original_message.save(tx).await)
+            .write_tx(async |tx| original_message.save(tx).await)
             .await
             .unwrap();
 
@@ -1559,7 +1559,7 @@ mod rebase_messages {
 
         // simulate state reset.
         tether
-            .tx(async |tx| updated_message.save(tx).await)
+            .write_tx(async |tx| updated_message.save(tx).await)
             .await
             .unwrap();
 
@@ -1619,7 +1619,7 @@ mod rebase_messages {
 
         // simulate state reset.
         tether
-            .tx(async |tx| updated_message.save(tx).await)
+            .write_tx(async |tx| updated_message.save(tx).await)
             .await
             .unwrap();
 
@@ -1705,7 +1705,7 @@ mod rebase_messages {
 
         // simulate state reset.
         tether
-            .tx(async |tx| updated_message.save(tx).await)
+            .write_tx(async |tx| updated_message.save(tx).await)
             .await
             .unwrap();
 
@@ -1826,7 +1826,7 @@ mod rebase_messages {
 
         // simulate state reset.
         tether
-            .tx(async |tx| updated_message.save(tx).await)
+            .write_tx(async |tx| updated_message.save(tx).await)
             .await
             .unwrap();
 
@@ -2061,7 +2061,7 @@ mod rebase_conversations {
 
         // simulate state reset.
         tether
-            .tx::<_, _, StashError>(async |tx| {
+            .write_tx::<_, _, StashError>(async |tx| {
                 original_conversation.save(tx).await?;
                 for msg in &mut original_conv_messages {
                     msg.save(tx).await?
@@ -2183,7 +2183,7 @@ mod rebase_conversations {
 
         // simulate state reset.
         tether
-            .tx::<_, _, StashError>(async |tx| {
+            .write_tx::<_, _, StashError>(async |tx| {
                 conv1.save(tx).await?;
                 for msg in &mut original_conv_messages {
                     msg.save(tx).await?

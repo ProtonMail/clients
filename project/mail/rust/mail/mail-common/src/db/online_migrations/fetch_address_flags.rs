@@ -98,7 +98,7 @@ async fn update_address(
         .await?;
 
     tether
-        .tx(async |bond| {
+        .write_tx(async |bond| {
             address.reload(bond).await?;
             address.flags = Some(api_address.address.flags.into());
             address.save(bond).await
@@ -145,7 +145,7 @@ mod tests {
         let mut tether = muctx.user_stash().connection().await.unwrap();
 
         tether
-            .tx(async |bond| {
+            .write_tx(async |bond| {
                 addr1.save(bond).await?;
                 addr2.save(bond).await
             })

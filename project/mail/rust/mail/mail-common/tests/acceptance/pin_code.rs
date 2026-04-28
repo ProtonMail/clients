@@ -146,7 +146,7 @@ async fn set_default_pin_code(user_ctx: &MailUserContext) {
     user_ctx.core_context().clock().pin_code_reset();
 
     tether
-        .tx(async |bond| pin_metadata.save(bond).await)
+        .write_tx(async |bond| pin_metadata.save(bond).await)
         .await
         .unwrap();
 }

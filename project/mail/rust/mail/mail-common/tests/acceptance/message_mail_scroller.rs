@@ -86,7 +86,7 @@ async fn test_message_mail_scroller_reads_correct_items_within_visible_range_for
         .build();
 
     tether
-        .tx(async |bond| scroller.save(bond).await)
+        .write_tx(async |bond| scroller.save(bond).await)
         .await
         .unwrap();
 
@@ -199,7 +199,7 @@ async fn test_message_mail_scroller_reads_two_pages_from_online_scroll_data() {
         .unwrap();
     counters.total = page_size as u64 * 2;
     tether
-        .tx(async |bond| counters.save(bond).await)
+        .write_tx(async |bond| counters.save(bond).await)
         .await
         .unwrap();
 
@@ -329,7 +329,7 @@ async fn test_message_mail_scroller_notificate_about_changes() {
         .unwrap();
     counters.total = page_size as u64 * 2;
     tether
-        .tx(async |bond| counters.save(bond).await)
+        .write_tx(async |bond| counters.save(bond).await)
         .await
         .unwrap();
 
@@ -409,7 +409,7 @@ async fn test_message_mail_scroller_notificate_about_changes() {
     );
 
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             let label = Label::load(local_label_id, bond).await.unwrap().unwrap();
             save_single_message(&[label], &mut test_message.clone(), bond).await;
             Ok(())
@@ -464,7 +464,7 @@ async fn all_scheduled_is_displayed_in_ascending_order() {
         .unwrap();
     counters.total = page_size as u64 * 2;
     tether
-        .tx(async |bond| counters.save(bond).await)
+        .write_tx(async |bond| counters.save(bond).await)
         .await
         .unwrap();
 
@@ -890,7 +890,7 @@ async fn test_snooze_time_pagination_fix_works() {
     );
 
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             let label = Label::load(local_label_id, bond).await.unwrap().unwrap();
             save_single_message(&[label], &mut new_message.clone(), bond).await;
             Ok(())

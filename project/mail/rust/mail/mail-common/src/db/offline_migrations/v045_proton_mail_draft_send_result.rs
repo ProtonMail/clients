@@ -2,7 +2,7 @@ use crate::datatypes::LocalAttachmentId;
 use crate::models::{DraftAttachmentInternalError, DraftAttachmentInternalUploadError};
 use mail_sqlite3::Migration;
 use mail_stash::macros::DbRecord;
-use mail_stash::stash::{Bond, StashError};
+use mail_stash::stash::{StashError, WriteTx};
 use mail_stash::{UserDb, params};
 
 #[derive(DbRecord, Debug, Clone, Eq, PartialEq)]
@@ -21,7 +21,7 @@ impl Migration<UserDb> for DraftSendResultAttachmentErrorsMigration {
         "v045_proton_mail_draft_send_result_attachment_errors"
     }
 
-    async fn migrate(&self, tx: &Bond<'_>) -> Result<(), StashError> {
+    async fn migrate(&self, tx: &WriteTx<'_>) -> Result<(), StashError> {
         // Convert any old draft send failures into the new
         let results = tx
             .query::<_, V1Value>(

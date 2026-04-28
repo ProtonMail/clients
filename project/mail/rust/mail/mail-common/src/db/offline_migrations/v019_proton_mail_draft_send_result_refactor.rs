@@ -6,7 +6,7 @@ use crate::models::{
 use mail_core_api::services::proton::AddressId;
 use mail_sqlite3::Migration;
 use mail_stash::macros::DbRecord;
-use mail_stash::stash::{Bond, StashError};
+use mail_stash::stash::{StashError, WriteTx};
 use mail_stash::{UserDb, params, sql_using_serde};
 
 pub struct DraftSendResultMigration;
@@ -84,7 +84,7 @@ impl Migration<UserDb> for DraftSendResultMigration {
         "v019_proton_mail_draft_send_result_refactor"
     }
 
-    async fn migrate(&self, tx: &Bond<'_>) -> Result<(), StashError> {
+    async fn migrate(&self, tx: &WriteTx<'_>) -> Result<(), StashError> {
         // Convert any old draft send failures into the new
         let results = tx
             .query::<_, V1Value>(

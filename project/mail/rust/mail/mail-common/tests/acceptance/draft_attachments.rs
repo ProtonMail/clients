@@ -225,7 +225,7 @@ async fn remove_attachment_by_cid() {
     // Make the content id the same to check if our query is working correctly.
     attachment2.content_id = attachment.content_id.clone();
     tether
-        .tx(async |tx| attachment2.save(tx).await)
+        .write_tx(async |tx| attachment2.save(tx).await)
         .await
         .unwrap();
 
@@ -471,7 +471,7 @@ async fn draft_reply_or_forward_creates_new_attachments() {
             .unwrap();
 
     tether
-        .tx(async |tx| existing_message.save(tx).await)
+        .write_tx(async |tx| existing_message.save(tx).await)
         .await
         .unwrap();
 
@@ -653,7 +653,7 @@ async fn deleting_draft_metadata_cleans_not_uploaded_attachments() {
             .unwrap();
 
     tether
-        .tx(async |tx| existing_message.save(tx).await)
+        .write_tx(async |tx| existing_message.save(tx).await)
         .await
         .unwrap();
 
@@ -816,7 +816,7 @@ async fn total_attachment_size_more_than_limit_local() {
             image_height: None,
         };
         tether
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 attachment.save(tx).await?;
                 let mut attachment_metadata =
                     DraftAttachmentMetadata::new(draft.metadata_id, attachment.id(), 1, false);
@@ -930,7 +930,7 @@ async fn total_attachment_size_more_than_limit() {
             image_height: None,
         };
         tether
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 attachment.save(tx).await?;
                 let mut attachment_metadata =
                     DraftAttachmentMetadata::new(draft.metadata_id, attachment.id(), 1, false);
@@ -1022,7 +1022,7 @@ async fn total_attachment_count_exceeds_limit() {
     // Create 100 small attachments
     {
         tether
-            .tx::<_, _, StashError>(async |tx| {
+            .write_tx::<_, _, StashError>(async |tx| {
                 for _ in 0..100 {
                     let mut attachment = Attachment {
                         local_id: None,
@@ -1224,7 +1224,7 @@ async fn total_attachment_count_exceeds_limit_local() {
     // Create 100 small attachments
     {
         tether
-            .tx::<_, _, StashError>(async |tx| {
+            .write_tx::<_, _, StashError>(async |tx| {
                 for _ in 0..100 {
                     let mut attachment = Attachment {
                         local_id: None,

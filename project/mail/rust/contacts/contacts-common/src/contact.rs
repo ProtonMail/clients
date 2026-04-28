@@ -28,7 +28,7 @@ use mail_stash::params;
 use mail_stash::rusqlite::Connection;
 use mail_stash::rusqlite::params_from_iter;
 use mail_stash::stash::{
-    Bond, RunTransaction, Stash, StashError, StashResult, Tether, WatcherHandle,
+    RunTransaction, Stash, StashError, StashResult, Tether, WatcherHandle, WriteTx,
 };
 use mail_stash::utils::placeholders;
 use mail_stash::{UserDb, macros::Model as ModelDerive};
@@ -332,7 +332,7 @@ impl Contact {
                 .contact,
         );
 
-        tx.run_tx(async |tx| {
+        tx.run_write_tx(async |tx| {
             contact_with_card.save(tx).await.map_err(|err| {
                 error!("Failed to sync full contact to db: {err:?}");
                 err
@@ -364,7 +364,7 @@ impl Contact {
             );
         }
 
-        tx.run_tx(async |tx| {
+        tx.run_write_tx(async |tx| {
             for contact in &mut contacts {
                 contact.save(tx).await?;
             }
@@ -459,7 +459,7 @@ impl Contact {
     /// the database, then it is deleted from the remote server, and finally
     /// It is deleted from the local database by the event loop update.
     ///
-    pub async fn mark_delete(&mut self, bond: &Bond<'_>) -> Result<(), StashError> {
+    pub async fn mark_delete(&mut self, bond: &WriteTx<'_>) -> Result<(), StashError> {
         self.deleted = true;
         self.save(bond).await
     }
@@ -468,7 +468,7 @@ impl Contact {
     /// This method serves as the reverse of [`Contact::mark_delete()`].
     /// which can revert the deletion of a contact in case of something unpredictable happened.
     ///
-    pub async fn mark_undelete(&mut self, bond: &Bond<'_>) -> Result<(), StashError> {
+    pub async fn mark_undelete(&mut self, bond: &WriteTx<'_>) -> Result<(), StashError> {
         self.deleted = false;
         self.save(bond).await
     }
@@ -503,7 +503,7 @@ impl Contact {
     }
 
     pub async fn handle_event(
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
         id: &ContactId,
         action: mail_shared_types::Action,
         contact: Option<&mut Contact>,
@@ -847,7 +847,7 @@ mod tests {
             .unwrap();
         let mut full_contact = create_test_full_contact();
         let local_id = tether
-            .tx::<_, _, StashError>(async |tx| {
+            .write_tx::<_, _, StashError>(async |tx| {
                 full_contact
                     .save(tx)
                     .await
@@ -888,7 +888,7 @@ mod tests {
         let mut partial_contacts = create_test_partial_contacts();
         let mut contact_emails = create_test_contact_emails();
         tether
-            .tx::<_, _, StashError>(async |tx| {
+            .write_tx::<_, _, StashError>(async |tx| {
                 for contact in &mut partial_contacts {
                     contact.save(tx).await.expect("failed to create contact");
                 }
@@ -1047,12 +1047,15 @@ mod tests {
             let mut tether = mail_stash.connection().await.unwrap();
             let mut contact =
                 crate::contact!(remote_id: crate::cid!("123"), name: "Barbara Fox".to_string());
-            tether.tx(async |tx| contact.save(tx).await).await.unwrap();
+            tether
+                .write_tx(async |tx| contact.save(tx).await)
+                .await
+                .unwrap();
             let (_, list_receiver) = Contact::watch_contact_list(&mail_stash).await.unwrap();
             let list_receiver = list_receiver.receiver;
 
             tether
-                .tx(async |tx| {
+                .write_tx(async |tx| {
                     contact.name = "Barbara Lox".to_string();
                     contact.save(tx).await
                 })
@@ -1062,7 +1065,7 @@ mod tests {
             assert!(list_receiver.recv_async().await.is_ok());
 
             tether
-                .tx(async |tx| {
+                .write_tx(async |tx| {
                     contact.deleted = true;
                     contact.save(tx).await
                 })
@@ -1072,7 +1075,7 @@ mod tests {
             assert!(list_receiver.recv_async().await.is_ok());
 
             tether
-                .tx(async |tx| {
+                .write_tx(async |tx| {
                     contact.deleted = false;
                     contact.save(tx).await
                 })
@@ -1082,7 +1085,7 @@ mod tests {
             assert!(list_receiver.recv_async().await.is_ok());
 
             tether
-                .tx(async |tx| {
+                .write_tx(async |tx| {
                     tx.execute(
                         "DELETE FROM contacts WHERE local_id = ?",
                         params![contact.local_id],

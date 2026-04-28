@@ -9,7 +9,7 @@ use mail_stash::exports::{FromSql, FromSqlError, ToSql, Value};
 use mail_stash::{
     macros::DbRecord,
     params,
-    stash::{Bond, StashError, Tether},
+    stash::{StashError, Tether, WriteTx},
 };
 use rusqlite::types;
 #[cfg(feature = "foundation_search")]
@@ -136,7 +136,7 @@ impl RawMessageBody {
 
     /// Store the message body
     #[instrument(skip_all, fields(id=%id))]
-    pub async fn store(&self, id: LocalMessageId, tx: &Bond<'_>) -> Result<(), StashError> {
+    pub async fn store(&self, id: LocalMessageId, tx: &WriteTx<'_>) -> Result<(), StashError> {
         self.clone().store_and_consume(id, tx).await
     }
 
@@ -144,7 +144,7 @@ impl RawMessageBody {
     pub async fn store_and_consume(
         self,
         id: LocalMessageId,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         // Extract values from self before moving to avoid borrow checker issues.
         // They are needed both for the database insert and for search indexing
@@ -223,7 +223,7 @@ impl RawMessageBody {
     #[cfg(feature = "foundation_search")]
     pub async fn store_and_consume_batch(
         items: Vec<(LocalMessageId, Self)>,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         if items.is_empty() {
             return Ok(());
@@ -283,7 +283,7 @@ impl RawMessageBody {
 
     /// Delete the message body
     #[instrument(skip_all, fields(id=%id))]
-    pub async fn delete(id: LocalMessageId, tx: &Bond<'_>) -> Result<(), StashError> {
+    pub async fn delete(id: LocalMessageId, tx: &WriteTx<'_>) -> Result<(), StashError> {
         tx.execute(
             "DELETE FROM raw_message_body WHERE message_id = ?",
             params![id],
@@ -303,7 +303,7 @@ impl RawMessageBody {
     pub async fn update_signatures(
         id: LocalMessageId,
         signatures: Vec<u8>,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         tx.execute(
             "UPDATE raw_message_body SET signatures = ? WHERE message_id = ?",

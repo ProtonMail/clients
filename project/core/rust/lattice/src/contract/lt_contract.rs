@@ -1,8 +1,6 @@
 use std::{borrow::Cow, collections::HashMap};
 
-#[cfg(feature = "serde")]
-use crate::LtRequestBody;
-use crate::{LatticeError, LtResponseBody, Method};
+use crate::{LatticeError, LtRequestBody, LtResponseBody, Method};
 
 /// A trait for all Lattice contracts.
 ///
@@ -203,9 +201,9 @@ pub trait LtContract {
 
     /// The body type for the contract.
     ///
-    /// This type needs to implement `Serialize` from `serde` if the method is `POST` or `PUT`.
-    /// This can be `LtRawBody` if the method is `GET` or `DELETE`.
-    #[cfg(feature = "serde")]
+    /// For `POST` / `PUT`, this is usually `LtSlimAPIJSON` (JSON), `LtRawBody` (opaque bytes), or
+    /// `LtEmptyBody` (no request body). `GET` / `DELETE` do not use `Post`/`Put` on [`Method`], so
+    /// they do not send a body via this associated type.
     type Body<'b>: LtRequestBody
     where
         Self: 'b;

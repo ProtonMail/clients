@@ -1,4 +1,3 @@
-#[cfg(feature = "serde")]
 use crate::LtRequestBody;
 
 /// A enum for the HTTP methods.
@@ -11,8 +10,8 @@ use crate::LtRequestBody;
 /// The `Put` variant is used for PUT requests.
 ///
 /// The `T` type is the body type for the request.
-/// This type needs to implement `LtRequestBody` if the method is `POST` or `PUT`.
-/// This can be `()` if the method is `GET` or `DELETE`.
+/// It must implement [`crate::LtRequestBody`] for `Post` and `Put` (e.g. [`crate::LtSlimAPIJSON`],
+/// [`crate::LtRawBody`], [`crate::LtEmptyBody`]). `Get` and `Delete` do not carry a body in this enum.
 #[derive(Clone)]
 pub enum Method<T: LtRequestBody> {
     Get,

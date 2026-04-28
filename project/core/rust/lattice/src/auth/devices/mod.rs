@@ -14,9 +14,7 @@ pub use post_auth_devices_create::{
     LtAuthPostDevicesCreateAuthDevice, LtAuthPostDevicesCreateReq, LtAuthPostDevicesCreateRes,
 };
 pub use post_auth_devices_device_id::LtAuthPostDevicesDeviceIDReq;
-pub use put_auth_devices_device_id_admin::{
-    LtAuthPutDevicesAdminRes, LtAuthPutDevicesDeviceIDAdminReq,
-};
+pub use put_auth_devices_device_id_admin::LtAuthPutDevicesDeviceIDAdminReq;
 
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 

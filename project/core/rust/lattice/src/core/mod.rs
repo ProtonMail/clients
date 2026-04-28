@@ -1,3 +1,7 @@
+//! Core HTTP API v4 contracts.
+//! [`LtAuthDevice`] and [`LtAuthDeviceState`] are re-exported from [`crate::auth::devices`] for use next to
+//! other Core DTOs; the canonical import path is `lattice::auth::devices` when you only need those types.
+
 pub mod account_enums;
 pub mod get_core_address;
 pub mod get_core_addresses;
@@ -10,37 +14,52 @@ pub mod get_members;
 pub mod get_members_me_unprivatize;
 pub mod get_organization_settings;
 pub mod get_organizations;
+pub mod get_organizations_keys;
 pub mod get_organizations_keys_signature;
 pub mod get_organizations_logo;
 pub mod get_tests_ping;
 pub mod ids;
 pub mod keys;
 pub use keys::post_keys_setup;
+pub mod members;
 pub mod post_domains;
 pub mod post_members_saml;
+pub mod post_members_unprivatize;
 pub mod post_saml_setup_fields;
 pub mod post_validate_email;
 pub mod post_validate_phone;
 pub mod put_domains;
 pub mod put_keys_private;
+pub mod put_organizations_keys_signature;
 pub mod put_users_password;
+pub mod unpriv_types;
 pub mod user;
 pub mod user_settings;
 
+pub use crate::auth::devices::{LtAuthDevice, LtAuthDeviceState};
 pub use account_enums::{
     LtCoreDomainVerifyState, LtCoreMemberOrgKeyStatus, LtCoreMemberState, LtCoreSsoType,
 };
 pub use get_members::{LtCoreMemberListAddress, LtCoreMemberListUnprivatization};
-pub use ids::{LtCoreDomainId, LtCoreMemberEncId};
+pub use ids::{LtCoreAuthDeviceId, LtCoreDomainId, LtCoreMemberEncId};
+pub use members::devices::{
+    LtCoreDeleteMembersDeviceReq, LtCoreDeleteMembersDevicesReq, LtCoreGetMembersDevicesPendingReq,
+    LtCoreGetMembersDevicesPendingRes, LtCoreGetMembersDevicesReq, LtCoreGetMembersDevicesRes,
+    LtCorePostMembersDevicesResetBody, LtCorePostMembersDevicesResetReq,
+    LtCorePutMembersDevicesRejectReq, LtCoreResetAuthDevicesUserKey,
+};
+pub use unpriv_types::{
+    LtCoreUnprivActivationToken, LtCoreUnprivArmoredPrivateKey, LtCoreUnprivInvitationData,
+    LtCoreUnprivInvitationSignature, LtCoreUnprivOrgKeyFingerprintSignature,
+    LtCoreUnprivPgpPublicKey, LtCoreUnprivState,
+};
 
 use derive_more::{From, Into};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
-use crate::{
-    Sensitive,
-    auth::{LtAuthAddressId, LtAuthUserId},
-    core::keys::LtCoreSensitiveAddressKeys,
-};
+use crate::Sensitive;
+use crate::auth::{LtAuthAddressId, LtAuthUserId};
+use crate::core::keys::LtCoreSensitiveAddressKeys;
 
 /// Async user initialization flag
 #[repr(i32)]

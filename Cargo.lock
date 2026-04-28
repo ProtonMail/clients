@@ -5197,6 +5197,7 @@ dependencies = [
  "muon 2.3.0",
  "num_enum",
  "passkey",
+ "proton-crypto",
  "proton-crypto-account",
  "rand 0.9.4",
  "regex",

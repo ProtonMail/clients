@@ -14,7 +14,6 @@
 mod lt_contract;
 
 pub use lt_contract::LtContract;
-use serde::{Deserialize, Serialize};
 
 use crate::LatticeError;
 
@@ -50,16 +49,28 @@ impl LtResponseBody for LtRawBody {
     }
 }
 
-/// A body type for slimAPI Lattice contracts that use JSON for the request body.
+/// No HTTP body (zero bytes). Use for `POST`/`PUT` routes that have no `FromBody` / no JSON payload —
+/// this is **not** JSON (`{}` or `null`); it is intentionally empty.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
+pub struct LtEmptyBody;
+
+impl LtRequestBody for LtEmptyBody {
+    fn to_body(&self) -> Result<Vec<u8>, LatticeError> {
+        Ok(Vec::new())
+    }
+}
+
+/// SlimAPI JSON: **request** body is the JSON you send; **response** is parsed as [`crate::LtApiResponse`]
+/// (flat `Code` + `T` fields — there is no nested `"Body"` key in the JSON).
 ///
-/// When used as a request body, the type needs to implement `Serialize` from `serde`.
-/// When used as a response body, the type needs to implement `Deserialize` from `serde`.
+/// When used as a request body, `T` must implement `Serialize`. For responses, `T` must implement
+/// `Deserialize` and matches the extra fields beside `Code` on the wire.
 ///
 /// For general purpose JSON contracts, use [`LtJson`].
 pub struct LtSlimAPIJSON<T>(pub T);
 
 #[cfg(feature = "serde")]
-impl<T: Serialize> LtRequestBody for LtSlimAPIJSON<T> {
+impl<T: serde::Serialize> LtRequestBody for LtSlimAPIJSON<T> {
     fn to_body(&self) -> Result<Vec<u8>, LatticeError> {
         serde_json::to_vec(&self.0).map_err(|e| {
             LatticeError::SerdeJSON(
@@ -74,7 +85,7 @@ impl<T: Serialize> LtRequestBody for LtSlimAPIJSON<T> {
 }
 
 #[cfg(feature = "serde")]
-impl<T: for<'de> Deserialize<'de>> LtResponseBody for LtSlimAPIJSON<T> {
+impl<T: for<'de> serde::Deserialize<'de>> LtResponseBody for LtSlimAPIJSON<T> {
     fn from_body(body: &[u8]) -> Result<Self, LatticeError> {
         let response: crate::LtApiResponse<T> = serde_json::from_slice(body)
             .map_err(|e| LatticeError::SerdeJSON(e, String::from_utf8(body.to_vec()).ok()))?;
@@ -92,7 +103,7 @@ impl<T: for<'de> Deserialize<'de>> LtResponseBody for LtSlimAPIJSON<T> {
 pub struct LtJson<T>(pub T);
 
 #[cfg(feature = "serde")]
-impl<T: Serialize> LtRequestBody for LtJson<T> {
+impl<T: serde::Serialize> LtRequestBody for LtJson<T> {
     fn to_body(&self) -> Result<Vec<u8>, LatticeError> {
         serde_json::to_vec(&self.0).map_err(|e| {
             LatticeError::SerdeJSON(
@@ -107,7 +118,7 @@ impl<T: Serialize> LtRequestBody for LtJson<T> {
 }
 
 #[cfg(feature = "serde")]
-impl<T: for<'de> Deserialize<'de>> LtResponseBody for LtJson<T> {
+impl<T: for<'de> serde::Deserialize<'de>> LtResponseBody for LtJson<T> {
     fn from_body(body: &[u8]) -> Result<Self, LatticeError> {
         Ok(LtJson(serde_json::from_slice(body).map_err(|e| {
             LatticeError::SerdeJSON(e, String::from_utf8(body.to_vec()).ok())

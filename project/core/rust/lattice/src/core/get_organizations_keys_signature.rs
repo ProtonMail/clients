@@ -18,7 +18,9 @@ pub struct LtCoreGetOrganizationsKeysSignatureRes {
     /// Signature of the SHA256 fingerprint of the organization key.
     pub fingerprint_signature: String,
 
-    /// The email address that signed the SHA256 fingerprint (admin email).
+    /// Admin email (or display string) for the signing user — **not** an encrypted
+    /// [`crate::auth::LtAuthAddressId`] (unlike `SignatureAddress` on
+    /// [`crate::core::get_organizations_keys::LtCoreGetOrganizationsKeysRes`]).
     pub fingerprint_signature_address: String,
 }
 

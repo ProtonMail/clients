@@ -29,7 +29,8 @@
 //! let worker = SearchIndexWorker::new(mail_stash, service.clone(), data_provider);
 //!
 //! // Spawn worker in background
-//! tokio::spawn(async move { worker.run().await });
+//! let (_shutdown, shutdown_signal) = WorkerShutdownHandle::pair();
+//! tokio::spawn(async move { worker.run(shutdown_signal).await });
 //!
 //! // Queue messages for indexing (in a transaction)
 //! MailSearchService::queue_index(message_id, &bond).await?;
@@ -46,6 +47,7 @@ mod foundation;
 pub mod intent;
 mod migrations;
 mod service;
+mod shutdown;
 mod storage;
 pub mod traits;
 mod watcher;
@@ -64,7 +66,8 @@ pub use foundation::FoundationSearchEngine;
 
 pub use traits::BlobStorage;
 
-pub use service::{IndexStats, MailSearchService, SearchServiceError};
+pub use service::{IndexStats, LAB_MAX_TOKEN_BUCKET_SIZE, MailSearchService, SearchServiceError};
+pub use shutdown::{WorkerShutdownHandle, WorkerShutdownSignal};
 
 pub use storage::StashBlobStorage;
 

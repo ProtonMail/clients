@@ -81,7 +81,12 @@ const DEFAULT_SEND_QUEUE_POOL_SIZE: usize = 4;
 const DEFAULT_DEFAULT_QUEUE_POOL_SIZE: usize = 1;
 
 #[cfg(feature = "foundation_search_lab_harness")]
-const DEFAULT_PREFETCH_ROLLBACK_QUEUE_POOL_SIZE: usize = 6;
+// Lab benchmark note:
+// Historic-load test runs (22k messages, page_size=200, ephemeral fixture mode) showed that
+// prefetch rollback throughput plateaued around 20 workers; lower values (e.g. 6-12) underutilized
+// fixture-fed indexing and increased wall-clock completion time. Keep this at 20 unless new
+// benchmark runs demonstrate a better throughput/resource trade-off.
+const DEFAULT_PREFETCH_ROLLBACK_QUEUE_POOL_SIZE: usize = 20;
 #[cfg(not(feature = "foundation_search_lab_harness"))]
 const DEFAULT_PREFETCH_ROLLBACK_QUEUE_POOL_SIZE: usize = 1;
 const DEFAULT_SHARE_EXT_QUEUE_POOL_SIZE: usize = 2;
@@ -97,6 +102,11 @@ pub struct DefaultQueueExecutor {
 }
 
 impl DefaultQueueExecutor {
+    #[must_use]
+    pub fn prefetch_rollback_worker_count(&self) -> usize {
+        self.prefetch_rollback.worker_count()
+    }
+
     pub fn pause(&self) {
         self.default.pause();
         self.prefetch_rollback.pause();
@@ -651,37 +661,73 @@ impl MailUserContext {
     /// - Runs cleanup when the intent queue is empty (idempotent)
     ///
     /// If the worker fails to start, it reports the error to Sentry as a critical issue.
+    ///
+    /// The worker runs on a dedicated thread named `Search Index Worker` with its own
+    /// [`tokio::runtime::Runtime`] (`current_thread` scheduler) so bulk indexing does not share
+    /// Tokio worker threads with the rest of the mail event loop (prefetch, sync, etc.).
     /// A root [`tracing::Span`] keeps the task identifiable in Perfetto / tracing captures.
-    /// better observability
     #[cfg(feature = "foundation_search")]
     fn init_search_worker(&self) {
         use crate::search::StashMessageDataProvider;
+        use std::thread;
 
         let search_service = self.search_service().clone();
         let data_provider = Arc::new(StashMessageDataProvider::new(self.user_stash().clone()));
         let ctx_weak = self.this.clone();
+        let shutdown_token = self.cancellation_token.child_token();
         let span = tracing::info_span!("search_index_worker");
 
-        self.spawn(
-            async move {
-                match search_service.create_worker(data_provider).await {
-                    Ok(worker) => {
-                        worker.run().await;
-                    }
+        thread::Builder::new()
+            .name("Search Index Worker".into())
+            .spawn(move || {
+                let rt = match tokio::runtime::Builder::new_current_thread()
+                    .enable_all()
+                    .build()
+                {
+                    Ok(r) => r,
                     Err(e) => {
-                        error!("Failed to create search index worker: {}", e);
+                        error!("Failed to create search index worker runtime: {}", e);
                         if let Some(ctx) = ctx_weak.upgrade() {
                             ctx.issue_reporter_service().report(
                                 IssueLevel::Critical,
-                                format!("Failed to create search index worker: {e}"),
+                                format!("Failed to create search index worker runtime: {e}"),
                                 issue_report_keys_from_error(&e),
                             );
                         }
+                        return;
                     }
-                }
-            }
-            .instrument(span),
-        );
+                };
+
+                rt.block_on(
+                    async move {
+                        let (shutdown_handle, worker_shutdown_signal) =
+                            crate::search::WorkerShutdownHandle::pair();
+                        let shutdown_wait = shutdown_token;
+                        tokio::spawn(async move {
+                            shutdown_wait.cancelled().await;
+                            let _ = shutdown_handle.request_shutdown();
+                        });
+
+                        match search_service.create_worker(data_provider).await {
+                            Ok(worker) => {
+                                worker.run(worker_shutdown_signal).await;
+                            }
+                            Err(e) => {
+                                error!("Failed to create search index worker: {}", e);
+                                if let Some(ctx) = ctx_weak.upgrade() {
+                                    ctx.issue_reporter_service().report(
+                                        IssueLevel::Critical,
+                                        format!("Failed to create search index worker: {e}"),
+                                        issue_report_keys_from_error(&e),
+                                    );
+                                }
+                            }
+                        }
+                    }
+                    .instrument(span),
+                );
+            })
+            .expect("Failed to spawn Search Index Worker thread");
     }
 
     pub fn session(&self) -> &Session {

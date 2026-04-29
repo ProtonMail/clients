@@ -1301,6 +1301,11 @@ impl<Db: mail_stash::marker::DatabaseMarker> QueueAutoExecutorPool<Db> {
         }
     }
 
+    #[must_use]
+    pub fn worker_count(&self) -> usize {
+        self.executors.len()
+    }
+
     pub async fn await_finished(self) {
         for executor in self.executors {
             executor.await_finished().await;

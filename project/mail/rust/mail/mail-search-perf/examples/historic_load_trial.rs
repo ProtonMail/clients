@@ -174,14 +174,18 @@ async fn main() -> Result<(), anyhow::Error> {
         if let Some(max) = max_messages {
             info!("Limiting to {} messages", max);
         }
-        let total_fetched = fetch_all_messages(&user_ctx, remote_label_id, page_size, max_messages)
-            .await
-            .map_err(|e| anyhow::anyhow!("fetch_all_messages: {}", e))?;
+        let fetch_summary =
+            fetch_all_messages(&user_ctx, remote_label_id, page_size, max_messages, None)
+                .await
+                .map_err(|e| anyhow::anyhow!("fetch_all_messages: {}", e))?;
+
+        let total_fetched = fetch_summary.messages_saved;
 
         info!(
-            "Fetched {} messages in {:.2}s",
+            "Fetched {} messages in {:.2}s (oldest in batch unix time: {:?})",
             total_fetched,
-            start_time.elapsed().as_secs_f64()
+            start_time.elapsed().as_secs_f64(),
+            fetch_summary.oldest_saved_message_time
         );
 
         let (indexed_count, prefetch_count, prefetch_broadcast_rx) =

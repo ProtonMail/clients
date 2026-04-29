@@ -173,12 +173,34 @@ impl<S: BlobStorage + Clone + 'static> FoundationSearchEngine<S> {
     ///
     /// The `task_service` is used to spawn background tasks that can be paused
     /// when the app goes into the background.
+    ///
+    /// Uses [`TextIndex::default`] (`maximum_token_bucket_size == 0`): a new token bucket per
+    /// commit, which tends to produce many small SQLite blob rows.
     pub fn new(storage: S, task_service: Arc<TaskService>) -> Self {
-        info!("Initializing Foundation Search engine");
+        Self::new_with_maximum_token_bucket_size(storage, task_service, 0)
+    }
+
+    /// Create a new engine with an explicit `proton_foundation_search::index::text::TextIndex`
+    /// token-bucket limit.
+    ///
+    /// * `0` — new bucket on every commit (many blobs).
+    /// * Larger values — allow more token-entry weight in a bucket before splitting (fewer blobs).
+    ///   Lab / app entry points cap this at [`LAB_MAX_TOKEN_BUCKET_SIZE`](crate::LAB_MAX_TOKEN_BUCKET_SIZE). See
+    ///   `proton-foundation-search` `TextIndex::maximum_token_bucket_size`.
+    pub fn new_with_maximum_token_bucket_size(
+        storage: S,
+        task_service: Arc<TaskService>,
+        maximum_token_bucket_size: usize,
+    ) -> Self {
+        info!(
+            "Initializing Foundation Search engine (maximum_token_bucket_size={maximum_token_bucket_size})"
+        );
 
         let engine = Engine::builder()
             .with_builtin_processor(&ProcessorConfig::default())
-            .with_index(TextIndex::default())
+            .with_index(TextIndex {
+                maximum_token_bucket_size,
+            })
             .build();
 
         Self {

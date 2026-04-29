@@ -67,6 +67,8 @@ default = []
 # Foundation Search: Local body text search indexing
 # When enabled, message bodies are indexed locally for offline full-text search.
 foundation_search = ["mail-common/foundation_search"]
+# Forward only: flag is implemented in mail-common / mail-search; needed for CARGO_FEATURES on -p mail-uniffi.
+foundation_search_index_timing = ["mail-common/foundation_search_index_timing"]
 foundation_search_historic_load = [
   "foundation_search",
   "dep:mail-historic-search-load",

@@ -21,9 +21,6 @@ use mail_stash::stash::WriteTx;
 use serde::{self, Deserialize, Serialize};
 use std::collections::HashSet;
 use std::sync::Weak;
-use std::time::{Duration, Instant};
-#[cfg(feature = "foundation_search_lab_harness")]
-use tokio::task::spawn_blocking;
 use tracing::debug;
 #[cfg(feature = "foundation_search_lab_harness")]
 use tracing::error;
@@ -33,9 +30,8 @@ use tracing::error;
 /// Kept separate from search worker `MAX_BATCH_SIZE` (Foundation commit cap).
 pub const BATCH_PREFETCH_SIZE: usize = 100;
 
-const WRITER_GUARD_REFRESH_INTERVAL: Duration = Duration::from_secs(10);
-
-/// Blocking fixture body lookup (`mail_search_perf`); must run on the blocking pool (`tokio::task::spawn_blocking`).
+/// Lab-only fixture body lookup (`mail_search_perf`). May block (e.g. Condvar / file I/O); kept inline
+/// on the action-queue worker to avoid per-message `spawn_blocking` hand-offs during large batches.
 #[cfg(feature = "foundation_search_lab_harness")]
 fn lab_fixture_body_for_batch_prefetch(remote_id: MessageId) -> Option<RawMessageBody> {
     if mail_search_perf::fixture_bodies::is_real_bodies_initialized() {
@@ -58,20 +54,7 @@ fn lab_fixture_body_for_batch_prefetch(remote_id: MessageId) -> Option<RawMessag
         None
     }
 }
-
-async fn batch_prefetch_refresh_writer_guard_if_due(
-    guard: &mut WriterGuard<'_, UserDb>,
-    last_refresh: &mut Instant,
-) -> Result<(), MailActionError> {
-    if last_refresh.elapsed() < WRITER_GUARD_REFRESH_INTERVAL {
-        return Ok(());
-    }
-    guard.tx::<_, _, MailActionError>(async |_| Ok(())).await?;
-    debug!("BatchPrefetch: no-op transaction to keep writer guard lease alive");
-    *last_refresh = Instant::now();
-    Ok(())
-}
-
+// removed hot prefetching option as it is not suitable for user device
 #[must_use]
 pub fn batch_prefetch_can_ingest_bodies() -> bool {
     #[cfg(feature = "foundation_search_lab_harness")]
@@ -151,14 +134,11 @@ impl Handler<UserDb> for BatchPrefetchHandler {
         <Self::Action as Action<UserDb>>::Error,
     > {
         let _ctx = self.ctx.upgrade().ok_or(MailActionError::LostContext)?;
-        let mut last_guard_refresh = Instant::now();
 
         let mut candidates: Vec<(LocalMessageId, MessageId)> =
             Vec::with_capacity(action.local_ids.len());
 
         for local_id in &action.local_ids {
-            batch_prefetch_refresh_writer_guard_if_due(&mut guard, &mut last_guard_refresh).await?;
-
             let Some(local_message) = Message::load(*local_id, guard.tether()).await? else {
                 debug!(
                     "Message {} not found for batch prefetch, skipping",
@@ -186,7 +166,6 @@ impl Handler<UserDb> for BatchPrefetchHandler {
         let tombstoned: HashSet<String> = if candidates.is_empty() {
             HashSet::new()
         } else {
-            batch_prefetch_refresh_writer_guard_if_due(&mut guard, &mut last_guard_refresh).await?;
             DeletedItem::find_deleted_by_remote_ids(
                 candidates.iter().map(|(_, rid)| rid.as_str()),
                 DeletedItemType::Message,
@@ -198,8 +177,6 @@ impl Handler<UserDb> for BatchPrefetchHandler {
         let mut items: Vec<(LocalMessageId, RawMessageBody)> = Vec::with_capacity(candidates.len());
 
         for (local_id, remote_id) in candidates {
-            batch_prefetch_refresh_writer_guard_if_due(&mut guard, &mut last_guard_refresh).await?;
-
             if tombstoned.contains(remote_id.as_str()) {
                 debug!(
                     "Message {} in deleted_items, skipping batch prefetch",
@@ -209,16 +186,7 @@ impl Handler<UserDb> for BatchPrefetchHandler {
             }
 
             #[cfg(feature = "foundation_search_lab_harness")]
-            let raw = {
-                let remote_id = remote_id.clone();
-                spawn_blocking(move || lab_fixture_body_for_batch_prefetch(remote_id))
-                    .await
-                    .map_err(|e| {
-                        MailActionError::Other(anyhow::anyhow!(
-                            "batch_prefetch lab fixture spawn_blocking: {e}"
-                        ))
-                    })?
-            };
+            let raw = lab_fixture_body_for_batch_prefetch(remote_id.clone());
 
             #[cfg(not(feature = "foundation_search_lab_harness"))]
             let raw: Option<RawMessageBody> = None;

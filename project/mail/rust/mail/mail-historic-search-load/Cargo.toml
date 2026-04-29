@@ -9,7 +9,13 @@ description = "Historic search load scaffolding: bulk fetch/index orchestration 
 [features]
 default = []
 # Perf lab harness (remote/local bodies). `foundation_search` is always enabled via `mail-common` dep.
-foundation_search_lab_harness = ["mail-common/foundation_search_lab_harness"]
+foundation_search_lab_harness = [
+  "mail-common/foundation_search_lab_harness",
+  "dep:mail-crypto-inbox",
+  "dep:mail-html-transformer",
+  "dep:mail-search",
+  "dep:mail-search-perf",
+]
 
 [dependencies]
 mail-action-queue = { workspace = true }
@@ -20,6 +26,10 @@ mail-api = { workspace = true, features = ["sql"] }
 mail-core-api = { workspace = true, features = ["sql"] }
 mail-core-common = { workspace = true }
 mail-stash = { workspace = true }
+mail-crypto-inbox = { workspace = true, optional = true }
+mail-html-transformer = { workspace = true, optional = true }
+mail-search = { workspace = true, optional = true }
+mail-search-perf = { workspace = true, optional = true }
 futures = { workspace = true }
 tracing = { workspace = true }
 anyhow = { workspace = true }

@@ -46,15 +46,6 @@ pub mod images_logo;
 pub mod nuke;
 pub mod services;
 
-// Arbitrary number: We _temporairly_ increase connection pool from 12 to 50
-// to mitigate issues when there is a very bad network.
-// Should be removed after we uncouple API calls from tether connection.
-#[cfg(target_os = "ios")]
-const USER_STASH_CONNECTION_POOL_SIZE: u32 = 50;
-
-#[cfg(not(target_os = "ios"))]
-const USER_STASH_CONNECTION_POOL_SIZE: u32 = 12;
-
 #[async_trait::async_trait]
 pub trait UserDatabaseInitializer: Send + Sync {
     async fn initialize(&self, mail_stash: &Stash<UserDb>) -> Result<(), MigratorError>;
@@ -348,9 +339,15 @@ impl UserContext {
         let path = path.to_owned();
 
         let mail_stash = task::spawn_blocking(move || {
+            #[cfg(feature = "foundation_search_lab_harness")]
+            let pool_size = Some(32);
+            #[cfg(not(feature = "foundation_search_lab_harness"))]
+            let pool_size = None;
+
             Stash::new(StashConfiguration {
                 path: Some(&path),
-                pool_size: Some(USER_STASH_CONNECTION_POOL_SIZE),
+                // Lab-only tuning: allow larger DB pool for high-concurrency prefetch/index runs.
+                pool_size,
                 ..Default::default()
             })
         })

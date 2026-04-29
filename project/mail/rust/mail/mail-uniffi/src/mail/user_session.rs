@@ -131,6 +131,7 @@ impl MailUserSession {
     /// * `label_id` - Optional label ID string (defaults to All Mail if None)
     /// * `max_messages` - Optional maximum number of messages to process
     /// * `page_size` - Optional page size for fetching (default: 100)
+    /// * `continuation` - Optional anchor from a previous result’s oldest message; fetches the next **older** messages instead of restarting from newest
     ///
     /// # Returns
     /// A `HistoricLoadResult` with counts of fetched, indexed, and prefetched messages
@@ -139,9 +140,11 @@ impl MailUserSession {
         label_id: Option<String>,
         max_messages: Option<u64>,
         page_size: Option<u64>,
+        continuation: Option<crate::mail::datatypes::HistoricLoadContinuation>,
     ) -> Result<crate::mail::datatypes::HistoricLoadResult, UserSessionError> {
+        use mail_api::services::proton::common::MessageId;
         use mail_core_api::services::proton::LabelId as RealLabelId;
-        use mail_historic_search_load::historic_load_messages;
+        use mail_historic_search_load::{HistoricFetchContinuation, historic_load_messages};
 
         let ctx = self.ctx()?;
 
@@ -149,15 +152,159 @@ impl MailUserSession {
         let max_messages = max_messages.map(|n| usize::try_from(n).unwrap_or(usize::MAX));
         let page_size = page_size.map(|n| usize::try_from(n).unwrap_or(usize::MAX));
 
+        let continuation_inner = match continuation {
+            None => None,
+            Some(c) => {
+                let id = c.anchor_message_id.trim();
+                if id.is_empty() {
+                    return Err(UserSessionError::Other(ProtonError::Unexpected(
+                        UnexpectedError::InvalidArgument,
+                    )));
+                }
+                Some(HistoricFetchContinuation {
+                    anchor_time: c.anchor_time,
+                    anchor_message_id: MessageId::from(id.to_owned()),
+                })
+            }
+        };
+
         uniffi_async(async move {
-            let result = historic_load_messages(&ctx, label_id, max_messages, page_size)
-                .await
-                .map_err(RealProtonMailError::from)?;
+            let result =
+                historic_load_messages(&ctx, label_id, max_messages, page_size, continuation_inner)
+                    .await
+                    .map_err(RealProtonMailError::from)?;
 
             Result::<_, RealProtonMailError>::Ok(crate::mail::datatypes::HistoricLoadResult {
                 messages_fetched: result.messages_fetched as u64,
                 messages_indexed: result.messages_indexed as u64,
                 messages_prefetched: result.messages_prefetched as u64,
+                oldest_saved_message_time: result.oldest_saved_message_time,
+                oldest_saved_message_remote_id: result.oldest_saved_message_remote_id,
+            })
+        })
+        .await
+        .map_err(UserSessionError::from)
+    }
+}
+
+/// Ephemeral historic load: fetch + decrypt + index directly — zero SQLite writes.
+#[cfg(feature = "foundation_search_lab_harness")]
+#[uniffi_export]
+impl MailUserSession {
+    /// Ephemeral historic load: skip all SQLite writes.
+    ///
+    /// Fetches metadata pages from the API, obtains bodies (from fixtures if loaded, otherwise
+    /// fetches + decrypts from the API in-memory), and indexes directly into Foundation Search.
+    ///
+    /// # Arguments
+    /// * `label_id` - Optional label ID string (defaults to All Mail if None)
+    /// * `max_messages` - Maximum number of messages to process
+    /// * `page_size` - Page size for metadata fetching (capped to API max of 200)
+    /// * `concurrent_body_fetches` - Max concurrent API body fetches (only used when no fixture source)
+    pub async fn historic_load_ephemeral(
+        &self,
+        label_id: Option<String>,
+        max_messages: u64,
+        page_size: u64,
+        concurrent_body_fetches: u64,
+    ) -> Result<crate::mail::datatypes::EphemeralHistoricLoadResult, UserSessionError> {
+        use mail_core_api::services::proton::LabelId as RealLabelId;
+        use mail_historic_search_load::ephemeral_index_only_messages;
+
+        let ctx = self.ctx()?;
+        let label_id = label_id.map(RealLabelId::from);
+        let max_messages = usize::try_from(max_messages).unwrap_or(usize::MAX);
+        let page_size = usize::try_from(page_size).unwrap_or(200);
+        let concurrent = usize::try_from(concurrent_body_fetches).unwrap_or(10);
+
+        uniffi_async(async move {
+            let result =
+                ephemeral_index_only_messages(&ctx, label_id, max_messages, page_size, concurrent)
+                    .await
+                    .map_err(RealProtonMailError::from)?;
+
+            Result::<_, RealProtonMailError>::Ok(
+                crate::mail::datatypes::EphemeralHistoricLoadResult {
+                    messages_fetched: result.messages_fetched as u64,
+                    messages_indexed: result.messages_indexed as u64,
+                    messages_skipped_missing_body: result.messages_skipped_missing_body as u64,
+                    oldest_message_time: result.oldest_message_time,
+                    oldest_message_remote_id: result.oldest_message_remote_id,
+                },
+            )
+        })
+        .await
+        .map_err(UserSessionError::from)
+    }
+
+    /// Search the Foundation Search index and return raw hits with server-fetched metadata.
+    ///
+    /// For each index hit, fetches the message from the Proton API to populate
+    /// subject/sender/time. This works even in ephemeral mode where messages
+    /// are not stored locally.
+    pub async fn search_index_raw(
+        &self,
+        query: String,
+    ) -> Result<crate::mail::datatypes::RawSearchResult, UserSessionError> {
+        use mail_api::services::proton::{ProtonMail, common::MessageId};
+
+        let ctx = self.ctx()?;
+        let q = query.clone();
+
+        uniffi_async(async move {
+            let start = std::time::Instant::now();
+            let found = ctx
+                .search_service()
+                .search_local_with_metadata(&q)
+                .await
+                .map_err(|e| RealProtonMailError::from(e.into_inner()))?;
+            let search_elapsed_ms = start.elapsed().as_millis() as u64;
+
+            let session = ctx.session().clone();
+            let mut hits = Vec::with_capacity(found.len());
+
+            for entry in &found {
+                let remote_id = entry.identifier().to_string();
+                let score = f64::from(entry.score());
+                let mid = MessageId::from(remote_id.clone());
+
+                match ProtonMail::get_message(&session, mid).await {
+                    Ok(resp) => {
+                        let meta = &resp.message.metadata;
+                        hits.push(crate::mail::datatypes::RawSearchHit {
+                            remote_id,
+                            score,
+                            subject: Some(meta.subject.clone()),
+                            sender: Some(
+                                meta.sender.address.as_clear_text_str().to_owned(),
+                            ),
+                            time: Some(meta.time),
+                        });
+                    }
+                    Err(e) => {
+                        tracing::warn!("Failed to fetch message {}: {e}", remote_id);
+                        hits.push(crate::mail::datatypes::RawSearchHit {
+                            remote_id,
+                            score,
+                            subject: None,
+                            sender: None,
+                            time: None,
+                        });
+                    }
+                }
+            }
+
+            let total_elapsed_ms = start.elapsed().as_millis() as u64;
+            tracing::info!(
+                "Raw search: {} hits, index={search_elapsed_ms}ms, total={total_elapsed_ms}ms (including {} API fetches)",
+                hits.len(),
+                found.len(),
+            );
+
+            Result::<_, RealProtonMailError>::Ok(crate::mail::datatypes::RawSearchResult {
+                hits,
+                query,
+                elapsed_ms: total_elapsed_ms,
             })
         })
         .await
@@ -220,6 +367,14 @@ impl MailUserSession {
     /// Call before historic_load to ensure bodies are served from the start.
     pub fn reset_fixture_bodies(&self) {
         mail_search_perf::fixture_bodies::reset_index();
+    }
+
+    /// Tear down the in-memory chunked real-bodies store (AWS mock / S3 fixture path).
+    ///
+    /// After this, historic load body prefetch uses the live Proton API instead of substituted
+    /// bodies from the bundled remote fixture config.
+    pub fn shutdown_real_bodies_api(&self) {
+        mail_search_perf::fixture_bodies::shutdown_real_bodies_api();
     }
 }
 
@@ -407,6 +562,75 @@ impl MailUserSession {
                     Ok(0)
                 }
             }
+        })
+    }
+
+    /// Deletes rows from Foundation Search lab tables (`search_index_blobs`, `search_index_content_hashes`,
+    /// `search_index_intents`) so a historic load / indexing run can start from a clean slate.
+    pub fn clear_foundation_search_index_tables(&self) -> Result<(), UserSessionError> {
+        use mail_stash::stash::StashError;
+
+        let ctx = self.ctx()?;
+        let stash = ctx.user_stash().clone();
+
+        async_runtime().block_on(async {
+            let mut tether = match stash.connection().await {
+                Ok(t) => t,
+                Err(e) => {
+                    tracing::error!("Failed to get DB connection: {:?}", e);
+                    return Err(UserSessionError::Other(ProtonError::Unexpected(
+                        UnexpectedError::Network,
+                    )));
+                }
+            };
+
+            tether
+                .sync_write_tx(move |tx| {
+                    tx.execute_batch(
+                        "DELETE FROM search_index_blobs;
+                         DELETE FROM search_index_content_hashes;
+                         DELETE FROM search_index_intents;",
+                    )
+                    .map_err(StashError::ExecutionError)?;
+                    Ok(())
+                })
+                .await
+                .map_err(|e| {
+                    tracing::error!("Failed to clear search index tables: {:?}", e);
+                    UserSessionError::Other(ProtonError::Unexpected(UnexpectedError::Internal))
+                })
+        })
+    }
+
+    /// Clears Foundation Search index tables and rebuilds the in-memory search engine with the
+    /// given `maximum_token_bucket_size` (see `proton_foundation_search::index::text::TextIndex`).
+    ///
+    /// `0` yields many small blobs per commit; larger values allow more token-entry weight per
+    /// bucket (fewer blobs). Must be `<=` [`mail_common::search::LAB_MAX_TOKEN_BUCKET_SIZE`].
+    /// This wipes the same rows as [`Self::clear_foundation_search_index_tables`].
+    pub fn apply_foundation_search_max_token_bucket_size(
+        &self,
+        max_token_bucket_size: u64,
+    ) -> Result<(), UserSessionError> {
+        use mail_common::search::LAB_MAX_TOKEN_BUCKET_SIZE;
+
+        let ctx = self.ctx()?;
+        if max_token_bucket_size > LAB_MAX_TOKEN_BUCKET_SIZE as u64 {
+            return Err(UserSessionError::Other(ProtonError::Unexpected(
+                UnexpectedError::InvalidArgument,
+            )));
+        }
+        let max = usize::try_from(max_token_bucket_size).unwrap_or(0);
+        let task_service = ctx.core_context().task_service().task_service_arc();
+
+        async_runtime().block_on(async {
+            ctx.search_service()
+                .rebuild_engine_with_max_token_bucket_size(task_service, max)
+                .await
+                .map_err(|e| {
+                    tracing::error!("apply_foundation_search_max_token_bucket_size: {e}");
+                    UserSessionError::Other(ProtonError::Unexpected(UnexpectedError::Internal))
+                })
         })
     }
 }

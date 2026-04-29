@@ -24,6 +24,12 @@ use crate::traits::MessageDataProvider;
 use crate::worker::SearchIndexWorker;
 use mail_task_service::TaskService;
 
+/// Upper bound for lab-configured `TextIndex::maximum_token_bucket_size` (historic load / debug UI).
+///
+/// The engine field limits how much token-entry “weight” is accumulated in one bucket before starting
+/// a new one; values in the thousands are already large relative to typical commits (~tens of entries).
+pub const LAB_MAX_TOKEN_BUCKET_SIZE: usize = 5000;
+
 /// Error type for search service operations
 #[derive(Debug, thiserror::Error)]
 pub enum SearchServiceError {
@@ -99,6 +105,56 @@ impl MailSearchService {
             engine: Arc::new(RwLock::new(engine)),
             mail_stash,
         })
+    }
+
+    /// Lab / debug: clear Foundation Search tables and replace the in-memory engine so
+    /// `maximum_token_bucket_size` takes effect (must not reuse an existing on-disk index layout).
+    ///
+    /// Deletes rows in `search_index_blobs`, `search_index_content_hashes`, and
+    /// `search_index_intents`, then builds a fresh [`FoundationSearchEngine`].
+    pub async fn rebuild_engine_with_max_token_bucket_size(
+        &self,
+        task_service: Arc<TaskService>,
+        maximum_token_bucket_size: usize,
+    ) -> Result<(), SearchServiceError> {
+        use mail_stash::stash::StashError as SE;
+
+        if maximum_token_bucket_size > LAB_MAX_TOKEN_BUCKET_SIZE {
+            return Err(SearchServiceError::Engine(SearchError::Internal(format!(
+                "maximum_token_bucket_size must be <= {LAB_MAX_TOKEN_BUCKET_SIZE}"
+            ))));
+        }
+
+        let mut tether = self
+            .mail_stash
+            .connection()
+            .await
+            .map_err(|e| SearchServiceError::Migration(format!("stash connection: {e}")))?;
+
+        tether
+            .sync_write_tx(move |tx| {
+                tx.execute_batch(
+                    "DELETE FROM search_index_blobs;
+                     DELETE FROM search_index_content_hashes;
+                     DELETE FROM search_index_intents;",
+                )
+                .map_err(SE::ExecutionError)?;
+                Ok(())
+            })
+            .await
+            .map_err(|e| SearchServiceError::Migration(format!("clear index tables: {e}")))?;
+
+        let storage = StashBlobStorage::new(self.mail_stash.clone());
+        let engine = FoundationSearchEngine::new_with_maximum_token_bucket_size(
+            storage,
+            task_service,
+            maximum_token_bucket_size,
+        );
+        *self.engine.write().await = engine;
+        info!(
+            "Rebuilt Foundation Search engine after clearing index tables (maximum_token_bucket_size={maximum_token_bucket_size})"
+        );
+        Ok(())
     }
 
     /// Get a reference to the underlying Stash connection pool

@@ -35,7 +35,12 @@ foundation_search_index_timing = [
   "mail-search/foundation_search_index_timing",
 ]
 # Search perf lab (fixture/real bodies live in `mail-search-perf`; no extra crypto/codec deps here.)
-foundation_search_lab_harness = ["foundation_search", "dep:mail-search-perf"]
+foundation_search_lab_harness = [
+  "foundation_search",
+  "mail-core-common/foundation_search_lab_harness",
+  "dep:mail-search-perf",
+  "mail-search/foundation_search_lab_harness",
+]
 
 [dependencies]
 anyhow = { workspace = true }

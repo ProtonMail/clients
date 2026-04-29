@@ -40,17 +40,18 @@ async fn store_single_unseen_in_category(category: &Label, bond: &WriteTx<'_>) {
         .await
         .unwrap();
 
-    // MessageCounter with unread=1 to reflect the unread message in chosen category
+    // MessageCounter and ConversationCounter with unread=1 to reflect the unread message
+    // in the chosen category (one unread message implies one unread conversation).
     let mut conv = conversation!(remote_id: conv_id!("unseen_conv"));
     conv.save(bond).await.unwrap();
     let mut category_msg_counter = MessageCounter::new(category.id());
     category_msg_counter.unread = 1;
     category_msg_counter.total = 1;
     category_msg_counter.save(bond).await.unwrap();
-    ConversationCounter::new(category.id())
-        .save(bond)
-        .await
-        .unwrap();
+    let mut category_conv_counter = ConversationCounter::new(category.id());
+    category_conv_counter.unread = 1;
+    category_conv_counter.total = 1;
+    category_conv_counter.save(bond).await.unwrap();
 
     // One unread message in chosen category
     let mut address = test_address();

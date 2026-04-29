@@ -24,6 +24,8 @@ use std::sync::{Arc, Weak};
 pub struct CategoryLabel {
     /// The local label ID used to identify and enable this category.
     pub id: Id,
+    /// Unread count for this category, respecting the user's message/conversation view mode.
+    pub unread: u64,
     /// Whether there are unseen items in this category (unread count > 0).
     pub has_unseen_items: bool,
     /// Whether this category is currently the active filter.
@@ -50,6 +52,7 @@ impl From<RealCategoryLabel> for CategoryLabel {
     fn from(c: RealCategoryLabel) -> Self {
         CategoryLabel {
             id: c.local_id.as_u64().into(),
+            unread: c.unread,
             has_unseen_items: c.has_unseen_items,
             enabled: c.enabled,
             system_label: c.system_label.into(),

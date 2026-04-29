@@ -14,10 +14,9 @@
 //! ## Interruption / resume
 //!
 //! [`fetch_all_messages`] commits one transaction per page; stops leave earlier pages in the DB.
-//! Pagination cursor exists only in memory—there is no persisted resume. Callers that need a
-//! long-running background job (app install historic load) must orchestrate retries and/or store
-//! cursor state themselves until we add an explicit resumable API (see **Interruption** on
-//! [`fetch_all_messages`]).
+//! To fetch the **next older** slice after a bounded run, pass [`HistoricFetchContinuation`] with the
+//! previous batch’s boundary (`oldest_saved_message_time` + `oldest_saved_message_remote_id` from
+//! [`FetchAllMessagesSummary`]). The first request then uses the same anchor as an internal “page 2”.
 
 use std::sync::Arc;
 
@@ -47,7 +46,7 @@ use mail_common::search::{MailSearchService, SearchIndexIntent};
 
 /// Maximum time to wait for prefetch and indexing to complete before returning.
 /// Prefetch/indexing continue in the background; the app can show "completed" and refresh stats.
-const WAIT_FOR_COMPLETION_TIMEOUT: Duration = Duration::from_secs(30 * 60); // 30 minutes
+const WAIT_FOR_COMPLETION_TIMEOUT: Duration = Duration::from_secs(300 * 60); // 300 minutes
 
 const SQL_MESSAGES_WITH_BODY_PENDING_INDEX: &str = r"
     SELECT DISTINCT mb.message_id
@@ -72,6 +71,29 @@ const INDEX_INTENT_QUEUE_BATCH: usize = 1000;
 const PREFETCH_ACTION_JOIN_CHUNK: usize = 100;
 const PREFETCH_QUEUE_ERRORS_STOP: usize = 10;
 const PREFETCH_LOG_COUNT: usize = 1000;
+const PREFETCH_BACKPRESSURE_CHECK_EVERY_CHUNKS: usize = 5;
+const PREFETCH_BACKPRESSURE_HIGH_WATERMARK: usize = 5000;
+const PREFETCH_BACKPRESSURE_LOW_WATERMARK: usize = 2000;
+const PREFETCH_BACKPRESSURE_SLEEP: Duration = Duration::from_secs(2);
+
+/// Resume token: next [`fetch_all_messages`] call starts with the same cursor as after this message
+/// (anchor time + id), returning the next **older** page(s) in descending-time order.
+#[derive(Debug, Clone)]
+pub struct HistoricFetchContinuation {
+    pub anchor_time: u64,
+    pub anchor_message_id: MessageId,
+}
+
+/// Summary of [`fetch_all_messages`]
+#[derive(Debug, Clone)]
+pub struct FetchAllMessagesSummary {
+    pub messages_saved: usize,
+    /// Unix time in seconds: minimum message time among rows saved in this call.
+    /// With newest-first fetch order, this is the **oldest** message in the batch (the boundary of the youngest-`max` window).
+    pub oldest_saved_message_time: Option<u64>,
+    /// Remote message id at [`Self::oldest_saved_message_time`] (tie-break by id when times match).
+    pub oldest_saved_message_remote_id: Option<String>,
+}
 
 /// Result of a historic load operation
 #[derive(Debug, Clone)]
@@ -83,6 +105,10 @@ pub struct HistoricLoadResult {
     pub messages_indexed: usize,
     /// Number of messages queued for prefetch (needed bodies)
     pub messages_prefetched: usize,
+    /// Unix time in seconds of the oldest message in the fetched batch (see [`FetchAllMessagesSummary::oldest_saved_message_time`]).
+    pub oldest_saved_message_time: Option<u64>,
+    /// Remote id of that oldest message; pass with the time as [`HistoricFetchContinuation`] to continue older.
+    pub oldest_saved_message_remote_id: Option<String>,
 }
 
 /// Fetch messages from the server and queue them for indexing/prefetch
@@ -96,16 +122,19 @@ pub struct HistoricLoadResult {
 /// # Arguments
 /// * `user_ctx` - The mail user context
 /// * `label_id` - Optional label ID to fetch from (defaults to All Mail)
-/// * `max_messages` - Optional maximum number of messages to process
+/// * `max_messages` - Optional maximum number of messages to process (**youngest / newest first** by server time)
 /// * `page_size` - Page size for fetching (default: 100)
+/// * `continuation` - Optional anchor (`HistoricFetchContinuation`) to fetch the next **older** slice instead of from newest
 ///
 /// # Returns
-/// A `HistoricLoadResult` with counts of fetched, indexed, and prefetched messages
+/// A `HistoricLoadResult` with counts of fetched, indexed, and prefetched messages, plus the oldest
+/// message time in the fetched batch (when `max_messages` is set, that batch is the youngest *N* messages).
 pub async fn historic_load_messages(
     user_ctx: &Arc<MailUserContext>,
     label_id: Option<LabelId>,
     max_messages: Option<usize>,
     page_size: Option<usize>,
+    continuation: Option<HistoricFetchContinuation>,
 ) -> Result<HistoricLoadResult, MailContextError> {
     let page_size = page_size.unwrap_or(100);
     let stash = user_ctx.user_stash().clone();
@@ -132,12 +161,28 @@ pub async fn historic_load_messages(
         info!("Limiting to {} messages", max);
     }
 
-    // Fetch messages from server
-    let messages_fetched = fetch_all_messages(user_ctx, remote_label_id, page_size, max_messages)
-        .await
-        .map_err(|e| MailContextError::Other(anyhow::anyhow!("Failed to fetch messages: {}", e)))?;
+    // Fetch messages from server (newest first; see `ScrollOrderDir::Desc` + `ScrollOrderField::Time` in `fetch_all_messages`)
+    let fetch_summary = fetch_all_messages(
+        user_ctx,
+        remote_label_id,
+        page_size,
+        max_messages,
+        continuation,
+    )
+    .await
+    .map_err(|e| MailContextError::Other(anyhow::anyhow!("Failed to fetch messages: {}", e)))?;
+
+    let messages_fetched = fetch_summary.messages_saved;
+    let oldest_saved_message_time = fetch_summary.oldest_saved_message_time;
+    let oldest_saved_message_remote_id = fetch_summary.oldest_saved_message_remote_id.clone();
 
     info!("Fetched {} messages from server", messages_fetched);
+    if let Some(t) = oldest_saved_message_time {
+        info!("Oldest message time in fetched batch (unix secs): {}", t);
+    }
+    if let Some(id) = &oldest_saved_message_remote_id {
+        info!("Oldest message remote id in fetched batch: {}", id);
+    }
 
     // Queue indexing and prefetch
     let (messages_indexed_immediate, messages_prefetched, prefetch_broadcast_rx) =
@@ -175,6 +220,8 @@ pub async fn historic_load_messages(
         messages_fetched,
         messages_indexed,
         messages_prefetched,
+        oldest_saved_message_time,
+        oldest_saved_message_remote_id,
     })
 }
 
@@ -185,41 +232,60 @@ pub async fn historic_load_messages(
 ///
 /// # Interruption
 ///
-/// Completed pages remain committed; errors or process exit stop the loop. The next call starts
-/// from the first page again (cursor is not persisted). Metadata writes are expected to upsert by
-/// remote id, but the mailbox may be only partly ingested until the caller runs again or adds
-/// orchestration (persist anchor time + id, job state, `WorkManager` chunks, etc.).
+/// Completed pages remain committed; errors or process exit stop the loop. Without
+/// [`HistoricFetchContinuation`], the next call starts from the newest page again (metadata upserts
+/// by remote id). With `continuation`, the first request uses the stored anchor so the next **older**
+/// slice is fetched.
 ///
 /// # Arguments
 /// * `user_ctx` - The mail user context
 /// * `remote_label_id` - Remote label ID to fetch messages from
 /// * `page_size` - Number of messages to fetch per page
 /// * `max_messages` - Optional maximum number of messages to fetch
+/// * `continuation` - Optional anchor from a previous run’s batch boundary (oldest time + remote id in that batch)
 ///
 /// # Returns
-/// The total number of messages fetched and saved
+/// Count of messages saved and the oldest **message** (unix time + remote id) in that saved set.
 ///
-// TODO: Resumable historic load — optional persisted cursor (anchor time + message id) or job
-// record, pluggable from UniFFI / platform background work, so interruptions avoid full restart.
+/// Messages are requested in **descending time order** (newest first). With `max_messages`, the
+/// saved set is the youngest *N* messages in the label; `oldest_saved_message_time` is the time of
+/// the oldest among those *N* (the in-mailbox lower bound of the window).
 #[allow(clippy::too_many_lines)] // cursor pagination + persist loop
 pub async fn fetch_all_messages(
     user_ctx: &Arc<MailUserContext>,
     remote_label_id: LabelId,
     page_size: usize,
     max_messages: Option<usize>,
-) -> Result<usize, anyhow::Error> {
+    continuation: Option<HistoricFetchContinuation>,
+) -> Result<FetchAllMessagesSummary, anyhow::Error> {
     let session = user_ctx.session();
     let stash = user_ctx.user_stash().clone();
     let unread = ReadFilter::All;
     let order_dir = ScrollOrderDir::Desc;
     let order_field = ScrollOrderField::Time;
 
-    let mut total_pages = 0;
-    let mut last_message_id: Option<MessageId> = None;
-    let mut last_message_time: Option<u64> = None;
+    let mut total_pages = if continuation.is_some() { 1 } else { 0 };
+    let mut last_message_id = continuation.as_ref().map(|c| c.anchor_message_id.clone());
+    let mut last_message_time = continuation.as_ref().map(|c| c.anchor_time);
     let mut total_messages_saved = 0;
+    // Running minimum (time, id) with deterministic tie-break on id.
+    let mut oldest_saved: Option<(u64, MessageId)> = None;
 
+    if let Some(c) = &continuation {
+        if c.anchor_message_id.as_str().is_empty() {
+            return Err(anyhow::anyhow!(
+                "Historic fetch continuation: anchor_message_id must not be empty"
+            ));
+        }
+        info!(
+            "Resuming historic fetch from anchor time={} id={}",
+            c.anchor_time, c.anchor_message_id
+        );
+    }
+
+    let mut page_requests: u32 = 0;
     loop {
+        page_requests = page_requests.saturating_add(1);
         let mut opts = GetMessagesOptions {
             label_id: Some(vec![remote_label_id.clone()]),
             page_size: if total_pages == 0 {
@@ -318,6 +384,21 @@ pub async fn fetch_all_messages(
             .await?;
 
         total_messages_saved += saved_messages.len();
+        for m in &saved_messages {
+            let Some(rid) = m.remote_id.clone() else {
+                continue;
+            };
+            let t = m.time.as_u64();
+            let replace = match &oldest_saved {
+                None => true,
+                Some((ot, oid)) if t < *ot => true,
+                Some((ot, oid)) if t == *ot && rid < *oid => true,
+                _ => false,
+            };
+            if replace {
+                oldest_saved = Some((t, rid));
+            }
+        }
         info!(
             "Saved {} messages (total: {})",
             saved_messages.len(),
@@ -357,10 +438,18 @@ pub async fn fetch_all_messages(
     }
 
     info!(
-        "Finished fetching: {} pages, {} total messages",
-        total_pages, total_messages_saved
+        "Finished fetching: {} page request(s), {} total messages",
+        page_requests, total_messages_saved
     );
-    Ok(total_messages_saved)
+    let (oldest_saved_message_time, oldest_saved_message_remote_id) = match oldest_saved {
+        None => (None, None),
+        Some((t, id)) => (Some(t), Some(id.to_string())),
+    };
+    Ok(FetchAllMessagesSummary {
+        messages_saved: total_messages_saved,
+        oldest_saved_message_time,
+        oldest_saved_message_remote_id,
+    })
 }
 
 /// Queue indexing for messages with bodies and prefetch for messages without bodies
@@ -521,6 +610,9 @@ async fn queue_prefetch_for_missing_bodies(
             if prefetch_count > 0 && prefetch_count.is_multiple_of(PREFETCH_LOG_COUNT) {
                 info!("Queued {prefetch_count} messages for batch prefetch...");
             }
+            if (chunk_idx + 1).is_multiple_of(PREFETCH_BACKPRESSURE_CHECK_EVERY_CHUNKS) {
+                maybe_apply_prefetch_backpressure(user_ctx).await;
+            }
         }
         debug!(
             "BatchPrefetch queueing complete: {prefetch_count} messages in {} batches, {prefetch_errors} errors",
@@ -562,11 +654,58 @@ async fn queue_prefetch_for_missing_bodies(
             if prefetch_count > 0 && prefetch_count.is_multiple_of(PREFETCH_LOG_COUNT) {
                 info!("Queued {prefetch_count} prefetch actions...");
             }
+            if (chunk_idx + 1).is_multiple_of(PREFETCH_BACKPRESSURE_CHECK_EVERY_CHUNKS) {
+                maybe_apply_prefetch_backpressure(user_ctx).await;
+            }
         }
         debug!("Prefetch queueing complete: {prefetch_count} succeeded, {prefetch_errors} errors");
     }
 
     (prefetch_count, prefetch_errors)
+}
+
+async fn maybe_apply_prefetch_backpressure(user_ctx: &MailUserContext) {
+    let Some(mut pending) = load_pending_index_intent_count(user_ctx).await else {
+        return;
+    };
+    if pending < PREFETCH_BACKPRESSURE_HIGH_WATERMARK {
+        return;
+    }
+
+    info!(
+        "Applying prefetch backpressure: pending index intents={} (high watermark={})",
+        pending, PREFETCH_BACKPRESSURE_HIGH_WATERMARK
+    );
+    while pending > PREFETCH_BACKPRESSURE_LOW_WATERMARK {
+        tokio::time::sleep(PREFETCH_BACKPRESSURE_SLEEP).await;
+        match load_pending_index_intent_count(user_ctx).await {
+            Some(next_pending) => {
+                pending = next_pending;
+            }
+            None => break,
+        }
+    }
+    info!(
+        "Backpressure released: pending index intents={} (low watermark={})",
+        pending, PREFETCH_BACKPRESSURE_LOW_WATERMARK
+    );
+}
+
+async fn load_pending_index_intent_count(user_ctx: &MailUserContext) -> Option<usize> {
+    let tether = match user_ctx.user_stash().connection().await {
+        Ok(tether) => tether,
+        Err(e) => {
+            warn!("Failed to read pending index intents (stash connection): {e}");
+            return None;
+        }
+    };
+    match SearchIndexIntent::pending_count(&tether).await {
+        Ok(count) => Some(usize::try_from(count).unwrap_or(0)),
+        Err(e) => {
+            warn!("Failed to read pending index intents: {e}");
+            None
+        }
+    }
 }
 
 #[allow(clippy::too_many_arguments)]

@@ -1162,15 +1162,9 @@ impl Message {
             return Ok(decrypted);
         }
 
-        #[cfg(feature = "foundation_search_lab_harness")]
-        let prefetch_sw = mail_search_perf::prefetch_timing::PrefetchStopwatch::start();
-
         let (_, encrypted_body) =
             Self::sync_message_and_body(remote_id, ctx.session(), &mut tx, ctx.action_queue())
                 .await?;
-
-        #[cfg(feature = "foundation_search_lab_harness")]
-        let prefetch_sw = prefetch_sw.record_http_done();
 
         trace!("Message successfully downloaded. Decrypting...");
 
@@ -1182,9 +1176,6 @@ impl Message {
             with_attachment_prefetching,
         )
         .await?;
-
-        #[cfg(feature = "foundation_search_lab_harness")]
-        prefetch_sw.record_decrypt_done();
 
         trace!("Message successfully decrypted. Caching...");
         // Note: The raw body is already stored by decrypt_and_store() called in decrypt_message_body()
@@ -1693,7 +1684,11 @@ impl Message {
         queue: &Queue<UserDb>,
     ) -> Result<(Message, EncryptedMessageBody), MailContextError> {
         info!("Fetching message");
+        #[cfg(feature = "foundation_search_lab_harness")]
+        let prefetch_sw = mail_search_perf::prefetch_timing::PrefetchStopwatch::start();
         let message = api.get_message(message_id).await.map(|v| v.message)?;
+        #[cfg(feature = "foundation_search_lab_harness")]
+        let prefetch_sw = prefetch_sw.record_api_fetch_done();
 
         let (mut message, mut body_metadata, body) = Message::from_api_data(message, tx.tether())
             .await
@@ -1722,6 +1717,8 @@ impl Message {
         })
         .await
         .map_err(MailContextError::Other)?;
+        #[cfg(feature = "foundation_search_lab_harness")]
+        prefetch_sw.record_metadata_done();
 
         info!("Message saved with {:?}", message.id());
 

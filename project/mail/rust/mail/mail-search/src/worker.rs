@@ -15,6 +15,7 @@ use tracing::{debug, error, info, warn};
 
 use crate::intent::{LocalMessageId, SearchIndexIntent, SearchOperation};
 use crate::service::MailSearchService;
+use crate::shutdown::WorkerShutdownSignal;
 use crate::traits::{BatchPreparedMessage, MIME_TYPE_HTML, MessageDataProvider};
 
 /// Worker-specific error types
@@ -61,14 +62,15 @@ const BULK_ACCUMULATION_THRESHOLD_LARGE: i64 = 50; // Wait 10s if >= 50 pending
 /// This prevents messages without remote IDs from blocking the queue
 const DEFER_DELAY_SECONDS: i64 = 60;
 
-/// Minimum batch size for processing intents
-const MIN_BATCH_SIZE: usize = 50;
+/// Minimum batch size when requesting a batch of intents from the DB.
+/// Kept at **100** (same as `feat/wire-search-to-scroller-v3`) so historic / bulk loads do not
+/// fragment work into tiny batches.
+const MIN_BATCH_SIZE: usize = 100;
 
-/// Maximum batch size for bulk loading mode
+/// Maximum batch size for one Foundation Search `commit` via `index_message_bodies_batch`.
 ///
-/// Caps how many documents go into one Foundation Search `commit` via `index_message_bodies_batch`.
-/// Lower values trade more Load/Save work for friendlier segment layout (often better query latency
-/// after bulk load); raise to speed up indexing on I/O-bound devices.
+/// Kept intentionally lower on mobile to reduce peak memory pressure during historic-load runs
+/// where prefetch can fill the queue quickly (e.g. low-latency fixture body source).
 const MAX_BATCH_SIZE: usize = 1000;
 
 /// The search index worker
@@ -123,8 +125,20 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
     /// Wait for watcher notification
     ///
     /// Returns `true` if notification received, `false` if watcher closed (worker should exit)
-    async fn wait_for_watcher_notification(&self, context: &str) -> bool {
-        if let Ok(()) = self.watcher_handle.receiver.recv_async().await {
+    async fn wait_for_watcher_notification(
+        &self,
+        context: &str,
+        shutdown: &mut WorkerShutdownSignal,
+    ) -> bool {
+        let notified = tokio::select! {
+            _ = shutdown.cancelled() => {
+                debug!("Search index worker shutdown requested ({})", context);
+                return false;
+            }
+            result = self.watcher_handle.receiver.recv_async() => result,
+        };
+
+        if let Ok(()) = notified {
             debug!(
                 "Worker woken up by table watcher notification ({})",
                 context
@@ -144,11 +158,19 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
     /// Uses database table watcher for event-driven notification: waits for changes
     /// to the `search_index_intents` table. The watcher only fires after transactions
     /// commit, eliminating race conditions. Cleanup runs when the queue is empty.
-    pub async fn run(&self) {
+    pub async fn run(&self, mut shutdown: WorkerShutdownSignal) {
         debug!("Search index worker started (table watcher)");
 
         loop {
-            match self.process_batch().await {
+            let batch_result = tokio::select! {
+                _ = shutdown.cancelled() => {
+                    debug!("Search index worker shutdown requested");
+                    return;
+                }
+                result = self.process_batch() => result,
+            };
+
+            match batch_result {
                 Ok(processed) => {
                     if processed {
                         // Processed intents, check for more immediately
@@ -162,7 +184,10 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
 
                         // Wait for table change notification
                         // The watcher will notify us immediately when intents are queued (after commit)
-                        if !self.wait_for_watcher_notification("normal operation").await {
+                        if !self
+                            .wait_for_watcher_notification("normal operation", &mut shutdown)
+                            .await
+                        {
                             return;
                         }
                     }
@@ -170,7 +195,10 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
                 Err(e) => {
                     error!("Worker error: {}", e);
                     // On error, wait for notification before retrying
-                    if !self.wait_for_watcher_notification("after error").await {
+                    if !self
+                        .wait_for_watcher_notification("after error", &mut shutdown)
+                        .await
+                    {
                         return;
                     }
                 }
@@ -187,7 +215,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
     /// - Otherwise fetches all available when between `MIN_BATCH_SIZE` and `MAX_BATCH_SIZE`
     /// - Requests `MIN_BATCH_SIZE` when fewer are pending (may receive fewer)
     ///
-    /// When intents are pending, waits before fetching to allow more to accumulate:
+    /// When intents are pending but below `MAX_BATCH_SIZE`, waits before fetching to allow more to accumulate:
     /// - 2s if any pending, 4s if ≥20 pending, 10s if ≥50 pending.
     ///
     /// This is important because indexing is slow, so we want to batch as many as possible.
@@ -197,10 +225,10 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
         // Check how many intents are pending
         let mut pending_count = SearchIndexIntent::pending_count(&tether).await?;
 
-        // Always wait briefly when intents are pending to let more accumulate
-        // By waiting, we allow prefetch workers to create more intents while we're about to process
-        // Progressive delay: more pending = longer wait to accumulate more
-        if pending_count > 0 {
+        // Wait briefly when intents are pending but still below max batch size
+        // to let prefetch workers create more intents before we process.
+        // Skip delay if we already have a full batch ready.
+        if pending_count > 0 && pending_count < i64::try_from(MAX_BATCH_SIZE).unwrap_or(i64::MAX) {
             let delay = if pending_count >= BULK_ACCUMULATION_THRESHOLD_LARGE {
                 BULK_ACCUMULATION_DELAY_LARGE
             } else if pending_count >= BULK_ACCUMULATION_THRESHOLD_MEDIUM {
@@ -225,6 +253,11 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
                 );
                 pending_count = updated_count;
             }
+        } else if pending_count >= i64::try_from(MAX_BATCH_SIZE).unwrap_or(i64::MAX) {
+            debug!(
+                "Bulk mode: {} intents pending (>= MAX_BATCH_SIZE {}), skipping accumulation delay",
+                pending_count, MAX_BATCH_SIZE
+            );
         }
 
         // Use adaptive batch size: fetch as many as available, up to MAX_BATCH_SIZE
@@ -432,7 +465,12 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
         // Convert HTML to text if appropriate (only for text/html MIME type).
         // Use fast strip for indexing (no DOM parse) to keep Android/mobile indexing fast.
         let body_to_index = if is_html {
-            html_to_text_fast(&body)
+            #[cfg(feature = "foundation_search_index_timing")]
+            let strip_start = Instant::now();
+            let stripped = html_to_text_fast(&body);
+            #[cfg(feature = "foundation_search_index_timing")]
+            crate::indexing_timing::record_html_strip(strip_start.elapsed());
+            stripped
         } else {
             body
         };
@@ -522,7 +560,12 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
 
         // Convert HTML to text if appropriate (only for text/html MIME type)
         let body_to_index = if is_html {
-            html_to_text_fast(&body)
+            #[cfg(feature = "foundation_search_index_timing")]
+            let strip_start = Instant::now();
+            let stripped = html_to_text_fast(&body);
+            #[cfg(feature = "foundation_search_index_timing")]
+            crate::indexing_timing::record_html_strip(strip_start.elapsed());
+            stripped
         } else {
             body
         };

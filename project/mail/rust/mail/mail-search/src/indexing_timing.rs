@@ -18,6 +18,9 @@ use std::time::{Duration, Instant};
 /// Accumulated time spent preparing messages for indexing (DB reads, HTML conversion)
 static PREP_TIME_MICROS: AtomicU64 = AtomicU64::new(0);
 
+/// Accumulated time spent only in HTML->text stripping.
+static HTML_STRIP_TIME_MICROS: AtomicU64 = AtomicU64::new(0);
+
 /// Accumulated time spent in Foundation Search indexing (tokenization, index writes)
 static INDEX_TIME_MICROS: AtomicU64 = AtomicU64::new(0);
 
@@ -99,16 +102,23 @@ impl Default for BatchStopwatch {
 /// Reset all counters (call at start of test)
 pub fn reset() {
     PREP_TIME_MICROS.store(0, Ordering::Relaxed);
+    HTML_STRIP_TIME_MICROS.store(0, Ordering::Relaxed);
     INDEX_TIME_MICROS.store(0, Ordering::Relaxed);
     CLEANUP_TIME_MICROS.store(0, Ordering::Relaxed);
     TOTAL_MESSAGES_INDEXED.store(0, Ordering::Relaxed);
     TOTAL_BATCHES.store(0, Ordering::Relaxed);
 }
 
+/// Record just the HTML->text stripping stage.
+pub fn record_html_strip(duration: Duration) {
+    add_micros(&HTML_STRIP_TIME_MICROS, duration);
+}
+
 /// Statistics snapshot for display
 #[derive(Debug, Clone)]
 pub struct IndexingTimingStats {
     pub prep_time: Duration,
+    pub html_strip_time: Duration,
     pub index_time: Duration,
     pub cleanup_time: Duration,
     pub total_messages: u64,
@@ -120,6 +130,7 @@ impl IndexingTimingStats {
     pub fn snapshot() -> Self {
         Self {
             prep_time: Duration::from_micros(PREP_TIME_MICROS.load(Ordering::Relaxed)),
+            html_strip_time: Duration::from_micros(HTML_STRIP_TIME_MICROS.load(Ordering::Relaxed)),
             index_time: Duration::from_micros(INDEX_TIME_MICROS.load(Ordering::Relaxed)),
             cleanup_time: Duration::from_micros(CLEANUP_TIME_MICROS.load(Ordering::Relaxed)),
             total_messages: TOTAL_MESSAGES_INDEXED.load(Ordering::Relaxed),
@@ -216,6 +227,11 @@ impl std::fmt::Display for IndexingTimingStats {
             "    Preparation (DB read, HTML→text): {:>8.2}s ({:>5.1}%)",
             self.prep_time.as_secs_f64(),
             prep_pct
+        )?;
+        writeln!(
+            f,
+            "      of which HTML strip only:       {:>8.2}s",
+            self.html_strip_time.as_secs_f64()
         )?;
         writeln!(
             f,

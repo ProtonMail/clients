@@ -18,6 +18,7 @@ pub use search_results::{LocalSearchResult, SearchMatchPosition, search_local_wi
 // Re-export from proton-mail-search crate for convenience
 pub use mail_search::{
     BlobStorage, CleanupResult, FoundEntry, FoundationSearchEngine, IndexResult, IndexStats,
-    LocalMessageId, MailSearchService, MessageDataProvider, SearchError, SearchIndexIntent,
-    SearchIndexWorker, SearchOperation, SearchServiceError, SearchStats, StashBlobStorage,
+    LAB_MAX_TOKEN_BUCKET_SIZE, LocalMessageId, MailSearchService, MessageDataProvider, SearchError,
+    SearchIndexIntent, SearchIndexWorker, SearchOperation, SearchServiceError, SearchStats,
+    StashBlobStorage, WorkerShutdownHandle, WorkerShutdownSignal,
 };

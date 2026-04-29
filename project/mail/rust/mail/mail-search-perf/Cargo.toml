@@ -27,6 +27,7 @@ foundation_search_lab_harness = []
 
 [dev-dependencies]
 anyhow = { workspace = true }
+async-trait = { workspace = true }
 clap = { workspace = true }
 mail-api = { workspace = true }
 mail-common = { workspace = true, features = [
@@ -42,10 +43,14 @@ mail-historic-search-load = { workspace = true, features = [
 ] }
 mail-issue-reporter-service = { workspace = true }
 mail-log-service = { workspace = true }
+mail-task-service = { workspace = true }
 mail-search = { workspace = true, features = [
   "foundation_search_index_timing",
 ] }
+mail-html-transformer = { workspace = true }
+mail-crypto-inbox = { workspace = true }
 mail-action-queue = { workspace = true }
+chrono = { workspace = true }
 tempfile = { workspace = true }
 tokio = { workspace = true }
 tracing-subscriber = { workspace = true, features = ["env-filter"] }
@@ -59,4 +64,8 @@ required-features = ["foundation_search"]
 
 [[example]]
 name = "historic_load_trial"
+required-features = ["foundation_search"]
+
+[[example]]
+name = "search_query"
 required-features = ["foundation_search"]

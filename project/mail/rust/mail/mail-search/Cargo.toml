@@ -8,6 +8,8 @@ description = "Self-contained search engine for Proton Mail local search"
 [features]
 # Enable timing instrumentation for indexing operations (enabled via `mail-common/foundation_search_index_timing`)
 foundation_search_index_timing = []
+# Per-message ingest toasts for lab / historic-load debugging (uses `mail-search-perf`)
+foundation_search_lab_harness = ["dep:mail-search-perf"]
 
 [dependencies]
 # Core dependencies (always needed)
@@ -42,6 +44,8 @@ proton-foundation-search = { workspace = true }
 
 # HTML-to-text for body indexing (lightweight stripper, no DOM)
 mail-html-transformer = { path = "../mail-html-transformer" }
+
+mail-search-perf = { path = "../mail-search-perf", optional = true }
 
 [lints]
 workspace = true

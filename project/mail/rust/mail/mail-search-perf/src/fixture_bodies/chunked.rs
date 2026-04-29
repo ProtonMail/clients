@@ -3,6 +3,7 @@
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Condvar, Mutex, RwLock};
+use std::time::Duration;
 
 use serde::Deserialize;
 use tracing::{debug, error, info};
@@ -61,6 +62,10 @@ pub struct RealBodiesStore {
     wait_mutex: Mutex<()>,
     /// Counter of bodies served (for stats)
     bodies_served: AtomicUsize,
+    /// Accumulated decrypt time in microseconds for served bodies.
+    decrypt_micros: AtomicUsize,
+    /// Number of successful decrypt operations.
+    decrypt_count: AtomicUsize,
     /// Hex-encoded AES-256 key for ciphertext in the store
     encryption_key_hex: String,
 }
@@ -77,6 +82,8 @@ impl RealBodiesStore {
             bodies_available: Condvar::new(),
             wait_mutex: Mutex::new(()),
             bodies_served: AtomicUsize::new(0),
+            decrypt_micros: AtomicUsize::new(0),
+            decrypt_count: AtomicUsize::new(0),
             encryption_key_hex,
         }
     }
@@ -99,8 +106,12 @@ impl RealBodiesStore {
                 if let Some(encrypted_body) = bodies.get(remote_id) {
                     let encrypted = encrypted_body.clone();
                     drop(bodies); // Release lock before decrypting
+                    let decrypt_start = std::time::Instant::now();
+                    let decrypted = decrypt_body(&encrypted, &self.encryption_key_hex);
+                    let decrypt_elapsed = decrypt_start.elapsed();
+                    self.record_decrypt_timing(decrypt_elapsed);
                     self.bodies_served.fetch_add(1, Ordering::Relaxed);
-                    return decrypt_body(&encrypted, &self.encryption_key_hex);
+                    return decrypted;
                 }
 
                 let is_complete = self.loading_complete.load(Ordering::SeqCst);
@@ -184,6 +195,12 @@ impl RealBodiesStore {
     /// Whether loading is complete
     pub fn is_loading_complete(&self) -> bool {
         self.loading_complete.load(Ordering::SeqCst)
+    }
+
+    fn record_decrypt_timing(&self, duration: Duration) {
+        let micros = duration.as_micros().min(usize::MAX as u128) as usize;
+        self.decrypt_micros.fetch_add(micros, Ordering::Relaxed);
+        self.decrypt_count.fetch_add(1, Ordering::Relaxed);
     }
 }
 
@@ -381,6 +398,16 @@ pub fn initialize_real_bodies_api(config: ChunkedBodiesFixtureConfig) -> Result<
     Ok(())
 }
 
+/// Clear the global real-bodies store so body substitution uses the live mail API again.
+///
+/// In-flight download tasks may keep their `Arc` until they finish, but
+/// [`is_real_bodies_initialized`] becomes false immediately, so perf body substitution no longer
+/// serves chunked bodies.
+pub fn shutdown_real_bodies_api() {
+    *acquire_write(&REAL_BODIES_STORE) = None;
+    info!("Shut down chunked real-bodies store");
+}
+
 /// Check if the real-bodies store is initialized
 #[must_use]
 pub fn is_real_bodies_initialized() -> bool {
@@ -423,6 +450,8 @@ pub struct RealBodiesStats {
     pub bodies_served: usize,
     pub loading_complete: bool,
     pub manifest_loaded: bool,
+    pub decrypt_total: Duration,
+    pub decrypt_count: usize,
 }
 
 impl RealBodiesStats {
@@ -435,6 +464,10 @@ impl RealBodiesStats {
             bodies_served: store.bodies_served.load(Ordering::Relaxed),
             loading_complete: store.is_loading_complete(),
             manifest_loaded: store.manifest_loaded.load(Ordering::SeqCst),
+            decrypt_total: Duration::from_micros(
+                store.decrypt_micros.load(Ordering::Relaxed) as u64
+            ),
+            decrypt_count: store.decrypt_count.load(Ordering::Relaxed),
         })
     }
 }
@@ -450,9 +483,21 @@ impl std::fmt::Display for RealBodiesStats {
             "pending"
         };
         let lc = self.loading_complete;
-        write!(
+        let avg_decrypt_ms = if self.decrypt_count == 0 {
+            0.0
+        } else {
+            (self.decrypt_total.as_secs_f64() * 1000.0) / self.decrypt_count as f64
+        };
+        writeln!(
             f,
             "Real Bodies Stats [API]: {bs} bodies served, {tf}/{ta} fetched (manifest: {manifest}, complete: {lc})"
+        )?;
+        write!(
+            f,
+            "  Real bodies decrypt (lazy, on-demand): {:.2}s total ({} decrypts, avg {:.2}ms)",
+            self.decrypt_total.as_secs_f64(),
+            self.decrypt_count,
+            avg_decrypt_ms
         )
     }
 }

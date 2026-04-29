@@ -98,6 +98,7 @@ pub fn try_substitute_perf_body(
 pub use chunked::{
     RealBodiesStats, RealBodiesStore, get_body_for_remote_id, initialize_real_bodies_api,
     is_real_bodies_initialized, is_real_bodies_loading_complete, real_bodies_loaded,
+    shutdown_real_bodies_api,
 };
 pub use sequential::{
     FixtureEmail, FixtureSource, FixtureStats, FixtureStore, current_index, expected_total,

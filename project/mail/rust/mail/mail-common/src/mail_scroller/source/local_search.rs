@@ -5,12 +5,16 @@ use crate::{
     mail_scroller::MailScrollerSource,
     models::{MailBusyLabel, Message, MessageCounter, MessageLabel, SearchScrollData},
 };
+use futures::stream::{self, StreamExt};
 use mail_core_common::datatypes::LocalLabelId;
 use mail_core_common::models::ModelExtension;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
 use mail_stash::stash::{StashError, Tether, WriteTx};
 use tracing::{debug, error, info, instrument, warn};
+
+const MAX_UNRESOLVED_HIT_FETCHES: usize = 100;
+const UNRESOLVED_HIT_FETCH_CONCURRENCY: usize = 4;
 
 #[derive(Debug)]
 pub struct LocalSearchScrollerSource {
@@ -88,6 +92,12 @@ impl LocalSearchScrollerSource {
                 MailContextError::Other(anyhow::anyhow!("Local search failed: {:#?}", e))
             })?;
 
+        let local_results = if local_results.is_empty() {
+            Self::try_fetch_unresolved_hits(ctx, search_service, query, tether).await?
+        } else {
+            local_results
+        };
+
         if local_results.is_empty() {
             let stats = search_service.get_stats().await;
             tracing::warn!(
@@ -163,6 +173,128 @@ impl LocalSearchScrollerSource {
 
         info!("Saved {} messages to SearchScrollData", saved_count);
         Ok(())
+    }
+
+    /// When Foundation Search finds index hits that can't be resolved to local messages
+    /// (e.g. after ephemeral indexing), fetch them from the Proton API and save locally
+    /// so the normal search pipeline can display them.
+    async fn try_fetch_unresolved_hits(
+        ctx: &MailUserContext,
+        search_service: &crate::search::MailSearchService,
+        query: &str,
+        tether: &mut Tether,
+    ) -> Result<Vec<crate::search::LocalSearchResult>, MailContextError> {
+        use crate::datatypes::dependencies::DependencyFetcher;
+        use crate::search::search_local_with_keywords;
+        use mail_action_queue::action::ActionGroup;
+        use mail_action_queue::rebase::RebaseChangeSet;
+        use mail_api::services::proton::{
+            ProtonMail, response_data::MessageMetadata as ApiMessageMetadata,
+        };
+
+        let found_entries = search_service
+            .search_local_with_metadata(query)
+            .await
+            .map_err(|e| MailContextError::from(e.into_inner()))?;
+
+        if found_entries.is_empty() {
+            return Ok(vec![]);
+        }
+
+        if ctx.network_monitor_service().is_os_offline() {
+            info!(
+                "Found {} index entries but device is offline — cannot fetch from server",
+                found_entries.len()
+            );
+            return Ok(vec![]);
+        }
+
+        info!(
+            "Found {} index entries without local messages, fetching from server",
+            found_entries.len()
+        );
+
+        let fetch_count = found_entries.len().min(MAX_UNRESOLVED_HIT_FETCHES);
+        if found_entries.len() > fetch_count {
+            info!(
+                "Capping unresolved-hit fetches from {} to {}",
+                found_entries.len(),
+                fetch_count
+            );
+        }
+
+        let session = ctx.session().clone();
+        let mut api_messages: Vec<ApiMessageMetadata> = Vec::new();
+        let responses = stream::iter(found_entries.into_iter().take(fetch_count))
+            .map(|entry| {
+                let session = session.clone();
+                async move {
+                    let mid = mail_api::services::proton::common::MessageId::from(
+                        entry.identifier().to_string(),
+                    );
+                    let result = session.get_message(mid.clone()).await;
+                    (mid, result)
+                }
+            })
+            .buffer_unordered(UNRESOLVED_HIT_FETCH_CONCURRENCY)
+            .collect::<Vec<_>>()
+            .await;
+
+        for (mid, result) in responses {
+            match result {
+                Ok(resp) => api_messages.push(resp.message.metadata),
+                Err(e) => warn!("Failed to fetch message {mid}: {e}"),
+            }
+        }
+
+        if api_messages.is_empty() {
+            return Ok(vec![]);
+        }
+
+        info!(
+            "Fetched {} messages from server, saving locally",
+            api_messages.len()
+        );
+
+        let mut dependency_fetcher = DependencyFetcher::new();
+        for msg in &api_messages {
+            dependency_fetcher
+                .check_api_message_metadata(msg, tether)
+                .await?;
+        }
+        let unresolved_label_ids = dependency_fetcher.fetch_and_store(&session, tether).await?;
+
+        let queue = ctx.action_queue();
+        tether
+            .quiet_write_tx(async |tx| {
+                let mut rebase_change_set = RebaseChangeSet::default();
+                Message::save_scroller_messages(
+                    api_messages,
+                    &mut rebase_change_set,
+                    &unresolved_label_ids,
+                    tx,
+                )
+                .await?;
+
+                if let Err(e) = queue
+                    .rebase_in(ActionGroup::default(), &rebase_change_set, tx)
+                    .await
+                {
+                    error!("Failed to rebase: {e}");
+                }
+
+                Ok::<_, MailContextError>(())
+            })
+            .await?;
+
+        search_local_with_keywords(search_service, tether, query)
+            .await
+            .map_err(|e| {
+                MailContextError::Other(anyhow::anyhow!(
+                    "Local search re-resolution failed: {:#?}",
+                    e
+                ))
+            })
     }
 }
 

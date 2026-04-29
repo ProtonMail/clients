@@ -14,6 +14,7 @@ use mail_core_common::models::ModelExtension;
 use mail_sqlite3::rusqlite::types::{FromSql, FromSqlResult, ToSqlOutput, Value, ValueRef};
 use mail_sqlite3::rusqlite::{Error as SqliteError, ToSql};
 use mail_stash::UserDb;
+use mail_stash::exports::FromSqlError;
 use mail_stash::macros::Model;
 use mail_stash::orm::Model;
 use mail_stash::params;
@@ -52,14 +53,22 @@ impl ToSql for CanonicalCategory {
 
 impl FromSql for CanonicalCategory {
     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        let s = String::column_result(value)?;
+        let s = value.as_str()?;
         if s.is_empty() {
             return Ok(Self::default());
         }
         let labels = s
             .split(',')
-            .filter_map(|part| part.parse::<u64>().ok().map(LocalLabelId::from))
-            .collect();
+            .map(|part| {
+                part.parse::<u64>()
+                    .map(LocalLabelId::from)
+                    .map_err(|e| {
+                        tracing::error!("Critical: Primary key of the scroller cursor is broken, couldnt deserialize CanonicalCategory: {e}");
+                        FromSqlError::InvalidType
+                    })
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
         Ok(Self(labels))
     }
 }

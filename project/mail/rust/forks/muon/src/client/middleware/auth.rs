@@ -238,7 +238,14 @@ where
 
         Err(err) => {
             error!(%err, "unexpected error during auth refresh");
-            return Err(AuthErr::Refresh)?;
+            return match err {
+                AuthLayerErr::Auth(_)
+                | AuthLayerErr::StoreState(_) => Err(AuthErr::Refresh.into()),
+                AuthLayerErr::StatusErr(StatusErr(code, _)) if !code.is_server_error() => {
+                    Err(AuthErr::Refresh.into())
+                }
+                err => Err(err),
+            };
         }
     };
 

@@ -10,7 +10,7 @@ use mail_action_queue::rebase::RebaseChangeSet;
 use mail_core_api::session::Session;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
-use mail_stash::stash::{Bond, RunTransaction};
+use mail_stash::stash::{RunTransaction, WriteTx};
 use serde::{Deserialize, Serialize};
 use tracing::warn;
 
@@ -103,7 +103,7 @@ impl Handler<UserDb> for UpdateMobileActionsHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         let mut mail_settings = match MailSettings::get(bond.tether()).await? {
             Some(ms) => ms,
@@ -146,7 +146,7 @@ impl Handler<UserDb> for UpdateMobileActionsHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         if let Some(old_mobile_settings) = action.old_mobile_settings.clone() {
             let mut mail_settings = match MailSettings::get(bond.tether()).await? {
@@ -191,7 +191,7 @@ impl Handler<UserDb> for UpdateMobileActionsHandler {
         _: ActionId,
         _: &mut Self::Action,
         _: &RebaseChangeSet,
-        _: &Bond<'_>,
+        _: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         Ok(())
     }

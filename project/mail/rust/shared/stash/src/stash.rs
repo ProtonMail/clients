@@ -124,11 +124,11 @@ enum OperationTransaction {
     /// Rolls back a transaction, i.e. abandons it.
     Rollback(OneshotSender<Result<(), StashError>>),
 
-    /// Used to bridge between async and sync code, Bond -> rusqlite::Transaction
+    /// Used to bridge between async and sync code, WriteTx -> rusqlite::Transaction
     Bridge(BridgeClosure),
 
     /// Rollbacks a transaction too.
-    /// This one is meant to be called in Bond's drop glue. That's why it doesn't have a sender.
+    /// This one is meant to be called in WriteTx's drop glue. That's why it doesn't have a sender.
     /// Same semantics as Rollback.
     RollbackAbort,
 }
@@ -927,12 +927,12 @@ impl<Db: DatabaseMarker> Tether<Db> {
     /// It is possible to reuse a connection for multiple transactions, but only
     /// one transaction can be active at a time on a given connection.
     ///
-    pub async fn tx<F, T, E>(&mut self, closure: F) -> Result<T, E>
+    pub async fn write_tx<F, T, E>(&mut self, closure: F) -> Result<T, E>
     where
-        F: AsyncFnOnce(&Bond<'_, Db>) -> Result<T, E>,
+        F: AsyncFnOnce(&WriteTx<'_, Db>) -> Result<T, E>,
         E: From<StashError>,
     {
-        self.tx_impl(TransactionTrackingPolicy::Tracking, closure)
+        self.write_tx_impl(TransactionTrackingPolicy::Tracking, closure)
             .await
     }
 
@@ -940,22 +940,22 @@ impl<Db: DatabaseMarker> Tether<Db> {
     ///
     /// This method is used to start a transaction without listening for changes.
     /// It is needed for internal implementation of the watch mechanism and scrollers.
-    pub async fn quiet_tx<F, T, E>(&mut self, closure: F) -> Result<T, E>
+    pub async fn quiet_write_tx<F, T, E>(&mut self, closure: F) -> Result<T, E>
     where
-        F: AsyncFnOnce(&Bond<'_, Db>) -> Result<T, E>,
+        F: AsyncFnOnce(&WriteTx<'_, Db>) -> Result<T, E>,
         E: From<StashError>,
     {
-        self.tx_impl(TransactionTrackingPolicy::Quiet, closure)
+        self.write_tx_impl(TransactionTrackingPolicy::Quiet, closure)
             .await
     }
 
-    async fn tx_impl<F, T, E>(
+    async fn write_tx_impl<F, T, E>(
         &mut self,
         policy: TransactionTrackingPolicy,
         closure: F,
     ) -> Result<T, E>
     where
-        F: AsyncFnOnce(&Bond<'_, Db>) -> Result<T, E>,
+        F: AsyncFnOnce(&WriteTx<'_, Db>) -> Result<T, E>,
         E: From<StashError>,
     {
         // We acquire a lock rather than relying on the SQLite internal lock as it allows us to:
@@ -992,7 +992,7 @@ impl<Db: DatabaseMarker> Tether<Db> {
     async fn transaction_impl(
         &mut self,
         policy: TransactionTrackingPolicy,
-    ) -> Result<Bond<'_, Db>, StashError> {
+    ) -> Result<WriteTx<'_, Db>, StashError> {
         let (sender, receiver) = oneshot::channel();
         let operation = Operation::Transaction(OperationTransaction::Start(policy, sender));
 
@@ -1005,7 +1005,7 @@ impl<Db: DatabaseMarker> Tether<Db> {
             .await
             .map_err(|_| anyhow!("The mail_stash worker dropped"))??;
 
-        Ok(Bond::new(self))
+        Ok(WriteTx::new(self))
     }
 
     /// Starts a new tethered worker thread.
@@ -1071,23 +1071,23 @@ impl<Db: DatabaseMarker> Tether<Db> {
         ret.map(|x| *x.downcast().expect("Downcast failed?"))
     }
 
-    pub async fn sync_tx(
+    pub async fn sync_write_tx(
         &mut self,
         callback: impl FnOnce(&rusqlite::Transaction<'_>) -> StashResult<()> + Send + 'static,
     ) -> StashResult<()> {
-        self.sync_tx_returning(callback).await
+        self.sync_write_tx_returning(callback).await
     }
 
-    pub async fn sync_tx_returning<T: Send + 'static>(
+    pub async fn sync_write_tx_returning<T: Send + 'static>(
         &mut self,
         callback: impl FnOnce(&rusqlite::Transaction) -> StashResult<T> + Send + 'static,
     ) -> StashResult<T> {
-        self.run_sync_tx(callback, TransactionTrackingPolicy::Tracking)
+        self.run_sync_write_tx(callback, TransactionTrackingPolicy::Tracking)
             .await
     }
 
     /// This runs the given callback in the tether thread.
-    async fn run_sync_tx<T>(
+    async fn run_sync_write_tx<T>(
         &mut self,
         callback: impl FnOnce(&rusqlite::Transaction<'_>) -> StashResult<T> + Send + 'static,
         policy: TransactionTrackingPolicy,
@@ -1244,13 +1244,13 @@ struct BridgeClosure {
 /// there is only one transaction per tether.
 ///
 #[derive(Debug)]
-pub struct Bond<'tether, Db: DatabaseMarker = crate::marker::UserDb> {
+pub struct WriteTx<'tether, Db: DatabaseMarker = crate::marker::UserDb> {
     /// The associated [`Tether`] instance.
     tether: &'tether mut Tether<Db>,
 }
 
-impl<'tether, Db: DatabaseMarker> Bond<'tether, Db> {
-    /// Create new instance of the Bond.
+impl<'tether, Db: DatabaseMarker> WriteTx<'tether, Db> {
+    /// Create new instance of the WriteTx.
     ///
     fn new(tether: &'tether mut Tether<Db>) -> Self {
         Self { tether }
@@ -1337,7 +1337,7 @@ impl<'tether, Db: DatabaseMarker> Bond<'tether, Db> {
     }
 }
 
-impl<Db: DatabaseMarker> Deref for Bond<'_, Db> {
+impl<Db: DatabaseMarker> Deref for WriteTx<'_, Db> {
     type Target = Tether<Db>;
 
     fn deref(&self) -> &Self::Target {
@@ -1345,7 +1345,7 @@ impl<Db: DatabaseMarker> Deref for Bond<'_, Db> {
     }
 }
 
-impl<Db: DatabaseMarker> Drop for Bond<'_, Db> {
+impl<Db: DatabaseMarker> Drop for WriteTx<'_, Db> {
     fn drop(&mut self) {
         _ = self
             .connection
@@ -1359,23 +1359,23 @@ impl<Db: DatabaseMarker> RunTransaction<Db> for Tether<Db> {
     }
 
     #[allow(clippy::manual_async_fn)]
-    fn run_tx<T, F>(&mut self, closure: F) -> impl Future<Output = anyhow::Result<T>>
+    fn run_write_tx<T, F>(&mut self, closure: F) -> impl Future<Output = anyhow::Result<T>>
     where
-        F: AsyncFnOnce(&Bond<'_, Db>) -> Result<T, anyhow::Error>,
+        F: AsyncFnOnce(&WriteTx<'_, Db>) -> Result<T, anyhow::Error>,
     {
         async move {
-            self.tx(closure)
+            self.write_tx(closure)
                 .await
                 .context("Could not start transaction for tether")
         }
     }
 
-    async fn run_tx_sync<T, F>(&mut self, closure: F) -> anyhow::Result<T>
+    async fn run_write_tx_sync<T, F>(&mut self, closure: F) -> anyhow::Result<T>
     where
         F: FnOnce(&rusqlite::Transaction<'_>) -> StashResult<T> + Send + 'static,
         T: Send + 'static,
     {
-        self.sync_tx_returning(closure)
+        self.sync_write_tx_returning(closure)
             .await
             .context("Could not start sync transaction for tether")
     }
@@ -1389,11 +1389,14 @@ pub trait RunTransaction<Db: DatabaseMarker = crate::marker::UserDb>: Sized {
     fn tether(&self) -> &Tether<Db>;
 
     /// Creates a transaction and run the given `closure`.
-    fn run_tx<T, F>(&mut self, closure: F) -> impl Future<Output = anyhow::Result<T>>
+    fn run_write_tx<T, F>(&mut self, closure: F) -> impl Future<Output = anyhow::Result<T>>
     where
-        F: AsyncFnOnce(&Bond<'_, Db>) -> Result<T, anyhow::Error>;
+        F: AsyncFnOnce(&WriteTx<'_, Db>) -> Result<T, anyhow::Error>;
 
-    fn run_tx_sync<T, F>(&mut self, closure: F) -> impl Future<Output = anyhow::Result<T>> + Send
+    fn run_write_tx_sync<T, F>(
+        &mut self,
+        closure: F,
+    ) -> impl Future<Output = anyhow::Result<T>> + Send
     where
         F: FnOnce(&rusqlite::Transaction<'_>) -> StashResult<T> + Send + 'static,
         T: Send + 'static;
@@ -1405,20 +1408,23 @@ impl<Db: DatabaseMarker, RT: RunTransaction<Db>> RunTransaction<Db> for &mut RT 
     }
 
     #[allow(clippy::manual_async_fn)]
-    fn run_tx<T, F>(&mut self, closure: F) -> impl Future<Output = anyhow::Result<T>>
+    fn run_write_tx<T, F>(&mut self, closure: F) -> impl Future<Output = anyhow::Result<T>>
     where
-        F: AsyncFnOnce(&Bond<'_, Db>) -> Result<T, anyhow::Error>,
+        F: AsyncFnOnce(&WriteTx<'_, Db>) -> Result<T, anyhow::Error>,
     {
-        RT::run_tx(self, closure)
+        RT::run_write_tx(self, closure)
     }
 
     #[allow(clippy::manual_async_fn)]
-    fn run_tx_sync<T, F>(&mut self, closure: F) -> impl Future<Output = anyhow::Result<T>> + Send
+    fn run_write_tx_sync<T, F>(
+        &mut self,
+        closure: F,
+    ) -> impl Future<Output = anyhow::Result<T>> + Send
     where
         F: FnOnce(&rusqlite::Transaction<'_>) -> StashResult<T> + Send + 'static,
         T: Send + 'static,
     {
-        RT::run_tx_sync(self, closure)
+        RT::run_write_tx_sync(self, closure)
     }
 }
 

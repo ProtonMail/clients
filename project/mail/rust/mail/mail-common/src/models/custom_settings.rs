@@ -51,7 +51,7 @@ impl CustomSettings {
         let payload = account_stash
             .connection()
             .await?
-            .tx(async |tx| PostLoginMobileMigrationPayload::load(user_id, tx).await)
+            .write_tx(async |tx| PostLoginMobileMigrationPayload::load(user_id, tx).await)
             .await?;
 
         if let Some(payload) = payload {
@@ -118,7 +118,7 @@ impl CustomSettings {
         ctx.user_stash()
             .connection()
             .await?
-            .tx(async move |tx| {
+            .write_tx(async move |tx| {
                 let mut this = Self::get_or_default(tx.tether()).await?;
 
                 this.mobile_signature = signature.map(|sig| Self::sanitize_mobile_signature(&sig));
@@ -163,7 +163,7 @@ impl CustomSettings {
         ctx.user_stash()
             .connection()
             .await?
-            .tx(async move |tx| {
+            .write_tx(async move |tx| {
                 let mut this = CustomSettings::get_or_default(tx.tether()).await?;
 
                 this.mobile_signature_enabled = enabled;
@@ -182,7 +182,7 @@ impl CustomSettings {
         ctx.user_stash()
             .connection()
             .await?
-            .tx(async move |tx| {
+            .write_tx(async move |tx| {
                 let mut this = CustomSettings::get_or_default(tx.tether()).await?;
 
                 this.swipe_to_adjacent_conversation = enabled;

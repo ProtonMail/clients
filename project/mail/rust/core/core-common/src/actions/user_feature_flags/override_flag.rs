@@ -11,7 +11,7 @@ use mail_core_api::services::proton::FeatureFlagsApi as _;
 use mail_core_api::session::Session;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
-use mail_stash::stash::{Bond, RunTransaction};
+use mail_stash::stash::{RunTransaction, WriteTx};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -69,7 +69,7 @@ impl Handler<UserDb> for OverrideFlagHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         let mut flag = UserFeatureFlag::by_name(&action.flag_name, tx.tether())
             .await?
@@ -110,7 +110,7 @@ impl Handler<UserDb> for OverrideFlagHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         let mut flag = UserFeatureFlag::by_name(&action.flag_name, tx.tether())
             .await?
@@ -184,7 +184,7 @@ impl Handler<UserDb> for OverrideFlagHandler {
         _this_id: ActionId,
         _action: &mut Self::Action,
         _: &RebaseChangeSet,
-        _tx: &Bond<'_>,
+        _tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         // We do not track feature flag updates as a part of rebasing
         // Nothing to do.

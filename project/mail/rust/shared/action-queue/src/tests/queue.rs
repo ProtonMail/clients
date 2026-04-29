@@ -330,7 +330,7 @@ impl Handler<TestDb> for ActionHandler2 {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_, TestDb>,
+        tx: &WriteTx<'_, TestDb>,
     ) -> Result<(), NoopError> {
         if action.die {
             return Err(NoopError {});
@@ -356,7 +356,7 @@ impl Handler<TestDb> for ActionHandler2 {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: &Bond<'_, TestDb>,
+        _: &WriteTx<'_, TestDb>,
     ) -> Result<(), NoopError> {
         unreachable!()
     }
@@ -374,7 +374,7 @@ impl Handler<TestDb> for ActionHandler2 {
         _: ActionId,
         _: &mut Self::Action,
         _: &RebaseChangeSet,
-        _: &Bond<'_, TestDb>,
+        _: &WriteTx<'_, TestDb>,
     ) -> std::result::Result<(), <Self::Action as Action<TestDb>>::Error> {
         Ok(())
     }

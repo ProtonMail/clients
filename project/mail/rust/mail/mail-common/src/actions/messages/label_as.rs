@@ -11,7 +11,7 @@ use mail_action_queue::rebase::RebaseChangeSet;
 use mail_core_api::session::Session;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
-use mail_stash::stash::{Bond, Tether};
+use mail_stash::stash::{Tether, WriteTx};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -50,7 +50,7 @@ impl Handler<UserDb> for LabelAsHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<bool, <Self::Action as Action<UserDb>>::Error> {
         action.0.apply_local_common(tx).await?;
 
@@ -67,7 +67,7 @@ impl Handler<UserDb> for LabelAsHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         action.0.revert_local(tx).await?;
         Ok(())
@@ -89,7 +89,7 @@ impl Handler<UserDb> for LabelAsHandler {
         _: ActionId,
         action: &mut Self::Action,
         changeset: &RebaseChangeSet,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         action.0.rebase_local(changeset, tx).await?;
         Ok(())
@@ -128,7 +128,7 @@ impl UndoLabelAsMessages {
             queue
                 .tether()
                 .await?
-                .tx::<_, _, AppError>(async |tx| {
+                .write_tx::<_, _, AppError>(async |tx| {
                     let metadata = Metadata::builder().with_dependency(move_action.id).build();
                     queue
                         .queue_action_with_metadata_in_tx(label, metadata.clone(), tx)

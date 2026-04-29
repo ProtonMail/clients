@@ -19,7 +19,7 @@ use mail_core_api::session::Session;
 use mail_core_common::models::ModelExtension;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
-use mail_stash::stash::Bond;
+use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
@@ -78,7 +78,7 @@ impl Handler<UserDb> for AttachmentDispositionUpdateHandler {
         &self,
         this_id: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::LocalOutput,
         <Self::Action as Action<UserDb>>::Error,
@@ -149,7 +149,7 @@ impl Handler<UserDb> for AttachmentDispositionUpdateHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: &Bond<'_>,
+        _: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         // Nothing to undo, we remain in an error state
         Ok(())
@@ -305,7 +305,7 @@ impl Handler<UserDb> for AttachmentDispositionUpdateHandler {
         _: ActionId,
         _: &mut Self::Action,
         _: &RebaseChangeSet,
-        _: &Bond<'_>,
+        _: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         Ok(())
     }

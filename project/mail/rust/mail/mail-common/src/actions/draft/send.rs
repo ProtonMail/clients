@@ -35,7 +35,7 @@ use mail_crypto_inbox::keys::ComposerPreference;
 use mail_crypto_inbox::proton_crypto::new_pgp_provider;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
-use mail_stash::stash::{Bond, StashError};
+use mail_stash::stash::{StashError, WriteTx};
 use proton_crypto_account::keys::AddressKeySelector;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -156,7 +156,7 @@ impl Handler<UserDb> for SendHandler {
         &self,
         action_id: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::LocalOutput,
         <Self::Action as Action<UserDb>>::Error,
@@ -253,7 +253,7 @@ impl Handler<UserDb> for SendHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         let local_message_id = action.local_message_id.expect("Should be set");
         let local_draft_label_id = local_draft_label_id(tx).await?;
@@ -318,7 +318,7 @@ impl Handler<UserDb> for SendHandler {
         _: ActionId,
         _: &mut Self::Action,
         _: &RebaseChangeSet,
-        _: &Bond<'_>,
+        _: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         Ok(())
     }
@@ -702,7 +702,7 @@ async fn save_send_status(
 async fn on_already_sent(
     metadata_id: MetadataId,
     message_id: Option<MessageId>,
-    tx: &Bond<'_>,
+    tx: &WriteTx<'_>,
 ) -> Result<(), StashError> {
     DraftMetadata::delete(metadata_id, tx)
         .await

@@ -61,7 +61,7 @@ use mail_stash::macros::Model;
 use mail_stash::orm::Model;
 use mail_stash::orm::ModelHooks;
 use mail_stash::rusqlite::{OptionalExtension, params_from_iter};
-use mail_stash::stash::{Bond, RunTransaction, Stash, StashError, Tether, WatcherHandle};
+use mail_stash::stash::{RunTransaction, Stash, StashError, Tether, WatcherHandle, WriteTx};
 use mail_stash::utils::{ConnectionExt, IterMapToSql, MapToSql as _, placeholders, placeholders_n};
 use mail_stash::{UserDb, params};
 use serde::{Deserialize, Serialize};
@@ -506,7 +506,7 @@ impl Conversation {
         &mut self,
         current_label_id: &LabelId,
         rebase_change_set: &mut RebaseChangeSet,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         if let Some(remote_id) = self.remote_id.clone()
             && let Some(existing) = Self::find_by_remote_id(remote_id, bond).await?
@@ -562,7 +562,7 @@ impl Conversation {
     pub async fn apply_label_async(
         label_id: LocalLabelId,
         ids: impl IntoIterator<Item = LocalConversationId>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<Vec<LocalMessageId>, StashError> {
         let ids = Vec::from_iter(ids);
         bond.sync_bridge(move |tx| Self::apply_label(label_id, ids, tx))
@@ -589,7 +589,7 @@ impl Conversation {
 
     pub async fn create_or_update_conversations(
         conversations: Vec<Conversation>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<Vec<LocalConversationId>, AppError> {
         let mut ids = Vec::with_capacity(conversations.len());
 
@@ -606,7 +606,7 @@ impl Conversation {
     pub async fn mark_deleted(
         label_id: LocalLabelId,
         ids: impl IntoIterator<Item = LocalConversationId>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), AppError> {
         let all_mail_id = SystemLabel::AllMail.local_id(bond).await?;
         let is_all_mail = all_mail_id
@@ -624,7 +624,7 @@ impl Conversation {
 
     async fn mark_deleted_all_mail(
         ids: impl IntoIterator<Item = LocalConversationId>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), AppError> {
         for id in ids {
             info!("Marking {id:?} as deleted in all mail");
@@ -669,7 +669,7 @@ impl Conversation {
     async fn remove_conversation_from_all_labels(
         &self,
         all_stats: HashMap<LocalLabelId, MessageLabelStats>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), AppError> {
         let conv_labels = ConversationLabel::find(
             "WHERE local_conversation_id=? AND deleted=0",
@@ -703,7 +703,7 @@ impl Conversation {
     async fn mark_deleted_current_label(
         label_id: LocalLabelId,
         ids: impl IntoIterator<Item = LocalConversationId>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), AppError> {
         for id in ids {
             info!("Marking {id:?} as deleted in {label_id:?}");
@@ -755,7 +755,7 @@ impl Conversation {
         &mut self,
         label_id: LocalLabelId,
         stats: Option<&MessageLabelStats>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), AppError> {
         let conv_label = ConversationLabel::find_first(
             "WHERE local_conversation_id=? AND deleted=0 AND local_label_id=?",
@@ -785,7 +785,7 @@ impl Conversation {
     pub async fn mark_undeleted(
         label_id: LocalLabelId,
         ids: impl IntoIterator<Item = LocalConversationId>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), AppError> {
         let all_mail_id = SystemLabel::AllMail.local_id(bond).await?;
         let is_all_mail = all_mail_id
@@ -803,7 +803,7 @@ impl Conversation {
 
     async fn mark_undeleted_all_mail(
         ids: impl IntoIterator<Item = LocalConversationId>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), AppError> {
         for id in ids {
             info!("Unmarking {id:?} as deleted in all mail",);
@@ -861,7 +861,7 @@ impl Conversation {
     async fn add_conversation_to_all_labels(
         &self,
         all_stats: HashMap<LocalLabelId, MessageLabelStats>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), AppError> {
         let conv_labels = ConversationLabel::find(
             "WHERE local_conversation_id=? AND deleted=1",
@@ -895,7 +895,7 @@ impl Conversation {
     async fn mark_undeleted_current_label(
         label_id: LocalLabelId,
         ids: impl IntoIterator<Item = LocalConversationId>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), AppError> {
         for id in ids {
             info!("Unmarking {id:?} as deleted in {label_id:?}",);
@@ -958,7 +958,7 @@ impl Conversation {
         &mut self,
         label_id: LocalLabelId,
         stats: Option<&MessageLabelStats>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), AppError> {
         let conv_label = ConversationLabel::find_first(
             "WHERE local_conversation_id=? AND deleted=1 AND local_label_id=?",
@@ -989,7 +989,7 @@ impl Conversation {
     pub async fn mark_delete_update_stats(
         &mut self,
         stats: Option<&MessageLabelStats>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), AppError> {
         let undeleted_messages = Message::count(
             "WHERE local_conversation_id=? AND deleted=0",
@@ -1017,7 +1017,7 @@ impl Conversation {
     pub async fn mark_undelete_update_stats(
         &mut self,
         stats: Option<&MessageLabelStats>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), AppError> {
         if let Some(stats) = stats {
             self.num_messages += stats.count;
@@ -1287,7 +1287,7 @@ impl Conversation {
     pub async fn mark_unread_async(
         local_label_id: LocalLabelId,
         conversation_ids: impl IntoIterator<Item = LocalConversationId>,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<Vec<LocalMessageId>, StashError> {
         let ids = Vec::from_iter(conversation_ids);
         tx.sync_bridge(move |tx| Self::mark_unread(local_label_id, ids, tx))
@@ -1298,7 +1298,7 @@ impl Conversation {
     pub async fn remove_label_async(
         label_id: LocalLabelId,
         ids: impl IntoIterator<Item = LocalConversationId>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<Vec<LocalMessageId>, StashError> {
         let ids = Vec::from_iter(ids);
         bond.sync_bridge(move |tx| Self::remove_label(label_id, ids, tx))
@@ -1326,7 +1326,7 @@ impl Conversation {
         local_label_id: LocalLabelId,
         ids: &[LocalConversationId],
         snooze_until: UnixTimestamp,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), AppError> {
         Self::validate_snooze_location(local_label_id, bond).await?;
 
@@ -1340,7 +1340,7 @@ impl Conversation {
     pub async fn snooze_unchecked(
         ids: &[LocalConversationId],
         snooze_until: UnixTimestamp,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), AppError> {
         let local_inbox_id = SystemLabel::Inbox
             .local_id(bond)
@@ -1384,7 +1384,7 @@ impl Conversation {
     pub async fn unsnooze(
         local_label_id: LocalLabelId,
         ids: &[LocalConversationId],
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), AppError> {
         Self::validate_snooze_location(local_label_id, bond).await?;
 
@@ -1419,7 +1419,7 @@ impl Conversation {
 
     async fn validate_snooze_location(
         local_label_id: LocalLabelId,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), AppError> {
         let label = Label::find_by_id(local_label_id, bond)
             .await?
@@ -1434,7 +1434,7 @@ impl Conversation {
 
     pub async fn set_display_snooze_reminder(
         ids: &[LocalConversationId],
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), AppError> {
         let placeholders = placeholders(ids);
         let params = ids.to_sql();
@@ -1477,7 +1477,7 @@ impl Conversation {
             .conversations;
         let mut local_convs = Vec::with_capacity(remote_convs.len());
 
-        tx.run_tx(async |tx| {
+        tx.run_write_tx(async |tx| {
             for conv in remote_convs {
                 let mut conv = Self::from(conv);
                 conv.save(tx).await?;
@@ -1806,7 +1806,7 @@ impl Conversation {
                 tracing::error!("Failed to fetch dependencies : {e}");
             })?;
 
-        tx.run_tx::<_, _>(async move |tx| {
+        tx.run_write_tx::<_, _>(async move |tx| {
             let mut rebase_change_set = RebaseChangeSet::default();
             let had_messages = conversation.has_messages;
             let should_sync_conv = conversation
@@ -1951,7 +1951,7 @@ impl Conversation {
                     tracing::error!("Failed to fetch dependencies : {e}");
                 })?;
 
-            tx.run_tx::<_, _>(async move |tx| {
+            tx.run_write_tx::<_, _>(async move |tx| {
                 let mut rebase_change_set = RebaseChangeSet::default();
 
                 let message_metadata: Vec<ApiMessageMetadata> = conversation_response.messages;
@@ -2096,7 +2096,7 @@ impl Conversation {
     pub(crate) async fn update_remote_id(
         local_conversation_id: LocalConversationId,
         conversation_id: ConversationId,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<usize, StashError> {
         bond.execute(
             format!(
@@ -2111,7 +2111,7 @@ impl Conversation {
     pub async fn update_subject(
         id: LocalConversationId,
         subject: String,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<usize, StashError> {
         bond.execute(
             format!(
@@ -2163,7 +2163,7 @@ impl Conversation {
     }
 
     pub async fn handle_event(
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
         id: &ConversationId,
         action: Action,
         conversation: Option<&mut Conversation>,
@@ -2971,7 +2971,7 @@ impl ConversationLabel {
     pub async fn find_by_conversation_and_label_id(
         conversation_id: LocalConversationId,
         label_id: LocalLabelId,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<Option<Self>, StashError> {
         Self::find_first(
             "WHERE local_conversation_id = ? AND local_label_id = ?",
@@ -2984,7 +2984,7 @@ impl ConversationLabel {
     pub async fn mark_delete_update_stats(
         &mut self,
         stats: Option<&MessageLabelStats>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), AppError> {
         if let Some(stats) = stats {
             let mut conv_counter =
@@ -3025,7 +3025,7 @@ impl ConversationLabel {
     pub async fn mark_undelete_update_stats(
         &mut self,
         stats: Option<&MessageLabelStats>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), AppError> {
         if let Some(stats) = stats {
             let mut conv_counter =
@@ -3407,7 +3407,7 @@ impl Conversation {
             response.total
         );
         tether
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 Self::create_or_update_conversations(
                     response
                         .conversations

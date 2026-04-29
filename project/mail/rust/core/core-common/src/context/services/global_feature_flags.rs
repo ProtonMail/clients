@@ -97,7 +97,7 @@ impl FeatureFlagsService {
         let flags = flags.into_values().collect();
 
         tether
-            .tx(async |tx| FeatureFlag::save_all(flags, tx).await)
+            .write_tx(async |tx| FeatureFlag::save_all(flags, tx).await)
             .await?;
 
         Ok(())
@@ -126,7 +126,7 @@ impl FeatureFlagsService {
                 modify_time: UnixTimestamp::now(),
             });
         flag.enabled = value;
-        tether.tx(async |tx| flag.save(tx).await).await?;
+        tether.write_tx(async |tx| flag.save(tx).await).await?;
 
         Ok(())
     }

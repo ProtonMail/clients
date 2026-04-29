@@ -271,7 +271,7 @@ async fn lock_calculation() {
     let mut tether = user_ctx.user_stash().connection().await.unwrap();
 
     let draft_metadata = tether
-        .tx(async |tx| DraftMetadata::empty(tx).await)
+        .write_tx(async |tx| DraftMetadata::empty(tx).await)
         .await
         .unwrap();
 

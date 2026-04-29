@@ -15,7 +15,7 @@ use mail_core_api::services::proton::LabelId;
 use mail_core_common::datatypes::SystemLabel;
 use mail_core_common::models::{Label, ModelExtension, ModelIdExtension};
 use mail_stash::orm::Model;
-use mail_stash::stash::{Bond, StashError, Tether};
+use mail_stash::stash::{StashError, Tether, WriteTx};
 use velcro::btree_map;
 
 fn test_conversations(n: usize, order_shift: u64) -> Vec<Conversation> {
@@ -27,14 +27,18 @@ fn test_conversations(n: usize, order_shift: u64) -> Vec<Conversation> {
         .collect()
 }
 
-async fn save_single_conversation(label: &Label, conversation: &mut Conversation, bond: &Bond<'_>) {
+async fn save_single_conversation(
+    label: &Label,
+    conversation: &mut Conversation,
+    bond: &WriteTx<'_>,
+) {
     save_conversation_with_labels(conversation, &[label], bond).await;
 }
 
 pub async fn save_conversation_with_labels(
     conversation: &mut Conversation,
     labels: &[&Label],
-    bond: &Bond<'_>,
+    bond: &WriteTx<'_>,
 ) {
     conversation.save(bond).await.unwrap();
     for label in labels {
@@ -52,7 +56,7 @@ pub async fn save_conversation_with_labels(
 
 async fn save_to_database(data: &mut BTreeMap<&str, Vec<Conversation>>, tether: &mut Tether) {
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             for (label_rid, conversations) in data.iter_mut() {
                 let mut label = label!(remote_id: lbl_id!(label_rid));
                 label.save(bond).await.unwrap();
@@ -129,7 +133,7 @@ async fn test_scroller_reads_correct_items_within_visible_range() {
         .build();
 
     tether
-        .tx::<_, _, StashError>(async |bond| scroller.save(bond).await)
+        .write_tx::<_, _, StashError>(async |bond| scroller.save(bond).await)
         .await
         .unwrap();
     let scroller = ScrollCursor::from(scroller);
@@ -169,7 +173,7 @@ async fn test_scroller_reads_correct_items_within_visible_range() {
 
     let mut conversation = conversation!(remote_id: conv_id!(0), display_order: 0);
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             save_single_conversation(&local_label, &mut conversation, bond).await;
             Ok(())
         })
@@ -186,7 +190,7 @@ async fn test_scroller_reads_correct_items_within_visible_range() {
     // & make sure both scrollers "see" the change
     let mut conversation = conversation!(remote_id: conv_id!(100), display_order: 200);
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             save_single_conversation(&local_label, &mut conversation, bond).await;
             Ok(())
         })
@@ -208,7 +212,7 @@ async fn test_scroller_reads_correct_items_within_visible_range() {
 
     // Remove just added coversation from inside of the visible view
     tether
-        .tx::<_, _, StashError>(async |bond| conversation.delete(bond).await)
+        .write_tx::<_, _, StashError>(async |bond| conversation.delete(bond).await)
         .await
         .unwrap();
 
@@ -256,7 +260,7 @@ async fn test_cashed_scroller_reads_correct_items_within_visible_range() {
         .build();
 
     tether
-        .tx::<_, _, StashError>(async |bond| scroller.save(bond).await)
+        .write_tx::<_, _, StashError>(async |bond| scroller.save(bond).await)
         .await
         .unwrap();
 
@@ -290,7 +294,7 @@ async fn test_cashed_scroller_reads_correct_items_within_visible_range() {
     // Store new conversation outside of the visible view
     let mut conversation = conversation!(remote_id: conv_id!(0), display_order: 0);
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             save_single_conversation(&local_label, &mut conversation, bond).await;
             Ok(())
         })
@@ -307,7 +311,7 @@ async fn test_cashed_scroller_reads_correct_items_within_visible_range() {
     // & make sure cached scroller "see" the change
     let mut conversation = conversation!(remote_id: conv_id!(100), display_order: 200);
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             save_single_conversation(&local_label, &mut conversation, bond).await;
             Ok(())
         })
@@ -350,7 +354,7 @@ async fn test_cashed_scroller_reads_correct_items_within_visible_range() {
 
     // Remove just added coversation from inside of the visible view
     tether
-        .tx::<_, _, StashError>(async |bond| conversation.delete(bond).await)
+        .write_tx::<_, _, StashError>(async |bond| conversation.delete(bond).await)
         .await
         .unwrap();
 
@@ -388,7 +392,7 @@ async fn test_cashed_scroller_reads_correct_items_within_visible_range() {
     // Delete whole first page
     let convs = data.get(REMOTE_LABEL_ID).unwrap();
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             for conv_to_delete in convs.iter().rev().take(page_size).cloned() {
                 conv_to_delete.delete(bond).await.unwrap();
             }
@@ -412,7 +416,7 @@ async fn test_cashed_scroller_reads_correct_items_within_visible_range() {
 
     // Delete next 3 pages and prove we can progress to the next page
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             for conv_to_delete in convs
                 .iter()
                 .rev()
@@ -442,7 +446,7 @@ async fn test_cashed_scroller_reads_correct_items_within_visible_range() {
     // Undelete previous 4 pages
     let convs = data.get_mut(REMOTE_LABEL_ID).unwrap();
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             for conv in convs.iter_mut().rev().take(page_size * 4) {
                 conv.local_id = None;
                 let mut labels = vec![];
@@ -504,7 +508,7 @@ async fn test_cashed_scroller_reads_last_two_pages_together_when_last_page_is_no
         .build();
 
     tether
-        .tx::<_, _, StashError>(async |bond| scroller.save(bond).await)
+        .write_tx::<_, _, StashError>(async |bond| scroller.save(bond).await)
         .await
         .unwrap();
 
@@ -580,7 +584,7 @@ async fn allow_different_filter_types_to_be_stored_in_database() {
     assert_eq!(count, 0);
 
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             scroller_all.save(bond).await.unwrap();
             scroller_read.save(bond).await.unwrap();
             scroller_unread.save(bond).await.unwrap();
@@ -604,7 +608,7 @@ async fn allow_different_filter_types_to_be_stored_in_database() {
 
     // Verify that the entries can be saved again
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             scroller_all.save(bond).await.unwrap();
             scroller_read.save(bond).await.unwrap();
             scroller_unread.save(bond).await.unwrap();
@@ -655,7 +659,7 @@ async fn allow_different_filter_types_to_be_stored_in_database() {
         .build();
 
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             scroller_all.save(bond).await.unwrap();
             scroller_read.save(bond).await.unwrap();
             scroller_unread.save(bond).await.unwrap();
@@ -706,7 +710,7 @@ async fn allow_different_filter_types_to_be_stored_in_database() {
         .build();
 
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             scroller_all.save(bond).await.unwrap();
             scroller_read.save(bond).await.unwrap();
             scroller_unread.save(bond).await.unwrap();
@@ -757,7 +761,7 @@ async fn allow_different_filter_types_to_be_stored_in_database() {
         .build();
 
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             scroller_all.save(bond).await.unwrap();
             scroller_read.save(bond).await.unwrap();
             scroller_unread.save(bond).await.unwrap();
@@ -824,7 +828,7 @@ async fn allow_different_filter_types_to_be_stored_in_database() {
         .build();
 
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             scroller_all.save(bond).await.unwrap();
             scroller_read.save(bond).await.unwrap();
             scroller_unread.save(bond).await.unwrap();
@@ -860,7 +864,7 @@ async fn test_cashed_scroller_correctly_reads_empty_conversations_from_the_trash
 
     let trash_clone = trash.clone();
     tether
-        .tx(async move |bond| {
+        .write_tx(async move |bond| {
             for conversation in conversations.iter_mut() {
                 save_single_conversation(&trash_clone, conversation, bond).await;
             }
@@ -884,7 +888,7 @@ async fn test_cashed_scroller_correctly_reads_empty_conversations_from_the_trash
         .build();
 
     tether
-        .tx::<_, _, StashError>(async |bond| scroller.save(bond).await)
+        .write_tx::<_, _, StashError>(async |bond| scroller.save(bond).await)
         .await
         .unwrap();
 
@@ -923,7 +927,7 @@ async fn test_create_or_get_local_fix_preserves_api_conversations_with_labels() 
     let inbox_remote_id = SystemLabel::Inbox.remote_id();
     let mut inbox_label = label!(remote_id: Some(inbox_remote_id.clone()));
     tether
-        .tx(async |bond| inbox_label.save(bond).await)
+        .write_tx(async |bond| inbox_label.save(bond).await)
         .await
         .unwrap();
     let inbox_local_id = inbox_label.id();
@@ -933,7 +937,7 @@ async fn test_create_or_get_local_fix_preserves_api_conversations_with_labels() 
     // Step 1: Create an unknown conversation (simulating message event creating it first)
     let mut unknown_conversation = Conversation::unknown(test_remote_id.clone());
     tether
-        .tx(async |bond| {
+        .write_tx(async |bond| {
             unknown_conversation.save(bond).await.unwrap();
             Ok::<(), StashError>(())
         })
@@ -985,7 +989,7 @@ async fn test_create_or_get_local_fix_preserves_api_conversations_with_labels() 
 
     // Step 3: Call create_or_get_local (this is where the bug happened)
     tether
-        .tx(async |bond| {
+        .write_tx(async |bond| {
             let mut change_set = RebaseChangeSet::default();
             api_conversation
                 .create_or_get_local(&LabelId::inbox(), &mut change_set, bond)
@@ -1089,7 +1093,7 @@ async fn test_category_filter_social_shows_only_matching_conversations() {
     ];
 
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             social.display = true;
             social.save(bond).await.unwrap();
             // 2 conversations with inbox AND social labels
@@ -1159,7 +1163,7 @@ async fn test_category_filter_default_shows_all_conversations_from_disabled_cate
     ];
 
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             social.display = true;
             social.save(bond).await?;
             promotions.display = false;

@@ -100,7 +100,7 @@ async fn fetch_public_keys_loads_cached_version_when_network_fails() {
     let email = "foo@params.com";
     let mut tether = user_ctx.mail_stash().connection().await.unwrap();
     tether
-        .tx(async |tx| {
+        .write_tx(async |tx| {
             let response = APIPublicAddressKeys {
                 address_keys: APIPublicAddressKeyGroup::default(),
                 catch_all_keys: None,

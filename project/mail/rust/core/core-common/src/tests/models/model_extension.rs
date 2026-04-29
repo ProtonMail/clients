@@ -12,7 +12,7 @@ use proton_crypto_account::keys::AddressKeys as RealAddressKeys;
 async fn count_test() {
     let mut tether = new_core_test_connection().await.connection().await.unwrap();
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             for i in 0..10 {
                 let mut address = create_test_address(i);
                 address.save(tx).await.expect("failed to create address");

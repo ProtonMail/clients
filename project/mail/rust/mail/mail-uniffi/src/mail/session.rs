@@ -813,7 +813,9 @@ impl MailSession {
             let mut app_settings = RealAppSettings::get_or_default(&tether).await;
             app_settings.set_biometrics();
 
-            tether.tx(async |tx| app_settings.save(tx).await).await?;
+            tether
+                .write_tx(async |tx| app_settings.save(tx).await)
+                .await?;
 
             Result::<_, RealProtonMailError>::Ok(())
         })
@@ -830,7 +832,9 @@ impl MailSession {
             let mut app_settings = RealAppSettings::get_or_default(&tether).await;
             app_settings.unset_biometrics();
 
-            tether.tx(async |tx| app_settings.save(tx).await).await?;
+            tether
+                .write_tx(async |tx| app_settings.save(tx).await)
+                .await?;
 
             Result::<_, RealProtonMailError>::Ok(())
         })
@@ -865,7 +869,7 @@ impl MailSession {
             let mut real_app_settings = settings.merge_with_current(real_app_settings);
 
             tether
-                .tx(async |tx| real_app_settings.save(tx).await)
+                .write_tx(async |tx| real_app_settings.save(tx).await)
                 .await?;
 
             Result::<_, RealProtonMailError>::Ok(())

@@ -86,7 +86,7 @@ async fn setup_local_search_index(
 
         let label = SystemLabel::AllMail.load(&tether).await.unwrap().unwrap();
         tether
-            .tx::<_, _, StashError>(async |bond| {
+            .write_tx::<_, _, StashError>(async |bond| {
                 save_single_message(&[label], &mut msg, bond).await;
                 Ok(())
             })
@@ -95,7 +95,7 @@ async fn setup_local_search_index(
 
         let raw_body = mail_common::models::RawMessageBody::local_draft(entry.body.clone());
         tether
-            .tx::<_, _, StashError>(async |bond| {
+            .write_tx::<_, _, StashError>(async |bond| {
                 raw_body.store(msg.id(), bond).await?;
                 Ok(())
             })
@@ -160,7 +160,7 @@ async fn hybrid_search_shows_local_first_then_remote_appended() {
     let mut settings = MailSettings::get_or_default(&tether).await;
     settings.almost_all_mail = AlmostAllMail::AlmostAllMail;
     tether
-        .tx(async |bond| settings.save(bond).await)
+        .write_tx(async |bond| settings.save(bond).await)
         .await
         .unwrap();
 
@@ -287,7 +287,7 @@ async fn hybrid_search_pagination_no_duplicates_or_skips_when_remote_appends() {
     let mut settings = MailSettings::get_or_default(&tether).await;
     settings.almost_all_mail = AlmostAllMail::AlmostAllMail;
     tether
-        .tx(async |bond| settings.save(bond).await)
+        .write_tx(async |bond| settings.save(bond).await)
         .await
         .unwrap();
 
@@ -401,7 +401,7 @@ async fn hybrid_search_local_only_when_offline() {
     let mut settings = MailSettings::get_or_default(&tether).await;
     settings.almost_all_mail = AlmostAllMail::AlmostAllMail;
     tether
-        .tx(async |bond| settings.save(bond).await)
+        .write_tx(async |bond| settings.save(bond).await)
         .await
         .unwrap();
 
@@ -474,7 +474,7 @@ async fn hybrid_search_fallback_to_remote_when_no_local_results() {
     let mut settings = MailSettings::get_or_default(&tether).await;
     settings.almost_all_mail = AlmostAllMail::AlmostAllMail;
     tether
-        .tx(async |bond| settings.save(bond).await)
+        .write_tx(async |bond| settings.save(bond).await)
         .await
         .unwrap();
 
@@ -527,7 +527,7 @@ async fn remote_only_total_uses_api_response() {
     let mut settings = MailSettings::get_or_default(&tether).await;
     settings.almost_all_mail = AlmostAllMail::AlmostAllMail;
     tether
-        .tx(async |bond| settings.save(bond).await)
+        .write_tx(async |bond| settings.save(bond).await)
         .await
         .unwrap();
 
@@ -599,7 +599,7 @@ async fn hybrid_total_uses_deduped_count_not_api_response() {
     let mut settings = MailSettings::get_or_default(&tether).await;
     settings.almost_all_mail = AlmostAllMail::AlmostAllMail;
     tether
-        .tx(async |bond| settings.save(bond).await)
+        .write_tx(async |bond| settings.save(bond).await)
         .await
         .unwrap();
 
@@ -680,7 +680,7 @@ async fn hybrid_search_refresh_before_fetch_more_no_duplicates() {
     let mut settings = MailSettings::get_or_default(&tether).await;
     settings.almost_all_mail = AlmostAllMail::AlmostAllMail;
     tether
-        .tx(async |bond| settings.save(bond).await)
+        .write_tx(async |bond| settings.save(bond).await)
         .await
         .unwrap();
 

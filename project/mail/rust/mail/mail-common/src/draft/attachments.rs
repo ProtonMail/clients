@@ -403,7 +403,7 @@ mod tests {
 
         let mut tether = mail_stash.connection().await.unwrap();
         let db_metadata = tether
-            .tx(async |tx| DraftMetadata::empty(tx).await)
+            .write_tx(async |tx| DraftMetadata::empty(tx).await)
             .await
             .unwrap();
 

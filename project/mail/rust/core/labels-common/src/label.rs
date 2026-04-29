@@ -16,7 +16,7 @@ use mail_shared_types::{Action, InitializationKey, ModelIdExtension};
 use mail_stash::exports::{Connection, Transaction};
 use mail_stash::macros::Model;
 use mail_stash::orm::{Model, ModelHooks};
-use mail_stash::stash::{Bond, Stash, StashError, StashResult, Tether, WatcherHandle};
+use mail_stash::stash::{Stash, StashError, StashResult, Tether, WatcherHandle, WriteTx};
 use mail_stash::utils::{MapToSql as _, placeholders};
 use mail_stash::{UserDb, params};
 use sqlite_watcher::watcher::TableObserver;
@@ -195,7 +195,7 @@ impl Label {
 
     #[instrument(skip_all)]
     pub async fn store_labels_async(
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
         labels: Vec<Label>,
     ) -> StashResult<Vec<LocalLabelId>> {
         tx.sync_bridge(move |tx| Self::store_labels(tx, labels))
@@ -306,7 +306,7 @@ impl Label {
     }
 
     pub async fn handle_event(
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
         id: &LabelId,
         action: Action,
         label: Option<&mut Label>,
@@ -512,7 +512,7 @@ mod tests {
             .unwrap();
         let labels = test_labels();
         tether
-            .tx::<_, _, StashError>(async |tx| {
+            .write_tx::<_, _, StashError>(async |tx| {
                 for label in labels.clone() {
                     Label::from(label).save(tx).await?;
                 }
@@ -532,7 +532,7 @@ mod tests {
             .unwrap();
         let label = test_label(random_string(1).as_str());
         tether
-            .tx::<_, _, StashError>(async |tx| Label::from(label.clone()).save(tx).await)
+            .write_tx::<_, _, StashError>(async |tx| Label::from(label.clone()).save(tx).await)
             .await
             .unwrap();
         compare_remote_label_with_local(&tether, label).await;
@@ -547,7 +547,7 @@ mod tests {
             .unwrap();
         let label = test_label(random_string(100).as_str());
         tether
-            .tx(async |tx| Label::from(label.clone()).save(tx).await)
+            .write_tx(async |tx| Label::from(label.clone()).save(tx).await)
             .await
             .unwrap();
         compare_remote_label_with_local(&tether, label).await;
@@ -567,7 +567,7 @@ mod tests {
             .collect::<Vec<_>>();
         let mut remote_labels = test_labels();
         tether
-            .tx::<_, _, StashError>(async |tx| {
+            .write_tx::<_, _, StashError>(async |tx| {
                 for label in &mut labels {
                     label.save(tx).await.unwrap();
                 }
@@ -623,7 +623,7 @@ mod tests {
         let mut labels = test_labels();
 
         tether
-            .tx::<_, _, StashError>(async |tx| {
+            .write_tx::<_, _, StashError>(async |tx| {
                 for label in labels.clone() {
                     let mut label = Label::from(label);
                     if let Some(parent_id) = label.remote_parent_id.clone() {
@@ -662,7 +662,7 @@ mod tests {
             .await
             .unwrap();
         tether
-            .tx::<_, _, StashError>(async |tx| {
+            .write_tx::<_, _, StashError>(async |tx| {
                 for t in [
                     LabelType::Label,
                     LabelType::Folder,
@@ -705,7 +705,7 @@ mod tests {
             .await
             .unwrap();
         tether
-            .tx::<_, _, StashError>(async |tx| {
+            .write_tx::<_, _, StashError>(async |tx| {
                 for t in [LabelType::Label, LabelType::Folder] {
                     let label_name = random_string(1);
                     let mut new_label = Label {
@@ -744,7 +744,7 @@ mod tests {
             .await
             .unwrap();
         tether
-            .tx::<_, _, StashError>(async |tx| {
+            .write_tx::<_, _, StashError>(async |tx| {
                 for t in [LabelType::Label, LabelType::Folder] {
                     let label_name = random_string(100);
                     let mut new_label = Label {
@@ -783,7 +783,7 @@ mod tests {
             .await
             .unwrap();
         tether
-            .tx::<_, _, StashError>(async |tx| {
+            .write_tx::<_, _, StashError>(async |tx| {
                 for t in [
                     LabelType::Label,
                     LabelType::Folder,
@@ -844,7 +844,7 @@ mod tests {
             .await
             .unwrap();
         tether
-            .tx::<_, _, StashError>(async |tx| {
+            .write_tx::<_, _, StashError>(async |tx| {
                 let mut new_label = Label {
                     local_id: None,
                     remote_id: Some("MyLabel".into()),
@@ -921,7 +921,7 @@ mod tests {
         let mail_stash = new_label_test_connection().await;
         let mut tether = mail_stash.connection().await.unwrap();
         let mut label = tether
-            .tx::<_, _, StashError>(async |tx| {
+            .write_tx::<_, _, StashError>(async |tx| {
                 let mut label: Label = ApiLabel {
                     id: LabelId::from("label_id"),
                     parent_id: None,
@@ -951,7 +951,7 @@ mod tests {
 
         label.display_order = 10;
         tether
-            .tx::<_, _, StashError>(async |tx| label.save(tx).await)
+            .write_tx::<_, _, StashError>(async |tx| label.save(tx).await)
             .await
             .unwrap();
 

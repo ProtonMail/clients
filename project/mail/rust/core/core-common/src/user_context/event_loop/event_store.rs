@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use core_event_loop::store::EventStore;
 use mail_core_api::services::proton::EventId;
 use mail_stash::params;
-use mail_stash::stash::{Bond, StashError, Tether};
+use mail_stash::stash::{StashError, Tether, WriteTx};
 use tracing::error;
 
 // Once v5 event code has been dropped, these declarations can be moved
@@ -34,7 +34,7 @@ impl EventStore<EventManagerContext> for CoreEventLoopContext {
         ctx.mail_stash()
             .connection()
             .await?
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 store_event_id_query(CORE_EVENT_TYPE_ID, id.clone(), tx).await?;
                 store_event_id_query(CONTACT_EVENT_TYPE_ID, id.clone(), tx).await?;
                 store_event_id_query(MAIL_EVENT_TYPE_ID, id, tx).await
@@ -81,7 +81,7 @@ pub async fn store_event_id(
     ctx.mail_stash()
         .connection()
         .await?
-        .tx(async |tx| store_event_id_query(key, id, tx).await)
+        .write_tx(async |tx| store_event_id_query(key, id, tx).await)
         .await
         .map_err(|e: StashError| {
             error!("Failed to store event id ({key}) in db:{e:?}");
@@ -92,7 +92,7 @@ pub async fn store_event_id(
 pub async fn store_event_id_query(
     key: &'static str,
     id: core_event_loop::EventId,
-    tx: &Bond<'_>,
+    tx: &WriteTx<'_>,
 ) -> Result<(), StashError> {
     tx.execute(
         "INSERT OR REPLACE INTO event_id_store (id, value) VALUES (?, ?)",

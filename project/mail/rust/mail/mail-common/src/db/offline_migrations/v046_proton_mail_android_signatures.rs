@@ -1,7 +1,7 @@
 use mail_sqlite3::Migration;
 use mail_stash::{
     UserDb, params,
-    stash::{Bond, StashError},
+    stash::{StashError, WriteTx},
 };
 
 pub struct AndroidSignaturesMigration;
@@ -78,7 +78,7 @@ impl Migration<UserDb> for AndroidSignaturesMigration {
         "v046_proton_mail_android_signatures"
     }
 
-    async fn migrate(&self, tx: &Bond<'_>) -> Result<(), StashError> {
+    async fn migrate(&self, tx: &WriteTx<'_>) -> Result<(), StashError> {
         for (old, new) in Self::list() {
             tx.execute(
                 "UPDATE custom_settings SET mobile_signature = ? WHERE trim(mobile_signature) = ?",

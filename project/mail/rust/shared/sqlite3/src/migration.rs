@@ -10,7 +10,7 @@ use itertools::Itertools;
 use mail_stash::exports::SqliteError;
 use mail_stash::marker::DatabaseMarker;
 use mail_stash::params;
-use mail_stash::stash::{Bond, StashError, Tether};
+use mail_stash::stash::{StashError, Tether, WriteTx};
 use thiserror::Error;
 use tracing::{Instrument, debug};
 
@@ -28,7 +28,7 @@ pub trait Migration<Db: DatabaseMarker>: Send + Sync {
         order
     }
 
-    async fn migrate(&self, tx: &Bond<'_, Db>) -> Result<(), StashError>;
+    async fn migrate(&self, tx: &WriteTx<'_, Db>) -> Result<(), StashError>;
 }
 
 #[derive(Debug, Error)]
@@ -75,7 +75,7 @@ impl<Db: DatabaseMarker> Migrator<Db> {
             return Ok(expected_version);
         }
         tether
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 let current_version = if let Some(version) = current_version {
                     debug!("Found current version={version}");
                     if version > expected_version {
@@ -106,7 +106,7 @@ impl<Db: DatabaseMarker> Migrator<Db> {
     /// See: [`Self::migrate()`].
     pub async fn verify(&self, tether: &mut Tether<Db>) -> Result<(), MigratorError> {
         tether
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 let got = get_current_version(tx, &self.table).await?;
                 let expected = get_expected_version(&self.migrations);
 
@@ -172,7 +172,7 @@ async fn read_current_version<Db: DatabaseMarker>(
     Ok(version as usize)
 }
 
-async fn create_version_table<Db: DatabaseMarker>(tx: &Bond<'_, Db>) -> Result<(), StashError> {
+async fn create_version_table<Db: DatabaseMarker>(tx: &WriteTx<'_, Db>) -> Result<(), StashError> {
     let query = format!(
         "CREATE TABLE {VERSION_TABLE_NAME} ({VERSION_TABLE_FIELD_ID} TEXT UNIQUE NOT NULL PRIMARY KEY, \
 {VERSION_TABLE_FIELD_VERSION} INTEGER NOT NULL)"
@@ -182,7 +182,7 @@ async fn create_version_table<Db: DatabaseMarker>(tx: &Bond<'_, Db>) -> Result<(
 }
 
 async fn set_current_version<Db: DatabaseMarker>(
-    tx: &Bond<'_, Db>,
+    tx: &WriteTx<'_, Db>,
     id: &str,
     version: usize,
 ) -> Result<(), StashError> {
@@ -195,7 +195,7 @@ ON CONFLICT({VERSION_TABLE_FIELD_ID}) DO UPDATE SET {VERSION_TABLE_FIELD_VERSION
 }
 
 async fn run_migrations<Db: DatabaseMarker>(
-    tx: &Bond<'_, Db>,
+    tx: &WriteTx<'_, Db>,
     table_name: &str,
     current_version: usize,
     migrations: &[Box<dyn Migration<Db>>],

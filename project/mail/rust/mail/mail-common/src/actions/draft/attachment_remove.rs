@@ -14,7 +14,7 @@ use mail_api::services::proton::ProtonMail;
 use mail_core_api::session::Session;
 use mail_core_common::models::ModelExtension;
 use mail_stash::orm::Model as _;
-use mail_stash::stash::{Bond, Tether};
+use mail_stash::stash::{Tether, WriteTx};
 use mail_stash::{UserDb, params};
 use serde::{Deserialize, Serialize};
 use tracing::{debug, error, info};
@@ -76,7 +76,7 @@ impl Handler<UserDb> for AttachmentRemoveHandler {
         &self,
         this_id: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::LocalOutput,
         <Self::Action as Action<UserDb>>::Error,
@@ -133,7 +133,7 @@ impl Handler<UserDb> for AttachmentRemoveHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         // Restore undeleted status.
         if let Some(mut attachment_metadata) =
@@ -200,7 +200,7 @@ impl Handler<UserDb> for AttachmentRemoveHandler {
 
         // Delete metadata & attachment record
         writer_guard
-            .tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx: &Bond<'_>| {
+            .tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx: &WriteTx<'_>| {
                 // If we own the attachment, delete it.
                 if matches!(
                     attachment_metadata.ownership,
@@ -229,7 +229,7 @@ impl Handler<UserDb> for AttachmentRemoveHandler {
         _: ActionId,
         _: &mut Self::Action,
         _: &RebaseChangeSet,
-        _: &Bond<'_>,
+        _: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         Ok(())
     }

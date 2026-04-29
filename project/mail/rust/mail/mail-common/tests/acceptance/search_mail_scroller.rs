@@ -226,7 +226,7 @@ async fn does_not_refresh_on_new_message_in_database() {
     // Add a new message to the database
     let label = SystemLabel::AllMail.load(&tether).await.unwrap().unwrap();
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             save_single_message(&[label], &mut new_message.clone(), bond).await;
             Ok(())
         })
@@ -296,7 +296,7 @@ async fn does_refresh_on_modified_message_in_database() {
     // Add a new message to the database
     let label = SystemLabel::AllMail.load(&tether).await.unwrap().unwrap();
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             save_single_message(&[label], &mut new_message.clone(), bond).await;
             Ok(())
         })
@@ -347,7 +347,7 @@ async fn all_mail() {
     settings.almost_all_mail = AlmostAllMail::AllMail;
 
     tether
-        .tx(async |bond| settings.save(bond).await)
+        .write_tx(async |bond| settings.save(bond).await)
         .await
         .unwrap();
 
@@ -428,7 +428,7 @@ async fn almost_all_mail_with_spam_and_trash() {
     settings.almost_all_mail = AlmostAllMail::AlmostAllMail;
 
     tether
-        .tx(async |bond| settings.save(bond).await)
+        .write_tx(async |bond| settings.save(bond).await)
         .await
         .unwrap();
 
@@ -543,7 +543,7 @@ async fn change_include_multiple_times_in_a_row() {
     settings.almost_all_mail = AlmostAllMail::AlmostAllMail;
 
     tether
-        .tx(async |bond| settings.save(bond).await)
+        .write_tx(async |bond| settings.save(bond).await)
         .await
         .unwrap();
 
@@ -657,7 +657,7 @@ async fn change_keywords_multiple_times_in_a_row() {
     settings.almost_all_mail = AlmostAllMail::AlmostAllMail;
 
     tether
-        .tx(async |bond| settings.save(bond).await)
+        .write_tx(async |bond| settings.save(bond).await)
         .await
         .unwrap();
 

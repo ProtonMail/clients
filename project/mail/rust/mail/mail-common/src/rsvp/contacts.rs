@@ -84,13 +84,13 @@ mod tests {
 
         for contact in [&mut bj, &mut rs] {
             mail_stash
-                .tx(async |tether| contact.save(tether).await)
+                .write_tx(async |tether| contact.save(tether).await)
                 .await
                 .unwrap();
 
             for email in &mut contact.contact_emails {
                 mail_stash
-                    .tx(async |tether| email.save(tether).await)
+                    .write_tx(async |tether| email.save(tether).await)
                     .await
                     .unwrap();
             }

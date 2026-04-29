@@ -11,7 +11,7 @@ use mail_core_api::services::proton::User;
 use mail_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
 use mail_stash::AccountDb;
 use mail_stash::orm::Model;
-use mail_stash::stash::{Bond, StashError};
+use mail_stash::stash::{StashError, WriteTx};
 use std::sync::Weak;
 use tracing::{debug, warn};
 
@@ -83,7 +83,7 @@ pub(crate) async fn handle_user_update_event(
         .account_stash()
         .connection()
         .await?
-        .tx::<_, _, StashError>(async |tx| update_account_data(user, tx).await)
+        .write_tx::<_, _, StashError>(async |tx| update_account_data(user, tx).await)
         .await
         .map_err(|e: StashError| {
             ctx.issue_reporter_service().report(
@@ -103,7 +103,7 @@ pub(crate) async fn handle_user_refresh(
         .account_stash()
         .connection()
         .await?
-        .tx::<_, _, AccountEventSubscriberError>(async |tx| {
+        .write_tx::<_, _, AccountEventSubscriberError>(async |tx| {
             update_account_data(user, tx).await.map_err(|e| {
                 AccountEventSubscriberError::Other(anyhow!("Failed apply refresh changes: {e}"))
             })
@@ -118,7 +118,7 @@ pub(crate) async fn handle_user_refresh(
         })
 }
 
-async fn update_account_data(user: &User, tx: &Bond<'_, AccountDb>) -> Result<(), StashError> {
+async fn update_account_data(user: &User, tx: &WriteTx<'_, AccountDb>) -> Result<(), StashError> {
     if let Some(account) = CoreAccount::load(user.id.clone(), tx).await? {
         account
             .with_display_name(user.display_name.clone().unwrap_or_default())

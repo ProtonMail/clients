@@ -53,7 +53,7 @@ use mail_stash::UserDb;
 use mail_stash::exports::{Connection, Transaction};
 use mail_stash::orm::Model;
 use mail_stash::rusqlite::params_from_iter;
-use mail_stash::stash::{Bond, StashError, Tether};
+use mail_stash::stash::{StashError, Tether, WriteTx};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::any::type_name;
@@ -334,8 +334,8 @@ where
     /*
     async fn apply_changes(
         &mut self,
-        tx: &Bond<'_>,
-        closure: impl AsyncFn(T::IdType, &Bond<'_>) -> Result<Vec<LocalMessageId>, StashError>,
+        tx: &WriteTx<'_>,
+        closure: impl AsyncFn(T::IdType, &WriteTx<'_>) -> Result<Vec<LocalMessageId>, StashError>,
     ) -> Result<(), MailActionError> {
         for id in &self.target_ids {
             let modified = closure(id.clone(), tx).await?;
@@ -349,7 +349,7 @@ where
 
     async fn apply_changes_sync(
         &mut self,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
         closure: impl Fn(T::IdType, &Transaction<'_>) -> Result<Vec<LocalMessageId>, StashError>
         + Send
         + 'static,
@@ -372,7 +372,7 @@ where
     async fn rebase_changes_sync(
         &mut self,
         changeset: &RebaseChangeSet,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
         closure: impl Fn(
             T::IdType,
             &HashSet<LocalMessageId>,
@@ -448,7 +448,7 @@ where
     async fn mark_rollback<'a>(
         remote_ids: impl IntoIterator<Item = &'a T::RemoteId>,
         item_type: RollbackItemType,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), MailActionError> {
         for remote_id in remote_ids {
             RollbackItem::new(remote_id.to_string(), item_type)
@@ -553,7 +553,7 @@ where
     }
     async fn apply_changes_sync(
         &mut self,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
         closure: impl Fn(T::IdType, &Transaction<'_>) -> Result<Vec<LocalMessageId>, StashError>
         + Send
         + 'static,
@@ -564,7 +564,7 @@ where
     async fn rebase_changes_sync(
         &mut self,
         changeset: &RebaseChangeSet,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
         closure: impl Fn(
             T::IdType,
             &HashSet<LocalMessageId>,
@@ -936,7 +936,7 @@ where
         }))
     }
 
-    async fn move_to_async(&mut self, bond: &Bond<'_>) -> anyhow::Result<()> {
+    async fn move_to_async(&mut self, bond: &WriteTx<'_>) -> anyhow::Result<()> {
         //TODO: handle revert
         // This action modifies self, so we need to send it and get it back.
         let mut this = self.clone();
@@ -990,7 +990,7 @@ where
         Ok(())
     }
 
-    async fn revert_local(&mut self, tx: &Bond<'_>) -> Result<(), MailActionError> {
+    async fn revert_local(&mut self, tx: &WriteTx<'_>) -> Result<(), MailActionError> {
         //TODO: handle revert
         let this = self.clone();
         tx.sync_bridge(move |tx| {
@@ -1007,7 +1007,7 @@ where
     async fn rebase_local(
         &mut self,
         changeset: &RebaseChangeSet,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), MailActionError> {
         // sigh
         let mut this = std::mem::replace(
@@ -1044,7 +1044,7 @@ where
         Ok(())
     }
 
-    async fn queue_rollback_items(&self, tx: &Bond<'_, UserDb>) -> Result<(), StashError> {
+    async fn queue_rollback_items(&self, tx: &WriteTx<'_, UserDb>) -> Result<(), StashError> {
         let ids = self.entries.keys().cloned().collect();
         let ids = T::local_ids_counterpart(ids, tx).await?;
         RollbackItem::save_many(tx, ids, T::ROLLBACK_ITEM_TYPE).await?;
@@ -1234,7 +1234,7 @@ pub trait ConversationOrMessage:
     async fn apply_label_async(
         local_label_id: LocalLabelId,
         ids: impl IntoIterator<Item = Self::IdType> + Send + 'static,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<Vec<LocalMessageId>, StashError> {
         bond.sync_bridge(move |tx| Self::apply_label(local_label_id, ids, tx))
             .await
@@ -1243,7 +1243,7 @@ pub trait ConversationOrMessage:
     async fn remove_label_async(
         local_label_id: LocalLabelId,
         ids: impl IntoIterator<Item = Self::IdType> + Send + 'static,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<Vec<LocalMessageId>, StashError> {
         bond.sync_bridge(move |tx| Self::remove_label(local_label_id, ids, tx))
             .await
@@ -1251,7 +1251,7 @@ pub trait ConversationOrMessage:
 
     async fn mark_read_async(
         ids: impl IntoIterator<Item = Self::IdType>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<Vec<LocalMessageId>, StashError> {
         let ids = Vec::from_iter(ids);
         bond.sync_bridge(|tx| Self::mark_read(ids, tx)).await
@@ -1368,7 +1368,7 @@ where
         result
     }
 
-    async fn apply_local_common(&mut self, tx: &Bond<'_>) -> Result<(), StashError> {
+    async fn apply_local_common(&mut self, tx: &WriteTx<'_>) -> Result<(), StashError> {
         // to preserve perf of sync tx, we make a copy of the data and then reset it later
         let mut items = self.items.clone();
 
@@ -1391,7 +1391,7 @@ where
         Ok(())
     }
 
-    async fn revert_local(&mut self, tx: &Bond<'_>) -> Result<(), StashError> {
+    async fn revert_local(&mut self, tx: &WriteTx<'_>) -> Result<(), StashError> {
         let items = std::mem::take(&mut self.items);
         tx.sync_bridge(|tx| {
             for data in items.into_values() {
@@ -1574,7 +1574,7 @@ where
     pub async fn rebase_local(
         &mut self,
         rebase_change_set: &RebaseChangeSet,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), MailActionError> {
         for (id, data) in &mut self.items {
             let rebase_key: RebaseKey = (*id).into();

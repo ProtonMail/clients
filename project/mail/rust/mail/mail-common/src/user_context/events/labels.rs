@@ -5,10 +5,10 @@ use mail_core_common::datatypes::LabelType;
 use mail_core_common::event_loop::events::{Action, LabelEvent};
 use mail_core_common::models::{Label, ModelIdExtension};
 use mail_stash::orm::Model;
-use mail_stash::stash::Bond;
+use mail_stash::stash::WriteTx;
 
 pub async fn handle_counters_label_events(
-    tx: &Bond<'_>,
+    tx: &WriteTx<'_>,
     label_events: &[LabelEvent],
 ) -> Result<(), AppError> {
     for label_event in label_events {
@@ -24,7 +24,7 @@ pub async fn handle_counters_label_events(
 }
 
 pub async fn handle_counters_label_event(
-    tx: &Bond<'_>,
+    tx: &WriteTx<'_>,
     id: &LabelId,
     action: Action,
     label: Option<&Label>,

@@ -96,7 +96,7 @@ impl PinCode {
         app_settings.protection = AppProtection::Pin;
 
         tether
-            .tx(async |bond| -> Result<(), StashError> {
+            .write_tx(async |bond| -> Result<(), StashError> {
                 this.save(bond).await?;
                 app_settings.save(bond).await?;
 
@@ -143,7 +143,7 @@ impl PinCode {
             .await??;
 
             tether
-                .tx(async |bond| -> Result<(), StashError> {
+                .write_tx(async |bond| -> Result<(), StashError> {
                     ctx.clock().pin_code_tick();
 
                     if success {
@@ -190,7 +190,7 @@ impl PinCode {
         app_settings.protection = AppProtection::None;
 
         tether
-            .tx(async |bond| -> Result<(), StashError> {
+            .write_tx(async |bond| -> Result<(), StashError> {
                 app_settings.save(bond).await?;
 
                 if let Some(pin_protection) = pin_protection {

@@ -6,7 +6,7 @@ use mail_action_queue::action::{
 use mail_action_queue::db::{DependencyType, ExecutionGuard, StoredAction};
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_action_queue::tests::common::TestDb;
-use mail_stash::stash::Bond;
+use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
 
 #[tokio::test]
@@ -94,7 +94,7 @@ async fn replace_updates_queues_if_action_is_executing() {
     // simulate action executing
     let mut tether = queue.mail_stash().connection().await.unwrap();
     tether
-        .tx(async |tx| ExecutionGuard::acquire(queued_output.id, "TEST", tx).await)
+        .write_tx(async |tx| ExecutionGuard::acquire(queued_output.id, "TEST", tx).await)
         .await
         .unwrap();
 
@@ -244,7 +244,7 @@ impl Handler<TestDb> for TestActionHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_, TestDb>,
+        tx: &WriteTx<'_, TestDb>,
     ) -> Result<(), <Self::Action as Action<TestDb>>::Error> {
         Ok(tx.ext_insert_value(ACTION_KEY, action.v).await?)
     }
@@ -253,7 +253,7 @@ impl Handler<TestDb> for TestActionHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: &Bond<'_, TestDb>,
+        _: &WriteTx<'_, TestDb>,
     ) -> Result<(), <Self::Action as Action<TestDb>>::Error> {
         // do nothing
         Ok(())
@@ -285,7 +285,7 @@ impl Handler<TestDb> for TestActionHandler {
         _: ActionId,
         _: &mut Self::Action,
         _: &RebaseChangeSet,
-        _: &Bond<'_, TestDb>,
+        _: &WriteTx<'_, TestDb>,
     ) -> Result<(), <Self::Action as Action<TestDb>>::Error> {
         Ok(())
     }

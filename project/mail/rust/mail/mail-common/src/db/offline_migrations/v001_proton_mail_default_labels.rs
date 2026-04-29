@@ -1,5 +1,5 @@
 use mail_core_api::services::proton::LabelId;
-use mail_stash::stash::{Bond, StashError};
+use mail_stash::stash::{StashError, WriteTx};
 use mail_stash::{UserDb, params};
 
 use crate::datatypes::SystemLabelId;
@@ -37,7 +37,7 @@ impl Migration<UserDb> for DefaultLabelsMigration {
         "v001_proton_mail_default_labels"
     }
 
-    async fn migrate(&self, tx: &Bond<'_>) -> Result<(), StashError> {
+    async fn migrate(&self, tx: &WriteTx<'_>) -> Result<(), StashError> {
         // Insert default known system
         let sql = r#"INSERT INTO labels (remote_id, label_type, name, color, display_order) VALUES (?,4,?,'#000000',?)"#;
 

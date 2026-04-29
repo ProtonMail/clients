@@ -111,7 +111,7 @@ async fn test_basic_unblock_sender() {
 
     test_ctx.mock_delete_incoming_default().await;
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             let mut incoming_default = IncomingDefault {
                 email: Some(email.into()),
                 location: IncomingDefaultLocation::Blocked,
@@ -194,7 +194,7 @@ async fn test_double_unblock_idempotent() {
     test_ctx.mock_delete_incoming_default().await;
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             let mut incoming_default = IncomingDefault {
                 email: Some(email.into()),
                 location: IncomingDefaultLocation::Blocked,
@@ -345,7 +345,7 @@ async fn test_remote_unblock_failure_with_proper_error_handling() {
     let email = "fail_unblock@example.com";
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             let mut incoming_default = IncomingDefault {
                 email: Some(email.into()),
                 location: IncomingDefaultLocation::Blocked,
@@ -392,7 +392,7 @@ async fn test_block_sender_when_inbox_location_exists() {
     let email = "inbox_to_block@example.com";
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             let mut incoming_default = IncomingDefault {
                 email: Some(email.into()),
                 location: IncomingDefaultLocation::Inbox,
@@ -454,7 +454,7 @@ async fn test_block_sender_when_spam_location_exists() {
     let email = "spam_to_block@example.com";
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             let mut incoming_default = IncomingDefault {
                 email: Some(email.into()),
                 location: IncomingDefaultLocation::Spam,
@@ -516,7 +516,7 @@ async fn test_unblock_sender_when_inbox_location_exists_should_not_work() {
     let email = "inbox_unblock_attempt@example.com";
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             let mut incoming_default = IncomingDefault {
                 email: Some(email.into()),
                 location: IncomingDefaultLocation::Inbox,
@@ -575,7 +575,7 @@ async fn test_unblock_sender_when_spam_location_exists_should_not_work() {
     let email = "spam_unblock_attempt@example.com";
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             let mut incoming_default = IncomingDefault {
                 email: Some(email.into()),
                 location: IncomingDefaultLocation::Spam,

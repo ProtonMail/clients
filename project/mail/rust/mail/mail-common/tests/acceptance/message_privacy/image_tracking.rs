@@ -424,7 +424,7 @@ async fn get_tracker_info_returns_correct_data() {
     assert!(tracker_info.is_pending());
 
     tether
-        .tx(async |tx| {
+        .write_tx(async |tx| {
             MessageTracker {
                 local_message_id: message_id,
                 last_checked_at: UnixTimestamp::now(),
@@ -444,7 +444,7 @@ async fn get_tracker_info_returns_correct_data() {
     assert!(tracker_info.as_detected().unwrap().trackers.is_empty());
 
     tether
-        .tx(async |tx| {
+        .write_tx(async |tx| {
             MessageTracker {
                 local_message_id: message_id,
                 last_checked_at: UnixTimestamp::now(),

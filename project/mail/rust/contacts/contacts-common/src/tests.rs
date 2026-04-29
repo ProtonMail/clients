@@ -423,7 +423,7 @@ async fn prepare_sync_test_data(
         .await
         .expect("failed to download contacts");
     tether
-        .sync_tx(move |tx| contacts.store(tx))
+        .sync_write_tx(move |tx| contacts.store(tx))
         .await
         .expect("failed to store contacts");
 
@@ -455,7 +455,7 @@ async fn prepare_sync_test_data_partial(
         .expect("failed to download contacts");
     let mut tether = stash.connection().await.unwrap();
     tether
-        .sync_tx(move |tx| contacts.store(tx))
+        .sync_write_tx(move |tx| contacts.store(tx))
         .await
         .expect("failed to store contacts");
 }
@@ -546,7 +546,7 @@ async fn test_sync_and_load_contacts() {
         .await
         .expect("failed to download contacts");
     tether
-        .sync_tx(move |tx| contacts.store(tx))
+        .sync_write_tx(move |tx| contacts.store(tx))
         .await
         .expect("failed to store contacts");
 

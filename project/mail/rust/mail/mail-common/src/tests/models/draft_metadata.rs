@@ -15,7 +15,7 @@ async fn test_messages_with_pending_send() {
     let mut tether = new_test_connection().await.connection().await.unwrap();
     let address = create_address(&mut tether).await;
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             let conversation = conversation!(remote_id: conv_id!(1))
                 .with_save(bond)
                 .await

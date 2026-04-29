@@ -8,9 +8,9 @@ use mail_common::{conv_id, conversation, message, msg_id};
 use mail_core_common::datatypes::SystemLabel;
 use mail_core_common::models::Label;
 use mail_stash::orm::Model;
-use mail_stash::stash::{Bond, StashError};
+use mail_stash::stash::{StashError, WriteTx};
 
-async fn enable_category_view_setting(bond: &Bond<'_>) {
+async fn enable_category_view_setting(bond: &WriteTx<'_>) {
     MailSettings {
         local_id: MailSettingsId,
         mail_category_view: true,
@@ -21,7 +21,7 @@ async fn enable_category_view_setting(bond: &Bond<'_>) {
     .unwrap();
 }
 
-async fn store_single_unseen_in_category(category: &Label, bond: &Bond<'_>) {
+async fn store_single_unseen_in_category(category: &Label, bond: &WriteTx<'_>) {
     // Inbox and default should be available always
     let inbox = SystemLabel::Inbox.load(bond).await.unwrap().unwrap();
     MessageCounter::new(inbox.id()).save(bond).await.unwrap();
@@ -80,7 +80,7 @@ async fn test_category_label_has_unseen_items_from_db() {
         .unwrap();
 
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             enable_category_view_setting(bond).await;
             social.display = true;
             social.save(bond).await?;
@@ -124,7 +124,7 @@ async fn test_load_available_filters_display_and_carries_unseen_items_to_primary
         .unwrap();
 
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             enable_category_view_setting(bond).await;
             MessageCounter::new(social.id()).save(bond).await?;
             ConversationCounter::new(social.id())
@@ -192,7 +192,7 @@ async fn test_expanded_filter_ids_category_default() {
         .unwrap();
 
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             enable_category_view_setting(bond).await;
             social.display = false;
             social.save(bond).await.unwrap();

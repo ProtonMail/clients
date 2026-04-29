@@ -83,7 +83,7 @@ where
 
         let result = self
             .tether
-            .tx::<_, _, anyhow::Error>(async move |tx| {
+            .write_tx::<_, _, anyhow::Error>(async move |tx| {
                 debug!("Saving message into the database");
 
                 if let Some(remote_att) = resp.sent.body.attachments.first() {
@@ -183,7 +183,7 @@ where
 
         let ics = self
             .tether
-            .tx(async |bond| {
+            .write_tx(async |bond| {
                 Attachment::create(
                     self.ctx,
                     bond,

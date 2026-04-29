@@ -91,7 +91,7 @@ async fn banners() {
     let tether = &mut ctx.user_stash().connection().await.unwrap();
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             conv.save(tx).await.unwrap();
             addr.save(tx).await.unwrap();
             let mut incoming_default = IncomingDefault {
@@ -256,7 +256,7 @@ async fn banners() {
     );
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             msg_normal.save(tx).await.unwrap();
             msg_normal.reload(tx).await.unwrap();
             msg_spam.save(tx).await.unwrap();
@@ -401,7 +401,7 @@ async fn spam_banners(label: LabelId, flags: MessageFlags, res: Option<MessageBa
 async fn autodelete_and_expiry() {
     async fn update_setting(days: Option<u32>, tether: &mut Tether) {
         tether
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 let mut settings = MailSettings {
                     auto_delete_spam_and_trash_days: days,
                     ..Default::default()
@@ -564,7 +564,7 @@ async fn banners_unsubscribe() {
         ..Message::test_default()
     };
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             addr.save(tx).await?;
             conv.save(tx).await?;
             msg.local_conversation_id = conv.local_id;

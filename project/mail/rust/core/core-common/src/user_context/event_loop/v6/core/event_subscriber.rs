@@ -47,7 +47,7 @@ impl EventSubscriber<EventManagerContext, CoreEventSourceV6> for CoreEventV6Subs
 
             let mut tether = ctx.user_stash.connection().await?;
             tether
-                .tx(async |tx| {
+                .write_tx(async |tx| {
                     if event.users.as_ref().is_some_and(|v| !v.is_empty()) {
                         debug!("Handling user event");
                         // Clear the crypto key cache as keys might have changed.
@@ -190,7 +190,7 @@ pub async fn refresh_core(ctx: &UserContext) -> EventSubscriberResult<()> {
         let contacts = join_task!(contacts, "contacts");
 
         tether
-            .tx::<_, _, CoreEventSubscriberError>(async |tx| {
+            .write_tx::<_, _, CoreEventSubscriberError>(async |tx| {
                 for local_address_to_remove in all_local_addresses.into_values() {
                     debug!(
                         "Removing address with remote_id {:?}",

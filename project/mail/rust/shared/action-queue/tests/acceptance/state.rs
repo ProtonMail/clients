@@ -5,7 +5,7 @@ use mail_action_queue::action::{
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_action_queue::tests::common::TestDb;
-use mail_stash::stash::Bond;
+use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
 
 #[tokio::test]
@@ -65,7 +65,7 @@ async fn rebase_state() {
         .connection()
         .await
         .unwrap()
-        .tx(async |tx| tx.ext_insert_value(ACTION_KEY, 100).await)
+        .write_tx(async |tx| tx.ext_insert_value(ACTION_KEY, 100).await)
         .await
         .unwrap();
 
@@ -121,7 +121,7 @@ impl Handler<TestDb> for TestActionHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_, TestDb>,
+        tx: &WriteTx<'_, TestDb>,
     ) -> Result<(), <Self::Action as Action<TestDb>>::Error> {
         assert_eq!(action.v, ACTION_VALUE);
         action.v = ACTION_VALUE_AFTER_LOCAL_APPLY;
@@ -134,7 +134,7 @@ impl Handler<TestDb> for TestActionHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: &Bond<'_, TestDb>,
+        _: &WriteTx<'_, TestDb>,
     ) -> Result<(), <Self::Action as Action<TestDb>>::Error> {
         panic!("should not be called");
     }
@@ -150,9 +150,11 @@ impl Handler<TestDb> for TestActionHandler {
     > {
         assert_eq!(action.v, ACTION_VALUE_AFTER_LOCAL_APPLY);
         writer_guard
-            .tx::<_, _, <Self::Action as Action<TestDb>>::Error>(async |tx: &Bond<'_, TestDb>| {
-                Ok(tx.ext_insert_value(ACTION_KEY, ACTION_VALUE_FINAL).await?)
-            })
+            .tx::<_, _, <Self::Action as Action<TestDb>>::Error>(
+                async |tx: &WriteTx<'_, TestDb>| {
+                    Ok(tx.ext_insert_value(ACTION_KEY, ACTION_VALUE_FINAL).await?)
+                },
+            )
             .await?;
 
         Ok(ACTION_VALUE_FINAL)
@@ -162,7 +164,7 @@ impl Handler<TestDb> for TestActionHandler {
         _: ActionId,
         _: &mut Self::Action,
         _: &RebaseChangeSet,
-        tx: &Bond<'_, TestDb>,
+        tx: &WriteTx<'_, TestDb>,
     ) -> Result<(), <Self::Action as Action<TestDb>>::Error> {
         Ok(tx
             .ext_insert_value(ACTION_KEY, ACTION_VALUE_AFTER_LOCAL_APPLY)

@@ -155,7 +155,7 @@ impl MailUserContext {
     async fn verify_and_cleanup_deleted_items(&self) -> Result<(), MailContextError> {
         let mut tether = self.user_stash().connection().await?;
         tether
-            .run_tx(async |tx| {
+            .run_write_tx(async |tx| {
                 DeletedItem::verify_and_cleanup(tx).await?;
                 Ok(())
             })

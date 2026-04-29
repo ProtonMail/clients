@@ -184,7 +184,7 @@ impl UserFeatureFlagsService {
         let flags = flags.into_values().collect();
 
         tether
-            .tx(async |tx| UserFeatureFlag::save_all(flags, tx).await)
+            .write_tx(async |tx| UserFeatureFlag::save_all(flags, tx).await)
             .await?;
         Ok(())
     }
@@ -221,7 +221,7 @@ impl UserFeatureFlagsService {
         }
 
         tether
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 UserFeatureFlag::delete_batch_from_source(
                     flags_to_remove,
                     UserFeatureFlagSource::Legacy,

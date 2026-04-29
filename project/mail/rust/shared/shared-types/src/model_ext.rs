@@ -8,7 +8,7 @@ use mail_stash::orm::Model;
 use mail_stash::params;
 use mail_stash::rusqlite::params_from_iter;
 use mail_stash::rusqlite::{Connection, OptionalExtension};
-use mail_stash::stash::{Bond, StashError, Tether};
+use mail_stash::stash::{StashError, Tether, WriteTx};
 use mail_stash::utils::{ConnectionExt, IterMapToSql as _, MapToSql as _, placeholders};
 
 #[allow(async_fn_in_trait)]
@@ -50,12 +50,12 @@ pub trait ModelExtension: Model {
         Self::find(query, parameters, tether).await
     }
 
-    async fn with_save(mut self, bond: &Bond<'_, Self::Database>) -> Result<Self, StashError> {
+    async fn with_save(mut self, bond: &WriteTx<'_, Self::Database>) -> Result<Self, StashError> {
         self.save(bond).await?;
         Ok(self)
     }
 
-    async fn with_insert(mut self, bond: &Bond<'_, Self::Database>) -> Result<Self, StashError> {
+    async fn with_insert(mut self, bond: &WriteTx<'_, Self::Database>) -> Result<Self, StashError> {
         self.insert(bond).await?;
         Ok(self)
     }
@@ -110,13 +110,13 @@ pub trait ModelExtension: Model {
             .map(|v| !v.is_empty())
     }
 
-    async fn delete(self, bond: &Bond<'_, Self::Database>) -> Result<bool, StashError> {
+    async fn delete(self, bond: &WriteTx<'_, Self::Database>) -> Result<bool, StashError> {
         Self::delete_by_id(self.id_value()?, bond).await
     }
 
     async fn delete_by_id(
         id: Self::IdType,
-        bond: &Bond<'_, Self::Database>,
+        bond: &WriteTx<'_, Self::Database>,
     ) -> Result<bool, StashError> {
         bond.sync_bridge(|tx| Self::delete_by_id_sync(id, tx)).await
     }
@@ -125,7 +125,7 @@ pub trait ModelExtension: Model {
     #[must_use]
     async fn delete_by_ids(
         ids: Vec<Self::IdType>,
-        bond: &Bond<'_, Self::Database>,
+        bond: &WriteTx<'_, Self::Database>,
     ) -> Result<usize, StashError> {
         bond.sync_bridge(move |tx| Self::delete_by_ids_sync(&ids, tx))
             .await
@@ -153,7 +153,7 @@ pub trait ModelExtension: Model {
     }
 
     #[must_use]
-    async fn delete_all(bond: &Bond<'_, Self::Database>) -> Result<usize, StashError> {
+    async fn delete_all(bond: &WriteTx<'_, Self::Database>) -> Result<usize, StashError> {
         let table = Self::table_name();
         let query = format!("DELETE FROM {table}");
 
@@ -244,7 +244,7 @@ pub trait ModelIdExtension: ModelExtension + Model<IdType: LocalIdMarker> {
 
     async fn delete_by_remote_id(
         remote_id: Self::RemoteId,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<usize, StashError> {
         let table = Self::table_name();
         let query = format!(

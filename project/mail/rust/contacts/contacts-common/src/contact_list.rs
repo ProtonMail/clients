@@ -761,7 +761,7 @@ mod tests {
             let mut contact =
                 crate::contact!(remote_id: crate::cid!("123"), name: "Barbara Fox".to_string());
             tether
-                .tx::<_, _, StashError>(async |tx| {
+                .write_tx::<_, _, StashError>(async |tx| {
                     contact.save(tx).await?;
                     for mut email in emails {
                         email.remote_contact_id = contact.remote_id.clone();
@@ -807,7 +807,7 @@ mod tests {
             contact.contact_emails = vec![email_in_group, email_not_in_group];
 
             tether
-                .tx::<_, _, StashError>(async |tx| {
+                .write_tx::<_, _, StashError>(async |tx| {
                     group.save(tx).await.unwrap();
                     contact.save(tx).await.unwrap();
                     Ok(())
@@ -854,7 +854,7 @@ mod tests {
             let mut contact2_email = crate::contact_email!(remote_id: crate::ceid!("ceid2"), label_ids: Labels::new(vec![not_empty_group_id.clone()]), remote_contact_id: contact2.remote_id.clone());
 
             tether
-                .tx::<_, _, StashError>(async |tx| {
+                .write_tx::<_, _, StashError>(async |tx| {
                     contact_group_empty.save(tx).await.unwrap();
                     contact_group_not_empty.save(tx).await.unwrap();
                     contact1.save(tx).await.unwrap();
@@ -1380,7 +1380,7 @@ mod tests {
                 .await
                 .unwrap();
             tether
-                .tx::<_, _, mail_stash::stash::StashError>(async |tx| {
+                .write_tx::<_, _, mail_stash::stash::StashError>(async |tx| {
                     for label in &mut test_case.contact_groups {
                         label.save(tx).await.unwrap();
                     }

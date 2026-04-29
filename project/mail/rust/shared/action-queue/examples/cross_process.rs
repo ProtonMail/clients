@@ -30,7 +30,7 @@ use mail_action_queue::queue::{
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_stash::marker::DatabaseMarker;
-use mail_stash::stash::{Bond, StashConfiguration};
+use mail_stash::stash::{StashConfiguration, WriteTx};
 use serde::{Deserialize, Serialize};
 use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
@@ -246,7 +246,7 @@ impl Handler<TestDb> for TestHandler {
         &self,
         id: ActionId,
         _: &mut Self::Action,
-        _: &Bond<'_, TestDb>,
+        _: &WriteTx<'_, TestDb>,
     ) -> Result<
         <Self::Action as Action<TestDb>>::LocalOutput,
         <Self::Action as Action<TestDb>>::Error,
@@ -263,7 +263,7 @@ impl Handler<TestDb> for TestHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: &Bond<'_, TestDb>,
+        _: &WriteTx<'_, TestDb>,
     ) -> Result<(), <Self::Action as Action<TestDb>>::Error> {
         Ok(())
     }
@@ -290,7 +290,7 @@ impl Handler<TestDb> for TestHandler {
         _: ActionId,
         _: &mut Self::Action,
         _: &RebaseChangeSet,
-        _: &Bond<'_, TestDb>,
+        _: &WriteTx<'_, TestDb>,
     ) -> Result<(), <Self::Action as Action<TestDb>>::Error> {
         Ok(())
     }

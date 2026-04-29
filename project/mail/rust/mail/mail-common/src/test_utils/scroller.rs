@@ -8,7 +8,7 @@ use mail_core_common::{
 use mail_stash::{
     orm::Model,
     params,
-    stash::{Bond, StashError, Tether},
+    stash::{StashError, Tether, WriteTx},
 };
 
 use crate::{
@@ -46,7 +46,7 @@ pub fn test_messages(n: usize, order_shift: usize) -> Vec<Message> {
         .collect()
 }
 
-pub async fn save_single_message(labels: &[Label], message: &mut Message, bond: &Bond<'_>) {
+pub async fn save_single_message(labels: &[Label], message: &mut Message, bond: &WriteTx<'_>) {
     message.save(bond).await.unwrap();
     let local_message_id = message.id();
     for label_id in labels.iter().map(|l| l.id()) {
@@ -84,7 +84,7 @@ pub async fn create_single_message(
         .unwrap();
 
     tether
-        .tx(async |tx| {
+        .write_tx(async |tx| {
             save_single_message(&labels, &mut message, tx).await;
             Result::<Message, StashError>::Ok(message)
         })
@@ -108,7 +108,7 @@ pub fn test_conversations(n: usize, order_shift: usize) -> Vec<Conversation> {
 pub async fn save_single_conversation(
     labels: &[Label],
     conversation: &mut Conversation,
-    bond: &Bond<'_>,
+    bond: &WriteTx<'_>,
 ) {
     conversation.save(bond).await.unwrap();
     let local_conversation_id = conversation.id();
@@ -133,7 +133,7 @@ impl<D: Display + Send + Sync> StoreLabeledModelMap<D, Conversation>
 {
     async fn save_to_database(&mut self, tether: &mut Tether) {
         tether
-            .tx::<_, _, StashError>(async |bond| {
+            .write_tx::<_, _, StashError>(async |bond| {
                 for (label_ids, conversations) in self.iter_mut() {
                     let mut labels = Vec::new();
                     for label_id in label_ids {
@@ -179,7 +179,7 @@ impl<D: Display + Send + Sync> StoreLabeledModelMap<D, Message> for HashMap<Vec<
     async fn save_to_database(&mut self, tether: &mut Tether) {
         let address = create_address(tether).await;
         tether
-            .tx::<_, _, StashError>(async |bond| {
+            .write_tx::<_, _, StashError>(async |bond| {
                 let mut conv = conversation!(remote_id: conv_id!(UNIQUE_CONV_ID));
                 conv.save(bond).await.unwrap();
                 for (label_ids, messages) in self.iter_mut() {
@@ -206,7 +206,10 @@ impl<D: Display + Send + Sync> StoreLabeledModelMap<D, Message> for HashMap<Vec<
     }
 }
 
-async fn create_label(bond: &Bond<'_>, label_id: impl Into<LabelId>) -> Result<Label, StashError> {
+async fn create_label(
+    bond: &WriteTx<'_>,
+    label_id: impl Into<LabelId>,
+) -> Result<Label, StashError> {
     let label_id = label_id.into();
     let label = match Label::find_by_remote_id(label_id.clone(), bond).await? {
         Some(label) => label,
@@ -233,7 +236,7 @@ where
     async fn save_to_database(&mut self, tether: &mut Tether) {
         let label = self.0.to_string();
         tether
-            .tx::<_, _, StashError>(async |bond| {
+            .write_tx::<_, _, StashError>(async |bond| {
                 let mut conv =
                     conversation!(remote_id: conv_id!("unique_conv_id_for_storing_messages"));
                 conv.save(bond).await.unwrap();

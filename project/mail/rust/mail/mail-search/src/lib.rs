@@ -308,7 +308,7 @@ mod tests {
         // 4. Queue intents in a transaction (simulating MessageBody::store)
         let mut tether = mail_stash.connection().await.unwrap();
         tether
-            .tx::<_, (), SE>(async |bond| {
+            .write_tx::<_, (), SE>(async |bond| {
                 for &local_id in &message_ids {
                     MailSearchService::queue_index(local_id, bond).await?;
                 }

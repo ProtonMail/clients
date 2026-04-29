@@ -13,7 +13,7 @@ use mail_core_api::session::Session;
 use mail_core_common::datatypes::LocalLabelId;
 use mail_core_common::models::{ModelExtension, ModelIdExtension};
 use mail_stash::UserDb;
-use mail_stash::stash::Bond;
+use mail_stash::stash::WriteTx;
 use serde::{self, Deserialize, Serialize};
 use tracing::error;
 
@@ -55,7 +55,7 @@ impl Handler<UserDb> for DeleteHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::LocalOutput,
         <Self::Action as Action<UserDb>>::Error,
@@ -73,7 +73,7 @@ impl Handler<UserDb> for DeleteHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         Conversation::mark_undeleted(action.0.label_id, action.0.data.target_ids.clone(), tx)
             .await?;
@@ -156,7 +156,7 @@ impl Handler<UserDb> for DeleteHandler {
         _: ActionId,
         action: &mut Self::Action,
         changeset: &RebaseChangeSet,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         for id in &action.0.data.target_ids {
             let rebase_key: RebaseKey = (*id).into();

@@ -12,7 +12,7 @@ use mail_core_common::datatypes::LocalLabelId;
 use mail_core_common::models::{Label, ModelIdExtension};
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
-use mail_stash::stash::Bond;
+use mail_stash::stash::WriteTx;
 use serde::{self, Deserialize, Serialize};
 use std::sync::Weak;
 use tracing::error;
@@ -61,7 +61,7 @@ impl Handler<UserDb> for PrefetchHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: &Bond<'_>,
+        _: &WriteTx<'_>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::LocalOutput,
         <Self::Action as Action<UserDb>>::Error,
@@ -73,7 +73,7 @@ impl Handler<UserDb> for PrefetchHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: &Bond<'_>,
+        _: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         Ok(())
     }
@@ -184,7 +184,7 @@ impl Handler<UserDb> for PrefetchHandler {
         _: ActionId,
         _: &mut Self::Action,
         _: &RebaseChangeSet,
-        _: &Bond<'_>,
+        _: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         Ok(())
     }

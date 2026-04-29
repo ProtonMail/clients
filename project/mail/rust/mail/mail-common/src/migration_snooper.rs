@@ -5,7 +5,7 @@ use mail_core_common::{Context, migration_snooper::MigrationSnooper};
 use mail_stash::AccountDb;
 use mail_stash::macros::Model;
 use mail_stash::orm::Model;
-use mail_stash::stash::{Bond, StashError, Tether};
+use mail_stash::stash::{StashError, Tether, WriteTx};
 use std::sync::Arc;
 use tracing::instrument;
 
@@ -32,7 +32,7 @@ impl MigrationSnooper for MailMigrationSnooper {
             .account_stash()
             .connection()
             .await?
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 PostLoginMobileMigrationPayload {
                     user_id: user_id.into(),
                     address_signature_enabled,
@@ -83,7 +83,7 @@ impl PostLoginMobileMigrationPayload {
     }
 
     #[instrument(skip_all)]
-    pub async fn save(mut self, bond: &Bond<'_, AccountDb>) -> Result<(), StashError> {
+    pub async fn save(mut self, bond: &WriteTx<'_, AccountDb>) -> Result<(), StashError> {
         bond.execute(
             "CREATE TABLE IF NOT EXISTS post_login_mobile_migration (
                 user_id STRING PRIMARY KEY,
@@ -117,7 +117,7 @@ mod tests {
         );
 
         tether
-            .tx::<_, _, CoreContextError>(async |tx| {
+            .write_tx::<_, _, CoreContextError>(async |tx| {
                 for id in 0..5 {
                     PostLoginMobileMigrationPayload {
                         user_id: format!("==abcd{id}").into(),

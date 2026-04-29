@@ -9,7 +9,7 @@ use mail_core_common::datatypes::LocalLabelId;
 use mail_core_common::models::ModelExtension;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
-use mail_stash::stash::{Bond, StashError, Tether};
+use mail_stash::stash::{StashError, Tether, WriteTx};
 use tracing::{debug, error, info, instrument, warn};
 
 #[derive(Debug)]
@@ -45,7 +45,7 @@ impl LocalSearchScrollerSource {
         let mut tether = ctx.user_stash().connection().await?;
 
         tether
-            .tx(async |tx| SearchScrollData::clear_all_search_data(tx).await)
+            .write_tx(async |tx| SearchScrollData::clear_all_search_data(tx).await)
             .await?;
 
         let Some(keywords) = &self.options.keywords else {
@@ -104,7 +104,7 @@ impl LocalSearchScrollerSource {
         );
 
         let saved_count = tether
-            .quiet_tx::<_, usize, StashError>(async |tx: &Bond<'_, UserDb>| {
+            .quiet_write_tx::<_, usize, StashError>(async |tx: &WriteTx<'_, UserDb>| {
                 let mut display_order = 0_u64;
                 let mut saved = 0_usize;
 

@@ -2,7 +2,7 @@ use crate::action::{Action, ActionId, Error, Handler, WriterGuard, WriterGuardEr
 use crate::queue::ActionRequeueReason;
 use crate::rebase::RebaseChangeSet;
 use mail_stash::marker::DatabaseMarker;
-use mail_stash::stash::{Bond, StashError};
+use mail_stash::stash::{StashError, WriteTx};
 use std::marker::PhantomData;
 
 #[derive(Clone, Debug, Copy, PartialEq, Eq)]
@@ -27,7 +27,7 @@ where
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: &Bond<'_, TestDb>,
+        _: &WriteTx<'_, TestDb>,
     ) -> Result<<T as Action<TestDb>>::LocalOutput, T::Error> {
         Ok(<T as Action<TestDb>>::LocalOutput::default())
     }
@@ -36,7 +36,7 @@ where
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: &Bond<'_, TestDb>,
+        _: &WriteTx<'_, TestDb>,
     ) -> Result<(), T::Error> {
         Ok(())
     }
@@ -55,7 +55,7 @@ where
         _: ActionId,
         _: &mut Self::Action,
         _: &RebaseChangeSet,
-        _: &Bond<'_, TestDb>,
+        _: &WriteTx<'_, TestDb>,
     ) -> Result<(), T::Error> {
         Ok(())
     }

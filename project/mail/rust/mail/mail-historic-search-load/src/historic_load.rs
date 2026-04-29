@@ -38,7 +38,7 @@ use mail_core_common::datatypes::LocalLabelId;
 use mail_core_common::models::{Label, ModelIdExtension};
 use mail_stash::rusqlite::Connection;
 use mail_stash::stash::{StashError, Tether};
-use mail_stash::{UserDb, stash::Bond};
+use mail_stash::{UserDb, stash::WriteTx};
 use std::time::{Duration, Instant};
 use tokio::sync::broadcast::error::RecvError;
 use tracing::{debug, error, info, warn};
@@ -304,7 +304,7 @@ pub async fn fetch_all_messages(
 
         // Save messages within a transaction using public API
         let saved_messages = tether
-            .quiet_tx(async |tx| {
+            .quiet_write_tx(async |tx| {
                 Message::create_or_update_messages_from_metadata_vec(
                     messages_to_save,
                     None, // No event action
@@ -460,7 +460,7 @@ async fn queue_search_index_batches(
     for chunk in message_ids.chunks(INDEX_INTENT_QUEUE_BATCH) {
         let chunk_ids: Vec<u64> = chunk.iter().map(LocalMessageId::as_u64).collect();
         tether
-            .tx(async |bond: &Bond<'_, UserDb>| {
+            .write_tx(async |bond: &WriteTx<'_, UserDb>| {
                 MailSearchService::queue_index_batch(&chunk_ids, bond).await
             })
             .await

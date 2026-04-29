@@ -205,7 +205,7 @@ mod test_utils {
 
             mailbox_label.initialized = true;
             tether
-                .tx(async |tx| {
+                .write_tx(async |tx| {
                     mailbox_label.save(tx).await.map_err(|e| {
                         error!("Failed to mark label as initialized: {e:?}");
                         MailContextError::Stash(e)

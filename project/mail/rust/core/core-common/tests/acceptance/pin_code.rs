@@ -114,7 +114,7 @@ async fn validation_max_attempts() {
     pin_metadata.attempts = PinCode::MAX_ATTEMPTS - 1;
 
     tether
-        .tx(async |tx| pin_metadata.save(tx).await)
+        .write_tx(async |tx| pin_metadata.save(tx).await)
         .await
         .unwrap();
 
@@ -153,7 +153,7 @@ async fn deleting_not_existing_pin_multiple_times_should_succeed() {
     let mut app_settings = AppSettings::get_or_default(&tether).await;
     app_settings.set_biometrics();
     tether
-        .tx(async |tx| app_settings.save(tx).await)
+        .write_tx(async |tx| app_settings.save(tx).await)
         .await
         .unwrap();
 

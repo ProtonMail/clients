@@ -7,7 +7,7 @@ use mail_core_api::services::proton::prelude::GetImagesLogoOptions;
 use mail_core_api::services::proton::{PrivateEmail, ProtonCore};
 use mail_stash::exports::{SqliteError, ToSql};
 use mail_stash::params;
-use mail_stash::stash::{Bond, StashError, Tether};
+use mail_stash::stash::{StashError, Tether, WriteTx};
 use std::hash::{DefaultHasher, Hash, Hasher};
 use tracing::info;
 
@@ -78,7 +78,7 @@ impl UserContext {
         // it.
         let image = self.session().get_images_logo(options).await?;
         tether
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 match find_sender_image_in_cache(
                     tx,
                     address.clone(),
@@ -151,7 +151,7 @@ impl UserContext {
 }
 
 async fn insert(
-    tx: &Bond<'_>,
+    tx: &WriteTx<'_>,
     address: PrivateEmail,
     bimi_selector: Option<String>,
     mode: Option<LightOrDarkMode>,

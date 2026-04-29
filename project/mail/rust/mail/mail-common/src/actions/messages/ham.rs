@@ -12,7 +12,7 @@ use mail_core_api::session::Session;
 use mail_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;
 use mail_core_common::models::ModelIdExtension;
 use mail_stash::UserDb;
-use mail_stash::stash::Bond;
+use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
@@ -60,7 +60,7 @@ impl Handler<UserDb> for HamHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         if action.0.is_empty() {
             return Err(MailActionError::NoInput);
@@ -77,7 +77,7 @@ impl Handler<UserDb> for HamHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         for &id in &action.0 {
             Message::unset_flags(id, MessageFlags::HAM_MANUAL, bond).await?;
@@ -120,7 +120,7 @@ impl Handler<UserDb> for HamHandler {
         _: ActionId,
         action: &mut Self::Action,
         changeset: &RebaseChangeSet,
-        tx: &Bond<'_>,
+        tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         for &id in &action.0 {
             let rebase_key: RebaseKey = id.into();

@@ -30,7 +30,7 @@ use mail_core_common::datatypes::UnixTimestamp;
 use mail_core_common::models::{Address, ModelExtension, ModelIdExtension};
 use mail_crypto_inbox::message::EncryptedDraft;
 use mail_stash::orm::Model;
-use mail_stash::stash::{Bond, StashError};
+use mail_stash::stash::{StashError, WriteTx};
 use mail_stash::{UserDb, params};
 use serde::{Deserialize, Serialize};
 use std::sync::Weak;
@@ -163,7 +163,7 @@ impl Handler<UserDb> for SaveHandler {
         &self,
         action_id: ActionId,
         action: &mut Self::Action,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::LocalOutput,
         <Self::Action as Action<UserDb>>::Error,
@@ -382,7 +382,7 @@ impl Handler<UserDb> for SaveHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: &Bond<'_>,
+        _: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         // Don't remove resources if draft failed to create.
         // These items will be removed via a discard action.
@@ -415,7 +415,7 @@ impl Handler<UserDb> for SaveHandler {
         _: ActionId,
         _: &mut Self::Action,
         _: &RebaseChangeSet,
-        _: &Bond<'_>,
+        _: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         Ok(())
     }
@@ -1007,7 +1007,7 @@ impl Save {
         }
     }
 
-    async fn attachments(&self, tether: &Bond<'_>) -> Result<Vec<Attachment>, StashError> {
+    async fn attachments(&self, tether: &WriteTx<'_>) -> Result<Vec<Attachment>, StashError> {
         DraftAttachmentMetadata::attachment_for_draft(self.metadata_id, tether).await
     }
     fn attachment_metadata(attachments: &[Attachment]) -> Vec<AttachmentMetadata> {

@@ -15,7 +15,7 @@ use mail_stash::UserDb;
 use mail_stash::macros::Model;
 use mail_stash::orm::Model;
 use mail_stash::params;
-use mail_stash::stash::{Bond, StashError, Tether};
+use mail_stash::stash::{StashError, Tether, WriteTx};
 use std::fmt::Debug;
 use std::future::Future;
 use std::marker::PhantomData;
@@ -122,7 +122,7 @@ pub struct MessageScrollData {
 }
 
 impl MessageScrollData {
-    pub async fn save(&mut self, tx: &Bond<'_>) -> Result<(), StashError> {
+    pub async fn save(&mut self, tx: &WriteTx<'_>) -> Result<(), StashError> {
         if let Some(existing) =
             Self::find_with_key(self.local_label_id, self.unread, self.order_dir, tx).await?
         {
@@ -410,7 +410,7 @@ pub struct ConversationScrollData {
 }
 
 impl ConversationScrollData {
-    pub async fn save(&mut self, tx: &Bond<'_>) -> Result<(), StashError> {
+    pub async fn save(&mut self, tx: &WriteTx<'_>) -> Result<(), StashError> {
         if let Some(existing) =
             Self::find_with_key(self.local_label_id, self.unread, self.order_dir, tx).await?
         {
@@ -1062,7 +1062,7 @@ impl SearchScrollData {
     /// Clears all search-related persisted data (scroll data and highlighting).
     /// Call on re-initialize (new search, clear, change_state) to avoid stale highlighting
     /// rows accumulating — mail_search_highlighting has no FK to search_scroll_data.
-    pub async fn clear_all_search_data(bond: &Bond<'_, UserDb>) -> Result<(), StashError> {
+    pub async fn clear_all_search_data(bond: &WriteTx<'_, UserDb>) -> Result<(), StashError> {
         SearchScrollData::delete_all(bond).await?;
         #[cfg(feature = "foundation_search")]
         SearchHighlighting::delete_all(bond).await?;

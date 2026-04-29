@@ -12,7 +12,7 @@ use mail_api::services::proton::prelude::GetMessagesOptions;
 use mail_core_common::models::{ModelExtension, ModelIdExtension};
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
-use mail_stash::stash::Bond;
+use mail_stash::stash::WriteTx;
 use serde::{self, Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::Weak;
@@ -59,7 +59,7 @@ impl Handler<UserDb> for RefreshMetadataHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: &Bond<'_>,
+        _: &WriteTx<'_>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::LocalOutput,
         <Self::Action as Action<UserDb>>::Error,
@@ -71,7 +71,7 @@ impl Handler<UserDb> for RefreshMetadataHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: &Bond<'_>,
+        _: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         Ok(())
     }
@@ -172,7 +172,7 @@ impl Handler<UserDb> for RefreshMetadataHandler {
         _: ActionId,
         _: &mut Self::Action,
         _: &RebaseChangeSet,
-        _: &Bond<'_>,
+        _: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         Ok(())
     }

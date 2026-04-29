@@ -30,7 +30,7 @@ use mail_core_common::models::ModelIdExtension;
 use mail_stash::exports::SqliteError;
 use mail_stash::macros::{DbRecord, Model};
 use mail_stash::orm::{Model, ModelHooks};
-use mail_stash::stash::{Bond, Stash, StashError, Tether, WatcherHandle};
+use mail_stash::stash::{Stash, StashError, Tether, WatcherHandle, WriteTx};
 use mail_stash::{UserDb, exports::*};
 use mail_stash::{params, sql_using_serde};
 use secrecy::SecretString;
@@ -119,7 +119,7 @@ pub struct DraftMetadata {
 }
 
 impl DraftMetadata {
-    pub async fn empty(bond: &Bond<'_>) -> Result<Self, StashError> {
+    pub async fn empty(bond: &WriteTx<'_>) -> Result<Self, StashError> {
         let mut metadata = Self {
             id: None,
             local_message_id: None,
@@ -144,7 +144,7 @@ impl DraftMetadata {
         source_message_id: LocalMessageId,
         source_conversation_id: LocalConversationId,
         expiration_time: Option<UnixTimestamp>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<Self, StashError> {
         let expiration_option = if expiration_time.is_none() {
             DraftExpirationOption::Never
@@ -209,7 +209,7 @@ impl DraftMetadata {
 
     pub async fn delete_for_message(
         local_message_id: LocalMessageId,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<usize, StashError> {
         bond.execute(
             format!(
@@ -221,7 +221,7 @@ impl DraftMetadata {
         .await
     }
 
-    pub async fn delete(id: MetadataId, bond: &Bond<'_>) -> Result<usize, StashError> {
+    pub async fn delete(id: MetadataId, bond: &WriteTx<'_>) -> Result<usize, StashError> {
         bond.execute(
             format!("DELETE FROM `{}` WHERE id = ?", Self::table_name()),
             params![id],
@@ -496,7 +496,7 @@ impl DraftSendResult {
     /// Set the send results for the messages with `ids` as seen.
     pub async fn mark_seen(
         ids: impl IntoIterator<Item = LocalMessageId>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         let params = ids
             .into_iter()
@@ -522,7 +522,7 @@ impl DraftSendResult {
     /// Delete the send results for the messages with `ids`.
     pub async fn delete(
         ids: impl IntoIterator<Item = LocalMessageId>,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         let params = ids
             .into_iter()
@@ -1223,7 +1223,7 @@ impl DraftAttachmentMetadata {
     pub async fn reset_draft_attachments_after_sync(
         metadata_id: MetadataId,
         body_metadata: &MessageBodyMetadata,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         let new_state = body_metadata
             .attachments

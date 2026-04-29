@@ -40,10 +40,10 @@ use mail_api::services::proton::response_data::IncomingDefaultEvent as ApiIncomi
 use mail_api::services::proton::response_data::IncomingDefaultLocation as ApiIncomingDefaultLocation;
 use mail_stash::orm::Model;
 use mail_stash::params;
-use mail_stash::stash::Bond;
 use mail_stash::stash::Stash;
 use mail_stash::stash::StashError;
 use mail_stash::stash::Tether;
+use mail_stash::stash::WriteTx;
 
 use crate::MailContextError;
 use crate::actions::MailActionError;
@@ -179,7 +179,7 @@ impl IncomingDefault {
     pub async fn update_from_api(
         local_id: LocalIncomingDefaultId,
         api: ApiIncomingDefault,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         let incoming = Self::from(api);
         Self {
@@ -194,7 +194,7 @@ impl IncomingDefault {
     pub async fn update_location(
         local_id: LocalIncomingDefaultId,
         location: IncomingDefaultLocation,
-        bond: &Bond<'_>,
+        bond: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         bond.execute(
             format!(
@@ -207,7 +207,7 @@ impl IncomingDefault {
         Ok(())
     }
 
-    pub async fn replace_all(new: Vec<Self>, bond: &Bond<'_>) -> Result<(), StashError> {
+    pub async fn replace_all(new: Vec<Self>, bond: &WriteTx<'_>) -> Result<(), StashError> {
         bond.sync_bridge(move |tx| Self::replace_all_sync(new, tx))
             .await?;
         Ok(())

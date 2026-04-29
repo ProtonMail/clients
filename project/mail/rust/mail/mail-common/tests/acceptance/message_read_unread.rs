@@ -155,7 +155,7 @@ async fn mark_message_read(messages: &[TestCase], expected_unread: usize) {
                 .unwrap();
         conversation.num_unread = messages.len() as u64;
         tether
-            .tx(async |bond| conversation.save(bond).await)
+            .write_tx(async |bond| conversation.save(bond).await)
             .await
             .unwrap();
     }
@@ -312,7 +312,7 @@ mod rebase {
             .collect_vec();
 
         tether
-            .tx::<_, _, StashError>(async |tx| {
+            .write_tx::<_, _, StashError>(async |tx| {
                 for message in &mut messages {
                     message.save(tx).await?;
                     message.reload(tx).await?;
@@ -348,7 +348,7 @@ mod rebase {
             .unwrap();
         // reset state
         tether
-            .tx(async |tx| original_message.save(tx).await)
+            .write_tx(async |tx| original_message.save(tx).await)
             .await
             .unwrap();
         let changeset = RebaseChangeSet::from(original_message.id());
@@ -400,7 +400,7 @@ mod rebase {
             .unwrap();
         // reset state
         tether
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 original_message1.save(tx).await?;
                 original_message2.save(tx).await
             })
@@ -469,7 +469,7 @@ mod rebase {
             .unwrap();
         // reset state
         tether
-            .tx(async |tx| original_message.save(tx).await)
+            .write_tx(async |tx| original_message.save(tx).await)
             .await
             .unwrap();
         let changeset = RebaseChangeSet::from(original_message.id());
@@ -543,7 +543,7 @@ mod rebase {
             .unwrap();
         // reset state
         tether
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 original_message1.save(tx).await?;
                 original_message2.save(tx).await
             })

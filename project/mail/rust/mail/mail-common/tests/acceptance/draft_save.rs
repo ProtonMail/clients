@@ -340,7 +340,7 @@ async fn create_draft_reply_without_body_is_error() {
         .unwrap();
 
     tether
-        .tx(async |tx| existing_message.save(tx).await)
+        .write_tx(async |tx| existing_message.save(tx).await)
         .await
         .unwrap();
 
@@ -384,7 +384,7 @@ async fn create_draft_reply_should_fail_for_drafts() {
         .unwrap();
 
     tether
-        .tx(async |tx| existing_message.save(tx).await)
+        .write_tx(async |tx| existing_message.save(tx).await)
         .await
         .unwrap();
 
@@ -429,7 +429,10 @@ async fn metadata_is_create_for_existing_not_opened_draft() {
         .unwrap();
 
     // Save message.
-    tether.tx(async |tx| message.save(tx).await).await.unwrap();
+    tether
+        .write_tx(async |tx| message.save(tx).await)
+        .await
+        .unwrap();
 
     assert!(
         DraftMetadata::find_by_message_id(message.id(), &tether)
@@ -621,7 +624,7 @@ async fn create_draft_reply_with_override_impl(
             .unwrap();
 
     tether
-        .tx(async |tx| existing_message.save(tx).await)
+        .write_tx(async |tx| existing_message.save(tx).await)
         .await
         .unwrap();
 
@@ -685,7 +688,7 @@ async fn create_draft_reply_with_override_impl(
     .unwrap();
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             // Insert attachment data into the cache.
             for attachment in &remote_existing_message.body.attachments {
                 let local_attachment_id =
@@ -993,7 +996,7 @@ async fn new_draft_conversation_remote_id_updated_externally() {
     fetched_conv.local_id = None;
 
     tether
-        .tx(async |tx| fetched_conv.save(tx).await)
+        .write_tx(async |tx| fetched_conv.save(tx).await)
         .await
         .unwrap();
 
@@ -1315,7 +1318,7 @@ async fn create_draft_reply_with_invalid_address_produces_address_validation_err
             .unwrap();
 
     tether
-        .tx(async |tx| existing_message.save(tx).await)
+        .write_tx(async |tx| existing_message.save(tx).await)
         .await
         .unwrap();
 
@@ -1410,7 +1413,10 @@ async fn open_draft_catches_invalid_address() {
 
     address.status = AddressStatus::Disabled.into();
 
-    tether.tx(async |tx| address.save(tx).await).await.unwrap();
+    tether
+        .write_tx(async |tx| address.save(tx).await)
+        .await
+        .unwrap();
 
     // Load the draft.
     let draft_message_id = draft.message_id().await.unwrap().unwrap();
@@ -1522,7 +1528,7 @@ async fn open_draft_detects_sender_alias() {
     };
 
     tether
-        .tx(async |tx| {
+        .write_tx(async |tx| {
             message.save(tx).await.unwrap();
             message_body_metadata.save(tx).await.unwrap();
 
@@ -1650,7 +1656,7 @@ async fn prepare_draft_reply_attach_public_key(
             .unwrap();
 
     tether
-        .tx(async |tx| existing_message.save(tx).await)
+        .write_tx(async |tx| existing_message.save(tx).await)
         .await
         .unwrap();
 
@@ -1693,7 +1699,7 @@ async fn prepare_draft_reply_attach_public_key(
     .unwrap();
 
     tether
-        .tx::<_, _, StashError>(async |tx| {
+        .write_tx::<_, _, StashError>(async |tx| {
             // Insert attachment data into the cache.
             for attachment in &remote_existing_message.body.attachments {
                 let local_attachment_id =
@@ -1766,7 +1772,7 @@ async fn replying_to_expiring_message_inherits_expiration() {
             .unwrap();
 
     tether
-        .tx(async |tx| existing_message.save(tx).await)
+        .write_tx(async |tx| existing_message.save(tx).await)
         .await
         .unwrap();
 
@@ -1854,7 +1860,7 @@ async fn draft_save_handles_save_with_new_message_if_remote_message_already_exis
             .unwrap();
 
     tether
-        .tx(async |tx| existing_message.save(tx).await)
+        .write_tx(async |tx| existing_message.save(tx).await)
         .await
         .unwrap();
 
@@ -1909,7 +1915,7 @@ async fn draft_save_handles_save_with_new_message_if_remote_message_already_exis
         .await
         .unwrap();
     tether
-        .tx(async |tx| new_message.save(tx).await)
+        .write_tx(async |tx| new_message.save(tx).await)
         .await
         .unwrap();
 
@@ -1965,7 +1971,7 @@ async fn draft_reply_handles_conversation_id_change_on_new_subject() {
             .unwrap();
 
     tether
-        .tx(async |tx| existing_message.save(tx).await)
+        .write_tx(async |tx| existing_message.save(tx).await)
         .await
         .unwrap();
 
@@ -2080,7 +2086,7 @@ async fn draft_reply_handles_conversation_id_change_multiple_times_without_destr
             .unwrap();
 
     tether
-        .tx(async |tx| existing_message.save(tx).await)
+        .write_tx(async |tx| existing_message.save(tx).await)
         .await
         .unwrap();
 
@@ -2112,7 +2118,7 @@ async fn draft_reply_handles_conversation_id_change_multiple_times_without_destr
         .connection()
         .await
         .unwrap()
-        .tx(async |tx| conv.save(tx).await)
+        .write_tx(async |tx| conv.save(tx).await)
         .await
         .unwrap();
 
@@ -2242,7 +2248,7 @@ async fn draft_reply_handles_conversation_id_change_on_new_subject_from_place_ho
             .unwrap();
 
     tether
-        .tx(async |tx| {
+        .write_tx(async |tx| {
             existing_conversation.save(tx).await?;
             existing_message.save(tx).await
         })
@@ -2378,7 +2384,7 @@ async fn draft_reply_handles_conversation_id_change_on_new_subject_from_place_ho
 
     // simulate a converation update from api which introduces the attachment
     tether
-        .tx(async |tx| {
+        .write_tx(async |tx| {
             Conversation {
                 remote_id: Some(changed_conversation_id.clone()),
                 attachments_metadata: vec![AttachmentMetadata {
@@ -2412,7 +2418,7 @@ async fn draft_reply_handles_conversation_id_change_on_new_subject_from_place_ho
 
     // Finally deleting the placeholder should not cause the draft metatadata to expire.
     tether
-        .tx(async |tx| Conversation::delete_by_id(second_conversation_id, tx).await)
+        .write_tx(async |tx| Conversation::delete_by_id(second_conversation_id, tx).await)
         .await
         .unwrap();
 

@@ -241,7 +241,7 @@ impl InitializationMediator {
             let mut tether = ctx.user_stash().connection().await?;
 
             tether
-                .tx(async |tx| {
+                .write_tx(async |tx| {
                     tx.execute(
                         "DELETE FROM initialized_components WHERE key = ? OR key = ?",
                         params![User::INIT_KEY.0, MailUserContext::CONTEXT_INIT_KEY.0],

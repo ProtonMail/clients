@@ -190,7 +190,7 @@ impl EventSubscriber<EventManagerContext, MailEventSourceV5> for MailEventV5Subs
                 .inspect_err(|e| error!("Failed to fetch or store dependencies: {e}"))?;
 
             tether
-                .tx::<_, _, MailEventSubscriberError>(async |tx| {
+                .write_tx::<_, _, MailEventSubscriberError>(async |tx| {
                     let mut rebase_change_set = RebaseChangeSet::default();
 
                     if let Some(labels) = &event.labels {

@@ -119,7 +119,9 @@ async fn migrate(
         .connection()
         .await?;
 
-    tether.tx(async |bond| migration.delete(bond).await).await?;
+    tether
+        .write_tx(async |bond| migration.delete(bond).await)
+        .await?;
 
     Ok(())
 }
@@ -258,7 +260,7 @@ mod tests {
         };
 
         let contact_ids_wihtout_email = tether
-            .tx(async |tx| {
+            .write_tx(async |tx| {
                 contact1.save(tx).await?;
                 contact2.save(tx).await?;
 

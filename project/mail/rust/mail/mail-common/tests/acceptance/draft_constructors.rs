@@ -216,7 +216,7 @@ mod mailto {
                     .connection()
                     .await
                     .unwrap()
-                    .tx(async |bond| {
+                    .write_tx(async |bond| {
                         let mut settings = MailSettings::get_or_default(bond).await;
 
                         settings.draft_mime_type = MimeType::TextPlain;

@@ -79,7 +79,9 @@ impl GrowthService {
         };
 
         let mut tether = account_stash.connection().await?;
-        tether.tx(async |tx| measurement.save(tx).await).await?;
+        tether
+            .write_tx(async |tx| measurement.save(tx).await)
+            .await?;
 
         Ok(())
     }
@@ -142,7 +144,9 @@ impl GrowthService {
         };
 
         let mut tether = ctx.account_stash().connection().await?;
-        tether.tx(async |tx| measurement.save(tx).await).await?;
+        tether
+            .write_tx(async |tx| measurement.save(tx).await)
+            .await?;
 
         Ok(())
     }
@@ -275,7 +279,7 @@ impl GrowthService {
 
         let mut tether = ctx.account_stash().connection().await?;
         tether
-            .tx(async |tx| Measurement::delete_by_ids(measurement_ids, tx).await)
+            .write_tx(async |tx| Measurement::delete_by_ids(measurement_ids, tx).await)
             .await?;
 
         result.map_err(Into::into)
@@ -307,7 +311,7 @@ impl GrowthService {
             trace!("Telemetry disabled for user, clearing measurements");
             let mut tether = ctx.account_stash().connection().await?;
             tether
-                .tx(async |tx| Measurement::delete_all(tx).await)
+                .write_tx(async |tx| Measurement::delete_all(tx).await)
                 .await?;
 
             return Ok(());

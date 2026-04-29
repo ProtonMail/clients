@@ -4,7 +4,7 @@ use mail_core_common::datatypes::UnixTimestamp;
 use mail_core_common::models::{Label, ModelExtension, ModelIdExtension};
 use mail_stash::macros::Model;
 use mail_stash::orm::Model;
-use mail_stash::stash::{Bond, StashError, Tether};
+use mail_stash::stash::{StashError, Tether, WriteTx};
 use mail_stash::{UserDb, params};
 use std::collections::HashSet;
 
@@ -35,7 +35,7 @@ impl DeletedItem {
         }
     }
 
-    pub async fn save(&mut self, bond: &Bond<'_>) -> Result<(), StashError> {
+    pub async fn save(&mut self, bond: &WriteTx<'_>) -> Result<(), StashError> {
         // We do not update to not extend the lifetime of tombstone
         bond.execute(
             format!(
@@ -85,7 +85,7 @@ impl DeletedItem {
     /// 1. Remove deleted items that have been re-added to their original tables
     /// 2. Remove deleted items that are older than 1 day (stale tombstones)
     ///
-    pub async fn verify_and_cleanup(bond: &Bond<'_>) -> Result<(), StashError> {
+    pub async fn verify_and_cleanup(bond: &WriteTx<'_>) -> Result<(), StashError> {
         const RETENTION_SECONDS: u64 = 86400; // 1 day
         let cutoff = UnixTimestamp::now().saturating_sub(RETENTION_SECONDS);
 

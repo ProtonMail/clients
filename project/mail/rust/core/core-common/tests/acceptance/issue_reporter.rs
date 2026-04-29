@@ -42,7 +42,7 @@ async fn issues_not_report_if_telemetry_disabled() {
         .connection()
         .await
         .unwrap()
-        .tx(async |tx| settings.save(tx).await)
+        .write_tx(async |tx| settings.save(tx).await)
         .await
         .unwrap();
 

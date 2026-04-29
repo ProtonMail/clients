@@ -2,7 +2,7 @@ use indoc::indoc;
 use mail_sqlite3::Migration;
 use mail_stash::{
     UserDb, params,
-    stash::{Bond, StashError},
+    stash::{StashError, WriteTx},
 };
 
 use crate::{datatypes::LocalMessageId, models::Message};
@@ -15,7 +15,7 @@ impl Migration<UserDb> for RestoreNonExpiredMessages {
         "v061_proton_mail_restore_non_expired_messages"
     }
 
-    async fn migrate(&self, tx: &Bond<'_>) -> Result<(), StashError> {
+    async fn migrate(&self, tx: &WriteTx<'_>) -> Result<(), StashError> {
         // Attempt to undelted all messages that belong to an expired conversation that have not
         // really expired.
         let ids:Vec<LocalMessageId> = tx.query_values(indoc! {"

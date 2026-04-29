@@ -48,7 +48,7 @@ mail-stash = { workspace = true }
 mail-log-service = { workspace = true }
 secrecy = { workspace = true }
 thiserror = { workspace = true }
-tokio = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
 tokio-util = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }

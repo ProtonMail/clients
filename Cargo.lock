@@ -19,6 +19,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "366ffbaa4442f4684d91e2cd7c5ea7c4ed8add41959a31447066e279e432b618"
 
 [[package]]
+name = "accessory"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "28e416a3ab45838bac2ab2d81b1088d738d7b2d2c5272a54d39366565a29bd80"
+dependencies = [
+ "macroific",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
+
+[[package]]
 name = "account-crux"
 version = "0.1.0"
 dependencies = [
@@ -1225,6 +1237,355 @@ dependencies = [
 ]
 
 [[package]]
+name = "calendar-access"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "calendar-api",
+ "calendar-crypto",
+ "calendar-db",
+ "calendar-db-diesel",
+ "calendar-ical",
+ "indoc",
+ "itertools 0.14.0",
+ "jiff",
+ "mail-canonical-email",
+ "proton-crypto",
+ "proton-crypto-account",
+ "regex",
+ "test-case",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "calendar-api"
+version = "0.1.0"
+dependencies = [
+ "calendar-net",
+ "facet",
+ "jiff",
+ "proton-crypto-account",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "serde_with",
+]
+
+[[package]]
+name = "calendar-bootstrap"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "calendar-api",
+ "calendar-db",
+ "calendar-db-diesel",
+ "calendar-net",
+ "calendar-net-fake",
+ "futures",
+ "jiff",
+ "mail-canonical-email",
+ "tokio",
+ "tracing",
+ "web-time",
+]
+
+[[package]]
+name = "calendar-components-crux"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "calendar-access",
+ "calendar-api",
+ "calendar-bootstrap",
+ "calendar-crypto",
+ "calendar-db",
+ "calendar-ical",
+ "calendar-keychain",
+ "calendar-loop",
+ "calendar-net",
+ "crux_core",
+ "facet",
+ "futures",
+ "itertools 0.14.0",
+ "jiff",
+ "serde",
+ "tracing",
+]
+
+[[package]]
+name = "calendar-components-crux-codegen"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "calendar-api",
+ "calendar-components-crux",
+ "calendar-db",
+ "clap",
+ "crux_core",
+ "glob",
+ "regex",
+]
+
+[[package]]
+name = "calendar-crux"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "calendar-api",
+ "calendar-components-crux",
+ "calendar-db",
+ "calendar-db-diesel",
+ "calendar-keychain",
+ "calendar-net",
+ "calendar-net-fake",
+ "calendar-net-muon",
+ "console_error_panic_hook",
+ "crux_core",
+ "facet",
+ "futures",
+ "itertools 0.14.0",
+ "js-sys",
+ "notify-waker",
+ "serde",
+ "tokio",
+ "tracing",
+ "tracing-logcat",
+ "tracing-oslog",
+ "tracing-subscriber",
+ "tracing-web",
+ "uniffi 0.30.0",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+]
+
+[[package]]
+name = "calendar-crux-codegen"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "calendar-crux",
+ "clap",
+ "crux_core",
+ "glob",
+ "regex",
+]
+
+[[package]]
+name = "calendar-crypto"
+version = "0.1.0"
+dependencies = [
+ "aes-gcm",
+ "anyhow",
+ "base64",
+ "calendar-api",
+ "calendar-ical",
+ "derive_more 2.1.1",
+ "indoc",
+ "pretty_assertions",
+ "proton-crypto",
+ "proton-crypto-account",
+ "serde",
+ "serde_json",
+ "sha2",
+ "thiserror 2.0.18",
+ "tracing",
+ "zeroize",
+]
+
+[[package]]
+name = "calendar-db"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "calendar-api",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "calendar-db-diesel"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "calendar-api",
+ "calendar-db",
+ "deadpool-diesel",
+ "diesel",
+ "diesel_migrations",
+ "libsqlite3-sys",
+ "serde",
+ "serde_json",
+ "sqlite-wasm-rs",
+ "sqlite-wasm-vfs",
+ "tracing",
+]
+
+[[package]]
+name = "calendar-ical"
+version = "0.1.5"
+dependencies = [
+ "calendar-ical-tz",
+ "criterion 0.8.2",
+ "email_address",
+ "ext-php-rs",
+ "indoc",
+ "insta",
+ "itertools 0.14.0",
+ "jiff",
+ "pretty_assertions",
+ "strum 0.27.2",
+ "test-case",
+ "thiserror 2.0.18",
+ "tynm",
+ "utf8-width",
+]
+
+[[package]]
+name = "calendar-ical-cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "calendar-ical",
+ "clap",
+ "jiff",
+]
+
+[[package]]
+name = "calendar-ical-fuzz"
+version = "0.0.0"
+dependencies = [
+ "calendar-ical",
+ "libfuzzer-sys",
+]
+
+[[package]]
+name = "calendar-ical-tz"
+version = "0.1.0"
+dependencies = [
+ "quick-xml 0.38.4",
+ "serde",
+ "test-case",
+]
+
+[[package]]
+name = "calendar-keychain"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "crux_core",
+ "facet",
+ "serde",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "calendar-loop"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "calendar-access",
+ "calendar-api",
+ "calendar-db",
+ "calendar-db-diesel",
+ "calendar-net",
+ "calendar-net-fake",
+ "calendar-queue",
+ "futures",
+ "serde_json",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "calendar-net"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "crux_core",
+ "derive_more 2.1.1",
+ "facet",
+ "http",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "calendar-net-fake"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "calendar-net",
+ "clap",
+ "serde",
+ "serde_json",
+ "tracing",
+]
+
+[[package]]
+name = "calendar-net-muon"
+version = "0.1.0"
+dependencies = [
+ "aes-gcm",
+ "anyhow",
+ "base64",
+ "calendar-net",
+ "muon 2.3.0",
+ "rand 0.9.4",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tokio",
+ "url",
+ "zeroize",
+]
+
+[[package]]
+name = "calendar-queue"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "calendar-api",
+ "calendar-db",
+ "calendar-db-diesel",
+ "calendar-net",
+ "calendar-net-fake",
+ "serde_json",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "calendar-tui"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "calendar-crux",
+ "calendar-db-diesel",
+ "calendar-keychain",
+ "calendar-net",
+ "clap",
+ "crossterm",
+ "crux_core",
+ "futures",
+ "jiff",
+ "keyring",
+ "notify-waker",
+ "open",
+ "ratatui 0.29.0",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+ "warp",
+]
+
+[[package]]
 name = "calloop"
 version = "0.14.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1651,6 +2012,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "console_error_panic_hook"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a06aeb73f470f66dcdbf7223caeebb85984942f22f1adb2a088cf9668146bbbc"
+dependencies = [
+ "cfg-if",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "const-oid"
 version = "0.9.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1716,7 +2087,7 @@ dependencies = [
  "flume",
  "futures",
  "ical",
- "include_dir",
+ "include_dir 0.7.4",
  "indexmap 2.14.0",
  "indoc",
  "insta",
@@ -2394,8 +2765,7 @@ checksum = "460fbee9c2c2f33933d720630a6a0bac33ba7053db5344fac858d4b8952d77d5"
 [[package]]
 name = "crux_core"
 version = "0.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68328a703adba9b705c7b2de3e0fe434f4a310974fc6944c280cd4d15651485c"
+source = "git+https://github.com/redbadger/crux?rev=04347ef20277faa80f041c9b99ee79fcdb39b7d1#04347ef20277faa80f041c9b99ee79fcdb39b7d1"
 dependencies = [
  "anyhow",
  "bincode",
@@ -2406,6 +2776,8 @@ dependencies = [
  "futures",
  "log",
  "serde",
+ "serde-generate",
+ "serde-reflection",
  "serde_json",
  "slab",
  "thiserror 2.0.18",
@@ -2414,8 +2786,7 @@ dependencies = [
 [[package]]
 name = "crux_macros"
 version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "23c2549bcdfd872810d0c6a704ce1bd0e7b2007a8078370f02aa7f45ccade686"
+source = "git+https://github.com/redbadger/crux?rev=04347ef20277faa80f041c9b99ee79fcdb39b7d1#04347ef20277faa80f041c9b99ee79fcdb39b7d1"
 dependencies = [
  "darling 0.23.0",
  "heck 0.5.0",
@@ -2803,6 +3174,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "delegate-display"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9926686c832494164c33a36bf65118f4bd6e704000b58c94681bf62e9ad67a74"
+dependencies = [
+ "impartial-ord",
+ "itoa 1.0.18",
+ "macroific",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
+
+[[package]]
 name = "der"
 version = "0.7.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2979,6 +3364,7 @@ dependencies = [
  "diesel_derives",
  "downcast-rs 2.0.2",
  "libsqlite3-sys",
+ "serde_json",
  "sqlite-wasm-rs",
  "time",
 ]
@@ -3589,13 +3975,13 @@ dependencies = [
  "derive_builder",
  "facet",
  "heck 0.5.0",
- "include_dir",
+ "include_dir 0.7.4",
  "indent",
  "indoc",
  "regex",
  "serde",
  "serde_json",
- "textwrap",
+ "textwrap 0.16.2",
  "thiserror 2.0.18",
  "tracing",
 ]
@@ -3632,6 +4018,18 @@ dependencies = [
  "bit-set",
  "regex-automata",
  "regex-syntax",
+]
+
+[[package]]
+name = "fancy_constructor"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "28a27643a5d05f3a22f5afd6e0d0e6e354f92d37907006f97b84b9cb79082198"
+dependencies = [
+ "macroific",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
 ]
 
 [[package]]
@@ -4233,6 +4631,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "headers"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b3314d5adb5d94bcdf56771f2e50dbbc80bb4bdf88967526706205ac9eff24eb"
+dependencies = [
+ "base64",
+ "bytes",
+ "headers-core",
+ "http",
+ "httpdate",
+ "mime",
+ "sha1",
+]
+
+[[package]]
+name = "headers-core"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "54b4a22553d4242c49fddb9ba998a99962b5cc6f22cb5a3482bec22522403ce4"
+dependencies = [
+ "http",
+]
+
+[[package]]
+name = "heck"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d621efb26863f0e9924c6ac577e8275e5e6b77455db64ffa6c65c904e9e132c"
+dependencies = [
+ "unicode-segmentation",
+]
+
+[[package]]
 name = "heck"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4765,10 +5196,32 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e7c5cedc30da3a610cac6b4ba17597bdf7152cf974e8aab3afb3d54455e371c8"
 
 [[package]]
+name = "impartial-ord"
+version = "1.0.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0ab604ee7085efba6efc65e4ebca0e9533e3aff6cb501d7d77b211e3a781c6d5"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
+
+[[package]]
 name = "impls"
 version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a46645bbd70538861a90d0f26c31537cdf1e44aae99a794fb75a664b70951bc"
+
+[[package]]
+name = "include_dir"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "24b56e147e6187d61e9d0f039f10e070d0c0a887e24fe0bb9ca3f29bfde62cab"
+dependencies = [
+ "glob",
+ "include_dir_impl",
+ "proc-macro-hack",
+]
 
 [[package]]
 name = "include_dir"
@@ -4778,6 +5231,19 @@ checksum = "923d117408f1e49d914f1a379a309cffe4f18c05cf4e3d12e613a15fc81bd0dd"
 dependencies = [
  "glob",
  "include_dir_macros",
+]
+
+[[package]]
+name = "include_dir_impl"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0a0c890c85da4bab7bce4204c707396bbd3c6c8a681716a51c8814cfc2b682df"
+dependencies = [
+ "anyhow",
+ "proc-macro-hack",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -4801,6 +5267,40 @@ name = "indenter"
 version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "964de6e86d545b246d84badc0fef527924ace5134f30641c203ef52ba83f58d5"
+
+[[package]]
+name = "indexed_db_futures"
+version = "0.6.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "69ff41758cbd104e91033bb53bc449bec7eea65652960c81eddf3fc146ecea19"
+dependencies = [
+ "accessory",
+ "cfg-if",
+ "delegate-display",
+ "derive_more 2.1.1",
+ "fancy_constructor",
+ "indexed_db_futures_macros_internal",
+ "js-sys",
+ "sealed",
+ "smallvec",
+ "thiserror 2.0.18",
+ "tokio",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
+
+[[package]]
+name = "indexed_db_futures_macros_internal"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "caeba94923b68f254abef921cea7e7698bf4675fdd89d7c58bf1ed885b49a27d"
+dependencies = [
+ "macroific",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
 
 [[package]]
 name = "indexmap"
@@ -4937,6 +5437,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "is-docker"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "928bae27f42bc99b60d9ac7334e3a21d10ad8f1835a4e12ec3ec0464765ed1b3"
+dependencies = [
+ "once_cell",
+]
+
+[[package]]
 name = "is-terminal"
 version = "0.4.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4945,6 +5454,16 @@ dependencies = [
  "hermit-abi",
  "libc",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "is-wsl"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "173609498df190136aa7dea1a91db051746d339e18476eed5ca40521f02d7aa5"
+dependencies = [
+ "is-docker",
+ "once_cell",
 ]
 
 [[package]]
@@ -5452,6 +5971,54 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c41e0c4fef86961ac6d6f8a82609f55f31b05e4fce149ac5710e439df7619ba4"
 
 [[package]]
+name = "macroific"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "89f276537b4b8f981bf1c13d79470980f71134b7bdcc5e6e911e910e556b0285"
+dependencies = [
+ "macroific_attr_parse",
+ "macroific_core",
+ "macroific_macro",
+]
+
+[[package]]
+name = "macroific_attr_parse"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ad4023761b45fcd36abed8fb7ae6a80456b0a38102d55e89a57d9a594a236be9"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "sealed",
+ "syn 2.0.117",
+]
+
+[[package]]
+name = "macroific_core"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d0a7594d3c14916fa55bef7e9d18c5daa9ed410dd37504251e4b75bbdeec33e3"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "sealed",
+ "syn 2.0.117",
+]
+
+[[package]]
+name = "macroific_macro"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4da6f2ed796261b0a74e2b52b42c693bb6dee1effba3a482c49592659f824b3b"
+dependencies = [
+ "macroific_attr_parse",
+ "macroific_core",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
+
+[[package]]
 name = "mail-account-api"
 version = "0.1.0"
 dependencies = [
@@ -5557,7 +6124,7 @@ dependencies = [
  "clap",
  "derive_more 2.1.1",
  "futures",
- "include_dir",
+ "include_dir 0.7.4",
  "indoc",
  "mail-action-queue",
  "mail-sqlite3",
@@ -5815,7 +6382,7 @@ dependencies = [
  "flume",
  "function_name",
  "futures",
- "include_dir",
+ "include_dir 0.7.4",
  "indoc",
  "insta",
  "itertools 0.14.0",
@@ -5952,7 +6519,7 @@ dependencies = [
  "futures",
  "hex",
  "ical",
- "include_dir",
+ "include_dir 0.7.4",
  "indexmap 2.14.0",
  "indoc",
  "insta",
@@ -6243,7 +6810,7 @@ dependencies = [
  "derive_more 2.1.1",
  "flume",
  "futures",
- "include_dir",
+ "include_dir 0.7.4",
  "itertools 0.14.0",
  "mail-action-queue",
  "mail-api-labels",
@@ -6411,7 +6978,7 @@ dependencies = [
  "flate2",
  "flume",
  "hex",
- "include_dir",
+ "include_dir 0.7.4",
  "mail-api",
  "mail-html-transformer",
  "mail-sqlite3",
@@ -6481,7 +7048,7 @@ dependencies = [
  "fixedbitset",
  "flume",
  "futures",
- "include_dir",
+ "include_dir 0.7.4",
  "itertools 0.14.0",
  "mail-stash",
  "notify",
@@ -6555,7 +7122,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "core-telemetry",
- "include_dir",
+ "include_dir 0.7.4",
  "mail-core-api",
  "mail-muon",
  "mail-sqlite3",
@@ -7288,6 +7855,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "notify-waker"
+version = "0.1.0"
+dependencies = [
+ "futures",
+ "tokio",
+]
+
+[[package]]
 name = "nu-ansi-term"
 version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7626,6 +8201,17 @@ name = "opaque-debug"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
+
+[[package]]
+name = "open"
+version = "5.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9f3bab717c29a857abf75fcef718d441ec7cb2725f937343c734740a985d37fd"
+dependencies = [
+ "is-wsl",
+ "libc",
+ "pathdiff",
+]
 
 [[package]]
 name = "openssl"
@@ -8255,7 +8841,9 @@ version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fabbf1ead8a5bcbc20f5f8b939ee3f5b0f6f281b6ad3468b84656b658b455259"
 dependencies = [
+ "phf_macros 0.10.0",
  "phf_shared 0.10.0",
+ "proc-macro-hack",
 ]
 
 [[package]]
@@ -8345,6 +8933,20 @@ checksum = "7f6fde18ff429ffc8fe78e2bf7f8b7a5a5a6e2a8b58bc5a9ac69198bbda9189c"
 dependencies = [
  "phf_generator 0.8.0",
  "phf_shared 0.8.0",
+ "proc-macro-hack",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "phf_macros"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "58fdf3184dd560f160dd73922bea2d5cd6e8f064bf4b13110abd81b03697b4e0"
+dependencies = [
+ "phf_generator 0.10.0",
+ "phf_shared 0.10.0",
  "proc-macro-hack",
  "proc-macro2",
  "quote",
@@ -9962,6 +10564,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "sealed"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "22f968c5ea23d555e670b449c1c5e7b2fc399fdaec1d304a17cd48e288abc107"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
+
+[[package]]
 name = "sec1"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10097,6 +10710,31 @@ dependencies = [
  "serde",
  "serde-value",
  "serde_json",
+]
+
+[[package]]
+name = "serde-generate"
+version = "0.26.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8309fc8d475cf5884e92a463b3a003d433684335be19c3f739af0451b027254b"
+dependencies = [
+ "heck 0.3.3",
+ "include_dir 0.6.2",
+ "phf 0.10.1",
+ "serde",
+ "serde-reflection",
+ "textwrap 0.13.4",
+]
+
+[[package]]
+name = "serde-reflection"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5b6798a64289ff550d8d79847467789a5fd30b42c9c406a4d6dc0bc9b567e55c"
+dependencies = [
+ "once_cell",
+ "serde",
+ "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -10605,6 +11243,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "sqlite-wasm-vfs"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f7a5c9ac229421d577bb5a9bb59048838509958b218dd4e0b3c1214a87c361e"
+dependencies = [
+ "indexed_db_futures",
+ "js-sys",
+ "rsqlite-vfs",
+ "thiserror 2.0.18",
+ "tokio",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
+
+[[package]]
 name = "sqlite-watcher"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10908,6 +11562,16 @@ dependencies = [
  "quote",
  "syn 2.0.117",
  "test-case-core",
+]
+
+[[package]]
+name = "textwrap"
+version = "0.13.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd05616119e612a8041ef58f2b578906cc2531a6069047ae092cfb86a325d835"
+dependencies = [
+ "smawk",
+ "unicode-width 0.1.14",
 ]
 
 [[package]]
@@ -11375,6 +12039,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "tracing-logcat"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "678d561ce3d4b33dfcfb1c6bd13c422aad89be5bf0e66e20d518a5a254345b54"
+dependencies = [
+ "rustix 0.38.44",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "tracing-oslog"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -11423,6 +12098,19 @@ checksum = "ad06847b7afb65c7866a36664b75c40b895e318cea4f71299f013fb22965329d"
 dependencies = [
  "quote",
  "syn 2.0.117",
+]
+
+[[package]]
+name = "tracing-web"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b9e6a141feebd51f8d91ebfd785af50fca223c570b86852166caa3b141defe7c"
+dependencies = [
+ "js-sys",
+ "tracing-core",
+ "tracing-subscriber",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]
@@ -11728,7 +12416,7 @@ dependencies = [
  "once_cell",
  "serde",
  "tempfile",
- "textwrap",
+ "textwrap 0.16.2",
  "toml 0.9.12+spec-1.1.0",
  "uniffi_internal_macros 0.30.0",
  "uniffi_meta 0.30.0",
@@ -11754,7 +12442,7 @@ dependencies = [
  "once_cell",
  "serde",
  "tempfile",
- "textwrap",
+ "textwrap 0.16.2",
  "toml 0.9.12+spec-1.1.0",
  "uniffi_internal_macros 0.31.1",
  "uniffi_meta 0.31.1",
@@ -11915,7 +12603,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d0adacdd848aeed7af4f5af7d2f621d5e82531325d405e29463482becfdeafca"
 dependencies = [
  "anyhow",
- "textwrap",
+ "textwrap 0.16.2",
  "uniffi_meta 0.30.0",
  "weedle2",
 ]
@@ -11927,7 +12615,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68773ec0e1c067b6505a73bbf6a5782f31a7f9209333a0df97b87565c46bf370"
 dependencies = [
  "anyhow",
- "textwrap",
+ "textwrap 0.16.2",
  "uniffi_meta 0.31.1",
  "weedle2",
 ]
@@ -12136,6 +12824,35 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bfa7760aed19e106de2c7c0b581b509f2f25d3dacaf737cb82ac61bc6d760b0e"
 dependencies = [
  "try-lock",
+]
+
+[[package]]
+name = "warp"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "51d06d9202adc1f15d709c4f4a2069be5428aa912cc025d6f268ac441ab066b0"
+dependencies = [
+ "bytes",
+ "futures-util",
+ "headers",
+ "http",
+ "http-body",
+ "http-body-util",
+ "hyper",
+ "hyper-util",
+ "log",
+ "mime",
+ "mime_guess",
+ "percent-encoding",
+ "pin-project",
+ "scoped-tls",
+ "serde",
+ "serde_json",
+ "serde_urlencoded",
+ "tokio",
+ "tokio-util",
+ "tower-service",
+ "tracing",
 ]
 
 [[package]]

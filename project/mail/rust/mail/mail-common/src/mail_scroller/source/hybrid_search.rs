@@ -284,10 +284,10 @@ impl MailScrollerSource for HybridSearchScrollerSource {
         &mut self,
         ctx: &MailUserContext,
         invalidate: flume::Sender<()>,
-        _category_view: CategoryView,
+        category_view: CategoryView,
     ) -> Result<MailPaginatorJoinHandle, MailContextError> {
         self.invalidate = Some(invalidate);
-        self.category_view = _category_view;
+        self.category_view = category_view;
         self.initialize_impl(ctx).await
     }
 
@@ -445,7 +445,7 @@ impl MailScrollerSource for HybridSearchScrollerSource {
         _unread: Option<crate::datatypes::ReadFilter>,
         label: Option<LocalLabelId>,
         keywords: Option<SearchOptions>,
-        _category_view: Option<CategoryView>,
+        category_view: Option<CategoryView>,
     ) -> Result<MailPaginatorJoinHandle, MailContextError> {
         if let Some(label) = label {
             info!(
@@ -460,7 +460,7 @@ impl MailScrollerSource for HybridSearchScrollerSource {
             self.options = keywords;
         }
 
-        if let Some(v) = _category_view {
+        if let Some(v) = category_view {
             self.category_view = v;
         }
 

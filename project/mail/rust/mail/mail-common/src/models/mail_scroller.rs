@@ -466,12 +466,7 @@ pub struct ConversationScrollData {
 }
 
 impl ConversationScrollData {
-<<<<<<< HEAD
     pub async fn save(&mut self, tx: &WriteTx<'_>) -> Result<(), StashError> {
-        if let Some(existing) =
-            Self::find_with_key(self.local_label_id, self.unread, self.order_dir, tx).await?
-=======
-    pub async fn save(&mut self, tx: &Bond<'_>) -> Result<(), StashError> {
         if let Some(existing) = Self::find_with_key(
             self.local_label_id,
             self.unread,
@@ -480,7 +475,6 @@ impl ConversationScrollData {
             tx,
         )
         .await?
->>>>>>> c322923efa (feat(ET-6145): Scroller makes multilabel requests to the API including categories)
         {
             self.id = existing.id;
         } else {

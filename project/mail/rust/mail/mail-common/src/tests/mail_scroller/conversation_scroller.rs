@@ -1255,7 +1255,7 @@ async fn test_category_round_trip_with_composite_key() {
         .build();
 
     tether
-        .tx::<_, _, StashError>(async |bond| scroller.save(bond).await)
+        .write_tx::<_, _, StashError>(async |bond| scroller.save(bond).await)
         .await
         .unwrap();
 
@@ -1294,7 +1294,7 @@ async fn test_category_round_trip_with_composite_key() {
         .build();
 
     tether
-        .tx::<_, _, StashError>(async |bond| scroller2.save(bond).await)
+        .write_tx::<_, _, StashError>(async |bond| scroller2.save(bond).await)
         .await
         .unwrap();
 
@@ -1368,7 +1368,7 @@ async fn test_unsorted_category_normalizes_to_canonical_form() {
         .build();
 
     tether
-        .tx::<_, _, StashError>(async |bond| scroller.save(bond).await)
+        .write_tx::<_, _, StashError>(async |bond| scroller.save(bond).await)
         .await
         .unwrap();
 
@@ -1412,7 +1412,7 @@ async fn test_cached_scroller_with_category_does_not_collide_with_empty_category
         .build(); // category defaults to empty
 
     tether
-        .tx::<_, _, StashError>(async |bond| scroller_no_cat.save(bond).await)
+        .write_tx::<_, _, StashError>(async |bond| scroller_no_cat.save(bond).await)
         .await
         .unwrap();
 
@@ -1430,7 +1430,7 @@ async fn test_cached_scroller_with_category_does_not_collide_with_empty_category
         .build();
 
     tether
-        .tx::<_, _, StashError>(async |bond| scroller_with_cat.save(bond).await)
+        .write_tx::<_, _, StashError>(async |bond| scroller_with_cat.save(bond).await)
         .await
         .unwrap();
 

@@ -2898,7 +2898,7 @@ async fn test_category_view_first_page_sends_multi_label_ids_to_api() {
         .unwrap()
         .unwrap();
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             MailSettings {
                 mail_category_view: true,
                 ..Default::default()
@@ -3062,7 +3062,7 @@ async fn test_category_view_next_page_sends_multi_label_ids_to_api() {
         .unwrap()
         .unwrap();
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             MailSettings {
                 mail_category_view: true,
                 ..Default::default()
@@ -3257,7 +3257,7 @@ async fn test_total_reflects_active_category_after_change_category_view() {
         .unwrap();
 
     tether
-        .tx::<_, _, StashError>(async |bond| {
+        .write_tx::<_, _, StashError>(async |bond| {
             MailSettings {
                 mail_category_view: true,
                 ..Default::default()

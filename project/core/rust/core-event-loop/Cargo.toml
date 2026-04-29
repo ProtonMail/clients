@@ -16,7 +16,7 @@
 
 [dev-dependencies]
   mockall = "0.14.0"
-  tokio = { version = "1.46.1", features = ["macros", "rt-multi-thread"] }
+  tokio = { workspace = true, features = ["rt-multi-thread"] }
 
 [features]
   default = []

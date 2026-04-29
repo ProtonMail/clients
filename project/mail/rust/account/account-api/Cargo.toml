@@ -56,7 +56,7 @@ sql = ["dep:mail-stash", "mail-account-ids/sql"]
 workspace = true
 
 [dev-dependencies]
-tokio = { workspace = true }
+tokio = { workspace = true, features = ["io-std"] }
 tracing-subscriber = { workspace = true }
 tempfile = { workspace = true }
 mail-core-common = { workspace = true, features = ["test-utils"] }

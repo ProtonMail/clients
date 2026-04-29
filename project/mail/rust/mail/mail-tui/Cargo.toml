@@ -33,7 +33,7 @@ secrecy = { workspace = true }
 sqlite-watcher = { workspace = true }
 mail-stash = { workspace = true }
 throbber-widgets-tui = "0.7.1"
-tokio = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
 tokio-util = { workspace = true }
 tracing = { workspace = true }
 tracing-appender = { workspace = true }

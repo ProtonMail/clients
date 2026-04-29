@@ -1,6 +1,6 @@
 [package]
 name = "mail-uniffi"
-version = "0.164.21"
+version = "0.164.22"
 edition.workspace = true
 rust-version.workspace = true
 publish = false

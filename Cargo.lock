@@ -2121,6 +2121,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "contacts-service"
+version = "0.1.0"
+
+[[package]]
 name = "convert_case"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6706,6 +6710,10 @@ dependencies = [
  "mail-common",
  "mail-core-api",
  "mail-core-common",
+ "mail-crypto-inbox",
+ "mail-html-transformer",
+ "mail-search",
+ "mail-search-perf",
  "mail-stash",
  "tokio",
  "tracing",
@@ -6981,6 +6989,7 @@ dependencies = [
  "include_dir 0.7.4",
  "mail-api",
  "mail-html-transformer",
+ "mail-search-perf",
  "mail-sqlite3",
  "mail-stash",
  "mail-task-service",
@@ -6999,7 +7008,9 @@ version = "0.1.0"
 dependencies = [
  "aes-gcm",
  "anyhow",
+ "async-trait",
  "base64",
+ "chrono",
  "clap",
  "flate2",
  "futures",
@@ -7009,11 +7020,14 @@ dependencies = [
  "mail-common",
  "mail-core-api",
  "mail-core-common",
+ "mail-crypto-inbox",
  "mail-historic-search-load",
+ "mail-html-transformer",
  "mail-issue-reporter-service",
  "mail-log-service",
  "mail-search",
  "mail-stash",
+ "mail-task-service",
  "reqwest 0.13.2",
  "serde",
  "serde_json",

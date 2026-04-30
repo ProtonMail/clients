@@ -1409,7 +1409,7 @@ dependencies = [
 
 [[package]]
 name = "calendar-ical"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "calendar-ical-tz",
  "criterion 0.8.2",

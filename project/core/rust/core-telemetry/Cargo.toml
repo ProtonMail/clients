@@ -10,7 +10,6 @@ http = ["dep:reqwest"]
 uniffi = ["dep:uniffi", "uniffi/cli", "http", "sqlite"]
 
 [dependencies]
-uuid = "1.18"
 thiserror = "2.0"
 serde.workspace = true
 serde_json.workspace = true

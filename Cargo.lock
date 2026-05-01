@@ -37,9 +37,7 @@ dependencies = [
  "account-db-op",
  "account-validator-password",
  "anyhow",
- "async-compat",
  "async-trait",
- "bitflags 2.11.1",
  "core-client-info-op",
  "core-common-types",
  "core-device-info-op",
@@ -63,13 +61,11 @@ dependencies = [
  "data-encoding",
  "derive_more 2.1.1",
  "facet",
- "fancy-regex 0.16.2",
  "flume",
  "futures",
  "image",
  "itertools 0.14.0",
  "lattice",
- "num",
  "num_enum",
  "parking_lot",
  "passkey",
@@ -84,8 +80,6 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_repr",
- "serde_with",
- "sha2",
  "strum 0.26.3",
  "tempfile",
  "test-case",
@@ -93,7 +87,6 @@ dependencies = [
  "totp-rs",
  "tracing",
  "unicode-segmentation",
- "url",
  "zeroize",
 ]
 
@@ -108,7 +101,6 @@ dependencies = [
  "anyhow",
  "async-compat",
  "async-trait",
- "cfg-if",
  "core-client-info-op",
  "core-common-types",
  "core-device-info-op",
@@ -161,8 +153,6 @@ dependencies = [
 name = "account-db"
 version = "0.1.0"
 dependencies = [
- "bitflags 2.11.1",
- "core-common-types",
  "core-keystore-op",
  "deadpool-diesel",
  "derive_more 2.1.1",
@@ -173,7 +163,6 @@ dependencies = [
  "futures",
  "lattice",
  "libsqlite3-sys",
- "num_enum",
  "proton-crypto-account",
  "serde",
  "serde_json",
@@ -193,8 +182,6 @@ dependencies = [
  "derive_more 2.1.1",
  "facet",
  "serde",
- "serde_json",
- "thiserror 2.0.18",
 ]
 
 [[package]]
@@ -202,9 +189,7 @@ name = "account-in-memory-db"
 version = "0.1.0"
 dependencies = [
  "account-crux",
- "async-trait",
  "core-keystore-op",
- "futures",
  "lattice",
  "proton-crypto-account",
 ]
@@ -2237,7 +2222,6 @@ version = "0.1.0"
 dependencies = [
  "account-db",
  "crux_core",
- "derive_more 2.1.1",
  "facet",
  "serde",
  "thiserror 2.0.18",
@@ -2262,7 +2246,6 @@ dependencies = [
  "mockall 0.14.0",
  "serde",
  "serde_json",
- "serde_with",
  "slotmap",
  "thiserror 2.0.18",
  "tokio",
@@ -2284,8 +2267,6 @@ dependencies = [
  "async-trait",
  "core-feature-flags",
  "core-muon-op",
- "core-proc",
- "crux_core",
  "derive_more 2.1.1",
  "facet",
  "lattice",
@@ -2357,10 +2338,6 @@ version = "0.1.0"
 dependencies = [
  "lattice",
  "proton-crypto-account",
- "serde",
- "serde_json",
- "serde_repr",
- "serde_with",
  "thiserror 2.0.18",
 ]
 
@@ -2480,7 +2457,6 @@ name = "core-observability-proc"
 version = "0.1.0"
 dependencies = [
  "core-observability-impl",
- "derive_more 2.1.1",
  "glob",
  "heck 0.5.0",
  "itertools 0.14.0",
@@ -2517,7 +2493,6 @@ dependencies = [
  "thiserror 2.0.18",
  "tokio",
  "uniffi 0.30.0",
- "uuid",
 ]
 
 [[package]]
@@ -2525,7 +2500,6 @@ name = "core-user-manager"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "core-common-types",
  "core-db-op",
  "core-device-info-op",
  "core-key",

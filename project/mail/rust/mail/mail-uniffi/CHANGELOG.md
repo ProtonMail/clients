@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [mail-uniffi-v0.165.3] - 2026-05-04
+
+### Changed
+
+- Rename Bond to WriteTx - proton/clients/monorepo!2065
+
+### Features
+
+- [ET-6145] Scroller makes multilabel requests to the API including categories
+
+### Fixes
+
+- [ET-5596] Fake refresh failure - proton/clients/monorepo!2074
+- [ET-3853] Only delete expired messages
+
+
 ## [mail-uniffi-v0.165.2] - 2026-04-27
 
 ### Fixes

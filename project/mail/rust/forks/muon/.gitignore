@@ -1,0 +1,4 @@
+# TODO(CP-11562): Bazel generates this file because mail-muon is a
+# patched in crate that is sort-of but not quite a workspace member.
+# Remove this file when Muon again becomes a regular dependency.
+BUILD.bazel

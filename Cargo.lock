@@ -1496,6 +1496,7 @@ dependencies = [
  "calendar-db-diesel",
  "calendar-net",
  "calendar-net-fake",
+ "futures",
  "serde_json",
  "tokio",
  "tracing",

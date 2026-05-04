@@ -151,6 +151,8 @@
 
 [workspace.dependencies.uniffi]
   version = "0.30"
+  # Disable cargo_metadata to make uniffi-bindgen work in Bazel.
+  default-features = false
 
 [workspace.dependencies.serde]
   version = "1.0.219"

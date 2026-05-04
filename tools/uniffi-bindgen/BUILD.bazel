@@ -1,0 +1,14 @@
+load("@crate_index//:defs.bzl", "all_crate_deps")
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+
+rust_binary(
+    name = "uniffi-bindgen",
+    srcs = glob(["src/**/*.rs"]),
+    edition = "2024",
+    visibility = ["//visibility:public"],
+    deps = all_crate_deps(
+        normal = True,
+    ),
+)
+
+exports_files(["Cargo.toml"])

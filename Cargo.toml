@@ -16,7 +16,7 @@
     "project/mail/rust/shared/*",
     "project/mail/rust/uniffi/*",
     "project/payment/rust/payment*",
-    "project/contacts/rust/contacts-*",
+    "project/contact/rust/contact-*",
   ]
   resolver = "3"
 

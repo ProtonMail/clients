@@ -7,7 +7,10 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
 
-use crate::{LatticeError, LtContract, LtResponseBody, LtSlimAPIJSON, UnauthReq};
+use crate::{
+    LatticeError, LtContract, LtRequestQueryParams, LtResponseBody, LtSlimAPIJSON, Sensitive,
+    UnauthReq,
+};
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -28,6 +31,21 @@ pub struct LtAuthGetSsoReq {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LtAuthGetSsoRes {
     pub url: String,
+}
+
+pub struct LtAuthGetSsoQuery<'a> {
+    pub final_redirect_base_url: &'a str,
+}
+
+impl LtRequestQueryParams for LtAuthGetSsoQuery<'_> {
+    fn to_query_params<'a>(
+        &'a self,
+    ) -> Result<HashMap<Cow<'a, str>, Sensitive<String>>, LatticeError> {
+        Ok(HashMap::from([(
+            "FinalRedirectBaseUrl".into(),
+            Sensitive::new(self.final_redirect_base_url.to_owned()),
+        )]))
+    }
 }
 
 impl LtResponseBody for LtAuthGetSsoRes {
@@ -58,20 +76,18 @@ impl LtContract for LtAuthGetSsoReq {
     /// Not [`LtSlimAPIJSON`] — success body is HTML; see module docs.
     type Response = LtAuthGetSsoRes;
     type Body<'a> = LtSlimAPIJSON<()>;
+    type Query<'q> = LtAuthGetSsoQuery<'q>;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
         Ok(Cow::Owned(format!("/auth/v4/sso/{}", self.token)))
     }
 
-    fn query(&self) -> Result<Option<HashMap<String, String>>, LatticeError> {
-        if let Some(url) = &self.final_redirect_base_url {
-            Ok(Some(HashMap::from([(
-                "FinalRedirectBaseUrl".to_string(),
-                url.clone(),
-            )])))
-        } else {
-            Ok(None)
-        }
+    fn query<'a>(&'a self) -> Option<Self::Query<'a>> {
+        self.final_redirect_base_url
+            .as_deref()
+            .map(|final_redirect_base_url| LtAuthGetSsoQuery {
+                final_redirect_base_url,
+            })
     }
 }
 

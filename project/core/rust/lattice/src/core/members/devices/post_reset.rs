@@ -7,7 +7,7 @@ use std::borrow::Cow;
 
 use crate::auth::LtAuthUserKeyId;
 use crate::core::ids::{LtCoreAuthDeviceId, LtCoreMemberEncId};
-use crate::{AuthReq, LatticeError, LtContract, LtSlimAPIJSON, Method, Sensitive};
+use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method, Sensitive};
 
 /// Identifies the target member; body carries the new device to activate and re-encrypted key material.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -44,6 +44,7 @@ pub struct LtCoreResetAuthDevicesUserKey {
 impl LtContract for LtCorePostMembersDevicesResetReq {
     type Response = LtSlimAPIJSON<()>;
     type Body<'a> = LtSlimAPIJSON<&'a LtCorePostMembersDevicesResetBody>;
+    type Query<'q> = LtNoQueryParams;
 
     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, LatticeError> {
         Ok(Method::Post(LtSlimAPIJSON(&self.body)))

@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use passkey::types::webauthn::CredentialRequestOptions;
 
 use crate::auth::LtAuthFidoKeyId;
-use crate::{AuthReq, LatticeError, LtContract, LtSlimAPIJSON, Method, Sensitive};
+use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method, Sensitive};
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -83,6 +83,7 @@ pub struct LtAuthPost2faRes {
 impl LtContract for LtAuthPost2fa {
     type Response = LtSlimAPIJSON<LtAuthPost2faRes>;
     type Body<'b> = LtSlimAPIJSON<&'b Self>;
+    type Query<'q> = LtNoQueryParams;
 
     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, LatticeError> {
         Ok(Method::Post(LtSlimAPIJSON(self)))

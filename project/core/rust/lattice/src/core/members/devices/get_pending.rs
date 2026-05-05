@@ -6,7 +6,7 @@
 use std::borrow::Cow;
 
 use crate::auth::devices::LtAuthDevice;
-use crate::{AuthReq, LatticeError, LtContract, LtSlimAPIJSON};
+use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON};
 
 /// No path or query parameters.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
@@ -23,6 +23,7 @@ pub struct LtCoreGetMembersDevicesPendingRes {
 impl LtContract for LtCoreGetMembersDevicesPendingReq {
     type Response = LtSlimAPIJSON<LtCoreGetMembersDevicesPendingRes>;
     type Body<'a> = LtSlimAPIJSON<()>;
+    type Query<'q> = LtNoQueryParams;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
         Ok(Cow::Borrowed("/core/v4/members/devices/pending"))

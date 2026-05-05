@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeError, LtContract, LtSlimAPIJSON, Method};
+use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method};
 
 use super::ids::LtCoreMemberEncId;
 use super::unpriv_types::{LtCoreUnprivInvitationData, LtCoreUnprivInvitationSignature};
@@ -28,6 +28,7 @@ pub struct LtCorePostMembersUnprivatizeRes {}
 impl LtContract for LtCorePostMembersUnprivatizeReq {
     type Response = LtSlimAPIJSON<LtCorePostMembersUnprivatizeRes>;
     type Body<'a> = LtSlimAPIJSON<&'a LtCorePostMembersUnprivatizeBody>;
+    type Query<'q> = LtNoQueryParams;
 
     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, LatticeError> {
         Ok(Method::Post(LtSlimAPIJSON(&self.body)))

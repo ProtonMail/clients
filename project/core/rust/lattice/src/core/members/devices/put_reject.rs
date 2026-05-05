@@ -5,7 +5,9 @@
 use std::borrow::Cow;
 
 use crate::core::ids::{LtCoreAuthDeviceId, LtCoreMemberEncId};
-use crate::{AuthReq, LatticeError, LtContract, LtEmptyBody, LtSlimAPIJSON, Method};
+use crate::{
+    AuthReq, LatticeError, LtContract, LtEmptyBody, LtNoQueryParams, LtSlimAPIJSON, Method,
+};
 
 /// Path identifies member and device; no JSON body.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -17,6 +19,7 @@ pub struct LtCorePutMembersDevicesRejectReq {
 impl LtContract for LtCorePutMembersDevicesRejectReq {
     type Response = LtSlimAPIJSON<()>;
     type Body<'a> = LtEmptyBody;
+    type Query<'q> = LtNoQueryParams;
 
     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, LatticeError> {
         Ok(Method::Put(LtEmptyBody))

@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeError, LtContract, LtSlimAPIJSON, Sensitive};
+use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Sensitive};
 
 use super::account_enums::{LtCoreMemberOrgKeyStatus, LtCoreMemberState};
 use super::ids::LtCoreMemberEncId;
@@ -159,6 +159,7 @@ pub struct LtCoreMemberListUnprivatization {
 impl LtContract for LtCoreGetMembersReq {
     type Response = LtSlimAPIJSON<LtCoreGetMembersRes>;
     type Body<'a> = LtSlimAPIJSON<()>;
+    type Query<'q> = LtNoQueryParams;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
         Ok(Cow::Borrowed("/core/v4/members"))

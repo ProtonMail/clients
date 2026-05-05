@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crate::auth::LtAuthAddressId;
-use crate::{AuthReq, LatticeError, LtContract, LtSlimAPIJSON, Sensitive};
+use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Sensitive};
 
 use super::account_enums::LtCoreMemberOrgKeyStatus;
 
@@ -102,6 +102,7 @@ pub struct LtCoreGetOrganizationsKeysRes {
 impl LtContract for LtCoreGetOrganizationsKeysReq {
     type Response = LtSlimAPIJSON<LtCoreGetOrganizationsKeysRes>;
     type Body<'a> = LtSlimAPIJSON<()>;
+    type Query<'q> = LtNoQueryParams;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
         Ok(Cow::Borrowed("/core/v4/organizations/keys"))

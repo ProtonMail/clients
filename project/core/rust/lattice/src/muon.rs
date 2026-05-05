@@ -4,7 +4,10 @@ use muon::{
     http::{HttpReq, Method as MuonMethod},
 };
 
-use crate::{LatticeError, LtApiResponseError, LtContract, LtRequestBody, LtResponseBody, Method};
+use crate::{
+    LatticeError, LtApiResponseError, LtContract, LtRequestBody, LtRequestQueryParams,
+    LtResponseBody, Method,
+};
 
 impl<T: LtRequestBody> Method<T> {
     fn as_muon_method(&self) -> MuonMethod {
@@ -44,10 +47,13 @@ impl<T: LtContract> LtContractExt for T {
         let path = self.path()?;
         let mut http_req = HttpReq::new(method.as_muon_method(), path);
 
-        if let Some(query) = self.query()? {
+        if let Some(query) = self.query() {
             http_req = query
+                .to_query_params()?
                 .into_iter()
-                .fold(http_req, |http_req, query| http_req.query(query))
+                .fold(http_req, |http_req, (k, v)| {
+                    http_req.query((k.into_owned(), v.into_inner()))
+                })
         }
 
         http_req = self

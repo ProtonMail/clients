@@ -1,8 +1,8 @@
 use std::borrow::Cow;
 
 use crate::{
-    AuthReq, LatticeError, LtContract, LtSlimAPIJSON, Method, Sensitive, auth::LtAuthFidoKeyId,
-    core::user::LtCoreSrpVerifier,
+    AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method, Sensitive,
+    auth::LtAuthFidoKeyId, core::user::LtCoreSrpVerifier,
 };
 
 /// Inline FIDO2 payload for `PUT /core/v4/keys/private` (alternative to `TwoFactorCode`).
@@ -89,6 +89,7 @@ pub struct LtCorePutKeysPrivateRes {
 impl LtContract for LtCorePutKeysPrivateReq {
     type Response = LtSlimAPIJSON<LtCorePutKeysPrivateRes>;
     type Body<'a> = LtSlimAPIJSON<&'a Self>;
+    type Query<'q> = LtNoQueryParams;
 
     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, LatticeError> {
         Ok(Method::Put(LtSlimAPIJSON(self)))

@@ -5663,8 +5663,10 @@ dependencies = [
  "reqwest 0.12.28",
  "serde",
  "serde_json",
+ "serde_qs 0.13.0",
  "tokio",
  "totp-rs",
+ "url",
  "zeroize",
 ]
 

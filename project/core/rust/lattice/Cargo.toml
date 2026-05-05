@@ -12,11 +12,13 @@
   serde = ["dep:serde", "dep:serde_json", "bitflags?/serde"]
   muon = ["dep:muon"]
   observability = ["serde"]
-  full = ["core", "auth", "muon", "serde", "facet", "observability", "quark"]
+  full = ["core", "auth", "muon", "serde", "facet", "observability", "quark", "serde_qs"]
+  serde_qs = ["dep:serde_qs", "dep:url", "serde"]
 
 [dependencies]
   serde = { optional = true, version = "^1.0.228", features = ["derive"] }
   serde_json = { optional = true, version = "1.0.149" }
+  serde_qs = { workspace = true, optional = true }
   facet = { workspace = true, optional = true }
   zeroize = { version = "1.8.2" }
   derive_more = { workspace = true }
@@ -26,6 +28,7 @@
   num_enum = { workspace = true, optional = true }
   muon = { workspace = true, optional = true }
   regex = { optional = true, version = "1.10" }
+  url = { workspace = true, optional = true }
 
 [dev-dependencies]
   muon = { workspace = true, features = ["full-native"] }

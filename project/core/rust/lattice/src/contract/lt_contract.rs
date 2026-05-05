@@ -1,6 +1,6 @@
 use std::{borrow::Cow, collections::HashMap};
 
-use crate::{LatticeError, LtRequestBody, LtResponseBody, Method};
+use crate::{LatticeError, LtRequestBody, LtRequestQueryParams, LtResponseBody, Method};
 
 /// A trait for all Lattice contracts.
 ///
@@ -14,7 +14,7 @@ use crate::{LatticeError, LtRequestBody, LtResponseBody, Method};
 /// ## GET
 /// ### Without path parameters
 /// ```rust
-/// use lattice::{LtContract, LatticeError, Method, LtSlimAPIJSON};
+/// use lattice::{LtContract, LatticeError, Method, LtSlimAPIJSON, LtNoQueryParams};
 /// use std::borrow::Cow;
 ///
 /// struct GetRequest;
@@ -27,6 +27,7 @@ use crate::{LatticeError, LtRequestBody, LtResponseBody, Method};
 /// impl LtContract for GetRequest {
 ///     type Response = LtSlimAPIJSON<GetRequestRes>;
 ///     type Body<'a> = LtSlimAPIJSON<()>;
+///     type Query<'a> = LtNoQueryParams;
 ///
 ///     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
 ///         Ok(Cow::Borrowed("/auth/v4/modulus"))
@@ -38,7 +39,7 @@ use crate::{LatticeError, LtRequestBody, LtResponseBody, Method};
 ///
 /// ### With path parameters
 /// ```rust
-/// use lattice::{LtContract, LatticeError, Method, LtSlimAPIJSON};
+/// use lattice::{LtContract, LatticeError, Method, LtSlimAPIJSON, LtNoQueryParams};
 /// use std::borrow::Cow;
 ///
 /// struct GetRequest {
@@ -53,6 +54,7 @@ use crate::{LatticeError, LtRequestBody, LtResponseBody, Method};
 /// impl LtContract for GetRequest {
 ///     type Response = LtSlimAPIJSON<GetRequestRes>;
 ///     type Body<'a> = LtSlimAPIJSON<()>;
+///     type Query<'a> = LtNoQueryParams;
 ///
 ///     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
 ///         Ok(Cow::Owned(format!("/some/path/{}", self.some_path_param)))
@@ -64,7 +66,7 @@ use crate::{LatticeError, LtRequestBody, LtResponseBody, Method};
 ///
 /// ## DELETE
 /// ```rust
-/// use lattice::{LtContract, LatticeError, Method, LtSlimAPIJSON};
+/// use lattice::{LtContract, LatticeError, Method, LtSlimAPIJSON, LtNoQueryParams};
 /// use std::borrow::Cow;
 ///
 /// #[derive(serde::Deserialize)]
@@ -79,6 +81,7 @@ use crate::{LatticeError, LtRequestBody, LtResponseBody, Method};
 /// impl LtContract for PutRequest {
 ///     type Response = LtSlimAPIJSON<PutRequestRes>;
 ///     type Body<'a> = LtSlimAPIJSON<()>;
+///     type Query<'a> = LtNoQueryParams;
 ///
 ///     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
 ///         Ok(Cow::Owned(format!("/some/path/{}", self.some_path_param)))
@@ -95,7 +98,7 @@ use crate::{LatticeError, LtRequestBody, LtResponseBody, Method};
 /// ## POST / PUT
 /// ### Without url parameters
 /// ```rust
-/// use lattice::{LtContract, LatticeError, Method, LtSlimAPIJSON};
+/// use lattice::{LtContract, LatticeError, Method, LtSlimAPIJSON, LtNoQueryParams};
 /// use std::borrow::Cow;
 ///
 /// #[derive(serde::Deserialize)]
@@ -111,6 +114,7 @@ use crate::{LatticeError, LtRequestBody, LtResponseBody, Method};
 /// impl LtContract for PostRequest {
 ///     type Response = LtSlimAPIJSON<PostRequestRes>;
 ///     type Body<'a> = LtSlimAPIJSON<&'a Self>;
+///     type Query<'a> = LtNoQueryParams;
 ///
 ///     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, LatticeError> {
 ///         Ok(Method::Post(LtSlimAPIJSON(self)))
@@ -126,7 +130,7 @@ use crate::{LatticeError, LtRequestBody, LtResponseBody, Method};
 ///
 /// ### With url parameters
 /// ```rust
-/// use lattice::{LtContract, LatticeError, Method, LtSlimAPIJSON};
+/// use lattice::{LtContract, LatticeError, Method, LtSlimAPIJSON, LtNoQueryParams};
 /// use std::borrow::Cow;
 ///
 /// #[derive(serde::Deserialize)]
@@ -147,6 +151,7 @@ use crate::{LatticeError, LtRequestBody, LtResponseBody, Method};
 /// impl LtContract for PostRequest {
 ///     type Response = LtSlimAPIJSON<PostRequestRes>;
 ///     type Body<'a> = LtSlimAPIJSON<&'a PostRequestBody>;
+///     type Query<'a> = LtNoQueryParams;
 ///
 ///     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, LatticeError> {
 ///         Ok(Method::Post(LtSlimAPIJSON(&self.body))) // Or Method::Put(LtSlimAPIJSON(&self.body))
@@ -162,12 +167,14 @@ use crate::{LatticeError, LtRequestBody, LtResponseBody, Method};
 ///
 /// ## Query parameters
 /// ```rust
-/// use lattice::{LtContract, LatticeError, Method, LtSlimAPIJSON};
+/// use lattice::{LtContract, LtRequestQueryParams, LatticeError, Method, LtSlimAPIJSON, Sensitive};
 /// use std::collections::HashMap;
 /// use std::borrow::Cow;
 ///
+/// #[derive(serde::Serialize)]
 /// struct GetRequest {
-///     some_query_param: String,
+///   #[serde(skip)]
+///   query_params: GetRequestQueryParams,
 /// }
 ///
 /// #[derive(serde::Deserialize)]
@@ -175,12 +182,25 @@ use crate::{LatticeError, LtRequestBody, LtResponseBody, Method};
 ///     some_json_field: String,
 /// }
 ///
+/// struct GetRequestQueryParams {
+///     some_query_param: String,
+/// }
+///
+/// impl LtRequestQueryParams for GetRequestQueryParams {
+///     fn to_query_params<'a>(
+///         &'a self,
+///     ) -> Result<HashMap<Cow<'a, str>, Sensitive<String>>, LatticeError> {
+///         Ok(HashMap::from([("SomeQueryPrama".into(), Sensitive::new(self.some_query_param.clone()))]))
+///     }
+/// }
+///
 /// impl LtContract for GetRequest {
 ///     type Response = LtSlimAPIJSON<GetRequestRes>;
 ///     type Body<'a> = LtSlimAPIJSON<()>;
+///     type Query<'a> = &'a GetRequestQueryParams;
 ///
-///     fn query(&self) -> Result<Option<HashMap<String, String>>, LatticeError> {
-///         Ok(Some(HashMap::from([("some_query_param".to_string(), self.some_query_param.to_string())])))
+///     fn query<'a>(&'a self) -> Option<Self::Query<'a>> {
+///        Some(&self.query_params)
 ///     }
 ///
 ///     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
@@ -208,6 +228,10 @@ pub trait LtContract {
     where
         Self: 'b;
 
+    type Query<'q>: LtRequestQueryParams
+    where
+        Self: 'q;
+
     /// The path for the contract.
     ///
     /// This method returns the path for the contract.
@@ -224,12 +248,12 @@ pub trait LtContract {
     /// This method returns the query parameters for the contract.
     /// The query parameters are the HTTP url query parameters for the request.
     ///
-    /// The query parameters are a `HashMap<String, String>`.
-    /// The key is the query parameter name and the value is the query parameter value.
+    /// The query paremeters ar serialized via `serde_qs` from the supplied
+    /// type.
     ///
     /// The query parameters can be `None` if there are no query parameters.
-    fn query(&self) -> Result<Option<HashMap<String, String>>, LatticeError> {
-        Ok(None)
+    fn query<'a>(&'a self) -> Option<Self::Query<'a>> {
+        None
     }
 
     /// The headers for the contract.

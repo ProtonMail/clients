@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{LtContract, LtSlimAPIJSON, Sensitive, UnauthReq};
+use crate::{LtContract, LtNoQueryParams, LtSlimAPIJSON, Sensitive, UnauthReq};
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -20,6 +20,7 @@ pub struct LtAuthGetModulusRes {
 impl LtContract for LtAuthGetModulusReq {
     type Response = LtSlimAPIJSON<LtAuthGetModulusRes>;
     type Body<'a> = LtSlimAPIJSON<()>;
+    type Query<'q> = LtNoQueryParams;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, crate::LatticeError> {
         Ok(Cow::Borrowed("/auth/v4/modulus"))

@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeError, LtContract, LtSlimAPIJSON, Method};
+use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method};
 
 use super::{LtCoreDomainId, post_domains::LtCoreDomainOutput};
 
@@ -43,6 +43,7 @@ pub struct LtCorePutDomainsRes {
 impl LtContract for LtCorePutDomainsReq {
     type Response = LtSlimAPIJSON<LtCorePutDomainsRes>;
     type Body<'a> = LtSlimAPIJSON<&'a Self>;
+    type Query<'q> = LtNoQueryParams;
 
     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, LatticeError> {
         Ok(Method::Put(LtSlimAPIJSON(self)))

@@ -1,7 +1,7 @@
 use std::num::NonZeroU32;
 use std::{borrow::Cow, collections::HashMap};
 
-use crate::{AuthReq, LatticeError, LtContract, LtSlimAPIJSON};
+use crate::{AuthReq, LatticeError, LtContract, LtRequestQueryParams, LtSlimAPIJSON, Sensitive};
 
 use super::post_domains::LtCoreDomainOutput;
 
@@ -32,29 +32,49 @@ pub struct LtCoreGetDomainsRes {
     pub total: u32,
 }
 
+pub struct LtCoreGetDomainsQueryParams {
+    pub page_size: Option<NonZeroU32>,
+    pub page: Option<u32>,
+}
+
+impl LtRequestQueryParams for LtCoreGetDomainsQueryParams {
+    fn to_query_params<'a>(
+        &'a self,
+    ) -> Result<HashMap<Cow<'a, str>, Sensitive<String>>, LatticeError> {
+        let mut params = HashMap::new();
+
+        if let Some(page_size) = self.page_size {
+            params.insert(
+                "PageSize".into(),
+                Sensitive::new(page_size.get().to_string()),
+            );
+        }
+
+        if let Some(page) = self.page {
+            params.insert("Page".into(), Sensitive::new(page.to_string()));
+        }
+
+        Ok(params)
+    }
+}
+
 impl LtContract for LtCoreGetDomainsReq {
     type Response = LtSlimAPIJSON<LtCoreGetDomainsRes>;
     type Body<'a> = LtSlimAPIJSON<()>;
+    type Query<'q> = LtCoreGetDomainsQueryParams;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
         Ok(Cow::Borrowed("/core/v4/domains"))
     }
 
-    fn query(&self) -> Result<Option<HashMap<String, String>>, LatticeError> {
-        let mut params = HashMap::new();
-
-        if let Some(page_size) = self.page_size {
-            params.insert(String::from("PageSize"), page_size.get().to_string());
-        }
-
-        if let Some(page) = self.page {
-            params.insert(String::from("Page"), page.to_string());
-        }
-
-        if params.is_empty() {
-            Ok(None)
+    fn query<'a>(&'a self) -> Option<Self::Query<'a>> {
+        if self.page_size.is_some() || self.page.is_some() {
+            Some(LtCoreGetDomainsQueryParams {
+                page_size: self.page_size,
+                page: self.page,
+            })
         } else {
-            Ok(Some(params))
+            None
         }
     }
 }

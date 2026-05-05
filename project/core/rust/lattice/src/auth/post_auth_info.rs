@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{
-    AuthReq, LatticeError, LtContract, LtSlimAPIJSON, Method, UnauthReq,
+    AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method, UnauthReq,
     auth::{LtAuthSrpChallenge, LtAuthTwoFactorOptions},
 };
 
@@ -65,6 +65,7 @@ pub enum LtAuthPostInfoRes {
 impl LtContract for LtAuthPostInfoReq {
     type Response = LtSlimAPIJSON<LtAuthPostInfoRes>;
     type Body<'b> = LtSlimAPIJSON<&'b Self>;
+    type Query<'q> = LtNoQueryParams;
 
     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, LatticeError> {
         Ok(Method::Post(LtSlimAPIJSON(self)))

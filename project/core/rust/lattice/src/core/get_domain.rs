@@ -1,6 +1,6 @@
 use std::{borrow::Cow, collections::HashMap};
 
-use crate::{AuthReq, LatticeError, LtContract, LtSlimAPIJSON};
+use crate::{AuthReq, LatticeError, LtContract, LtRequestQueryParams, LtSlimAPIJSON, Sensitive};
 
 use super::{LtCoreDomainId, post_domains::LtCoreDomainOutput};
 
@@ -30,23 +30,33 @@ pub struct LtCoreGetDomainRes {
     pub domain: LtCoreDomainOutput,
 }
 
+pub struct LtCoreGetDomainQueryParams {
+    pub refresh: bool,
+}
+
+impl LtRequestQueryParams for LtCoreGetDomainQueryParams {
+    fn to_query_params<'a>(
+        &'a self,
+    ) -> Result<HashMap<Cow<'a, str>, crate::Sensitive<String>>, LatticeError> {
+        Ok(HashMap::from([(
+            "Refresh".into(),
+            Sensitive::new(String::from(if self.refresh { "1" } else { "0" })),
+        )]))
+    }
+}
+
 impl LtContract for LtCoreGetDomainReq {
     type Response = LtSlimAPIJSON<LtCoreGetDomainRes>;
     type Body<'a> = LtSlimAPIJSON<()>;
+    type Query<'q> = LtCoreGetDomainQueryParams;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
         Ok(Cow::Owned(format!("/core/v4/domains/{}", self.domain_id)))
     }
 
-    fn query(&self) -> Result<Option<HashMap<String, String>>, LatticeError> {
-        if let Some(refresh) = self.refresh {
-            Ok(Some(HashMap::from([(
-                String::from("Refresh"),
-                String::from(if refresh { "1" } else { "0" }),
-            )])))
-        } else {
-            Ok(None)
-        }
+    fn query<'a>(&'a self) -> Option<Self::Query<'a>> {
+        self.refresh
+            .map(|refresh| LtCoreGetDomainQueryParams { refresh })
     }
 }
 

@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{LatticeError, LtContract, LtSlimAPIJSON, Method, UnauthReq};
+use crate::{LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method, UnauthReq};
 
 pub const DATA_V1_METRICS_PATH: &str = "/data/v1/metrics";
 
@@ -29,6 +29,7 @@ pub struct LtDataPostMetricsElement {
 impl LtContract for LtDataPostMetricsReq {
     type Response = LtSlimAPIJSON<()>;
     type Body<'b> = LtSlimAPIJSON<&'b Self>;
+    type Query<'q> = LtNoQueryParams;
 
     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, LatticeError> {
         Ok(Method::Post(LtSlimAPIJSON(self)))

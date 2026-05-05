@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crate::auth::LtAuthAddressId;
-use crate::{AuthReq, LatticeError, LtContract, LtSlimAPIJSON, Method, Sensitive};
+use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method, Sensitive};
 
 /// `PUT /core/v4/organizations/keys/signature` — publish org-identity (fingerprint) signature.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -29,6 +29,7 @@ pub struct LtCorePutOrganizationsKeysSignatureRes {}
 impl LtContract for LtCorePutOrganizationsKeysSignatureReq {
     type Response = LtSlimAPIJSON<LtCorePutOrganizationsKeysSignatureRes>;
     type Body<'a> = LtSlimAPIJSON<&'a LtCorePutOrganizationsKeysSignatureBody>;
+    type Query<'q> = LtNoQueryParams;
 
     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, LatticeError> {
         Ok(Method::Put(LtSlimAPIJSON(&self.body)))

@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeError, LtContract, LtSlimAPIJSON};
+use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON};
 
 use super::LtAuthDevice;
 
@@ -20,6 +20,7 @@ pub struct LtAuthGetDevicesRes {
 impl LtContract for LtAuthGetDevicesReq {
     type Response = LtSlimAPIJSON<LtAuthGetDevicesRes>;
     type Body<'a> = LtSlimAPIJSON<()>;
+    type Query<'q> = LtNoQueryParams;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
         Ok(Cow::Borrowed("/auth/v4/devices"))

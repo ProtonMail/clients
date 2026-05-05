@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 
 use crate::{
-    AuthReq, LatticeError, LtContract, LtSlimAPIJSON, Method, Sensitive,
+    AuthReq, LatticeError, LtContract, LtRequestQueryParams, LtSlimAPIJSON, Method, Sensitive,
     core::{LtCoreAddressKeyInput, LtCoreAsyncUserInitialization, user::LtCoreUser},
 };
 
@@ -52,9 +52,25 @@ pub struct LtCorePostKeysSetupRes {
     pub user: LtCoreUser,
 }
 
+pub struct LtCorePostKeysSetupQueryParams {
+    flag: i32,
+}
+
+impl LtRequestQueryParams for LtCorePostKeysSetupQueryParams {
+    fn to_query_params<'a>(
+        &'a self,
+    ) -> Result<HashMap<Cow<'a, str>, Sensitive<String>>, LatticeError> {
+        Ok(HashMap::from([(
+            "AsyncUserInitialization".into(),
+            Sensitive::new(self.flag.to_string()),
+        )]))
+    }
+}
+
 impl LtContract for LtCorePostKeysSetupReq {
     type Response = LtSlimAPIJSON<LtCorePostKeysSetupRes>;
     type Body<'a> = LtSlimAPIJSON<&'a LtCoreSetupKeysBody>;
+    type Query<'q> = LtCorePostKeysSetupQueryParams;
 
     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, LatticeError> {
         Ok(Method::Post(LtSlimAPIJSON(&self.body)))
@@ -64,12 +80,9 @@ impl LtContract for LtCorePostKeysSetupReq {
         Ok(Cow::Borrowed("/core/v4/keys/setup"))
     }
 
-    fn query(&self) -> Result<Option<HashMap<String, String>>, LatticeError> {
+    fn query<'a>(&'a self) -> Option<Self::Query<'a>> {
         let flag: i32 = self.user_init_flag.into();
-        Ok(Some(HashMap::from([(
-            "AsyncUserInitialization".to_string(),
-            flag.to_string(),
-        )])))
+        Some(LtCorePostKeysSetupQueryParams { flag })
     }
 }
 

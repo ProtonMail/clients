@@ -36,6 +36,7 @@ members = [
     "project/contact/rust/contact-service",
     "project/core/rust/core-client-info-op",
     "project/core/rust/core-common-types",
+    "project/core/rust/core-crux-shell",
     "project/core/rust/core-crux-types",
     "project/core/rust/core-db-op",
     "project/core/rust/core-device-info-op",
@@ -193,6 +194,9 @@ path = "project/core/rust/core-feature-flags"
 
 [workspace.dependencies.core-feature-flags-op]
 path = "project/core/rust/core-feature-flags-op"
+
+[workspace.dependencies.core-crux-shell]
+path = "project/core/rust/core-crux-shell"
 
 [workspace.dependencies.muon]
 version = "2.3.0"

@@ -140,9 +140,6 @@
 
 [workspace.dependencies.crux_core]
   version = "0.17.0"
-  git = "https://github.com/redbadger/crux"
-  # https://github.com/redbadger/crux/pull/518
-  rev = "04347ef20277faa80f041c9b99ee79fcdb39b7d1"
   features = ["facet_typegen"]
 
 [workspace.dependencies.facet]

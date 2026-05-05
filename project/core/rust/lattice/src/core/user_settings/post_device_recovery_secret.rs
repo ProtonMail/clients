@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeError, LtContract, LtSlimAPIJSON, Method, Sensitive};
+use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method, Sensitive};
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug)]
@@ -13,6 +13,7 @@ pub struct LtCorePostDeviceRecoverySecretReq {
 impl LtContract for LtCorePostDeviceRecoverySecretReq {
     type Response = LtSlimAPIJSON<()>;
     type Body<'a> = LtSlimAPIJSON<&'a Self>;
+    type Query<'q> = LtNoQueryParams;
 
     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, LatticeError> {
         Ok(Method::Post(LtSlimAPIJSON(self)))

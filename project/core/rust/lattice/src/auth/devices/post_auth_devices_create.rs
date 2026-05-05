@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeError, LtContract, LtSlimAPIJSON, Method};
+use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method};
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -37,6 +37,7 @@ pub struct LtAuthPostDevicesCreateAuthDevice {
 impl LtContract for LtAuthPostDevicesCreateReq {
     type Response = LtSlimAPIJSON<LtAuthPostDevicesCreateRes>;
     type Body<'a> = LtSlimAPIJSON<&'a Self>;
+    type Query<'q> = LtNoQueryParams;
 
     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, LatticeError> {
         Ok(Method::Post(LtSlimAPIJSON(self)))

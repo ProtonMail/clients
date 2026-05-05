@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{
-    LatticeError, LtContract, LtSlimAPIJSON, Method, UnauthReq,
+    LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method, UnauthReq,
     core::user::{LtCoreCreateUserType, LtCoreSrpVerifier, LtCoreUser},
 };
 
@@ -35,6 +35,7 @@ pub struct LtCorePostUsersExternalRes {
 impl LtContract for LtCorePostUsersExternalReq {
     type Response = LtSlimAPIJSON<LtCorePostUsersExternalRes>;
     type Body<'a> = LtSlimAPIJSON<&'a Self>;
+    type Query<'q> = LtNoQueryParams;
 
     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, LatticeError> {
         Ok(Method::Post(LtSlimAPIJSON(self)))

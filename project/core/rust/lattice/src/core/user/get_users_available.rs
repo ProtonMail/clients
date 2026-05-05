@@ -1,7 +1,10 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
 
-use crate::{LatticeError, LtContract, LtSlimAPIJSON, UnauthReq, core::user::LtCoreParseDomain};
+use crate::{
+    LatticeError, LtContract, LtRequestQueryParams, LtSlimAPIJSON, Sensitive, UnauthReq,
+    core::user::LtCoreParseDomain,
+};
 
 pub struct LtCoreGetUsersAvailableReq {
     /// The username to check for availability.
@@ -13,20 +16,40 @@ pub struct LtCoreGetUsersAvailableReq {
     pub payment_info_token: Option<String>,
 }
 
+pub struct LtCoreGetUsersAvailableQueryParams<'a> {
+    pub name: &'a str,
+    pub parse_domain: u8,
+}
+
+impl LtRequestQueryParams for LtCoreGetUsersAvailableQueryParams<'_> {
+    fn to_query_params<'a>(
+        &'a self,
+    ) -> Result<HashMap<Cow<'a, str>, Sensitive<String>>, LatticeError> {
+        Ok(HashMap::from([
+            ("Name".into(), Sensitive::new(self.name.to_owned())),
+            (
+                "ParseDomain".into(),
+                Sensitive::new(self.parse_domain.to_string()),
+            ),
+        ]))
+    }
+}
+
 impl LtContract for LtCoreGetUsersAvailableReq {
     type Response = LtSlimAPIJSON<()>;
     type Body<'a> = LtSlimAPIJSON<()>;
+    type Query<'q> = LtCoreGetUsersAvailableQueryParams<'q>;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
         Ok(Cow::Borrowed("/core/v4/users/available"))
     }
 
-    fn query(&self) -> Result<Option<HashMap<String, String>>, LatticeError> {
+    fn query<'a>(&'a self) -> Option<Self::Query<'a>> {
         let parse_domain: u8 = self.parse_domain.into();
-        Ok(Some(HashMap::from([
-            ("Name".to_string(), self.name.clone()),
-            ("ParseDomain".to_string(), parse_domain.to_string()),
-        ])))
+        Some(LtCoreGetUsersAvailableQueryParams {
+            name: self.name.as_str(),
+            parse_domain,
+        })
     }
 
     fn headers(&self) -> Result<HashMap<String, String>, LatticeError> {

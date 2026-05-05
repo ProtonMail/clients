@@ -7,7 +7,7 @@ use std::borrow::Cow;
 
 use crate::auth::devices::LtAuthDevice;
 use crate::core::ids::LtCoreMemberEncId;
-use crate::{AuthReq, LatticeError, LtContract, LtSlimAPIJSON};
+use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON};
 
 /// Request to list auth devices for a member (path `id` = encrypted member id).
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -26,6 +26,7 @@ pub struct LtCoreGetMembersDevicesRes {
 impl LtContract for LtCoreGetMembersDevicesReq {
     type Response = LtSlimAPIJSON<LtCoreGetMembersDevicesRes>;
     type Body<'a> = LtSlimAPIJSON<()>;
+    type Query<'q> = LtNoQueryParams;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
         Ok(Cow::Owned(format!(

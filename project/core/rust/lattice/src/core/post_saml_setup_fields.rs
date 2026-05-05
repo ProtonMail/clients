@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeError, LtContract, LtSlimAPIJSON, Method};
+use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method};
 
 use super::{LtCoreDomainId, account_enums::LtCoreSsoType};
 
@@ -104,6 +104,7 @@ pub struct LtCorePostSamlSetupFieldsRes {
 impl LtContract for LtCorePostSamlSetupFieldsReq {
     type Response = LtSlimAPIJSON<LtCorePostSamlSetupFieldsRes>;
     type Body<'a> = LtSlimAPIJSON<&'a Self>;
+    type Query<'q> = LtNoQueryParams;
 
     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, LatticeError> {
         Ok(Method::Post(LtSlimAPIJSON(self)))

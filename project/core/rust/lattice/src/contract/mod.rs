@@ -12,8 +12,10 @@
 //! requires authentication. This helps with type-safe session handling.
 
 mod lt_contract;
+mod lt_query_params;
 
 pub use lt_contract::LtContract;
+pub use lt_query_params::*;
 
 use crate::LatticeError;
 

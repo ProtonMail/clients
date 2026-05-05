@@ -1,6 +1,8 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeError, LtContract, LtEmptyBody, LtSlimAPIJSON, Method};
+use crate::{
+    AuthReq, LatticeError, LtContract, LtEmptyBody, LtNoQueryParams, LtSlimAPIJSON, Method,
+};
 
 /// `PUT /auth/v4/devices/{deviceId}/admin` — request org-admin help (no request body; `LtEmptyBody`).
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
@@ -15,6 +17,7 @@ pub struct LtAuthPutDevicesDeviceIDAdminReq {
 impl LtContract for LtAuthPutDevicesDeviceIDAdminReq {
     type Response = LtSlimAPIJSON<()>;
     type Body<'a> = LtEmptyBody;
+    type Query<'q> = LtNoQueryParams;
 
     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, LatticeError> {
         Ok(Method::Put(LtEmptyBody))

@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{LatticeError, LtContract, LtSlimAPIJSON, Method, UnauthReq};
+use crate::{LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method, UnauthReq};
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
@@ -12,6 +12,7 @@ pub struct LtCorePostValidatePhoneReq {
 impl LtContract for LtCorePostValidatePhoneReq {
     type Response = LtSlimAPIJSON<()>;
     type Body<'a> = LtSlimAPIJSON<&'a Self>;
+    type Query<'q> = LtNoQueryParams;
 
     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, LatticeError> {
         Ok(Method::Post(LtSlimAPIJSON(self)))

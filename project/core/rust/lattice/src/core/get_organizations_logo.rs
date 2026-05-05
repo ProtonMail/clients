@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeError, LtContract, LtRawBody, LtSlimAPIJSON};
+use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtRawBody, LtSlimAPIJSON};
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -12,6 +12,7 @@ pub struct LtCoreGetOrganizationsLogoReq {
 impl LtContract for LtCoreGetOrganizationsLogoReq {
     type Response = LtRawBody;
     type Body<'a> = LtSlimAPIJSON<()>;
+    type Query<'q> = LtNoQueryParams;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
         Ok(Cow::Owned(format!(

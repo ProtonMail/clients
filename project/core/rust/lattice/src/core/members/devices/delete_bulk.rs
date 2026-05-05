@@ -5,7 +5,7 @@
 use std::borrow::Cow;
 
 use crate::core::ids::LtCoreMemberEncId;
-use crate::{AuthReq, LatticeError, LtContract, LtSlimAPIJSON, Method};
+use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method};
 
 /// No body; `memberId` selects the org member.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -16,6 +16,7 @@ pub struct LtCoreDeleteMembersDevicesReq {
 impl LtContract for LtCoreDeleteMembersDevicesReq {
     type Response = LtSlimAPIJSON<()>;
     type Body<'a> = LtSlimAPIJSON<()>;
+    type Query<'q> = LtNoQueryParams;
 
     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, LatticeError> {
         Ok(Method::Delete)

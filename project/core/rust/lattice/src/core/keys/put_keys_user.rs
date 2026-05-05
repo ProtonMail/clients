@@ -2,8 +2,8 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 
 use crate::{
-    AuthReq, LatticeError, LtContract, LtSlimAPIJSON, Method, Sensitive, auth::LtAuthUserKeyId,
-    core::LtCoreSignedKeyList,
+    AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method, Sensitive,
+    auth::LtAuthUserKeyId, core::LtCoreSignedKeyList,
 };
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -27,6 +27,7 @@ pub struct LtCorePutKeysUserReq {
 impl LtContract for LtCorePutKeysUserReq {
     type Response = LtSlimAPIJSON<()>;
     type Body<'a> = LtSlimAPIJSON<&'a LtCorePutKeysUserBody>;
+    type Query<'q> = LtNoQueryParams;
 
     fn method<'a>(&'a self) -> Result<Method<Self::Body<'a>>, LatticeError> {
         Ok(Method::Put(LtSlimAPIJSON(&self.body)))

@@ -1,7 +1,8 @@
 use std::borrow::Cow;
 
 use crate::{
-    AuthReq, LatticeError, LtContract, LtSlimAPIJSON, auth::LtAuthEventId, core::LtCoreEvents,
+    AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, auth::LtAuthEventId,
+    core::LtCoreEvents,
 };
 
 #[cfg_attr(feature = "facet", derive(facet::Facet))]
@@ -25,6 +26,7 @@ pub struct LtCoreGetEventsIdRes {
 impl LtContract for LtCoreGetEventsIdReq {
     type Response = LtSlimAPIJSON<LtCoreGetEventsIdRes>;
     type Body<'a> = LtSlimAPIJSON<()>;
+    type Query<'q> = LtNoQueryParams;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
         Ok(Cow::Owned(format!("/core/v6/events/{}", self.event_id.0)))
@@ -73,6 +75,7 @@ impl<'de> serde::Deserialize<'de> for LtCoreGetEventsIdRawRes {
 impl LtContract for LtCoreGetEventsIdRawReq {
     type Response = LtSlimAPIJSON<LtCoreGetEventsIdRawRes>;
     type Body<'a> = LtSlimAPIJSON<()>;
+    type Query<'q> = LtNoQueryParams;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
         Ok(Cow::Owned(format!("/core/v6/events/{}", self.event_id.0)))
@@ -98,6 +101,7 @@ pub struct LtCoreGetEventsLatestRes {
 impl LtContract for LtCoreGetEventsLatestReq {
     type Response = LtSlimAPIJSON<LtCoreGetEventsLatestRes>;
     type Body<'a> = LtSlimAPIJSON<()>;
+    type Query<'q> = LtNoQueryParams;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
         Ok(Cow::Borrowed("/core/v6/events/latest"))

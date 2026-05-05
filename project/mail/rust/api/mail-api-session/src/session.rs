@@ -1,6 +1,7 @@
 use derive_more::Debug;
 use futures::FutureExt;
-use mail_api_shared::ApiServiceResult;
+use lattice::{LatticeError, LtContract};
+use mail_api_shared::{ApiServiceError, ApiServiceResult};
 use mail_muon::client::InfoProvider;
 use mail_muon::client::flow::{ForkFlowResult, WithSelectorFlow};
 use mail_muon::common::{BoxFut, ParseEndpointErr, Sender};
@@ -14,6 +15,9 @@ use tokio::sync::RwLock;
 use crate::auth::UserKeySecret;
 use crate::build::{BuildError, build};
 use crate::crypto_clock::init_server_crypto_clock;
+use crate::lattice::{
+    from_muon_res_to_lattice_error, lattice_error_to_api_error, lattice_request_to_muon_request,
+};
 use crate::store::{BoxStore, DynStore, Store, TempStore};
 use crate::verification::{DynChallengeNotifier, FailNotifier};
 
@@ -419,6 +423,28 @@ impl Session {
             connection_monitor: parts.connection_monitor,
             network_status_observer: parts.network_status_observer,
         }
+    }
+
+    pub async fn run_lattice_contract<T: LtContract>(
+        &self,
+        contract: T,
+    ) -> Result<T::Response, LatticeError> {
+        let http_req = lattice_request_to_muon_request(contract)?;
+        let resp = self
+            .send_impl(http_req)
+            .await
+            .map_err(LatticeError::MailMuon)?;
+        from_muon_res_to_lattice_error::<T>(resp)
+    }
+
+    pub async fn run_lattice_contract_compat<T: LtContract>(
+        &self,
+        contract: T,
+    ) -> Result<T::Response, ApiServiceError> {
+        let http_req =
+            lattice_request_to_muon_request(contract).map_err(lattice_error_to_api_error)?;
+        let resp = self.send_impl(http_req).await?;
+        from_muon_res_to_lattice_error::<T>(resp).map_err(lattice_error_to_api_error)
     }
 }
 

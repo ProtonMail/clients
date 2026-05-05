@@ -334,7 +334,7 @@ where
             queries,
             commands,
             updates,
-            handle,
+            source_db_handle,
             tasks,
         } = ScrollerWorker::run(id, ctx_weak.clone(), source, page_size, label).await?;
 
@@ -383,7 +383,10 @@ where
                 commands,
                 tasks,
             },
-            MailScrollerHandle { updates, handle },
+            MailScrollerHandle {
+                updates,
+                source_db_handle,
+            },
         ))
     }
 
@@ -715,7 +718,7 @@ where
 
 pub struct MailScrollerHandle<T> {
     pub updates: flume::Receiver<ScrollerUpdate<T>>,
-    pub handle: DropRemoveTableObserverHandle,
+    pub source_db_handle: DropRemoveTableObserverHandle,
 }
 
 struct ScrollerWorker<S>
@@ -771,11 +774,19 @@ where
         let tables = source.watched_tables();
 
         let WatcherHandle {
-            receiver, handle, ..
+            receiver: source_db_receiver,
+            handle: source_db_handle,
+            ..
         } = arc_ctx
             .user_stash()
             .subscribe_to(move |sender| Box::new(MailScrollerWatcher { sender, tables }))
             .await?;
+
+        let WatcherHandle {
+            receiver: category_db_receiver,
+            handle: category_db_handle,
+            ..
+        } = CategoryView::watch(arc_ctx.user_stash()).await?;
 
         let source = Arc::new(RwLock::new(source));
         let items = Arc::new(SyncRwLock::new(vec![]));
@@ -797,15 +808,17 @@ where
         let tasks = this.spawn(
             query_rx,
             command_tx.clone(),
-            receiver,
+            source_db_receiver,
             invalidation_receiver,
+            category_db_receiver,
+            category_db_handle,
         )?;
 
         Ok(ScrollerWorkerHandle {
             queries: query_tx,
             commands: command_tx,
             updates: update_receiver,
-            handle,
+            source_db_handle,
             tasks,
         })
     }
@@ -814,14 +827,18 @@ where
         mut self,
         queries: flume::Receiver<ScrollerQuery<S::Item>>,
         commands: flume::Sender<ScrollerCommand>,
-        on_db_changed: flume::Receiver<()>,
-        on_invalidated: flume::Receiver<()>,
+        on_source_db_change: flume::Receiver<()>,
+        on_invalidation: flume::Receiver<()>,
+        on_category_db_change: flume::Receiver<()>,
+        category_db_handle: DropRemoveTableObserverHandle,
     ) -> Result<Vec<AbortHandle>, MailContextError> {
         let ctx = self.ctx.upgrade().ok_or(MailContextError::MissingContext)?;
         let source = self.source.clone();
         let items = Arc::clone(&self.items);
 
         let cmd_handler = ctx.spawn(async move {
+            let _category_db_handle = category_db_handle;
+
             while let Ok(command) = self.command_rx.recv_async().await {
                 // This prevents abusing the scroller by sending multiple commands
                 // in a row. We do not want and need to handle all of them one by one.
@@ -842,7 +859,7 @@ where
 
             loop {
                 select! {
-                    r = on_invalidated.recv_async() => {
+                    r = on_invalidation.recv_async() => {
                         if let Err(e) = r {
                             error!("Failed to receive invalidation: {e:?}");
                             return;
@@ -853,7 +870,7 @@ where
                             .inspect_err(|e| error!("Failed to send refresh command: {e:?}"));
                     }
 
-                    r = on_db_changed.recv_async() => {
+                    r = on_source_db_change.recv_async() => {
                         if let Err(e) = r {
                             error!("Failed to receive db update: {e:?}");
                             return;
@@ -873,6 +890,17 @@ where
                         if let Err(e) = Self::handle_query(r.unwrap(), &source, &items, &ctx).await {
                             error!("Failed to handle query: {e:?}");
                         }
+                    }
+
+                    r = on_category_db_change.recv_async() => {
+                        if let Err(e) = r {
+                            error!("Failed to receive settings update: {e:?}");
+                            return;
+                        }
+
+                        let _ = commands
+                            .send_async(ScrollerCommand::CategoryViewChanged(ScrollerSource::Database)).await
+                            .inspect_err(|e| error!("Failed to send settings changed command: {e:?}"));
                     }
                 }
             }
@@ -1013,27 +1041,21 @@ where
                         .map_err(|e| anyhow!("Failed to send category filter update: {e:?}"))?;
                 }
 
-                // Emit CategoryViewChanged with the resolved state.
-                // Errors here are propagated as ScrollerUpdate::Error.
-                let ctx = match self.ctx.upgrade() {
-                    Some(ctx) => ctx,
-                    None => {
-                        error!("Cannot emit CategoryViewChanged: context dropped");
-                        return Ok(());
-                    }
-                };
-                let tether = ctx.user_stash().connection().await.map_err(|e| {
-                    anyhow!("Failed to acquire connection for CategoryViewChanged: {e:?}")
-                })?;
-                let view = self.source.read().await.category_view().clone();
-                let category_view = view
-                    .into_labels(&tether)
+                self.emit_category_view_changed(src).await?;
+            }
+
+            ScrollerCommand::CategoryViewChanged(src) => {
+                let result = self
+                    .handle_category_changed(src)
                     .await
-                    .map_err(|e| anyhow!("Failed to resolve category labels: {e:?}"))?;
-                self.update
-                    .send_async(ScrollerUpdate::CategoryViewChanged { src, category_view })
-                    .await
-                    .map_err(|e| anyhow!("Failed to send CategoryViewChanged: {e:?}"))?;
+                    .unwrap_or_else(|e| ScrollerUpdate::Error { src, error: e });
+
+                if result.is_some() || result.is_scroll_event() {
+                    self.update
+                        .send_async(result)
+                        .await
+                        .map_err(|e| anyhow!("Failed to send category filter update: {e:?}"))?;
+                }
             }
 
             ScrollerCommand::ChangeLabel { src, label } => {
@@ -1383,6 +1405,38 @@ where
     }
 
     #[instrument(skip_all, fields(scroller=%self.scroller_id, src=%src))]
+    async fn handle_category_changed(
+        &mut self,
+        src: ScrollerSource,
+    ) -> Result<ScrollerUpdate<S::Item>, MailContextError> {
+        let ctx = self.ctx.upgrade().ok_or(MailContextError::MissingContext)?;
+        let tether = ctx.user_stash().connection().await?;
+        let label = self.alternative_labels.label;
+        let candidate = CategoryView::load(label, &tether)
+            .await
+            .map_err(|e| anyhow!("Failed to reload category view after settings change: {e:?}"))?;
+        let current = self.source.read().await.category_view().clone();
+
+        if candidate == current {
+            return Ok(ScrollerUpdate::List(ScrollerListUpdate::None {
+                src,
+                scroller_id: self.scroller_id,
+            }));
+        }
+
+        let _ = self.task.take();
+        self.task = self
+            .source
+            .write()
+            .await
+            .change_state(&ctx, None, None, None, Some(candidate))
+            .await?;
+
+        self.emit_category_view_changed(src).await?;
+        self.reset(src).await
+    }
+
+    #[instrument(skip_all, fields(scroller=%self.scroller_id, src=%src))]
     async fn change_label(
         &mut self,
         src: ScrollerSource,
@@ -1463,6 +1517,28 @@ where
             }
             .into())
         }
+    }
+
+    async fn emit_category_view_changed(
+        &self,
+        src: ScrollerSource,
+    ) -> Result<(), MailContextError> {
+        let ctx = self.ctx.upgrade().ok_or(MailContextError::MissingContext)?;
+        let tether =
+            ctx.user_stash().connection().await.map_err(|e| {
+                anyhow!("Failed to acquire connection for CategoryViewChanged: {e:?}")
+            })?;
+        let view = self.source.read().await.category_view().clone();
+        let category_view = view
+            .into_labels(&tether)
+            .await
+            .map_err(|e| anyhow!("Failed to resolve category labels: {e:?}"))?;
+        self.update
+            .send_async(ScrollerUpdate::CategoryViewChanged { src, category_view })
+            .await
+            .map_err(|e| anyhow!("Failed to send CategoryViewChanged: {e:?}"))?;
+
+        Ok(())
     }
 
     async fn total(
@@ -1623,7 +1699,7 @@ where
     queries: flume::Sender<ScrollerQuery<S::Item>>,
     commands: flume::Sender<ScrollerCommand>,
     updates: flume::Receiver<ScrollerUpdate<S::Item>>,
-    handle: DropRemoveTableObserverHandle,
+    source_db_handle: DropRemoveTableObserverHandle,
     tasks: Vec<AbortHandle>,
 }
 
@@ -1677,6 +1753,7 @@ enum ScrollerCommand {
     Clear(ScrollerSource),
     AlternativeLabels(#[derivative(PartialEq = "ignore")] oneshot::Sender<AlternativeLabels>),
     CategoryView(#[derivative(PartialEq = "ignore")] oneshot::Sender<CategoryView>),
+    CategoryViewChanged(ScrollerSource),
 }
 
 fn calculate_scroller_update<T>(

@@ -295,11 +295,11 @@
   zeroizing-alloc = "0.1.0"
 
 # mail path deps
-[workspace.dependencies.contacts-api]
+[workspace.dependencies.mail-contacts-api]
   version = "0.1.0"
   path = "project/mail/rust/contacts/contacts-api"
 
-[workspace.dependencies.contacts-common]
+[workspace.dependencies.mail-contacts-common]
   version = "0.1.0"
   path = "project/mail/rust/contacts/contacts-common"
 

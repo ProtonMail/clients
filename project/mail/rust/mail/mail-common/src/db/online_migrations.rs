@@ -129,7 +129,7 @@ async fn migrate(
 #[cfg(test)]
 mod tests {
     use crate::test_utils::test_context::MailTestContext;
-    use contacts_api::mocks::ContactsMockServerExt;
+    use mail_contacts_api::mocks::ContactsMockServerExt;
     use mail_core_api::services::proton::{
         ContactEmail as ApiContactEmail, ContactEmailId, ContactFull, ContactId,
         ContactSendingPreferences as ApiContactSendingPreferences, ContactUID, PrivateEmail,

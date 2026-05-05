@@ -1,5 +1,5 @@
-use contacts_api::ContactSendingPreferences as ApiContactSendingPreferences;
 use derive_more::TryFrom;
+use mail_contacts_api::ContactSendingPreferences as ApiContactSendingPreferences;
 use mail_stash::exports::{
     FromSql, FromSqlError, FromSqlResult, SqliteError, ToSql, ToSqlOutput, Value, ValueRef,
 };

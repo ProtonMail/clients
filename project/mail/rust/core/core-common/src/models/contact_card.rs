@@ -1,1 +1,1 @@
-pub use contacts_common::contact_card::ContactCard;
+pub use mail_contacts_common::contact_card::ContactCard;

@@ -1,4 +1,4 @@
-pub use contacts_common::contact::*;
+pub use mail_contacts_common::contact::*;
 
 use std::sync::Arc;
 

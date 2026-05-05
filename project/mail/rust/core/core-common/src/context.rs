@@ -156,7 +156,7 @@ impl action::Error for CoreContextError {
     }
 }
 
-pub use contacts_common::error::ContactError;
+pub use mail_contacts_common::error::ContactError;
 
 /// Represents the state of an account.
 #[derive(Debug, Clone)]

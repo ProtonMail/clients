@@ -23,8 +23,8 @@ ical = { workspace = true }
 include_dir = { workspace = true }
 indexmap = { workspace = true }
 parking_lot = { workspace = true }
-contacts-api = { workspace = true }
-contacts-common = { workspace = true }
+mail-contacts-api = { workspace = true }
+mail-contacts-common = { workspace = true }
 mail-core-key-manager = { workspace = true, features = ["contacts"] }
 mail-avatar = { workspace = true }
 mail-labels-common = { workspace = true }
@@ -97,8 +97,8 @@ test-utils = [
   "dep:rand",
   "mail-core-api/mocks",
   "mail-labels-common/test-utils",
-  "contacts-api/mocks",
-  "contacts-common/test-utils",
+  "mail-contacts-api/mocks",
+  "mail-contacts-common/test-utils",
 ]
 events-v6 = []
 foundation_search_lab_harness = []

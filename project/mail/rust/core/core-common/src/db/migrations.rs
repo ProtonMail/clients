@@ -43,7 +43,7 @@ pub async fn migrate_core_db(mail_stash: &Stash<UserDb>) -> Result<usize, Migrat
 
     let count = core_db().migrate(&mut tether).await?;
     mail_labels_common::db::migrate(&mut tether).await?;
-    contacts_common::db::migrate(&mut tether).await?;
+    mail_contacts_common::db::migrate(&mut tether).await?;
     Ok(count)
 }
 

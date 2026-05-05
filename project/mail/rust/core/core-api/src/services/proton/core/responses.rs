@@ -47,11 +47,11 @@ pub use mail_account_api::protocol::proton::{
     GetUsersResponse,
 };
 
-pub use contacts_api::{
+pub use mail_api_event_types::GetEventsLatestResponse;
+pub use mail_contacts_api::{
     GetContactResponse, GetContactsEmailsResponse, GetContactsResponse, PutDeleteContactResponse,
     PutDeleteContactsResponse,
 };
-pub use mail_api_event_types::GetEventsLatestResponse;
 
 /// Available public keys.
 #[serde_as]

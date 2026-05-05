@@ -57,9 +57,9 @@ pub use self::push_notifications::*;
 pub use self::system_label::*;
 pub use self::timestamp_ms::*;
 pub use self::user_feature_flags::*;
-pub use contacts_common::local_ids::{LocalContactEmailId, LocalContactId};
-pub use contacts_common::types::{ContactSendingPreferences, ContactTypes};
 pub use mail_avatar::AvatarInformation;
+pub use mail_contacts_common::local_ids::{LocalContactEmailId, LocalContactId};
+pub use mail_contacts_common::types::{ContactSendingPreferences, ContactTypes};
 
 pub use mail_api_session::auth_mode::{PasswordMode, TfaStatus};
 pub use mail_labels_common::{

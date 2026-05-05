@@ -1,5 +1,5 @@
 [package]
-name = "contacts-common"
+name = "mail-contacts-common"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
@@ -10,7 +10,7 @@ async-trait = { workspace = true }
 anyhow = { workspace = true }
 base64 = { workspace = true }
 bytes = { workspace = true }
-contacts-api = { workspace = true }
+mail-contacts-api = { workspace = true }
 derive_more = { workspace = true, features = ["try_from"] }
 flume = { workspace = true }
 futures = { workspace = true }
@@ -43,8 +43,8 @@ mail-issue-reporter-service = { workspace = true }
 mail-api-session = { workspace = true }
 
 [dev-dependencies]
-contacts-api = { workspace = true, features = ["mocks"] }
-contacts-common = { path = ".", features = ["test-utils"] }
+mail-contacts-api = { workspace = true, features = ["mocks"] }
+mail-contacts-common = { path = ".", features = ["test-utils"] }
 insta = { workspace = true }
 mail-api-session = { workspace = true, features = ["mocks"] }
 mail-core-api = { workspace = true, features = ["mocks"] }

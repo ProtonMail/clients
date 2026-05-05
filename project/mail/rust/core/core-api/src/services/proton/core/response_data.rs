@@ -1,7 +1,3 @@
-pub use contacts_api::{
-    ContactBasic, ContactCard, ContactEmail, ContactEmailEvent, ContactEvent, ContactEventV6,
-    ContactFull, ContactLabelEventV6, ContactRootEventV6, ContactSendingPreferences,
-};
 pub use mail_api_event_types::Action;
 pub use mail_api_feature_flags::{
     GetLegacyFeaturesResponse, GetUnleashFeaturesResponse, LegacyFeatureFlag, LegacyFeatureFlagId,
@@ -10,6 +6,10 @@ pub use mail_api_feature_flags::{
     UnleashTogglePayloadType, UnleashToggleVariant, Value,
 };
 pub use mail_api_labels::LabelEvent;
+pub use mail_contacts_api::{
+    ContactBasic, ContactCard, ContactEmail, ContactEmailEvent, ContactEvent, ContactEventV6,
+    ContactFull, ContactLabelEventV6, ContactRootEventV6, ContactSendingPreferences,
+};
 
 pub use mail_account_api::protocol::proton::{
     Address, AddressFlags, AddressSignedKeyList, AddressStatus, AddressType, DateFormat,

@@ -1,5 +1,5 @@
 ---
-source: contacts/contacts-common/src/contact_list.rs
+source: contacts/mail-contacts-common/src/contact_list.rs
 expression: display_suggestions(one.all().to_vec())
 ---
 3 suggestions:

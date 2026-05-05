@@ -10,13 +10,13 @@ use crate::events::{
     ContactTaskSpawnerContext,
 };
 use crate::test_utils::new_contact_test_connection;
-use contacts_api::mocks::ContactsMockServerExt;
-use contacts_api::{ContactEventV6, ContactRootEventV6};
 use core_event_loop::v6::{EventSource, EventSubscriber};
 use mail_action_queue::queue::Queue;
 use mail_api_session::mocks::test_session;
 use mail_api_session::session::Session;
 use mail_avatar::AvatarInformation;
+use mail_contacts_api::mocks::ContactsMockServerExt;
+use mail_contacts_api::{ContactEventV6, ContactRootEventV6};
 use mail_core_api::services::proton::{
     Action, ContactBasic as ApiContactBasic, ContactCard as ApiContactCard,
     ContactEmail as ApiContactEmail, ContactEmailId, ContactFull as ApiContactFull, ContactId,

@@ -1,5 +1,5 @@
 ---
-source: contacts/contacts-common/src/contact_details.rs
+source: contacts/mail-contacts-common/src/contact_details.rs
 expression: get_vcard(full)
 snapshot_kind: text
 ---

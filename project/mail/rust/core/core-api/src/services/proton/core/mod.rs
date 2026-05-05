@@ -12,12 +12,12 @@ pub use self::response_data::*;
 pub use self::responses::*;
 use crate::service::ApiServiceResult;
 use bytes::Bytes;
-use contacts_api::ContactApi;
 pub use mail_api_bug_report::BugReportApi;
 pub use mail_api_device::DeviceApi;
 pub use mail_api_feature_flags::FeatureFlagsApi;
 use mail_api_labels::LabelApi;
 pub use mail_api_ping::PingApi;
+use mail_contacts_api::ContactApi;
 
 /// The Proton Core API base path (v4).
 pub const CORE_V4: &str = "/core/v4";

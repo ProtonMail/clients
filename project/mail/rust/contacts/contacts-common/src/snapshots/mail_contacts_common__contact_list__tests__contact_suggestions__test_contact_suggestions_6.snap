@@ -1,5 +1,5 @@
 ---
-source: contacts/contacts-common/src/contact_list.rs
+source: contacts/mail-contacts-common/src/contact_list.rs
 expression: display_suggestions(res)
 ---
 8 suggestions:
@@ -22,7 +22,7 @@ H (#764AC4): harvey@jp.com <hXXXXX@XXXXXX>, last used: 1
 device-contact-email/000-0: Aunt Molly
 A (#7B3185): <mXXXX@XXXXXXXXXX>
 
-device-contact-email/001-0: Aunt Molly
+device-contact-email/000-1: Aunt Molly
 A (#7B3185): <bXXXXX@XXXXXXXX>
 
 group/910: M. Schur Productions

@@ -45,7 +45,7 @@ use crate::contact_email::ContactEmail;
 use crate::contact_list::{ContactGroupItem, ContactSuggestions, DeviceContact, GroupedContacts};
 use crate::error::ContactError;
 use crate::local_ids::{LocalContactEmailId, LocalContactId};
-use contacts_api::ContactApi as _;
+use mail_contacts_api::ContactApi as _;
 use mail_labels_common::LocalLabelId;
 
 #[derive(Clone, Debug, Eq, ModelDerive, PartialEq)]

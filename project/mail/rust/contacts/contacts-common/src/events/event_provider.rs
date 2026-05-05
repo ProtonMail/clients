@@ -1,7 +1,7 @@
 use crate::events::{ContactEventLoopV6Context, ContactEventSessionContext};
 use async_trait::async_trait;
-use contacts_api::ContactApi;
 use core_event_loop::{EventProvider, EventProviderError, EventProviderResult, RawEvent};
+use mail_contacts_api::ContactApi;
 use mail_core_api::service::ApiServiceError;
 
 #[derive(Debug, thiserror::Error)]

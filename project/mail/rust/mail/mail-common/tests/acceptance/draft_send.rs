@@ -1,6 +1,5 @@
 use super::drafts_common::{self, draft_message};
 use chrono::{Days, Local, Months, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
-use contacts_api::mocks::ContactsMockServerExt;
 use indoc::formatdoc;
 use mail_action_queue::queue::{ActionError, AsActionError, QueuedError};
 use mail_api::services::proton::prelude::{MailEvent, MessageEvent, PostCancelSendResponse};
@@ -27,6 +26,7 @@ use mail_common::test_utils::messages::{
 };
 use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
 use mail_common::{MailContextError, MailUserContext, draft};
+use mail_contacts_api::mocks::ContactsMockServerExt;
 use mail_core_api::consts::{CoreBundle, Mail};
 use mail_core_api::services::proton::ContactFull;
 use mail_core_api::services::proton::common::ApiErrorInfo;

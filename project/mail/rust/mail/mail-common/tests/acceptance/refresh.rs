@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use contacts_api::mocks::ContactsMockServerExt;
 use core_event_loop::EventLoopError;
 use mail_action_queue::queue::{ActionError, AsActionError, QueuedError};
 use mail_api::services::proton::prelude::ViewMode;
@@ -13,6 +12,7 @@ use mail_common::test_utils::scroller::{
 };
 use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
 use mail_common::{MailUserContext, api_conversation, api_message_meta};
+use mail_contacts_api::mocks::ContactsMockServerExt;
 use mail_core_api::services::proton::common::ApiErrorInfo;
 use mail_core_common::actions::event_poll::ActionEventLoopError;
 use mail_core_common::datatypes::{Refresh, SystemLabel};

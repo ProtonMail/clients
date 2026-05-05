@@ -8,7 +8,7 @@ categories = ["api-bindings"]
 license = "AGPL-3.0-only"
 
 [dependencies]
-contacts-api = { workspace = true }
+mail-contacts-api = { workspace = true }
 mail-account-api = { workspace = true }
 mail-api-bug-report = { workspace = true }
 mail-api-device = { workspace = true }
@@ -55,7 +55,7 @@ mail-core-api = { path = ".", features = ["mocks"] }
 default = []
 sql = [
   "dep:mail-stash",
-  "contacts-api/sql",
+  "mail-contacts-api/sql",
   "mail-account-api/sql",
   "mail-api-session/sql",
   "mail-account-ids/sql",
@@ -64,7 +64,7 @@ sql = [
   "mail-api-labels/sql",
 ]
 mocks = [
-  "contacts-api/mocks",
+  "mail-contacts-api/mocks",
   "mail-api-feature-flags/mocks",
   "mail-api-session/mocks",
   "mail-api-shared/mocks",

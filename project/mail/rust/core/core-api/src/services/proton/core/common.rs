@@ -17,7 +17,7 @@ pub enum LightOrDarkMode {
     Dark,
 }
 
-pub use contacts_api::{ContactEmailId, ContactId, ContactUID};
+pub use mail_contacts_api::{ContactEmailId, ContactId, ContactUID};
 
 /// Human verification type returned by the API.
 #[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]

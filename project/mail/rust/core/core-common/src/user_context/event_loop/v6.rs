@@ -2,11 +2,11 @@ mod account;
 mod core;
 
 pub use account::*;
-use contacts_common::events::{
+pub use core::*;
+use mail_contacts_common::events::{
     ContactActionQueueContext, ContactEventSessionContext, ContactEventStorageContext,
     ContactIssueReporterContext, ContactTaskSpawnerContext,
 };
-pub use core::*;
 
 use crate::UserContext;
 

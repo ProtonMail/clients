@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use contacts_common::{
+use mail_contacts_common::{
     contact::Contact, contact_card::ContactCard, contact_email::ContactEmail, error::ContactError,
 };
 use mail_core_api::{

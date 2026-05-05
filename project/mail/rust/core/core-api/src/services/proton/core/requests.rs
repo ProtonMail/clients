@@ -2,10 +2,10 @@ use crate::services::proton::prelude::*;
 use serde::Serialize;
 use serde_with::{BoolFromInt, serde_as};
 
-pub use contacts_api::{GetContactsEmailsOptions, GetContactsOptions, PutDeleteContacts};
 pub use mail_api_labels::{
     GetLabelsByIdsOptions, GetLabelsOptions, PatchLabelRequest, PostLabelsRequest, PutLabelRequest,
 };
+pub use mail_contacts_api::{GetContactsEmailsOptions, GetContactsOptions, PutDeleteContacts};
 
 pub use mail_account_api::protocol::proton::{GetCaptchaOptions, GetKeysAllOptions};
 pub use mail_api_bug_report::PostReportBug;

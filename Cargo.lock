@@ -2002,73 +2002,6 @@ name = "contact-service"
 version = "0.1.0"
 
 [[package]]
-name = "contacts-api"
-version = "0.1.0"
-dependencies = [
- "mail-api-event-types",
- "mail-api-labels",
- "mail-api-shared",
- "mail-api-utils",
- "mail-muon",
- "mail-proton-ids",
- "mail-stash",
- "proton-crypto-account",
- "serde",
- "serde_repr",
- "serde_with",
- "smart-default",
- "wiremock",
-]
-
-[[package]]
-name = "contacts-common"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "base64",
- "bytes",
- "contacts-api",
- "contacts-common",
- "core-event-loop",
- "derive_more 2.1.1",
- "flume",
- "futures",
- "ical",
- "include_dir 0.7.4",
- "indexmap 2.14.0",
- "indoc",
- "insta",
- "itertools 0.14.0",
- "mail-action-queue",
- "mail-api-labels",
- "mail-api-session",
- "mail-api-utils",
- "mail-avatar",
- "mail-core-api",
- "mail-issue-reporter-service",
- "mail-labels-common",
- "mail-shared-types",
- "mail-sqlite3",
- "mail-stash",
- "mail-vcard",
- "pretty_assertions",
- "proton-crypto",
- "proton-crypto-account",
- "serde",
- "serde_json",
- "sqlite-watcher",
- "test-case",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "unicode-segmentation",
- "url",
- "wiremock",
-]
-
-[[package]]
 name = "convert_case"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6311,7 +6244,6 @@ dependencies = [
  "chrono",
  "clap",
  "color-backtrace",
- "contacts-api",
  "core-event-loop",
  "criterion 0.8.2",
  "derivative",
@@ -6335,6 +6267,7 @@ dependencies = [
  "mail-canonical-email",
  "mail-common",
  "mail-common-derive",
+ "mail-contacts-api",
  "mail-core-api",
  "mail-core-common",
  "mail-crypto-calendar",
@@ -6391,6 +6324,73 @@ dependencies = [
 ]
 
 [[package]]
+name = "mail-contacts-api"
+version = "0.1.0"
+dependencies = [
+ "mail-api-event-types",
+ "mail-api-labels",
+ "mail-api-shared",
+ "mail-api-utils",
+ "mail-muon",
+ "mail-proton-ids",
+ "mail-stash",
+ "proton-crypto-account",
+ "serde",
+ "serde_repr",
+ "serde_with",
+ "smart-default",
+ "wiremock",
+]
+
+[[package]]
+name = "mail-contacts-common"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "base64",
+ "bytes",
+ "core-event-loop",
+ "derive_more 2.1.1",
+ "flume",
+ "futures",
+ "ical",
+ "include_dir 0.7.4",
+ "indexmap 2.14.0",
+ "indoc",
+ "insta",
+ "itertools 0.14.0",
+ "mail-action-queue",
+ "mail-api-labels",
+ "mail-api-session",
+ "mail-api-utils",
+ "mail-avatar",
+ "mail-contacts-api",
+ "mail-contacts-common",
+ "mail-core-api",
+ "mail-issue-reporter-service",
+ "mail-labels-common",
+ "mail-shared-types",
+ "mail-sqlite3",
+ "mail-stash",
+ "mail-vcard",
+ "pretty_assertions",
+ "proton-crypto",
+ "proton-crypto-account",
+ "serde",
+ "serde_json",
+ "sqlite-watcher",
+ "test-case",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "unicode-segmentation",
+ "url",
+ "wiremock",
+]
+
+[[package]]
 name = "mail-core-api"
 version = "0.8.1"
 dependencies = [
@@ -6399,7 +6399,6 @@ dependencies = [
  "bitflags 2.11.1",
  "bytes",
  "chrono",
- "contacts-api",
  "cookie",
  "derive_more 2.1.1",
  "futures",
@@ -6415,6 +6414,7 @@ dependencies = [
  "mail-api-session",
  "mail-api-shared",
  "mail-api-utils",
+ "mail-contacts-api",
  "mail-core-api",
  "mail-muon",
  "mail-network-monitor-service",
@@ -6448,8 +6448,6 @@ dependencies = [
  "bitflags 2.11.1",
  "bytes",
  "chrono",
- "contacts-api",
- "contacts-common",
  "core-event-loop",
  "derive_more 2.1.1",
  "email_address",
@@ -6470,6 +6468,8 @@ dependencies = [
  "mail-api-session",
  "mail-api-utils",
  "mail-avatar",
+ "mail-contacts-api",
+ "mail-contacts-common",
  "mail-core-api",
  "mail-core-common",
  "mail-core-key-manager",

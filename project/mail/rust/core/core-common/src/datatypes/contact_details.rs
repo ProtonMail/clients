@@ -1,1 +1,1 @@
-pub use contacts_common::contact_details::*;
+pub use mail_contacts_common::contact_details::*;

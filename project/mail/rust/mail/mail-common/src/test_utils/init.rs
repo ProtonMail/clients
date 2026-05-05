@@ -1,6 +1,5 @@
 use super::attachment::{testdata_attachment_metadata, testdata_attachment_metadata_complete};
 use crate::test_utils::test_context::MailTestContext;
-use contacts_api::mocks::ContactsMockServerExt;
 use mail_api::services::proton::common::{ConversationId, MessageId};
 use mail_api::services::proton::prelude::{GetIncomingDefaultResponse, RunningTasks};
 use mail_api::services::proton::request_data::{PutMobileSettings, PutNextMessageOnMoveRequest};
@@ -13,6 +12,7 @@ use mail_api::services::proton::response_data::{
     MessageSender as ApiMessageSender, MimeType, PgpScheme, PmSignature, ShowImages, ShowMoved,
     SwipeAction, ViewLayout, ViewMode,
 };
+use mail_contacts_api::mocks::ContactsMockServerExt;
 use mail_core_api::services::proton::GetKeysAllResponse;
 use mail_core_api::services::proton::{
     Address as ApiAddress, AddressFlags, AddressSignedKeyList, AddressStatus as ApiAddressStatus,

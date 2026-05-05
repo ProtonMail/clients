@@ -32,6 +32,6 @@ pub enum Violation {
     #[error("viol: event[{0}]: {1}")]
     InvalidEvent(usize, VEventViolation),
 
-    #[error("viol: timezone[{0}]: {0}")]
+    #[error("viol: timezone[{0}]: {1}")]
     InvalidTimeZone(usize, VTimeZoneViolation),
 }

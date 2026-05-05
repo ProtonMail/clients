@@ -4,11 +4,12 @@ use core_event_loop::v6::EventSource;
 use futures::StreamExt;
 use futures::future::BoxFuture;
 use futures::stream::FuturesUnordered;
+use mail_core_api::consts::General;
 use mail_core_api::service::ApiServiceError;
 use mail_core_api::services::proton::{Action, AddressId, CoreEventV6, ProtonAccount as _, User};
 use mail_core_api::session::Session;
 use std::collections::HashMap;
-use tracing::error;
+use tracing::{error, warn};
 
 pub struct CoreEventSourceV6;
 
@@ -65,11 +66,19 @@ impl CoreEventCache {
             {
                 let session = session.clone();
                 tasks.push(Box::pin(async move {
-                    session
-                        .get_address_by_id(id.clone())
-                        .await
-                        .inspect_err(|e| error!("Failed to get {id:?}: {e}"))
-                        .map(|a| FetchData::Address(id, a.address.into()))
+                    match session.get_address_by_id(id.clone()).await {
+                        Ok(response) => Ok(FetchData::Address(Some((id, response.address.into())))),
+                        Err(ApiServiceError::UnprocessableEntity(_, Some(api_error)))
+                            if api_error.code == General::NotExists as u32 =>
+                        {
+                            warn!("Address {id:?} no longer exists");
+                            Ok(FetchData::Address(None))
+                        }
+                        Err(e) => {
+                            error!("Failed to get {id:?}: {e}");
+                            Err(e)
+                        }
+                    }
                 }));
             }
         }
@@ -140,7 +149,7 @@ impl CoreEventCache {
 
 type FutureTask = BoxFuture<'static, Result<FetchData, ApiServiceError>>;
 enum FetchData {
-    Address(AddressId, Address),
+    Address(Option<(AddressId, Address)>),
     User(User),
     Settings(UserSettings),
 }
@@ -148,7 +157,8 @@ enum FetchData {
 impl FetchData {
     fn apply(self, cache: &mut CoreEventCache) {
         match self {
-            FetchData::Address(id, address) => {
+            FetchData::Address(None) => {}
+            FetchData::Address(Some((id, address))) => {
                 cache.addresses.insert(id, address);
             }
             FetchData::User(user) => cache.user = Some(user),

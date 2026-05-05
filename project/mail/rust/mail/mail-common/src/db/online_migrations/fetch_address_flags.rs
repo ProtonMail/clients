@@ -1,5 +1,9 @@
 use crate::{MailContextError, MailContextResult, MailUserContext};
-use mail_core_api::services::proton::{AddressId, ProtonAccount as _};
+use mail_core_api::{
+    consts::General,
+    service::ApiServiceError,
+    services::proton::{AddressId, ProtonAccount as _},
+};
 use mail_core_common::models::{Address, ModelExtension};
 use mail_stash::orm::Model;
 use std::{sync::Weak, time::Duration};
@@ -47,6 +51,12 @@ async fn update_address(
         match ctx.session().get_address_by_id(address_id.clone()).await {
             Ok(address) => {
                 break address;
+            }
+            Err(ApiServiceError::UnprocessableEntity(_, Some(api_error)))
+                if api_error.code == General::NotExists as u32 =>
+            {
+                tracing::warn!("Address no longer exists");
+                return Ok(());
             }
 
             Err(err) => {

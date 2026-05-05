@@ -103,6 +103,7 @@ dependencies = [
  "anyhow",
  "async-compat",
  "async-trait",
+ "bincode",
  "core-client-info-op",
  "core-common-types",
  "core-device-info-op",

@@ -29,6 +29,9 @@ pub enum LatticeError {
     #[cfg(feature = "serde_qs")]
     #[display("SerdeQs: {_0}")]
     SerdeQs(serde_qs::Error),
+
+    #[display("Other: {_0}")]
+    Other(String),
 }
 
 impl LatticeError {

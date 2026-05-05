@@ -1,0 +1,26 @@
+[package]
+name = "contact-lattice"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+lattice = {workspace=true, features = ["serde", "serde_qs"]}
+mail-proton-ids = {workspace= true}
+serde = {workspace = true}
+mail-stash = {workspace=true, optional = true}
+serde_repr = {workspace = true}
+mail-api-event-types = { workspace = true }
+serde_with = {workspace =true}
+proton-crypto-account = {workspace = true}
+smart-default = { workspace = true }
+mail-api-utils = {workspace = true, optional = true}
+wiremock = {workspace=true, optional = true}
+
+[features]
+default =[]
+sql =["mail-proton-ids/sql", "dep:mail-stash", "proton-crypto-account/sql"]
+mocks = ["dep:wiremock"]
+mail-utils = []
+[lints]
+workspace = true

@@ -222,7 +222,10 @@ pub(crate) fn spawn_conversation_scroller_watcher(
     handle: MailScrollerHandle<RealContextualConversation>,
     callback: Box<dyn ConversationScrollerLiveQueryCallback>,
 ) -> Arc<WatchHandle> {
-    let MailScrollerHandle { updates, handle } = handle;
+    let MailScrollerHandle {
+        updates,
+        source_db_handle,
+    } = handle;
 
     let task = user_ctx.spawn(async move {
         let callback = Arc::new(callback);
@@ -236,7 +239,7 @@ pub(crate) fn spawn_conversation_scroller_watcher(
         }
     });
 
-    Arc::new(WatchHandle::new(handle, &task))
+    Arc::new(WatchHandle::new(source_db_handle, &task))
 }
 
 #[uniffi::export(callback_interface)]
@@ -367,7 +370,10 @@ pub(crate) fn spawn_message_scroller_watcher(
     handle: MailScrollerHandle<RealMessage>,
     callback: Box<dyn MessageScrollerLiveQueryCallback>,
 ) -> Arc<WatchHandle> {
-    let MailScrollerHandle { updates, handle } = handle;
+    let MailScrollerHandle {
+        updates,
+        source_db_handle,
+    } = handle;
 
     let task = user_ctx.spawn(async move {
         let callback = Arc::new(callback);
@@ -381,7 +387,7 @@ pub(crate) fn spawn_message_scroller_watcher(
         }
     });
 
-    Arc::new(WatchHandle::new(handle, &task))
+    Arc::new(WatchHandle::new(source_db_handle, &task))
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Hash, Eq, Copy, uniffi::Enum)]

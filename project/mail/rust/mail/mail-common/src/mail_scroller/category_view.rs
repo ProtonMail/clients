@@ -1,9 +1,15 @@
+use std::collections::BTreeSet;
+
 use crate::MailContextError;
 use crate::models::{LabelWithCounters, MailSettings};
 use mail_api_labels::LabelId;
 use mail_core_common::datatypes::{LocalLabelId, SystemLabel};
+use mail_core_common::models::Label;
+use mail_stash::UserDb;
 use mail_stash::orm::Model;
-use mail_stash::stash::Tether;
+use mail_stash::stash::{Stash, StashError, Tether, WatcherHandle};
+use sqlite_watcher::watcher::TableObserver;
+use tracing::error;
 
 pub use crate::datatypes::CategoryLabel;
 
@@ -15,8 +21,6 @@ pub struct CategoryView {
 }
 
 impl CategoryView {
-    /// Load the category view for the given label.
-    ///
     /// Returns `CategoryView::default()` (empty) when:
     /// - `label` is not the Inbox (only Inbox supports category filtering), or
     /// - `mail_category_view = false` in `MailSettings`.
@@ -89,34 +93,6 @@ impl CategoryView {
         Ok(self)
     }
 
-    fn resolve_filter_ids(
-        enabled: Option<LocalLabelId>,
-        labels: &[LabelWithCounters],
-    ) -> Vec<LocalLabelId> {
-        let Some(enabled_id) = enabled else {
-            return vec![];
-        };
-
-        let enabled_is_default = labels.iter().any(|lwc| {
-            lwc.label.local_id == Some(enabled_id)
-                && SystemLabel::from_opt_rid(lwc.label.remote_id.as_ref())
-                    == Some(SystemLabel::CategoryDefault)
-        });
-
-        if !enabled_is_default {
-            return vec![enabled_id];
-        }
-
-        labels
-            .iter()
-            .filter(|lwc| {
-                let system_label = SystemLabel::from_opt_rid(lwc.label.remote_id.as_ref());
-                system_label == Some(SystemLabel::CategoryDefault) || !lwc.label.display
-            })
-            .filter_map(|lwc| lwc.label.local_id)
-            .collect()
-    }
-
     /// Returns fully-resolved category labels, including live unread counts and
     /// the enabled flag. The FFI layer calls this and converts via `From::from`.
     ///
@@ -166,5 +142,71 @@ impl CategoryView {
                 })
             })
             .collect())
+    }
+
+    pub async fn watch(mail_stash: &Stash<UserDb>) -> Result<WatcherHandle, StashError> {
+        let tables = Self::watched_tables();
+
+        mail_stash
+            .subscribe_to(move |sender| Box::new(CategoryViewWatcher { sender, tables }))
+            .await
+    }
+
+    fn watched_tables() -> Vec<String> {
+        vec![
+            MailSettings::table_name().to_owned(),
+            Label::table_name().to_owned(),
+        ]
+    }
+
+    fn resolve_filter_ids(
+        enabled: Option<LocalLabelId>,
+        labels: &[LabelWithCounters],
+    ) -> Vec<LocalLabelId> {
+        let Some(enabled_id) = enabled else {
+            return vec![];
+        };
+
+        let enabled_is_default = labels.iter().any(|lwc| {
+            lwc.label.local_id == Some(enabled_id)
+                && SystemLabel::from_opt_rid(lwc.label.remote_id.as_ref())
+                    == Some(SystemLabel::CategoryDefault)
+        });
+
+        if !enabled_is_default {
+            return vec![enabled_id];
+        }
+
+        labels
+            .iter()
+            .filter(|lwc| {
+                let system_label = SystemLabel::from_opt_rid(lwc.label.remote_id.as_ref());
+                system_label == Some(SystemLabel::CategoryDefault) || !lwc.label.display
+            })
+            .filter_map(|lwc| lwc.label.local_id)
+            .collect()
+    }
+}
+
+struct CategoryViewWatcher {
+    sender: flume::Sender<()>,
+    tables: Vec<String>,
+}
+
+impl TableObserver for CategoryViewWatcher {
+    fn tables(&self) -> Vec<String> {
+        self.tables.clone()
+    }
+
+    fn on_tables_changed(&self, _changed_tables: &BTreeSet<String>) {
+        self.sender
+            .send(())
+            .inspect_err(|e| {
+                error!(
+                    "Failed to send notification for MailScrollerWatcher: {:?}",
+                    e
+                );
+            })
+            .ok();
     }
 }

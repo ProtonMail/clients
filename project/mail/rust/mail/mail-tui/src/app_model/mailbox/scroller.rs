@@ -33,7 +33,7 @@ where
         let to_message = Arc::new(to_message);
 
         let (watcher, background_command) =
-            TuiWatchHandle::new(handle.updates, handle.handle, move |update| {
+            TuiWatchHandle::new(handle.updates, handle.source_db_handle, move |update| {
                 let to_message = Arc::clone(&to_message);
 
                 async move { Some(to_message(update)) }.boxed()

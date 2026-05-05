@@ -499,10 +499,10 @@ pub enum VEventViolation {
     #[error("dtend is exclusive with duration")]
     BothDtEndAndDurationSpecified,
 
-    #[error("dtstart ({0}) has different type than dtend ({0})")]
+    #[error("dtstart ({0}) has different type than dtend ({1})")]
     DtStartAndDtEndTypeMismatch(&'static str, &'static str),
 
-    #[error("dtstart ({0}) has different type than recurrence-id ({0})")]
+    #[error("dtstart ({0}) has different type than recurrence-id ({1})")]
     DtStartAndRecurrenceIdTypeMismatch(&'static str, &'static str),
 
     #[error("dtstamp is missing")]

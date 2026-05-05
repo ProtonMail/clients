@@ -31,6 +31,7 @@
     "project/calendar/rust/calendar-queue",
     "project/calendar/rust/calendar-tui",
     "project/calendar/rust/notify-waker",
+    "project/contact/rust/contact-lattice",
     "project/contact/rust/contact-service",
     "project/core/rust/core-client-info-op",
     "project/core/rust/core-common-types",

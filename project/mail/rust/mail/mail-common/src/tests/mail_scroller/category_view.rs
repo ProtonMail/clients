@@ -263,3 +263,150 @@ async fn test_load_returns_empty_when_setting_disabled() {
         "enabled should be None when mail_category_view is disabled"
     );
 }
+
+// ── MailSettings → CategoryViewChanged reactive tests ────────────────────────
+
+#[tokio::test]
+async fn test_settings_toggle_enabled_to_disabled_produces_empty_view() {
+    let mail_stash = new_test_connection().await;
+    let mut tether = mail_stash.connection().await.unwrap();
+
+    tether
+        .write_tx::<_, _, StashError>(async |bond| {
+            enable_category_view_setting(bond).await;
+            Ok(())
+        })
+        .await
+        .unwrap();
+
+    let inbox_id = SystemLabel::Inbox.local_id(&tether).await.unwrap().unwrap();
+    let view_enabled = CategoryView::load(inbox_id, &tether).await.unwrap();
+    assert!(
+        !view_enabled.available.is_empty(),
+        "precondition: feature on"
+    );
+
+    tether
+        .write_tx::<_, _, StashError>(async |bond| {
+            MailSettings {
+                local_id: MailSettingsId,
+                mail_category_view: false,
+                ..Default::default()
+            }
+            .save(bond)
+            .await
+            .unwrap();
+            Ok(())
+        })
+        .await
+        .unwrap();
+
+    let view_disabled = CategoryView::load(inbox_id, &tether).await.unwrap();
+    assert!(
+        view_disabled.available.is_empty(),
+        "available must be empty after feature is toggled off"
+    );
+    assert!(
+        view_disabled.enabled.is_none(),
+        "enabled must be None after feature is toggled off"
+    );
+}
+
+#[tokio::test]
+async fn test_settings_toggle_disabled_to_enabled_populates_view() {
+    let mail_stash = new_test_connection().await;
+    let mut tether = mail_stash.connection().await.unwrap();
+
+    // Start with feature disabled (no MailSettings row → defaults to false).
+    let inbox_id = SystemLabel::Inbox.local_id(&tether).await.unwrap().unwrap();
+    let view_before = CategoryView::load(inbox_id, &tether).await.unwrap();
+    assert!(
+        view_before.available.is_empty(),
+        "precondition: feature off"
+    );
+
+    tether
+        .write_tx::<_, _, StashError>(async |bond| {
+            enable_category_view_setting(bond).await;
+            Ok(())
+        })
+        .await
+        .unwrap();
+
+    let view_after = CategoryView::load(inbox_id, &tether).await.unwrap();
+    assert!(
+        !view_after.available.is_empty(),
+        "available must be non-empty after feature is toggled on"
+    );
+    assert!(
+        view_after.enabled.is_some(),
+        "enabled should default to CategoryDefault after feature is toggled on"
+    );
+}
+
+#[tokio::test]
+async fn test_unrelated_settings_change_does_not_alter_category_view() {
+    let mail_stash = new_test_connection().await;
+    let mut tether = mail_stash.connection().await.unwrap();
+
+    tether
+        .write_tx::<_, _, StashError>(async |bond| {
+            enable_category_view_setting(bond).await;
+            Ok(())
+        })
+        .await
+        .unwrap();
+
+    let inbox_id = SystemLabel::Inbox.local_id(&tether).await.unwrap().unwrap();
+    let view_before = CategoryView::load(inbox_id, &tether).await.unwrap();
+
+    // Change an unrelated MailSettings field.
+    tether
+        .write_tx::<_, _, StashError>(async |bond| {
+            MailSettings {
+                local_id: MailSettingsId,
+                mail_category_view: true,
+                auto_save_contacts: true,
+                ..Default::default()
+            }
+            .save(bond)
+            .await
+            .unwrap();
+            Ok(())
+        })
+        .await
+        .unwrap();
+
+    let view_after = CategoryView::load(inbox_id, &tether).await.unwrap();
+    assert_eq!(
+        view_before.available, view_after.available,
+        "available must not change when an unrelated setting changes"
+    );
+    assert_eq!(
+        view_before.enabled.is_some(),
+        view_after.enabled.is_some(),
+        "enabled presence must not change when an unrelated setting changes"
+    );
+}
+
+#[tokio::test]
+async fn test_settings_change_noop_for_non_inbox_label() {
+    let mail_stash = new_test_connection().await;
+    let mut tether = mail_stash.connection().await.unwrap();
+
+    tether
+        .write_tx::<_, _, StashError>(async |bond| {
+            enable_category_view_setting(bond).await;
+            Ok(())
+        })
+        .await
+        .unwrap();
+
+    // Sent is not Inbox → CategoryView::load must return default regardless.
+    let sent_id = SystemLabel::Sent.local_id(&tether).await.unwrap().unwrap();
+    let view = CategoryView::load(sent_id, &tether).await.unwrap();
+    assert!(
+        view.available.is_empty(),
+        "category view must be empty for non-Inbox labels even when setting is enabled"
+    );
+}

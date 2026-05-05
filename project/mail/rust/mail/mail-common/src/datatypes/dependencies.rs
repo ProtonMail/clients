@@ -6,7 +6,9 @@ use itertools::Itertools;
 use mail_api::services::proton::response_data::{
     Conversation as ApiConversation, MessageMetadata as ApiMessageMetadata,
 };
-use mail_core_api::services::proton::{AddressId, LabelId, ProtonCore};
+use mail_core_api::consts::General;
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::{AddressId, LabelId, ProtonCore as _};
 use mail_core_api::session::Session;
 use mail_core_common::models::{Address, Label, ModelIdExtension};
 use mail_stash::orm::Model;
@@ -138,17 +140,33 @@ impl DependencyFetcher {
             let mut addresses = Vec::with_capacity(self.address_ids.len());
             info!("Syncing missing addresses: {:?}", self.address_ids);
             for address_id in &self.address_ids {
-                let address = api.get_address_by_id(address_id.clone()).await?.address;
-                addresses.push(Address::from(address));
-            }
-            tx.run_tx(async |tx| {
-                for mut address in addresses {
-                    address.save(tx).await?;
+                match api.get_address_by_id(address_id.clone()).await {
+                    Ok(response) => {
+                        addresses.push(Address::from(response.address));
+                    }
+
+                    Err(ApiServiceError::UnprocessableEntity(_, Some(api_error)))
+                        if api_error.code == General::NotExists as u32 =>
+                    {
+                        tracing::warn!("{:?} no longer exists", address_id);
+                        continue;
+                    }
+                    Err(e) => {
+                        return Err(e.into());
+                    }
                 }
-                Ok(())
-            })
-            .await
-            .map_err(MailContextError::Other)?;
+            }
+
+            if !addresses.is_empty() {
+                tx.run_tx(async |tx| {
+                    for mut address in addresses {
+                        address.save(tx).await?;
+                    }
+                    Ok(())
+                })
+                .await
+                .map_err(MailContextError::Other)?;
+            }
         }
 
         if !unresolved_labels.is_empty() {

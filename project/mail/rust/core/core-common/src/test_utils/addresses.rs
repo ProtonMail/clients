@@ -1,4 +1,5 @@
 use crate::test_utils::test_context::TestContext;
+use mail_core_api::service::ApiErrorInfo;
 use mail_core_api::services::proton::AddressFlags;
 use mail_core_api::services::proton::AddressId;
 use mail_core_api::services::proton::AddressSignedKeyList as ApiAddressSignedKeyList;
@@ -42,6 +43,28 @@ impl TestContext {
             .named(function_name!())
             .mount(self.mock_server())
             .await;
+    }
+
+    #[function_name::named]
+    pub async fn mock_get_address_by_id(
+        &self,
+        id: AddressId,
+        response: Result<ApiAddress, (u16, ApiErrorInfo)>,
+    ) {
+        let mock = Mock::given(method("GET")).and(path(format!("/api/core/v4/addresses/{id}")));
+
+        match response {
+            Ok(address) => {
+                let response = GetAddressResponse { address };
+                mock.respond_with(ResponseTemplate::new(200).set_body_json(response))
+            }
+            Err((status_code, e)) => {
+                mock.respond_with(ResponseTemplate::new(status_code).set_body_json(e))
+            }
+        }
+        .named(function_name!())
+        .mount(self.mock_server())
+        .await;
     }
 
     #[function_name::named]

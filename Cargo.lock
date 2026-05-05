@@ -56,7 +56,7 @@ dependencies = [
  "core-proc",
  "core-user-manager",
  "core-validator",
- "crux_core",
+ "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "ctor 0.6.3",
  "data-encoding",
  "derive_more 2.1.1",
@@ -109,7 +109,7 @@ dependencies = [
  "core-logging",
  "core-logging-op",
  "core-muon-op",
- "crux_core",
+ "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "ctor 0.6.3",
  "data-encoding",
  "derive_more 2.1.1",
@@ -146,7 +146,7 @@ version = "0.1.0"
 dependencies = [
  "account-crux",
  "anyhow",
- "crux_core",
+ "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex",
 ]
 
@@ -179,7 +179,7 @@ dependencies = [
  "core-db-op",
  "core-keystore-op",
  "core-proc",
- "crux_core",
+ "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "derive_more 2.1.1",
  "facet",
  "serde",
@@ -1248,7 +1248,7 @@ dependencies = [
  "calendar-keychain",
  "calendar-loop",
  "calendar-net",
- "crux_core",
+ "crux_core 0.17.0 (git+https://github.com/redbadger/crux?rev=04347ef20277faa80f041c9b99ee79fcdb39b7d1)",
  "facet",
  "futures",
  "itertools 0.14.0",
@@ -1266,7 +1266,7 @@ dependencies = [
  "calendar-components-crux",
  "calendar-db",
  "clap",
- "crux_core",
+ "crux_core 0.17.0 (git+https://github.com/redbadger/crux?rev=04347ef20277faa80f041c9b99ee79fcdb39b7d1)",
  "glob",
  "regex",
 ]
@@ -1285,7 +1285,7 @@ dependencies = [
  "calendar-net-fake",
  "calendar-net-muon",
  "console_error_panic_hook",
- "crux_core",
+ "crux_core 0.17.0 (git+https://github.com/redbadger/crux?rev=04347ef20277faa80f041c9b99ee79fcdb39b7d1)",
  "facet",
  "futures",
  "itertools 0.14.0",
@@ -1310,7 +1310,7 @@ dependencies = [
  "anyhow",
  "calendar-crux",
  "clap",
- "crux_core",
+ "crux_core 0.17.0 (git+https://github.com/redbadger/crux?rev=04347ef20277faa80f041c9b99ee79fcdb39b7d1)",
  "glob",
  "regex",
 ]
@@ -1418,7 +1418,7 @@ name = "calendar-keychain"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "crux_core",
+ "crux_core 0.17.0 (git+https://github.com/redbadger/crux?rev=04347ef20277faa80f041c9b99ee79fcdb39b7d1)",
  "facet",
  "serde",
  "thiserror 2.0.18",
@@ -1447,7 +1447,7 @@ name = "calendar-net"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "crux_core",
+ "crux_core 0.17.0 (git+https://github.com/redbadger/crux?rev=04347ef20277faa80f041c9b99ee79fcdb39b7d1)",
  "derive_more 2.1.1",
  "facet",
  "http",
@@ -1514,7 +1514,7 @@ dependencies = [
  "calendar-net",
  "clap",
  "crossterm",
- "crux_core",
+ "crux_core 0.17.0 (git+https://github.com/redbadger/crux?rev=04347ef20277faa80f041c9b99ee79fcdb39b7d1)",
  "futures",
  "jiff",
  "keyring",
@@ -2074,7 +2074,7 @@ name = "core-client-info-op"
 version = "0.1.0"
 dependencies = [
  "core-proc",
- "crux_core",
+ "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "facet",
  "serde",
 ]
@@ -2104,7 +2104,7 @@ dependencies = [
  "core-message",
  "core-muon-op",
  "core-validator",
- "crux_core",
+ "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "lattice",
  "regex",
 ]
@@ -2114,7 +2114,7 @@ name = "core-db-op"
 version = "0.1.0"
 dependencies = [
  "account-db",
- "crux_core",
+ "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "facet",
  "serde",
  "thiserror 2.0.18",
@@ -2125,7 +2125,7 @@ name = "core-device-info-op"
 version = "0.1.0"
 dependencies = [
  "core-proc",
- "crux_core",
+ "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "facet",
  "serde",
 ]
@@ -2174,7 +2174,7 @@ dependencies = [
  "async-trait",
  "core-proc",
  "coset",
- "crux_core",
+ "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "derive_more 2.1.1",
  "facet",
  "itertools 0.14.0",
@@ -2217,7 +2217,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "core-proc",
- "crux_core",
+ "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "derive_more 2.1.1",
  "facet",
  "serde",
@@ -2241,7 +2241,7 @@ dependencies = [
  "async-trait",
  "core-common-types",
  "core-proc",
- "crux_core",
+ "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "derive_more 2.1.1",
  "diesel",
  "diesel-derive-newtype",
@@ -2267,7 +2267,7 @@ dependencies = [
 name = "core-logging-op"
 version = "0.1.0"
 dependencies = [
- "crux_core",
+ "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "facet",
  "serde",
  "tracing",
@@ -2312,7 +2312,7 @@ dependencies = [
  "async-trait",
  "core-hv-op",
  "core-proc",
- "crux_core",
+ "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "derive_more 2.1.1",
  "facet",
  "futures",
@@ -2636,12 +2636,32 @@ checksum = "460fbee9c2c2f33933d720630a6a0bac33ba7053db5344fac858d4b8952d77d5"
 [[package]]
 name = "crux_core"
 version = "0.17.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "68328a703adba9b705c7b2de3e0fe434f4a310974fc6944c280cd4d15651485c"
+dependencies = [
+ "anyhow",
+ "bincode",
+ "crossbeam-channel",
+ "crux_macros 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "facet",
+ "facet_generate",
+ "futures",
+ "log",
+ "serde",
+ "serde_json",
+ "slab",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "crux_core"
+version = "0.17.0"
 source = "git+https://github.com/redbadger/crux?rev=04347ef20277faa80f041c9b99ee79fcdb39b7d1#04347ef20277faa80f041c9b99ee79fcdb39b7d1"
 dependencies = [
  "anyhow",
  "bincode",
  "crossbeam-channel",
- "crux_macros",
+ "crux_macros 0.8.0 (git+https://github.com/redbadger/crux?rev=04347ef20277faa80f041c9b99ee79fcdb39b7d1)",
  "facet",
  "facet_generate",
  "futures",
@@ -2652,6 +2672,20 @@ dependencies = [
  "serde_json",
  "slab",
  "thiserror 2.0.18",
+]
+
+[[package]]
+name = "crux_macros"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "23c2549bcdfd872810d0c6a704ce1bd0e7b2007a8078370f02aa7f45ccade686"
+dependencies = [
+ "darling 0.23.0",
+ "heck 0.5.0",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
 ]
 
 [[package]]

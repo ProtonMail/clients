@@ -119,7 +119,7 @@ dependencies = [
  "image",
  "itertools 0.14.0",
  "lattice",
- "muon 2.3.0",
+ "muon",
  "num_enum",
  "passkey",
  "proton-crypto",
@@ -909,7 +909,7 @@ dependencies = [
  "bitflags 2.11.1",
  "cexpr",
  "clang-sys",
- "itertools 0.12.1",
+ "itertools 0.10.5",
  "lazy_static",
  "lazycell",
  "log",
@@ -932,7 +932,7 @@ dependencies = [
  "bitflags 2.11.1",
  "cexpr",
  "clang-sys",
- "itertools 0.13.0",
+ "itertools 0.10.5",
  "log",
  "prettyplease",
  "proc-macro2",
@@ -966,32 +966,11 @@ checksum = "1e4b40c7323adcfc0a41c4b88143ed58346ff65a288fc144329c5c45e05d70c6"
 
 [[package]]
 name = "bitfields"
-version = "0.12.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1d84268bbf9b487d31fe4b849edbefcd3911422d7a07de855a2da1f70ab3d1c"
-dependencies = [
- "bitfields-impl 0.9.4",
-]
-
-[[package]]
-name = "bitfields"
 version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ef6e59298da389bc0649c7463856b34c6e17fe542f88939426ede4436c6b1195"
 dependencies = [
- "bitfields-impl 1.0.3",
-]
-
-[[package]]
-name = "bitfields-impl"
-version = "0.9.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07c93edde7bb4416c35c85048e34f78999dcb47d199bde3b1d79286156f3e2fb"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.117",
- "thiserror 2.0.18",
+ "bitfields-impl",
 ]
 
 [[package]]
@@ -1154,31 +1133,11 @@ checksum = "1e748733b7cbc798e1434b6ac524f0c1ff2ab456fe201501e6497c8417a4fc33"
 
 [[package]]
 name = "bzip2"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49ecfb22d906f800d4fe833b6282cf4dc1c298f5057ca0b5445e5c209735ca47"
-dependencies = [
- "bzip2-sys",
- "libbz2-rs-sys 0.1.3",
-]
-
-[[package]]
-name = "bzip2"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f3a53fac24f34a81bc9954b5d6cfce0c21e18ec6959f44f56e8e90e4bb7c346c"
 dependencies = [
- "libbz2-rs-sys 0.2.2",
-]
-
-[[package]]
-name = "bzip2-sys"
-version = "0.1.13+1.0.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "225bff33b2141874fe80d71e07d6eec4f85c5c216453dd96388240f96e1acc14"
-dependencies = [
- "cc",
- "pkg-config",
+ "libbz2-rs-sys",
 ]
 
 [[package]]
@@ -1478,7 +1437,7 @@ dependencies = [
  "anyhow",
  "base64",
  "calendar-net",
- "muon 2.3.0",
+ "muon",
  "rand 0.9.4",
  "serde",
  "serde_json",
@@ -1894,7 +1853,7 @@ version = "3.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "faf9468729b8cbcea668e36183cb69d317348c2e08e994829fb56ebfdfbaac34"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
@@ -2318,7 +2277,7 @@ dependencies = [
  "facet",
  "futures",
  "lattice",
- "muon 2.3.0",
+ "muon",
  "serde",
  "serde_json",
  "test-case",
@@ -4242,7 +4201,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f2f12607f92c69b12ed746fabf9ca4f5c482cba46679c1a75b874ed7c26adb"
 dependencies = [
  "futures-io",
- "rustls 0.23.38",
+ "rustls",
  "rustls-pki-types",
 ]
 
@@ -4595,25 +4554,6 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "hickory-client"
-version = "0.24.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "156579a5cd8d1fc6f0df87cc21b6ee870db978a163a1ba484acd98a4eff5a6de"
-dependencies = [
- "cfg-if",
- "data-encoding",
- "futures-channel",
- "futures-util",
- "hickory-proto 0.24.4",
- "once_cell",
- "radix_trie",
- "rand 0.8.5",
- "thiserror 1.0.69",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "hickory-client"
 version = "0.25.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c466cd63a4217d5b2b8e32f23f58312741ce96e3c84bf7438677d2baff0fc555"
@@ -4622,37 +4562,13 @@ dependencies = [
  "data-encoding",
  "futures-channel",
  "futures-util",
- "hickory-proto 0.25.2",
+ "hickory-proto",
  "once_cell",
  "radix_trie",
  "rand 0.9.4",
  "thiserror 2.0.18",
  "tokio",
  "tracing",
-]
-
-[[package]]
-name = "hickory-proto"
-version = "0.24.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92652067c9ce6f66ce53cc38d1169daa36e6e7eb7dd3b63b5103bd9d97117248"
-dependencies = [
- "async-trait",
- "cfg-if",
- "data-encoding",
- "enum-as-inner",
- "futures-channel",
- "futures-io",
- "futures-util",
- "idna",
- "ipnet",
- "once_cell",
- "rand 0.8.5",
- "thiserror 1.0.69",
- "tinyvec",
- "tokio",
- "tracing",
- "url",
 ]
 
 [[package]]
@@ -4839,9 +4755,9 @@ dependencies = [
  "http",
  "hyper",
  "hyper-util",
- "rustls 0.23.38",
+ "rustls",
  "tokio",
- "tokio-rustls 0.26.4",
+ "tokio-rustls",
  "tower-service",
  "webpki-roots",
 ]
@@ -5623,7 +5539,7 @@ dependencies = [
  "futures",
  "lattice",
  "mail-muon",
- "muon 2.3.0",
+ "muon",
  "num_enum",
  "passkey",
  "proton-crypto",
@@ -5689,12 +5605,6 @@ name = "lebe"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a79a3332a6609480d7d0c9eab957bca6b455b91bb84e66d19f5ff66294b85b8"
-
-[[package]]
-name = "libbz2-rs-sys"
-version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0864a00c8d019e36216b69c2c4ce50b83b7bd966add3cf5ba554ec44f8bebcf5"
 
 [[package]]
 name = "libbz2-rs-sys"
@@ -6857,8 +6767,8 @@ dependencies = [
  "futures-timer",
  "getrandom 0.2.17",
  "h2",
- "hickory-client 0.25.2",
- "hickory-proto 0.25.2",
+ "hickory-client",
+ "hickory-proto",
  "http",
  "http-body",
  "hyper",
@@ -6870,12 +6780,12 @@ dependencies = [
  "num",
  "num_cpus",
  "pin-project",
- "proton-srp 0.7.1 (git+https://github.com/ProtonMail/proton-crypto-rs.git?rev=33d22de54c578408108f580d6cafae06f656da9a)",
+ "proton-srp",
  "rand 0.8.5",
  "rcgen",
  "regex",
  "reqwest 0.12.28",
- "rustls-native-certs 0.8.3",
+ "rustls-native-certs",
  "rustls-platform-verifier",
  "semver",
  "serde",
@@ -6886,7 +6796,7 @@ dependencies = [
  "tempfile",
  "thiserror 1.0.69",
  "tokio",
- "tokio-rustls 0.26.4",
+ "tokio-rustls",
  "totp-rs",
  "tower 0.4.13",
  "tracing",
@@ -7580,63 +7490,6 @@ dependencies = [
 
 [[package]]
 name = "muon"
-version = "1.7.0"
-source = "sparse+https://rust-registry.proton.me/index/"
-checksum = "9669220821c7d056c27b7c0b4803c2360a555db18c56281cc4f5609d216cfc3f"
-dependencies = [
- "anyhow",
- "async-channel",
- "async-executor",
- "async-io",
- "async-lock",
- "async-net",
- "async-trait",
- "bindgen 0.69.5",
- "bytes",
- "camino",
- "cfg-if",
- "common-multipart-rfc7578",
- "ctor 0.2.9",
- "data-encoding",
- "derive_more 1.0.0",
- "futures",
- "futures-rustls",
- "futures-timer",
- "getrandom 0.2.17",
- "h2",
- "hickory-client 0.24.4",
- "hickory-proto 0.24.4",
- "http",
- "http-body",
- "hyper",
- "itertools 0.13.0",
- "jni",
- "lazy_static",
- "muon-proc",
- "num",
- "num_cpus",
- "pin-project",
- "proton-srp 0.7.1 (sparse+https://rust-registry.proton.me/index/)",
- "rand 0.8.5",
- "reqwest 0.12.28",
- "rustls-native-certs 0.7.3",
- "rustls-platform-verifier",
- "semver",
- "serde",
- "serde_json",
- "serde_qs 0.13.0",
- "serde_repr",
- "sha2",
- "thiserror 1.0.69",
- "tokio",
- "tokio-rustls 0.25.0",
- "tracing",
- "url",
- "x509-parser 0.16.0",
-]
-
-[[package]]
-name = "muon"
 version = "2.3.0"
 source = "sparse+https://rust-registry.proton.me/index/"
 checksum = "e5183e77cb59655c45a40c7954dd3ffe04ed8cb988d35df19bc982918253cd89"
@@ -7653,7 +7506,7 @@ dependencies = [
  "getrandom 0.2.17",
  "getrandom 0.3.4",
  "h2",
- "hickory-proto 0.25.2",
+ "hickory-proto",
  "http",
  "http-body",
  "hyper",
@@ -7661,7 +7514,7 @@ dependencies = [
  "muon-rest",
  "pin-project",
  "proton-os-interface",
- "proton-srp 0.8.2",
+ "proton-srp",
  "rand_chacha 0.9.0",
  "reqwest 0.12.28",
  "semver",
@@ -7738,7 +7591,7 @@ dependencies = [
  "libc",
  "log",
  "openssl",
- "openssl-probe 0.2.1",
+ "openssl-probe",
  "openssl-sys",
  "schannel",
  "security-framework 3.7.0",
@@ -8201,15 +8054,14 @@ dependencies = [
 
 [[package]]
 name = "openssl"
-version = "0.10.77"
+version = "0.10.79"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bfe4646e360ec77dff7dde40ed3d6c5fee52d156ef4a62f53973d38294dad87f"
+checksum = "bf0b434746ee2832f4f0baf10137e1cabb18cbe6912c69e2e33263c45250f542"
 dependencies = [
  "bitflags 2.11.1",
  "cfg-if",
  "foreign-types",
  "libc",
- "once_cell",
  "openssl-macros",
  "openssl-sys",
 ]
@@ -8227,21 +8079,15 @@ dependencies = [
 
 [[package]]
 name = "openssl-probe"
-version = "0.1.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d05e27ee213611ffe7d6348b942e8f942b37114c00cc03cec254295a4a17852e"
-
-[[package]]
-name = "openssl-probe"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7c87def4c32ab89d880effc9e097653c8da5d6ef28e6b539d313baaacfbafcbe"
 
 [[package]]
 name = "openssl-sys"
-version = "0.9.113"
+version = "0.9.115"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ad2f2c0eba47118757e4c6d2bff2838f3e0523380021356e7875e858372ce644"
+checksum = "158fe5b292746440aa6e7a7e690e55aeb72d41505e2804c23c6973ad0e9c9781"
 dependencies = [
  "cc",
  "libc",
@@ -8569,7 +8415,7 @@ dependencies = [
  "color-eyre",
  "crossterm",
  "futures",
- "muon 1.7.0",
+ "mail-muon",
  "parking_lot",
  "payment-core",
  "payment-http",
@@ -8670,75 +8516,6 @@ dependencies = [
 
 [[package]]
 name = "pgp"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f91d320242d9b686612b15526fe38711afdf856e112eaa4775ce25b0d9b12b11"
-dependencies = [
- "aead",
- "aes",
- "aes-gcm",
- "aes-kw",
- "argon2",
- "base64",
- "bitfields 0.12.4",
- "block-padding",
- "blowfish",
- "buffer-redux",
- "byteorder",
- "bytes",
- "bzip2 0.5.2",
- "camellia",
- "cast5",
- "cfb-mode",
- "chrono",
- "cipher",
- "const-oid",
- "crc24",
- "curve25519-dalek",
- "cx448",
- "derive_builder",
- "derive_more 2.1.1",
- "des",
- "digest",
- "dsa",
- "eax",
- "ecdsa",
- "ed25519-dalek",
- "elliptic-curve",
- "flate2",
- "generic-array",
- "hex",
- "hkdf",
- "idea",
- "k256",
- "log",
- "md-5",
- "nom 7.1.3",
- "num-bigint-dig",
- "num-traits",
- "num_enum",
- "ocb3",
- "p256",
- "p384",
- "p521",
- "rand 0.8.5",
- "regex",
- "ripemd",
- "rsa",
- "sha1",
- "sha1-checked",
- "sha2",
- "sha3",
- "signature",
- "smallvec",
- "snafu",
- "twofish",
- "x25519-dalek",
- "zeroize",
-]
-
-[[package]]
-name = "pgp"
 version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eaffe1ec22db286599c30ae6be75b37493b558735d86c8e59ec5c38794415fe4"
@@ -8749,13 +8526,13 @@ dependencies = [
  "aes-kw",
  "argon2",
  "base64",
- "bitfields 1.0.3",
+ "bitfields",
  "block-padding",
  "blowfish",
  "buffer-redux",
  "byteorder",
  "bytes",
- "bzip2 0.6.1",
+ "bzip2",
  "camellia",
  "cast5",
  "cfb-mode",
@@ -9332,7 +9109,7 @@ dependencies = [
  "hex",
  "parking_lot",
  "proton-rpgp",
- "proton-srp 0.8.2",
+ "proton-srp",
  "rand 0.8.5",
  "serde",
  "subtle",
@@ -9422,44 +9199,13 @@ dependencies = [
  "hex",
  "kem",
  "nom 8.0.0",
- "pgp 0.19.0",
+ "pgp",
  "rand 0.8.5",
  "rsa",
  "sha2",
  "smallvec",
  "thiserror 1.0.69",
  "web-time",
- "zeroize",
-]
-
-[[package]]
-name = "proton-srp"
-version = "0.7.1"
-source = "sparse+https://rust-registry.proton.me/index/"
-checksum = "2be7a723cbcf580757fb53e7152c70336def958cdd0436a601a06c52ed233a3c"
-dependencies = [
- "base64",
- "bcrypt",
- "crypto-bigint",
- "pgp 0.16.0",
- "rand 0.8.5",
- "sha2",
- "thiserror 1.0.69",
- "zeroize",
-]
-
-[[package]]
-name = "proton-srp"
-version = "0.7.1"
-source = "git+https://github.com/ProtonMail/proton-crypto-rs.git?rev=33d22de54c578408108f580d6cafae06f656da9a#33d22de54c578408108f580d6cafae06f656da9a"
-dependencies = [
- "base64",
- "bcrypt",
- "crypto-bigint",
- "pgp 0.16.0",
- "rand 0.8.5",
- "sha2",
- "thiserror 1.0.69",
  "zeroize",
 ]
 
@@ -9476,7 +9222,7 @@ dependencies = [
  "getrandom 0.3.4",
  "hex",
  "md-5",
- "pgp 0.19.0",
+ "pgp",
  "rand 0.8.5",
  "sha2",
  "thiserror 1.0.69",
@@ -9595,7 +9341,7 @@ dependencies = [
  "quinn-proto",
  "quinn-udp",
  "rustc-hash 2.1.2",
- "rustls 0.23.38",
+ "rustls",
  "socket2",
  "thiserror 2.0.18",
  "tokio",
@@ -9616,7 +9362,7 @@ dependencies = [
  "rand 0.9.4",
  "ring",
  "rustc-hash 2.1.2",
- "rustls 0.23.38",
+ "rustls",
  "rustls-pki-types",
  "slab",
  "thiserror 2.0.18",
@@ -10048,7 +9794,7 @@ dependencies = [
  "percent-encoding",
  "pin-project-lite",
  "quinn",
- "rustls 0.23.38",
+ "rustls",
  "rustls-pki-types",
  "serde",
  "serde_json",
@@ -10056,7 +9802,7 @@ dependencies = [
  "sync_wrapper",
  "tokio",
  "tokio-native-tls",
- "tokio-rustls 0.26.4",
+ "tokio-rustls",
  "tower 0.5.3",
  "tower-http",
  "tower-service",
@@ -10091,7 +9837,7 @@ dependencies = [
  "percent-encoding",
  "pin-project-lite",
  "quinn",
- "rustls 0.23.38",
+ "rustls",
  "rustls-pki-types",
  "rustls-platform-verifier",
  "serde",
@@ -10099,7 +9845,7 @@ dependencies = [
  "serde_urlencoded",
  "sync_wrapper",
  "tokio",
- "tokio-rustls 0.26.4",
+ "tokio-rustls",
  "tokio-util",
  "tower 0.5.3",
  "tower-http",
@@ -10283,20 +10029,6 @@ dependencies = [
 
 [[package]]
 name = "rustls"
-version = "0.22.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf4ef73721ac7bcd79b2b315da7779d8fc09718c6b3d2d1b2d94850eb8c18432"
-dependencies = [
- "log",
- "ring",
- "rustls-pki-types",
- "rustls-webpki 0.102.8",
- "subtle",
- "zeroize",
-]
-
-[[package]]
-name = "rustls"
 version = "0.23.38"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "69f9466fb2c14ea04357e91413efb882e2a6d4a406e625449bc0a5d360d53a21"
@@ -10306,22 +10038,9 @@ dependencies = [
  "once_cell",
  "ring",
  "rustls-pki-types",
- "rustls-webpki 0.103.13",
+ "rustls-webpki",
  "subtle",
  "zeroize",
-]
-
-[[package]]
-name = "rustls-native-certs"
-version = "0.7.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e5bfb394eeed242e909609f56089eecfe5fda225042e8b171791b9c95f5931e5"
-dependencies = [
- "openssl-probe 0.1.6",
- "rustls-pemfile",
- "rustls-pki-types",
- "schannel",
- "security-framework 2.11.1",
 ]
 
 [[package]]
@@ -10330,19 +10049,10 @@ version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "612460d5f7bea540c490b2b6395d8e34a953e52b491accd6c86c8164c5932a63"
 dependencies = [
- "openssl-probe 0.2.1",
+ "openssl-probe",
  "rustls-pki-types",
  "schannel",
  "security-framework 3.7.0",
-]
-
-[[package]]
-name = "rustls-pemfile"
-version = "2.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dce314e5fee3f39953d46bb63bb8a46d40c2f8fb7cc5a3b6cab2bde9721d6e50"
-dependencies = [
- "rustls-pki-types",
 ]
 
 [[package]]
@@ -10366,10 +10076,10 @@ dependencies = [
  "jni",
  "log",
  "once_cell",
- "rustls 0.23.38",
- "rustls-native-certs 0.8.3",
+ "rustls",
+ "rustls-native-certs",
  "rustls-platform-verifier-android",
- "rustls-webpki 0.103.13",
+ "rustls-webpki",
  "security-framework 3.7.0",
  "security-framework-sys",
  "webpki-root-certs",
@@ -10381,17 +10091,6 @@ name = "rustls-platform-verifier-android"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f87165f0995f63a9fbeea62b64d10b4d9d8e78ec6d7d51fb2125fda7bb36788f"
-
-[[package]]
-name = "rustls-webpki"
-version = "0.102.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "64ca1bc8749bd4cf37b5ce386cc146580777b4e8572c7b97baf22c83f444bee9"
-dependencies = [
- "ring",
- "rustls-pki-types",
- "untrusted",
-]
 
 [[package]]
 name = "rustls-webpki"
@@ -11172,7 +10871,7 @@ version = "0.8.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c1c97747dbf44bb1ca44a561ece23508e99cb592e862f22222dcf42f51d1e451"
 dependencies = [
- "heck 0.5.0",
+ "heck 0.4.1",
  "proc-macro2",
  "quote",
  "syn 2.0.117",
@@ -11759,22 +11458,11 @@ dependencies = [
 
 [[package]]
 name = "tokio-rustls"
-version = "0.25.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "775e0c0f0adb3a2f22a00c4745d728b479985fc15ee7ca6a2608388c5569860f"
-dependencies = [
- "rustls 0.22.4",
- "rustls-pki-types",
- "tokio",
-]
-
-[[package]]
-name = "tokio-rustls"
 version = "0.26.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1729aa945f29d91ba541258c8df89027d5792d85a8841fb65e8bf0f4ede4ef61"
 dependencies = [
- "rustls 0.23.38",
+ "rustls",
  "tokio",
 ]
 
@@ -13213,7 +12901,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
@@ -13932,7 +13620,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c42e33efc22a0650c311c2ef19115ce232583abbe80850bc8b66509ebef02de0"
 dependencies = [
  "aes",
- "bzip2 0.6.1",
+ "bzip2",
  "constant_time_eq",
  "crc32fast",
  "deflate64",

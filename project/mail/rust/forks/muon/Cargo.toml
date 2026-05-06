@@ -162,10 +162,7 @@ serde = { version = "1.0", features = ["derive"] }
 
 hickory-proto = { version = "0.25", default-features = false, optional = true }
 
-
-[dependencies.proton-srp]
-git = "https://github.com/ProtonMail/proton-crypto-rs.git"
-rev = "33d22de54c578408108f580d6cafae06f656da9a"
+proton-srp = { version = "0.8.2", registry = "proton" }
 
 [build-dependencies]
 anyhow = "1.0"

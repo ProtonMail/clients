@@ -27,7 +27,7 @@ pub async fn post(
     // Build the JSON response.
     Ok(Json(auth::v4::info::PostRes {
         session,
-        version,
+        version: version.into(),
         salt,
         modulus,
         server_ephemeral,

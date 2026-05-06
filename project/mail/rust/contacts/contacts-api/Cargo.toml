@@ -12,6 +12,7 @@ mail-api-event-types = { workspace = true }
 mail-api-shared = { workspace = true }
 mail-muon = { workspace = true }
 mail-api-utils = { workspace = true }
+mail-api-lattice = { workspace = true }
 proton-crypto-account = { workspace = true, features = ["sql"] }
 serde = { workspace = true }
 serde_repr = { workspace = true }
@@ -19,6 +20,9 @@ serde_with = { workspace = true }
 smart-default = { workspace = true }
 mail-stash = { workspace = true, optional = true }
 wiremock = { workspace = true, optional = true }
+contact-lattice = { workspace = true, features = ["mail-utils"] }
+lattice = { workspace = true }
+serde_json = { workspace = true }
 
 [features]
 default = []
@@ -27,12 +31,14 @@ mocks = [
   "mail-api-labels/mocks",
   "mail-api-event-types/mocks",
   "mail-api-shared/mocks",
+  "contact-lattice/mocks",
 ]
 sql = [
   "dep:mail-stash",
   "mail-proton-ids/sql",
   "mail-api-labels/sql",
   "mail-api-event-types/sql",
+  "contact-lattice/sql",
 ]
 
 [lints]

@@ -640,7 +640,7 @@ impl From<ApiContactBasic> for Contact {
             cards: vec![],
             contact_emails: vec![],
             create_time: value.create_time,
-            label_ids: Labels::new(value.label_ids),
+            label_ids: Labels::new(value.label_ids.into_iter().map(Into::into).collect()),
             modify_time: value.modify_time,
             name: value.name,
             size: value.size,

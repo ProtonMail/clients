@@ -34,6 +34,13 @@ mail_proton_ids::declare_proton_id! {
     pub ContactGroupId
 }
 
+#[cfg(feature = "mail-utils")]
+impl From<ContactGroupId> for mail_api_labels::LabelId {
+    fn from(value: ContactGroupId) -> Self {
+        Self::from(value.into_inner())
+    }
+}
+
 #[derive(
     Clone,
     Copy,

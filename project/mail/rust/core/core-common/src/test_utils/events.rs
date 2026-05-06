@@ -1,3 +1,5 @@
+use lattice::{LtApiCode, LtApiResponse};
+use mail_contacts_api::GetLatestContactEvent;
 use mail_core_api::services::proton::{EventId, GetEventsLatestResponse};
 use wiremock::{
     Mock, ResponseTemplate,
@@ -32,11 +34,11 @@ impl TestContext {
     }
 
     pub async fn mock_last_event_id_contacts_v6(&self, id: EventId) {
-        Mock::given(method("GET"))
-            .and(path("/api/contacts/v6/events/latest"))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(GetEventsLatestResponse { event_id: id }),
-            )
+        GetLatestContactEvent::mock()
+            .respond_with(ResponseTemplate::new(200).set_body_json(LtApiResponse {
+                code: LtApiCode(1000),
+                body: GetEventsLatestResponse { event_id: id },
+            }))
             .expect(1) // this should only ever be initialized once at the moment
             .named("Setup user get latest events")
             .mount(self.mock_server())

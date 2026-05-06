@@ -4,6 +4,7 @@ use core_event_loop::v6::{EventSource, EventSubscriber};
 use core_event_loop::{EventSubscriberError, EventSubscriberResult, RefreshFlag};
 use mail_action_queue::action::ActionGroup;
 use mail_action_queue::rebase::RebaseChangeSet;
+use mail_api_labels::LabelId;
 use mail_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
 use mail_labels_common::Label;
 use mail_shared_types::ModelExtension;
@@ -50,11 +51,12 @@ where
                     if let Some(events) = &event.labels {
                         debug!("Handling contact label event");
                         for event in events {
+                            let label_id: LabelId = event.id.clone().into();
                             Label::handle_event(
                                 tx,
-                                &event.id,
+                                &label_id,
                                 event.action.into(),
-                                cache.get_label_mut(&event.id),
+                                cache.get_label_mut(&label_id),
                                 &mut changeset,
                             )
                             .await?;

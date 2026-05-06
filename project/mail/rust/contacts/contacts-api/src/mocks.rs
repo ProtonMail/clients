@@ -1,10 +1,11 @@
-use wiremock::matchers::{body_json, method, path};
+use lattice::{LtApiCode, LtApiErrorMetadata, LtApiResponse, LtApiResponseErrorInfo};
+use wiremock::matchers::body_json;
 use wiremock::{Mock, MockBuilder, MockServer, ResponseTemplate, Times};
 
-use crate::{
-    ContactBasic, ContactEmail, ContactFull, ContactId, GetContactResponse,
-    GetContactsEmailsResponse, GetContactsResponse, PutDeleteContactResponse, PutDeleteContacts,
-    PutDeleteContactsResponse,
+use contact_lattice::{
+    ContactBasic, ContactEmail, ContactFull, ContactId, GetContactRequest, GetContactResponse,
+    GetContactsEmails, GetContactsEmailsResponse, GetContactsRequest, GetContactsResponse,
+    PutDeleteContactResponse, PutDeleteContacts, PutDeleteContactsResponse,
 };
 use mail_api_shared::ApiErrorInfo;
 
@@ -54,14 +55,14 @@ pub trait ContactsMockServerExt {
 impl ContactsMockServerExt for MockServer {
     async fn mock_get_all_contacts_partial_request(&self, contacts: Vec<ContactBasic>) {
         let num_contacts = contacts.len() as u64;
-        Mock::given(method("GET"))
-            .and(path("/api/contacts/v4/contacts"))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(GetContactsResponse {
+        GetContactsRequest::mock()
+            .respond_with(ResponseTemplate::new(200).set_body_json(LtApiResponse {
+                code: LtApiCode(1000),
+                body: GetContactsResponse {
                     contacts,
                     total: num_contacts,
-                }),
-            )
+                },
+            }))
             .expect(1)
             .named("mock_get_all_contacts_partial_request")
             .mount(self)
@@ -74,14 +75,14 @@ impl ContactsMockServerExt for MockServer {
         expect: impl Into<Times>,
     ) {
         let contacts = contacts.unwrap_or_default();
-        Mock::given(method("GET"))
-            .and(path("/api/contacts/v4/contacts"))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(GetContactsResponse {
+        GetContactsRequest::mock()
+            .respond_with(ResponseTemplate::new(200).set_body_json(LtApiResponse {
+                code: LtApiCode(1000),
+                body: GetContactsResponse {
                     total: contacts.len() as u64,
                     contacts,
-                }),
-            )
+                },
+            }))
             .expect(expect)
             .named("mock_get_contacts")
             .mount(self)
@@ -89,7 +90,7 @@ impl ContactsMockServerExt for MockServer {
     }
 
     async fn mock_get_contacts_respond_with(&self, respond_with: impl Fn(MockBuilder) -> Mock) {
-        let mock = Mock::given(method("GET")).and(path("/api/contacts/v4/contacts"));
+        let mock = GetContactsRequest::mock();
         respond_with(mock)
             .named("mock_get_contacts_respond_with")
             .mount(self)
@@ -102,14 +103,14 @@ impl ContactsMockServerExt for MockServer {
         expect: impl Into<Times>,
     ) {
         let contact_emails = contact_emails.unwrap_or_default();
-        Mock::given(method("GET"))
-            .and(path("/api/contacts/v4/contacts/emails"))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(GetContactsEmailsResponse {
+        GetContactsEmails::mock()
+            .respond_with(ResponseTemplate::new(200).set_body_json(LtApiResponse {
+                code: LtApiCode(1000),
+                body: GetContactsEmailsResponse {
                     total: contact_emails.len() as u64,
                     contact_emails,
-                }),
-            )
+                },
+            }))
             .expect(expect)
             .named("mock_get_contacts_emails")
             .mount(self)
@@ -118,14 +119,14 @@ impl ContactsMockServerExt for MockServer {
 
     async fn mock_get_all_contact_emails_request(&self, contact_emails: Vec<ContactEmail>) {
         let num_contacts = contact_emails.len() as u64;
-        Mock::given(method("GET"))
-            .and(path("/api/contacts/v4/contacts/emails"))
-            .respond_with(
-                ResponseTemplate::new(200).set_body_json(GetContactsEmailsResponse {
+        GetContactsEmails::mock()
+            .respond_with(ResponseTemplate::new(200).set_body_json(LtApiResponse {
+                code: LtApiCode(1000),
+                body: GetContactsEmailsResponse {
                     contact_emails,
                     total: num_contacts,
-                }),
-            )
+                },
+            }))
             .expect(1)
             .named("mock_get_all_contact_emails_request")
             .mount(self)
@@ -133,20 +134,21 @@ impl ContactsMockServerExt for MockServer {
     }
 
     async fn mock_get_full_contact(&self, contact: ContactFull) {
-        Mock::given(method("GET"))
-            .and(path(format!("/api/contacts/v4/contacts/{}", &contact.id)))
-            .respond_with(ResponseTemplate::new(200).set_body_json(GetContactResponse { contact }))
+        GetContactRequest::mock(contact.id.clone())
+            .respond_with(ResponseTemplate::new(200).set_body_json(LtApiResponse {
+                code: LtApiCode(1000),
+                body: GetContactResponse { contact },
+            }))
             .named("mock_get_full_contact")
             .mount(self)
             .await;
     }
 
     async fn mock_get_full_contact_does_not_exist(&self, contact_id: ContactId) {
-        Mock::given(method("GET"))
-            .and(path(format!("/api/contacts/v4/contacts/{contact_id}")))
+        GetContactRequest::mock(contact_id)
             .respond_with(ResponseTemplate::new(422).set_body_json(ApiErrorInfo {
                 code: NOT_EXISTS_CODE,
-                error: None,
+                error: Some("Not found".into()),
                 details: None,
             }))
             .named("mock_get_full_contact_does_not_exist")
@@ -155,23 +157,34 @@ impl ContactsMockServerExt for MockServer {
     }
 
     async fn mock_delete_contacts(&self, contact_ids: Vec<ContactId>) {
-        Mock::given(method("PUT"))
-            .and(path("/api/contacts/v4/contacts/delete"))
+        PutDeleteContacts::mock()
             .and(body_json(PutDeleteContacts {
                 ids: contact_ids.clone(),
             }))
             .respond_with(
-                ResponseTemplate::new(200).set_body_json(PutDeleteContactsResponse {
-                    responses: contact_ids
-                        .into_iter()
-                        .map(|id| PutDeleteContactResponse {
-                            id,
-                            response: ApiErrorInfo {
-                                code: 1000,
-                                ..Default::default()
-                            },
-                        })
-                        .collect(),
+                ResponseTemplate::new(200).set_body_json(LtApiResponse {
+                    code: LtApiCode(1000),
+                    body: PutDeleteContactsResponse {
+                        responses: contact_ids
+                            .into_iter()
+                            .map(|id| PutDeleteContactResponse {
+                                id,
+                                response: LtApiResponseErrorInfo {
+                                    code: 1000,
+                                    details: serde_json::Value::Null,
+                                    error: String::new(),
+                                    metadata: LtApiErrorMetadata {
+                                        exception: None,
+                                        message: None,
+                                        file: None,
+                                        line: None,
+                                        trace: None,
+                                        previous: None,
+                                    },
+                                },
+                            })
+                            .collect(),
+                    },
                 }),
             )
             .expect(1)

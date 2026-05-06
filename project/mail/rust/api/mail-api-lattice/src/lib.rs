@@ -126,7 +126,7 @@ pub trait RunLatticeContractExt {
     ) -> Result<T::Response, ApiServiceError>;
 }
 
-impl<S: Sender<ProtonRequest, ProtonResponse>> RunLatticeContractExt for S {
+impl<S: ?Sized + Sender<ProtonRequest, ProtonResponse>> RunLatticeContractExt for S {
     async fn run_lattice_contract<T: LtContract>(
         &self,
         contract: T,

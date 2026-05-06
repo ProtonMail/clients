@@ -116,9 +116,9 @@ impl SystemLabel {
             Self::CategoryDefault,
             Self::CategorySocial,
             Self::CategoryPromotions,
-            Self::CategoryUpdates,
             Self::CategoryNewsletter,
             Self::CategoryTransactions,
+            Self::CategoryUpdates,
         ]
     }
 

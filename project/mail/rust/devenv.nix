@@ -48,33 +48,10 @@ in
     EOF
   '';
 
-  overlays = [ inputs.rust-overlay.overlays.default ];
 
   packages =
-    let
-      rustVersion = (
-        let
-          file = builtins.readFile ./rust-toolchain.toml;
-          toml = builtins.fromTOML file;
-        in toml.toolchain.channel
-      );
-
-      rustTargets =
-        [
-          "wasm32-unknown-unknown"
-        ]
-        ++ lib.optionals pkgs.stdenv.isDarwin [
-          "aarch64-apple-ios"
-          "aarch64-apple-ios-sim"
-        ];
-
-      rustToolchain = pkgs.rust-bin.stable.${rustVersion}.default.override {
-        targets = rustTargets;
-      };
-    in
     with pkgs;
     [
-      rustToolchain
       bashInteractive
       git-cliff
       php # For iCal
@@ -93,7 +70,11 @@ in
     );
 
   languages = {
-   # rust.enable = true; # This is disabled because we are using rust-overlay directly
+   rust = {
+     enable = true;
+     toolchainFile = ../../../rust-toolchain.toml;
+   };
+
 
     go = {
       enable = true; # For PGP

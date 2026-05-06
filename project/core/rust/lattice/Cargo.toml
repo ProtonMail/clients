@@ -14,6 +14,7 @@
   observability = ["serde"]
   full = ["core", "auth", "muon", "serde", "facet", "observability", "quark", "serde_qs"]
   serde_qs = ["dep:serde_qs", "dep:url", "serde"]
+  mail-muon-v1 = ["dep:mail-muon"]
 
 [dependencies]
   serde = { optional = true, version = "^1.0.228", features = ["derive"] }
@@ -29,6 +30,7 @@
   muon = { workspace = true, optional = true }
   regex = { optional = true, version = "1.10" }
   url = { workspace = true, optional = true }
+  mail-muon = { workspace = true, optional = true }
 
 [dev-dependencies]
   muon = { workspace = true, features = ["full-native"] }

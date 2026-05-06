@@ -140,6 +140,7 @@ dependencies = [
  "totp-rs",
  "tracing",
  "tracing-subscriber",
+ "typed-builder",
  "uniffi 0.30.0",
  "url",
 ]

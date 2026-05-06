@@ -54,21 +54,23 @@ impl BackgroundExecutionContext {
     ) -> MailContextResult<BackgroundExecutionResult> {
         tracing::debug!("Background execution is gathering user contexts");
 
+        ctx.core_context().task_service().resume_background();
+
         let all_user_ctxs = ctx
             .get_all_logged_in_and_initialized_user_contexts()
             .await
             .inspect_err(|e| {
+                ctx.core_context().task_service().pause_background();
                 tracing::error!("Failed to get logged in users, details: `{e:?}`");
             })?;
 
         if all_user_ctxs.is_empty() {
+            ctx.core_context().task_service().pause_background();
             tracing::warn!("There are no logged in users, skipping background execution");
             return Ok(BackgroundExecutionResult::no_active_contexts());
         }
 
         let _pause_prefetch_rollback = PausePrefetchRollbackScope::new(&all_user_ctxs);
-
-        ctx.core_context().task_service().resume_background();
 
         tracing::debug!("Background execution is in progress... awaiting for abort");
         let status = match tokio::time::timeout(max_duration, abort).await {

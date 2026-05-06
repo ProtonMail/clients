@@ -38,7 +38,8 @@ use mail_stash::orm::Model;
 use mail_stash::stash::{Stash, WatcherHandle};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Weak};
 use std::time::Duration;
 use tracing::{debug, error, warn};
 
@@ -1236,6 +1237,23 @@ impl MailSession {
             .network_monitor_service()
             .update_os_network_status(os_network_status.into());
     }
+
+    /// Creates a new background execution scrope hanlde.
+    ///
+    /// When bakcground execution is finished, call [`MailBackgroundExecScope::finsihed()`].
+    ///
+    /// # Important
+    ///
+    /// Make sure to call stop when done or the execution state will not be correct.
+    #[must_use]
+    pub fn new_background_execution_scope(&self) -> Arc<MailBackgroundExecScope> {
+        let ctx = Arc::downgrade(&self.mail_ctx);
+        self.mail_ctx
+            .core_context()
+            .task_service()
+            .resume_background();
+        Arc::new(MailBackgroundExecScope::new(ctx))
+    }
 }
 
 impl MailSession {
@@ -1376,5 +1394,38 @@ impl WatchedFeatureFlags {
         WatchedFeatureFlags::new(WatchFeatureFlagsMarker::watch_channel_async(
             ctx, handle, callback,
         ))
+    }
+}
+
+#[derive(uniffi::Object)]
+pub struct MailBackgroundExecScope {
+    canceled: AtomicBool,
+    ctx: Weak<MailContext>,
+}
+
+impl MailBackgroundExecScope {
+    fn new(ctx: Weak<MailContext>) -> Self {
+        Self {
+            canceled: AtomicBool::new(false),
+            ctx,
+        }
+    }
+}
+
+#[uniffi::export]
+impl MailBackgroundExecScope {
+    /// Signal that the background execution is finsihed.
+    pub fn finsihed(&self) {
+        if !self.canceled.swap(true, Ordering::SeqCst)
+            && let Some(ctx) = self.ctx.upgrade()
+        {
+            ctx.core_context().task_service().pause_background();
+        }
+    }
+}
+
+impl Drop for MailBackgroundExecScope {
+    fn drop(&mut self) {
+        self.finsihed();
     }
 }

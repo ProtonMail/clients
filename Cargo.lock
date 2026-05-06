@@ -5621,6 +5621,7 @@ dependencies = [
  "facet",
  "futures",
  "lattice",
+ "mail-muon",
  "muon 2.3.0",
  "num_enum",
  "passkey",

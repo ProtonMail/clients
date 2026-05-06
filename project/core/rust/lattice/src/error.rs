@@ -18,6 +18,9 @@ pub enum LatticeError {
     #[cfg(feature = "muon")]
     Muon(::muon::Error),
 
+    #[cfg(feature = "mail-muon-v1")]
+    MailMuon(::mail_muon::Error),
+
     #[display("UnexpectedStatusCode({_0}: \"{}\")", String::from_utf8(_1.to_vec()).unwrap_or_else(|_| format!("Invalid UTF-8: {:?}", _1)))]
     #[debug("UnexpectedStatusCode({_0}: \"{}\")", String::from_utf8(_1.to_vec()).unwrap_or_else(|_| format!("Invalid UTF-8: {:?}", _1)))]
     UnexpectedStatusCode(u16, Vec<u8>),

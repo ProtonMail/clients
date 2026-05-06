@@ -16,7 +16,7 @@ use mail_api_session::mocks::test_session;
 use mail_api_session::session::Session;
 use mail_avatar::AvatarInformation;
 use mail_contacts_api::mocks::ContactsMockServerExt;
-use mail_contacts_api::{ContactEventV6, ContactRootEventV6};
+use mail_contacts_api::{ContactEventV6, ContactGroupId, ContactRootEventV6};
 use mail_core_api::services::proton::{
     Action, ContactBasic as ApiContactBasic, ContactCard as ApiContactCard,
     ContactEmail as ApiContactEmail, ContactEmailId, ContactFull as ApiContactFull, ContactId,
@@ -99,7 +99,7 @@ fn create_test_remote_partial_contacts() -> Vec<ApiContactBasic> {
         ApiContactBasic {
             id: ContactId::from("a29olIjFv0rnXxBhSMw=="),
             create_time: 1_503_815_366,
-            label_ids: vec![LabelId::from("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==")],
+            label_ids: vec![ContactGroupId::from("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==")],
             modify_time: 1_503_815_366,
             name: "contact_name".to_owned(),
             size: 1443,
@@ -108,7 +108,7 @@ fn create_test_remote_partial_contacts() -> Vec<ApiContactBasic> {
         ApiContactBasic {
             id: ContactId::from("z29olIjFv0rnXxBhSMz=="),
             create_time: 1_503_815_367,
-            label_ids: vec![LabelId::from(
+            label_ids: vec![ContactGroupId::from(
                 "I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==".to_owned(),
             )],
             modify_time: 1_503_815_367,
@@ -129,7 +129,7 @@ fn create_test_remote_contact_emails() -> Vec<ApiContactEmail> {
             defaults: ApiContactSendingPreferences::Default,
             email: "keytransparencymailer@gmail.com".into(),
             is_proton: true,
-            label_ids: vec![LabelId::from("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==")],
+            label_ids: vec![ContactGroupId::from("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==")],
             last_used_time: 0,
             name: "contact_email_name_1".to_owned(),
             order: 1,
@@ -142,7 +142,7 @@ fn create_test_remote_contact_emails() -> Vec<ApiContactEmail> {
             defaults: ApiContactSendingPreferences::Default,
             email: "contact_email_2@contact.test".into(),
             is_proton: true,
-            label_ids: vec![LabelId::from("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==")],
+            label_ids: vec![ContactGroupId::from("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==")],
             last_used_time: 0,
             name: "contact_email_name_2".to_owned(),
             order: 1,
@@ -155,7 +155,7 @@ fn create_test_remote_contact_emails() -> Vec<ApiContactEmail> {
             defaults: ApiContactSendingPreferences::Custom,
             email: "contact_email_3@contact.test".into(),
             is_proton: true,
-            label_ids: vec![LabelId::from("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==")],
+            label_ids: vec![ContactGroupId::from("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==")],
             last_used_time: 0,
             name: "contact_email_name_3".to_owned(),
             order: 1,
@@ -371,7 +371,7 @@ fn create_test_remote_full_modified_contact() -> (ApiContactFull, ApiContactEmai
         order: 1,
         email: "contact_email_mod@contact.test".into(),
         is_proton: true,
-        label_ids: vec![LabelId::from(
+        label_ids: vec![ContactGroupId::from(
             "I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==".to_owned(),
         )],
         last_used_time: 0,
@@ -490,9 +490,11 @@ impl ContactIssueReporterContext for TestEventContext {
     fn report_contacts_event_issue(
         &self,
         _: mail_issue_reporter_service::IssueLevel,
-        _: String,
-        _: mail_issue_reporter_service::IssueReportKeys,
+        e: String,
+        keys: mail_issue_reporter_service::IssueReportKeys,
     ) {
+        eprintln!("{e}");
+        eprintln!("{keys:?}");
         unreachable!();
     }
 }

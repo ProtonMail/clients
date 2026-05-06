@@ -76,6 +76,7 @@ mail-observability = { workspace = true }
 mail-telemetry = { workspace = true }
 topological-sort = { workspace = true }
 velcro = { workspace = true }
+lattice = { workspace = true }
 
 [dev-dependencies]
 futures = { workspace = true }

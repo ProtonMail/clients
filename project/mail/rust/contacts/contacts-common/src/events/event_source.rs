@@ -102,7 +102,7 @@ impl ContactEventCache {
             let mut label_ids = Vec::with_capacity(events.len());
             for event in events {
                 if event.action != Action::Delete {
-                    label_ids.push(event.id.clone());
+                    label_ids.push(event.id.clone().into());
                 }
             }
             self.fetch_labels(&mut tasks, session, label_ids);

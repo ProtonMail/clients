@@ -84,7 +84,7 @@ impl From<ApiContactEmail> for ContactEmail {
             display_order: value.order,
             email: value.email,
             is_proton: value.is_proton,
-            label_ids: Labels::new(value.label_ids),
+            label_ids: Labels::new(value.label_ids.into_iter().map(Into::into).collect()),
             last_used_time: value.last_used_time.into(),
             name: value.name,
         }

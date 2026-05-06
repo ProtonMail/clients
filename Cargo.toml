@@ -457,6 +457,10 @@
   version = "0.1.0"
   path = "project/mail/rust/shared/api-utils"
 
+[workspace.dependencies.mail-api-lattice]
+  version = "0.1.0"
+  path = "project/mail/rust/api/mail-api-lattice"
+
 [workspace.dependencies.mail-account-api]
   version = "0.1"
   path = "project/mail/rust/account/account-api"
@@ -810,6 +814,9 @@
 
 [workspace.dependencies.payment-observability]
   path = "project/payment/rust/payment-observability"
+
+[workspace.dependencies.contact-lattice]
+  path = "project/contact/rust/contact-lattice"
 
 [patch.proton]
 mail-muon = { path = "project/mail/rust/forks/muon" }

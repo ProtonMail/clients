@@ -1986,11 +1986,13 @@ version = "0.1.0"
 dependencies = [
  "lattice",
  "mail-api-event-types",
+ "mail-api-labels",
  "mail-api-utils",
  "mail-proton-ids",
  "mail-stash",
  "proton-crypto-account",
  "serde",
+ "serde_json",
  "serde_repr",
  "serde_with",
  "smart-default",
@@ -6324,8 +6326,11 @@ dependencies = [
 name = "mail-contacts-api"
 version = "0.1.0"
 dependencies = [
+ "contact-lattice",
+ "lattice",
  "mail-api-event-types",
  "mail-api-labels",
+ "mail-api-lattice",
  "mail-api-shared",
  "mail-api-utils",
  "mail-muon",
@@ -6333,6 +6338,7 @@ dependencies = [
  "mail-stash",
  "proton-crypto-account",
  "serde",
+ "serde_json",
  "serde_repr",
  "serde_with",
  "smart-default",
@@ -6459,6 +6465,7 @@ dependencies = [
  "insta",
  "itertools 0.14.0",
  "jiff",
+ "lattice",
  "mail-account-api",
  "mail-action-queue",
  "mail-api-labels",

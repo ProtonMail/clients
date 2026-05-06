@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{CONTACTS_V4, ContactId};
-use lattice::{LtContract, LtNoQueryParams, LtSlimAPIJSON};
+use lattice::{LtApiResponseErrorInfo, LtContract, LtNoQueryParams, LtSlimAPIJSON};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize)]
@@ -24,6 +24,7 @@ pub struct PutDeleteContactsResponse {
 #[cfg_attr(feature = "mocks", derive(Serialize))]
 #[serde(rename_all = "PascalCase")]
 pub struct PutDeleteContactResponse {
+    pub response: LtApiResponseErrorInfo<u32, serde_json::Value>,
     /// Remote ID of the contact.
     #[serde(rename = "ID")]
     pub id: ContactId,

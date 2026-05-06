@@ -12,15 +12,17 @@ mail-stash = {workspace=true, optional = true}
 serde_repr = {workspace = true}
 mail-api-event-types = { workspace = true }
 serde_with = {workspace =true}
+serde_json = {workspace = true}
 proton-crypto-account = {workspace = true}
 smart-default = { workspace = true }
 mail-api-utils = {workspace = true, optional = true}
 wiremock = {workspace=true, optional = true}
+mail-api-labels = {workspace = true, optional = true}
 
 [features]
 default =[]
 sql =["mail-proton-ids/sql", "dep:mail-stash", "proton-crypto-account/sql"]
 mocks = ["dep:wiremock"]
-mail-utils = []
+mail-utils = ["dep:mail-api-utils" , "dep:mail-api-labels"]
 [lints]
 workspace = true

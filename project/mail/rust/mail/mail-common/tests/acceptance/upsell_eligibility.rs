@@ -27,9 +27,16 @@ async fn mail_plus_upsell_when_unlimited_flag_disabled() {
     let ctx = MailTestContext::new().await;
     let params = TestParams::default_basic().with_user(USER());
     ctx.setup_user(params).await;
-    setup_feature_flags(&ctx, TestedFeatureFlags::default()).await;
+    mount_feature_flag_mocks(&ctx, TestedFeatureFlags::default()).await;
 
     let user_ctx = ctx.mail_user_context().await;
+    user_ctx
+        .user_context()
+        .feature_flags()
+        .refresh()
+        .await
+        .expect("Fresh feature flags");
+
     let service = user_ctx.get_service::<UpsellEligibilityService>();
     let eligibility = service.upsell_eligibility().await.unwrap();
 
@@ -44,7 +51,7 @@ async fn unlimited_upsell_when_unlimited_flag_enabled() {
     let ctx = MailTestContext::new().await;
     let params = TestParams::default_basic().with_user(USER());
     ctx.setup_user(params).await;
-    setup_feature_flags(
+    mount_feature_flag_mocks(
         &ctx,
         TestedFeatureFlags {
             upsell_unlimited_parent: true,
@@ -54,6 +61,13 @@ async fn unlimited_upsell_when_unlimited_flag_enabled() {
     .await;
 
     let user_ctx = ctx.mail_user_context().await;
+    user_ctx
+        .user_context()
+        .feature_flags()
+        .refresh()
+        .await
+        .expect("Fresh feature flags");
+
     let service = user_ctx.get_service::<UpsellEligibilityService>();
     let eligibility = service.upsell_eligibility().await.unwrap();
 
@@ -68,9 +82,15 @@ async fn paid_user_not_eligible() {
     let ctx = MailTestContext::new().await;
     let params = TestParams::default_basic().with_user(USER());
     ctx.setup_user(params).await;
-    setup_feature_flags(&ctx, TestedFeatureFlags::default()).await;
+    mount_feature_flag_mocks(&ctx, TestedFeatureFlags::default()).await;
 
     let user_ctx = ctx.mail_user_context().await;
+    user_ctx
+        .user_context()
+        .feature_flags()
+        .refresh()
+        .await
+        .expect("Fresh feature flags");
 
     let user_stash = user_ctx.user_stash();
     let mut tether = user_stash.connection().await.unwrap();
@@ -91,9 +111,15 @@ async fn paid_user_other_services_not_eligible() {
     let ctx = MailTestContext::new().await;
     let params = TestParams::default_basic().with_user(USER());
     ctx.setup_user(params).await;
-    setup_feature_flags(&ctx, TestedFeatureFlags::default()).await;
+    mount_feature_flag_mocks(&ctx, TestedFeatureFlags::default()).await;
 
     let user_ctx = ctx.mail_user_context().await;
+    user_ctx
+        .user_context()
+        .feature_flags()
+        .refresh()
+        .await
+        .expect("Fresh feature flags");
 
     let user_stash = user_ctx.user_stash();
     let mut tether = user_stash.connection().await.unwrap();
@@ -112,9 +138,15 @@ async fn member_role_not_eligible() {
     let ctx = MailTestContext::new().await;
     let params = TestParams::default_basic().with_user(USER());
     ctx.setup_user(params).await;
-    setup_feature_flags(&ctx, TestedFeatureFlags::default()).await;
+    mount_feature_flag_mocks(&ctx, TestedFeatureFlags::default()).await;
 
     let user_ctx = ctx.mail_user_context().await;
+    user_ctx
+        .user_context()
+        .feature_flags()
+        .refresh()
+        .await
+        .expect("Fresh feature flags");
 
     let user_stash = user_ctx.user_stash();
     let mut tether = user_stash.connection().await.unwrap();
@@ -158,7 +190,7 @@ struct TestedFeatureFlags {
     upsell_unlimited_child: bool,
 }
 
-async fn setup_feature_flags(ctx: &MailTestContext, flags: TestedFeatureFlags) {
+async fn mount_feature_flag_mocks(ctx: &MailTestContext, flags: TestedFeatureFlags) {
     let mut toggles = vec![];
 
     if flags.upsell_unlimited_parent {
@@ -199,11 +231,4 @@ async fn setup_feature_flags(ctx: &MailTestContext, flags: TestedFeatureFlags) {
         .named("Empty Legacy fetch")
         .mount(ctx.mock_server())
         .await;
-
-    ctx.user_context()
-        .await
-        .feature_flags()
-        .refresh()
-        .await
-        .expect("Fresh feature flags");
 }

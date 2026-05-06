@@ -6,7 +6,7 @@ use crate::rest::auth;
 use crate::rest::auth::v4::fido2;
 use crate::{PasswordMode, Result, Tokens};
 use futures::FutureExt;
-use proton_srp::{RPGPVerifier, SRPAuth, SRPError, SRPProofB64};
+use proton_srp::{RPGPVerifier, SRPAuth, SRPError, SRPProofB64, SrpHashVersion};
 
 /// Additional data returned by the login flow.
 #[derive(Debug)]
@@ -98,7 +98,11 @@ impl LoginFlow {
             return_variant_on_error!(res.into_body_json(), client, Self::Failed);
 
         info!(session = %res.session, "generating SRP proofs");
-        let proofs = return_variant_on_error!(gen_proofs(password, &res), client, Self::Failed);
+        let proofs = return_variant_on_error!(
+            gen_proofs(username, password, &res),
+            client,
+            Self::Failed
+        );
 
         info!(session = %res.session, "sending auth request");
 
@@ -339,11 +343,17 @@ fn auth_info_post_req(username: &str) -> auth::v4::info::Post {
     }
 }
 
-fn gen_proofs(pass: &str, info: &auth::v4::info::PostRes) -> Result<SRPProofB64, SRPError> {
+fn gen_proofs(
+    username: &str,
+    pass: &str,
+    info: &auth::v4::info::PostRes,
+) -> Result<SRPProofB64, SRPError> {
+    let version = SrpHashVersion::try_from(info.version)?;
     SRPAuth::new(
         &RPGPVerifier::default(),
+        Some(username),
         pass,
-        info.version,
+        version,
         &info.salt,
         &info.modulus,
         &info.server_ephemeral,

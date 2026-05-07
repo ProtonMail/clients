@@ -325,6 +325,7 @@
   calendar-net-fake = { path = "project/calendar/rust/calendar-net-fake" }
   calendar-net-muon = { path = "project/calendar/rust/calendar-net-muon" }
   calendar-queue = { path = "project/calendar/rust/calendar-queue" }
+  calendar-telemetry = { path = "project/calendar/rust/calendar-telemetry" }
   calendar-tui = { path = "project/calendar/rust/calendar-tui" }
   notify-waker = { path = "project/calendar/rust/notify-waker" }
 

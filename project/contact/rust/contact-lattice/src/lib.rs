@@ -1,22 +1,32 @@
+mod delete_contact_group;
 mod get_contact;
 mod get_contact_events;
+mod get_contact_group;
 mod get_contacts_emails;
+mod post_contact_group;
+mod put_contact_group;
 mod put_delete_contacts;
 
+pub use delete_contact_group::*;
 pub use get_contact::*;
 pub use get_contact_events::*;
+pub use get_contact_group::*;
 pub use get_contacts_emails::*;
+pub use post_contact_group::*;
 use proton_crypto_account::contacts::ContactCardType;
+pub use put_contact_group::*;
 pub use put_delete_contacts::*;
 
 use mail_api_event_types::Action;
 use mail_proton_ids::PrivateEmail;
 use serde::Deserialize;
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use serde_with::{BoolFromInt, serde_as};
+use serde_with::{BoolFromInt, DefaultOnNull, serde_as};
 
 const CONTACTS_V4: &str = "/contacts/v4/contacts";
 const CONTACTS_V6: &str = "/contacts/v6";
+const CORE_V4: &str = "/core/v4";
+const CONTACT_GROUP_LABEL_TYPE: u32 = 2;
 
 mail_proton_ids::declare_proton_id! {
     pub ContactId
@@ -190,4 +200,49 @@ pub struct ContactLabelEventV6 {
     #[serde(rename = "ID")]
     pub id: ContactGroupId,
     pub action: Action,
+}
+
+// Even though they are techincally sharing the same types as labels, we
+// only need this subset of data to work.
+#[serde_as]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[cfg_attr(feature = "mocks", derive(serde::Serialize))]
+#[serde(rename_all = "PascalCase")]
+#[allow(clippy::struct_excessive_bools)]
+pub struct ContactGroup {
+    #[serde(rename = "ID")]
+    pub id: ContactGroupId,
+
+    pub color: String,
+
+    #[serde_as(as = "DefaultOnNull<BoolFromInt>")]
+    pub display: bool,
+
+    pub name: String,
+
+    #[serde(default)]
+    pub order: u32,
+
+    #[serde_as(as = "DefaultOnNull<BoolFromInt>")]
+    pub sticky: bool,
+}
+
+#[cfg(feature = "mail-utils")]
+impl From<ContactGroup> for mail_api_labels::Label {
+    fn from(value: ContactGroup) -> Self {
+        let path = value.name.clone();
+        Self {
+            id: value.id.into(),
+            parent_id: None,
+            color: value.color,
+            display: value.display,
+            expanded: false,
+            label_type: mail_api_labels::LabelType::ContactGroup,
+            name: value.name,
+            notify: false,
+            order: value.order,
+            path: Some(path),
+            sticky: value.sticky,
+        }
+    }
 }

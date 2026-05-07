@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "PascalCase")]
-pub struct PutDeleteContacts {
+pub struct PutDeleteContactsRequest {
     /// The list of contact IDs to delete.
     #[serde(rename = "IDs")]
     pub ids: Vec<ContactId>,
@@ -30,7 +30,7 @@ pub struct PutDeleteContactResponse {
     pub id: ContactId,
 }
 
-impl LtContract for PutDeleteContacts {
+impl LtContract for PutDeleteContactsRequest {
     type Response = LtSlimAPIJSON<PutDeleteContactsResponse>;
     type Body<'b> = LtSlimAPIJSON<&'b Self>;
     type Query<'q> = LtNoQueryParams;
@@ -45,7 +45,7 @@ impl LtContract for PutDeleteContacts {
 }
 
 #[cfg(feature = "mocks")]
-impl PutDeleteContacts {
+impl PutDeleteContactsRequest {
     pub fn mock() -> wiremock::MockBuilder {
         use wiremock::matchers::*;
         wiremock::Mock::given(method("PUT")).and(path(format!("api{CONTACTS_V4}/delete")))

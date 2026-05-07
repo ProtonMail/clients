@@ -4,9 +4,9 @@ use crate::CONTACTS_V6;
 use lattice::{LtContract, LtNoQueryParams, LtRawBody, LtSlimAPIJSON};
 use mail_api_event_types::{EventId, GetEventsLatestResponse};
 
-pub struct GetLatestContactEvent;
+pub struct GetContactEventLatestRequest;
 
-impl LtContract for GetLatestContactEvent {
+impl LtContract for GetContactEventLatestRequest {
     type Response = LtSlimAPIJSON<GetEventsLatestResponse>;
     type Body<'b> = LtSlimAPIJSON<()>;
     type Query<'q> = LtNoQueryParams;
@@ -17,7 +17,7 @@ impl LtContract for GetLatestContactEvent {
 }
 
 #[cfg(feature = "mocks")]
-impl GetLatestContactEvent {
+impl GetContactEventLatestRequest {
     pub fn mock() -> wiremock::MockBuilder {
         use wiremock::matchers::*;
         wiremock::Mock::given(method("GET")).and(path(format!("api{CONTACTS_V6}/events")))

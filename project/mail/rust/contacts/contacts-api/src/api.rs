@@ -2,9 +2,9 @@
 
 use crate::{
     ContactId, GetContactResponse, GetContactsEmailsOptions, GetContactsEmailsResponse,
-    GetContactsOptions, GetContactsResponse, PutDeleteContacts, PutDeleteContactsResponse,
+    GetContactsOptions, GetContactsResponse, PutDeleteContactsRequest, PutDeleteContactsResponse,
 };
-use contact_lattice::{GetContactEvent, GetLatestContactEvent};
+use contact_lattice::{GetContactEvent, GetContactEventLatestRequest};
 use mail_api_event_types::{EventId, GetEventsLatestResponse};
 use mail_api_lattice::RunLatticeContractExt;
 use mail_api_shared::ApiServiceResult;
@@ -72,7 +72,7 @@ impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> ContactApi for This {
         options: GetContactsEmailsOptions,
     ) -> ApiServiceResult<GetContactsEmailsResponse> {
         let resp = self
-            .run_lattice_contract_compat(contact_lattice::GetContactsEmails { options })
+            .run_lattice_contract_compat(contact_lattice::GetContactsEmailsRequest { options })
             .await?;
         Ok(resp.0)
     }
@@ -82,7 +82,7 @@ impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> ContactApi for This {
         ids: Vec<ContactId>,
     ) -> ApiServiceResult<PutDeleteContactsResponse> {
         let resp = self
-            .run_lattice_contract_compat(PutDeleteContacts { ids })
+            .run_lattice_contract_compat(PutDeleteContactsRequest { ids })
             .await?;
         Ok(resp.0)
     }
@@ -96,7 +96,7 @@ impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> ContactApi for This {
 
     async fn get_contact_event_latest_v6(&self) -> ApiServiceResult<GetEventsLatestResponse> {
         let resp = self
-            .run_lattice_contract_compat(GetLatestContactEvent)
+            .run_lattice_contract_compat(GetContactEventLatestRequest)
             .await?;
         Ok(resp.0)
     }

@@ -4,8 +4,8 @@ use wiremock::{Mock, MockBuilder, MockServer, ResponseTemplate, Times};
 
 use contact_lattice::{
     ContactBasic, ContactEmail, ContactFull, ContactId, GetContactRequest, GetContactResponse,
-    GetContactsEmails, GetContactsEmailsResponse, GetContactsRequest, GetContactsResponse,
-    PutDeleteContactResponse, PutDeleteContacts, PutDeleteContactsResponse,
+    GetContactsEmailsRequest, GetContactsEmailsResponse, GetContactsRequest, GetContactsResponse,
+    PutDeleteContactResponse, PutDeleteContactsRequest, PutDeleteContactsResponse,
 };
 use mail_api_shared::ApiErrorInfo;
 
@@ -103,7 +103,7 @@ impl ContactsMockServerExt for MockServer {
         expect: impl Into<Times>,
     ) {
         let contact_emails = contact_emails.unwrap_or_default();
-        GetContactsEmails::mock()
+        GetContactsEmailsRequest::mock()
             .respond_with(ResponseTemplate::new(200).set_body_json(LtApiResponse {
                 code: LtApiCode(1000),
                 body: GetContactsEmailsResponse {
@@ -119,7 +119,7 @@ impl ContactsMockServerExt for MockServer {
 
     async fn mock_get_all_contact_emails_request(&self, contact_emails: Vec<ContactEmail>) {
         let num_contacts = contact_emails.len() as u64;
-        GetContactsEmails::mock()
+        GetContactsEmailsRequest::mock()
             .respond_with(ResponseTemplate::new(200).set_body_json(LtApiResponse {
                 code: LtApiCode(1000),
                 body: GetContactsEmailsResponse {
@@ -157,8 +157,8 @@ impl ContactsMockServerExt for MockServer {
     }
 
     async fn mock_delete_contacts(&self, contact_ids: Vec<ContactId>) {
-        PutDeleteContacts::mock()
-            .and(body_json(PutDeleteContacts {
+        PutDeleteContactsRequest::mock()
+            .and(body_json(PutDeleteContactsRequest {
                 ids: contact_ids.clone(),
             }))
             .respond_with(

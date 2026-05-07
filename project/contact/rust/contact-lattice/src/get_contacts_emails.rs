@@ -68,11 +68,11 @@ impl mail_api_utils::PaginateResponse<ContactEmail> for GetContactsEmailsRespons
     }
 }
 
-pub struct GetContactsEmails {
+pub struct GetContactsEmailsRequest {
     pub options: GetContactsEmailsOptions,
 }
 
-impl LtContract for GetContactsEmails {
+impl LtContract for GetContactsEmailsRequest {
     type Response = LtSlimAPIJSON<GetContactsEmailsResponse>;
     type Body<'b> = LtSlimAPIJSON<()>;
 
@@ -88,7 +88,7 @@ impl LtContract for GetContactsEmails {
 }
 
 #[cfg(feature = "mocks")]
-impl GetContactsEmails {
+impl GetContactsEmailsRequest {
     pub fn mock() -> wiremock::MockBuilder {
         use wiremock::matchers::*;
         wiremock::Mock::given(method("GET")).and(path(format!("api{CONTACTS_V4}/emails")))

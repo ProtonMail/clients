@@ -1208,6 +1208,7 @@ dependencies = [
  "calendar-keychain",
  "calendar-loop",
  "calendar-net",
+ "calendar-telemetry",
  "crux_core 0.17.0 (git+https://github.com/redbadger/crux?rev=04347ef20277faa80f041c9b99ee79fcdb39b7d1)",
  "facet",
  "futures",
@@ -1244,6 +1245,7 @@ dependencies = [
  "calendar-net",
  "calendar-net-fake",
  "calendar-net-muon",
+ "calendar-telemetry",
  "console_error_panic_hook",
  "crux_core 0.17.0 (git+https://github.com/redbadger/crux?rev=04347ef20277faa80f041c9b99ee79fcdb39b7d1)",
  "facet",
@@ -1464,6 +1466,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "calendar-telemetry"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "calendar-db-diesel",
+ "calendar-net-muon",
+ "core-telemetry",
+ "diesel",
+ "muon 2.3.0",
+ "serde_json",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "calendar-tui"
 version = "0.1.0"
 dependencies = [
@@ -1472,6 +1489,8 @@ dependencies = [
  "calendar-db-diesel",
  "calendar-keychain",
  "calendar-net",
+ "calendar-net-muon",
+ "calendar-telemetry",
  "clap",
  "crossterm",
  "crux_core 0.17.0 (git+https://github.com/redbadger/crux?rev=04347ef20277faa80f041c9b99ee79fcdb39b7d1)",

@@ -12,7 +12,7 @@ impl LtContract for GetContactEventLatestRequest {
     type Query<'q> = LtNoQueryParams;
 
     fn path<'a>(&'a self) -> Result<std::borrow::Cow<'a, str>, lattice::LatticeError> {
-        Ok(Cow::Owned(format!("{CONTACTS_V6}/events")))
+        Ok(Cow::Owned(format!("{CONTACTS_V6}/events/latest")))
     }
 }
 
@@ -20,7 +20,7 @@ impl LtContract for GetContactEventLatestRequest {
 impl GetContactEventLatestRequest {
     pub fn mock() -> wiremock::MockBuilder {
         use wiremock::matchers::*;
-        wiremock::Mock::given(method("GET")).and(path(format!("api{CONTACTS_V6}/events")))
+        wiremock::Mock::given(method("GET")).and(path(format!("api{CONTACTS_V6}/events/latest")))
     }
 }
 

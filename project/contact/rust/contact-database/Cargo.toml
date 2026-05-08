@@ -1,0 +1,22 @@
+[package]
+name = "contact-database"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+
+
+[features]
+default = []
+mail-compat = ["dep:mail-stash", "mail-local-id/stash"]
+
+[dependencies]
+mail-local-id = {workspace=true}
+mail-db = {workspace=true}
+contact-lattice = {workspace=true}
+serde = {workspace = true}
+mail-proton-ids = {workspace = true}
+proton-crypto-account = {workspace = true}
+mail-stash = {workspace = true, optional = true}
+
+[lints]
+workspace = true

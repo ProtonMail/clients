@@ -1984,6 +1984,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7c74b8349d32d297c9134b8c88677813a227df8f779daa29bfc29c183fe3dca6"
 
 [[package]]
+name = "contact-database"
+version = "0.1.0"
+dependencies = [
+ "contact-lattice",
+ "mail-db",
+ "mail-local-id",
+ "mail-proton-ids",
+ "mail-stash",
+ "proton-crypto-account",
+ "serde",
+]
+
+[[package]]
 name = "contact-lattice"
 version = "0.1.0"
 dependencies = [
@@ -2005,6 +2018,10 @@ dependencies = [
 [[package]]
 name = "contact-service"
 version = "0.1.0"
+dependencies = [
+ "contact-database",
+ "contact-lattice",
+]
 
 [[package]]
 name = "convert_case"

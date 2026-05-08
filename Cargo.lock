@@ -1214,6 +1214,9 @@ dependencies = [
  "futures",
  "itertools 0.14.0",
  "jiff",
+ "mail-avatar",
+ "mail-canonical-email",
+ "pretty_assertions",
  "serde",
  "tracing",
 ]
@@ -1474,7 +1477,7 @@ dependencies = [
  "calendar-net-muon",
  "core-telemetry",
  "diesel",
- "muon 2.3.0",
+ "muon",
  "serde_json",
  "tokio",
  "tracing",

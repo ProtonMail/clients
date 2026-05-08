@@ -6,7 +6,7 @@ use crate::errors::{ProtonError, UserSessionError};
 use crate::mail::MailUserSession;
 use crate::mail::datatypes::{MessageRecipientDisplayMode, ViewMode};
 use crate::mail::state::MailUserContextPtr;
-use crate::{LiveQueryCallback, WatchHandle, declare_live_query_tagger, uniffi_async};
+use crate::{LiveQueryCallback, WatchHandle, uniffi_async, watch_channel_inner};
 use mail_common::MailUserContext;
 use mail_common::Mailbox as RealMailbox;
 use mail_common::ProtonMailError as RealProtonMailError;
@@ -133,22 +133,30 @@ impl Mailbox {
     pub async fn watch_unread_count(
         &self,
         callback: Box<dyn LiveQueryCallback>,
+        category: Option<Id>,
     ) -> Result<Arc<WatchHandle>, UserSessionError> {
         let ctx = self.ctx()?;
         let mbox = self.mbox.clone();
 
         uniffi_async(async move {
-            let receiver = mbox.watch_unread_count(ctx.user_stash()).await?;
-            let watcher = WatchUnreadCounterMarker::watch_channel(&*ctx, receiver, callback);
+            let handle = mbox
+                .watch_unread_count(&*ctx, category.map(Into::into))
+                .await?;
 
-            Result::<_, RealProtonMailError>::Ok(watcher)
+            let callback = Arc::new(callback);
+            let task = watch_channel_inner(&*ctx, handle.receiver, move || {
+                callback.on_update();
+            });
+
+            Result::<_, RealProtonMailError>::Ok(Arc::new(WatchHandle::new(
+                handle.drop_handle,
+                &task,
+            )))
         })
         .await
         .map_err(UserSessionError::from)
     }
 }
-
-declare_live_query_tagger!(WatchUnreadCounterMarker);
 
 impl Mailbox {
     #[must_use]

@@ -4,8 +4,8 @@ mod labels;
 
 use crate::core::datatypes::{
     AccountDetails, ConnectionStatus, GetPaymentsPlansOptions, Id, NewSubscription,
-    NewSubscriptionValues, PaymentMethod, PaymentReceipt, PaymentToken, PaymentsPlans,
-    PaymentsStatus, Subscriptions, UpsellEligibility, User, UserSettings,
+    NewSubscriptionValues, PaymentMethod, PaymentReceipt, PaymentToken, PaymentsHttpResponse,
+    PaymentsPlans, PaymentsStatus, Subscriptions, UpsellEligibility, User, UserSettings,
 };
 use crate::core::measurement::{MeasurementEventType, MeasurementValue};
 use crate::errors::unexpected::UnexpectedError;
@@ -1161,6 +1161,47 @@ impl MailUserSession {
                 .map_err(MailContextError::from)?;
 
             Ok::<_, RealProtonMailError>(res.payment_method.into())
+        })
+        .await
+        .map_err(UserSessionError::from)
+    }
+
+    #[tracing::instrument(skip_all)]
+    pub async fn payments_http_get(
+        &self,
+        endpoint: String,
+    ) -> Result<PaymentsHttpResponse, UserSessionError> {
+        let ctx = self.ctx()?;
+        uniffi_async(async move {
+            let res = mail_api_payments::http_get(ctx.session(), endpoint)
+                .await
+                .map_err(MailContextError::from)?;
+
+            Result::<_, RealProtonMailError>::Ok(PaymentsHttpResponse {
+                status: res.status,
+                body: res.body,
+            })
+        })
+        .await
+        .map_err(UserSessionError::from)
+    }
+
+    #[tracing::instrument(skip_all)]
+    pub async fn payments_http_post(
+        &self,
+        endpoint: String,
+        body: Vec<u8>,
+    ) -> Result<PaymentsHttpResponse, UserSessionError> {
+        let ctx = self.ctx()?;
+        uniffi_async(async move {
+            let res = mail_api_payments::http_post(ctx.session(), endpoint, body)
+                .await
+                .map_err(MailContextError::from)?;
+
+            Result::<_, RealProtonMailError>::Ok(PaymentsHttpResponse {
+                status: res.status,
+                body: res.body,
+            })
         })
         .await
         .map_err(UserSessionError::from)

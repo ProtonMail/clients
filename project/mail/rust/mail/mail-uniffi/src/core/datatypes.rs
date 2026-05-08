@@ -2186,6 +2186,13 @@ pub struct PaymentToken {
     pub status: u64,
 }
 
+/// HTTP response forwarded to the Payment SDK.
+#[derive(uniffi::Record)]
+pub struct PaymentsHttpResponse {
+    pub status: u16,
+    pub body: Vec<u8>,
+}
+
 /// Current subscriptions.
 #[derive(uniffi::Record)]
 pub struct Subscriptions {

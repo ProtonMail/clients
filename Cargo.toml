@@ -437,6 +437,10 @@
   version = "0.1.0"
   path = "project/mail/rust/api/mail-api-labels"
 
+[workspace.dependencies.mail-api-payments]
+  version = "0.1.0"
+  path = "project/mail/rust/api/mail-api-payments"
+
 [workspace.dependencies.mail-api-ping]
   version = "0.1.0"
   path = "project/mail/rust/api/mail-api-ping"

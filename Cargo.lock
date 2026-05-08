@@ -6106,6 +6106,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "mail-api-payments"
+version = "0.1.0"
+dependencies = [
+ "mail-api-session",
+ "mail-api-shared",
+ "mail-muon",
+]
+
+[[package]]
 name = "mail-api-ping"
 version = "0.1.0"
 dependencies = [
@@ -7151,6 +7160,7 @@ dependencies = [
  "mail-account-uniffi",
  "mail-action-queue",
  "mail-api",
+ "mail-api-payments",
  "mail-calendar-api-v1",
  "mail-calendar-common",
  "mail-common",

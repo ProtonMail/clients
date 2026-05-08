@@ -31,6 +31,7 @@ proton-crypto-account = { workspace = true, features = ["sql"] }
 mail-crypto-inbox = { workspace = true }
 core-event-loop = { workspace = true }
 mail-api = { workspace = true }
+mail-api-payments = { workspace = true }
 mail-common = { workspace = true, features = ["proton_mail_error_log"] }
 mail-historic-search-load = { workspace = true, optional = true }
 mail-search-perf = { workspace = true, optional = true }

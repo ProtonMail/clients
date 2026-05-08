@@ -19,7 +19,14 @@
 
 MIN_IOS_VERSION="17.2"
 PROFILE="${4:-mail-ios}" # Use 4th argument if provided, otherwise default to "mail-ios"
-BUILD_TARGET_DIR="../../../target"
+# Must match where `cargo build` writes (respects CARGO_TARGET_DIR and `.cargo/config.toml`).
+# A hardcoded `../../../target` breaks when the workspace uses another target directory.
+BUILD_TARGET_DIR="$(cargo metadata --format-version 1 --no-deps | jq -r '.target_directory')"
+if [ -z "$BUILD_TARGET_DIR" ] || [ "$BUILD_TARGET_DIR" = "null" ]; then
+    echo "error: could not resolve Cargo target directory (cargo metadata)." >&2
+    exit 1
+fi
+echo "Cargo target directory: $BUILD_TARGET_DIR"
 
 export LIBSQLITE3_FLAGS="-DNDEBUG=1 -DSQLITE_THREADSAFE=2\
  -DSQLITE_DEFAULT_FILE_PERMISSIONS=0600 -DSQLITE_SECURE_DELETE"
@@ -220,8 +227,9 @@ cargo run --release -p mail-uniffi-bindgen generate --library "$BUILD_TARGET_DIR
     --config "$CONFIG_PATH" --language swift --out-dir "$TMP_DIR/include"
 check_exit
 
-echo "Generating framework for ios sim aarch64"
-gen_framework "$BUILD_TARGET_DIR/aarch64-apple-ios-sim/$PROFILE" $TARGET_UNDERSCORE "$TMP_DIR/include" $CRATE_VERSION iphonesimulator
+SIM_FRAMEWORK_DIR="$BUILD_TARGET_DIR/aarch64-apple-ios-sim/$PROFILE"
+echo "Generating framework for ios simulator (arm64)"
+gen_framework "$SIM_FRAMEWORK_DIR" $TARGET_UNDERSCORE "$TMP_DIR/include" $CRATE_VERSION iphonesimulator
 
 echo "Generating framework for ios aarch64"
 gen_framework "$BUILD_TARGET_DIR/aarch64-apple-ios/$PROFILE" $TARGET_UNDERSCORE "$TMP_DIR/include" $CRATE_VERSION iphoneos
@@ -252,7 +260,7 @@ fi
 echo "Generating xcframework"
 xcodebuild -create-xcframework \
     -output  "$SWIFT_PACKAGE_SOURCES_DIR/${FRAMEWORK_NAME}" \
-    -framework "$BUILD_TARGET_DIR/aarch64-apple-ios-sim/$PROFILE/${TARGET_UNDERSCORE}_ffi.framework" \
+    -framework "$SIM_FRAMEWORK_DIR/${TARGET_UNDERSCORE}_ffi.framework" \
     -framework "$BUILD_TARGET_DIR/aarch64-apple-ios/$PROFILE/${TARGET_UNDERSCORE}_ffi.framework"
 check_exit
 

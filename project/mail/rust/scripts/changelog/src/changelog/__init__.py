@@ -35,7 +35,9 @@ def main(
         commits, cur_tag = OrderedDict(), None
 
         if path:
-            path_commits = set(r.iter_commits(f"{init or ''}..{r.commit(head)}", paths=path))
+            path_commits = set(
+                r.iter_commits(f"{init or ''}..{r.commit(head)}", paths=path)
+            )
         else:
             path_commits = None
 

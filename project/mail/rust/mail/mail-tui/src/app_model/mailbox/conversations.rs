@@ -68,7 +68,7 @@ impl ConversationsState {
         label_id: LocalLabelId,
     ) -> MailContextResult<(Self, Command<Messages>)> {
         let (scroller, handle) =
-            RealMailScroller::conversations(ctx.as_weak(), label_id, ITEM_LIMIT).await?;
+            RealMailScroller::conversations(ctx.as_weak(), label_id, ITEM_LIMIT, None).await?;
 
         let (scroller, command) = MailScroller::new(scroller, handle, |update| match update {
             ScrollerUpdate::List(update) => match update {

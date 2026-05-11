@@ -232,6 +232,7 @@ impl MailScroller<ContextualConversation> {
         ctx: Weak<MailUserContext>,
         label: LocalLabelId,
         page_size: usize,
+        enabled_category: Option<LocalLabelId>,
     ) -> Result<(Self, MailScrollerHandle<ContextualConversation>), MailContextError> {
         let ctx = ctx.upgrade().ok_or(MailContextError::MissingContext)?;
         let tether = ctx.user_stash().connection().await?;
@@ -247,7 +248,7 @@ impl MailScroller<ContextualConversation> {
             order_field,
         );
 
-        Self::new(ctx, source, page_size, label).await
+        Self::new(ctx, source, page_size, label, enabled_category).await
     }
 }
 
@@ -256,6 +257,7 @@ impl MailScroller<Message> {
         ctx: Weak<MailUserContext>,
         label: LocalLabelId,
         page_size: usize,
+        enabled_category: Option<LocalLabelId>,
     ) -> Result<(Self, MailScrollerHandle<Message>), MailContextError> {
         let ctx = ctx.upgrade().ok_or(MailContextError::MissingContext)?;
         let tether = ctx.user_stash().connection().await?;
@@ -271,13 +273,14 @@ impl MailScroller<Message> {
             order_field,
         );
 
-        Self::new(ctx, source, page_size, label).await
+        Self::new(ctx, source, page_size, label, enabled_category).await
     }
 
     pub async fn search(
         ctx: Weak<MailUserContext>,
         options: SearchOptions,
         page_size: usize,
+        enabled_category: Option<LocalLabelId>,
     ) -> Result<(Self, MailScrollerHandle<Message>), MailContextError> {
         let ctx = ctx.upgrade().ok_or(MailContextError::MissingContext)?;
         let tether = ctx.user_stash().connection().await?;
@@ -289,7 +292,7 @@ impl MailScroller<Message> {
 
         let source = HybridSearchScrollerSource::new(label, options, page_size);
 
-        Self::new(ctx, source, page_size, label).await
+        Self::new(ctx, source, page_size, label, enabled_category).await
     }
 
     #[cfg(feature = "foundation_search")]
@@ -308,7 +311,7 @@ impl MailScroller<Message> {
 
         let source = LocalSearchScrollerSource::new(label, options, page_size);
 
-        Self::new(ctx, source, page_size, label).await
+        Self::new(ctx, source, page_size, label, None).await
     }
 }
 
@@ -321,6 +324,7 @@ where
         source: S,
         page_size: usize,
         label: LocalLabelId,
+        enabled_category: Option<LocalLabelId>,
     ) -> Result<(Self, MailScrollerHandle<T>), MailContextError>
     where
         S: MailScrollerSource<Item = T>,
@@ -336,7 +340,15 @@ where
             updates,
             source_db_handle,
             tasks,
-        } = ScrollerWorker::run(id, ctx_weak.clone(), source, page_size, label).await?;
+        } = ScrollerWorker::run(
+            id,
+            ctx_weak.clone(),
+            source,
+            page_size,
+            label,
+            enabled_category,
+        )
+        .await?;
 
         let events = ctx.core_context().event_service();
 
@@ -759,6 +771,7 @@ where
         mut source: S,
         page_size: usize,
         label: LocalLabelId,
+        enabled_category: Option<LocalLabelId>,
     ) -> Result<ScrollerWorkerHandle<S>, MailContextError> {
         let (update_sender, update_receiver) = flume::unbounded();
         let (query_tx, query_rx) = flume::unbounded();
@@ -767,7 +780,8 @@ where
         let arc_ctx = ctx.upgrade().ok_or(MailContextError::MissingContext)?;
         let tether = arc_ctx.user_stash().connection().await?;
         let alternative_labels = AlternativeLabels::new(label, &tether).await?;
-        let category_view = CategoryView::load(label, &tether).await?;
+        let mut category_view = CategoryView::load(label, &tether).await?;
+        category_view.enable(enabled_category, &tether).await?;
         let task = source
             .initialize(&arc_ctx, invalidation_sender, category_view)
             .await?;

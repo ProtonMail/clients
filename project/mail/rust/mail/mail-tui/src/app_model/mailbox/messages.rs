@@ -151,7 +151,7 @@ impl MessagesState {
         recipient_display_mode: MessageRecipientDisplayMode,
     ) -> MailContextResult<(Self, Command<Messages>)> {
         let (scroller, handle) =
-            RealMailScroller::messages(ctx.as_weak(), label_id, ITEM_LIMIT).await?;
+            RealMailScroller::messages(ctx.as_weak(), label_id, ITEM_LIMIT, None).await?;
 
         let (scroller, command) =
             MailScroller::new::<MailMessage>(scroller, handle, handle_scroller_update).await;
@@ -200,9 +200,13 @@ impl MessagesState {
         ctx: Arc<MailUserContext>,
         keywords: String,
     ) -> MailContextResult<(Self, Command<Messages>)> {
-        let (scroller, handle) =
-            RealMailScroller::search(ctx.as_weak(), SearchOptions::from(&keywords), ITEM_LIMIT)
-                .await?;
+        let (scroller, handle) = RealMailScroller::search(
+            ctx.as_weak(),
+            SearchOptions::from(&keywords),
+            ITEM_LIMIT,
+            None,
+        )
+        .await?;
 
         let (scroller, command) =
             MailScroller::new::<MailMessage>(scroller, handle, handle_scroller_update).await;

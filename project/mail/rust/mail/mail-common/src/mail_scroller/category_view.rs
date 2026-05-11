@@ -75,6 +75,9 @@ impl CategoryView {
         {
             return Err(MailContextError::CategoryNotSupported);
         }
+        // Do not allow to disable category with Some(enabled) field
+        let enable = enable.or(self.enabled);
+
         self.enabled = enable;
 
         if enable.is_none() {

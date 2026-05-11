@@ -584,7 +584,7 @@ version = "0.1"
 path = "project/mail/rust/mail/mail-common-derive"
 
 [workspace.dependencies.mail-search]
-version = "0.1"
+version = "2.0.0-preview.1"
 path = "project/mail/rust/mail/mail-search"
 
 [workspace.dependencies.mail-search-perf]
@@ -766,7 +766,7 @@ version = "0.15.0"
 features = ["criterion", "flamegraph"]
 
 [workspace.dependencies.proton-foundation-search]
-version = "1.1.2"
+version = "2.0.0-preview1"
 registry = "proton"
 default-features = false
 

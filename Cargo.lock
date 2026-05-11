@@ -910,7 +910,7 @@ dependencies = [
  "bitflags 2.11.1",
  "cexpr",
  "clang-sys",
- "itertools 0.10.5",
+ "itertools 0.12.1",
  "lazy_static",
  "lazycell",
  "log",
@@ -6936,7 +6936,7 @@ dependencies = [
 
 [[package]]
 name = "mail-search"
-version = "0.1.0"
+version = "2.0.0-preview.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -9234,9 +9234,9 @@ dependencies = [
 
 [[package]]
 name = "proton-foundation-search"
-version = "1.1.2"
+version = "2.0.0-preview1"
 source = "sparse+https://rust-registry.proton.me/index/"
-checksum = "3d310b964eec12570343d55a886b0528cc5fc0a0e7fa151cf7e6cb88dad560d4"
+checksum = "903168ff8b69949b88f866f7895386550029bd7a79b8ba1f3b5d89faa2a156d9"
 dependencies = [
  "ciborium",
  "derive_more 2.1.1",

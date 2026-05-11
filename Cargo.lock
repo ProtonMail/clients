@@ -1190,8 +1190,10 @@ dependencies = [
  "futures",
  "jiff",
  "mail-canonical-email",
+ "serde_json",
  "tokio",
  "tracing",
+ "url",
  "web-time",
 ]
 

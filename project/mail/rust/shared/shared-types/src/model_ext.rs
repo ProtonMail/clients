@@ -1,6 +1,6 @@
-use crate::local_id::LocalIdMarker;
 use indoc::formatdoc;
 use itertools::Itertools as _;
+use mail_local_id::LocalIdMarker;
 use mail_proton_ids::ProtonIdMarker;
 use mail_stash::exports::Transaction;
 use mail_stash::exports::{FromSql, SqliteError, ToSql};

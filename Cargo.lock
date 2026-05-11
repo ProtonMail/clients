@@ -6786,6 +6786,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "mail-local-id"
+version = "0.1.0"
+dependencies = [
+ "mail-action-queue",
+ "mail-stash",
+ "serde",
+]
+
+[[package]]
 name = "mail-log-service"
 version = "0.1.0"
 dependencies = [
@@ -6997,6 +7006,7 @@ dependencies = [
  "jiff",
  "mail-action-queue",
  "mail-api-event-types",
+ "mail-local-id",
  "mail-proton-ids",
  "mail-stash",
  "serde",

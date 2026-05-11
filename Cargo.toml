@@ -109,6 +109,7 @@ members = [
     "project/mail/rust/shared/mail-avatar",
     "project/mail/rust/shared/mail-db",
     "project/mail/rust/shared/mail-db-stash",
+    "project/mail/rust/shared/mail-local-id",
     "project/mail/rust/shared/mail-network-error",
     "project/mail/rust/shared/mail-proton-ids",
     "project/mail/rust/shared/mailto",
@@ -544,6 +545,10 @@ path = "project/mail/rust/shared/shared-types"
 [workspace.dependencies.mail-db]
 version = "0.1.0"
 path = "project/mail/rust/shared/mail-db"
+
+[workspace.dependencies.mail-local-id]
+version = "0.1.0"
+path = "project/mail/rust/shared/mail-local-id"
 
 [workspace.dependencies.mail-db-stash]
 version = "0.1.0"

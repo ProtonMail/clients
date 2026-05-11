@@ -5,7 +5,13 @@ edition.workspace = true
 rust-version.workspace = true
 license = "AGPL-3.0-only"
 
+
 [dependencies]
+mail-local-id = { workspace = true, features = [
+  "serde",
+  "stash",
+  "mail-actions",
+] }
 indoc = { workspace = true }
 itertools = { workspace = true }
 jiff = { workspace = true }

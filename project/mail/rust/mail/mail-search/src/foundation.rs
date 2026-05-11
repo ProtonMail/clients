@@ -696,6 +696,9 @@ impl<S: BlobStorage + Clone + 'static> FoundationSearchEngine<S> {
                             }
                         }
                     }
+                    CleanupEvent::Tracked(blob_id) => {
+                        debug!("Cleanup: tracked blob '{}'", blob_id);
+                    }
                 }
             }
 

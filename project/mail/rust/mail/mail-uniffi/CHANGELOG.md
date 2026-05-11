@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [mail-uniffi-v0.165.5] - 2026-05-11
+
+### Changed
+
+- Change order of the catergory labels to match the web order
+
+### Features
+
+- [ET-6193] [Breaking] Scroller now accepts additional optional field of the enabled category
+- [Breaking] Mailbox::watch_unread_count now accepts optional `category: Id` parameter
+- [ET-6153] [Breaking] Add unread counters for category labels
+- [ET-6152] Scroller observes MailSettings & Label tables and reacts to the changes of the CategoryView state
+- [ET-5803] Background Execution Scope
+
+### Fixes
+
+- [ET-5803] Background execution signals
+
+
 ## [mail-uniffi-v0.165.4] - 2026-05-05
 
 ### Fixes

@@ -2,5 +2,8 @@
 name = "uniffi-bindgen"
 edition = { workspace = true }
 
+[features]
+cargo-metadata = ["uniffi/cargo-metadata"]
+
 [dependencies]
 uniffi = { workspace = true, features = ["cli"] }

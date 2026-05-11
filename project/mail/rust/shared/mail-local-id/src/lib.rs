@@ -1,19 +1,32 @@
-#[cfg(feature = "stash")]
-use mail_stash::exports::{FromSql, ToSql};
-#[cfg(feature = "serde")]
-use serde::de::DeserializeOwned;
 use std::fmt::Debug;
+
+#[cfg(feature = "stash")]
+pub trait LocalIdMarkerStash: mail_stash::exports::FromSql + mail_stash::exports::ToSql {}
+
+#[cfg(feature = "stash")]
+impl<T: mail_stash::exports::FromSql + mail_stash::exports::ToSql> LocalIdMarkerStash for T {}
+
+#[cfg(not(feature = "stash"))]
+pub trait LocalIdMarkerStash {}
+
+#[cfg(not(feature = "stash"))]
+impl<T> LocalIdMarkerStash for T {}
+
+#[cfg(feature = "serde")]
+pub trait LocalIdMarkerSerde: serde::Serialize + serde::de::DeserializeOwned {}
+
+#[cfg(feature = "serde")]
+impl<T: serde::Serialize + serde::de::DeserializeOwned> LocalIdMarkerSerde for T {}
+
+#[cfg(not(feature = "serde"))]
+pub trait LocalIdMarkerSerde {}
+
+#[cfg(not(feature = "serde"))]
+impl<T> LocalIdMarkerSerde for T {}
 
 /// Marker trait to signal that this type was declared as a local id.
 pub trait LocalIdMarker: Sized {
-    type Counterpart: Clone
-        + Send
-        + Sync
-        + ToSql
-        + FromSql
-        + serde::Serialize
-        + DeserializeOwned
-        + Debug;
+    type Counterpart: Clone + Send + Sync + LocalIdMarkerStash + LocalIdMarkerSerde + Debug;
 }
 
 #[cfg(feature = "mail-actions")]
@@ -185,9 +198,46 @@ macro_rules! declare_local_id {
             }
         }
 
-
         impl $crate::LocalIdMarker for $name {
             type Counterpart = $remote_id;
+        }
+
+        $crate::define_local_id_stash!($name);
+
+
+        $crate::define_local_id_actions!($name);
+    };
+    (
+        $(#[$($attrss:tt)*])*
+        $visibility:vis $name:ident
+    ) => {
+        $(#[$($attrss)*])*
+        $crate::declare_local_id_type!($name);
+
+        impl $name {
+            /// Represents the internal value as an unsigned 64-bit integer.
+            #[must_use]
+            pub const fn as_u64(&self) -> u64 {
+                self.0
+            }
+        }
+
+        impl AsRef<u64> for $name {
+            fn as_ref(&self) -> &u64 {
+                &self.0
+            }
+        }
+
+        impl ::std::fmt::Display for $name {
+            fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                write!(f, "{}", self.0)
+            }
+        }
+
+        impl From<u64> for $name {
+            fn from(id: u64) -> Self {
+                Self(id)
+            }
         }
 
         $crate::define_local_id_stash!($name);

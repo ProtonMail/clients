@@ -8,12 +8,24 @@ use mail_stash::orm::Model;
 use tokio::time::{Duration, timeout};
 
 #[test]
-fn tables_category_returns_all_four() {
-    let tables = UnreadWatchScope::Category.tables();
+fn test_tables_category_conversations() {
+    let tables = UnreadWatchScope::CategoryConversations.tables();
     assert_eq!(
         tables,
         vec![
             ConversationCounter::table_name(),
+            MailSettings::table_name(),
+            Label::table_name(),
+        ]
+    );
+}
+
+#[test]
+fn test_tables_category_messages() {
+    let tables = UnreadWatchScope::CategoryMessages.tables();
+    assert_eq!(
+        tables,
+        vec![
             MessageCounter::table_name(),
             MailSettings::table_name(),
             Label::table_name(),
@@ -40,7 +52,7 @@ fn tables_messages_returns_only_message_counter() {
 #[tokio::test]
 async fn watch_category_fires_on_conversation_counter_change() {
     let mail_stash = new_test_connection().await;
-    let handle = UnreadCountWatcher::watch(UnreadWatchScope::Category, &mail_stash)
+    let handle = UnreadCountWatcher::watch(UnreadWatchScope::CategoryConversations, &mail_stash)
         .await
         .unwrap();
 
@@ -66,7 +78,7 @@ async fn watch_category_fires_on_conversation_counter_change() {
 #[tokio::test]
 async fn watch_category_fires_on_mail_settings_change() {
     let mail_stash = new_test_connection().await;
-    let handle = UnreadCountWatcher::watch(UnreadWatchScope::Category, &mail_stash)
+    let handle = UnreadCountWatcher::watch(UnreadWatchScope::CategoryConversations, &mail_stash)
         .await
         .unwrap();
 
@@ -94,7 +106,7 @@ async fn watch_category_fires_on_mail_settings_change() {
 #[tokio::test]
 async fn watch_category_fires_on_label_display_change() {
     let mail_stash = new_test_connection().await;
-    let handle = UnreadCountWatcher::watch(UnreadWatchScope::Category, &mail_stash)
+    let handle = UnreadCountWatcher::watch(UnreadWatchScope::CategoryConversations, &mail_stash)
         .await
         .unwrap();
 

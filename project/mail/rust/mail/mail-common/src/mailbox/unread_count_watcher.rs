@@ -19,7 +19,8 @@ pub struct UnreadCountHandle {
 }
 
 pub enum UnreadWatchScope {
-    Category,
+    CategoryConversations,
+    CategoryMessages,
     Conversations,
     Messages,
 }
@@ -27,7 +28,10 @@ pub enum UnreadWatchScope {
 impl UnreadWatchScope {
     pub fn new(view_mode: ViewMode, category: Option<LocalLabelId>) -> Self {
         if category.is_some() {
-            Self::Category
+            match view_mode {
+                ViewMode::Conversations => Self::CategoryConversations,
+                ViewMode::Messages => Self::CategoryMessages,
+            }
         } else {
             match view_mode {
                 ViewMode::Conversations => Self::Conversations,
@@ -38,9 +42,13 @@ impl UnreadWatchScope {
 
     fn tables(&self) -> Vec<String> {
         match self {
-            Self::Category => vec![
-                ConversationCounter::table_name().to_string(),
+            Self::CategoryMessages => vec![
                 MessageCounter::table_name().to_string(),
+                MailSettings::table_name().to_string(),
+                Label::table_name().to_string(),
+            ],
+            Self::CategoryConversations => vec![
+                ConversationCounter::table_name().to_string(),
                 MailSettings::table_name().to_string(),
                 Label::table_name().to_string(),
             ],

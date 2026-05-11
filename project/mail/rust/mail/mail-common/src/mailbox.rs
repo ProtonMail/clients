@@ -147,9 +147,16 @@ impl Mailbox {
         ctx.spawn(async move {
             while notify_rx.recv_async().await.is_ok() {
                 if let Ok(tether) = stash.connection().await {
-                    let count = resolve_unread(label_id, view_mode, category, &tether)
-                        .await
-                        .unwrap_or_default();
+                    let count = match resolve_unread(label_id, view_mode, category, &tether).await {
+                        Ok(count) => count,
+                        Err(e) => {
+                            tracing::error!(
+                                "Couldnt resolve the unread count due to an error: `{e}`"
+                            );
+                            continue;
+                        }
+                    };
+
                     if tx.send(count).is_err() {
                         break;
                     }

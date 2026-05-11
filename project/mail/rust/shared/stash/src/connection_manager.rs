@@ -36,6 +36,8 @@ pub struct StashConnectionPool {
     wait_resume: Condvar,
     max_connections: usize,
     span: Span,
+    pub(crate) write_worker: PooledTether,
+    write_worker_interrupt: InterruptData,
 }
 
 impl Drop for StashConnectionPool {
@@ -85,6 +87,8 @@ impl StashConnectionPool {
             .map(|_| Self::create_connection(&source, &init_fn, OpenFlags::default()))
             .collect::<Result<_, Error>>()?;
 
+        let write_conn = Self::create_connection(&source, &init_fn, OpenFlags::default())?;
+
         Ok(Arc::new({
             let mut interrupts = Vec::with_capacity(connections.len());
 
@@ -102,6 +106,13 @@ impl StashConnectionPool {
                 })
                 .collect();
 
+            let write_handle = write_conn.get_interrupt_handle();
+            let write_worker = PooledTether::new(write_conn, watcher, max_connections);
+            let write_worker_interrupt = InterruptData {
+                handle: write_handle,
+                interrupt_notifier: write_worker.interrupt_notifier(),
+            };
+
             Self {
                 connections: Mutex::new(connections),
                 connections_cond_var: Condvar::new(),
@@ -110,6 +121,8 @@ impl StashConnectionPool {
                 wait_resume: Condvar::new(),
                 max_connections,
                 span: Span::current(),
+                write_worker,
+                write_worker_interrupt,
             }
         }))
     }
@@ -148,6 +161,7 @@ impl StashConnectionPool {
             for handle in &self.interrupts {
                 handle.interrupt()
             }
+            self.write_worker_interrupt.interrupt();
         }
     }
 

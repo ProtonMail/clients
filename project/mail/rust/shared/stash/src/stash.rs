@@ -81,7 +81,7 @@ enum Operation {
     ReturnToPool,
 }
 
-struct TracedOperation {
+pub(crate) struct TracedOperation {
     span: Span,
     operation: Operation,
 }
@@ -468,7 +468,10 @@ pub struct Stash<Db: DatabaseMarker> {
     /// The pool used for database connections.
     pool: Arc<StashConnectionPool>,
 
-    tx_lock: Arc<Mutex<()>>,
+    /// Sender to the dedicated write worker. Wrapped in a mutex that doubles as
+    /// the transaction lock — acquiring the mutex both serializes write
+    /// transactions and provides the channel to send operations on.
+    rw_sender: Arc<Mutex<flume::Sender<TracedOperation>>>,
 
     _marker: PhantomData<Db>,
 }
@@ -495,11 +498,12 @@ impl<Db: DatabaseMarker> Stash<Db> {
     pub fn new<'a>(config: impl Into<StashConfiguration<'a>>) -> Result<Self, StashError> {
         let watcher = Watcher::new().map_err(|e| StashError::WatcherError(e.to_string()))?;
         let pool = Self::make_pool(config.into(), &watcher)?;
+        let rw_sender = Arc::new(Mutex::new(pool.write_worker.sender.clone()));
 
         Ok(Self {
             pool,
             watcher,
-            tx_lock: Default::default(),
+            rw_sender,
             _marker: PhantomData,
         })
     }
@@ -665,13 +669,21 @@ impl WatcherHandle {
 pub struct Tether<Db: DatabaseMarker = crate::marker::UserDb> {
     connection: StashPooledConnection,
     watcher: Arc<Watcher>,
-    tx_lock: Arc<Mutex<()>>,
+    rw_sender: Arc<Mutex<flume::Sender<TracedOperation>>>,
+    // This is temporary solution until we introduce MPMC read workers.
+    active_sender: Option<flume::Sender<TracedOperation>>,
     acquired_at: Instant,
     acquired_in: Span,
     _marker: PhantomData<Db>,
 }
 
 impl<Db: DatabaseMarker> Tether<Db> {
+    fn op_sender(&self) -> &flume::Sender<TracedOperation> {
+        self.active_sender
+            .as_ref()
+            .unwrap_or(&self.connection.sender)
+    }
+
     /// Subscribes to notifications of changes to a specific table.
     pub fn subscribe_to<F>(&self, observer: F) -> Result<WatcherHandle, StashError>
     where
@@ -723,7 +735,7 @@ impl<Db: DatabaseMarker> Tether<Db> {
             query: query.into(),
         }));
 
-        self.connection
+        self.op_sender()
             .send_async(operation.into())
             .await
             .map_err(|_| anyhow!("The mail_stash worker dropped"))?;
@@ -749,7 +761,7 @@ impl<Db: DatabaseMarker> Tether<Db> {
             queries: queries.into(),
         }));
 
-        self.connection
+        self.op_sender()
             .send_async(operation.into())
             .await
             .map_err(|_| anyhow!("The mail_stash worker dropped"))?;
@@ -809,7 +821,7 @@ impl<Db: DatabaseMarker> Tether<Db> {
 
         let operation = Operation::Execution(OperationExec::Query(query));
 
-        self.connection
+        self.op_sender()
             .send_async(operation.into())
             .await
             .map_err(|_| anyhow!("The mail_stash worker dropped"))?;
@@ -958,16 +970,21 @@ impl<Db: DatabaseMarker> Tether<Db> {
         F: AsyncFnOnce(&WriteTx<'_, Db>) -> Result<T, E>,
         E: From<StashError>,
     {
+        let rw_sender = self.rw_sender.clone();
         // We acquire a lock rather than relying on the SQLite internal lock as it allows us to:
         // * Avoid busy timeouts in the same process
         // * Ensure that when this is running on a pausable future, that we _really_ only create
         //   a new transaction if we are not paused. Previously it would be possible for many
         //   transactions to be in flight at the same time.
-        let tx_lock = self.tx_lock.clone();
-        let _guard = tx_lock.lock().await;
+        let guard = rw_sender.lock().await;
+        self.active_sender = Some(guard.clone());
+        // Declared after `guard` so it is dropped before the lock is released.
+        let write_guard = WriteWorkerGuard {
+            sender: guard.clone(),
+        };
 
-        async {
-            let tx = self.transaction_impl(policy).await?;
+        let result = async {
+            let tx = self.transaction_impl(policy, write_guard).await?;
             let r = closure(&tx).await;
 
             if r.is_err() {
@@ -986,17 +1003,22 @@ impl<Db: DatabaseMarker> Tether<Db> {
         }
         .in_current_span()
         .into_non_pausable()
-        .await
+        .await;
+
+        self.active_sender = None;
+
+        result
     }
 
     async fn transaction_impl(
         &mut self,
         policy: TransactionTrackingPolicy,
+        write_guard: WriteWorkerGuard,
     ) -> Result<WriteTx<'_, Db>, StashError> {
         let (sender, receiver) = oneshot::channel();
         let operation = Operation::Transaction(OperationTransaction::Start(policy, sender));
 
-        self.connection
+        self.op_sender()
             .send_async(operation.into())
             .await
             .map_err(|_| anyhow!("The mail_stash worker dropped"))?;
@@ -1005,7 +1027,7 @@ impl<Db: DatabaseMarker> Tether<Db> {
             .await
             .map_err(|_| anyhow!("The mail_stash worker dropped"))??;
 
-        Ok(WriteTx::new(self))
+        Ok(WriteTx::new(self, write_guard))
     }
 
     /// Starts a new tethered worker thread.
@@ -1036,7 +1058,8 @@ impl<Db: DatabaseMarker> Tether<Db> {
         Ok(Self {
             connection,
             watcher: mail_stash.watcher.clone(),
-            tx_lock: Arc::clone(&mail_stash.tx_lock),
+            rw_sender: Arc::clone(&mail_stash.rw_sender),
+            active_sender: None,
             acquired_at: Instant::now(),
             acquired_in: Span::current(),
             _marker: PhantomData,
@@ -1058,7 +1081,7 @@ impl<Db: DatabaseMarker> Tether<Db> {
         let sync_closure = SyncClosure { closure, sender };
         let operation = Operation::Execution(OperationExec::Sync(sync_closure));
 
-        self.connection
+        self.op_sender()
             .send_async(operation.into())
             .await
             .map_err(|_| anyhow!("The mail_stash worker dropped"))?;
@@ -1095,7 +1118,9 @@ impl<Db: DatabaseMarker> Tether<Db> {
     where
         T: Send + 'static,
     {
-        let _guard = self.tx_lock.lock().await;
+        let rw_sender = self.rw_sender.clone();
+        let guard = rw_sender.lock().await;
+        self.active_sender = Some(guard.clone());
 
         let closure = Box::new(move |tx: &rusqlite::Transaction| {
             callback(tx).map(|x| Box::new(x) as Box<dyn Any + Send>)
@@ -1107,7 +1132,7 @@ impl<Db: DatabaseMarker> Tether<Db> {
         let operation =
             Operation::Transaction(OperationTransaction::StartSync(sync_closure, policy));
 
-        self.connection
+        self.op_sender()
             .send_async(operation.into())
             .await
             .map_err(|_| anyhow!("The mail_stash worker dropped"))?;
@@ -1115,6 +1140,8 @@ impl<Db: DatabaseMarker> Tether<Db> {
         let ret = receiver
             .await
             .map_err(|_| anyhow!("The mail_stash worker dropped"))?;
+
+        self.active_sender = None;
 
         // This cannot fail as the type system assures us that the return type of `callback` is T
         ret.map(|x| *x.downcast().expect("Downcast failed?"))
@@ -1143,7 +1170,7 @@ impl<Db: DatabaseMarker> Drop for Tether<Db> {
 }
 
 pub(crate) struct PooledTether {
-    sender: flume::Sender<TracedOperation>,
+    pub(crate) sender: flume::Sender<TracedOperation>,
 }
 impl PooledTether {
     pub(crate) fn new(connection: Connection, watcher: &Arc<Watcher>, number: usize) -> Self {
@@ -1192,13 +1219,6 @@ impl PooledTether {
     fn send(&self, operation: TracedOperation) -> Result<(), flume::SendError<TracedOperation>> {
         self.sender.send(operation)
     }
-
-    async fn send_async(
-        &self,
-        operation: TracedOperation,
-    ) -> Result<(), flume::SendError<TracedOperation>> {
-        self.sender.send_async(operation).await
-    }
 }
 
 impl Drop for PooledTether {
@@ -1212,6 +1232,25 @@ pub(crate) struct PooledTetherInterruptNotifier(flume::Sender<TracedOperation>);
 impl PooledTetherInterruptNotifier {
     pub fn interrupt(&self) {
         let _ = self.0.send(Operation::Interrupt.into());
+    }
+}
+
+/// Sends `RollbackAbort` to the write worker on drop.
+///
+/// Unlike `WriteTx`, this guard exists from the moment we enter `write_tx_impl`
+/// — covering the window where `Start` has been sent but `WriteTx` doesn't
+/// exist yet (e.g. awaiting the worker's response in `transaction_impl`).
+/// Moved into `WriteTx` once created; `mem::forget(WriteTx)` on successful
+/// commit/rollback suppresses it.
+struct WriteWorkerGuard {
+    sender: flume::Sender<TracedOperation>,
+}
+
+impl Drop for WriteWorkerGuard {
+    fn drop(&mut self) {
+        let _ = self
+            .sender
+            .send(Operation::Transaction(OperationTransaction::RollbackAbort).into());
     }
 }
 
@@ -1243,17 +1282,20 @@ struct BridgeClosure {
 /// database modification queries to ensure safety of execution. Rust type system ensures that
 /// there is only one transaction per tether.
 ///
-#[derive(Debug)]
 pub struct WriteTx<'tether, Db: DatabaseMarker = crate::marker::UserDb> {
     /// The associated [`Tether`] instance.
     tether: &'tether mut Tether<Db>,
+    /// Sends `RollbackAbort` on drop. Forgotten together with `WriteTx` on
+    /// successful commit/rollback via `mem::forget(self)`.
+    _write_guard: WriteWorkerGuard,
 }
 
 impl<'tether, Db: DatabaseMarker> WriteTx<'tether, Db> {
-    /// Create new instance of the WriteTx.
-    ///
-    fn new(tether: &'tether mut Tether<Db>) -> Self {
-        Self { tether }
+    fn new(tether: &'tether mut Tether<Db>, write_guard: WriteWorkerGuard) -> Self {
+        Self {
+            tether,
+            _write_guard: write_guard,
+        }
     }
 
     /// Internal commit implementation.
@@ -1266,7 +1308,7 @@ impl<'tether, Db: DatabaseMarker> WriteTx<'tether, Db> {
         let (sender, receiver) = oneshot::channel();
         let operation = Operation::Transaction(OperationTransaction::Commit(policy, sender));
 
-        self.connection
+        self.op_sender()
             .send_async(operation.into())
             .await
             .map_err(|_| anyhow!("The mail_stash worker dropped"))?;
@@ -1294,7 +1336,7 @@ impl<'tether, Db: DatabaseMarker> WriteTx<'tether, Db> {
         let (sender, receiver) = oneshot::channel();
         let operation = Operation::Transaction(OperationTransaction::Rollback(sender));
 
-        self.connection
+        self.op_sender()
             .send_async(operation.into())
             .await
             .map_err(|_| anyhow!("The mail_stash worker dropped"))?;
@@ -1323,7 +1365,7 @@ impl<'tether, Db: DatabaseMarker> WriteTx<'tether, Db> {
         let sync_closure = BridgeClosure { closure, sender };
         let operation = Operation::Transaction(OperationTransaction::Bridge(sync_closure));
 
-        self.connection
+        self.op_sender()
             .send_async(operation.into())
             .await
             .map_err(|_| anyhow!("The mail_stash worker dropped"))?;
@@ -1342,14 +1384,6 @@ impl<Db: DatabaseMarker> Deref for WriteTx<'_, Db> {
 
     fn deref(&self) -> &Self::Target {
         self.tether
-    }
-}
-
-impl<Db: DatabaseMarker> Drop for WriteTx<'_, Db> {
-    fn drop(&mut self) {
-        _ = self
-            .connection
-            .send(Operation::Transaction(OperationTransaction::RollbackAbort).into());
     }
 }
 

@@ -1,0 +1,19 @@
+[package]
+name = "mail-local-id"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+
+[features]
+default = []
+stash = ["dep:mail-stash"]
+mail-actions = ["dep:mail-action-queue"]
+serde = ["dep:serde"]
+
+[dependencies]
+serde = { workspace = true, optional = true }
+mail-action-queue = { workspace = true, optional = true }
+mail-stash = { workspace = true, optional = true }
+
+[lints]
+workspace = true

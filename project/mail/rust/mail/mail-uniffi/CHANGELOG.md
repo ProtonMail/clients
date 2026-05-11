@@ -5,57 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [mail-uniffi-v0.165.4] - 2026-05-05
-
-### Fixes
-
-- [ET-6163] Handle failed address fetch
-
-
-## [mail-uniffi-v0.165.3] - 2026-05-04
+## [mail-uniffi-v0.166.0] - 2026-05-11
 
 ### Changed
 
+- [IMP-12] Rename existing requests for consistency
+- Rename contact crates in mail
 - Rename Bond to WriteTx - proton/clients/monorepo!2065
-
-### Features
-
-- [ET-6145] Scroller makes multilabel requests to the API including categories
-
-### Fixes
-
-- [ET-5596] Fake refresh failure - proton/clients/monorepo!2074
-- [ET-3853] Only delete expired messages
-
-
-## [mail-uniffi-v0.165.2] - 2026-04-27
-
-### Fixes
-
-- Downgrade uniffi to 0.29.5 - proton/clients/monorepo!2001
-
-
-## [mail-uniffi-v0.165.1] - 2026-04-24
-
-### Features
-
-- [ET-6126] Obey Mail Settings for Category View in Scrollers
-
-### Fixes
-
-- [ET-6131] Eager auth refresh for migrated sessions + autoheal - proton/clients/monorepo!1961
-- Change-label scroller's command should modify the category view state
-- Android .apk contains libgopenpgp-sys.so - proton/clients/monorepo!1922
-
-
-## [mail-uniffi-v0.165.0] - 2026-04-21
-
-### Changed
-
+- Rename Bond to WriteTx - proton/clients/monorepo!2040
 - Rename key-manager - proton/clients/monorepo!1620
 
 ### Features
 
+- [ET-6152] Scroller observes MailSettings & Label tables and reacts to the changes of the CategoryView state
+- [ET-5803] Background Execution Scope
+- [ET-6145] Scroller makes multilabel requests to the API including categories
+- [ET-6126] Obey Mail Settings for Category View in Scrollers
+- [NGC-1023] event details view model - proton/clients/monorepo!2107
 - [ET-6098] Implement category view support in the scrollers - proton/clients/monorepo!1874
 - [ET-6086] Use two flags for upsell eligibility - proton/clients/monorepo!1846
 - [ET-6092] Implement Category View interfaces
@@ -64,6 +30,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixes
 
+- [ET-5803] Background execution signals
+- [ET-6163] Handle failed address fetch
+- Route buildSrc and child builds through Proton maven cache. - proton/clients/monorepo!2248
+- Make upsell eligibility tests less flaky - proton/clients/monorepo!2190
+- show `InvalidTimeZone` error message - proton/clients/monorepo!2140
+- [ET-3853] Only delete expired messages
+- Downgrade uniffi to 0.29.5 - proton/clients/monorepo!2001
+- speed up historic load and add lab controls for more indexing experiments - proton/clients/monorepo!1887
+- [ET-5596] Fake refresh failure - proton/clients/monorepo!2074 - proton/clients/monorepo!2076
+- Android .apk contains libgopenpgp-sys.so (Cherry picked from 0.165) - proton/clients/monorepo!1923
 - iCal - make sure we parse TZID even if non-standard - proton/clients/monorepo!1838
 - [ET-6119] runtime crash in RustInit.kt due to package mismatch - proton/clients/monorepo!1851
 - Move to the non-streaming API in attachment decryption - proton/clients/monorepo!1803

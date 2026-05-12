@@ -8463,6 +8463,7 @@ dependencies = [
  "async-channel",
  "core-observability-impl",
  "core-observability-proc",
+ "facet",
  "payment-http",
  "serde",
  "serde_json",

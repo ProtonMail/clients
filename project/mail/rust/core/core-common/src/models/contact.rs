@@ -10,7 +10,7 @@ use mail_core_api::session::Session;
 use mail_stash::UserDb;
 use mail_stash::stash::Stash;
 
-use super::{InitializationError, InitializationWatcher, InitializedComponent, Label};
+use super::{InitializationError, InitializationWatcher, InitializedComponent};
 
 /// Initializes contacts by syncing with the backend.
 ///
@@ -25,9 +25,9 @@ pub async fn initialize_contacts(
     InitializedComponent::initialize(
         watcher,
         Contact::INIT_KEY,
-        &[Label::INIT_KEY],
+        &[],
         mail_stash.connection(),
-        async move || Ok(Contact::sync(api).await?),
+        async move || Ok(Contact::sync_with_contact_groups(api).await?),
         |tx, res| {
             res.store(tx)?;
             Ok(())

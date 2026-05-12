@@ -73,6 +73,7 @@ use tracing::error;
 
 use core::fmt;
 use mail_common::datatypes::{LocalAttachmentId, LocalConversationId, LocalMessageId};
+use mail_contacts_common::local_ids::LocalContactGroupId;
 use mail_core_api::services::proton::{
     AppleRecurringReceiptDetails as RealAppleRecurringReceiptDetails,
     GetPaymentsPlansOptions as RealGetPaymentsPlansOptions,
@@ -1246,6 +1247,7 @@ impl_into_id!(LocalContactEmailId);
 impl_into_id!(LocalAttachmentId);
 impl_into_id!(LocalMessageId);
 impl_into_id!(LocalConversationId);
+impl_into_id!(LocalContactGroupId);
 
 /// Remote ID
 ///

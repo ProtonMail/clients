@@ -1,9 +1,7 @@
 #![allow(clippy::module_inception)]
 #![allow(clippy::struct_excessive_bools)]
 
-use crate::label_type::{
-    ALL_LABEL_TYPES, CONTACT_LABEL_TYPES, LabelColor, LabelType, MAIL_LABEL_TYPES,
-};
+use crate::label_type::{ALL_LABEL_TYPES, LabelColor, LabelType, MAIL_LABEL_TYPES};
 use crate::local_ids::LocalLabelId;
 use itertools::Itertools;
 use mail_action_queue::rebase::RebaseChangeSet;
@@ -110,14 +108,6 @@ impl Label {
         API: ProtonCore,
     {
         Self::fetch_labels(api, &MAIL_LABEL_TYPES).await
-    }
-
-    #[instrument(skip_all)]
-    pub async fn fetch_contact_labels<API>(api: &API) -> Result<Vec<Label>, LabelError>
-    where
-        API: ProtonCore,
-    {
-        Self::fetch_labels(api, &CONTACT_LABEL_TYPES).await
     }
 
     #[allow(clippy::result_large_err)]
@@ -268,11 +258,6 @@ impl Label {
     #[instrument(skip_all)]
     pub async fn all_mail(tether: &Tether) -> Result<Vec<Self>, StashError> {
         Self::find_by_kinds(&MAIL_LABEL_TYPES, tether).await
-    }
-
-    #[instrument(skip_all)]
-    pub async fn all_contact_groups(tether: &Tether) -> Result<Vec<Self>, StashError> {
-        Self::find_by_kinds(&CONTACT_LABEL_TYPES, tether).await
     }
 
     #[instrument(skip_all)]
@@ -645,12 +630,7 @@ mod tests {
         let mut tether = new_label_test_connection().await.connection();
         tether
             .write_tx::<_, _, StashError>(async |tx| {
-                for t in [
-                    LabelType::Label,
-                    LabelType::Folder,
-                    LabelType::System,
-                    LabelType::ContactGroup,
-                ] {
+                for t in [LabelType::Label, LabelType::Folder, LabelType::System] {
                     let mut new_label = Label {
                         local_id: None,
                         remote_id: Some(format!("Label-{t:?}").into()),
@@ -754,12 +734,7 @@ mod tests {
         let mut tether = new_label_test_connection().await.connection();
         tether
             .write_tx::<_, _, StashError>(async |tx| {
-                for t in [
-                    LabelType::Label,
-                    LabelType::Folder,
-                    LabelType::System,
-                    LabelType::ContactGroup,
-                ] {
+                for t in [LabelType::Label, LabelType::Folder, LabelType::System] {
                     let mut new_label1 = Label {
                         local_id: None,
                         remote_id: Some(format!("Label-{t:?}-01").into()),

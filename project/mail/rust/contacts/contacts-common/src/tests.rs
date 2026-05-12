@@ -1,14 +1,15 @@
 #![allow(clippy::needless_pass_by_value)]
-
 use crate::contact::Contact;
 use crate::contact_card::ContactCard;
 use crate::contact_email::ContactEmail;
+use crate::contact_group::ContactGroup;
 use crate::contact_list::{ContactEmailItem, ContactItem, ContactItemType, GroupedContacts};
 use crate::events::{
     ContactActionQueueContext, ContactEventCache, ContactEventSessionContext, ContactEventSourceV6,
     ContactEventStorageContext, ContactEventV6Subscriber, ContactIssueReporterContext,
     ContactTaskSpawnerContext,
 };
+use crate::local_ids::LocalContactGroupId;
 use crate::test_utils::new_contact_test_connection;
 use core_event_loop::v6::{EventSource, EventSubscriber};
 use mail_action_queue::queue::Queue;
@@ -20,9 +21,8 @@ use mail_contacts_api::{ContactEventV6, ContactGroupId, ContactRootEventV6};
 use mail_core_api::services::proton::{
     Action, ContactBasic as ApiContactBasic, ContactCard as ApiContactCard,
     ContactEmail as ApiContactEmail, ContactEmailId, ContactFull as ApiContactFull, ContactId,
-    ContactSendingPreferences as ApiContactSendingPreferences, ContactUID, LabelId,
+    ContactSendingPreferences as ApiContactSendingPreferences, ContactUID,
 };
-use mail_labels_common::Labels;
 use mail_shared_types::{ModelExtension, ModelIdExtension};
 use mail_stash::orm::Model;
 use mail_stash::stash::Stash;
@@ -207,7 +207,7 @@ fn create_test_local_partial_contacts() -> Vec<Contact> {
             cards: vec![],
             contact_emails: vec![],
             create_time: 1_503_815_366,
-            label_ids: Labels::new(vec![LabelId::from("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==")]),
+            label_ids: vec![ContactGroupId::from("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==")],
             modify_time: 1_503_815_366,
             name: "contact_name".to_owned(),
             size: 1443,
@@ -220,9 +220,9 @@ fn create_test_local_partial_contacts() -> Vec<Contact> {
             cards: vec![],
             contact_emails: vec![],
             create_time: 1_503_815_367,
-            label_ids: Labels::new(vec![LabelId::from(
+            label_ids: vec![ContactGroupId::from(
                 "I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==".to_owned(),
-            )]),
+            )],
             modify_time: 1_503_815_367,
             name: "contact_name2".to_owned(),
             size: 1445,
@@ -245,9 +245,9 @@ fn create_test_local_contact_emails() -> Vec<ContactEmail> {
             display_order: 1,
             email: "keytransparencymailer@gmail.com".into(),
             is_proton: true,
-            label_ids: Labels::new(vec![LabelId::from(
+            label_ids: vec![ContactGroupId::from(
                 "I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==".to_owned(),
-            )]),
+            )],
             last_used_time: 0.into(),
             name: "contact_email_name_1".to_owned(),
         },
@@ -262,7 +262,7 @@ fn create_test_local_contact_emails() -> Vec<ContactEmail> {
             display_order: 1,
             email: "contact_email_2@contact.test".into(),
             is_proton: true,
-            label_ids: Labels::new(vec![LabelId::from("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==")]),
+            label_ids: vec![ContactGroupId::from("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==")],
             last_used_time: 0.into(),
             name: "contact_email_name_2".to_owned(),
         },
@@ -277,7 +277,7 @@ fn create_test_local_contact_emails() -> Vec<ContactEmail> {
             display_order: 1,
             email: "contact_email_3@contact.test".into(),
             is_proton: true,
-            label_ids: Labels::new(vec![LabelId::from("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==")]),
+            label_ids: vec![ContactGroupId::from("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==")],
             last_used_time: 0.into(),
             name: "contact_email_name_3".to_owned(),
         },
@@ -419,7 +419,7 @@ async fn prepare_sync_test_data(
         .await;
 
     let mut tether = stash.connection();
-    let contacts = Contact::sync(session)
+    let contacts = Contact::sync_without_contact_groups(session)
         .await
         .expect("failed to download contacts");
     tether
@@ -450,7 +450,7 @@ async fn prepare_sync_test_data_partial(
         .mock_get_all_contact_emails_request(test_remote_contacts_email)
         .await;
 
-    let contacts = Contact::sync(session)
+    let contacts = Contact::sync_without_contact_groups(session)
         .await
         .expect("failed to download contacts");
     let mut tether = stash.connection();
@@ -536,6 +536,20 @@ async fn test_sync_and_load_contacts() {
     let session = test_session(&mock_server).await;
     let stash = new_contact_test_connection().await;
 
+    let mut tether = stash.connection();
+    // crate contact grouped so it can be resolved.
+    tether
+        .write_tx(async |tx| {
+            ContactGroup {
+                remote_id: Some("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==".into()),
+                ..ContactGroup::test_default()
+            }
+            .save(tx)
+            .await
+        })
+        .await
+        .unwrap();
+
     mock_server
         .mock_get_all_contacts_partial_request(create_test_remote_partial_contacts())
         .await;
@@ -543,8 +557,7 @@ async fn test_sync_and_load_contacts() {
         .mock_get_all_contact_emails_request(create_test_remote_contact_emails())
         .await;
 
-    let mut tether = stash.connection();
-    let contacts = Contact::sync(&session)
+    let contacts = Contact::sync_without_contact_groups(&session)
         .await
         .expect("failed to download contacts");
     tether
@@ -552,9 +565,19 @@ async fn test_sync_and_load_contacts() {
         .await
         .expect("failed to store contacts");
 
+    let label_ids: Vec<LocalContactGroupId> = tether
+        .query_values(
+            "SELECT local_contact_id FROM contact_contact_groups",
+            params![],
+        )
+        .await
+        .unwrap();
+    dbg!(label_ids);
+
     let mut contacts = Contact::find("LIMIT 100", vec![], &tether)
         .await
         .expect("failed to get contacts");
+    dbg!(&contacts);
     for contact in &mut contacts {
         contact.cards(&tether).await.expect("failed to query cards");
     }
@@ -573,6 +596,20 @@ async fn test_sync_and_load_contacts_mixed() {
     let test_contacts_email = create_test_remote_contact_emails();
     let test_full_contact = create_test_remote_full_contact();
 
+    // crate contact grouped so it can be resolved.
+    let mut tether = stash.connection();
+    tether
+        .write_tx(async |tx| {
+            ContactGroup {
+                remote_id: Some("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==".into()),
+                ..ContactGroup::test_default()
+            }
+            .save(tx)
+            .await
+        })
+        .await
+        .unwrap();
+
     prepare_sync_test_data(
         &mock_server,
         &session,
@@ -582,8 +619,6 @@ async fn test_sync_and_load_contacts_mixed() {
         test_full_contact.clone(),
     )
     .await;
-
-    let tether = stash.connection();
 
     let remote_id = test_contacts.first().unwrap().id.clone();
     let mut contact = Contact::find_by_remote_id(remote_id, &tether)
@@ -630,6 +665,20 @@ async fn sync_and_delete_event_contact() {
     let test_contacts = create_test_remote_partial_contacts();
     let test_contacts_email = create_test_remote_contact_emails();
     let test_full_contact = create_test_remote_full_contact();
+
+    // crate contact grouped so it can be resolved.
+    let mut tether = stash.connection();
+    tether
+        .write_tx(async |tx| {
+            ContactGroup {
+                remote_id: Some("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==".into()),
+                ..ContactGroup::test_default()
+            }
+            .save(tx)
+            .await
+        })
+        .await
+        .unwrap();
     prepare_sync_test_data(
         &mock_server,
         &session,
@@ -682,6 +731,20 @@ async fn test_sync_and_modify_event_contact() {
     let test_contacts = create_test_remote_partial_contacts();
     let test_contacts_email = create_test_remote_contact_emails();
     let test_full_contact = create_test_remote_full_contact();
+
+    // crate contact grouped so it can be resolved.
+    let mut tether = stash.connection();
+    tether
+        .write_tx(async |tx| {
+            ContactGroup {
+                remote_id: Some("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==".into()),
+                ..ContactGroup::test_default()
+            }
+            .save(tx)
+            .await
+        })
+        .await
+        .unwrap();
     prepare_sync_test_data(
         &mock_server,
         &session,

@@ -116,7 +116,7 @@ impl ExclusiveLocation {
 
     fn new_inner(label: &Label) -> Option<Self> {
         match label.label_type {
-            LabelType::Label | LabelType::ContactGroup => None,
+            LabelType::Label => None,
             LabelType::System => {
                 let system_label = SystemLabel::new(label)?;
 

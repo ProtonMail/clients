@@ -23,7 +23,6 @@ mail-action-queue = { workspace = true }
 mail-api-utils = { workspace = true }
 mail-avatar = { workspace = true }
 mail-core-api = { workspace = true }
-mail-labels-common = { workspace = true }
 mail-shared-types = { workspace = true }
 mail-sqlite3 = { workspace = true }
 mail-stash = { workspace = true }
@@ -38,9 +37,9 @@ tracing = { workspace = true }
 unicode-segmentation = { workspace = true }
 url = { workspace = true }
 core-event-loop = { workspace = true }
-mail-api-labels = { workspace = true }
 mail-issue-reporter-service = { workspace = true }
 mail-api-session = { workspace = true }
+mail-labels-common = { workspace = true, optional = true }
 
 [dev-dependencies]
 mail-contacts-api = { workspace = true, features = ["mocks"] }
@@ -59,7 +58,7 @@ wiremock = { workspace = true }
 [features]
 default = ["sql", "mail-compat"]
 sql = ["mail-core-api/sql"]
-test-utils = ["mail-labels-common/test-utils"]
+test-utils = ["dep:mail-labels-common"]
 mail-compat = []
 
 [lints]

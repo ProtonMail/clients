@@ -13,7 +13,6 @@ use std::ops::Deref;
 #[repr(u8)]
 pub enum LabelType {
     Label = 1,
-    ContactGroup = 2,
     Folder = 3,
     System = 4,
 }
@@ -22,7 +21,6 @@ impl Display for LabelType {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Self::Label => write!(f, "Label"),
-            Self::ContactGroup => write!(f, "Contact Group"),
             Self::Folder => write!(f, "Folder"),
             Self::System => write!(f, "System"),
         }
@@ -33,7 +31,7 @@ impl From<ApiLabelType> for LabelType {
     fn from(value: ApiLabelType) -> Self {
         match value {
             ApiLabelType::Label => Self::Label,
-            ApiLabelType::ContactGroup => Self::ContactGroup,
+            ApiLabelType::ContactGroup => panic!("Should not be used"),
             ApiLabelType::Folder => Self::Folder,
             ApiLabelType::System => Self::System,
         }
@@ -44,7 +42,6 @@ impl From<LabelType> for ApiLabelType {
     fn from(value: LabelType) -> Self {
         match value {
             LabelType::Label => Self::Label,
-            LabelType::ContactGroup => Self::ContactGroup,
             LabelType::Folder => Self::Folder,
             LabelType::System => Self::System,
         }
@@ -64,15 +61,10 @@ impl ToSql for LabelType {
     }
 }
 
-pub const ALL_LABEL_TYPES: [LabelType; 4] = [
-    LabelType::Label,
-    LabelType::ContactGroup,
-    LabelType::Folder,
-    LabelType::System,
-];
+pub const ALL_LABEL_TYPES: [LabelType; 3] =
+    [LabelType::Label, LabelType::Folder, LabelType::System];
 pub const MAIL_LABEL_TYPES: [LabelType; 3] =
     [LabelType::Label, LabelType::Folder, LabelType::System];
-pub const CONTACT_LABEL_TYPES: [LabelType; 1] = [LabelType::ContactGroup];
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
 pub struct LabelColor(String);

@@ -1,8 +1,9 @@
 use super::*;
 use mail_common::test_utils::db::new_test_connection_file;
-use mail_core_api::services::proton::{ContactEmailId, ContactId, LabelId};
-use mail_core_common::datatypes::{LabelType, Labels};
-use mail_core_common::models::{Contact, ContactEmail, Label};
+use mail_contacts_api::ContactGroupId;
+use mail_contacts_common::contact_group::ContactGroup;
+use mail_core_api::services::proton::{ContactEmailId, ContactId};
+use mail_core_common::models::{Contact, ContactEmail};
 use mail_stash::orm::Model;
 use mail_stash::stash::StashError;
 use test_case::test_case;
@@ -395,12 +396,11 @@ async fn contact_group_resolution_from_message_recipients() {
     let contact_group_name = "contact_group".to_owned();
     let unknown_contact_group_name = "unknown".to_owned();
 
-    let contact_group_id = LabelId::from("l2");
-    let mut contact_group = Label {
+    let contact_group_id = ContactGroupId::from("l2");
+    let mut contact_group = ContactGroup {
         remote_id: Some(contact_group_id.clone()),
         name: contact_group_name.clone(),
-        label_type: LabelType::ContactGroup,
-        ..Label::test_default()
+        ..ContactGroup::test_default()
     };
 
     let mut contact1 = Contact {
@@ -415,13 +415,13 @@ async fn contact_group_resolution_from_message_recipients() {
     };
     let mut contact1_email = ContactEmail {
         remote_id: Some(ContactEmailId::from("ceid1")),
-        label_ids: Labels::new(vec![contact_group_id.clone()]),
+        label_ids: vec![contact_group_id.clone()],
         remote_contact_id: contact1.remote_id.clone(),
         ..ContactEmail::test_default()
     };
     let mut contact2_email = ContactEmail {
         remote_id: Some(ContactEmailId::from("ceid2")),
-        label_ids: Labels::new(vec![contact_group_id.clone()]),
+        label_ids: vec![contact_group_id.clone()],
         remote_contact_id: contact1.remote_id.clone(),
         ..ContactEmail::test_default()
     };

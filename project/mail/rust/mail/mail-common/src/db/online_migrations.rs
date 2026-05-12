@@ -134,7 +134,7 @@ mod tests {
         ContactSendingPreferences as ApiContactSendingPreferences, ContactUID, PrivateEmail,
     };
     use mail_core_common::{
-        datatypes::{ContactSendingPreferences, ContactTypes, Labels, UnixTimestamp},
+        datatypes::{ContactSendingPreferences, ContactTypes, UnixTimestamp},
         models::{Contact, ContactEmail},
     };
     use mail_stash::orm::Model;
@@ -219,7 +219,7 @@ mod tests {
             cards: vec![],
             contact_emails: vec![],
             create_time: 1024,
-            label_ids: Labels::new(vec![]),
+            label_ids: vec![],
             modify_time: 1024,
             name: "Contact1".to_owned(),
             size: 100,
@@ -241,12 +241,12 @@ mod tests {
                 display_order: 0,
                 email: PrivateEmail::new("foo@bar.com"),
                 is_proton: false,
-                label_ids: Labels::new(vec![]),
+                label_ids: vec![],
                 last_used_time: UnixTimestamp::now(),
                 name: "Hello".to_owned(),
             }],
             create_time: 1024,
-            label_ids: Labels::new(vec![]),
+            label_ids: vec![],
             modify_time: 1024,
             name: "Contact1".to_owned(),
             size: 100,

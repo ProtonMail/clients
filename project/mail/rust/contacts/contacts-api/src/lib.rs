@@ -7,9 +7,10 @@ pub mod mocks;
 pub use api::ContactApi;
 pub use contact_lattice::{
     ContactBasic, ContactCard, ContactEmail, ContactEvent, ContactEventV6, ContactFull,
-    ContactGroupId, ContactLabelEventV6, ContactRootEventV6, ContactSendingPreferences,
-    GetContactEventLatestRequest, GetContactResponse, GetContactsEmailsResponse,
-    GetContactsResponse, PutDeleteContactResponse, PutDeleteContactsResponse,
+    ContactGroup, ContactGroupId, ContactLabelEventV6, ContactRootEventV6,
+    ContactSendingPreferences, GetContactEventLatestRequest, GetContactResponse,
+    GetContactsEmailsResponse, GetContactsResponse, PutDeleteContactResponse,
+    PutDeleteContactsResponse,
 };
 pub use contact_lattice::{GetContactsEmailsOptions, GetContactsOptions, PutDeleteContactsRequest};
 

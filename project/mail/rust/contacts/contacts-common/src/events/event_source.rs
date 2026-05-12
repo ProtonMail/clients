@@ -1,16 +1,15 @@
+use crate::contact_group::ContactGroup;
 use core_event_loop::EventSubscriberError;
 use core_event_loop::v6::{EventSource, EventSourceDependencyList};
 use futures::StreamExt;
 use futures::future::BoxFuture;
 use futures::stream::FuturesUnordered;
 use itertools::Itertools;
-use mail_api_labels::LabelApi;
-use mail_contacts_api::ContactApi;
+use mail_contacts_api::{ContactApi, ContactGroupId};
 use mail_core_api::consts::General;
 use mail_core_api::service::ApiServiceError;
-use mail_core_api::services::proton::{Action, ContactId, ContactRootEventV6, LabelId};
+use mail_core_api::services::proton::{Action, ContactId, ContactRootEventV6};
 use mail_core_api::session::Session;
-use mail_labels_common::{Label, LabelError};
 use mail_stash::stash::StashError;
 use std::collections::HashMap;
 use std::marker::PhantomData;
@@ -45,16 +44,6 @@ pub enum ContactEventSubscriberError {
     Other(#[from] anyhow::Error),
 }
 
-impl From<LabelError> for ContactEventSubscriberError {
-    fn from(err: LabelError) -> Self {
-        match err {
-            LabelError::API(e) => Self::Api(e),
-            LabelError::Stash(e) => Self::Stash(e),
-            err => Self::Other(err.into()),
-        }
-    }
-}
-
 impl EventSubscriberError for ContactEventSubscriberError {
     fn is_network_failure(&self) -> bool {
         match self {
@@ -75,7 +64,7 @@ impl EventSubscriberError for ContactEventSubscriberError {
 #[derive(Default)]
 pub struct ContactEventCache {
     contacts: HashMap<ContactId, Contact>,
-    labels: HashMap<LabelId, Label>,
+    contact_groups: HashMap<ContactGroupId, ContactGroup>,
 }
 
 impl ContactEventCache {
@@ -102,7 +91,7 @@ impl ContactEventCache {
             let mut label_ids = Vec::with_capacity(events.len());
             for event in events {
                 if event.action != Action::Delete {
-                    label_ids.push(event.id.clone().into());
+                    label_ids.push(event.id.clone());
                 }
             }
             self.fetch_labels(&mut tasks, session, label_ids);
@@ -163,12 +152,12 @@ impl ContactEventCache {
         &self,
         tasks: &mut FuturesUnordered<FutureTask>,
         session: &Session,
-        ids: impl IntoIterator<Item = LabelId>,
+        ids: impl IntoIterator<Item = ContactGroupId>,
     ) {
         const MAX_CURRENT_LABEL_REQUEST: usize = 50;
         tasks.extend(
             ids.into_iter()
-                .filter(|id| !self.labels.contains_key(id))
+                .filter(|id| !self.contact_groups.contains_key(id))
                 .chunks(MAX_CURRENT_LABEL_REQUEST)
                 .into_iter()
                 .map(|ids| -> FutureTask {
@@ -176,19 +165,21 @@ impl ContactEventCache {
                     let ids = ids.collect::<Vec<_>>();
                     Box::pin(async move {
                         session
-                            .get_labels_by_ids(ids)
+                            .get_contact_group_by_ids(ids)
                             .await
                             .inspect_err(|e| error!("Failed to get contact labels: {e}"))
                             .map(|r| {
-                                FetchData::Labels(r.labels.into_iter().map(Into::into).collect())
+                                FetchData::ContactGroups(
+                                    r.labels.into_iter().map(Into::into).collect(),
+                                )
                             })
                     })
                 }),
         );
     }
 
-    pub fn get_label_mut(&mut self, id: &LabelId) -> Option<&mut Label> {
-        self.labels.get_mut(id)
+    pub fn get_contact_group_mut(&mut self, id: &ContactGroupId) -> Option<&mut ContactGroup> {
+        self.contact_groups.get_mut(id)
     }
 }
 
@@ -197,7 +188,7 @@ type FutureTask = BoxFuture<'static, Result<FetchData, ApiServiceError>>;
 enum FetchData {
     Contact(ContactId, Contact),
     ContactDoesNotExist(ContactId),
-    Labels(Vec<Label>),
+    ContactGroups(Vec<ContactGroup>),
 }
 
 impl FetchData {
@@ -209,11 +200,12 @@ impl FetchData {
             FetchData::ContactDoesNotExist(id) => {
                 tracing::warn!("{id:?} no longer exists on server");
             }
-            FetchData::Labels(labels) => {
-                for label in labels {
-                    cache
-                        .labels
-                        .insert(label.remote_id.clone().expect("Should be set"), label);
+            FetchData::ContactGroups(contact_groups) => {
+                for contact_group in contact_groups {
+                    cache.contact_groups.insert(
+                        contact_group.remote_id.clone().expect("Should be set"),
+                        contact_group,
+                    );
                 }
             }
         }

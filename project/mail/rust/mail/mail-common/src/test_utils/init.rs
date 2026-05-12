@@ -12,6 +12,7 @@ use mail_api::services::proton::response_data::{
     MessageSender as ApiMessageSender, MimeType, PgpScheme, PmSignature, ShowImages, ShowMoved,
     SwipeAction, ViewLayout, ViewMode,
 };
+use mail_contacts_api::ContactGroup as ApiContactGroup;
 use mail_contacts_api::mocks::ContactsMockServerExt;
 use mail_core_api::services::proton::GetKeysAllResponse;
 use mail_core_api::services::proton::{
@@ -229,6 +230,24 @@ impl MailTestContext {
             )
             .await;
         }
+
+        let contact_groups = params
+            .labels
+            .remove(&ApiLabelType::ContactGroup)
+            .unwrap_or_default()
+            .into_iter()
+            .map(|label| ApiContactGroup {
+                id: label.id.into_inner().into(),
+                color: label.color,
+                display: label.display,
+                name: label.name,
+                order: label.order,
+                sticky: label.sticky,
+            })
+            .collect::<Vec<_>>();
+        self.mock_server()
+            .mock_get_contact_groups(contact_groups, number_of_calls)
+            .await;
 
         self.core_test_context
             .mock_server()

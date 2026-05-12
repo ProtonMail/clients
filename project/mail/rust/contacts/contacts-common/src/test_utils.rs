@@ -19,6 +19,46 @@ macro_rules! cid {
 }
 
 #[macro_export]
+macro_rules! cgid {
+    ($id:expr) => {{
+        use mail_contacts_api::ContactGroupId;
+        Some(ContactGroupId::from($id))
+    }};
+}
+
+#[macro_export]
+macro_rules! lcgid {
+    ($id:expr) => {{
+        use $crate::local_ids::LocalContactGroupId;
+        Some(LocalContactGroupId::from($id))
+    }};
+}
+
+#[macro_export]
+macro_rules! lid {
+    ($id:expr) => {{
+        use $crate::local_ids::LocalContactId;
+        Some(LocalContactId::from($id))
+    }};
+}
+
+#[macro_export]
+macro_rules! leid {
+    ($id:expr) => {{
+        use $crate::local_ids::LocalContactEmailId;
+        Some(LocalContactEmailId::from($id))
+    }};
+}
+
+#[macro_export]
+macro_rules! rcgid {
+    ($id:expr) => {{
+        use mail_contacts_api::ContactGroupId;
+        Some(ContactGroupId::from($id))
+    }};
+}
+
+#[macro_export]
 macro_rules! ceid {
     ($id:expr) => {{
         use mail_core_api::services::proton::ContactEmailId;
@@ -53,6 +93,26 @@ macro_rules! device_contact {
         $crate::contact_list::DeviceContact {
             $($field)*,
             ..Default::default()
+        }
+    }};
+}
+
+#[macro_export]
+macro_rules! contact_group_ids {
+    ($($label:expr),*) => {{
+        use mail_contacts_api::ContactGroupId;
+        vec![$(
+            ContactGroupId::from($label)
+        ),*]
+    }};
+}
+
+#[macro_export]
+macro_rules! label {
+    ($($field:tt)*) => {{
+        $crate::contact_group::ContactGroup {
+            $($field)*,
+            ..$crate::contact_group::ContactGroup::test_default()
         }
     }};
 }

@@ -1,6 +1,7 @@
 ---
-source: contacts/mail-contacts-common/src/contact_details.rs
-expression: "&details"
+source: project/mail/rust/contacts/contacts-common/src/contact_details.rs
+expression: "&contact_details"
+snapshot_kind: text
 ---
 InspectableContactDetails {
     id: LocalContactId(
@@ -33,14 +34,14 @@ InspectableContactDetails {
                     groups: [
                         ContactGroup {
                             name: "A",
-                            color: LabelColor(
-                                "",
+                            color: ContactGroupColor(
+                                "#000000",
                             ),
                         },
                         ContactGroup {
                             name: "B",
-                            color: LabelColor(
-                                "",
+                            color: ContactGroupColor(
+                                "#000000",
                             ),
                         },
                     ],
@@ -51,8 +52,8 @@ InspectableContactDetails {
                     groups: [
                         ContactGroup {
                             name: "C",
-                            color: LabelColor(
-                                "",
+                            color: ContactGroupColor(
+                                "#000000",
                             ),
                         },
                     ],

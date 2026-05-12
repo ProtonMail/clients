@@ -84,13 +84,7 @@ impl EventSubscriber<EventManagerContext, MailEventSourceV6> for MailEventV6Subs
                                 &mut changeset,
                             )
                             .await?;
-                            handle_counters_label_event(
-                                tx,
-                                &event.id,
-                                action,
-                                cache.get_label(&event.id),
-                            )
-                            .await?;
+                            handle_counters_label_event(tx, &event.id, action).await?;
                         }
                     }
 

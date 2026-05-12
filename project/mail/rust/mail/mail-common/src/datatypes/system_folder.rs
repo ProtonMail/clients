@@ -15,7 +15,7 @@ pub enum MovableSystemFolder {
 impl MovableSystemFolder {
     pub(crate) fn new(label: &Label) -> Option<Self> {
         match label.label_type {
-            LabelType::Label | LabelType::ContactGroup | LabelType::Folder | LabelType::System => {
+            LabelType::Label | LabelType::Folder | LabelType::System => {
                 Self::from_rid(label.remote_id.as_ref())
             }
         }

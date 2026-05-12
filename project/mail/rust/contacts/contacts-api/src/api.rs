@@ -4,7 +4,10 @@ use crate::{
     ContactId, GetContactResponse, GetContactsEmailsOptions, GetContactsEmailsResponse,
     GetContactsOptions, GetContactsResponse, PutDeleteContactsRequest, PutDeleteContactsResponse,
 };
-use contact_lattice::{GetContactEvent, GetContactEventLatestRequest};
+use contact_lattice::{
+    ContactGroupId, GetContactEvent, GetContactEventLatestRequest, GetContactGroupsByIdsRequest,
+    GetContactGroupsRequest, GetContactGroupsResponse,
+};
 use mail_api_event_types::{EventId, GetEventsLatestResponse};
 use mail_api_lattice::RunLatticeContractExt;
 use mail_api_shared::ApiServiceResult;
@@ -47,6 +50,15 @@ pub trait ContactApi {
     fn get_contact_event_latest_v6(
         &self,
     ) -> impl Future<Output = ApiServiceResult<GetEventsLatestResponse>> + Send;
+
+    fn get_contact_groups(
+        &self,
+    ) -> impl Future<Output = ApiServiceResult<GetContactGroupsResponse>> + Send;
+
+    fn get_contact_group_by_ids(
+        &self,
+        group_ids: Vec<ContactGroupId>,
+    ) -> impl Future<Output = ApiServiceResult<GetContactGroupsResponse>> + Send;
 }
 
 impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> ContactApi for This {
@@ -97,6 +109,23 @@ impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> ContactApi for This {
     async fn get_contact_event_latest_v6(&self) -> ApiServiceResult<GetEventsLatestResponse> {
         let resp = self
             .run_lattice_contract_compat(GetContactEventLatestRequest)
+            .await?;
+        Ok(resp.0)
+    }
+
+    async fn get_contact_groups(&self) -> ApiServiceResult<GetContactGroupsResponse> {
+        let resp = self
+            .run_lattice_contract_compat(GetContactGroupsRequest)
+            .await?;
+        Ok(resp.0)
+    }
+
+    async fn get_contact_group_by_ids(
+        &self,
+        group_ids: Vec<ContactGroupId>,
+    ) -> ApiServiceResult<GetContactGroupsResponse> {
+        let resp = self
+            .run_lattice_contract_compat(GetContactGroupsByIdsRequest { ids: group_ids })
             .await?;
         Ok(resp.0)
     }

@@ -63,6 +63,10 @@ impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> LabelApi for This {
     }
 
     async fn get_labels(&self, label_type: LabelType) -> ApiServiceResult<GetLabelsResponse> {
+        assert!(
+            label_type != LabelType::ContactGroup,
+            "Used dedicated contact api crate for this request"
+        );
         Ok(GET!("{CORE_V4}/labels")
             .query(serde_to_query(GetLabelsOptions { label_type })?)
             .send_with(self)
@@ -84,6 +88,10 @@ impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> LabelApi for This {
     }
 
     async fn post_labels(&self, body: PostLabelsRequest) -> ApiServiceResult<PostLabelsResponse> {
+        assert!(
+            body.label_type != LabelType::ContactGroup,
+            "Used dedicated contact api crate for this request"
+        );
         Ok(POST!("{CORE_V4}/labels")
             .body_json(body)?
             .send_with(self)

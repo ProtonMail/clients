@@ -1,6 +1,6 @@
 use crate::event_loop::event_subscriber::CoreEventSubscriberError;
 use crate::event_loop::v6::CoreEventSourceV6;
-use crate::models::{Address, Contact, Label, ModelExtension, User};
+use crate::models::{Address, ModelExtension, User};
 use crate::services::event_loop_service::EventManagerContext;
 use crate::{UserContext, join_task};
 use anyhow::Context;
@@ -9,6 +9,8 @@ use core_event_loop::v6::{EventSource, EventSubscriber};
 use core_event_loop::{EventSubscriberError, EventSubscriberResult, RefreshFlag};
 use mail_action_queue::action::ActionGroup;
 use mail_action_queue::rebase::RebaseChangeSet;
+use mail_contacts_common::contact::Contact;
+use mail_contacts_common::contact_group::ContactGroup;
 use mail_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
 use mail_stash::orm::Model;
 use std::collections::HashMap;
@@ -121,7 +123,7 @@ impl EventSubscriber<EventManagerContext, CoreEventSourceV6> for CoreEventV6Subs
             .context("Context is dead")
             .map_err(CoreEventSubscriberError::Other)
             .map_err(|e| -> Box<dyn EventSubscriberError> { Box::new(e) })?;
-        if let Err(e) = refresh_core(&ctx).await {
+        if let Err(e) = refresh_core_v6(&ctx).await {
             if !e.is_retryable() {
                 ctx.issue_reporter_service().report(
                     IssueLevel::Critical,
@@ -136,16 +138,12 @@ impl EventSubscriber<EventManagerContext, CoreEventSourceV6> for CoreEventV6Subs
 }
 
 #[tracing::instrument(skip_all)]
-pub async fn refresh_core(ctx: &UserContext) -> EventSubscriberResult<()> {
+pub async fn refresh_core_v6(ctx: &UserContext) -> EventSubscriberResult<()> {
     async {
-        let api = ctx.session().clone();
-        let contacts = ctx.spawn(async move { Contact::sync(&api).await });
         let api = ctx.session().clone();
         let all_remote_addresses = ctx.spawn(async move { Address::sync(&api).await });
         let api = ctx.session().clone();
         let user_and_settings = ctx.spawn(async move { User::sync_user_and_settings(&api).await });
-        let api = ctx.session().clone();
-        let all_remote_labels = ctx.spawn(async move { Label::fetch_contact_labels(&api).await });
 
         let mut tether = ctx.mail_stash().connection();
         let mut all_local_addresses: HashMap<_, _> = Address::all(&tether)
@@ -153,14 +151,81 @@ pub async fn refresh_core(ctx: &UserContext) -> EventSubscriberResult<()> {
             .into_iter()
             .map(|addr| (addr.remote_id.clone(), addr))
             .collect();
-        let mut all_local_labels: HashMap<_, _> = Label::all_contact_groups(&tether)
+
+        debug!(
+            "Number of addresses available localy: {}",
+            all_local_addresses.len()
+        );
+
+        let all_remote_addresses = join_task!(all_remote_addresses, "addresses").inner();
+        let user_and_settings = join_task!(user_and_settings, "user and settings");
+
+        debug!(
+            "Number of addresses available remotely: {}",
+            all_remote_addresses.len()
+        );
+        for remote_label in &all_remote_addresses {
+            all_local_addresses.remove(&remote_label.remote_id);
+        }
+
+        tether
+            .write_tx::<_, _, CoreEventSubscriberError>(async |tx| {
+                for local_address_to_remove in all_local_addresses.into_values() {
+                    debug!(
+                        "Removing address with remote_id {:?}",
+                        local_address_to_remove.remote_id
+                    );
+                    local_address_to_remove.delete(tx).await?;
+                }
+                for mut remote_address in all_remote_addresses {
+                    remote_address.save(tx).await?;
+                }
+
+                tx.sync_bridge(move |tx| {
+                    user_and_settings.store(tx)?;
+                    Ok(())
+                })
+                .await?;
+
+                Ok(())
+            })
+            .await
+            .inspect_err(|e| {
+                error!("Failed to update database entries while refreshing core: {e}");
+            })?;
+
+        Ok::<_, CoreEventSubscriberError>(())
+    }
+    .await
+    .map_err(|e| -> Box<dyn EventSubscriberError> { Box::new(e) })
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn refresh_core_v5(ctx: &UserContext) -> EventSubscriberResult<()> {
+    async {
+        let api = ctx.session().clone();
+        let contacts = ctx.spawn(async move { Contact::sync_without_contact_groups(&api).await });
+        let api = ctx.session().clone();
+        let all_remote_addresses = ctx.spawn(async move { Address::sync(&api).await });
+        let api = ctx.session().clone();
+        let user_and_settings = ctx.spawn(async move { User::sync_user_and_settings(&api).await });
+        let api = ctx.session().clone();
+        let all_remote_contact_groups = ctx.spawn(async move { ContactGroup::fetch(&api).await });
+
+        let mut tether = ctx.mail_stash().connection();
+        let mut all_local_addresses: HashMap<_, _> = Address::all(&tether)
+            .await?
+            .into_iter()
+            .map(|addr| (addr.remote_id.clone(), addr))
+            .collect();
+        let mut all_local_contact_groups: HashMap<_, _> = ContactGroup::all(&tether)
             .await?
             .into_iter()
             .map(|label| (label.remote_id.clone(), label))
             .collect();
         debug!(
             "Number of labels available localy: {}",
-            all_local_labels.len()
+            all_local_contact_groups.len()
         );
 
         debug!(
@@ -170,7 +235,7 @@ pub async fn refresh_core(ctx: &UserContext) -> EventSubscriberResult<()> {
 
         let all_remote_addresses = join_task!(all_remote_addresses, "addresses").inner();
         let user_and_settings = join_task!(user_and_settings, "user and settings");
-        let all_remote_labels = join_task!(all_remote_labels, "labels");
+        let all_remote_contact_groups = join_task!(all_remote_contact_groups, "contact_groups");
 
         debug!(
             "Number of addresses available remotely: {}",
@@ -180,11 +245,11 @@ pub async fn refresh_core(ctx: &UserContext) -> EventSubscriberResult<()> {
             all_local_addresses.remove(&remote_label.remote_id);
         }
         debug!(
-            "Number of labels available remotely: {}",
-            all_remote_labels.len()
+            "Number of contact groups available remotely: {}",
+            all_remote_contact_groups.len()
         );
-        for remote_label in &all_remote_labels {
-            all_local_labels.remove(&remote_label.remote_id);
+        for cg in &all_remote_contact_groups {
+            all_local_contact_groups.remove(&cg.remote_id);
         }
 
         let contacts = join_task!(contacts, "contacts");
@@ -202,16 +267,18 @@ pub async fn refresh_core(ctx: &UserContext) -> EventSubscriberResult<()> {
                     remote_address.save(tx).await?;
                 }
 
-                Label::store_labels_async(tx, all_remote_labels)
-                    .await
-                    .map_err(|e| anyhow::Error::new(e).context("Failed to store labels"))?;
+                for mut cg in all_remote_contact_groups {
+                    cg.save(tx)
+                        .await
+                        .map_err(|e| anyhow::Error::new(e).context("Failed to store labels"))?;
+                }
 
-                for local_label_to_remove in all_local_labels.into_values() {
+                for local_contact_group_to_remove in all_local_contact_groups.into_values() {
                     debug!(
-                        "Removing label with remote_id {:?}",
-                        local_label_to_remove.remote_id
+                        "Removing contact group with remote_id {:?}",
+                        local_contact_group_to_remove.remote_id
                     );
-                    local_label_to_remove.delete(tx).await?;
+                    local_contact_group_to_remove.delete(tx).await?;
                 }
 
                 tx.sync_bridge(move |tx| {

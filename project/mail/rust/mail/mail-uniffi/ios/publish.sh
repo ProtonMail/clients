@@ -16,8 +16,8 @@ FILE_TO_PUBLISH_WITH_PATH="/tmp/$FILE_TO_PUBLISH"
 tar czf $FILE_TO_PUBLISH_WITH_PATH $CRATE_VERSION
 
 if [ ! -e "$FILE_TO_PUBLISH_WITH_PATH" ]; then
-  echo "Error: File to upload $FILE_TO_PUBLISH_WITH_PATH does not exist."
-  exit 1
+    echo "Error: File to upload $FILE_TO_PUBLISH_WITH_PATH does not exist."
+    exit 1
 fi
 
 # Upload file to the iOS registry
@@ -28,6 +28,6 @@ echo "$REGISTRY_DEST"
 RESPONSE_CODE=$(curl -s -o /dev/null -w "%{http_code}" --header "PRIVATE-TOKEN: $PROTON_MAIL_IOS_REGISTRY_ACCESS_TOKEN" --upload-file "$FILE_TO_PUBLISH_WITH_PATH" "$REGISTRY_DEST")
 
 if [ "$RESPONSE_CODE" -ne 201 ]; then
-  echo "Error: Registry request HTTP response code is "$RESPONSE_CODE"."
-  exit 1
+    echo "Error: Registry request HTTP response code is "$RESPONSE_CODE"."
+    exit 1
 fi

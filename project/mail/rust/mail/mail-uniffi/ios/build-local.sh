@@ -13,11 +13,11 @@ TMP_DIR="/tmp/$(uuidgen)"
 PROFILE="${1:-}"
 
 if [ -n "$PROFILE" ]; then
-  echo "Building with profile: $PROFILE"
-  rust-build/build_ios_framework_uniffi.sh mail-uniffi ./mail/mail-uniffi/uniffi.toml $TMP_DIR $PROFILE
+    echo "Building with profile: $PROFILE"
+    rust-build/build_ios_framework_uniffi.sh mail-uniffi ./mail/mail-uniffi/uniffi.toml $TMP_DIR $PROFILE
 else
-  echo "Building with default profile (release)"
-  rust-build/build_ios_framework_uniffi.sh mail-uniffi ./mail/mail-uniffi/uniffi.toml $TMP_DIR
+    echo "Building with default profile (release)"
+    rust-build/build_ios_framework_uniffi.sh mail-uniffi ./mail/mail-uniffi/uniffi.toml $TMP_DIR
 fi
 
 CRATE_VERSION=$(cargo pkgid --manifest-path=./mail/mail-uniffi/Cargo.toml | cut -d "#" -f2)

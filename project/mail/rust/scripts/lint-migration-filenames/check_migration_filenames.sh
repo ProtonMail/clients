@@ -2,7 +2,7 @@
 
 # Function to check filenames in a directory
 check_migration_filenames() {
-    local directory_path="${1:-.}"  # Use current directory if no path provided
+    local directory_path="${1:-.}" # Use current directory if no path provided
 
     # Check if directory exists
     if [[ ! -d "$directory_path" ]]; then

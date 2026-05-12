@@ -11,11 +11,11 @@
 set -euo pipefail
 
 toml() {
-  uvx --from toml-cli toml "$@"
+    uvx --from toml-cli toml "$@"
 }
 
 semver() {
-  uvx --from semver pysemver "$@"
+    uvx --from semver pysemver "$@"
 }
 
 echo "Bumping..."

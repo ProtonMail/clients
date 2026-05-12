@@ -15,7 +15,7 @@ find_user_db() {
     for dir in "${search_dirs[@]}"; do
         if [[ -d "$dir" ]]; then
             local db
-            db=$(find "$dir" -maxdepth 1 -name '*.db' -print -quit 2>/dev/null)
+            db=$(find "$dir" -maxdepth 1 -name '*.db' -print -quit 2> /dev/null)
             if [[ -n "$db" ]]; then
                 echo "$db"
                 return 0

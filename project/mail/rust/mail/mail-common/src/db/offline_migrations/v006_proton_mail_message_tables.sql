@@ -77,7 +77,15 @@ CREATE TABLE draft_metadata (
   reply_mode INTEGER DEFAULT NULL,
   save_action_id INTEGER DEFAULT NULL,
   send_action_id INTEGER DEFAULT NULL,
-  CONSTRAINT create_draft_metadata_message_id FOREIGN KEY (local_message_id) REFERENCES messages (local_id) ON DELETE CASCADE CONSTRAINT create_draft_metadata_conversation_id FOREIGN KEY (local_conversation_id) REFERENCES conversations (local_id) ON DELETE SET NULL CONSTRAINT create_draft_metadata_parent_id FOREIGN KEY (local_parent_id) REFERENCES messages (local_id) ON DELETE SET NULL CONSTRAINT draft_metadata_save_action_id FOREIGN KEY (save_action_id) REFERENCES action_queue (id) ON DELETE SET NULL CONSTRAINT draft_metadata_send_action_id FOREIGN KEY (send_action_id) REFERENCES action_queue (id) ON DELETE SET NULL
+  CONSTRAINT create_draft_metadata_message_id FOREIGN KEY (local_message_id) REFERENCES messages (local_id) ON DELETE CASCADE CONSTRAINT create_draft_metadata_conversation_id FOREIGN KEY (local_conversation_id) REFERENCES conversations (local_id) ON DELETE
+  SET
+    NULL CONSTRAINT create_draft_metadata_parent_id FOREIGN KEY (local_parent_id) REFERENCES messages (local_id) ON DELETE
+  SET
+    NULL CONSTRAINT draft_metadata_save_action_id FOREIGN KEY (save_action_id) REFERENCES action_queue (id) ON DELETE
+  SET
+    NULL CONSTRAINT draft_metadata_send_action_id FOREIGN KEY (send_action_id) REFERENCES action_queue (id) ON DELETE
+  SET
+    NULL
 );
 
 CREATE UNIQUE INDEX index_draft_metadatqa_mid ON draft_metadata (local_message_id);
@@ -104,15 +112,13 @@ CREATE TABLE draft_attachment_metadata (
   display_order INTEGER NOT NULL DEFAULT 0,
   ownership INTEGER NOT NULL,
   deleted INTEGER NOT NULL DEFAULT 0,
-  CONSTRAINT draft_attachment_metadata_attachment_id FOREIGN KEY (local_attachment_id) REFERENCES attachments (local_id) ON DELETE CASCADE CONSTRAINT draft_attachment_metadata_metadata_id FOREIGN KEY (metadata_id) REFERENCES draft_metadata (id) ON DELETE CASCADE CONSTRAINT draft_attachment_metadata_action_id FOREIGN KEY (action_id) REFERENCES action_queue (id) ON DELETE SET NULL
+  CONSTRAINT draft_attachment_metadata_attachment_id FOREIGN KEY (local_attachment_id) REFERENCES attachments (local_id) ON DELETE CASCADE CONSTRAINT draft_attachment_metadata_metadata_id FOREIGN KEY (metadata_id) REFERENCES draft_metadata (id) ON DELETE CASCADE CONSTRAINT draft_attachment_metadata_action_id FOREIGN KEY (action_id) REFERENCES action_queue (id) ON DELETE
+  SET
+    NULL
 );
 
 CREATE TABLE message_body (
-    message_id INTEGER PRIMARY KEY,
-    body TEXT NOT NULL,
-
-CONSTRAINT message_body_id
-    FOREIGN KEY (message_id)
-    REFERENCES messages (local_id)
-    ON DELETE CASCADE
+  message_id INTEGER PRIMARY KEY,
+  body TEXT NOT NULL,
+  CONSTRAINT message_body_id FOREIGN KEY (message_id) REFERENCES messages (local_id) ON DELETE CASCADE
 );

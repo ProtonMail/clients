@@ -30,7 +30,9 @@ CREATE TABLE address_keys (
   flags INTEGER,
   address_forwarding_id TEXT,
   CONSTRAINT address_keys_id FOREIGN KEY (address_id) REFERENCES addresses (local_id) ON DELETE CASCADE,
-  CONSTRAINT address_keys_forwarding_id FOREIGN KEY (address_forwarding_id) REFERENCES addresses (local_id) ON DELETE SET NULL
+  CONSTRAINT address_keys_forwarding_id FOREIGN KEY (address_forwarding_id) REFERENCES addresses (local_id) ON DELETE
+  SET
+    NULL
 );
 
 CREATE INDEX index_address_keys_addr_id ON address_keys (address_id)

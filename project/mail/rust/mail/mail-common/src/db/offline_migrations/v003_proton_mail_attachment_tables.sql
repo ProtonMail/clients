@@ -19,18 +19,17 @@ CREATE TABLE attachments (
   transfer_encoding TEXT DEFAULT NULL,
   image_width TEXT DEFAULT NULL,
   image_height TEXT DEFAULT NULL,
-  attachment_type TEXT NOT NULL, -- JSON
-
+  attachment_type TEXT NOT NULL,  -- JSON
   CONSTRAINT attachments_address_id FOREIGN KEY (local_address_id) REFERENCES addresses (local_id),
   CONSTRAINT attachments_conversation_id FOREIGN KEY (local_conversation_id) REFERENCES conversations (local_id) ON DELETE CASCADE,
   CONSTRAINT attachments_message_id FOREIGN KEY (local_message_id) REFERENCES messages (local_id) ON DELETE CASCADE
 );
 
 CREATE TABLE attachment_cache (
-    attachment_id INTEGER PRIMARY KEY,
-    atime INTEGER NOT NULL DEFAULT (unixepoch('now')),
-    ctime INTEGER NOT NULL DEFAULT (unixepoch('now')),
-    hit_count INTEGER NOT NULL DEFAULT 0,
-    path TEXT NOT NULL,
-    size INTEGER NOT NULL
+  attachment_id INTEGER PRIMARY KEY,
+  atime INTEGER NOT NULL DEFAULT (unixepoch('now')),
+  ctime INTEGER NOT NULL DEFAULT (unixepoch('now')),
+  hit_count INTEGER NOT NULL DEFAULT 0,
+  path TEXT NOT NULL,
+  size INTEGER NOT NULL
 );

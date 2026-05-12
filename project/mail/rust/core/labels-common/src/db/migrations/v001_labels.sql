@@ -13,8 +13,11 @@ CREATE TABLE IF NOT EXISTS labels (
   notify INTEGER NOT NULL DEFAULT 0,
   expanded INTEGER NOT NULL DEFAULT 0,
   sticky INTEGER NOT NULL DEFAULT 0,
-  CONSTRAINT constraint_labels_parent_id FOREIGN KEY (local_parent_id)
-    REFERENCES labels (local_id) ON DELETE SET NULL
+  CONSTRAINT constraint_labels_parent_id FOREIGN KEY (local_parent_id) REFERENCES labels (local_id) ON DELETE
+  SET
+    NULL
 );
+
 CREATE UNIQUE INDEX IF NOT EXISTS index_labels_rid ON labels (remote_id);
+
 CREATE INDEX IF NOT EXISTS index_labels_order ON labels (display_order);

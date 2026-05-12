@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [mail-uniffi-v0.166.1] - 2026-05-12
+
+### Features
+
+- enable foundation search for mobile(ffi) and TUI
+- R foundation search 2.0.0-preview1 - proton/clients/monorepo!2276
+- [NGC-901] Sort attendees - proton/clients/monorepo!2008
+
+
 ## [mail-uniffi-v0.166.0] - 2026-05-11
 
 ### Changed

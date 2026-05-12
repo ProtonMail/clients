@@ -1,6 +1,6 @@
 [package]
 name = "mail-uniffi"
-version = "0.166.0"
+version = "0.166.1"
 edition.workspace = true
 rust-version.workspace = true
 publish = false
@@ -64,7 +64,7 @@ url = { workspace = true }
 zeroizing-alloc = { workspace = true }
 
 [features]
-default = []
+default = ["foundation_search"]
 # Foundation Search: Local body text search indexing
 # When enabled, message bodies are indexed locally for offline full-text search.
 foundation_search = ["mail-common/foundation_search"]

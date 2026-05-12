@@ -6,7 +6,7 @@ rust-version.workspace = true
 license = "AGPL-3.0-only"
 
 [features]
-default = ["sql", "events-v6"]
+default = ["sql", "events-v6", "foundation_search"]
 gtk = []
 test-utils = [
   "dep:wiremock",

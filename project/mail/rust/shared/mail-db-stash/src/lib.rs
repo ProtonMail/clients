@@ -3,7 +3,6 @@ use std::ops::Deref;
 use mail_db::{Database, Transaction};
 use mail_stash::{
     marker::DatabaseMarker,
-    params,
     stash::{Stash, StashError, Tether, WriteTx as StashWriteTx},
 };
 
@@ -67,15 +66,12 @@ impl<M: DatabaseMarker> Database for StashDb<M> {
         &self,
         closure: impl AsyncFnOnce(Self::ReadTx<'_>) -> Result<T, E>,
     ) -> Result<T, E> {
+        // TODO(ET-6112): Restore read transaction isolation via ReadTx (Phase 3).
+        // With MPMC read workers, raw BEGIN/ROLLBACK via execute() would hit
+        // different workers. For now, reads run without a transaction wrapper.
         let tether = self.stash.connection().await?;
-        tether.execute("BEGIN", params![]).await?;
         let rtx = ReadTx(&tether);
-        let result = closure(rtx).await;
-        // This is supposed to be a read only transaction, it doesn't matter
-        // whether we commit or rollback. But to protect against accidental
-        // writes by sneaky code, always rollback by default.
-        tether.execute("ROLLBACK", params![]).await?;
-        result
+        closure(rtx).await
     }
 
     async fn write<T, E: From<Self::Error>>(
@@ -94,7 +90,7 @@ impl<M: DatabaseMarker> Database for StashDb<M> {
 
 #[cfg(test)]
 mod tests {
-    use mail_stash::UserDb;
+    use mail_stash::{UserDb, params};
 
     use super::*;
 

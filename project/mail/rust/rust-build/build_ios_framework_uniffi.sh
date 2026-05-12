@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Build iOS XCFramework for UniFFI bindings
 #
@@ -31,7 +31,6 @@ echo "Cargo target directory: $BUILD_TARGET_DIR"
 export LIBSQLITE3_FLAGS="-DNDEBUG=1 -DSQLITE_THREADSAFE=2\
  -DSQLITE_DEFAULT_FILE_PERMISSIONS=0600 -DSQLITE_SECURE_DELETE"
 
-
 # iOS specific flags
 
 function check_exit {
@@ -51,38 +50,38 @@ function check_exit_popd {
     fi
 }
 
-
 function join_by {
-    local IFS="$1"; shift; echo "$*";
+    local IFS="$1"
+    shift
+    echo "$*"
 }
-
 
 # gen_framework path name swift_include_dir
 function gen_framework {
-   local TARGET_DIR=$1
-   local NAME=$2
-   local FRAMEWORK_NAME="${NAME}_ffi.framework"
-   local FRAMEWORK_PATH="$TARGET_DIR/$FRAMEWORK_NAME"
-   local SWIFT_HEADER_DIR=$3
-   local CRATE_VERSION=$4
-   local PLATFORM=$5
-   local NAME_PASCAL_CASE=$(echo "${NAME}_ffi" | perl -pe 's/(?:^|_)./uc($&)/ge;s/_//g')
+    local TARGET_DIR=$1
+    local NAME=$2
+    local FRAMEWORK_NAME="${NAME}_ffi.framework"
+    local FRAMEWORK_PATH="$TARGET_DIR/$FRAMEWORK_NAME"
+    local SWIFT_HEADER_DIR=$3
+    local CRATE_VERSION=$4
+    local PLATFORM=$5
+    local NAME_PASCAL_CASE=$(echo "${NAME}_ffi" | perl -pe 's/(?:^|_)./uc($&)/ge;s/_//g')
 
-   echo "$FRAMEWORK_PATH"
+    echo "$FRAMEWORK_PATH"
 
-   find $TARGET_DIR -type d -name "$FRAMEWORK_NAME" -exec rm -rf {} \; || echo "rm failed"
+    find $TARGET_DIR -type d -name "$FRAMEWORK_NAME" -exec rm -rf {} \; || echo "rm failed"
 
-   mkdir -p "$FRAMEWORK_PATH" "$FRAMEWORK_PATH/Headers" "$FRAMEWORK_PATH/Modules" "$FRAMEWORK_PATH/Resources"
-   check_exit
+    mkdir -p "$FRAMEWORK_PATH" "$FRAMEWORK_PATH/Headers" "$FRAMEWORK_PATH/Modules" "$FRAMEWORK_PATH/Resources"
+    check_exit
 
-   local MIN_VERSION=$MIN_IOS_VERSION
+    local MIN_VERSION=$MIN_IOS_VERSION
 
-   if [ "$PLATFORM" = "iphonesimulator" ]; then
+    if [ "$PLATFORM" = "iphonesimulator" ]; then
         MIN_VERSION=100
-   fi
+    fi
 
-   # iOS has Info.plist at the root
-   cat > $FRAMEWORK_PATH/Info.plist << CATEOF
+    # iOS has Info.plist at the root
+    cat > $FRAMEWORK_PATH/Info.plist << CATEOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -110,14 +109,14 @@ CATEOF
     # We need to generate a custom module and include the header files ourselves
 
     echo "framework module ${NAME}_ffi {" > $SWIFT_HEADER_DIR/module.tmp
-    for header in $SWIFT_HEADER_DIR/*.h
-    do
+    for header in $SWIFT_HEADER_DIR/*.h; do
         local header_name=$(basename "$header")
         echo "    header \"$header_name\"" >> $SWIFT_HEADER_DIR/module.tmp
         check_exit
     done
 
-    echo "    export *\n}" >> $SWIFT_HEADER_DIR/module.tmp
+    echo "    export *" >> $SWIFT_HEADER_DIR/module.tmp
+    echo "}" >> $SWIFT_HEADER_DIR/module.tmp
 
     cp $SWIFT_HEADER_DIR/*.h "$FRAMEWORK_PATH/Headers"
     check_exit
@@ -136,7 +135,6 @@ CATEOF
         check_exit
     fi
 }
-
 
 function gen_swift_package {
     local NAME=$2
@@ -176,7 +174,6 @@ let package = Package(
 
 CATEOF
 }
-
 
 SO_SUFFIX="dylib"
 TMP_DIR="/tmp/$(uuidgen)"
@@ -234,10 +231,8 @@ gen_framework "$SIM_FRAMEWORK_DIR" $TARGET_UNDERSCORE "$TMP_DIR/include" $CRATE_
 echo "Generating framework for ios aarch64"
 gen_framework "$BUILD_TARGET_DIR/aarch64-apple-ios/$PROFILE" $TARGET_UNDERSCORE "$TMP_DIR/include" $CRATE_VERSION iphoneos
 
-
 cp $BUILD_TARGET_DIR/aarch64-apple-ios/$PROFILE/lib${TARGET_UNDERSCORE}.a "$TMP_DIR/ios-dev/lib${TARGET_UNDERSCORE}_dev.a"
 check_exit
-
 
 SWIFT_PACKAGE_DIR=$OUTPUT_DIR/${CRATE_VERSION}
 SWIFT_PACKAGE_SOURCES_DIR=$SWIFT_PACKAGE_DIR/Sources
@@ -250,7 +245,6 @@ check_exit
 
 gen_swift_package $SWIFT_PACKAGE_DIR $PACKAGE_NAME $TARGET_UNDERSCORE
 
-
 if [[ -d "$SWIFT_PACKAGE_SOURCES_DIR/${FRAMEWORK_NAME}" ]]; then
     echo "Deleting previous artifact"
     rm -r "$SWIFT_PACKAGE_SOURCES_DIR/${FRAMEWORK_NAME}"
@@ -259,7 +253,7 @@ fi
 
 echo "Generating xcframework"
 xcodebuild -create-xcframework \
-    -output  "$SWIFT_PACKAGE_SOURCES_DIR/${FRAMEWORK_NAME}" \
+    -output "$SWIFT_PACKAGE_SOURCES_DIR/${FRAMEWORK_NAME}" \
     -framework "$SIM_FRAMEWORK_DIR/${TARGET_UNDERSCORE}_ffi.framework" \
     -framework "$BUILD_TARGET_DIR/aarch64-apple-ios/$PROFILE/${TARGET_UNDERSCORE}_ffi.framework"
 check_exit
@@ -267,17 +261,14 @@ check_exit
 echo "Changing folder name"
 mv $SWIFT_PACKAGE_SOURCES_DIR/$TARGET_UNDERSCORE $SWIFT_PACKAGE_SOURCES_DIR/$PACKAGE_NAME
 
-
 # We now need to replace the module imports with the correct module name.
 
-for header in $TMP_DIR/include/*.swift
-do
+for header in $TMP_DIR/include/*.swift; do
     header_name=$(basename $header)
     header_name_only=$(basename $header ".swift")
     sed "s/${header_name_only}FFI/${TARGET_UNDERSCORE}_ffi/g" $header > $SWIFT_PACKAGE_SOURCES_DIR/${PACKAGE_NAME}/$header_name
     check_exit
 done
-
 
 rm -r "$TMP_DIR"
 check_exit

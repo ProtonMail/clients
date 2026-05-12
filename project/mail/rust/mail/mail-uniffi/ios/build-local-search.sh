@@ -15,16 +15,16 @@
 set -eo pipefail
 
 if [ -z "$IOS_REPO_ROOT" ]; then
-  echo "error: IOS_REPO_ROOT is not set." >&2
-  echo "Set it to your Proton Mail iOS checkout (folder containing ProtonPackages/proton_app_uniffi)." >&2
-  echo "Example: IOS_REPO_ROOT=\"\$HOME/PROTON/mail\" $0" >&2
-  exit 1
+    echo "error: IOS_REPO_ROOT is not set." >&2
+    echo "Set it to your Proton Mail iOS checkout (folder containing ProtonPackages/proton_app_uniffi)." >&2
+    echo "Example: IOS_REPO_ROOT=\"\$HOME/PROTON/mail\" $0" >&2
+    exit 1
 fi
 
 if [ ! -d "$IOS_REPO_ROOT/ProtonPackages/proton_app_uniffi" ]; then
-  echo "error: IOS_REPO_ROOT does not look like the mail iOS repo:" >&2
-  echo "  missing: $IOS_REPO_ROOT/ProtonPackages/proton_app_uniffi" >&2
-  exit 1
+    echo "error: IOS_REPO_ROOT does not look like the mail iOS repo:" >&2
+    echo "  missing: $IOS_REPO_ROOT/ProtonPackages/proton_app_uniffi" >&2
+    exit 1
 fi
 
 # `rust-build/build_ios_framework_uniffi.sh` reads CARGO_FEATURES (default there is only
@@ -40,11 +40,11 @@ TMP_DIR="/tmp/$(uuidgen)"
 PROFILE="${1:-}"
 
 if [ -n "$PROFILE" ]; then
-  echo "Building with profile: $PROFILE"
-  rust-build/build_ios_framework_uniffi.sh mail-uniffi ./mail/mail-uniffi/uniffi.toml $TMP_DIR $PROFILE
+    echo "Building with profile: $PROFILE"
+    rust-build/build_ios_framework_uniffi.sh mail-uniffi ./mail/mail-uniffi/uniffi.toml $TMP_DIR $PROFILE
 else
-  echo "Building with default profile (release)"
-  rust-build/build_ios_framework_uniffi.sh mail-uniffi ./mail/mail-uniffi/uniffi.toml $TMP_DIR
+    echo "Building with default profile (release)"
+    rust-build/build_ios_framework_uniffi.sh mail-uniffi ./mail/mail-uniffi/uniffi.toml $TMP_DIR
 fi
 
 CRATE_VERSION=$(cargo pkgid --manifest-path=./mail/mail-uniffi/Cargo.toml | cut -d "#" -f2)

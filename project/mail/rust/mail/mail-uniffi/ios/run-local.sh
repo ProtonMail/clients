@@ -10,24 +10,24 @@ DESTINATION="platform=iOS Simulator,id=$DEVICE_ID,arch=$DEVICE_ARCH"
 BUNDLE_ID="ch.protonmail.protonmail"
 
 xcrun xcodebuild \
-        -scheme "$SCHEME" \
-        -project "$IOS_REPO_ROOT/ProtonMail.xcodeproj" \
-        -configuration Debug \
-        -destination "$DESTINATION" \
-        -sdk iphonesimulator26.2 \
-        -derivedDataPath "./target/ios-build" \
-        -resolvePackageDependencies
+    -scheme "$SCHEME" \
+    -project "$IOS_REPO_ROOT/ProtonMail.xcodeproj" \
+    -configuration Debug \
+    -destination "$DESTINATION" \
+    -sdk iphonesimulator26.2 \
+    -derivedDataPath "./target/ios-build" \
+    -resolvePackageDependencies
 
 # Build the app for the simulator
 xcrun xcodebuild \
-        -scheme "$SCHEME" \
-        -project "$IOS_REPO_ROOT/ProtonMail.xcodeproj" \
-        -configuration Debug \
-        -destination "$DESTINATION" \
-        -sdk iphonesimulator26.2 \
-        -derivedDataPath "./target/ios-build" \
-        REMOVE_STATIC_EXECUTABLES_FROM_EMBEDDED_BUNDLES=NO \
-        build
+    -scheme "$SCHEME" \
+    -project "$IOS_REPO_ROOT/ProtonMail.xcodeproj" \
+    -configuration Debug \
+    -destination "$DESTINATION" \
+    -sdk iphonesimulator26.2 \
+    -derivedDataPath "./target/ios-build" \
+    REMOVE_STATIC_EXECUTABLES_FROM_EMBEDDED_BUNDLES=NO \
+    build
 
 # Find the path to the built app
 APP_PATH=$(find ./target/ios-build -type d -name "$SCHEME.app" | sort | tail -n 1)

@@ -488,7 +488,7 @@ impl LabelSelectPopup {
         match self.active_label {
             LabelType::Label => 2,
             LabelType::Folder => 1,
-            LabelType::System | LabelType::ContactGroup => 0,
+            LabelType::System => 0,
         }
     }
 
@@ -496,9 +496,7 @@ impl LabelSelectPopup {
         match self.active_label {
             LabelType::Label => (&self.labels, &mut self.labels_list_state),
             LabelType::Folder => (&self.folders, &mut self.folder_list_state),
-            LabelType::System | LabelType::ContactGroup => {
-                (&self.system, &mut self.system_list_state)
-            }
+            LabelType::System => (&self.system, &mut self.system_list_state),
         }
     }
 
@@ -506,7 +504,7 @@ impl LabelSelectPopup {
         self.active_label = match self.active_label {
             LabelType::Label => LabelType::System,
             LabelType::Folder => LabelType::Label,
-            LabelType::System | LabelType::ContactGroup => LabelType::Folder,
+            LabelType::System => LabelType::Folder,
         }
     }
 
@@ -514,7 +512,7 @@ impl LabelSelectPopup {
         self.active_label = match self.active_label {
             LabelType::Label => LabelType::Folder,
             LabelType::Folder => LabelType::System,
-            LabelType::System | LabelType::ContactGroup => LabelType::Label,
+            LabelType::System => LabelType::Label,
         }
     }
 }

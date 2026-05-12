@@ -1,13 +1,17 @@
+use indoc::indoc;
+use mail_contacts_api::ContactGroupId;
 use mail_core_api::services::proton::{
     ContactEmail as ApiContactEmail, ContactEmailId, ContactId, PrivateEmail,
 };
-use mail_labels_common::{Label, Labels};
 use mail_shared_types::{ModelIdExtension, UnixTimestamp};
 use mail_stash::orm::{Model, ModelHooks};
+use mail_stash::rusqlite::{self};
 use mail_stash::stash::{StashError, Tether};
+use mail_stash::utils::ConnectionExt;
 use mail_stash::{UserDb, macros::Model as ModelDerive, params};
 
 use crate::contact::Contact;
+use crate::contact_group::ContactGroup;
 use crate::local_ids::{LocalContactEmailId, LocalContactId};
 use crate::types::{ContactSendingPreferences, ContactTypes};
 
@@ -53,8 +57,7 @@ pub struct ContactEmail {
     #[DbField]
     pub is_proton: bool,
 
-    #[DbField]
-    pub label_ids: Labels,
+    pub label_ids: Vec<ContactGroupId>,
 
     #[DbField]
     pub last_used_time: UnixTimestamp,
@@ -84,7 +87,7 @@ impl From<ApiContactEmail> for ContactEmail {
             display_order: value.order,
             email: value.email,
             is_proton: value.is_proton,
-            label_ids: Labels::new(value.label_ids.into_iter().map(Into::into).collect()),
+            label_ids: value.label_ids,
             last_used_time: value.last_used_time.into(),
             name: value.name,
         }
@@ -122,12 +125,13 @@ impl ContactEmail {
         group_name: String,
         tether: &Tether,
     ) -> Result<Option<usize>, StashError> {
-        let Some(label) = Label::find_first("WHERE name = ?", params![group_name], tether).await?
+        let Some(contact_group) =
+            ContactGroup::find_first("WHERE name = ?", params![group_name], tether).await?
         else {
             return Ok(None);
         };
 
-        let Some(remote_id) = label.remote_id else {
+        let Some(remote_id) = contact_group.remote_id else {
             return Ok(None);
         };
 
@@ -138,14 +142,12 @@ impl ContactEmail {
 
     /// Count the number of emails in a contact group with `contact_group_id`.
     pub async fn count_in_contact_group(
-        contact_group_id: mail_core_api::services::proton::LabelId,
+        contact_group_id: ContactGroupId,
         tether: &Tether,
     ) -> Result<usize, StashError> {
-        tether.query_value::<_, usize>(format!(
-            "SELECT DISTINCT COUNT(local_id) FROM {}, json_each({}.label_ids) WHERE json_each.value = ?",
-            Self::table_name(),
-            Self::table_name()
-        ), params![contact_group_id]).await
+        tether.query_value::<_, usize>(
+            "SELECT DISTINCT COUNT(local_contact_email_id) FROM contact_email_groups WHERE local_contact_group_id = (SELECT local_id FROM contact_group WHERE remote_id =? LIMIT 1)",
+         params![contact_group_id]).await
     }
 }
 
@@ -164,6 +166,40 @@ impl ModelHooks for ContactEmail {
 
         if let Some(contact_remote_id) = &self.remote_contact_id {
             self.local_contact_id = Contact::remote_id_counterpart_sync(contact_remote_id, tx)?;
+        }
+
+        Ok(())
+    }
+
+    fn after_load(
+        &mut self,
+        conn: &mail_stash::exports::Connection,
+    ) -> mail_stash::stash::StashResult<()> {
+        let label_ids: Vec<ContactGroupId> = conn.query_rows_col(
+            indoc! {
+                "SELECT remote_id FROM contact_group WHERE local_id IN (
+                SELECT local_contact_group_id FROM contact_email_groups WHERE local_contact_email_id = ?
+            ) AND remote_id IS NOT NULL"
+            },
+            rusqlite::params![self.id()],
+        )?;
+
+        self.label_ids = label_ids;
+        Ok(())
+    }
+
+    fn after_save(
+        &mut self,
+        tx: &mail_stash::exports::Transaction<'_>,
+    ) -> mail_stash::stash::StashResult<()> {
+        // handle contact groups
+        tx.execute(
+            "DELETE FROM contact_email_groups WHERE local_contact_email_id = ?",
+            mail_stash::rusqlite::params![self.id()],
+        )?;
+
+        if !self.label_ids.is_empty() {
+            ContactGroup::link_contact_groups_for_contact_email(tx, self.id(), &self.label_ids)?;
         }
 
         Ok(())

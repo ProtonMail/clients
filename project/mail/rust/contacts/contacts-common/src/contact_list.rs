@@ -2,18 +2,18 @@ use std::cmp::Ordering;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::mem;
 
+use crate::contact_group::ContactGroup as ContactGroupModel;
 use itertools::Itertools;
 use mail_avatar::AvatarInformation;
-use mail_core_api::services::proton::{LabelId, PrivateEmail};
-use mail_labels_common::{Label, LabelType};
+use mail_contacts_api::ContactGroupId;
+use mail_core_api::services::proton::PrivateEmail;
 use mail_shared_types::{MapVec as _, UnixTimestamp};
 use mail_stash::orm::Model;
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::contact::Contact;
 use crate::contact_email::ContactEmail;
-use crate::local_ids::LocalContactId;
-use mail_labels_common::LocalLabelId;
+use crate::local_ids::{LocalContactGroupId, LocalContactId};
 
 const DEFAULT_GROUP: &str = "#";
 
@@ -38,37 +38,32 @@ impl GroupedContacts {
     #[must_use]
     pub fn from_contacts_and_groups(
         mut contacts: Vec<Contact>,
-        contact_groups: Vec<Label>,
+        contact_groups: Vec<ContactGroupModel>,
     ) -> Vec<Self> {
-        debug_assert!(
-            contact_groups
-                .iter()
-                .all(|group| group.label_type == LabelType::ContactGroup)
-        );
-
         let mut btmap: BTreeMap<String, Vec<ContactItemType>> = BTreeMap::new();
 
-        let mut contact_group_items: HashMap<LabelId, (ContactGroupItem, Vec<ContactEmail>)> =
-            contact_groups
-                .into_iter()
-                .filter(|group| group.remote_id.is_some())
-                .filter(|group| group.label_type == LabelType::ContactGroup)
-                .map(|group| {
-                    let local_id = group.id();
+        let mut contact_group_items: HashMap<
+            ContactGroupId,
+            (ContactGroupItem, Vec<ContactEmail>),
+        > = contact_groups
+            .into_iter()
+            .filter(|group| group.remote_id.is_some())
+            .map(|group| {
+                let local_id = group.id();
+                (
+                    group.remote_id.unwrap().clone(),
                     (
-                        group.remote_id.unwrap().clone(),
-                        (
-                            ContactGroupItem {
-                                local_id,
-                                name: group.name.clone(),
-                                avatar_information: AvatarInformation::from(&group.name),
-                                contacts: vec![],
-                            },
-                            vec![],
-                        ),
-                    )
-                })
-                .collect();
+                        ContactGroupItem {
+                            local_id,
+                            name: group.name.clone(),
+                            avatar_information: AvatarInformation::from(&group.name),
+                            contacts: vec![],
+                        },
+                        vec![],
+                    ),
+                )
+            })
+            .collect();
 
         contacts.sort_by_key(|c| c.name.unicode_words().collect::<String>());
         for contact in &contacts {
@@ -175,7 +170,7 @@ impl From<Contact> for ContactItem {
 /// This is the main data structure that is used to represent the contact group.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ContactGroupItem {
-    pub local_id: LocalLabelId,
+    pub local_id: LocalContactGroupId,
     pub name: String,
     pub avatar_information: AvatarInformation,
     pub contacts: Vec<ContactEmailItem>,
@@ -247,15 +242,9 @@ impl ContactSuggestions {
     #[must_use]
     pub fn from_contacts_and_device_contacts(
         contacts: Vec<Contact>,
-        contact_groups: Vec<Label>,
+        contact_groups: Vec<ContactGroupModel>,
         device_contacts: Vec<DeviceContact>,
     ) -> Self {
-        debug_assert!(
-            contact_groups
-                .iter()
-                .all(|group| group.label_type == LabelType::ContactGroup)
-        );
-
         let label_ids = contacts
             .iter()
             .flat_map(|contact| {
@@ -268,10 +257,9 @@ impl ContactSuggestions {
             })
             .collect::<HashSet<_>>();
 
-        let mut contact_groups: HashMap<LabelId, ContactGroup> = contact_groups
+        let mut contact_groups: HashMap<ContactGroupId, ContactGroup> = contact_groups
             .into_iter()
             .filter(|group| group.remote_id.is_some())
-            .filter(|group| group.label_type == LabelType::ContactGroup)
             .filter(|group| label_ids.contains(group.remote_id.as_ref().unwrap()))
             .map(|group| {
                 let local_id = group.id();
@@ -383,7 +371,7 @@ impl ContactSuggestions {
     }
 
     fn aggregate_emails_to_groups(
-        contact_groups: &mut HashMap<LabelId, ContactGroup>,
+        contact_groups: &mut HashMap<ContactGroupId, ContactGroup>,
         contact: Contact,
         mut email: ContactEmail,
     ) -> (Contact, ContactEmailItem) {
@@ -549,7 +537,6 @@ mod tests {
     use crate::contact::Contact;
     use crate::contact_email::ContactEmail;
     use crate::test_utils::new_contact_test_connection;
-    use mail_labels_common::{Label, LabelType, Labels};
 
     fn display_email_item(
         ContactEmailItem {
@@ -688,7 +675,6 @@ mod tests {
     }
 
     mod contact_list {
-        use mail_core_api::services::proton::LabelId;
         use mail_stash::orm::Model;
         use mail_stash::stash::StashError;
         use pretty_assertions::assert_eq;
@@ -718,26 +704,30 @@ mod tests {
         ], vec![]
         ,4 ; "TEST 4 Mutliple groups")]
         #[test_case(vec![
-            crate::contact!(local_id: crate::lid!(123), label_ids: crate::labels!("family"), name: "Mom".to_string()),
-            crate::contact!(local_id: crate::lid!(124), label_ids: crate::labels!("family"), name: "Dad".to_string()),
-            crate::contact!(local_id: crate::lid!(125), label_ids: crate::labels!("family"), name: "Sister".to_string())
+            crate::contact!(local_id: crate::lid!(123), label_ids: crate::contact_group_ids!("family"), name: "Mom".to_string()),
+            crate::contact!(local_id: crate::lid!(124), label_ids: crate::contact_group_ids!("family"), name: "Dad".to_string()),
+            crate::contact!(local_id: crate::lid!(125), label_ids: crate::contact_group_ids!("family"), name: "Sister".to_string())
         ], vec![
-            crate::label!(local_id: crate::lid!(100), remote_id: Some(crate::label_id!("family")), name: "Family".to_string(), label_type: LabelType::ContactGroup)
+            crate::label!(local_id: crate::lcgid!(100), remote_id: crate::rcgid!("family"), name: "Family".to_string())
         ]
         ,5; "TEST 5 Contact groups (labels)")]
         #[test_case(vec![
             crate::contact!(local_id: crate::lid!(123), name: "Jake Peralta".to_string(), contact_emails: vec![
-                crate::contact_email!(local_id: crate::lid!(1), remote_id: crate::ceid!("1"), email: "jake@99.com".into(), label_ids: crate::labels!("squad")),
-                crate::contact_email!(local_id: crate::lid!(2), remote_id: crate::ceid!("2"), email: "jake.peralta@work.com".into()),
+                crate::contact_email!(local_id: crate::leid!(1), remote_id: crate::ceid!("1"), email: "jake@99.com".into(), label_ids: crate::contact_group_ids!("squad")),
+                crate::contact_email!(local_id: crate::leid!(2), remote_id: crate::ceid!("2"), email: "jake.peralta@work.com".into()),
             ]),
             crate::contact!(local_id: crate::lid!(124), name: "Amy Santiago".to_string(), contact_emails: vec![
-                crate::contact_email!(local_id: crate::lid!(3), remote_id: crate::ceid!("3"), email: "amy@99.com".into(), label_ids: crate::labels!("squad")),
+                crate::contact_email!(local_id: crate::leid!(3), remote_id: crate::ceid!("3"), email: "amy@99.com".into(), label_ids: crate::contact_group_ids!("squad")),
             ]),
         ], vec![
-            crate::label!(local_id: crate::lid!(200), remote_id: Some(crate::label_id!("squad")), name: "Squad".to_string(), label_type: LabelType::ContactGroup)
+            crate::label!(local_id: crate::lcgid!(200), remote_id: crate::rcgid!("squad"), name: "Squad".to_string())
         ]
         ,6; "TEST 6 Only emails explicitly added to the group are shown")]
-        fn test_grouped_contacts(contacts: Vec<Contact>, groups: Vec<Label>, test_number: u32) {
+        fn test_grouped_contacts(
+            contacts: Vec<Contact>,
+            groups: Vec<ContactGroupModel>,
+            test_number: u32,
+        ) {
             let groups = GroupedContacts::from_contacts_and_groups(contacts, groups);
             insta::assert_snapshot!(
                 format!("test_grouped_contacts_{}", test_number),
@@ -776,19 +766,18 @@ mod tests {
         async fn contact_group_by_id_only_returns_emails_in_group() {
             let mut tether = new_contact_test_connection().await.connection();
 
-            let group_id = LabelId::from("squad");
-            let mut group = Label {
+            let group_id = ContactGroupId::from("squad");
+            let mut group = ContactGroupModel {
                 remote_id: Some(group_id.clone()),
                 name: "Squad".to_owned(),
-                label_type: LabelType::ContactGroup,
-                ..Label::test_default()
+                ..ContactGroupModel::test_default()
             };
 
             let mut contact = crate::contact!(remote_id: crate::cid!("peralta"), name: "Jake Peralta".to_string());
             let email_in_group = crate::contact_email!(
                 remote_id: crate::ceid!("1"),
                 email: "jake@99.com".into(),
-                label_ids: Labels::new(vec![group_id.clone()]),
+                label_ids: vec![group_id.clone()],
                 remote_contact_id: contact.remote_id.clone()
             );
             let email_not_in_group = crate::contact_email!(
@@ -819,27 +808,25 @@ mod tests {
         async fn count_email_group_count() {
             let mut tether = new_contact_test_connection().await.connection();
 
-            let empty_group_id = LabelId::from("l1");
-            let not_empty_group_id = LabelId::from("l2");
-            let mut contact_group_empty = Label {
+            let empty_group_id = ContactGroupId::from("l1");
+            let not_empty_group_id = ContactGroupId::from("l2");
+            let mut contact_group_empty = ContactGroupModel {
                 remote_id: Some(empty_group_id.clone()),
                 name: "contact_group_empty".to_owned(),
-                label_type: LabelType::ContactGroup,
-                ..Label::test_default()
+                ..ContactGroupModel::test_default()
             };
-            let mut contact_group_not_empty = Label {
+            let mut contact_group_not_empty = ContactGroupModel {
                 remote_id: Some(not_empty_group_id.clone()),
                 name: "contact_group_not_empty".to_owned(),
-                label_type: LabelType::ContactGroup,
-                ..Label::test_default()
+                ..ContactGroupModel::test_default()
             };
 
             let mut contact1 =
                 crate::contact!(remote_id: crate::cid!("123"), name: "Barbara Fox".to_string());
             let mut contact2 =
                 crate::contact!(remote_id: crate::cid!("456"), name: "Stevie Wonder".to_string());
-            let mut contact1_email = crate::contact_email!(remote_id: crate::ceid!("ceid1"), label_ids: Labels::new(vec![not_empty_group_id.clone()]), remote_contact_id: contact1.remote_id.clone());
-            let mut contact2_email = crate::contact_email!(remote_id: crate::ceid!("ceid2"), label_ids: Labels::new(vec![not_empty_group_id.clone()]), remote_contact_id: contact2.remote_id.clone());
+            let mut contact1_email = crate::contact_email!(remote_id: crate::ceid!("ceid1"), label_ids: vec![not_empty_group_id.clone()], remote_contact_id: contact1.remote_id.clone());
+            let mut contact2_email = crate::contact_email!(remote_id: crate::ceid!("ceid2"), label_ids: vec![not_empty_group_id.clone()], remote_contact_id: contact2.remote_id.clone());
 
             tether
                 .write_tx::<_, _, StashError>(async |tx| {
@@ -905,7 +892,7 @@ mod tests {
         #[derive(Default)]
         struct TestCase {
             contacts: Vec<Contact>,
-            contact_groups: Vec<Label>,
+            contact_groups: Vec<ContactGroupModel>,
             device_contacts: Vec<DeviceContact>,
         }
 
@@ -914,7 +901,7 @@ mod tests {
         #[test_case(TestCase {
             contacts: vec![
                 crate::contact!(name: "Barbara Lox".to_string(),
-                    contact_emails: vec![crate::contact_email!(local_id: crate::lid!(123), is_proton: false, email: "barbara@lox.com".into(), last_used_time: 1.into())
+                    contact_emails: vec![crate::contact_email!(local_id: crate::leid!(123), is_proton: false, email: "barbara@lox.com".into(), last_used_time: 1.into())
                     ])],
             ..Default::default()
          }
@@ -922,10 +909,10 @@ mod tests {
         #[test_case(TestCase {
             contacts: vec![
                 crate::contact!(name: "Barbara Lox".to_string(), contact_emails: vec![
-                    crate::contact_email!(local_id: crate::lid!(123), is_proton: false, email: "barbara@lox.com".into(), last_used_time: 1.into())
+                    crate::contact_email!(local_id: crate::leid!(123), is_proton: false, email: "barbara@lox.com".into(), last_used_time: 1.into())
                 ]),
                 crate::contact!(name: "Michael Scott".to_string(), contact_emails: vec![
-                    crate::contact_email!(local_id: crate::lid!(234), is_proton: true, email: "m.scott@pm.me".into(), last_used_time: 1.into())
+                    crate::contact_email!(local_id: crate::leid!(234), is_proton: true, email: "m.scott@pm.me".into(), last_used_time: 1.into())
                 ])
             ],
             ..Default::default()
@@ -934,13 +921,13 @@ mod tests {
         #[test_case(TestCase {
             contacts: vec![
                 crate::contact!(name: "Barbara Lox".to_string(), contact_emails: vec![
-                    crate::contact_email!(local_id: crate::lid!(123), is_proton: true, email: "barbara@pm.me".into(), last_used_time: 1.into())
+                    crate::contact_email!(local_id: crate::leid!(123), is_proton: true, email: "barbara@pm.me".into(), last_used_time: 1.into())
                 ]),
                 crate::contact!(name: "Michael Scott".to_string(), contact_emails: vec![
-                    crate::contact_email!(local_id: crate::lid!(234), is_proton: true, email: "m.scott@pm.me".into(), last_used_time: 2.into())
+                    crate::contact_email!(local_id: crate::leid!(234), is_proton: true, email: "m.scott@pm.me".into(), last_used_time: 2.into())
                 ]),
                 crate::contact!(name: "Jake Peralta".to_string(), contact_emails: vec![
-                    crate::contact_email!(local_id: crate::lid!(456), is_proton: false, email: "jake.peralta@99.com".into(), last_used_time: 3.into())
+                    crate::contact_email!(local_id: crate::leid!(456), is_proton: false, email: "jake.peralta@99.com".into(), last_used_time: 3.into())
                 ])
             ],
             ..Default::default()
@@ -949,16 +936,16 @@ mod tests {
         #[test_case(TestCase {
             contacts: vec![
                 crate::contact!(name: "Barbara Lox".to_string(), contact_emails: vec![
-                    crate::contact_email!(local_id: crate::lid!(123), is_proton: true, email: "barbara@pm.me".into(), last_used_time: 1.into())
+                    crate::contact_email!(local_id: crate::leid!(123), is_proton: true, email: "barbara@pm.me".into(), last_used_time: 1.into())
                 ]),
                 crate::contact!(name: "Michael Scott".to_string(), contact_emails: vec![
-                    crate::contact_email!(local_id: crate::lid!(234), is_proton: true, email: "m.scott@pm.me".into(), last_used_time: 2.into())
+                    crate::contact_email!(local_id: crate::leid!(234), is_proton: true, email: "m.scott@pm.me".into(), last_used_time: 2.into())
                 ]),
                 crate::contact!(name: "Jason Mendoza".to_string(), contact_emails: vec![
-                    crate::contact_email!(local_id: crate::lid!(678), is_proton: true, email: "jianyu.li@pm.me".into(), last_used_time: 2.into())
+                    crate::contact_email!(local_id: crate::leid!(678), is_proton: true, email: "jianyu.li@pm.me".into(), last_used_time: 2.into())
                 ]),
                 crate::contact!(name: "Jake Peralta".to_string(), contact_emails: vec![
-                    crate::contact_email!(local_id: crate::lid!(456), is_proton: false, email: "jake.peralta@99.com".into(), last_used_time: 3.into())
+                    crate::contact_email!(local_id: crate::leid!(456), is_proton: false, email: "jake.peralta@99.com".into(), last_used_time: 3.into())
                 ]),
             ],
             ..Default::default()
@@ -967,21 +954,21 @@ mod tests {
         #[test_case(TestCase {
             contacts: vec![
                 crate::contact!(name: "Barbara Lox".to_string(), contact_emails: vec![
-                    crate::contact_email!(local_id: crate::lid!(123), is_proton: true, email: "barbara@pm.me".into(), last_used_time: 1.into())
+                    crate::contact_email!(local_id: crate::leid!(123), is_proton: true, email: "barbara@pm.me".into(), last_used_time: 1.into())
                 ]),
                 crate::contact!(name: "Michael Scott".to_string(), contact_emails: vec![
-                    crate::contact_email!(local_id: crate::lid!(234), is_proton: true, email: "m.scott@pm.me".into(), last_used_time: 2.into(), label_ids: crate::labels!("m.schur.productions"))
+                    crate::contact_email!(local_id: crate::leid!(234), is_proton: true, email: "m.scott@pm.me".into(), last_used_time: 2.into(), label_ids: crate::contact_group_ids!("m.schur.productions"))
                 ]),
                 crate::contact!(name: "Jason Mendoza".to_string(), contact_emails: vec![
-                    crate::contact_email!(local_id: crate::lid!(678), is_proton: true, email: "jianyu.li@pm.me".into(), last_used_time: 2.into(), label_ids: crate::labels!("m.schur.productions"))
+                    crate::contact_email!(local_id: crate::leid!(678), is_proton: true, email: "jianyu.li@pm.me".into(), last_used_time: 2.into(), label_ids: crate::contact_group_ids!("m.schur.productions"))
                 ]),
                 crate::contact!(name: "Jake Peralta".to_string(), contact_emails: vec![
-                    crate::contact_email!(local_id: crate::lid!(456), is_proton: false, email: "jake.peralta@99.com".into(), last_used_time: 3.into(), label_ids: crate::labels!("m.schur.productions")),
-                    crate::contact_email!(local_id: crate::lid!(112), is_proton: false, email: "harvey@jp.com".into(), last_used_time: 1.into())
+                    crate::contact_email!(local_id: crate::leid!(456), is_proton: false, email: "jake.peralta@99.com".into(), last_used_time: 3.into(), label_ids: crate::contact_group_ids!("m.schur.productions")),
+                    crate::contact_email!(local_id: crate::leid!(112), is_proton: false, email: "harvey@jp.com".into(), last_used_time: 1.into())
                 ]),
             ],
             contact_groups: vec![
-                crate::label!(local_id: crate::lid!(910), remote_id: Some(crate::label_id!("m.schur.productions")), name: "M. Schur Productions".into(), label_type: LabelType::ContactGroup),
+                crate::label!(local_id: crate::lcgid!(910), remote_id: crate::rcgid!("m.schur.productions"), name: "M. Schur Productions".into()),
             ],
             ..Default::default()
          }
@@ -989,21 +976,21 @@ mod tests {
         #[test_case(TestCase {
             contacts: vec![
                 crate::contact!(name: "Barbara Lox".to_string(), contact_emails: vec![
-                    crate::contact_email!(local_id: crate::lid!(123), is_proton: true, email: "barbara@pm.me".into(), last_used_time: 1.into())
+                    crate::contact_email!(local_id: crate::leid!(123), is_proton: true, email: "barbara@pm.me".into(), last_used_time: 1.into())
                 ]),
                 crate::contact!(name: "Michael Scott".to_string(), contact_emails: vec![
-                    crate::contact_email!(local_id: crate::lid!(234), is_proton: true, email: "m.scott@pm.me".into(), last_used_time: 2.into(), label_ids: crate::labels!("m.schur.productions"))
+                    crate::contact_email!(local_id: crate::leid!(234), is_proton: true, email: "m.scott@pm.me".into(), last_used_time: 2.into(), label_ids: crate::contact_group_ids!("m.schur.productions"))
                 ]),
                 crate::contact!(name: "Jason Mendoza".to_string(), contact_emails: vec![
-                    crate::contact_email!(local_id: crate::lid!(678), is_proton: true, email: "jianyu.li@pm.me".into(), last_used_time: 2.into(), label_ids: crate::labels!("m.schur.productions"))
+                    crate::contact_email!(local_id: crate::leid!(678), is_proton: true, email: "jianyu.li@pm.me".into(), last_used_time: 2.into(), label_ids: crate::contact_group_ids!("m.schur.productions"))
                 ]),
                 crate::contact!(name: "Jake Peralta".to_string(), contact_emails: vec![
-                    crate::contact_email!(local_id: crate::lid!(456), is_proton: false, email: "jake.peralta@99.com".into(), last_used_time: 3.into(), label_ids: crate::labels!("m.schur.productions")),
-                    crate::contact_email!(local_id: crate::lid!(112), is_proton: false, email: "harvey@jp.com".into(), last_used_time: 1.into())
+                    crate::contact_email!(local_id: crate::leid!(456), is_proton: false, email: "jake.peralta@99.com".into(), last_used_time: 3.into(), label_ids: crate::contact_group_ids!("m.schur.productions")),
+                    crate::contact_email!(local_id: crate::leid!(112), is_proton: false, email: "harvey@jp.com".into(), last_used_time: 1.into())
                 ]),
             ],
             contact_groups: vec![
-                crate::label!(local_id: crate::lid!(910), remote_id: Some(crate::label_id!("m.schur.productions")), name: "M. Schur Productions".into(), label_type: LabelType::ContactGroup),
+                crate::label!(local_id: crate::lcgid!(910), remote_id: crate::rcgid!("m.schur.productions"), name: "M. Schur Productions".into()),
             ],
             device_contacts: vec![
                 crate::device_contact!(key: "000".to_string(), name: "Aunt Molly".to_string(), emails: vec![
@@ -1016,21 +1003,21 @@ mod tests {
         #[test_case(TestCase {
             contacts: vec![
                 crate::contact!(name: "Barbara Lox".to_string(), contact_emails: vec![
-                    crate::contact_email!(local_id: crate::lid!(123), is_proton: true, email: "barbara@pm.me".into(), last_used_time: 1.into())
+                    crate::contact_email!(local_id: crate::leid!(123), is_proton: true, email: "barbara@pm.me".into(), last_used_time: 1.into())
                 ]),
                 crate::contact!(name: "Michael Scott".to_string(), contact_emails: vec![
-                    crate::contact_email!(local_id: crate::lid!(234), is_proton: true, email: "m.scott@pm.me".into(), last_used_time: 2.into(), label_ids: crate::labels!("m.schur.productions"))
+                    crate::contact_email!(local_id: crate::leid!(234), is_proton: true, email: "m.scott@pm.me".into(), last_used_time: 2.into(), label_ids: crate::contact_group_ids!("m.schur.productions"))
                 ]),
                 crate::contact!(name: "Jason Mendoza".to_string(), contact_emails: vec![
-                    crate::contact_email!(local_id: crate::lid!(678), is_proton: true, email: "jianyu.li@pm.me".into(), last_used_time: 2.into(), label_ids: crate::labels!("m.schur.productions"))
+                    crate::contact_email!(local_id: crate::leid!(678), is_proton: true, email: "jianyu.li@pm.me".into(), last_used_time: 2.into(), label_ids: crate::contact_group_ids!("m.schur.productions"))
                 ]),
                 crate::contact!(name: "Jake Peralta".to_string(), contact_emails: vec![
-                    crate::contact_email!(local_id: crate::lid!(456), is_proton: false, email: "jake.peralta@99.com".into(), last_used_time: 3.into(), label_ids: crate::labels!("m.schur.productions")),
-                    crate::contact_email!(local_id: crate::lid!(112), is_proton: false, email: "harvey@jp.com".into(), last_used_time: 1.into())
+                    crate::contact_email!(local_id: crate::leid!(456), is_proton: false, email: "jake.peralta@99.com".into(), last_used_time: 3.into(), label_ids: crate::contact_group_ids!("m.schur.productions")),
+                    crate::contact_email!(local_id: crate::leid!(112), is_proton: false, email: "harvey@jp.com".into(), last_used_time: 1.into())
                 ]),
             ],
             contact_groups: vec![
-                crate::label!(local_id: crate::lid!(910), remote_id: Some(crate::label_id!("m.schur.productions")), name: "M. Schur Productions".into(), label_type: LabelType::ContactGroup),
+                crate::label!(local_id: crate::lcgid!(910), remote_id: crate::rcgid!("m.schur.productions"), name: "M. Schur Productions".into()),
             ],
             device_contacts: vec![
                 crate::device_contact!(key: "000".to_string(), name: "Aunt Molly".to_string(), emails: vec![
@@ -1045,24 +1032,24 @@ mod tests {
         #[test_case(TestCase {
             contacts: vec![
                 crate::contact!(name: "Barbara Lox".to_string(), contact_emails: vec![
-                    crate::contact_email!(local_id: crate::lid!(123), is_proton: true, email: "barbara@pm.me".into(), last_used_time: 1.into())
+                    crate::contact_email!(local_id: crate::leid!(123), is_proton: true, email: "barbara@pm.me".into(), last_used_time: 1.into())
                 ]),
                 crate::contact!(name: "Michael Scott".to_string(), contact_emails: vec![
-                    crate::contact_email!(local_id: crate::lid!(234), is_proton: true, email: "m.scott@pm.me".into(), last_used_time: 2.into(), label_ids: crate::labels!("m.schur.productions"))
+                    crate::contact_email!(local_id: crate::leid!(234), is_proton: true, email: "m.scott@pm.me".into(), last_used_time: 2.into(), label_ids: crate::contact_group_ids!("m.schur.productions"))
                 ]),
                 crate::contact!(name: "Jason Mendoza".to_string(), contact_emails: vec![
-                    crate::contact_email!(local_id: crate::lid!(678), is_proton: true, email: "jianyu.li@pm.me".into(), last_used_time: 2.into(), label_ids: crate::labels!("m.schur.productions"))
+                    crate::contact_email!(local_id: crate::leid!(678), is_proton: true, email: "jianyu.li@pm.me".into(), last_used_time: 2.into(), label_ids: crate::contact_group_ids!("m.schur.productions"))
                 ]),
                 crate::contact!(name: "Jake Peralta".to_string(), contact_emails: vec![
-                    crate::contact_email!(local_id: crate::lid!(456), is_proton: false, email: "jake.peralta@99.com".into(), last_used_time: 3.into(), label_ids: crate::labels!("m.schur.productions")),
-                    crate::contact_email!(local_id: crate::lid!(112), is_proton: false, email: "harvey@jp.com".into(), last_used_time: 1.into())
+                    crate::contact_email!(local_id: crate::leid!(456), is_proton: false, email: "jake.peralta@99.com".into(), last_used_time: 3.into(), label_ids: crate::contact_group_ids!("m.schur.productions")),
+                    crate::contact_email!(local_id: crate::leid!(112), is_proton: false, email: "harvey@jp.com".into(), last_used_time: 1.into())
                 ]),
                 crate::contact!(name: "Detective Peralta".to_string(), contact_emails: vec![
-                    crate::contact_email!(local_id: crate::lid!(999), is_proton: false, email: "jake.peralta@99.com".into(), last_used_time: 3.into())
+                    crate::contact_email!(local_id: crate::leid!(999), is_proton: false, email: "jake.peralta@99.com".into(), last_used_time: 3.into())
                 ])
             ],
             contact_groups: vec![
-                crate::label!(local_id: crate::lid!(910), remote_id: Some(crate::label_id!("m.schur.productions")), name: "M. Schur Productions".to_string(), label_type: LabelType::ContactGroup),
+                crate::label!(local_id: crate::lcgid!(910), remote_id: crate::rcgid!("m.schur.productions"), name: "M. Schur Productions".to_string()),
             ],
             device_contacts: vec![
                 crate::device_contact!(key: "000".to_string(), name: "Aunt Molly".to_string(), emails: vec![
@@ -1311,18 +1298,18 @@ mod tests {
                         crate::contact_email!(remote_id: crate::ceid!("123"), is_proton: true, email: "barbara@pm.me".into(), last_used_time: 1.into())
                     ]),
                     crate::contact!(name: "Michael Scott".to_string(), remote_id: crate::cid!("scott"), contact_emails: vec![
-                        crate::contact_email!(remote_id: crate::ceid!("234"), is_proton: true, email: "m.scott@pm.me".into(), last_used_time: 2.into(), label_ids: crate::labels!("m.schur.productions"))
+                        crate::contact_email!(remote_id: crate::ceid!("234"), is_proton: true, email: "m.scott@pm.me".into(), last_used_time: 2.into(), label_ids: crate::contact_group_ids!("m.schur.productions"))
                     ]),
                     crate::contact!(name: "Jason Mendoza".to_string(), remote_id: crate::cid!("mendoza"), contact_emails: vec![
-                        crate::contact_email!(remote_id: crate::ceid!("678"), is_proton: true, email: "jianyu.li@pm.me".into(), last_used_time: 2.into(), label_ids: crate::labels!("m.schur.productions"))
+                        crate::contact_email!(remote_id: crate::ceid!("678"), is_proton: true, email: "jianyu.li@pm.me".into(), last_used_time: 2.into(), label_ids: crate::contact_group_ids!("m.schur.productions"))
                     ]),
                     crate::contact!(name: "Jake Peralta".to_string(), remote_id: crate::cid!("peralta"), contact_emails: vec![
-                        crate::contact_email!(remote_id: crate::ceid!("456"), is_proton: false, email: "jake.peralta@99.com".into(), last_used_time: 3.into(), label_ids: crate::labels!("m.schur.productions")),
+                        crate::contact_email!(remote_id: crate::ceid!("456"), is_proton: false, email: "jake.peralta@99.com".into(), last_used_time: 3.into(), label_ids: crate::contact_group_ids!("m.schur.productions")),
                         crate::contact_email!(remote_id: crate::ceid!("112"), is_proton: false, email: "harvey@jp.com".into(), last_used_time: 1.into())
                     ]),
                 ],
                 contact_groups: vec![
-                    crate::label!(remote_id: Some(crate::label_id!("m.schur.productions")), name: "M. Schur Productions".to_string(), label_type: LabelType::ContactGroup),
+                    crate::label!(remote_id: crate::rcgid!("m.schur.productions"), name: "M. Schur Productions".to_string()),
                 ],
                 device_contacts: vec![
                     crate::device_contact!(key: "000".to_string(), name: "Aunt Molly".to_string(), emails: vec![

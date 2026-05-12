@@ -20,18 +20,18 @@ use mail_core_api::services::proton::{
     GetContactsEmailsResponse, GetContactsOptions, GetContactsResponse,
 };
 use mail_core_api::session::Session;
-use mail_labels_common::{Label, LabelType, Labels};
-use mail_shared_types::{InitializationKey, MapVec, ModelExtension, ModelIdExtension};
+use mail_shared_types::ModelIdExtension;
+use mail_shared_types::{InitializationKey, MapVec, ModelExtension};
 use mail_stash::exports::Transaction;
 use mail_stash::orm::{DbRecord, Model, ModelHooks};
-use mail_stash::params;
 use mail_stash::rusqlite::Connection;
 use mail_stash::rusqlite::params_from_iter;
 use mail_stash::stash::{
     RunTransaction, Stash, StashError, StashResult, Tether, WatcherHandle, WriteTx,
 };
-use mail_stash::utils::placeholders;
+use mail_stash::utils::{ConnectionExt, placeholders};
 use mail_stash::{UserDb, macros::Model as ModelDerive};
+use mail_stash::{params, rusqlite};
 use mail_vcard::vcard::{PropertyUid, VCard};
 use proton_crypto::crypto::PGPProviderSync;
 use proton_crypto_account::contacts::DecryptableVerifiableCard as _;
@@ -42,11 +42,13 @@ use tracing::{debug, error, info};
 
 use crate::contact_card::ContactCard;
 use crate::contact_email::ContactEmail;
+use crate::contact_group::{
+    ContactGroup, LINK_CONTACT_GROUPS_CONTATCS_QUERY, LINK_CONTACT_GROUPS_EMAILS_QUERY,
+};
 use crate::contact_list::{ContactGroupItem, ContactSuggestions, DeviceContact, GroupedContacts};
 use crate::error::ContactError;
-use crate::local_ids::{LocalContactEmailId, LocalContactId};
-use mail_contacts_api::ContactApi as _;
-use mail_labels_common::LocalLabelId;
+use crate::local_ids::{LocalContactEmailId, LocalContactGroupId, LocalContactId};
+use mail_contacts_api::{ContactApi as _, ContactGroupId};
 
 #[derive(Clone, Debug, Eq, ModelDerive, PartialEq)]
 #[TableName("contacts")]
@@ -65,8 +67,7 @@ pub struct Contact {
     #[DbField]
     pub create_time: u64,
 
-    #[DbField]
-    pub label_ids: Labels,
+    pub label_ids: Vec<ContactGroupId>,
 
     #[DbField]
     pub modify_time: u64,
@@ -270,11 +271,12 @@ impl Contact {
     /// Updates all user contacts including their emails without their cards.
     ///
     /// The result of this function MUST ONLY be used (as in [`SyncedContacts::store`]) after syncing contact labels.
-    ///
     #[tracing::instrument(skip(api))]
     #[allow(clippy::too_many_lines)]
-    pub async fn sync(api: &Session) -> Result<SyncedContacts, ApiServiceError> {
-        info!("Syncing contacts");
+    pub async fn sync_without_contact_groups(
+        api: &Session,
+    ) -> Result<SyncedContacts, ApiServiceError> {
+        info!("Syncing contacts without groups");
 
         let contacts = PaginateContacts::fetch_all(api);
         let emails = PaginateEmails::fetch_all(api);
@@ -283,7 +285,38 @@ impl Contact {
         let contacts = contacts.into_iter().map(Into::into).collect();
         let emails = emails.into_iter().map(Into::into).collect();
 
-        Ok(SyncedContacts { contacts, emails })
+        Ok(SyncedContacts {
+            contacts,
+            emails,
+            contact_groups: vec![],
+        })
+    }
+
+    /// Updates all user contacts including their emails without their cards and with contact groups.
+    ///
+    /// The result of this function MUST ONLY be used (as in [`SyncedContacts::store`]) after syncing contact labels.
+    #[tracing::instrument(skip(api))]
+    #[allow(clippy::too_many_lines)]
+    pub async fn sync_with_contact_groups(
+        api: &Session,
+    ) -> Result<SyncedContacts, ApiServiceError> {
+        info!("Syncing contacts with groups");
+
+        let contacts = PaginateContacts::fetch_all(api);
+        let emails = PaginateEmails::fetch_all(api);
+        let contact_groups = api.get_contact_groups();
+
+        let (contacts, emails, contact_groups) =
+            tokio::try_join!(contacts, emails, contact_groups)?;
+        let contacts = contacts.into_iter().map(Into::into).collect();
+        let emails = emails.into_iter().map(Into::into).collect();
+        let contact_groups = contact_groups.labels.into_iter().map(Into::into).collect();
+
+        Ok(SyncedContacts {
+            contacts,
+            emails,
+            contact_groups,
+        })
     }
 
     /// Updates the full contact with the given ID including its emails and
@@ -382,7 +415,7 @@ impl Contact {
     pub async fn contact_list(tether: &Tether<UserDb>) -> Result<Vec<GroupedContacts>, StashError> {
         let (contacts, contact_groups) = try_join!(
             Contact::find("WHERE deleted = 0", vec![], tether),
-            Label::find_by_kind(LabelType::ContactGroup, tether)
+            ContactGroup::all(tether),
         )?;
 
         Ok(GroupedContacts::from_contacts_and_groups(
@@ -394,30 +427,19 @@ impl Contact {
     #[tracing::instrument(skip(tether))]
     pub async fn contact_group_by_id(
         tether: &Tether,
-        id: LocalLabelId,
+        id: LocalContactGroupId,
     ) -> Result<ContactGroupItem, StashError> {
-        let l = Label::find_by_id(id, tether)
+        let l = ContactGroup::find_by_id(id, tether)
             .await?
             .context("The specified id doesn't exist")?;
-
-        debug_assert_eq!(l.label_type, LabelType::ContactGroup);
-
-        let remote = Label::resolve_remote_label_id(id, tether)
-            .await
-            .with_context(||
-                format!("Local contact groups are not yet implemented: Trying to resolve nonexistent remote label for local label {id}")
-            )?;
 
         let mut res = ContactEmail::load_inner(
             "SELECT contact_emails.* FROM contact_emails
              JOIN contacts ON contact_emails.remote_contact_id = contacts.remote_id
+             JOIN contact_email_groups AS cgs ON cgs.local_contact_email_id = contact_emails.local_id AND local_contact_group_id =?
              WHERE contacts.deleted = 0
-             AND EXISTS (
-                 SELECT 1 FROM json_each(contact_emails.label_ids)
-                 WHERE json_each.value = ?
-             )
              ORDER BY contact_emails.display_order, contact_emails.local_id",
-            params![remote],
+            params![id],
             tether,
         )
         .await?;
@@ -444,7 +466,7 @@ impl Contact {
     ) -> Result<ContactSuggestions, StashError> {
         let (contacts, contact_groups) = try_join!(
             Contact::find("WHERE deleted = 0", vec![], tether),
-            Label::find_by_kind(LabelType::ContactGroup, tether)
+            ContactGroup::all(tether),
         )?;
 
         Ok(ContactSuggestions::from_contacts_and_device_contacts(
@@ -573,6 +595,16 @@ impl ModelHooks for Contact {
     }
 
     fn after_save(&mut self, tx: &Transaction<'_>) -> Result<(), StashError> {
+        // handle contact groups
+        tx.execute(
+            "DELETE FROM contact_contact_groups WHERE local_contact_id = ?",
+            mail_stash::rusqlite::params![self.id()],
+        )?;
+
+        if !self.label_ids.is_empty() {
+            ContactGroup::link_contact_groups_for_contact(tx, self.id(), &self.label_ids)?;
+        }
+
         for card in &mut self.cards {
             card.local_contact_id = self.local_id;
             card.remote_contact_id.clone_from(&self.remote_id);
@@ -623,11 +655,22 @@ impl ModelHooks for Contact {
     }
 
     fn after_load(&mut self, conn: &Connection) -> StashResult<()> {
+        let label_ids: Vec<ContactGroupId> = conn.query_rows_col(
+            indoc! {
+                "SELECT remote_id FROM contact_group WHERE local_id IN (
+                SELECT local_contact_group_id FROM contact_contact_groups WHERE local_contact_id = ?
+            ) AND remote_id IS NOT NULL"
+            },
+            rusqlite::params![self.id()],
+        )?;
+
         self.contact_emails = ContactEmail::find_sync(
             "WHERE local_contact_id = ? ORDER BY display_order ASC",
             [self.local_id.expect("Should be set")],
             conn,
         )?;
+
+        self.label_ids = label_ids;
         Ok(())
     }
 }
@@ -640,7 +683,7 @@ impl From<ApiContactBasic> for Contact {
             cards: vec![],
             contact_emails: vec![],
             create_time: value.create_time,
-            label_ids: Labels::new(value.label_ids.into_iter().map(Into::into).collect()),
+            label_ids: value.label_ids,
             modify_time: value.modify_time,
             name: value.name,
             size: value.size,
@@ -662,7 +705,7 @@ impl From<ApiContactFull> for Contact {
                 .map(ContactEmail::from)
                 .collect(),
             create_time: value.create_time,
-            label_ids: Labels::new(value.label_ids.map_vec()),
+            label_ids: value.label_ids.map_vec(),
             modify_time: value.modify_time,
             name: value.name,
             size: value.size,
@@ -723,6 +766,7 @@ impl TableObserver for ContactListWatcher {
 #[must_use]
 #[derive(Debug)]
 pub struct SyncedContacts {
+    contact_groups: Vec<ContactGroup>,
     contacts: Vec<Contact>,
     emails: Vec<ContactEmail>,
 }
@@ -733,7 +777,21 @@ impl SyncedContacts {
         let Self {
             contacts,
             mut emails,
+            mut contact_groups,
         } = self;
+
+        if !contact_groups.is_empty() {
+            let tgroups = Instant::now();
+            for contact_group in &mut contact_groups {
+                contact_group.save_sync(tx)?;
+            }
+            debug!(
+                "Stored {} contact groups to the db in {:?}",
+                contact_groups.len(),
+                tgroups.elapsed()
+            );
+        }
+
         tx.execute_batch(
             "
         DELETE FROM contacts;
@@ -746,11 +804,17 @@ impl SyncedContacts {
 
         let t1 = Instant::now();
         let mut q = tx.prepare(Contact::INSERT_QUERY)?;
+        let mut contact_groups_stmt = tx.prepare(LINK_CONTACT_GROUPS_CONTATCS_QUERY)?;
         for cont in contacts {
             let params = params_from_iter(cont.field_values());
             let id = q.query_row(params, |r| r.get(0))?;
             id_map.insert(cont.remote_id.clone().unwrap(), id);
+
+            for cg_id in cont.label_ids {
+                contact_groups_stmt.execute(rusqlite::params![id, cg_id])?;
+            }
         }
+        drop(contact_groups_stmt);
         debug!(
             "Stored {} contacts to the db in {:?}",
             id_map.len(),
@@ -773,9 +837,14 @@ impl SyncedContacts {
         let t2 = Instant::now();
         let mut q = tx.prepare(ContactEmail::INSERT_QUERY)?;
         let count = emails.len();
+        let mut contact_email_groups_stmt = tx.prepare(LINK_CONTACT_GROUPS_EMAILS_QUERY)?;
         for em in emails {
             let params = params_from_iter(em.field_values());
-            q.query(params)?.next()?;
+            let contact_email_id: LocalContactEmailId = q.query_row(params, |r| r.get(0))?;
+
+            for id in em.label_ids {
+                contact_email_groups_stmt.execute(rusqlite::params![contact_email_id, id])?;
+            }
         }
 
         debug!(
@@ -831,8 +900,7 @@ mod tests {
     use crate::contact_email::ContactEmail;
     use crate::test_utils::new_contact_test_connection;
     use crate::types::{ContactSendingPreferences, ContactTypes};
-    use mail_core_api::services::proton::{ContactEmailId, ContactId, ContactUID, LabelId};
-    use mail_labels_common::Labels;
+    use mail_core_api::services::proton::{ContactEmailId, ContactId, ContactUID};
     use mail_stash::orm::Model;
     use mail_stash::params;
     use mail_stash::stash::StashError;
@@ -841,6 +909,18 @@ mod tests {
     #[tokio::test]
     async fn test_full_contact() {
         let mut tether = new_contact_test_connection().await.connection();
+        // crate contact grouped so it can be resolved.
+        tether
+            .write_tx(async |tx| {
+                ContactGroup {
+                    remote_id: Some("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==".into()),
+                    ..ContactGroup::test_default()
+                }
+                .save(tx)
+                .await
+            })
+            .await
+            .unwrap();
         let mut full_contact = create_test_full_contact();
         let local_id = tether
             .write_tx::<_, _, StashError>(async |tx| {
@@ -879,6 +959,17 @@ mod tests {
         let mut tether = new_contact_test_connection().await.connection();
         let mut partial_contacts = create_test_partial_contacts();
         let mut contact_emails = create_test_contact_emails();
+        tether
+            .write_tx(async |tx| {
+                ContactGroup {
+                    remote_id: Some("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==".into()),
+                    ..ContactGroup::test_default()
+                }
+                .save(tx)
+                .await
+            })
+            .await
+            .unwrap();
         tether
             .write_tx::<_, _, StashError>(async |tx| {
                 for contact in &mut partial_contacts {
@@ -952,7 +1043,7 @@ mod tests {
             create_time: 1_503_815_366,
             modify_time: 1_503_815_366,
             contact_emails: create_test_contact_emails(),
-            label_ids: Labels::new(vec![LabelId::from("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==")]),
+            label_ids: vec![ContactGroupId::from("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==")],
             deleted: false,
             cards: vec![
                 ContactCard {
@@ -987,7 +1078,7 @@ mod tests {
                 display_order: 1,
                 remote_contact_id: Some(ContactId::from("a29olIjFv0rnXxBhSMw==")),
                 local_contact_id: None,
-                label_ids: Labels::new(vec![LabelId::from("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==")]),
+                label_ids: vec![ContactGroupId::from("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==")],
                 canonical_email: "contact_email_1@contact.test".into(),
                 last_used_time: 0.into(),
                 is_proton: true,
@@ -1002,7 +1093,7 @@ mod tests {
                 display_order: 1,
                 remote_contact_id: Some(ContactId::from("a29olIjFv0rnXxBhSMw==")),
                 local_contact_id: None,
-                label_ids: Labels::new(vec![LabelId::from("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==")]),
+                label_ids: vec![ContactGroupId::from("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==")],
                 canonical_email: "contact_email_2@contact.test".into(),
                 last_used_time: 0.into(),
                 is_proton: true,
@@ -1020,7 +1111,7 @@ mod tests {
             create_time: 1_503_815_366,
             modify_time: 1_503_815_366,
             contact_emails: vec![],
-            label_ids: Labels::new(vec![LabelId::from("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==")]),
+            label_ids: vec![ContactGroupId::from("I6hgx3Ol-d3HYa3E394T_ACXDmTaBub14w==")],
             cards: vec![],
             deleted: false,
         }]

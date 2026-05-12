@@ -2165,7 +2165,6 @@ impl From<Label> for CustomLabel {
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum LabelDescription {
     Label,
-    ContactGroup,
     Folder,
     System(Option<SystemLabel>),
 }
@@ -2175,7 +2174,6 @@ impl LabelDescription {
     pub fn new(label: &Label) -> Self {
         match label.label_type {
             LabelType::Label => LabelDescription::Label,
-            LabelType::ContactGroup => LabelDescription::ContactGroup,
             LabelType::Folder => LabelDescription::Folder,
             LabelType::System => LabelDescription::System(SystemLabel::new(label)),
         }
@@ -2186,7 +2184,6 @@ impl Display for LabelDescription {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Self::Label => write!(f, "Label"),
-            Self::ContactGroup => write!(f, "Contact Group"),
             Self::Folder => write!(f, "Folder"),
             Self::System(_) => write!(f, "System"),
         }
@@ -2197,7 +2194,6 @@ impl From<LabelDescription> for LabelType {
     fn from(value: LabelDescription) -> Self {
         match value {
             LabelDescription::Label => LabelType::Label,
-            LabelDescription::ContactGroup => LabelType::ContactGroup,
             LabelDescription::Folder => LabelType::Folder,
             LabelDescription::System(_) => LabelType::System,
         }

@@ -63,6 +63,7 @@ mail-core-api = { workspace = true, features = ["sql"] }
 mail-api = { workspace = true, features = ["sql"] }
 mail-canonical-email = { workspace = true }
 mail-contacts-api = { workspace = true, optional = true }
+mail-contacts-common = { workspace = true }
 mail-core-common = { workspace = true }
 mail-telemetry = { workspace = true }
 proton-crypto-account = { workspace = true, features = ["sql"] }

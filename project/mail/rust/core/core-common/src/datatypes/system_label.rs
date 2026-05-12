@@ -59,7 +59,7 @@ impl SystemLabel {
     #[must_use]
     pub fn new(label: &Label) -> Option<Self> {
         match label.label_type {
-            LabelType::Label | LabelType::ContactGroup | LabelType::Folder => None,
+            LabelType::Label | LabelType::Folder => None,
             LabelType::System => Self::from_opt_rid(label.remote_id.as_ref()),
         }
     }

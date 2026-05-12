@@ -279,7 +279,7 @@ impl UserContext {
                 // Mail refresh is handled by the mail context
             }
             Refresh::All => {
-                if let Err(e) = v6::refresh_core(self).await {
+                if let Err(e) = v6::refresh_core_v5(self).await {
                     if !e.is_retryable() {
                         self.issue_reporter_service().report(
                             IssueLevel::Critical,

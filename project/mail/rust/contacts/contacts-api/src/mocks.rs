@@ -3,9 +3,10 @@ use wiremock::matchers::body_json;
 use wiremock::{Mock, MockBuilder, MockServer, ResponseTemplate, Times};
 
 use contact_lattice::{
-    ContactBasic, ContactEmail, ContactFull, ContactId, GetContactRequest, GetContactResponse,
-    GetContactsEmailsRequest, GetContactsEmailsResponse, GetContactsRequest, GetContactsResponse,
-    PutDeleteContactResponse, PutDeleteContactsRequest, PutDeleteContactsResponse,
+    ContactBasic, ContactEmail, ContactFull, ContactGroup, ContactId, GetContactGroupsRequest,
+    GetContactGroupsResponse, GetContactRequest, GetContactResponse, GetContactsEmailsRequest,
+    GetContactsEmailsResponse, GetContactsRequest, GetContactsResponse, PutDeleteContactResponse,
+    PutDeleteContactsRequest, PutDeleteContactsResponse,
 };
 use mail_api_shared::ApiErrorInfo;
 
@@ -50,6 +51,8 @@ pub trait ContactsMockServerExt {
 
     /// Mock `PUT /contacts/v4/contacts/delete` for the given contact ids, expected exactly once.
     async fn mock_delete_contacts(&self, contact_ids: Vec<ContactId>);
+
+    async fn mock_get_contact_groups(&self, groups: Vec<ContactGroup>, expect: impl Into<Times>);
 }
 
 impl ContactsMockServerExt for MockServer {
@@ -189,6 +192,18 @@ impl ContactsMockServerExt for MockServer {
             )
             .expect(1)
             .named("mock_delete_contacts")
+            .mount(self)
+            .await;
+    }
+
+    async fn mock_get_contact_groups(&self, groups: Vec<ContactGroup>, expect: impl Into<Times>) {
+        GetContactGroupsRequest::mock()
+            .respond_with(ResponseTemplate::new(200).set_body_json(LtApiResponse {
+                code: LtApiCode(100),
+                body: GetContactGroupsResponse { labels: groups },
+            }))
+            .expect(expect.into())
+            .named("mock_get_contact_groups")
             .mount(self)
             .await;
     }

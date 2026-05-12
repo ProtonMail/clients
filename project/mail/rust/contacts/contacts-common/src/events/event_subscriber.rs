@@ -1,13 +1,14 @@
+use crate::contact_group::ContactGroup;
 use anyhow::Context;
 use async_trait::async_trait;
 use core_event_loop::v6::{EventSource, EventSubscriber};
 use core_event_loop::{EventSubscriberError, EventSubscriberResult, RefreshFlag};
 use mail_action_queue::action::ActionGroup;
 use mail_action_queue::rebase::RebaseChangeSet;
-use mail_api_labels::LabelId;
+use mail_contacts_api::ContactGroupId;
 use mail_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
-use mail_labels_common::Label;
 use mail_shared_types::ModelExtension;
+use mail_stash::orm::Model;
 use std::collections::HashMap;
 use tracing::{debug, error};
 
@@ -51,12 +52,12 @@ where
                     if let Some(events) = &event.labels {
                         debug!("Handling contact label event");
                         for event in events {
-                            let label_id: LabelId = event.id.clone().into();
-                            Label::handle_event(
+                            let contact_group_id: ContactGroupId = event.id.clone();
+                            ContactGroup::handle_event(
                                 tx,
-                                &label_id,
+                                &contact_group_id,
                                 event.action.into(),
-                                cache.get_label_mut(&label_id),
+                                cache.get_contact_group_mut(&contact_group_id),
                                 &mut changeset,
                             )
                             .await?;
@@ -152,41 +153,46 @@ where
 {
     async {
         let api = ctx.get_contact_api().clone();
-        let contacts = ctx.spawn_contact_task(async move { Contact::sync(&api).await });
+        let contacts =
+            ctx.spawn_contact_task(async move { Contact::sync_without_contact_groups(&api).await });
         let api = ctx.get_contact_api().clone();
-        let all_remote_labels =
-            ctx.spawn_contact_task(async move { Label::fetch_contact_labels(&api).await });
+        let all_remote_contact_groups =
+            ctx.spawn_contact_task(async move { ContactGroup::fetch(&api).await });
         let mut tether = ctx.get_contact_stash().connection();
-        let mut all_local_labels: HashMap<_, _> = Label::all_contact_groups(&tether)
+        let mut all_local_contact_groups: HashMap<_, _> = ContactGroup::all(&tether)
             .await?
             .into_iter()
             .map(|label| (label.remote_id.clone(), label))
             .collect();
         debug!(
-            "Number of labels available localy: {}",
-            all_local_labels.len()
+            "Number of contact_groups  available localy: {}",
+            all_local_contact_groups.len()
         );
-        let all_remote_labels = join_task!(all_remote_labels, "labels");
+        let all_remote_labels = join_task!(all_remote_contact_groups, "labels");
         debug!(
-            "Number of labels available remotely: {}",
+            "Number of contact groups available remotely: {}",
             all_remote_labels.len()
         );
         for remote_label in &all_remote_labels {
-            all_local_labels.remove(&remote_label.remote_id);
+            all_local_contact_groups.remove(&remote_label.remote_id);
         }
 
         let contacts = join_task!(contacts, "contacts");
 
         tether
             .sync_write_tx(move |tx| {
-                Label::store_labels(tx, all_remote_labels).context("Failed to sync labels")?;
+                for mut contact_group in all_remote_labels {
+                    contact_group
+                        .save_sync(tx)
+                        .context("Failed to store contac groups")?;
+                }
 
-                for local_label_to_remove in all_local_labels.into_values() {
+                for local_contact_group_to_remove in all_local_contact_groups.into_values() {
                     debug!(
                         "Removing label with remote_id {:?}",
-                        local_label_to_remove.remote_id
+                        local_contact_group_to_remove.remote_id
                     );
-                    local_label_to_remove.delete_sync(tx)?;
+                    local_contact_group_to_remove.delete_sync(tx)?;
                 }
                 contacts.store(tx)?;
 

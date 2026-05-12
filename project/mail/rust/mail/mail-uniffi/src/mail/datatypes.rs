@@ -215,7 +215,6 @@ impl From<RealExclusiveLocation> for ExclusiveLocation {
 #[repr(u8)]
 pub enum LabelType {
     Label = 1,
-    ContactGroup = 2,
     Folder = 3,
     System = 4,
 }
@@ -224,7 +223,6 @@ impl Display for LabelType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Label => write!(f, "Label"),
-            Self::ContactGroup => write!(f, "Contact Group"),
             Self::Folder => write!(f, "Folder"),
             Self::System => write!(f, "System"),
         }
@@ -235,7 +233,6 @@ impl From<LabelType> for RealLabelType {
     fn from(value: LabelType) -> Self {
         match value {
             LabelType::Label => RealLabelType::Label,
-            LabelType::ContactGroup => RealLabelType::ContactGroup,
             LabelType::Folder => RealLabelType::Folder,
             LabelType::System => RealLabelType::System,
         }
@@ -246,7 +243,6 @@ impl From<RealLabelType> for LabelType {
     fn from(value: RealLabelType) -> Self {
         match value {
             RealLabelType::Label => LabelType::Label,
-            RealLabelType::ContactGroup => LabelType::ContactGroup,
             RealLabelType::Folder => LabelType::Folder,
             RealLabelType::System => LabelType::System,
         }
@@ -266,7 +262,6 @@ impl From<RealLabelDescription> for LabelDescription {
     fn from(value: RealLabelDescription) -> Self {
         match value {
             RealLabelDescription::Label => LabelDescription::Label,
-            RealLabelDescription::ContactGroup => LabelDescription::ContactGroup,
             RealLabelDescription::Folder => LabelDescription::Folder,
             RealLabelDescription::System(system_label) => {
                 let system_label = system_label.map(SystemLabel::from);

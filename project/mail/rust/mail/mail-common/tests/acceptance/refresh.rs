@@ -72,9 +72,10 @@ async fn setup_contacts_refresh_mocks(ctx: &MailTestContext, expect: impl Into<T
         .mock_get_contacts(None, expect.clone().into())
         .await;
     ctx.mock_server()
-        .mock_get_contacts_emails(None, expect.into())
+        .mock_get_contacts_emails(None, expect.clone().into())
         .await;
-    ctx.mock_get_labels_and(vec![], |mock| mock.and(query_param("Type", "2")), 1..)
+    ctx.mock_server()
+        .mock_get_contact_groups(vec![], expect.into())
         .await;
 }
 

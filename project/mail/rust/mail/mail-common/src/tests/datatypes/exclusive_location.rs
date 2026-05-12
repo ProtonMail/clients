@@ -51,8 +51,6 @@ use test_case::test_case;
 )]
 #[test_case(&[(&LabelId::from("custom_folder"), Label)] => None; "TEST8 - in custom folder but label is not folder"
 )]
-#[test_case(&[(&LabelId::from("custom_folder"), ContactGroup)] => None; "TEST9 - in custom folder but label is not folder"
-)]
 #[test_case(&[(&LabelId::from("custom_folder"), System)] => None; "TEST10 - in custom folder but label is not folder"
 )]
 #[test_case(&[
@@ -83,12 +81,11 @@ use test_case::test_case;
 #[test_case(&[
         (&LabelId::starred(), System),
         (&LabelId::from("label"), Label),
-        (&LabelId::from("contact_group"), ContactGroup),
         (&LabelId::from("custom_folder"), Folder),
     ]
     => Some(ExclusiveLocation::Custom {
         name: "custom_folder".to_string(),
-        local_id: 3.into(),
+        local_id: 2.into(),
         color: Default::default()
     }); "TEST14 - all possible label types, but system label is not exclusive"
 )]

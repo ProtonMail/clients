@@ -4,10 +4,11 @@ use indexmap::IndexSet;
 use itertools::Itertools as _;
 use mail_avatar::AvatarInformation;
 use mail_avatar::proton_color;
-use mail_core_api::services::proton::{ContactId, LabelId, PrivateEmail};
+use mail_contacts_api::ContactGroupId;
+use mail_core_api::services::proton::{ContactId, PrivateEmail};
 use mail_core_api::session::Session;
-use mail_labels_common::{Label, LabelColor, LabelType};
 use mail_shared_types::MapVec as _;
+use mail_shared_types::ModelExtension;
 use mail_stash::orm::Model as _;
 use mail_stash::stash::Tether;
 use mail_vcard::address::Address as VcardAddress;
@@ -28,6 +29,8 @@ use url::Url;
 
 use crate::contact::Contact;
 use crate::contact_email::ContactEmail;
+use crate::contact_group::ContactGroup as ContactGroupModel;
+use crate::contact_group::ContactGroupColor;
 use crate::local_ids::LocalContactId;
 
 /// Represents some data known from the vCard in a form more suitable for human consumption than a
@@ -90,7 +93,7 @@ impl InspectableContactDetails {
                 let contact = Contact::load(contact_id, tether)
                     .await?
                     .context("Contact does not exist")?;
-                let contact_groups = Label::find_by_kind(LabelType::ContactGroup, tether).await?;
+                let contact_groups = ContactGroupModel::all(tether).await?;
 
                 Ok(Self::get_from_contact_basic(contact, &contact_groups))
             }
@@ -98,13 +101,7 @@ impl InspectableContactDetails {
     }
 
     #[must_use]
-    pub fn get_from_contact_basic(contact: Contact, contact_groups: &[Label]) -> Self {
-        debug_assert!(
-            contact_groups
-                .iter()
-                .all(|group| group.label_type == LabelType::ContactGroup)
-        );
-
+    pub fn get_from_contact_basic(contact: Contact, contact_groups: &[ContactGroupModel]) -> Self {
         let id = contact.id();
         let remote_id = contact.remote_id;
 
@@ -131,18 +128,19 @@ impl InspectableContactDetails {
     }
 
     fn matching_contact_groups(
-        contact_groups: &[Label],
+        contact_groups: &[ContactGroupModel],
         contact_email: &ContactEmail,
     ) -> Vec<ContactGroup> {
-        let groups_map: HashMap<&str, &Label> = contact_groups
+        let groups_map: HashMap<&str, &ContactGroupModel> = contact_groups
             .iter()
             .filter_map(|group| group.remote_id.as_deref().map(|id| (id, group)))
             .collect();
-        let unique_label_ids: IndexSet<&LabelId> = contact_email.label_ids.iter().collect();
+        let unique_contact_group_ids: IndexSet<&ContactGroupId> =
+            contact_email.label_ids.iter().collect();
 
-        unique_label_ids
+        unique_contact_group_ids
             .iter()
-            .filter_map(|label_id| groups_map.get(label_id.as_str()))
+            .filter_map(|contact_group_id| groups_map.get(contact_group_id.as_str()))
             .map(|group| ContactGroup {
                 name: group.name.clone(),
                 color: group.color.clone(),
@@ -399,7 +397,7 @@ pub struct ContactDetailsEmail {
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ContactGroup {
     pub name: String,
-    pub color: LabelColor,
+    pub color: ContactGroupColor,
 }
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
@@ -517,8 +515,7 @@ mod tests {
     use bytes::Buf as _;
     use ical::VcardParser;
     use insta::assert_snapshot;
-    use mail_core_api::services::proton::{ContactId, LabelId, PrivateEmail};
-    use mail_labels_common::{Label, LabelType, Labels};
+    use mail_core_api::services::proton::{ContactId, PrivateEmail};
     use mail_vcard::vcard::VCard;
     use std::fmt::Display;
 
@@ -560,9 +557,9 @@ mod tests {
     #[allow(clippy::similar_names)]
     #[test]
     fn get_from_contact_basic() {
-        let group_a_id = LabelId::from("<group_a_id>");
-        let group_b_id = LabelId::from("<group_b_id>");
-        let group_c_id = LabelId::from("<group_c_id>");
+        let group_a_id = ContactGroupId::from("<group_a_id>");
+        let group_b_id = ContactGroupId::from("<group_b_id>");
+        let group_c_id = ContactGroupId::from("<group_c_id>");
         let contact = Contact {
             local_id: Some(LocalContactId::from(1_u64)),
             remote_id: Some(ContactId::from("42")),
@@ -574,10 +571,10 @@ mod tests {
             ],
             ..Contact::test_default()
         };
-        let contact_groups: Vec<Label> = vec![
-            test_label_group(&group_a_id, "A"),
-            test_label_group(&group_b_id, "B"),
-            test_label_group(&group_c_id, "C"),
+        let contact_groups: Vec<ContactGroupModel> = vec![
+            test_contact_group(&group_a_id, "A"),
+            test_contact_group(&group_b_id, "B"),
+            test_contact_group(&group_c_id, "C"),
         ];
 
         let contact_details =
@@ -589,22 +586,19 @@ mod tests {
     fn test_contact_email(email: &str, label_ids: &[&str]) -> ContactEmail {
         ContactEmail {
             email: PrivateEmail::from(email),
-            label_ids: Labels::new(
-                label_ids
-                    .iter()
-                    .map(|label_id| LabelId::from(*label_id))
-                    .collect(),
-            ),
+            label_ids: label_ids
+                .iter()
+                .map(|label_id| ContactGroupId::from(*label_id))
+                .collect(),
             ..ContactEmail::test_default()
         }
     }
 
-    fn test_label_group(remote_id: &LabelId, name: &str) -> Label {
-        Label {
+    fn test_contact_group(remote_id: &ContactGroupId, name: &str) -> ContactGroupModel {
+        ContactGroupModel {
             remote_id: Some(remote_id.clone()),
             name: name.to_owned(),
-            label_type: LabelType::ContactGroup,
-            ..Label::test_default()
+            ..ContactGroupModel::test_default()
         }
     }
 

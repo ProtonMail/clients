@@ -6,12 +6,16 @@ CREATE TABLE registered_devices (
   push_notification_status INTEGER DEFAULT NULL
 );
 
-CREATE TRIGGER registered_devices_only_one_row BEFORE INSERT ON registered_devices WHEN (
-  SELECT
-    COUNT(*)
-  FROM
-    registered_devices
-) >= 1 BEGIN
+CREATE TRIGGER registered_devices_only_one_row BEFORE
+INSERT
+  ON registered_devices
+  WHEN (
+    SELECT
+      COUNT(*)
+    FROM
+      registered_devices
+  ) >= 1
+BEGIN
 SELECT
   RAISE (
     FAIL,

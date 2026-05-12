@@ -652,66 +652,118 @@ mod orm_tests {
     }
 }
 
-mod interrupt {
-    use mail_stash::UserDb;
+#[cfg(test)]
+mod read_tx_tests {
+    use mail_stash::stash::{Stash, StashError};
+    use mail_stash::{UserDb, params};
+    use tokio::sync::oneshot;
 
-    use super::*;
-
-    #[tokio::test]
-    async fn transactions_are_interrupted() -> anyhow::Result<()> {
+    #[tokio::test(flavor = "multi_thread")]
+    async fn read_tx_snapshot_isolation() {
         let db_dir = tempfile::tempdir().unwrap();
         let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
-        let mut conn = mail_stash.connection().await?;
-        let (sender, receiver) = tokio::sync::oneshot::channel::<()>();
-        let (sender_interrupt, receiver_interrupt) = tokio::sync::oneshot::channel::<()>();
-        let join_handle = tokio::spawn(async move {
-            conn.write_tx(async move |tx| {
-                sender.send(()).unwrap();
-                receiver_interrupt.await.unwrap();
-                tx.execute(r#"CREATE TABLE test_kv (value TEXT NOT NULL)"#, vec![])
-                    .await
+
+        let setup_conn = mail_stash.connection().await.unwrap();
+        setup_conn
+            .execute(r#"CREATE TABLE test_foo (foo INTEGER NOT NULL)"#, vec![])
+            .await
+            .unwrap();
+        setup_conn
+            .execute(r#"INSERT INTO test_foo (foo) VALUES (4)"#, vec![])
+            .await
+            .unwrap();
+
+        let (start_write_tx, start_write_rx) = oneshot::channel::<()>();
+        let (write_done_tx, write_done_rx) = oneshot::channel::<()>();
+
+        let writer_stash = mail_stash.clone();
+        let writer = tokio::spawn(async move {
+            start_write_rx.await.unwrap();
+            let mut conn = writer_stash.connection().await.unwrap();
+            conn.write_tx::<_, _, StashError>(async |tx| {
+                tx.execute(r#"UPDATE test_foo SET foo = 6"#, vec![]).await?;
+                Ok(())
             })
             .await
+            .unwrap();
+            write_done_tx.send(()).unwrap();
         });
 
-        receiver.await?;
-        mail_stash.interrupt();
-        sender_interrupt.send(()).unwrap();
+        let reader_stash = mail_stash.clone();
+        let mut reader_conn = reader_stash.connection().await.unwrap();
+        let mut start_write_tx = Some(start_write_tx);
+        let mut write_done_rx = Some(write_done_rx);
+        reader_conn
+            .read_tx::<_, _, StashError>(async |rtx| {
+                let before: Vec<i64> = rtx
+                    .query_values::<_, i64>(r#"SELECT foo FROM test_foo"#, vec![])
+                    .await?;
+                assert_eq!(before, vec![4]);
 
-        let err = join_handle.await?.unwrap_err();
-        assert!(err.was_interrupt());
+                start_write_tx.take().unwrap().send(()).unwrap();
+                write_done_rx.take().unwrap().await.unwrap();
 
-        Ok(())
+                let after: Vec<i64> = rtx
+                    .query_values::<_, i64>(r#"SELECT foo FROM test_foo"#, vec![])
+                    .await?;
+                assert_eq!(after, vec![4]);
+                Ok(())
+            })
+            .await
+            .unwrap();
+
+        writer.await.unwrap();
+
+        let final_value: Vec<i64> = reader_conn
+            .query_values::<_, i64>(r#"SELECT foo FROM test_foo"#, vec![])
+            .await
+            .unwrap();
+        assert_eq!(final_value, vec![6]);
     }
 
     #[tokio::test]
-    async fn new_transactions_wait_until_resume() -> anyhow::Result<()> {
+    async fn read_tx_rejects_mutations() {
         let db_dir = tempfile::tempdir().unwrap();
         let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
-        mail_stash.interrupt();
-        let mut conn = mail_stash.connection().await?;
-        let stash_cloned = mail_stash.clone();
-        let (sender, receiver) = tokio::sync::oneshot::channel::<()>();
-        tokio::spawn(async move {
-            sender.send(()).unwrap();
-            sleep(Duration::from_millis(400)).await;
-            stash_cloned.resume();
-        });
 
-        receiver.await?;
+        let mut conn = mail_stash.connection().await.unwrap();
+        conn.execute(r#"CREATE TABLE test_foo (foo INTEGER NOT NULL)"#, vec![])
+            .await
+            .unwrap();
+        conn.execute(r#"INSERT INTO test_foo (foo) VALUES (4)"#, vec![])
+            .await
+            .unwrap();
 
-        tokio::time::timeout(
-            Duration::from_secs(1),
-            conn.write_tx(async |tx| {
-                tx.execute(r#"CREATE TABLE test_kv (value TEXT NOT NULL)"#, vec![])
-                    .await
-            }),
-        )
+        conn.read_tx::<_, _, StashError>(async |rtx| {
+            let update_result = rtx.execute(r#"UPDATE test_foo SET foo = 6"#, vec![]).await;
+            assert!(
+                update_result.is_err(),
+                "UPDATE inside read_tx should fail, got {update_result:?}"
+            );
+
+            let insert_result = rtx
+                .execute(r#"INSERT INTO test_foo (foo) VALUES (?)"#, params![99_i64])
+                .await;
+            assert!(
+                insert_result.is_err(),
+                "INSERT inside read_tx should fail, got {insert_result:?}"
+            );
+
+            let still_four: Vec<i64> = rtx
+                .query_values::<_, i64>(r#"SELECT foo FROM test_foo"#, vec![])
+                .await?;
+            assert_eq!(still_four, vec![4]);
+            Ok(())
+        })
         .await
-        .unwrap()?;
+        .unwrap();
 
-        Ok(())
+        let after: Vec<i64> = conn
+            .query_values::<_, i64>(r#"SELECT foo FROM test_foo"#, vec![])
+            .await
+            .unwrap();
+        assert_eq!(after, vec![4]);
     }
 }

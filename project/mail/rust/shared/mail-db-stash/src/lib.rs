@@ -3,10 +3,10 @@ use std::ops::Deref;
 use mail_db::{Database, Transaction};
 use mail_stash::{
     marker::DatabaseMarker,
-    stash::{Stash, StashError, Tether, WriteTx as StashWriteTx},
+    stash::{ReadTx as StashReadTx, Stash, StashError, Tether, WriteTx as StashWriteTx},
 };
 
-pub struct ReadTx<'t, M: DatabaseMarker>(&'t Tether<M>);
+pub struct ReadTx<'t, M: DatabaseMarker>(&'t StashReadTx<'t, M>);
 
 impl<M: DatabaseMarker> Deref for ReadTx<'_, M> {
     type Target = Tether<M>;
@@ -66,12 +66,13 @@ impl<M: DatabaseMarker> Database for StashDb<M> {
         &self,
         closure: impl AsyncFnOnce(Self::ReadTx<'_>) -> Result<T, E>,
     ) -> Result<T, E> {
-        // TODO(ET-6112): Restore read transaction isolation via ReadTx (Phase 3).
-        // With MPMC read workers, raw BEGIN/ROLLBACK via execute() would hit
-        // different workers. For now, reads run without a transaction wrapper.
-        let tether = self.stash.connection().await?;
-        let rtx = ReadTx(&tether);
-        closure(rtx).await
+        let mut tether = self.stash.connection().await?;
+        tether
+            .read_tx(async |stash_rtx| {
+                let rtx = ReadTx(stash_rtx);
+                closure(rtx).await
+            })
+            .await
     }
 
     async fn write<T, E: From<Self::Error>>(

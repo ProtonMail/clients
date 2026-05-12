@@ -27,11 +27,10 @@ use derivative::Derivative;
 use flume::{Receiver as QueueReceiver, Sender as QueueSender, unbounded};
 use indoc::formatdoc;
 use mail_task_service::IntoNonPausableFuture;
-use rusqlite::ffi::SQLITE_INTERRUPT;
 use rusqlite::hooks::Action;
 use rusqlite::types::FromSql;
 use rusqlite::{
-    Connection, Error as SqliteError, Rows, ToSql, Transaction, TransactionBehavior, ffi,
+    Connection, Error as SqliteError, Rows, ToSql, Transaction, TransactionBehavior,
     params_from_iter,
 };
 use sqlite_watcher::connection::State;
@@ -64,8 +63,6 @@ enum Operation {
     Transaction(OperationTransaction),
     /// Only the operations related to execution
     Execution(OperationExec),
-    /// Signal an interruption of execution.
-    Interrupt,
     /// Quit the worker thread.
     Quit,
 }
@@ -84,9 +81,9 @@ impl From<Operation> for TracedOperation {
     }
 }
 
-/// Distinguishes transaction change detection behavior
+/// Distinguishes write transaction change detection behavior
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-enum TransactionTrackingPolicy {
+enum WriteTxTrackingPolicy {
     /// Use change tracking system.
     Tracking,
     /// Do not use change tracking system.
@@ -95,42 +92,44 @@ enum TransactionTrackingPolicy {
 
 /// Only the operations related to a transaction.
 enum OperationTransaction {
-    /// Starts a new transaction.
-    Start(
-        TransactionTrackingPolicy,
-        OneshotSender<Result<(), StashError>>,
-    ),
+    /// Starts a new write transaction.
+    StartWrite(WriteTxTrackingPolicy, OneshotSender<Result<(), StashError>>),
 
-    /// Starts a new transaction.
-    StartSync(BridgeClosure, TransactionTrackingPolicy),
+    /// Starts a new write transaction.
+    StartWriteSync(BridgeClosure, WriteTxTrackingPolicy),
 
-    /// Commits a transaction, i.e. finalises it.
-    Commit(
-        TransactionTrackingPolicy,
-        OneshotSender<Result<(), StashError>>,
-    ),
+    /// Commits a write transaction, i.e. finalises it.
+    Commit(WriteTxTrackingPolicy, OneshotSender<Result<(), StashError>>),
 
-    /// Rolls back a transaction, i.e. abandons it.
+    /// Rolls back a write or read transaction, i.e. abandons it.
     Rollback(OneshotSender<Result<(), StashError>>),
 
     /// Used to bridge between async and sync code, WriteTx -> rusqlite::Transaction
-    Bridge(BridgeClosure),
+    WriteBridge(BridgeClosure),
 
     /// Rollbacks a transaction too.
     /// This one is meant to be called in WriteTx's drop glue. That's why it doesn't have a sender.
     /// Same semantics as Rollback.
     RollbackAbort,
+
+    /// Pins a read worker by entering an inner loop on a private channel.
+    /// The worker runs BEGIN DEFERRED, sends back the private channel sender,
+    /// and reads from it until it disconnects (ReadTx dropped) or is interrupted.
+    StartRead {
+        response: OneshotSender<Result<flume::Sender<TracedOperation>, StashError>>,
+    },
 }
 
 impl Debug for OperationTransaction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Start(..) => write!(f, "Start"),
-            Self::StartSync(..) => write!(f, "StartSync"),
+            Self::StartWrite(..) => write!(f, "StartWrite"),
+            Self::StartWriteSync(..) => write!(f, "StartWriteSync"),
             Self::Commit(..) => write!(f, "Commit"),
             Self::Rollback(_) => write!(f, "Rollback"),
-            Self::Bridge(_) => write!(f, "Bridge"),
+            Self::WriteBridge(_) => write!(f, "Bridge"),
             Self::RollbackAbort => write!(f, "RollbackAbort"),
+            Self::StartRead { .. } => write!(f, "StartRead"),
         }
     }
 }
@@ -226,25 +225,6 @@ pub enum StashError {
 
 pub type StashResult<T> = Result<T, StashError>;
 pub type RusqliteResult<T> = Result<T, SqliteError>;
-
-impl StashError {
-    pub fn interrupted() -> Self {
-        StashError::ExecutionError(SqliteError::SqliteFailure(
-            ffi::Error::new(SQLITE_INTERRUPT),
-            None,
-        ))
-    }
-    pub fn was_interrupt(&self) -> bool {
-        match self {
-            StashError::ExecutionError(SqliteError::SqliteFailure(err, _))
-            | StashError::PreparationError(SqliteError::SqliteFailure(err, _))
-            | StashError::TransactionError(SqliteError::SqliteFailure(err, _)) => {
-                err.code == rusqlite::ErrorCode::OperationInterrupted
-            }
-            _ => false,
-        }
-    }
-}
 
 /// An operation to be executed by the worker, which does not return any data.
 ///
@@ -614,18 +594,6 @@ impl<Db: DatabaseMarker> Stash<Db> {
 
         Ok(WatcherHandle { receiver, handle })
     }
-
-    /// Interrupt all ongoing queries and transactions.
-    ///
-    /// This method will also prevent new transactions from executing until [`resume()`] is called.
-    pub fn interrupt(&self) {
-        self.pool.interrupt();
-    }
-
-    /// Resume execution of transactions after a call to [`interrupt()`].
-    pub fn resume(&self) {
-        self.pool.resume();
-    }
 }
 
 #[derive(Debug)]
@@ -925,7 +893,7 @@ impl<Db: DatabaseMarker> Tether<Db> {
         F: AsyncFnOnce(&WriteTx<'_, Db>) -> Result<T, E>,
         E: From<StashError>,
     {
-        self.write_tx_impl(TransactionTrackingPolicy::Tracking, closure)
+        self.write_tx_impl(WriteTxTrackingPolicy::Tracking, closure)
             .await
     }
 
@@ -938,13 +906,13 @@ impl<Db: DatabaseMarker> Tether<Db> {
         F: AsyncFnOnce(&WriteTx<'_, Db>) -> Result<T, E>,
         E: From<StashError>,
     {
-        self.write_tx_impl(TransactionTrackingPolicy::Quiet, closure)
+        self.write_tx_impl(WriteTxTrackingPolicy::Quiet, closure)
             .await
     }
 
     async fn write_tx_impl<F, T, E>(
         &mut self,
-        policy: TransactionTrackingPolicy,
+        policy: WriteTxTrackingPolicy,
         closure: F,
     ) -> Result<T, E>
     where
@@ -993,11 +961,11 @@ impl<Db: DatabaseMarker> Tether<Db> {
 
     async fn transaction_impl(
         &mut self,
-        policy: TransactionTrackingPolicy,
+        policy: WriteTxTrackingPolicy,
         write_guard: WriteWorkerGuard,
     ) -> Result<WriteTx<'_, Db>, StashError> {
         let (sender, receiver) = oneshot::channel();
-        let operation = Operation::Transaction(OperationTransaction::Start(policy, sender));
+        let operation = Operation::Transaction(OperationTransaction::StartWrite(policy, sender));
 
         self.sender
             .send_async(operation.into())
@@ -1060,7 +1028,7 @@ impl<Db: DatabaseMarker> Tether<Db> {
         &mut self,
         callback: impl FnOnce(&rusqlite::Transaction) -> StashResult<T> + Send + 'static,
     ) -> StashResult<T> {
-        self.run_sync_write_tx(callback, TransactionTrackingPolicy::Tracking)
+        self.run_sync_write_tx(callback, WriteTxTrackingPolicy::Tracking)
             .await
     }
 
@@ -1068,7 +1036,7 @@ impl<Db: DatabaseMarker> Tether<Db> {
     async fn run_sync_write_tx<T>(
         &mut self,
         callback: impl FnOnce(&rusqlite::Transaction<'_>) -> StashResult<T> + Send + 'static,
-        policy: TransactionTrackingPolicy,
+        policy: WriteTxTrackingPolicy,
     ) -> StashResult<T>
     where
         T: Send + 'static,
@@ -1085,7 +1053,7 @@ impl<Db: DatabaseMarker> Tether<Db> {
         let sync_closure = BridgeClosure { closure, sender };
 
         let operation =
-            Operation::Transaction(OperationTransaction::StartSync(sync_closure, policy));
+            Operation::Transaction(OperationTransaction::StartWriteSync(sync_closure, policy));
 
         self.sender
             .send_async(operation.into())
@@ -1101,6 +1069,39 @@ impl<Db: DatabaseMarker> Tether<Db> {
         // This cannot fail as the type system assures us that the return type of `callback` is T
         ret.map(|x| *x.downcast().expect("Downcast failed?"))
     }
+
+    pub async fn read_tx<F, T, E>(&mut self, closure: F) -> Result<T, E>
+    where
+        F: AsyncFnOnce(&ReadTx<'_, Db>) -> Result<T, E>,
+        E: From<StashError>,
+    {
+        let (response_tx, response_rx) = oneshot::channel();
+        let op = Operation::Transaction(OperationTransaction::StartRead {
+            response: response_tx,
+        });
+        self.sender
+            .send_async(op.into())
+            .await
+            .map_err(|_| E::from(StashError::Critical(anyhow!("worker dropped"))))?;
+
+        let private_sender = response_rx
+            .await
+            .map_err(|_| E::from(StashError::Critical(anyhow!("worker dropped"))))?
+            .map_err(E::from)?;
+
+        // Pointer swap: route all ops to the pinned read worker
+        let ro_sender = std::mem::replace(&mut self.sender, private_sender);
+
+        // ReadTx restores ro_sender on drop (including panic)
+        let rtx = ReadTx {
+            tether: self,
+            ro_sender: Some(ro_sender),
+        };
+        let result = closure(&rtx).await;
+        drop(rtx);
+
+        result
+    }
 }
 
 impl<Db: DatabaseMarker> Debug for Tether<Db> {
@@ -1114,7 +1115,6 @@ pub(crate) struct PooledTether {
 }
 impl PooledTether {
     pub(crate) fn new(connection: Connection, watcher: &Arc<Watcher>, number: usize) -> Self {
-        // One for tether commands, another for interruption
         let (sender, receiver) = flume::bounded(2);
         let watcher_cloned = watcher.clone();
 
@@ -1128,10 +1128,6 @@ impl PooledTether {
         Self { sender }
     }
 
-    pub(crate) fn interrupt_notifier(&self) -> PooledTetherInterruptNotifier {
-        PooledTetherInterruptNotifier(self.sender.clone())
-    }
-
     fn thread_loop(
         connection: Connection,
         receiver: flume::Receiver<TracedOperation>,
@@ -1142,12 +1138,10 @@ impl PooledTether {
             connection: &connection,
             state: State::new(),
             watcher,
-            was_interrupted: false,
         };
 
         while let Ok(operation) = receiver.recv() {
             let _span = operation.span.entered();
-
             if sm.handle_operation(operation.operation) {
                 break;
             }
@@ -1163,33 +1157,88 @@ impl Drop for PooledTether {
     }
 }
 
-pub(crate) struct PooledTetherInterruptNotifier(flume::Sender<TracedOperation>);
-
-impl PooledTetherInterruptNotifier {
-    pub(crate) fn new(sender: flume::Sender<TracedOperation>) -> Self {
-        Self(sender)
-    }
-
-    pub fn interrupt(&self) {
-        let _ = self.0.send(Operation::Interrupt.into());
-    }
-}
-
 pub(crate) fn spawn_read_worker(
     connection: Connection,
     receiver: flume::Receiver<TracedOperation>,
-    watcher: &Arc<Watcher>,
     number: usize,
-) -> rusqlite::InterruptHandle {
-    let handle = connection.get_interrupt_handle();
-    let watcher = watcher.clone();
+) {
     thread::Builder::new()
         .name(format!("Read Worker {number:02}"))
         .spawn(move || {
-            PooledTether::thread_loop(connection, receiver, &watcher);
+            read_worker_loop(connection, receiver);
         })
         .unwrap();
-    handle
+}
+
+fn handle_read_exec(connection: &Connection, operation: OperationExec) {
+    match operation {
+        OperationExec::Instruct(instruction) => {
+            let res = instruction.run(connection);
+            let _ = instruction.sender.send(res);
+        }
+        OperationExec::Batch(batch) => {
+            let res = batch.run(connection);
+            let _ = batch.sender.send(res);
+        }
+        OperationExec::Query(query) => {
+            query.run_and_send(connection);
+        }
+        OperationExec::Sync(sync) => {
+            let res = (sync.closure)(connection);
+            let _ = sync.sender.send(res);
+        }
+    }
+}
+
+fn read_worker_loop(connection: Connection, receiver: flume::Receiver<TracedOperation>) {
+    'outer: while let Ok(traced_op) = receiver.recv() {
+        let _span = traced_op.span.entered();
+
+        match traced_op.operation {
+            Operation::Transaction(OperationTransaction::StartRead { response }) => {
+                if let Err(e) = connection
+                    .pragma_update(None, "query_only", "ON")
+                    .and_then(|()| connection.execute_batch("BEGIN DEFERRED"))
+                {
+                    let _ = connection.pragma_update(None, "query_only", "OFF");
+                    let _ = response.send(Err(StashError::TransactionError(e)));
+                    continue;
+                }
+
+                let (private_tx, private_rx) = flume::bounded(2);
+                let _ = response.send(Ok(private_tx));
+
+                while let Ok(inner_op) = private_rx.recv() {
+                    let _span = inner_op.span.entered();
+
+                    match inner_op.operation {
+                        Operation::Execution(exec) => {
+                            handle_read_exec(&connection, exec);
+                        }
+                        other => {
+                            warn!("Unexpected operation in read tx inner loop: {other:?}");
+                        }
+                    }
+                }
+
+                // Normal exit (channel disconnected = ReadTx dropped)
+                if let Err(e) = connection.execute_batch("ROLLBACK") {
+                    error!("Failed to ROLLBACK read transaction: {e:?}");
+                }
+                let _ = connection.pragma_update(None, "query_only", "OFF");
+            }
+
+            Operation::Execution(exec) => {
+                handle_read_exec(&connection, exec);
+            }
+
+            Operation::Quit => break 'outer,
+
+            other => {
+                warn!("Unexpected operation in read worker: {other:?}");
+            }
+        }
+    }
 }
 
 /// Sends `RollbackAbort` to the write worker on drop.
@@ -1260,7 +1309,7 @@ impl<'tether, Db: DatabaseMarker> WriteTx<'tether, Db> {
     /// This method is used to commit a transaction without publishing changes.
     /// It is needed for internal implementation of the watch mechanism and scrollers.
     ///
-    async fn commit_(self, policy: TransactionTrackingPolicy) -> Result<(), StashError> {
+    async fn commit_(self, policy: WriteTxTrackingPolicy) -> Result<(), StashError> {
         // drop() has an auto-rollback code we don't want to run here:
         let (sender, receiver) = oneshot::channel();
         let operation = Operation::Transaction(OperationTransaction::Commit(policy, sender));
@@ -1320,7 +1369,7 @@ impl<'tether, Db: DatabaseMarker> WriteTx<'tether, Db> {
 
         let (sender, receiver) = oneshot::channel();
         let sync_closure = BridgeClosure { closure, sender };
-        let operation = Operation::Transaction(OperationTransaction::Bridge(sync_closure));
+        let operation = Operation::Transaction(OperationTransaction::WriteBridge(sync_closure));
 
         self.sender
             .send_async(operation.into())
@@ -1341,6 +1390,30 @@ impl<Db: DatabaseMarker> Deref for WriteTx<'_, Db> {
 
     fn deref(&self) -> &Self::Target {
         self.tether
+    }
+}
+
+pub struct ReadTx<'tether, Db: DatabaseMarker = crate::marker::UserDb> {
+    tether: &'tether mut Tether<Db>,
+    /// Saved ro_sender, restored on drop. Dropping the private sender
+    /// (which replaced it) disconnects the channel, causing the read
+    /// worker to exit its inner loop and ROLLBACK.
+    ro_sender: Option<flume::Sender<TracedOperation>>,
+}
+
+impl<Db: DatabaseMarker> Deref for ReadTx<'_, Db> {
+    type Target = Tether<Db>;
+
+    fn deref(&self) -> &Self::Target {
+        self.tether
+    }
+}
+
+impl<Db: DatabaseMarker> Drop for ReadTx<'_, Db> {
+    fn drop(&mut self) {
+        if let Some(ro_sender) = self.ro_sender.take() {
+            self.tether.sender = ro_sender;
+        }
     }
 }
 
@@ -1429,7 +1502,6 @@ struct TetheredWorkerStateMachine<'a> {
     connection: &'a Connection,
     state: State,
     watcher: &'a Watcher,
-    was_interrupted: bool,
 }
 
 impl<'a> TetheredWorkerStateMachine<'a> {
@@ -1443,82 +1515,24 @@ impl<'a> TetheredWorkerStateMachine<'a> {
     /// executing the queries.
     ///
     fn handle_operation(&mut self, operation: Operation) -> bool {
-        // If we were interrupted during a transaction, this value will be true.
-        let mut should_quit = false;
-        if self.was_interrupted {
-            self.was_interrupted = false;
-            // Any other operation that happens during the transaction needs to be notified
-            // that the execution was interrupted.
-            match operation {
-                Operation::Transaction(op) => match op {
-                    OperationTransaction::Commit(_, s) | OperationTransaction::Rollback(s) => {
-                        let _ = s.send(Err(StashError::interrupted()));
-                    }
-                    OperationTransaction::Start(_, _) => {
-                        // Starting a new transaction after an interrupt is fine since we
-                        // wait until resume was called.
-                        self.handle_transaction(op);
-                    }
-                    OperationTransaction::StartSync(o, _) | OperationTransaction::Bridge(o) => {
-                        let _ = o.sender.send(Err(StashError::interrupted()));
-                    }
-                    OperationTransaction::RollbackAbort => {
-                        //nothing to do
-                    }
-                },
-                Operation::Execution(op) => match op {
-                    OperationExec::Instruct(o) => {
-                        let _ = o.sender.send(Err(StashError::interrupted()));
-                    }
-                    OperationExec::Batch(o) => {
-                        let _ = o.sender.send(Err(StashError::interrupted()));
-                    }
-                    OperationExec::Query(o) => {
-                        let _ = o.sender.send(Err(StashError::interrupted()));
-                    }
-                    OperationExec::Sync(o) => {
-                        let _ = o.sender.send(Err(StashError::interrupted()));
-                    }
-                },
-                Operation::Interrupt => {
-                    // do nothing.
-                }
-                Operation::Quit => {
-                    should_quit = true;
-                }
-            };
-            return should_quit;
-        }
-
         match operation {
             Operation::Transaction(operation) => {
                 self.handle_transaction(operation);
+                false
             }
             Operation::Execution(operation) => {
                 self.handle_exec(operation);
+                false
             }
-            Operation::Interrupt => {
-                self.handle_interrupt();
-            }
-            Operation::Quit => {
-                should_quit = true;
-            }
+            Operation::Quit => true,
         }
-
-        should_quit
-    }
-
-    fn handle_interrupt(&mut self) {
-        self.was_interrupted = self.transaction.is_some();
-        // Rollback any active transactions.
-        self.transaction = None;
     }
 
     fn handle_transaction(&mut self, operation: OperationTransaction) {
         let tt = Instant::now();
 
         match operation {
-            OperationTransaction::Start(policy, send_back) => {
+            OperationTransaction::StartWrite(policy, send_back) => {
                 trace!("Starting transaction");
                 assert!(self.transaction.is_none(), "Started transaction twice");
 
@@ -1537,7 +1551,7 @@ impl<'a> TetheredWorkerStateMachine<'a> {
                 };
             }
 
-            OperationTransaction::StartSync(BridgeClosure { closure, sender }, policy) => {
+            OperationTransaction::StartWriteSync(BridgeClosure { closure, sender }, policy) => {
                 trace!("Starting sync-operation");
                 assert!(self.transaction.is_none(), "Started transaction twice");
 
@@ -1627,7 +1641,7 @@ impl<'a> TetheredWorkerStateMachine<'a> {
                 }
             }
 
-            OperationTransaction::Bridge(sync) => {
+            OperationTransaction::WriteBridge(sync) => {
                 trace!("Executing bridge-closure");
 
                 let Some(tx) = &self.transaction else {
@@ -1641,6 +1655,10 @@ impl<'a> TetheredWorkerStateMachine<'a> {
                 let res = (sync.closure)(tx);
                 let _ = sync.sender.send(res);
             }
+
+            OperationTransaction::StartRead { .. } => {
+                unreachable!("StartRead sent to write worker");
+            }
         }
 
         if tt.elapsed().as_millis() > 1000 {
@@ -1650,9 +1668,9 @@ impl<'a> TetheredWorkerStateMachine<'a> {
 
     fn start_transaction(
         &mut self,
-        transaction_tracking_policy: TransactionTrackingPolicy,
+        transaction_tracking_policy: WriteTxTrackingPolicy,
     ) -> Result<Transaction<'a>, SqliteError> {
-        if transaction_tracking_policy == TransactionTrackingPolicy::Tracking
+        if transaction_tracking_policy == WriteTxTrackingPolicy::Tracking
             && let Err(e) = self
                 .state
                 .sync_tables(self.watcher)
@@ -1712,11 +1730,11 @@ impl<'a> TetheredWorkerStateMachine<'a> {
     fn commit_transaction(
         &mut self,
         transaction: Transaction<'_>,
-        transaction_tracking_policy: TransactionTrackingPolicy,
+        transaction_tracking_policy: WriteTxTrackingPolicy,
     ) -> Result<(), rusqlite::Error> {
         transaction.commit()?;
 
-        if transaction_tracking_policy == TransactionTrackingPolicy::Tracking {
+        if transaction_tracking_policy == WriteTxTrackingPolicy::Tracking {
             self.state
                 .publish_changes(self.watcher)
                 .execute(self.connection)
@@ -1767,7 +1785,7 @@ impl<'a> TetheredWorkerStateMachine<'a> {
     fn handle_start_sync(
         &mut self,
         closure: Box<dyn FnOnce(&Transaction) -> SyncClosureRetTy + Send>,
-        policy: TransactionTrackingPolicy,
+        policy: WriteTxTrackingPolicy,
     ) -> StashResult<Box<dyn Any + Send>> {
         let tx = self
             .start_transaction(policy)

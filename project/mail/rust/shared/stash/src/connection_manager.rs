@@ -1,16 +1,13 @@
-use crate::stash::{
-    PooledTether, PooledTetherInterruptNotifier, TracedOperation, spawn_read_worker,
-};
-use parking_lot::Mutex;
+use crate::stash::{PooledTether, TracedOperation, spawn_read_worker};
 pub use rusqlite;
-use rusqlite::{Connection, Error, InterruptHandle, OpenFlags};
+use rusqlite::{Connection, Error, OpenFlags};
 use sqlite_watcher::connection::State;
 use sqlite_watcher::statement::Statement;
 use sqlite_watcher::watcher::Watcher;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tempfile::TempDir;
-use tracing::{Span, debug, info};
+use tracing::{Span, debug};
 
 const DEFAULT_READ_WORKERS: usize = 8;
 const READ_CHANNEL_CAPACITY: usize = 32;
@@ -25,11 +22,8 @@ type InitFn = dyn Fn(&mut Connection) -> Result<(), Error> + Send + Sync + 'stat
 
 pub struct StashConnectionPool {
     pub(crate) ro_sender: flume::Sender<TracedOperation>,
-    interrupts: Vec<InterruptData>,
-    interrupted: Mutex<bool>,
     span: Span,
     pub(crate) write_worker: PooledTether,
-    write_worker_interrupt: InterruptData,
     /// Keeps the temp directory alive for the lifetime of the pool
     _source: Source,
 }
@@ -85,62 +79,20 @@ impl StashConnectionPool {
 
         let (ro_sender, ro_receiver) = flume::bounded(READ_CHANNEL_CAPACITY);
 
-        let mut interrupts = Vec::with_capacity(read_worker_count);
         for i in 0..read_worker_count {
             let conn = Self::create_connection(&source, &init_fn, OpenFlags::default())?;
-            let handle = spawn_read_worker(conn, ro_receiver.clone(), watcher, i);
-            interrupts.push(InterruptData {
-                handle,
-                interrupt_notifier: PooledTetherInterruptNotifier::new(ro_sender.clone()),
-            });
+            spawn_read_worker(conn, ro_receiver.clone(), i);
         }
 
         let write_conn = Self::create_connection(&source, &init_fn, OpenFlags::default())?;
-        let write_handle = write_conn.get_interrupt_handle();
         let write_worker = PooledTether::new(write_conn, watcher, read_worker_count);
-        let write_worker_interrupt = InterruptData {
-            handle: write_handle,
-            interrupt_notifier: write_worker.interrupt_notifier(),
-        };
 
         Ok(Arc::new(Self {
             _source: source,
             ro_sender,
-            interrupts,
-            interrupted: Default::default(),
             span: Span::current(),
             write_worker,
-            write_worker_interrupt,
         }))
-    }
-
-    /// Interrupt all ongoing queries and rollback any active transactions.
-    ///
-    /// This method is useful on iOS to ensure that the db file locks are released and no new
-    /// transaction is started until `resume()` is called.
-    pub fn interrupt(&self) {
-        let was_interrupted = {
-            let mut interrupted = self.interrupted.lock();
-            let old_value = *interrupted;
-            *interrupted = true;
-            drop(interrupted);
-            old_value
-        };
-
-        if !was_interrupted {
-            info!("Interrupting mail_stash");
-            for handle in &self.interrupts {
-                handle.interrupt()
-            }
-            self.write_worker_interrupt.interrupt();
-        }
-    }
-
-    /// Resume execution and allow the tethers to proceed.
-    pub fn resume(&self) {
-        info!("Resuming mail_stash");
-        let mut is_interrupted = self.interrupted.lock();
-        *is_interrupted = false;
     }
 
     fn create_connection(
@@ -158,17 +110,5 @@ impl StashConnectionPool {
             State::start_tracking().execute(&c)?;
             Ok(c)
         })
-    }
-}
-
-struct InterruptData {
-    handle: InterruptHandle,
-    interrupt_notifier: PooledTetherInterruptNotifier,
-}
-
-impl InterruptData {
-    fn interrupt(&self) {
-        self.handle.interrupt();
-        self.interrupt_notifier.interrupt();
     }
 }

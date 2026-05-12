@@ -1,16 +1,19 @@
-use crate::stash::{PooledTether, PooledTetherInterruptNotifier};
-use parking_lot::{Condvar, Mutex};
+use crate::stash::{
+    PooledTether, PooledTetherInterruptNotifier, TracedOperation, spawn_read_worker,
+};
+use parking_lot::Mutex;
 pub use rusqlite;
 use rusqlite::{Connection, Error, InterruptHandle, OpenFlags};
 use sqlite_watcher::connection::State;
 use sqlite_watcher::statement::Statement;
 use sqlite_watcher::watcher::Watcher;
-use std::ops::{Deref, DerefMut};
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::time::Duration;
 use tempfile::TempDir;
-use tracing::{Span, debug, info, warn};
+use tracing::{Span, debug, info};
+
+const DEFAULT_READ_WORKERS: usize = 8;
+const READ_CHANNEL_CAPACITY: usize = 32;
 
 #[derive(Debug)]
 enum Source {
@@ -18,26 +21,17 @@ enum Source {
     TmpFile(TempDir),
 }
 
-#[derive(Debug, thiserror::Error)]
-pub enum StashConnectionPoolError {
-    #[error(transparent)]
-    Connection(#[from] Error),
-    #[error("Failed to acquire a connection in the given time limit")]
-    TimedOut,
-}
-
 type InitFn = dyn Fn(&mut Connection) -> Result<(), Error> + Send + Sync + 'static;
 
 pub struct StashConnectionPool {
-    connections: Mutex<Vec<PooledTether>>,
-    connections_cond_var: Condvar,
+    pub(crate) ro_sender: flume::Sender<TracedOperation>,
     interrupts: Vec<InterruptData>,
     interrupted: Mutex<bool>,
-    wait_resume: Condvar,
-    max_connections: usize,
     span: Span,
     pub(crate) write_worker: PooledTether,
     write_worker_interrupt: InterruptData,
+    /// Keeps the temp directory alive for the lifetime of the pool
+    _source: Source,
 }
 
 impl Drop for StashConnectionPool {
@@ -49,97 +43,75 @@ impl Drop for StashConnectionPool {
 }
 
 impl StashConnectionPool {
-    /// Creates a new `StashConnectionPool` from file.
-    ///
-    /// See `rusqlite::Connection::open`
     pub fn file<P: Into<PathBuf>>(
         path: P,
-        max_connections: usize,
+        read_worker_count: Option<usize>,
         init_fn: Box<InitFn>,
         watcher: &Arc<Watcher>,
     ) -> Result<Arc<Self>, Error> {
-        Self::new(Source::File(path.into()), max_connections, init_fn, watcher)
+        Self::new(
+            Source::File(path.into()),
+            read_worker_count,
+            init_fn,
+            watcher,
+        )
     }
 
-    /// Creates a new `StashConnectionPool` pretending to be memory database.
-    /// Due to many issues with shared_cache option and many more without, decision was made
-    /// to build temp file databases and keep them alive in Manager context.
-    /// This allows for flexibility of memory database and stability of file database in nice wrapping.
-    /// Since the production usage is exclusively file database it is nice bonus to run all tests in the
-    /// file.
-    ///
     pub fn tmp_file(
-        max_connections: usize,
+        read_worker_count: Option<usize>,
         init_fn: Box<InitFn>,
         watcher: &Arc<Watcher>,
     ) -> Result<Arc<Self>, Error> {
         let tmp_dir = TempDir::new().expect("failed to create temp dir");
-        Self::new(Source::TmpFile(tmp_dir), max_connections, init_fn, watcher)
+        Self::new(
+            Source::TmpFile(tmp_dir),
+            read_worker_count,
+            init_fn,
+            watcher,
+        )
     }
 
     fn new(
         source: Source,
-        max_connections: usize,
+        read_worker_count: Option<usize>,
         init_fn: Box<InitFn>,
         watcher: &Arc<Watcher>,
     ) -> Result<Arc<Self>, Error> {
-        let connections: Vec<_> = (0..max_connections)
-            .map(|_| Self::create_connection(&source, &init_fn, OpenFlags::default()))
-            .collect::<Result<_, Error>>()?;
+        let read_worker_count = read_worker_count.unwrap_or_else(|| {
+            std::thread::available_parallelism()
+                .map(|n| n.get().saturating_sub(1).max(1))
+                .unwrap_or(DEFAULT_READ_WORKERS)
+        });
+
+        let (ro_sender, ro_receiver) = flume::bounded(READ_CHANNEL_CAPACITY);
+
+        let mut interrupts = Vec::with_capacity(read_worker_count);
+        for i in 0..read_worker_count {
+            let conn = Self::create_connection(&source, &init_fn, OpenFlags::default())?;
+            let handle = spawn_read_worker(conn, ro_receiver.clone(), watcher, i);
+            interrupts.push(InterruptData {
+                handle,
+                interrupt_notifier: PooledTetherInterruptNotifier::new(ro_sender.clone()),
+            });
+        }
 
         let write_conn = Self::create_connection(&source, &init_fn, OpenFlags::default())?;
+        let write_handle = write_conn.get_interrupt_handle();
+        let write_worker = PooledTether::new(write_conn, watcher, read_worker_count);
+        let write_worker_interrupt = InterruptData {
+            handle: write_handle,
+            interrupt_notifier: write_worker.interrupt_notifier(),
+        };
 
-        Ok(Arc::new({
-            let mut interrupts = Vec::with_capacity(connections.len());
-
-            let connections = connections
-                .into_iter()
-                .enumerate()
-                .map(|(idx, conn)| {
-                    let handle = conn.get_interrupt_handle();
-                    let pooled_tether = PooledTether::new(conn, watcher, idx);
-                    interrupts.push(InterruptData {
-                        handle,
-                        interrupt_notifier: pooled_tether.interrupt_notifier(),
-                    });
-                    pooled_tether
-                })
-                .collect();
-
-            let write_handle = write_conn.get_interrupt_handle();
-            let write_worker = PooledTether::new(write_conn, watcher, max_connections);
-            let write_worker_interrupt = InterruptData {
-                handle: write_handle,
-                interrupt_notifier: write_worker.interrupt_notifier(),
-            };
-
-            Self {
-                connections: Mutex::new(connections),
-                connections_cond_var: Condvar::new(),
-                interrupts,
-                interrupted: Default::default(),
-                wait_resume: Condvar::new(),
-                max_connections,
-                span: Span::current(),
-                write_worker,
-                write_worker_interrupt,
-            }
+        Ok(Arc::new(Self {
+            _source: source,
+            ro_sender,
+            interrupts,
+            interrupted: Default::default(),
+            span: Span::current(),
+            write_worker,
+            write_worker_interrupt,
         }))
-    }
-
-    /// Acquire a new connection from the pool.
-    ///
-    /// `notify_interrupt` is required so that all active connections can be notified of a request
-    /// to interrupt the exeuction of sql code.
-    ///
-    /// If connections are available in the pool we use one of those, otherwise we create a new one.
-    pub fn acquire(
-        self: &Arc<Self>,
-        timeout: Option<Duration>,
-    ) -> Result<StashPooledConnection, StashConnectionPoolError> {
-        let connection = self.wait_or_acquire(timeout)?;
-
-        Ok(StashPooledConnection::new(connection, self.clone()))
     }
 
     /// Interrupt all ongoing queries and rollback any active transactions.
@@ -155,7 +127,6 @@ impl StashConnectionPool {
             old_value
         };
 
-        // interrupt all connections
         if !was_interrupted {
             info!("Interrupting mail_stash");
             for handle in &self.interrupts {
@@ -170,57 +141,6 @@ impl StashConnectionPool {
         info!("Resuming mail_stash");
         let mut is_interrupted = self.interrupted.lock();
         *is_interrupted = false;
-        self.wait_resume.notify_all();
-    }
-
-    /// Check whether we can proceed with new sql queries or wait on the user to call `resume()`.
-    #[allow(dead_code)]
-    pub fn check_interrupted_or_wait_resume(&self) {
-        let mut interrupted = self.interrupted.lock();
-        if !*interrupted {
-            return;
-        }
-        info!("Stash is interrupted, waiting on resume");
-        self.wait_resume.wait(&mut interrupted);
-    }
-
-    fn wait_or_acquire(
-        &self,
-        timeout: Option<Duration>,
-    ) -> Result<PooledTether, StashConnectionPoolError> {
-        loop {
-            let mut connections = self.connections.lock();
-
-            if connections.is_empty() {
-                debug!("No connections available, waiting");
-
-                if let Some(timeout) = timeout {
-                    let result = self
-                        .connections_cond_var
-                        .wait_for(&mut connections, timeout);
-
-                    if result.timed_out() {
-                        return Err(StashConnectionPoolError::TimedOut);
-                    }
-                } else {
-                    self.connections_cond_var.wait(&mut connections);
-                }
-            }
-
-            if let Some(connection) = connections.pop() {
-                let available = connections.len();
-                let in_use = self.max_connections - available - 1;
-                if available < self.max_connections / 4 {
-                    warn!(
-                        in_use,
-                        available,
-                        max = self.max_connections,
-                        "Connection pool running low"
-                    );
-                }
-                return Ok(connection);
-            }
-        }
     }
 
     fn create_connection(
@@ -239,49 +159,6 @@ impl StashConnectionPool {
             Ok(c)
         })
     }
-
-    /// Release a connection back to the pool.
-    fn release(&self, connection: PooledTether) {
-        let mut connections = self.connections.lock();
-        connections.push(connection);
-        self.connections_cond_var.notify_one();
-    }
-}
-
-/// A Sqlite Connection managed by the [`StashConnectionPool`].
-///
-/// On drop the connection is returned to the pool.
-pub(crate) struct StashPooledConnection {
-    conn: Option<PooledTether>,
-    pool: Arc<StashConnectionPool>,
-}
-
-impl StashPooledConnection {
-    fn new(connection: PooledTether, pool: Arc<StashConnectionPool>) -> Self {
-        Self {
-            conn: Some(connection),
-            pool,
-        }
-    }
-}
-
-impl Drop for StashPooledConnection {
-    fn drop(&mut self) {
-        self.pool.release(self.conn.take().expect("Should be set"));
-    }
-}
-
-impl Deref for StashPooledConnection {
-    type Target = PooledTether;
-    fn deref(&self) -> &Self::Target {
-        self.conn.as_ref().expect("Should be set")
-    }
-}
-
-impl DerefMut for StashPooledConnection {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        self.conn.as_mut().expect("Should be set")
-    }
 }
 
 struct InterruptData {
@@ -293,37 +170,5 @@ impl InterruptData {
     fn interrupt(&self) {
         self.handle.interrupt();
         self.interrupt_notifier.interrupt();
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn connection_pool_upper_limit() {
-        let watcher = Watcher::new().unwrap();
-        let pool = StashConnectionPool::tmp_file(2, Box::new(|_| Ok(())), &watcher).unwrap();
-
-        let conn1 = pool.acquire(None).unwrap();
-        let _conn2 = pool.acquire(None).unwrap();
-        let r = pool.acquire(Some(Duration::from_millis(200)));
-        assert!(matches!(r, Err(StashConnectionPoolError::TimedOut)));
-        drop(conn1);
-        pool.acquire(Some(Duration::from_millis(200))).unwrap();
-    }
-
-    #[test]
-    fn connection_pool_waits_on_connections_to_be_returned() {
-        let watcher = Watcher::new().unwrap();
-        let pool = StashConnectionPool::tmp_file(2, Box::new(|_| Ok(())), &watcher).unwrap();
-
-        let conn1 = pool.acquire(None).unwrap();
-        let _conn2 = pool.acquire(None).unwrap();
-        std::thread::spawn(move || {
-            std::thread::sleep(Duration::from_millis(300));
-            drop(conn1);
-        });
-        pool.acquire(Some(Duration::from_secs(1))).unwrap();
     }
 }

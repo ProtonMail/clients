@@ -114,7 +114,9 @@ fn handle_scroller_update(update: ScrollerUpdate<MailMessage>) -> Messages {
             tracing::error!("{e:?}");
             e.into()
         }
-        ScrollerUpdate::CategoryViewChanged { .. } => MessageMessage::ScrollerFetchNewEnd.into(),
+        ScrollerUpdate::CategoryViewChanged { category_view, .. } => {
+            MessageMessage::CategoryViewUpdated(category_view).into()
+        }
         ScrollerUpdate::Status(update) => match update {
             ScrollerStatusUpdate::FetchNewStart(_) => MessageMessage::ScrollerFetchNewStart.into(),
             ScrollerStatusUpdate::FetchNewEnd(_) => MessageMessage::ScrollerFetchNewEnd.into(),
@@ -890,6 +892,9 @@ impl MessagesState {
             }
             MessageMessage::ScrollerFetchNewEnd => {
                 self.fetching_new = false;
+            }
+            MessageMessage::CategoryViewUpdated(categories) => {
+                return Command::message(Message::CategoryViewUpdated(categories));
             }
         }
 

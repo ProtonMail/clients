@@ -10,11 +10,13 @@ use crate::app_model::mailbox::{Items, Message, poll_event_loop, refresh};
 use crate::app_model::watcher::TuiWatchHandle;
 use crate::app_model::{AppState, AppStateHandler, HelpPopup, YesNoPopup};
 use crate::messages::Messages;
+use crate::widgets::category_tabs::category_tabs;
 use crate::widgets::{CenteredThrobber, ScrollableListState};
 use anyhow::anyhow;
 use crossterm::event::{KeyCode, KeyModifiers};
 use flume::Sender;
 use futures::FutureExt;
+use mail_common::datatypes::CategoryLabel;
 use mail_stash::UserDb;
 
 use crate::widgets::utils::date_from_timestamp;
@@ -68,6 +70,7 @@ pub struct MailboxModel {
     unread: ReadFilter,
     background_worker_initialized: bool,
     force_event_loop_poll_running: bool,
+    categories: Vec<CategoryLabel>,
 }
 
 impl MailboxModel {
@@ -93,6 +96,7 @@ impl MailboxModel {
             unread: ReadFilter::All,
             background_worker_initialized: false,
             force_event_loop_poll_running: false,
+            categories: vec![],
         })
     }
 
@@ -113,6 +117,7 @@ impl MailboxModel {
     #[must_use]
     fn sync_mailbox(&mut self, mbox: Mailbox) -> Command<Messages> {
         self.state = State::new_syncing();
+        self.categories = vec![];
 
         let ctx = Arc::clone(&self.ctx);
 
@@ -219,7 +224,33 @@ impl MailboxModel {
         self.mailbox = mbox;
         self.label = label;
         self.state = State::Conversations(state);
-        self.build_item_count_query()
+        Command::batch([
+            self.build_item_count_query(),
+            self.fetch_initial_categories(),
+        ])
+    }
+
+    fn fetch_initial_categories(&self) -> Command<Messages> {
+        let State::Conversations(state) = &self.state else {
+            return Command::None;
+        };
+        let scroller = state.scroller().clone_inner();
+        let ctx = Arc::clone(&self.ctx);
+        Command::task(async move {
+            let category_view = match scroller.category_view().await {
+                Ok(v) => v,
+                Err(_) => return Command::None,
+            };
+            if category_view.available.is_empty() {
+                return Command::None;
+            }
+            let tether = match ctx.user_stash().connection().await {
+                Ok(t) => t,
+                Err(_) => return Command::None,
+            };
+            let categories = category_view.into_labels(&tether).await.unwrap_or_default();
+            Command::message(Message::CategoryViewUpdated(categories))
+        })
     }
 
     fn open_message_view(
@@ -359,6 +390,30 @@ impl MailboxModel {
                 .map(|scroller| scroller.clone_inner().clear());
         }
     }
+
+    fn advance_category(&mut self) {
+        self.switch_category(1);
+    }
+
+    fn prev_category(&mut self) {
+        self.switch_category(-1);
+    }
+
+    fn switch_category(&mut self, delta: i64) {
+        if self.categories.is_empty() {
+            return;
+        }
+        let active_idx = self.categories.iter().position(|c| c.enabled).unwrap_or(0);
+        let len = self.categories.len() as i64;
+        let next_idx = ((active_idx as i64 + delta).rem_euclid(len)) as usize;
+        let next_id = self.categories[next_idx].local_id;
+        if let State::Conversations(state) = &self.state {
+            let _ = state
+                .scroller()
+                .clone_inner()
+                .change_category_view(Some(next_id));
+        }
+    }
 }
 
 impl AppStateHandler for MailboxModel {
@@ -466,6 +521,24 @@ impl AppStateHandler for MailboxModel {
             return Command::Message(Message::SearchPopup(Search::new()).into());
         }
 
+        if let Event::Key(key) = &event
+            && key.code == KeyCode::Tab
+        {
+            if let State::Conversations(_) = &self.state {
+                self.advance_category();
+            }
+            return Command::None;
+        }
+
+        if let Event::Key(key) = &event
+            && key.code == KeyCode::BackTab
+        {
+            if let State::Conversations(_) = &self.state {
+                self.prev_category();
+            }
+            return Command::None;
+        }
+
         match &mut self.state {
             State::Syncing(_) => Command::None,
             State::Conversations(state) => state.handle_event(&self.ctx, &self.mailbox, &event),
@@ -560,6 +633,10 @@ impl AppStateHandler for MailboxModel {
                     &self.ctx,
                 ))
             }
+            Message::CategoryViewUpdated(categories) => {
+                self.categories = categories;
+                Command::None
+            }
         }
     }
 
@@ -626,10 +703,21 @@ impl AppStateHandler for MailboxModel {
     }
 
     fn help_bar_lines(&self) -> u16 {
-        1
+        1 + u16::from(!self.categories.is_empty())
     }
-    fn view_help_bar(&mut self, frame: &mut Frame, area: Rect) {
-        frame.render_widget(Line::from("Press F1/h to display the help popup"), area);
+
+    fn view_top_bar(&mut self, frame: &mut Frame, area: Rect) {
+        if self.categories.is_empty() {
+            frame.render_widget(Line::from("Press F1/h to display the help popup"), area);
+            return;
+        }
+        let [help_area, tab_area] =
+            Layout::vertical([Constraint::Length(1), Constraint::Length(1)]).areas(area);
+        frame.render_widget(
+            Line::from("Press F1/h to display the help popup"),
+            help_area,
+        );
+        frame.render_widget(category_tabs(&self.categories), tab_area);
     }
 
     fn view_status_bar(&mut self, frame: &mut Frame, area: Rect) {

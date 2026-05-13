@@ -98,7 +98,10 @@ pub struct SearchMatchPosition {
 /// 1. Calls the search service to get raw results with remote IDs
 /// 2. Looks up each remote ID in the database to find the local ID
 /// 3. Filters out results where the message no longer exists locally
-/// 4. Returns results with local IDs suitable for the UI
+/// 4. Sorts by the same `score` values we expose on [`LocalSearchResult`] (best first).
+///    The engine ranks before conversion, but we re-sort here so persisted `display_order`
+///    (and hybrid scroll order) always matches surfaced relevance scores.
+/// 5. Returns results with local IDs suitable for the UI
 pub async fn search_local_with_keywords(
     search_service: &MailSearchService,
     tether: &Tether,
@@ -118,6 +121,13 @@ pub async fn search_local_with_keywords(
             results.push(result);
         }
     }
+
+    // Highest relevance first, stable tie-break for deterministic ordering.
+    results.sort_by(|a, b| {
+        b.score
+            .total_cmp(&a.score)
+            .then_with(|| a.local_message_id.cmp(&b.local_message_id))
+    });
 
     Ok(results)
 }

@@ -183,8 +183,8 @@ async fn main() -> Result<(), anyhow::Error> {
     if no_telemetry {
         let mut tether = user_ctx.user_stash().connection();
         tether
-            .tx::<_, (), anyhow::Error>(async |bond| {
-                bond.execute("UPDATE user_settings SET telemetry = 0", params![])
+            .write_tx::<_, (), anyhow::Error>(async |tx| {
+                tx.execute("UPDATE user_settings SET telemetry = 0", params![])
                     .await?;
                 Ok(())
             })
@@ -214,6 +214,7 @@ async fn main() -> Result<(), anyhow::Error> {
             max_messages,
             page_size,
             ephemeral_concurrency,
+            None, // continuation: start from newest
         )
         .await
         .map_err(|e| anyhow::anyhow!("Ephemeral historic load failed: {}", e))?;

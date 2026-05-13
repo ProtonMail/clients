@@ -201,27 +201,51 @@ impl MailUserSession {
     /// * `max_messages` - Maximum number of messages to process
     /// * `page_size` - Page size for metadata fetching (capped to API max of 200)
     /// * `concurrent_body_fetches` - Max concurrent API body fetches (only used when no fixture source)
+    /// * `continuation` - Optional anchor from a previous result’s oldest message; fetches the next older messages instead of restarting from newest
     pub async fn historic_load_ephemeral(
         &self,
         label_id: Option<String>,
         max_messages: u64,
         page_size: u64,
         concurrent_body_fetches: u64,
+        continuation: Option<crate::mail::datatypes::HistoricLoadContinuation>,
     ) -> Result<crate::mail::datatypes::EphemeralHistoricLoadResult, UserSessionError> {
+        use mail_api::services::proton::common::MessageId;
         use mail_core_api::services::proton::LabelId as RealLabelId;
-        use mail_historic_search_load::ephemeral_index_only_messages;
+        use mail_historic_search_load::{HistoricFetchContinuation, ephemeral_index_only_messages};
 
         let ctx = self.ctx()?;
         let label_id = label_id.map(RealLabelId::from);
         let max_messages = usize::try_from(max_messages).unwrap_or(usize::MAX);
         let page_size = usize::try_from(page_size).unwrap_or(200);
         let concurrent = usize::try_from(concurrent_body_fetches).unwrap_or(10);
+        let continuation_inner = match continuation {
+            None => None,
+            Some(c) => {
+                let id = c.anchor_message_id.trim();
+                if id.is_empty() {
+                    return Err(UserSessionError::Other(ProtonError::Unexpected(
+                        UnexpectedError::InvalidArgument,
+                    )));
+                }
+                Some(HistoricFetchContinuation {
+                    anchor_time: c.anchor_time,
+                    anchor_message_id: MessageId::from(id.to_owned()),
+                })
+            }
+        };
 
         uniffi_async(async move {
-            let result =
-                ephemeral_index_only_messages(&ctx, label_id, max_messages, page_size, concurrent)
-                    .await
-                    .map_err(RealProtonMailError::from)?;
+            let result = ephemeral_index_only_messages(
+                &ctx,
+                label_id,
+                max_messages,
+                page_size,
+                concurrent,
+                continuation_inner,
+            )
+            .await
+            .map_err(RealProtonMailError::from)?;
 
             Result::<_, RealProtonMailError>::Ok(
                 crate::mail::datatypes::EphemeralHistoricLoadResult {

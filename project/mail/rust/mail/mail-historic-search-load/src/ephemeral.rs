@@ -27,6 +27,7 @@ use mail_search::MessageMetadata;
 use tracing::info;
 
 use crate::ephemeral_timing;
+use crate::historic_load::HistoricFetchContinuation;
 
 #[derive(Debug, Clone)]
 pub struct EphemeralHistoricLoadResult {
@@ -43,6 +44,7 @@ pub async fn ephemeral_index_only_messages(
     max_messages: usize,
     page_size: usize,
     concurrent_body_fetches: usize,
+    continuation: Option<HistoricFetchContinuation>,
 ) -> Result<EphemeralHistoricLoadResult, MailContextError> {
     let remote_label_id = label_id.unwrap_or_else(LabelId::all_mail);
     let session = user_ctx.session();
@@ -57,13 +59,26 @@ pub async fn ephemeral_index_only_messages(
         );
     }
 
+    let mut total_pages: usize = if continuation.is_some() { 1 } else { 0 };
+    let mut last_message_id = continuation.as_ref().map(|c| c.anchor_message_id.clone());
+    let mut last_message_time = continuation.as_ref().map(|c| c.anchor_time);
     let mut page_requests: u32 = 0;
     let mut total_fetched = 0usize;
     let mut total_indexed = 0usize;
     let mut total_skipped_missing_body = 0usize;
-    let mut last_message_id: Option<MessageId> = None;
-    let mut last_message_time: Option<u64> = None;
     let mut oldest_saved: Option<(u64, MessageId)> = None;
+
+    if let Some(c) = &continuation {
+        if c.anchor_message_id.as_str().is_empty() {
+            return Err(MailContextError::Other(anyhow::anyhow!(
+                "Historic fetch continuation: anchor_message_id must not be empty"
+            )));
+        }
+        info!(
+            "Resuming ephemeral historic fetch from anchor time={} id={}",
+            c.anchor_time, c.anchor_message_id
+        );
+    }
 
     loop {
         if total_fetched >= max_messages {
@@ -75,7 +90,7 @@ pub async fn ephemeral_index_only_messages(
 
         let mut opts = GetMessagesOptions {
             label_id: Some(vec![remote_label_id.clone()]),
-            page_size: if page_requests == 1 {
+            page_size: if total_pages == 0 {
                 effective_page_size as u64
             } else {
                 (effective_page_size as u64) + 1
@@ -86,7 +101,7 @@ pub async fn ephemeral_index_only_messages(
             ..Default::default()
         };
 
-        if page_requests > 1 {
+        if total_pages > 0 {
             let anchor_time = last_message_time.expect("anchor_time should exist after first page");
             let anchor_id = last_message_id
                 .as_ref()
@@ -105,7 +120,7 @@ pub async fn ephemeral_index_only_messages(
         }
 
         let mut messages = response.messages;
-        if page_requests > 1
+        if total_pages > 0
             && !messages.is_empty()
             && let Some(last_id) = &last_message_id
         {
@@ -297,6 +312,7 @@ pub async fn ephemeral_index_only_messages(
             last_message_id = Some(anchor.id.clone());
             last_message_time = Some(anchor.time);
         }
+        total_pages = total_pages.saturating_add(1);
 
         info!(
             "Ephemeral page {}: fetched={} indexed={} skipped={} | metadata={:.1}ms bodies={:.1}ms index={:.1}ms total={:.1}ms",

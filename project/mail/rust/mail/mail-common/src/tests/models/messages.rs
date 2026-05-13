@@ -923,7 +923,13 @@ async fn test_create_message_with_attachments() {
 async fn test_update_message() {
     let (mail_stash, _db_dir) = new_test_connection_file().await;
     let mut tether = mail_stash.connection();
-    tether.execute("DELETE FROM labels", vec![]).await.unwrap();
+    tether
+        .write_tx::<_, _, StashError>(async |tx| {
+            tx.execute("DELETE FROM labels", vec![]).await?;
+            Ok(())
+        })
+        .await
+        .unwrap();
     test_create_message_dependencies_core(&mut tether).await;
     let _conv_id = test_create_message_dependencies(&mut tether).await;
     tether

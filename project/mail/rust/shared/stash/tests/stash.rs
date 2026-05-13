@@ -1,23 +1,31 @@
 use mail_stash::params;
-use mail_stash::stash::{Stash, Tether, WriteTx};
+use mail_stash::stash::{Stash, StashError, Tether, WriteTx};
 use std::thread::spawn;
 use std::time::Duration;
 use tokio::spawn as async_spawn;
 use tokio::time::sleep;
 
-async fn create_table(tether: &Tether) {
+async fn create_table(tether: &mut Tether) {
     tether
-        .execute(r#"CREATE TABLE test_kv (value TEXT NOT NULL)"#, vec![])
+        .write_tx::<_, _, StashError>(async |tx| {
+            tx.execute(r#"CREATE TABLE test_kv (value TEXT NOT NULL)"#, vec![])
+                .await?;
+            Ok(())
+        })
         .await
         .unwrap();
 }
 
-async fn insert(tether: &Tether, value: &str) {
+async fn insert(tether: &mut Tether, value: &str) {
     tether
-        .execute(
-            r#"INSERT INTO test_kv (value) VALUES (?)"#,
-            params![value.to_owned()],
-        )
+        .write_tx::<_, _, StashError>(async |tx| {
+            tx.execute(
+                r#"INSERT INTO test_kv (value) VALUES (?)"#,
+                params![value.to_owned()],
+            )
+            .await?;
+            Ok(())
+        })
         .await
         .unwrap();
 }
@@ -65,17 +73,17 @@ mod concurrency_basic_sync {
         let db_dir = tempfile::tempdir().unwrap();
         let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
-        let conn = mail_stash.connection();
+        let mut conn = mail_stash.connection();
 
-        // Create a table
-        conn.execute(r#"CREATE TABLE test_kv (value TEXT NOT NULL)"#, vec![])
-            .await
-            .unwrap();
-
-        // Insert some data
-        conn.execute(r#"INSERT INTO test_kv (value) VALUES ("test")"#, vec![])
-            .await
-            .unwrap();
+        conn.write_tx::<_, _, super::StashError>(async |tx| {
+            tx.execute(r#"CREATE TABLE test_kv (value TEXT NOT NULL)"#, vec![])
+                .await?;
+            tx.execute(r#"INSERT INTO test_kv (value) VALUES ("test")"#, vec![])
+                .await?;
+            Ok(())
+        })
+        .await
+        .unwrap();
 
         // Query the data
         let result = conn
@@ -165,10 +173,10 @@ mod concurrency_async_functions {
         let db_dir = tempfile::tempdir().unwrap();
         let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
-        let conn = mail_stash.connection();
+        let mut conn = mail_stash.connection();
 
-        create_table(&conn).await;
-        insert(&conn, "test").await;
+        create_table(&mut conn).await;
+        insert(&mut conn, "test").await;
         let result = query(&conn, "test").await;
 
         assert_eq!(result.len(), 1);
@@ -206,11 +214,11 @@ mod concurrency_async_threads {
         let db_dir = tempfile::tempdir().unwrap();
         let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
-        let conn = mail_stash.connection();
+        let mut conn = mail_stash.connection();
 
         let result = async_spawn(async move {
-            create_table(&conn).await;
-            insert(&conn, "test").await;
+            create_table(&mut conn).await;
+            insert(&mut conn, "test").await;
             query(&conn, "test").await
         })
         .await
@@ -250,9 +258,9 @@ mod concurrency_async_threads {
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
         let stash1 = mail_stash.clone();
         let stash2 = mail_stash.clone();
-        let conn = mail_stash.connection();
+        let mut conn = mail_stash.connection();
 
-        create_table(&conn).await;
+        create_table(&mut conn).await;
 
         // First thread, with first transaction
         let handle1 = async_spawn(async move {
@@ -311,9 +319,9 @@ mod concurrency_std_threads {
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
         let stash1 = mail_stash.clone();
         let stash2 = mail_stash.clone();
-        let conn = mail_stash.connection();
+        let mut conn = mail_stash.connection();
 
-        create_table(&conn).await;
+        create_table(&mut conn).await;
 
         // First thread, with first transaction
         let handle1 = spawn(move || {
@@ -376,7 +384,7 @@ mod concurrency_mixed {
         let db_dir = tempfile::tempdir().unwrap();
         let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
-        let conn = mail_stash.connection();
+        let mut conn = mail_stash.connection();
         let stash1 = mail_stash.clone();
         let stash2 = mail_stash.clone();
         let stash3 = mail_stash.clone();
@@ -387,7 +395,7 @@ mod concurrency_mixed {
         let stash8 = mail_stash.clone();
         let stash9 = mail_stash.clone();
 
-        create_table(&conn).await;
+        create_table(&mut conn).await;
 
         // First thread (std), with first transaction
         let handle1 = spawn(move || {
@@ -424,8 +432,8 @@ mod concurrency_mixed {
         // Third thread (std), with no transaction
         let handle3 = spawn(move || {
             Runtime::new().unwrap().block_on(async {
-                let conn3 = stash3.connection();
-                insert(&conn3, "test3").await;
+                let mut conn3 = stash3.connection();
+                insert(&mut conn3, "test3").await;
                 sleep(Duration::from_millis(100)).await;
                 query(&conn3, "test3").await
             })
@@ -460,8 +468,8 @@ mod concurrency_mixed {
 
         // Sixth thread (async), with no transaction
         let handle6 = async_spawn(async move {
-            let conn6 = stash6.connection();
-            insert(&conn6, "test6").await;
+            let mut conn6 = stash6.connection();
+            insert(&mut conn6, "test6").await;
             sleep(Duration::from_millis(100)).await;
             query(&conn6, "test6").await
         });
@@ -474,14 +482,11 @@ mod concurrency_mixed {
         let result5 = handle5.await.unwrap();
         let result6 = handle6.await.unwrap();
 
-        let conn7 = stash7.connection();
+        let mut conn7 = stash7.connection();
         // Additional write queries
-        conn7
-            .execute(r#"INSERT INTO test_kv (value) VALUES ("test7")"#, vec![])
-            .await
-            .unwrap();
-        let conn8 = stash8.connection();
-        insert(&conn8, "test8").await;
+        insert(&mut conn7, "test7").await;
+        let mut conn8 = stash8.connection();
+        insert(&mut conn8, "test8").await;
         let mut conn9 = stash9.connection();
         let result9 = conn9
             .write_tx::<_, _, StashError>(async |tx| {
@@ -664,13 +669,15 @@ mod read_tx_tests {
         let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
 
-        let setup_conn = mail_stash.connection();
+        let mut setup_conn = mail_stash.connection();
         setup_conn
-            .execute(r#"CREATE TABLE test_foo (foo INTEGER NOT NULL)"#, vec![])
-            .await
-            .unwrap();
-        setup_conn
-            .execute(r#"INSERT INTO test_foo (foo) VALUES (4)"#, vec![])
+            .write_tx::<_, _, StashError>(async |tx| {
+                tx.execute(r#"CREATE TABLE test_foo (foo INTEGER NOT NULL)"#, vec![])
+                    .await?;
+                tx.execute(r#"INSERT INTO test_foo (foo) VALUES (4)"#, vec![])
+                    .await?;
+                Ok(())
+            })
             .await
             .unwrap();
 
@@ -729,12 +736,15 @@ mod read_tx_tests {
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
 
         let mut conn = mail_stash.connection();
-        conn.execute(r#"CREATE TABLE test_foo (foo INTEGER NOT NULL)"#, vec![])
-            .await
-            .unwrap();
-        conn.execute(r#"INSERT INTO test_foo (foo) VALUES (4)"#, vec![])
-            .await
-            .unwrap();
+        conn.write_tx::<_, _, StashError>(async |tx| {
+            tx.execute(r#"CREATE TABLE test_foo (foo INTEGER NOT NULL)"#, vec![])
+                .await?;
+            tx.execute(r#"INSERT INTO test_foo (foo) VALUES (4)"#, vec![])
+                .await?;
+            Ok(())
+        })
+        .await
+        .unwrap();
 
         conn.read_tx::<_, _, StashError>(async |rtx| {
             let update_result = rtx.execute(r#"UPDATE test_foo SET foo = 6"#, vec![]).await;
@@ -765,5 +775,77 @@ mod read_tx_tests {
             .await
             .unwrap();
         assert_eq!(after, vec![4]);
+    }
+}
+
+#[cfg(test)]
+mod read_only_enforcement {
+    use mail_stash::stash::{Stash, StashError};
+    use mail_stash::{UserDb, params};
+
+    /// Writes routed through a bare `Tether` (no `write_tx`/`pragma`) must
+    /// land on the RO pool and fail with `SQLITE_READONLY`.
+    #[tokio::test]
+    async fn tether_execute_rejects_writes() {
+        let db_dir = tempfile::tempdir().unwrap();
+        let mail_stash: Stash<UserDb> =
+            Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
+
+        let mut conn = mail_stash.connection();
+        conn.write_tx::<_, _, StashError>(async |tx| {
+            tx.execute(r#"CREATE TABLE t (x INTEGER NOT NULL)"#, vec![])
+                .await?;
+            Ok(())
+        })
+        .await
+        .unwrap();
+
+        let insert_via_tether = conn
+            .execute(r#"INSERT INTO t (x) VALUES (?)"#, params![1_i64])
+            .await;
+        assert!(
+            insert_via_tether.is_err(),
+            "INSERT via Tether::execute should hit the RO pool and fail, got {insert_via_tether:?}"
+        );
+
+        let rows: Vec<i64> = conn
+            .query_values::<_, i64>(r#"SELECT x FROM t"#, vec![])
+            .await
+            .unwrap();
+        assert!(rows.is_empty(), "no row should have been inserted");
+    }
+
+    /// `pragma` round-trips a PRAGMA statement through the write worker
+    /// without wrapping in `BEGIN`/`COMMIT`.
+    #[tokio::test]
+    async fn pragma_round_trip() {
+        let db_dir = tempfile::tempdir().unwrap();
+        let mail_stash: Stash<UserDb> =
+            Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
+
+        let mut conn = mail_stash.connection();
+        conn.pragma("user_version = 42").await.unwrap();
+
+        let version: i64 = conn
+            .query_value::<_, i64>("PRAGMA user_version", vec![])
+            .await
+            .unwrap();
+        assert_eq!(version, 42);
+    }
+
+    /// Brand-new database file: confirm that the write connection's init_fn
+    /// actually got `page_size = 8192` to stick.
+    #[tokio::test]
+    async fn page_size_takes_effect_on_first_run() {
+        let db_dir = tempfile::tempdir().unwrap();
+        let mail_stash: Stash<UserDb> =
+            Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
+
+        let conn = mail_stash.connection();
+        let page_size: i64 = conn
+            .query_value::<_, i64>("PRAGMA page_size", vec![])
+            .await
+            .unwrap();
+        assert_eq!(page_size, 8192);
     }
 }

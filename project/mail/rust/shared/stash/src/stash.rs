@@ -14,7 +14,7 @@
 //! Under the bonnet, there is a background worker that manages the connection
 //!
 
-use crate::connection_manager::StashConnectionPool;
+use crate::connection_manager::{InitFns, StashConnectionPool};
 use crate::marker::DatabaseMarker;
 use crate::orm::{ConversionError, DbRecord};
 use anyhow::{Context, anyhow};
@@ -495,25 +495,27 @@ impl<Db: DatabaseMarker> Stash<Db> {
 
         let read_worker_count = pool_size.map(|s| s as usize);
 
-        let init_fn = Box::new(|c: &mut Connection| {
-            c.execute_batch(&formatdoc!(
-                "
-                        PRAGMA journal_mode = WAL;         -- Better write-concurrency
-                        PRAGMA synchronous = NORMAL;       -- Perform fsync only at critical points
-                        PRAGMA busy_timeout = {};          -- Wait if the database is busy/locked
-                        PRAGMA foreign_keys = ON;          -- Enforce foreign key constraints
-                        PRAGMA temp_store = MEMORY;        -- Allows temporary storage for watcher
-                        PRAGMA recursive_triggers='ON';    -- Allows recursive triggers for watcher
-                        PRAGMA page_size = 8192;
-                        PRAGMA cache_size = 10000;
-                    ",
-                BUSY_TIMEOUT.as_millis()
-            ))?;
-            // Ensure on iOS wall checkpointing is disabled on close. We could have set this
-            // up as a configuration option, but we may forget to set this correctly in the
-            // future and re-introduce this bug.
+        // Pragmas valid on both RW and RO connections. `synchronous`, `busy_timeout`,
+        // `foreign_keys`, `temp_store`, `recursive_triggers`, `cache_size` are all
+        // per-connection settings and do not need write access to the database.
+        let common_pragmas = formatdoc!(
+            "
+                PRAGMA synchronous = NORMAL;       -- Perform fsync only at critical points
+                PRAGMA busy_timeout = {};          -- Wait if the database is busy/locked
+                PRAGMA foreign_keys = ON;          -- Enforce foreign key constraints
+                PRAGMA temp_store = MEMORY;        -- Allows temporary storage for watcher
+                PRAGMA recursive_triggers='ON';    -- Allows recursive triggers for watcher
+                PRAGMA cache_size = 10000;
+            ",
+            BUSY_TIMEOUT.as_millis()
+        );
+
+        // iOS-specific db config. Harmless on RO connections (they never
+        // checkpoint), but we set it unconditionally so RO/RW stay in lockstep
+        // if RO ever accidentally gains write capability in the future.
+        fn ios_set_no_ckpt_on_close(_c: &Connection) -> Result<(), SqliteError> {
             #[cfg(target_os = "ios")]
-            if !c.set_db_config(
+            if !_c.set_db_config(
                 rusqlite::config::DbConfig::SQLITE_DBCONFIG_NO_CKPT_ON_CLOSE,
                 true,
             )? {
@@ -522,12 +524,42 @@ impl<Db: DatabaseMarker> Stash<Db> {
                 ));
             }
             Ok(())
+        }
+
+        let init_rw = {
+            let common_pragmas = common_pragmas.clone();
+            Box::new(move |c: &mut Connection| {
+                // `page_size` MUST be set before `journal_mode = WAL`. The WAL
+                // switch writes the database header at the current page size,
+                // after which page_size becomes a no-op in WAL mode (VACUUM
+                // can't change it either). Both PRAGMAs need a writable
+                // connection, so they belong on the write conn only.
+                c.execute_batch(&formatdoc!(
+                    "
+                        PRAGMA page_size = 8192;
+                        PRAGMA journal_mode = WAL;         -- Better write-concurrency
+                        {}
+                    ",
+                    common_pragmas
+                ))?;
+                ios_set_no_ckpt_on_close(c)
+            })
+        };
+
+        let init_ro = Box::new(move |c: &mut Connection| {
+            c.execute_batch(&common_pragmas)?;
+            ios_set_no_ckpt_on_close(c)
         });
 
+        let init_fns = InitFns {
+            rw: init_rw,
+            ro: init_ro,
+        };
+
         match path {
-            Some(p) => StashConnectionPool::file(p, read_worker_count, init_fn, watcher)
+            Some(p) => StashConnectionPool::file(p, read_worker_count, init_fns, watcher)
                 .map_err(StashError::ExecutionError),
-            None => StashConnectionPool::tmp_file(read_worker_count, init_fn, watcher)
+            None => StashConnectionPool::tmp_file(read_worker_count, init_fns, watcher)
                 .map_err(StashError::ExecutionError),
         }
     }
@@ -692,6 +724,39 @@ impl<Db: DatabaseMarker> Tether<Db> {
         receiver
             .await
             .expect("Tether closed its channel with handles still open")
+    }
+
+    /// Run a `PRAGMA` statement against the write worker.
+    ///
+    /// `body` is the PRAGMA payload without the leading keyword — e.g.
+    /// `tether.pragma("foreign_keys = OFF")` runs `PRAGMA foreign_keys = OFF`.
+    /// PRAGMAs cannot live inside an open transaction (`PRAGMA foreign_keys`
+    /// is a documented no-op there), which is why they route through this
+    /// dedicated path rather than `write_tx`.
+    ///
+    /// Acquires the same write lock as `write_tx`/`sync_write_tx` for the
+    /// duration of the call so the PRAGMA runs between transactions, never
+    /// inside another caller's open `write_tx`.
+    pub async fn pragma(&mut self, body: &str) -> Result<(), StashError> {
+        let rw_sender = self.rw_sender.clone();
+        let guard = rw_sender.lock().await;
+
+        let (sender, receiver) = oneshot::channel();
+        let operation = Operation::Execution(OperationExec::Instruct(Instruction {
+            sender,
+            params: vec![],
+            query: format!("PRAGMA {body}"),
+        }));
+
+        guard
+            .send_async(operation.into())
+            .await
+            .map_err(|_| anyhow!("The mail_stash worker dropped"))?;
+
+        receiver
+            .await
+            .map_err(|_| anyhow!("The mail_stash worker dropped"))??;
+        Ok(())
     }
 
     /// Runs batch of queries separated by `;`. It does not return any result.
@@ -1196,11 +1261,7 @@ fn read_worker_loop(connection: Connection, receiver: flume::Receiver<TracedOper
 
         match traced_op.operation {
             Operation::Transaction(OperationTransaction::StartRead { response }) => {
-                if let Err(e) = connection
-                    .pragma_update(None, "query_only", "ON")
-                    .and_then(|()| connection.execute_batch("BEGIN DEFERRED"))
-                {
-                    let _ = connection.pragma_update(None, "query_only", "OFF");
+                if let Err(e) = connection.execute_batch("BEGIN DEFERRED") {
                     let _ = response.send(Err(StashError::TransactionError(e)));
                     continue;
                 }
@@ -1225,7 +1286,6 @@ fn read_worker_loop(connection: Connection, receiver: flume::Receiver<TracedOper
                 if let Err(e) = connection.execute_batch("ROLLBACK") {
                     error!("Failed to ROLLBACK read transaction: {e:?}");
                 }
-                let _ = connection.pragma_update(None, "query_only", "OFF");
             }
 
             Operation::Execution(exec) => {

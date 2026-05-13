@@ -544,7 +544,13 @@ mod tests {
     #[tokio::test]
     async fn test_remote_label_update() {
         let mut tether = new_label_test_connection().await.connection();
-        tether.execute("DELETE FROM labels", vec![]).await.unwrap();
+        tether
+            .write_tx::<_, _, StashError>(async |tx| {
+                tx.execute("DELETE FROM labels", vec![]).await?;
+                Ok(())
+            })
+            .await
+            .unwrap();
         let mut labels = test_labels()
             .into_iter()
             .map(Label::from)

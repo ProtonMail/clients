@@ -4,11 +4,9 @@ use std::collections::HashMap;
 use lattice::{
     LatticeError, LtContract, LtNoQueryParams, LtSerdeQueryParams, LtSlimAPIJSON, Method,
 };
-use serde::Deserializer;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 
-use crate::{CONTACT_GROUP_LABEL_TYPE, CORE_V4};
-use crate::{ContactGroup, ContactGroupId};
+use crate::{CONTACT_GROUP_LABEL_TYPE, CORE_V4, ContactGroup, ContactGroupId};
 
 #[derive(Debug)]
 pub struct GetContactGroupsRequest;

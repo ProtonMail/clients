@@ -5,8 +5,8 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-contact-database = {workspace = true}
-contact-lattice = {workspace = true}
+contact-database = { workspace = true }
+contact-lattice = { workspace = true }
 
 [lints]
 workspace = true

@@ -6,7 +6,7 @@ use mail_stash::{params, stash::StashError};
 #[async_trait]
 impl<T: ContactEventStorageContext> EventStore<T> for ContactEventLoopV6Context {
     async fn load(&self, ctx: &T) -> anyhow::Result<Option<core_event_loop::EventId>> {
-        let tether = ctx.get_contact_stash().connection().await?;
+        let tether = ctx.get_contact_stash().connection();
 
         let result = tether
             .query_value_opt::<String>(
@@ -32,7 +32,7 @@ impl<T: ContactEventStorageContext> EventStore<T> for ContactEventLoopV6Context 
     }
 
     async fn store(&self, ctx: &T, id: core_event_loop::EventId) -> anyhow::Result<()> {
-        let mut tether = ctx.get_contact_stash().connection().await?;
+        let mut tether = ctx.get_contact_stash().connection();
         tether
             .write_tx::<_, _, StashError>(async |tx| {
                 // Also update old mail location in case of v5 revert

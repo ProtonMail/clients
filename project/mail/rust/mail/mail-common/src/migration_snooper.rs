@@ -31,7 +31,6 @@ impl MigrationSnooper for MailMigrationSnooper {
         self.ctx
             .account_stash()
             .connection()
-            .await?
             .write_tx(async |tx| {
                 PostLoginMobileMigrationPayload {
                     user_id: user_id.into(),
@@ -107,7 +106,7 @@ mod tests {
     #[tokio::test]
     async fn test() {
         let ctx = TestContext::new().await;
-        let mut tether = ctx.context().account_stash().connection().await.unwrap();
+        let mut tether = ctx.context().account_stash().connection();
 
         assert_eq!(
             None,

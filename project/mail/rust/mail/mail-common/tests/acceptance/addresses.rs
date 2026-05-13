@@ -30,7 +30,7 @@ async fn address_delete_event() {
     ctx.setup_user(params.clone()).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     // crate a message with this address.
     let msgs = address_ids

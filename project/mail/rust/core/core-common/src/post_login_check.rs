@@ -135,7 +135,7 @@ impl DefaultPostLoginValidator {
                 return Ok(None);
             }
         };
-        UserTable::load(user_id, &user_stash.connection().await?).await
+        UserTable::load(user_id, &user_stash.connection()).await
     }
 }
 

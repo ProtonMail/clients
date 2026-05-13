@@ -97,7 +97,7 @@ pub async fn assigned_swipe_actions(
 ) -> Result<AssignedSwipeActions, ActionError> {
     let mail_stash = session.user_stash()?;
     uniffi_async(async move {
-        let tether = mail_stash.connection().await?;
+        let tether = mail_stash.connection();
         let actions = RealAssignedSwipeActions::get(current_folder.into(), &tether).await?;
 
         Ok::<_, RealProtonMailError>(AssignedSwipeActions::from(actions))

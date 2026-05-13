@@ -68,7 +68,7 @@ fn test_encryption() {
 #[tokio::test]
 async fn test_session_store_load() {
     let key = SessionEncryptionKey::random();
-    let mut tether = new_test_connection().await.connection().await.unwrap();
+    let mut tether = new_test_connection().await.connection();
     let account = new_test_account(&mut tether).await.unwrap();
     let session_id = SessionId::from("remote_id");
     let tokens = new_test_tokens();
@@ -98,7 +98,7 @@ async fn test_session_store_load() {
 #[tokio::test]
 async fn test_session_update() {
     let key = SessionEncryptionKey::random();
-    let mut tether = new_test_connection().await.connection().await.unwrap();
+    let mut tether = new_test_connection().await.connection();
     let account = new_test_account(&mut tether).await.unwrap();
     let session_id = SessionId::from("remote_id");
     let tokens = new_test_tokens();
@@ -149,7 +149,7 @@ async fn test_session_update() {
 #[tokio::test]
 async fn test_session_delete_user_id() {
     let key = SessionEncryptionKey::random();
-    let mut tether = new_test_connection().await.connection().await.unwrap();
+    let mut tether = new_test_connection().await.connection();
     let account = new_test_account(&mut tether).await.unwrap();
     let session_id = SessionId::from("remote_id");
     let tokens = new_test_tokens();
@@ -184,7 +184,7 @@ async fn test_session_delete_user_id() {
 #[tokio::test]
 async fn test_session_delete_session_id() {
     let key = SessionEncryptionKey::random();
-    let mut tether = new_test_connection().await.connection().await.unwrap();
+    let mut tether = new_test_connection().await.connection();
     let account = new_test_account(&mut tether).await.unwrap();
     let session_id = SessionId::from("remote_id");
     let tokens = new_test_tokens();
@@ -219,7 +219,7 @@ async fn test_session_delete_session_id() {
 #[tokio::test]
 async fn multiple_sessions_per_account_is_an_error() {
     let key = SessionEncryptionKey::random();
-    let mut tether = new_test_connection().await.connection().await.unwrap();
+    let mut tether = new_test_connection().await.connection();
     let account = new_test_account(&mut tether).await.unwrap();
     let session_id = SessionId::from("remote_id");
     let session_id2 = SessionId::from("remote_id2");
@@ -244,7 +244,7 @@ async fn multiple_sessions_per_account_is_an_error() {
 async fn test_session_observer() {
     let key = SessionEncryptionKey::random();
     let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
 
     let user_id1 = UserId::from("user-1");
     let user_id2 = UserId::from("user-2");

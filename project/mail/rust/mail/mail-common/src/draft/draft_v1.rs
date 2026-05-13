@@ -125,7 +125,7 @@ impl Draft {
     ) -> Result<(Self, DraftSyncStatus), MailContextError> {
         info!("Opening draft");
 
-        let tether = &mut context.user_stash().connection().await?;
+        let tether = &mut context.user_stash().connection();
 
         let Some(mut message) = Message::find_by_id(message_id, tether).await? else {
             error!("Opened message as draft that does not exist.");
@@ -341,7 +341,7 @@ impl Draft {
     pub async fn empty(context: &MailUserContext) -> Result<Self, MailContextError> {
         info!("Creating new empty draft");
 
-        let mut tether = context.user_stash().connection().await?;
+        let mut tether = context.user_stash().connection();
 
         let user = context.user().await?;
 
@@ -451,7 +451,7 @@ impl Draft {
     ) -> Result<Self, MailContextError> {
         info!("Creating new draft reply");
 
-        let mut tether = context.user_stash().connection().await?;
+        let mut tether = context.user_stash().connection();
 
         let Some(source_message) = Message::find_by_id(message_id, &tether).await? else {
             return Err(AppError::MessageMissing(message_id).into());
@@ -967,7 +967,7 @@ impl Draft {
         ctx: &MailUserContext,
         cid: &ContentId,
     ) -> MailContextResult<AttachmentData> {
-        let mut tether = ctx.user_stash().connection().await?;
+        let mut tether = ctx.user_stash().connection();
 
         let attachments =
             DraftAttachmentMetadata::attachment_for_draft(metadata_id, &tether).await?;
@@ -1013,7 +1013,7 @@ impl Draft {
         let upload_action = self.to_add_attachment_action(attachment_id);
 
         let queue = ctx.action_queue();
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
         let result = upload_action
             .queue(
                 queue,
@@ -1050,7 +1050,7 @@ impl Draft {
         let remove_action = self.to_remove_attachment_action(attachment_id);
 
         let queue = ctx.action_queue();
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
         let result = remove_action.queue(queue, &tether, ctx.origin()).await?;
 
         Ok(result.id)
@@ -1074,7 +1074,7 @@ impl Draft {
         let remove_action = self.to_remove_attachment_action_with_cid(content_id);
 
         let queue = ctx.action_queue();
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
         let result = remove_action.queue(queue, &tether, ctx.origin()).await?;
 
         Ok(result.id)
@@ -1092,7 +1092,7 @@ impl Draft {
         ctx: &MailUserContext,
         attachment_id: LocalAttachmentId,
     ) -> Result<ActionId, MailContextError> {
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
 
         let metadata = DraftAttachmentMetadata::find_by_id(attachment_id, &tether)
             .await?
@@ -1250,7 +1250,7 @@ impl Draft {
         ctx: &MailUserContext,
         message_id: LocalMessageId,
     ) -> MailContextResult<DateTime<Local>> {
-        let mut tether = ctx.user_stash().connection().await?;
+        let mut tether = ctx.user_stash().connection();
         let queue = ctx.action_queue();
         let timeout = Duration::from_secs(15);
         let session = ctx.session();
@@ -1317,7 +1317,7 @@ impl Draft {
         ctx: &MailUserContext,
         email: String,
     ) -> Result<(), MailContextError> {
-        let mut tether = ctx.user_stash().connection().await?;
+        let mut tether = ctx.user_stash().connection();
         let canonical_email = canonicalize_auto(email.as_str());
         let addresses = Address::all_send_enabled(&tether).await?;
         let address = addresses
@@ -1345,7 +1345,7 @@ impl Draft {
         sender_email: String,
         address_id: AddressId,
     ) -> Result<(), MailContextError> {
-        let mut tether = ctx.user_stash().connection().await?;
+        let mut tether = ctx.user_stash().connection();
         self.change_sender_address_impl(ctx, sender_email, address_id, &mut tether)
             .await
     }
@@ -1380,7 +1380,7 @@ impl Draft {
         ctx: &MailUserContext,
     ) -> Result<Option<EoData>, MailContextError> {
         let encryption_key = ctx.core_context().get_encryption_key()?;
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
 
         let metadata = DraftMetadata::find_by_id(self.metadata_id, &tether)
             .await?
@@ -1408,7 +1408,7 @@ impl Draft {
             return Err(PasswordError::PasswordTooShort.into());
         }
 
-        let mut tether = ctx.user_stash().connection().await?;
+        let mut tether = ctx.user_stash().connection();
 
         let mut metadata = DraftMetadata::find_by_id(metadata_id, &tether)
             .await?
@@ -1519,7 +1519,7 @@ impl Draft {
         ctx: &MailUserContext,
         content_id: ContentId,
     ) -> Result<(), MailContextError> {
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
         let attachment = Attachment::find_by_content_id(content_id.clone(), &tether)
             .await?
             .ok_or(AttachmentDispositionSwapError::AttachmentNotFoundCid(
@@ -1543,7 +1543,7 @@ impl Draft {
         new_attachment_disposition: CombinedAttachmentDisposition,
     ) -> Result<(), MailContextError> {
         let queue = ctx.action_queue();
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
         self.swap_attachment_disposition_impl(
             &tether,
             queue,

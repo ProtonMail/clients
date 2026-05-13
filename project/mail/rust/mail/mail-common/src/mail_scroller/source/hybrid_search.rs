@@ -110,7 +110,7 @@ impl HybridSearchScrollerSource {
         &mut self,
         ctx: &MailUserContext,
     ) -> Result<MailPaginatorJoinHandle, MailContextError> {
-        let mut tether = ctx.user_stash().connection().await?;
+        let mut tether = ctx.user_stash().connection();
 
         tether
             .write_tx(async |tx| SearchScrollData::clear_all_search_data(tx).await)
@@ -295,7 +295,7 @@ impl MailScrollerSource for HybridSearchScrollerSource {
         &self,
         ctx: &MailUserContext,
     ) -> Result<Vec<Self::Item>, MailContextError> {
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
 
         if !self.state.has_cursor() {
             Ok(vec![])
@@ -310,7 +310,7 @@ impl MailScrollerSource for HybridSearchScrollerSource {
     }
 
     async fn seen_count(&self, ctx: &MailUserContext) -> Result<u64, MailContextError> {
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
 
         if !self.state.has_cursor() {
             Ok(0)
@@ -329,12 +329,12 @@ impl MailScrollerSource for HybridSearchScrollerSource {
     }
 
     async fn all_total(&self, ctx: &MailUserContext) -> Result<u64, MailContextError> {
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
         Ok(self.total(&tether).await?)
     }
 
     async fn has_more(&self, ctx: &MailUserContext) -> Result<bool, MailContextError> {
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
         let last = self.state.resolve_last(&tether).await?;
         let has_more = match &last {
             Some(last) => last.has_more(&tether).await?,
@@ -348,7 +348,7 @@ impl MailScrollerSource for HybridSearchScrollerSource {
         &mut self,
         ctx: &MailUserContext,
     ) -> Result<(Vec<Self::Item>, MailPaginatorJoinHandle), MailContextError> {
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
 
         // Exhaustive match on state instead of boolean branches.
         match &mut self.state {

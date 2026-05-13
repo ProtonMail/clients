@@ -65,18 +65,16 @@ async fn move_between_folders() {
         .await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     // Create a mailbox and sync.
-    let mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        source_label_id.clone(),
-    )
-    .await
-    .unwrap();
+    let mailbox =
+        Mailbox::with_remote_id(&user_ctx.user_stash().connection(), source_label_id.clone())
+            .await
+            .unwrap();
     mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
@@ -165,18 +163,16 @@ async fn move_between_folders_and_undo() {
     .await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     // Create a mailbox and sync.
-    let mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        source_label_id.clone(),
-    )
-    .await
-    .unwrap();
+    let mailbox =
+        Mailbox::with_remote_id(&user_ctx.user_stash().connection(), source_label_id.clone())
+            .await
+            .unwrap();
     mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
@@ -302,18 +298,15 @@ async fn move_from_label_does_not_unlabel() {
     .await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     // Create a mailbox and sync.
-    let mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::inbox(),
-    )
-    .await
-    .unwrap();
+    let mailbox = Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::inbox())
+        .await
+        .unwrap();
     mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
@@ -362,7 +355,7 @@ async fn move_into_trash_remove_label_and_mark_read() {
     // * the message is unread
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let trash = Label::find_first("WHERE remote_id = ?", params![LabelId::trash()], &tether)
         .await
@@ -404,15 +397,12 @@ async fn move_into_trash_remove_label_and_mark_read() {
     ctx.initialize_uninitialized_ctx(&user_ctx).await;
 
     // Create a mailbox and sync.
-    let mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::inbox(),
-    )
-    .await
-    .unwrap();
+    let mailbox = Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::inbox())
+        .await
+        .unwrap();
     mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
@@ -482,7 +472,7 @@ async fn move_into_spam_remove_labels() {
     // * add the label to the message
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     let spam = Label::find_first("WHERE remote_id = ?", params![LabelId::spam()], &tether)
         .await
@@ -516,15 +506,12 @@ async fn move_into_spam_remove_labels() {
     ctx.initialize_uninitialized_ctx(&user_ctx).await;
 
     // Create a mailbox and sync.
-    let mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::inbox(),
-    )
-    .await
-    .unwrap();
+    let mailbox = Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::inbox())
+        .await
+        .unwrap();
     mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
@@ -562,7 +549,7 @@ async fn move_out_of_spam_set_almost_all_mail() {
     // * the message doesn't have `almost_all_mail` label
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let spam = Label::find_first("WHERE remote_id = ?", params![LabelId::spam()], &tether)
         .await
@@ -603,15 +590,12 @@ async fn move_out_of_spam_set_almost_all_mail() {
     ctx.initialize_uninitialized_ctx(&user_ctx).await;
 
     // Create a mailbox and sync.
-    let mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::spam(),
-    )
-    .await
-    .unwrap();
+    let mailbox = Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::spam())
+        .await
+        .unwrap();
     mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
@@ -650,7 +634,7 @@ async fn move_from_spam_to_trash_do_not_remove_almost_all_mail_label() {
     // * the message doesn't have `almost_all_mail` label
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let spam = SystemLabel::Spam.load(&tether).await.unwrap().unwrap();
 
@@ -698,15 +682,12 @@ async fn move_from_spam_to_trash_do_not_remove_almost_all_mail_label() {
     ctx.initialize_uninitialized_ctx(&user_ctx).await;
 
     // Create a mailbox and sync.
-    let mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::spam(),
-    )
-    .await
-    .unwrap();
+    let mailbox = Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::spam())
+        .await
+        .unwrap();
     mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
@@ -783,7 +764,7 @@ async fn move_message_also_moves_conversation() {
         .await;
     let user_ctx = ctx.mail_user_context().await;
 
-    let tether = &mut user_ctx.user_stash().connection().await.unwrap();
+    let tether = &mut user_ctx.user_stash().connection();
 
     let mut conv_data = hash_map! {
         vec![LabelId::inbox()]: vec![conversation!(remote_id: conv_id!("my_conv"),
@@ -938,18 +919,15 @@ async fn move_conversation_between_folders_and_undo() {
     ctx.mock_get_conversations(vec![conversation], 1).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     // Create a mailbox and sync.
-    let mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::inbox(),
-    )
-    .await
-    .unwrap();
+    let mailbox = Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::inbox())
+        .await
+        .unwrap();
     mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
@@ -1057,7 +1035,7 @@ async fn move_conversation_mix_unread() {
 
     let user_ctx = ctx.mail_user_context().await;
 
-    let tether = &mut user_ctx.user_stash().connection().await.unwrap();
+    let tether = &mut user_ctx.user_stash().connection();
 
     let mut conv_data = hash_map! {
         vec![LabelId::inbox()]: vec![conversation!(remote_id: conv_id!("my_conv"),
@@ -1254,7 +1232,7 @@ async fn move_from_allmail() {
         .await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     // ---
 
@@ -1321,7 +1299,7 @@ async fn move_out_of_sent_drafts_with_keep_moved(label_id: LabelId, show_moved: 
         .await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     let local_dst_label = Label::remote_id_counterpart(destination_label_id.clone(), &tether)
         .await
@@ -1329,15 +1307,12 @@ async fn move_out_of_sent_drafts_with_keep_moved(label_id: LabelId, show_moved: 
         .unwrap();
 
     // Create a mailbox and sync.
-    let mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        label_id.clone(),
-    )
-    .await
-    .unwrap();
+    let mailbox = Mailbox::with_remote_id(&user_ctx.user_stash().connection(), label_id.clone())
+        .await
+        .unwrap();
     mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
@@ -1420,7 +1395,7 @@ mod rebase_messages {
         ctx.setup_user(params.clone()).await;
         let user_ctx = ctx.mail_user_context().await;
 
-        let tether = &mut user_ctx.user_stash().connection().await.unwrap();
+        let tether = &mut user_ctx.user_stash().connection();
 
         let mut conv_data1 = velcro::hash_map! {
             vec![LabelId::inbox(),custom_label_id()]: vec![
@@ -1484,7 +1459,7 @@ mod rebase_messages {
     async fn simple() {
         let (_test_ctx, user_ctx, mut original_message, _) = setup_move_rebase().await;
 
-        let tether = &mut user_ctx.user_stash().connection().await.unwrap();
+        let tether = &mut user_ctx.user_stash().connection();
 
         let local_trash = Label::remote_id_counterpart(LabelId::trash(), tether)
             .await
@@ -1532,7 +1507,7 @@ mod rebase_messages {
     #[tokio::test]
     async fn revert_to_last_updated_state() {
         let (_test_ctx, user_ctx, mut updated_message, _) = setup_move_rebase().await;
-        let tether = &mut user_ctx.user_stash().connection().await.unwrap();
+        let tether = &mut user_ctx.user_stash().connection();
 
         updated_message.unread = false;
         updated_message.label_ids = vec![
@@ -1592,7 +1567,7 @@ mod rebase_messages {
     #[tokio::test]
     async fn rebase_only_modifies_changed_items() {
         let (_test_ctx, user_ctx, mut updated_message, mut msg2) = setup_move_rebase().await;
-        let tether = &mut user_ctx.user_stash().connection().await.unwrap();
+        let tether = &mut user_ctx.user_stash().connection();
 
         updated_message.unread = false;
         updated_message.label_ids = vec![
@@ -1660,7 +1635,7 @@ mod rebase_messages {
     #[tokio::test]
     async fn rebase_stack() {
         let (_test_ctx, user_ctx, _, mut updated_message) = setup_move_rebase().await;
-        let tether = &mut user_ctx.user_stash().connection().await.unwrap();
+        let tether = &mut user_ctx.user_stash().connection();
 
         updated_message.label_ids = vec![
             LabelId::all_mail(),
@@ -1738,7 +1713,7 @@ mod rebase_messages {
             })
             .await;
 
-        let tether = &mut user_ctx.user_stash().connection().await.unwrap();
+        let tether = &mut user_ctx.user_stash().connection();
 
         updated_message.unread = false;
         updated_message.label_ids = vec![
@@ -1788,7 +1763,7 @@ mod rebase_messages {
                     .await;
             })
             .await;
-        let tether = &mut user_ctx.user_stash().connection().await.unwrap();
+        let tether = &mut user_ctx.user_stash().connection();
 
         let local_trash = Label::remote_id_counterpart(LabelId::trash(), tether)
             .await
@@ -1920,7 +1895,7 @@ mod rebase_conversations {
         ctx.setup_user(params.clone()).await;
         let user_ctx = ctx.mail_user_context().await;
 
-        let tether = &mut user_ctx.user_stash().connection().await.unwrap();
+        let tether = &mut user_ctx.user_stash().connection();
 
         let mut conv_data1 = velcro::hash_map! {
             vec![]: vec![
@@ -2021,7 +1996,7 @@ mod rebase_conversations {
             assert_eq!(label.context_num_unread, 1);
         }
 
-        let tether = &mut user_ctx.user_stash().connection().await.unwrap();
+        let tether = &mut user_ctx.user_stash().connection();
 
         let local_trash = Label::remote_id_counterpart(LabelId::trash(), tether)
             .await
@@ -2138,7 +2113,7 @@ mod rebase_conversations {
             assert_eq!(label.context_num_unread, 1);
         }
 
-        let tether = &mut user_ctx.user_stash().connection().await.unwrap();
+        let tether = &mut user_ctx.user_stash().connection();
 
         let local_trash = Label::remote_id_counterpart(LabelId::trash(), tether)
             .await
@@ -2259,7 +2234,7 @@ mod rebase_conversations {
             assert_eq!(label.context_num_unread, 1);
         }
 
-        let tether = &mut user_ctx.user_stash().connection().await.unwrap();
+        let tether = &mut user_ctx.user_stash().connection();
 
         let local_trash = Label::remote_id_counterpart(LabelId::trash(), tether)
             .await

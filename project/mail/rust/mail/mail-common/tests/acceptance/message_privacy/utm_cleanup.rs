@@ -36,7 +36,7 @@ async fn utm_links_are_cleaned_when_decrypting_message() {
         .await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let mailbox = Mailbox::with_remote_id(&tether, LabelId::inbox())
         .await
@@ -119,7 +119,7 @@ async fn cleaned_utm_links_summary_can_be_retrieved() {
         .await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     let service = user_ctx.get_service::<TrackerService>();
 
     let mailbox = Mailbox::with_remote_id(&tether, LabelId::inbox())
@@ -189,7 +189,7 @@ async fn utm_watcher_is_notified_on_message_decryption() {
         .await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     let service = user_ctx.get_service::<TrackerService>();
     let mailbox = Mailbox::with_remote_id(&tether, LabelId::inbox())
@@ -197,7 +197,7 @@ async fn utm_watcher_is_notified_on_message_decryption() {
         .unwrap();
     mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
@@ -210,10 +210,7 @@ async fn utm_watcher_is_notified_on_message_decryption() {
         .expect("failed to load message");
 
     let decrypted_body = saved_message
-        .fetch_message_body(
-            &user_ctx,
-            &mut user_ctx.user_stash().connection().await.unwrap(),
-        )
+        .fetch_message_body(&user_ctx, &mut user_ctx.user_stash().connection())
         .await
         .unwrap();
 
@@ -264,7 +261,7 @@ async fn utm_results_are_cached_in_database() {
         .await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let service = user_ctx.get_service::<TrackerService>();
 
@@ -354,7 +351,7 @@ async fn utm_links_cleaned_even_when_proxy_disabled() {
         .await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let service = user_ctx.get_service::<TrackerService>();
 

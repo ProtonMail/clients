@@ -15,7 +15,7 @@ use test_case::test_case;
 #[tokio::test]
 async fn test_deleted_item_save() {
     let (mail_stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
 
     tether
         .write_tx::<_, _, StashError>(async |tx| {
@@ -44,7 +44,7 @@ async fn test_deleted_item_save() {
 #[tokio::test]
 async fn test_deleted_item_save_duplicate() {
     let (mail_stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
 
     tether
         .write_tx::<_, _, StashError>(async |tx| {
@@ -76,7 +76,7 @@ async fn test_find_deleted_by_remote_ids(
     expected_found: Vec<&str>,
 ) {
     let (mail_stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
 
     tether
         .write_tx::<_, _, StashError>(async |tx| {
@@ -104,7 +104,7 @@ async fn test_find_deleted_by_remote_ids(
 #[tokio::test]
 async fn test_find_deleted_by_remote_ids_different_types() {
     let (mail_stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
 
     tether
         .write_tx::<_, _, StashError>(async |tx| {
@@ -154,7 +154,7 @@ async fn test_find_deleted_by_remote_ids_different_types() {
 #[tokio::test]
 async fn test_verify_and_cleanup_removes_stale_items() {
     let (mail_stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
 
     let now = UnixTimestamp::now();
     let old_timestamp = now.saturating_sub(90000); // Older than 1 day
@@ -191,7 +191,7 @@ async fn test_verify_and_cleanup_removes_stale_items() {
 #[tokio::test]
 async fn test_verify_and_cleanup_removes_re_added_messages() {
     let (mail_stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
     let address = create_address(&mut tether).await;
 
     tether
@@ -256,7 +256,7 @@ async fn test_verify_and_cleanup_removes_re_added_messages() {
 #[tokio::test]
 async fn test_verify_and_cleanup_removes_re_added_conversations() {
     let (mail_stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
 
     tether
         .write_tx::<_, _, StashError>(async |tx| {
@@ -314,7 +314,7 @@ async fn test_verify_and_cleanup_removes_re_added_conversations() {
 #[tokio::test]
 async fn test_verify_and_cleanup_keeps_valid_tombstones() {
     let (mail_stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
 
     tether
         .write_tx::<_, _, StashError>(async |tx| {
@@ -346,7 +346,7 @@ async fn test_verify_and_cleanup_keeps_valid_tombstones() {
 #[tokio::test]
 async fn test_verify_and_cleanup_mixed_scenario() {
     let (mail_stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
 
     let now = UnixTimestamp::now();
     let old_timestamp = now.saturating_sub(90000);
@@ -444,7 +444,7 @@ async fn test_verify_and_cleanup_mixed_scenario() {
 #[tokio::test]
 async fn test_conversation_delete_tracks_all_messages() {
     let (mail_stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
 
     let address = create_address(&mut tether).await;
 
@@ -521,7 +521,7 @@ async fn test_conversation_delete_tracks_all_messages() {
 #[tokio::test]
 async fn test_conversation_delete_skips_null_remote_id_messages() {
     let (mail_stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
 
     let address = create_address(&mut tether).await;
 

@@ -1299,7 +1299,7 @@ impl Undo {
         let ctx = ctx.ctx()?;
 
         uniffi_async(async move {
-            let mut tether = ctx.user_stash().connection().await?;
+            let mut tether = ctx.user_stash().connection();
             output.undo(ctx.action_queue(), &mut tether).await?;
             Ok::<_, ProtonMailError>(())
         })

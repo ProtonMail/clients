@@ -28,7 +28,7 @@ async fn get_empty_sender_image() {
             None,
             None,
             None,
-            &mut user_ctx.mail_stash().connection().await.unwrap(),
+            &mut user_ctx.mail_stash().connection(),
         )
         .await
         .expect("failed to get image");
@@ -55,7 +55,7 @@ async fn concurrency() {
     let requests = (0..30).map(|_| {
         let ctx_clone = user_ctx.clone();
         async move {
-            let mut tether = ctx_clone.mail_stash().connection().await.unwrap();
+            let mut tether = ctx_clone.mail_stash().connection();
             ctx_clone
                 .image_for_sender(test_address().into(), None, None, None, None, &mut tether)
                 .await
@@ -67,7 +67,7 @@ async fn concurrency() {
         result.unwrap();
     }
 
-    let mut tether = user_ctx.mail_stash().connection().await.unwrap();
+    let mut tether = user_ctx.mail_stash().connection();
     let path_given = user_ctx
         .image_for_sender(test_address().into(), None, None, None, None, &mut tether)
         .await
@@ -104,7 +104,7 @@ async fn image_extension(bytes: &[u8], expected: &str) {
             None,
             None,
             None,
-            &mut user_ctx.mail_stash().connection().await.unwrap(),
+            &mut user_ctx.mail_stash().connection(),
         )
         .await
         .expect("failed to get image")
@@ -121,7 +121,7 @@ async fn image_extension(bytes: &[u8], expected: &str) {
             None,
             None,
             None,
-            &mut user_ctx.mail_stash().connection().await.unwrap(),
+            &mut user_ctx.mail_stash().connection(),
         )
         .await
         .expect("failed to get image")
@@ -162,7 +162,7 @@ async fn sender_image_size_sets_size_and_scale_factor(
             Some("png".to_owned()),
             Some(LightOrDarkMode::Light),
             Some(size),
-            &mut user_ctx.mail_stash().connection().await.unwrap(),
+            &mut user_ctx.mail_stash().connection(),
         )
         .await
         .expect("failed to get image");

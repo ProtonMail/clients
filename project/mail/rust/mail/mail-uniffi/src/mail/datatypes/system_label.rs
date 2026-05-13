@@ -116,7 +116,7 @@ pub async fn resolve_system_label_id(
 
     uniffi_async::<_, RealProtonMailError, _>(async move {
         let local_id = RealSystemLabel::from(label)
-            .local_id(&ctx.user_stash().connection().await?)
+            .local_id(&ctx.user_stash().connection())
             .await?
             .map(Into::into);
 
@@ -134,7 +134,7 @@ pub async fn resolve_system_label_by_id(
     let ctx = ctx.ctx()?;
 
     uniffi_async::<_, RealProtonMailError, _>(async move {
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
         let id = id.into();
         let label = RealLabel::load(id, &tether).await?;
         let Some(remote_id) = label.and_then(|l| l.remote_id) else {

@@ -46,10 +46,7 @@ impl UserIssueReporterService {
         message: String,
         mut keys: IssueReportKeys,
     ) {
-        let Ok(tether) = ctx.user_stash.connection().await else {
-            warn!("Issue not reported, failed to acquire db connection");
-            return;
-        };
+        let tether = ctx.user_stash.connection();
 
         let should_report = match UserSettings::find_by_id(ctx.user_id().clone(), &tether).await {
             Ok(Some(settings)) => settings.telemetry,

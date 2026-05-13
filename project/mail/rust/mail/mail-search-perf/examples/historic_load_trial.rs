@@ -141,11 +141,7 @@ async fn main() -> Result<(), anyhow::Error> {
     // starting concurrent prefetch executors — otherwise this connection stays checked out and
     // can starve the pool (`Failed to acquire connection in the given time limit`).
     let (total_fetched, indexed_count, prefetch_count, prefetch_broadcast_rx, start_time) = {
-        let mut tether = user_ctx
-            .user_stash()
-            .connection()
-            .await
-            .map_err(|e| anyhow::anyhow!("stash connection: {}", e))?;
+        let mut tether = user_ctx.user_stash().connection();
 
         let (local_label_id, remote_label_id) = if let Some(label_id_str) = &label_id {
             let remote_id = LabelId::from(label_id_str.clone());
@@ -272,7 +268,7 @@ async fn main() -> Result<(), anyhow::Error> {
         let mut max_wait_attempts = 30; // Max 60 seconds
         loop {
             let intent_count = {
-                let tether = user_ctx.user_stash().connection().await?;
+                let tether = user_ctx.user_stash().connection();
                 SearchIndexIntent::pending_count(&tether).await? as usize
             };
 
@@ -303,7 +299,7 @@ async fn main() -> Result<(), anyhow::Error> {
                 );
                 if intent_count > 0 {
                     // Show which intents are still pending
-                    let tether = user_ctx.user_stash().connection().await?;
+                    let tether = user_ctx.user_stash().connection();
                     let pending_intents: Vec<(i64, String)> = tether
                         .sync_query(|conn| {
                             let mut stmt = conn.prepare("SELECT message_id, operation FROM search_index_intents ORDER BY message_id")?;
@@ -333,7 +329,7 @@ async fn main() -> Result<(), anyhow::Error> {
 
         // Check blob count before cleanup
         let blob_count_before: i64 = {
-            let tether = user_ctx.user_stash().connection().await?;
+            let tether = user_ctx.user_stash().connection();
             tether
                 .sync_query(|conn| {
                     conn.query_row("SELECT COUNT(*) FROM search_index_blobs", [], |row| {
@@ -412,7 +408,7 @@ async fn main() -> Result<(), anyhow::Error> {
 
         // Check blob count after cleanup
         let blob_count_after: i64 = {
-            let tether = user_ctx.user_stash().connection().await?;
+            let tether = user_ctx.user_stash().connection();
             tether
                 .sync_query(|conn| {
                     conn.query_row("SELECT COUNT(*) FROM search_index_blobs", [], |row| {
@@ -458,7 +454,7 @@ async fn main() -> Result<(), anyhow::Error> {
         let mut final_intent_check = usize::MAX;
         for i in 0..5 {
             let count = {
-                let tether = user_ctx.user_stash().connection().await?;
+                let tether = user_ctx.user_stash().connection();
                 SearchIndexIntent::pending_count(&tether).await? as usize
             };
 
@@ -484,7 +480,7 @@ async fn main() -> Result<(), anyhow::Error> {
                 final_intent_check
             );
             // Show which intents are still pending
-            let tether = user_ctx.user_stash().connection().await?;
+            let tether = user_ctx.user_stash().connection();
             let pending_intents: Vec<(i64, String)> = tether
                 .sync_query(|conn| {
                     let mut stmt = conn.prepare("SELECT message_id, operation FROM search_index_intents ORDER BY message_id")?;
@@ -589,11 +585,11 @@ async fn main() -> Result<(), anyhow::Error> {
         {
             info!("Final database state check:");
             let final_intent_count = {
-                let tether = user_ctx.user_stash().connection().await?;
+                let tether = user_ctx.user_stash().connection();
                 SearchIndexIntent::pending_count(&tether).await? as usize
             };
             let final_blob_count: i64 = {
-                let tether = user_ctx.user_stash().connection().await?;
+                let tether = user_ctx.user_stash().connection();
                 tether
                     .sync_query(|conn| {
                         conn.query_row("SELECT COUNT(*) FROM search_index_blobs", [], |row| {

@@ -25,7 +25,7 @@ impl MailContext {
                 else {
                     return Err(MailContextError::UserContextNotInitialized(user_id));
                 };
-                let tether = user_ctx.user_stash().connection().await?;
+                let tether = user_ctx.user_stash().connection();
                 DraftMetadata::messages_with_pending_send(&tether).await?
             }
             _ => vec![],

@@ -390,7 +390,7 @@ fn to_message_recipient_only_copies_valid_values_group() {
 #[tokio::test]
 async fn contact_group_resolution_from_message_recipients() {
     let (mail_stash, _db_dir) = new_test_connection_file().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
 
     let contact_group_name = "contact_group".to_owned();
     let unknown_contact_group_name = "unknown".to_owned();

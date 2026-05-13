@@ -181,7 +181,7 @@ async fn main() -> Result<(), anyhow::Error> {
             .await?;
 
     if no_telemetry {
-        let mut tether = user_ctx.user_stash().connection().await?;
+        let mut tether = user_ctx.user_stash().connection();
         tether
             .tx::<_, (), anyhow::Error>(async |bond| {
                 bond.execute("UPDATE user_settings SET telemetry = 0", params![])

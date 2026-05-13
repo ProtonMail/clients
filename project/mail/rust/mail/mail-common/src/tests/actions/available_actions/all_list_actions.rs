@@ -324,7 +324,7 @@ mod message {
     async fn bottom_bar_actions(test_case: &TestCase<Vec<Message>>) {
         // Setup
         let mail_stash = new_test_connection().await;
-        let mut tether = mail_stash.connection().await.unwrap();
+        let mut tether = mail_stash.connection();
         let address = create_address(&mut tether).await;
         let mut settings = MailSettings::get_or_default(&tether).await;
         settings.mobile_settings = Some(MobileSettings {
@@ -806,7 +806,7 @@ mod conversation {
     async fn bottom_bar_actions(test_case: &TestCase<Vec<Conversation>>) {
         // Setup
         let mail_stash = new_test_connection().await;
-        let mut tether = mail_stash.connection().await.unwrap();
+        let mut tether = mail_stash.connection();
 
         let mut settings = MailSettings::get_or_default(&tether).await;
         settings.mobile_settings = Some(MobileSettings {

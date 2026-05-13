@@ -474,7 +474,7 @@ impl Attachment {
         // First let's check whether we should run. We run on two conditions:
         // 1. If the cache is too big
         // 2. If an attachment is scheduled for deletion (the attachment row has been deleted but not in the fs)
-        let mut tether = ctx.user_stash().connection().await?;
+        let mut tether = ctx.user_stash().connection();
         let current_size = tether
             .query_value::<_, u64>("SELECT IFNULL(SUM(size),0) FROM attachment_cache", vec![])
             .await

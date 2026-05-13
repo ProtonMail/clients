@@ -41,7 +41,7 @@ pub async fn run(mail_stash: &Stash<UserDb>) -> Result<usize, MigratorError> {
     migrations.push(Box::new(
         v061_proton_mail_restore_non_expired_messages::RestoreNonExpiredMessages,
     ));
-    let mut tether = mail_stash.connection().await?;
+    let mut tether = mail_stash.connection();
 
     Migrator::new(TABLE, migrations).migrate(&mut tether).await
 }

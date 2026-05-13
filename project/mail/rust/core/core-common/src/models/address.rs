@@ -115,7 +115,7 @@ impl Address {
             watcher,
             Self::INIT_KEY,
             &[],
-            mail_stash.connection().await?,
+            mail_stash.connection(),
             async || Self::sync(api).await,
             |tx, res| {
                 res.store(tx)?;

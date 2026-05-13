@@ -44,15 +44,7 @@ impl UserFeatureFlagsPopup {
 
     pub fn open(ctx: Arc<MailUserContext>) -> Command<Messages> {
         Command::task(async move {
-            let tether = match ctx.user_stash().connection().await {
-                Ok(t) => t,
-                Err(e) => {
-                    return Command::message(Messages::DisplayError(
-                        Some("Feature Flags".to_owned()),
-                        anyhow::anyhow!("Failed to connect to mail_stash: {}", e),
-                    ));
-                }
-            };
+            let tether = ctx.user_stash().connection();
 
             let db_flags = match UserFeatureFlag::all(&tether).await {
                 Ok(flags) => flags,

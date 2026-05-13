@@ -12,7 +12,7 @@ use pretty_assertions::assert_eq;
 
 #[tokio::test]
 async fn label_with_counters() {
-    let mut tether = new_test_connection().await.connection().await.unwrap();
+    let mut tether = new_test_connection().await.connection();
     let label = ApiLabel {
         id: LabelId::from("label"),
         parent_id: None,

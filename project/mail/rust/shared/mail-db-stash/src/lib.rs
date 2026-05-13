@@ -66,7 +66,7 @@ impl<M: DatabaseMarker> Database for StashDb<M> {
         &self,
         closure: impl AsyncFnOnce(Self::ReadTx<'_>) -> Result<T, E>,
     ) -> Result<T, E> {
-        let mut tether = self.stash.connection().await?;
+        let mut tether = self.stash.connection();
         tether
             .read_tx(async |stash_rtx| {
                 let rtx = ReadTx(stash_rtx);
@@ -79,7 +79,7 @@ impl<M: DatabaseMarker> Database for StashDb<M> {
         &self,
         closure: impl AsyncFnOnce(Self::WriteTx<'_>) -> Result<T, E>,
     ) -> Result<T, E> {
-        let mut tether = self.stash.connection().await?;
+        let mut tether = self.stash.connection();
         tether
             .write_tx(async move |tx| {
                 let tx = WriteTx(tx);

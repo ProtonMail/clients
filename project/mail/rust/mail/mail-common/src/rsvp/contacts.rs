@@ -19,7 +19,7 @@ impl RsvpContacts {
 impl cal::RsvpContacts for RsvpContacts {
     async fn get_display_name(&self, email: &str) -> Option<String> {
         let contact = async {
-            let tether = self.mail_stash.connection().await?;
+            let tether = self.mail_stash.connection();
             ContactEmail::find_first(
                 "WHERE canonical_email = ?",
                 vec![Box::new(email.to_string())],
@@ -80,7 +80,7 @@ mod tests {
             ..Contact::test_default()
         };
 
-        let mut mail_stash = ctx.user_stash().connection().await.unwrap();
+        let mut mail_stash = ctx.user_stash().connection();
 
         for contact in [&mut bj, &mut rs] {
             mail_stash

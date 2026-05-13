@@ -38,7 +38,7 @@ async fn setup_local_search_index(
     params: &TestParams,
 ) -> Vec<(MessageId, String, String)> {
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let conversation = params.conversations.first().cloned().unwrap();
     let address = params.addresses.first().cloned().unwrap();
@@ -156,7 +156,7 @@ async fn hybrid_search_shows_local_first_then_remote_appended() {
     setup_local_search_index(&ctx, &params).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     let mut settings = MailSettings::get_or_default(&tether).await;
     settings.almost_all_mail = AlmostAllMail::AlmostAllMail;
     tether
@@ -283,7 +283,7 @@ async fn hybrid_search_pagination_no_duplicates_or_skips_when_remote_appends() {
     setup_local_search_index(&ctx, &params).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     let mut settings = MailSettings::get_or_default(&tether).await;
     settings.almost_all_mail = AlmostAllMail::AlmostAllMail;
     tether
@@ -397,7 +397,7 @@ async fn hybrid_search_local_only_when_offline() {
     setup_local_search_index(&ctx, &params).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     let mut settings = MailSettings::get_or_default(&tether).await;
     settings.almost_all_mail = AlmostAllMail::AlmostAllMail;
     tether
@@ -470,7 +470,7 @@ async fn hybrid_search_fallback_to_remote_when_no_local_results() {
     ctx.setup_user(params.clone()).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     let mut settings = MailSettings::get_or_default(&tether).await;
     settings.almost_all_mail = AlmostAllMail::AlmostAllMail;
     tether
@@ -523,7 +523,7 @@ async fn remote_only_total_uses_api_response() {
     ctx.setup_user(params.clone()).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     let mut settings = MailSettings::get_or_default(&tether).await;
     settings.almost_all_mail = AlmostAllMail::AlmostAllMail;
     tether
@@ -595,7 +595,7 @@ async fn hybrid_total_uses_deduped_count_not_api_response() {
     setup_local_search_index(&ctx, &params).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     let mut settings = MailSettings::get_or_default(&tether).await;
     settings.almost_all_mail = AlmostAllMail::AlmostAllMail;
     tether
@@ -676,7 +676,7 @@ async fn hybrid_search_refresh_before_fetch_more_no_duplicates() {
     setup_local_search_index(&ctx, &params).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     let mut settings = MailSettings::get_or_default(&tether).await;
     settings.almost_all_mail = AlmostAllMail::AlmostAllMail;
     tether

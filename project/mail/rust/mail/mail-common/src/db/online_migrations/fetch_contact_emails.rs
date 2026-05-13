@@ -9,7 +9,7 @@ use crate::{MailContextError, MailContextResult, MailUserContext};
 pub async fn run(ctx: &Weak<MailUserContext>) -> MailContextResult<()> {
     let ctx = ctx.upgrade().ok_or(MailContextError::LostContext)?;
 
-    let mut tether = ctx.user_stash().connection().await?;
+    let mut tether = ctx.user_stash().connection();
 
     let contacts_without_emails = Contact::without_emails(&tether).await?;
     let session = ctx.session();

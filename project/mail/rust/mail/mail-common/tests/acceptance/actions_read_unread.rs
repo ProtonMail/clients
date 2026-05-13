@@ -139,7 +139,7 @@ async fn mark_conversation_read(conversations: &[TestCase], expected_read: usize
     }
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let mailbox = Mailbox::with_remote_id(&tether, LabelId::inbox())
         .await
@@ -229,7 +229,7 @@ async fn mark_conversation_unread(conversations: &[TestCase], expected_read: usi
     }
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let mailbox = Mailbox::with_remote_id(&tether, LabelId::inbox())
         .await
@@ -343,7 +343,7 @@ mod rebase {
     ) -> (MailTestContext, Arc<MailUserContext>, Vec<Conversation>) {
         let ctx = MailTestContext::new().await;
         let user_ctx = ctx.uninitialized_mail_user_context().await;
-        let mut tether = user_ctx.user_stash().connection().await.unwrap();
+        let mut tether = user_ctx.user_stash().connection();
         let params = Params::default_basic();
         ctx.setup_user(params.clone()).await;
         ctx.initialize_uninitialized_ctx(&user_ctx).await;
@@ -423,7 +423,7 @@ mod rebase {
                     .await
             })
             .await;
-        let mut tether = user_ctx.user_stash().connection().await.unwrap();
+        let mut tether = user_ctx.user_stash().connection();
         let local_inbox_id = Label::remote_id_counterpart(LabelId::inbox(), &tether)
             .await
             .unwrap()
@@ -525,7 +525,7 @@ mod rebase {
     async fn create_event_tracked_in_rebase_changeset() {
         let (_test_ctx, user_ctx, conversations) =
             setup_with_mocks(vec![vec![true]], async |_, _| {}).await;
-        let tether = user_ctx.user_stash().connection().await.unwrap();
+        let tether = user_ctx.user_stash().connection();
 
         let original_conversation = conversations.into_iter().next().unwrap();
         let original_messages = Message::in_conversation(
@@ -658,7 +658,7 @@ mod rebase {
             })
             .await;
 
-        let tether = user_ctx.user_stash().connection().await.unwrap();
+        let tether = user_ctx.user_stash().connection();
         let original_conversation = conversations.into_iter().next().unwrap();
         let local_inbox_id = Label::remote_id_counterpart(LabelId::inbox(), &tether)
             .await
@@ -694,7 +694,7 @@ mod rebase {
                 .await
             })
             .await;
-        let mut tether = user_ctx.user_stash().connection().await.unwrap();
+        let mut tether = user_ctx.user_stash().connection();
         let local_inbox_id = Label::remote_id_counterpart(LabelId::inbox(), &tether)
             .await
             .unwrap()
@@ -805,7 +805,7 @@ mod rebase {
             })
             .await;
 
-        let tether = user_ctx.user_stash().connection().await.unwrap();
+        let tether = user_ctx.user_stash().connection();
         let original_conversation = conversations.into_iter().next().unwrap();
         let local_inbox_id = Label::remote_id_counterpart(LabelId::inbox(), &tether)
             .await

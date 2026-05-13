@@ -21,7 +21,7 @@ pub async fn new_queue_with_stash(
 
 pub async fn new_stash() -> Stash<TestDb> {
     let mail_stash = Stash::new(StashConfiguration::test()).unwrap();
-    let mut conn = mail_stash.connection().await.unwrap();
+    let mut conn = mail_stash.connection();
 
     conn.write_tx(async |tx| tx.ext_create_table().await)
         .await

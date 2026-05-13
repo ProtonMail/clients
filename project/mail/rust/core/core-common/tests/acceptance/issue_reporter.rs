@@ -40,8 +40,6 @@ async fn issues_not_report_if_telemetry_disabled() {
     user_ctx
         .mail_stash()
         .connection()
-        .await
-        .unwrap()
         .write_tx(async |tx| settings.save(tx).await)
         .await
         .unwrap();

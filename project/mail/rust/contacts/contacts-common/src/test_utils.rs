@@ -3,7 +3,7 @@ use mail_stash::stash::{Stash, StashConfiguration};
 
 pub async fn new_contact_test_connection() -> Stash<UserDb> {
     let stash = Stash::new(StashConfiguration::test()).unwrap();
-    let mut tether = stash.connection().await.unwrap();
+    let mut tether = stash.connection();
     mail_labels_common::db::migrate(&mut tether).await.unwrap();
     crate::db::migrate(&mut tether).await.unwrap();
     drop(tether);

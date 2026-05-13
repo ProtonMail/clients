@@ -753,11 +753,7 @@ mod tests {
                 crate::contact_email!(remote_id: crate::ceid!("2"), email: "bfox@proton.me".into(), display_order: 1, is_proton: true),
             ];
 
-            let mut tether = new_contact_test_connection()
-                .await
-                .connection()
-                .await
-                .unwrap();
+            let mut tether = new_contact_test_connection().await.connection();
             let mut contact =
                 crate::contact!(remote_id: crate::cid!("123"), name: "Barbara Fox".to_string());
             tether
@@ -778,11 +774,7 @@ mod tests {
 
         #[tokio::test]
         async fn contact_group_by_id_only_returns_emails_in_group() {
-            let mut tether = new_contact_test_connection()
-                .await
-                .connection()
-                .await
-                .unwrap();
+            let mut tether = new_contact_test_connection().await.connection();
 
             let group_id = LabelId::from("squad");
             let mut group = Label {
@@ -825,11 +817,7 @@ mod tests {
 
         #[tokio::test]
         async fn count_email_group_count() {
-            let mut tether = new_contact_test_connection()
-                .await
-                .connection()
-                .await
-                .unwrap();
+            let mut tether = new_contact_test_connection().await.connection();
 
             let empty_group_id = LabelId::from("l1");
             let not_empty_group_id = LabelId::from("l2");
@@ -1374,11 +1362,7 @@ mod tests {
             query: &str,
             mut test_case: TestCase,
         ) -> Vec<ContactSuggestion> {
-            let mut tether = new_contact_test_connection()
-                .await
-                .connection()
-                .await
-                .unwrap();
+            let mut tether = new_contact_test_connection().await.connection();
             tether
                 .write_tx::<_, _, mail_stash::stash::StashError>(async |tx| {
                     for label in &mut test_case.contact_groups {

@@ -36,23 +36,20 @@ async fn setup_common(
 
     let user_ctx = ctx.mail_user_context().await;
 
-    let mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::inbox(),
-    )
-    .await
-    .unwrap();
+    let mailbox = Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::inbox())
+        .await
+        .unwrap();
 
     mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             1,
         )
         .await
         .expect("mailbox sync failed");
 
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
     let local_conversation = Conversation::find_first("", vec![], &tether)
         .await
         .expect("failed to load conversation")
@@ -70,7 +67,7 @@ async fn test_load_attachment_buffer() {
     let user_ctx = ctx.mail_user_context().await;
 
     // Load and decrypt attachment.
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     let att = Attachment::get_attachment(&user_ctx, attachment_local_id, &mut tether)
         .await
         .expect("decryption should not fail");
@@ -98,7 +95,7 @@ async fn concurrency() {
     let requests = (0..30).map(|_| {
         let ctx_clone = user_ctx.clone();
         async move {
-            let mut tether = ctx_clone.user_stash().connection().await.unwrap();
+            let mut tether = ctx_clone.user_stash().connection();
             Attachment::get_attachment(&ctx_clone, attachment_local_id, &mut tether).await
         }
     });
@@ -127,7 +124,7 @@ async fn load_attachment_from_cache() {
     let user_ctx = ctx.mail_user_context().await;
 
     // Load and decrypt attachment.
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     let decryption_result = Attachment::get_attachment(&user_ctx, attachment_local_id, &mut tether)
         .await
         .expect("decryption should not fail");
@@ -149,7 +146,7 @@ async fn external_attachment_file_removal_from_cache_triggers_download() {
     let user_ctx = ctx.mail_user_context().await;
 
     // Load and decrypt attachment.
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     let decryption_result = Attachment::get_attachment(&user_ctx, attachment_local_id, &mut tether)
         .await
         .expect("decryption should not fail");
@@ -186,7 +183,7 @@ async fn load_attachment_content_first_time() {
     let test_attachment = params.attachments.first().unwrap();
     let mut attachment: Attachment = test_attachment.clone().into();
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     tether
         .write_tx(async |tx| attachment.save(tx).await)
         .await

@@ -520,7 +520,7 @@ impl Draft {
 
         uniffi_async::<Option<Id>, RealProtonMailError, _>(async move {
             let metadata_id = self.instance.metadata_id;
-            let tether = ctx.user_stash().connection().await?;
+            let tether = ctx.user_stash().connection();
 
             DraftMetadata::message_id(metadata_id, &tether)
                 .await
@@ -865,7 +865,7 @@ pub async fn draft_discard(
 ) -> Result<(), DraftDiscardError> {
     let ctx = session.ctx()?;
     uniffi_async(async move {
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
         RealDraft::action_discard(message_id.into(), &tether, ctx.action_queue(), ctx.origin())
             .await?;
         Ok::<_, RealProtonMailError>(())

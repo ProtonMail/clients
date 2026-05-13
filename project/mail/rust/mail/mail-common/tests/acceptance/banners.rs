@@ -88,7 +88,7 @@ async fn banners() {
     let ctx = test_ctx.mail_user_context().await;
     test_ctx.initialize_uninitialized_ctx(&ctx).await;
 
-    let tether = &mut ctx.user_stash().connection().await.unwrap();
+    let tether = &mut ctx.user_stash().connection();
 
     tether
         .write_tx::<_, _, StashError>(async |tx| {
@@ -384,7 +384,7 @@ async fn banners() {
 async fn spam_banners(label: LabelId, flags: MessageFlags, res: Option<MessageBanner>) {
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     let message = Message {
         label_ids: vec![label],
@@ -414,7 +414,7 @@ async fn autodelete_and_expiry() {
 
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     // TRASH
 
@@ -522,7 +522,7 @@ async fn banners_unsubscribe() {
 
     test_ctx.setup_user(params.clone()).await;
     let ctx = test_ctx.mail_user_context().await;
-    let tether = &mut ctx.user_stash().connection().await.unwrap();
+    let tether = &mut ctx.user_stash().connection();
 
     Mock::given(method("PUT"))
         .and(path("/api/mail/v4/messages/mark/unsubscribed"))

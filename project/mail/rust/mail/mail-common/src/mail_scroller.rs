@@ -234,7 +234,7 @@ impl MailScroller<ContextualConversation> {
         page_size: usize,
     ) -> Result<(Self, MailScrollerHandle<ContextualConversation>), MailContextError> {
         let ctx = ctx.upgrade().ok_or(MailContextError::MissingContext)?;
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
         let order_dir = ScrollOrderDir::for_local_label(label, &tether).await?;
         let order_field = ScrollOrderField::for_local_label(label, &tether).await?;
         let unread = ReadFilter::All;
@@ -258,7 +258,7 @@ impl MailScroller<Message> {
         page_size: usize,
     ) -> Result<(Self, MailScrollerHandle<Message>), MailContextError> {
         let ctx = ctx.upgrade().ok_or(MailContextError::MissingContext)?;
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
         let order_dir = ScrollOrderDir::for_local_label(label, &tether).await?;
         let order_field = ScrollOrderField::for_local_label(label, &tether).await?;
         let unread = ReadFilter::All;
@@ -280,7 +280,7 @@ impl MailScroller<Message> {
         page_size: usize,
     ) -> Result<(Self, MailScrollerHandle<Message>), MailContextError> {
         let ctx = ctx.upgrade().ok_or(MailContextError::MissingContext)?;
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
         let label = MailSettings::get_or_default(&tether).await.all_mail();
 
         let label = Label::remote_id_counterpart(label, &tether)
@@ -299,7 +299,7 @@ impl MailScroller<Message> {
         page_size: usize,
     ) -> Result<(Self, MailScrollerHandle<Message>), MailContextError> {
         let ctx = ctx.upgrade().ok_or(MailContextError::MissingContext)?;
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
         let label = MailSettings::get_or_default(&tether).await.all_mail();
 
         let label = Label::remote_id_counterpart(label, &tether)
@@ -765,7 +765,7 @@ where
         let (command_tx, command_rx) = flume::unbounded();
         let (invalidation_sender, invalidation_receiver) = flume::unbounded();
         let arc_ctx = ctx.upgrade().ok_or(MailContextError::MissingContext)?;
-        let tether = arc_ctx.user_stash().connection().await?;
+        let tether = arc_ctx.user_stash().connection();
         let alternative_labels = AlternativeLabels::new(label, &tether).await?;
         let category_view = CategoryView::load(label, &tether).await?;
         let task = source
@@ -1389,7 +1389,7 @@ where
     ) -> Result<ScrollerUpdate<S::Item>, MailContextError> {
         let ctx = self.ctx.upgrade().ok_or(MailContextError::MissingContext)?;
         let view = {
-            let tether = ctx.user_stash().connection().await?;
+            let tether = ctx.user_stash().connection();
             let mut view = self.source.read().await.category_view().clone();
             view.enable(category, &tether).await?;
             view
@@ -1410,7 +1410,7 @@ where
         src: ScrollerSource,
     ) -> Result<ScrollerUpdate<S::Item>, MailContextError> {
         let ctx = self.ctx.upgrade().ok_or(MailContextError::MissingContext)?;
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
         let label = self.alternative_labels.label;
         let candidate = CategoryView::load(label, &tether)
             .await
@@ -1447,7 +1447,7 @@ where
 
         let ctx = self.ctx.upgrade().ok_or(MailContextError::MissingContext)?;
         let category_view = {
-            let tether = ctx.user_stash().connection().await?;
+            let tether = ctx.user_stash().connection();
             CategoryView::load(label, &tether).await?
         };
 
@@ -1524,10 +1524,7 @@ where
         src: ScrollerSource,
     ) -> Result<(), MailContextError> {
         let ctx = self.ctx.upgrade().ok_or(MailContextError::MissingContext)?;
-        let tether =
-            ctx.user_stash().connection().await.map_err(|e| {
-                anyhow!("Failed to acquire connection for CategoryViewChanged: {e:?}")
-            })?;
+        let tether = ctx.user_stash().connection();
         let view = self.source.read().await.category_view().clone();
         let category_view = view
             .into_labels(&tether)
@@ -1665,7 +1662,7 @@ where
         label: LocalLabelId,
     ) -> Result<(), MailContextError> {
         let ctx = self.ctx.upgrade().ok_or(MailContextError::MissingContext)?;
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
         self.alternative_labels = AlternativeLabels::new(label, &tether).await?;
 
         Ok(())

@@ -28,7 +28,7 @@ pub(crate) async fn run(mail_stash: &Stash<UserDb>) -> Result<usize, MigratorErr
     const MIGRATIONS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/src/migrations");
 
     let migrations = embedded_migrations(&MIGRATIONS);
-    let mut tether = mail_stash.connection().await?;
+    let mut tether = mail_stash.connection();
 
     Migrator::new(TABLE, migrations).migrate(&mut tether).await
 }

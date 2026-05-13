@@ -93,7 +93,7 @@ async fn paid_user_not_eligible() {
         .expect("Fresh feature flags");
 
     let user_stash = user_ctx.user_stash();
-    let mut tether = user_stash.connection().await.unwrap();
+    let mut tether = user_stash.connection();
     tether
         .write_tx(async |tx| save_subscription(&user_ctx, PaidSubscription::MAIL, tx).await)
         .await
@@ -122,7 +122,7 @@ async fn paid_user_other_services_not_eligible() {
         .expect("Fresh feature flags");
 
     let user_stash = user_ctx.user_stash();
-    let mut tether = user_stash.connection().await.unwrap();
+    let mut tether = user_stash.connection();
     tether
         .write_tx(async |tx| save_subscription(&user_ctx, PaidSubscription::VPN, tx).await)
         .await
@@ -149,7 +149,7 @@ async fn member_role_not_eligible() {
         .expect("Fresh feature flags");
 
     let user_stash = user_ctx.user_stash();
-    let mut tether = user_stash.connection().await.unwrap();
+    let mut tether = user_stash.connection();
     tether
         .write_tx(async |tx| save_role(&user_ctx, Role::Member, tx).await)
         .await

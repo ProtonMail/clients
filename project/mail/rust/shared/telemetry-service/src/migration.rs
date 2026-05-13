@@ -8,6 +8,6 @@ pub async fn migrate_user_db(stash: &Stash<UserDb>) -> Result<usize, MigratorErr
     const MIGRATIONS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/src/migrations");
 
     Migrator::new(TABLE, embedded_migrations::<UserDb>(&MIGRATIONS))
-        .migrate(&mut stash.connection().await?)
+        .migrate(&mut stash.connection())
         .await
 }

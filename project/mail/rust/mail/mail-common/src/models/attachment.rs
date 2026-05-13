@@ -471,7 +471,7 @@ impl Attachment {
         let pgp = new_pgp_provider();
 
         let unlocked_address_keys = {
-            let tether = context.user_stash().connection().await?;
+            let tether = context.user_stash().connection();
             context
                 .crypto_key_service()
                 .load_with_tether(context.user_context(), &tether)

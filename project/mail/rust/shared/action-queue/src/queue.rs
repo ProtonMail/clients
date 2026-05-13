@@ -306,8 +306,8 @@ pub struct QueuedActionOutput<T: Action<Db>, Db: mail_stash::marker::DatabaseMar
 }
 
 impl<Db: mail_stash::marker::DatabaseMarker> Queue<Db> {
-    pub async fn tether(&self) -> Result<Tether<Db>, StashError> {
-        self.shared.mail_stash.connection().await
+    pub fn tether(&self) -> Tether<Db> {
+        self.shared.mail_stash.connection()
     }
 
     /// Create a new queue with the given `mail_stash`;
@@ -317,7 +317,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> Queue<Db> {
 
     /// Create a new queue with the given `mail_stash` and `factory`;
     pub async fn with_factory(mail_stash: Stash<Db>, factory: Factory<Db>) -> Result<Self> {
-        let mut tether = mail_stash.connection().await?;
+        let mut tether = mail_stash.connection();
 
         db::migrate(&mut tether).await?;
 
@@ -358,7 +358,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> Queue<Db> {
     /// This operation does not operate within execution guards. It is intended to be used
     /// before queue executor is resumed (during app initialization). Use with caution.
     pub async fn delete_all_in_group(this: &Self, action_group: ActionGroup) -> QueuedResult<()> {
-        let mut tether = this.shared.mail_stash.connection().await?;
+        let mut tether = this.shared.mail_stash.connection();
         tether
             .write_tx(async |tx| StoredAction::delete_all_in_group(tx, action_group).await)
             .await?;
@@ -370,7 +370,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> Queue<Db> {
     /// This operation does not operate within execution guards. It is intended to be used
     /// before queue executor is resumed (during app initialization). Use with caution.
     pub async fn delete_all_by_type<T: Action<Db>>(&self) -> QueuedResult<usize> {
-        let mut tether = self.shared.mail_stash.connection().await?;
+        let mut tether = self.shared.mail_stash.connection();
         Ok(tether
             .write_tx(async |tx| StoredAction::delete_by_type(tx, &T::TYPE).await)
             .await?)
@@ -397,7 +397,6 @@ impl<Db: mail_stash::marker::DatabaseMarker> Queue<Db> {
         self.shared
             .mail_stash
             .connection()
-            .await?
             .write_tx(async |tx| {
                 let mut res: Vec<QueuedActionOutput<T, Db>> = vec![];
 
@@ -428,7 +427,6 @@ impl<Db: mail_stash::marker::DatabaseMarker> Queue<Db> {
         self.shared
             .mail_stash
             .connection()
-            .await?
             .write_tx(async |tx| {
                 self.queue_action_with_metadata_in_tx(action, metadata, tx)
                     .await
@@ -510,7 +508,6 @@ impl<Db: mail_stash::marker::DatabaseMarker> Queue<Db> {
                 .shared
                 .mail_stash
                 .connection()
-                .await?
                 .write_tx(async |tx| {
                     execute_action_local(&mut action, &handler, metadata, Some(existing_id), tx)
                         .await
@@ -542,7 +539,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> Queue<Db> {
     ///
     /// To revert local state use [`Queue::cancel()`] or [`Queue::cancel_with_dependees()`].
     pub async fn delete_action(&self, action_id: ActionId) -> QueuedResult<()> {
-        let mut tether = self.shared.mail_stash.connection().await?;
+        let mut tether = self.shared.mail_stash.connection();
         let existing_action_type = tether
             .write_tx(async |tx| {
                 // Safety: It's safe to perform this check without an executor guard as sqlite's
@@ -565,24 +562,24 @@ impl<Db: mail_stash::marker::DatabaseMarker> Queue<Db> {
 
     /// Returns the number of actions queued.
     pub async fn queued_actions_count(&self) -> Result<u64> {
-        let tether = self.shared.mail_stash.connection().await?;
+        let tether = self.shared.mail_stash.connection();
         Ok(StoredAction::pending_count(&tether).await?)
     }
 
     pub async fn typed_actions_count<T: Action<Db>>(&self) -> Result<u64> {
-        let tether = self.shared.mail_stash.connection().await?;
+        let tether = self.shared.mail_stash.connection();
         Ok(StoredAction::type_count::<T>(&tether).await?)
     }
 
     /// Check whether the action with `action_id` is present in the queue.
     pub async fn contains(&self, action_id: ActionId) -> Result<bool> {
-        let tether = self.shared.mail_stash.connection().await?;
+        let tether = self.shared.mail_stash.connection();
         Ok(StoredAction::contains(&tether, action_id).await?)
     }
 
     /// Retrieve the metadata associated `action_id` in the queue.
     pub async fn action(&self, action_id: ActionId) -> Result<Option<QueuedMetadata>> {
-        let tether = self.shared.mail_stash.connection().await?;
+        let tether = self.shared.mail_stash.connection();
         let stored_action = StoredAction::load(action_id, &tether).await?;
         Ok(stored_action.map(QueuedMetadata::from))
     }
@@ -593,7 +590,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> Queue<Db> {
     /// To remove an action from the queue without reverting state see [`Queue::delete_action()`].
     #[tracing::instrument(skip_all, fields(id = ?action_id))]
     pub async fn cancel(&self, action_id: ActionId) -> QueuedResult<Vec<ActionId>> {
-        let mut tether = self.shared.mail_stash.connection().await?;
+        let mut tether = self.shared.mail_stash.connection();
         let cancelled_actions = tether
             .write_tx(async |tx| {
                 // Safety: It's safe to perform this check without an executor guard as sqlite's
@@ -618,7 +615,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> Queue<Db> {
     /// Retrieve the next action to execute.
     #[cfg(test)]
     pub(crate) async fn next_action(&self) -> Result<Option<StoredAction<Db>>, StashError> {
-        let tether = self.shared.mail_stash.connection().await?;
+        let tether = self.shared.mail_stash.connection();
         StoredAction::next(ActionGroup::default().as_ref(), &tether).await
     }
 
@@ -643,7 +640,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> Queue<Db> {
     /// Validate all pending actions can be loaded and deserialized to prevent
     /// infinite execution loops.
     pub async fn validate_queued_actions(&self) -> QueuedResult<()> {
-        let tether = self.shared.mail_stash.connection().await?;
+        let tether = self.shared.mail_stash.connection();
         let actions = StoredAction::find("", vec![], &tether).await?;
         for action in actions {
             decode_action(&self.shared.factory, action)?;
@@ -656,7 +653,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> Queue<Db> {
         action_group: ActionGroup,
         change_set: &RebaseChangeSet,
     ) -> QueuedResult<()> {
-        let mut tether = self.shared.mail_stash.connection().await?;
+        let mut tether = self.shared.mail_stash.connection();
         tether
             .write_tx(async |tx| self.rebase_in(action_group, change_set, tx).await)
             .await
@@ -900,7 +897,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> QueueExecutor<Db> {
 
     /// Execute one action from the queue.
     pub async fn execute_one(&self) -> QueuedResult<Option<QueuedActionState>> {
-        let mut tether = self.shared.mail_stash.connection().await?;
+        let mut tether = self.shared.mail_stash.connection();
         self.execute_impl(&mut tether).await
     }
 
@@ -908,7 +905,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> QueueExecutor<Db> {
     ///
     /// Returns the number of executed actions.
     pub async fn execute_all(&self) -> QueuedResult<usize> {
-        let mut tether = self.shared.mail_stash.connection().await?;
+        let mut tether = self.shared.mail_stash.connection();
         let mut counter = 0;
         while let Some(QueuedActionState::Executed(_)) = self.execute_impl(&mut tether).await? {
             counter += 1;
@@ -1175,10 +1172,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> QueueAutoExecutor<Db> {
             match followup {
                 ActionExecutionFollowup::WaitForAction => {
                     if termination_policy.is_empty_policy() {
-                        let Ok(tether) = executor.shared.mail_stash.connection().await else {
-                            tracing::error!("Failed to acquire db connection");
-                            continue;
-                        };
+                        let tether = executor.shared.mail_stash.connection();
                         if let Ok(count) =
                             StoredAction::pending_count(&tether).await.inspect_err(|e| {
                                 error!("Failed to get pending action count: {e:?}");
@@ -1551,7 +1545,7 @@ macro_rules! enqueue {
         use $crate::action::{ActionId, Metadata};
         use ::anyhow::anyhow;
 
-        $queue.tether().await?.write_tx::<_,_, MultiActionError>(async |tx| {
+        $queue.tether().write_tx::<_,_, MultiActionError>(async |tx| {
             let mut last = None;
             $(
                 let meta = if let Some(last) = last {

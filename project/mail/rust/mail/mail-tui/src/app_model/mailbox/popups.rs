@@ -106,7 +106,7 @@ impl SnoozeItemPopup {
             let Items::Conversation(items) = items else {
                 return Err(anyhow::anyhow!("Cannot snooze messages"));
             };
-            let tether = ctx.user_stash().connection().await?;
+            let tether = ctx.user_stash().connection();
             let conversations =
                 <Conversation as ModelExtension>::find_by_ids(items.iter().copied(), &tether)
                     .await?;
@@ -222,7 +222,7 @@ pub struct MoveItemPopup {
 impl MoveItemPopup {
     pub async fn new(ctx: &MailUserContext, item: Items) -> MailContextResult<Self> {
         //TODO: improve
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
         let mut folders = Label::find_by_kind(LabelType::Folder, &tether).await?;
         folders.retain(MailLabel::is_movable_into_folder);
         let mut system = Label::find_by_kind(LabelType::System, &tether).await?;
@@ -288,7 +288,7 @@ pub struct LabelItemPopup {
 impl LabelItemPopup {
     pub async fn new(ctx: &MailUserContext, item: Items) -> MailContextResult<Self> {
         let mail_stash = ctx.user_stash();
-        let tether = mail_stash.connection().await?;
+        let tether = mail_stash.connection();
         let labels = match item.clone() {
             Items::Conversation(local_ids) => {
                 Conversation::available_label_as_actions(local_ids, &tether).await?
@@ -443,7 +443,7 @@ impl LabelSelectPopup {
         current_label: &LabelWithCounters,
         view_mode: ViewMode,
     ) -> anyhow::Result<Self> {
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
         let system = Sidebar.system_labels(&tether).await?;
         let labels = Sidebar.custom_labels(&tether).await?;
         let folders = Sidebar.custom_folders(&tether).await?;

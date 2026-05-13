@@ -108,13 +108,7 @@ mod tests {
     #[tokio::test]
     async fn busy() {
         let ctx = MailTestContext::new().await;
-        let mut tether = ctx
-            .user_context()
-            .await
-            .mail_stash()
-            .connection()
-            .await
-            .unwrap();
+        let mut tether = ctx.user_context().await.mail_stash().connection();
 
         let inbox = system_label(&mut tether, SystemLabel::Inbox).await;
         let trash = system_label(&mut tether, SystemLabel::Trash).await;

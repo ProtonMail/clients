@@ -110,7 +110,7 @@ async fn action_snooze_conversation_from_inbox_to_snoozed() {
     .await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     let inbox = SystemLabel::Inbox.load(&tether).await.unwrap().unwrap();
     let TestData {
         conversation: conv,
@@ -185,7 +185,7 @@ async fn unsnooze_conversation_from_snoozed_to_inbox() {
     ctx.setup_user(params.clone()).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     // Get labels
     let snoozed = SystemLabel::Snoozed.load(&tether).await.unwrap().unwrap();
@@ -288,7 +288,7 @@ async fn action_unsnooze_conversation_from_snoozed_to_inbox() {
         .await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     // Get labels
     let snoozed = SystemLabel::Snoozed.load(&tether).await.unwrap().unwrap();
@@ -399,7 +399,7 @@ async fn action_unsnooze_with_empty_input_fails() {
     ctx.setup_user(params.clone()).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     // Get snoozed label
     let snoozed = SystemLabel::Snoozed.load(&tether).await.unwrap().unwrap();
@@ -433,7 +433,7 @@ async fn snooze_and_unsnooze_are_perfect_counterparts() {
     let snooze_time: DateTime<Local> = Local::now() + Duration::hours(1);
     let snooze_timestamp = UnixTimestamp::from(snooze_time);
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     let inbox = SystemLabel::Inbox.load(&tether).await.unwrap().unwrap();
     let snoozed = SystemLabel::Snoozed.load(&tether).await.unwrap().unwrap();
     let TestData {
@@ -503,7 +503,7 @@ mod rebase {
         let snooze_time: DateTime<Local> = Local::now() + Duration::hours(1);
         let snooze_timestamp = UnixTimestamp::from(snooze_time);
         let user_ctx = ctx.mail_user_context().await;
-        let mut tether = user_ctx.user_stash().connection().await.unwrap();
+        let mut tether = user_ctx.user_stash().connection();
         let inbox = SystemLabel::Inbox.load(&tether).await.unwrap().unwrap();
         let snoozed = SystemLabel::Snoozed.load(&tether).await.unwrap().unwrap();
         let TestData {

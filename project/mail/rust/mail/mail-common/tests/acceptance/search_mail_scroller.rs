@@ -205,7 +205,7 @@ async fn does_not_refresh_on_new_message_in_database() {
     ctx.setup_user(params.clone()).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let new_message = Message::from_api_metadata(new_message, &tether)
         .await
@@ -275,7 +275,7 @@ async fn does_refresh_on_modified_message_in_database() {
     ctx.setup_user(params.clone()).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let new_message = Message::from_api_metadata(new_message, &tether)
         .await
@@ -342,7 +342,7 @@ async fn all_mail() {
     // ---
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     let mut settings = MailSettings::get_or_default(&tether).await;
 
     settings.almost_all_mail = AlmostAllMail::AllMail;
@@ -423,7 +423,7 @@ async fn almost_all_mail_with_spam_and_trash() {
     // ---
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     let mut settings = MailSettings::get_or_default(&tether).await;
 
     settings.almost_all_mail = AlmostAllMail::AlmostAllMail;
@@ -538,7 +538,7 @@ async fn change_include_multiple_times_in_a_row() {
     // ---
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     let mut settings = MailSettings::get_or_default(&tether).await;
 
     settings.almost_all_mail = AlmostAllMail::AlmostAllMail;
@@ -652,7 +652,7 @@ async fn change_keywords_multiple_times_in_a_row() {
     // ---
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     let mut settings = MailSettings::get_or_default(&tether).await;
 
     settings.almost_all_mail = AlmostAllMail::AlmostAllMail;
@@ -734,7 +734,7 @@ async fn search_scroller_accepts_non_empty_category_view_without_panic() {
     ctx.setup_user(params).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     let inbox_local_id = SystemLabel::Inbox.local_id(&tether).await.unwrap().unwrap();
     let category_view = CategoryView::load(inbox_local_id, &tether).await.unwrap();

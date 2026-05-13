@@ -53,7 +53,7 @@ impl EventSubscriber<EventManagerContext, MailEventSourceV6> for MailEventV6Subs
 
         async {
             cache.fetch_event_data(ctx.session(), event).await?;
-            let mut tether = ctx.user_stash().connection().await?;
+            let mut tether = ctx.user_stash().connection();
 
             //TODO: missing dependencies should check the cache?
             let unresolved_label_ids = cache
@@ -209,7 +209,7 @@ pub async fn refresh_mail(ctx: &MailUserContext) -> Result<(), MailEventSubscrib
     let api = ctx.session().clone();
     let mail_settings = ctx.spawn(async move { MailSettings::fetch_mail_settings(&api).await });
 
-    let mut tether = ctx.user_context.mail_stash().connection().await?;
+    let mut tether = ctx.user_context.mail_stash().connection();
     let mut all_local_labels: HashMap<_, _> = Label::all_mail(&tether)
         .await?
         .into_iter()

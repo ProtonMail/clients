@@ -16,7 +16,7 @@ use test_case::test_case;
 async fn bulk_unread_status_empty_list() {
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     let result = Message::bulk_unread_status_by_remote_ids(vec![], &tether)
         .await
@@ -29,7 +29,7 @@ async fn bulk_unread_status_empty_list() {
 async fn bulk_unread_status_nonexistent_messages() {
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     let remote_ids = vec![
         MessageId::from("nonexistent1"),
@@ -51,7 +51,7 @@ async fn bulk_unread_status_nonexistent_messages() {
 async fn bulk_unread_status_existing_messages(unread_states: Vec<bool>, expected: Vec<bool>) {
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let mut params = Params::default_basic();
     params.mail_settings = Some(ApiMailSettings {
@@ -109,7 +109,7 @@ async fn bulk_unread_status_existing_messages(unread_states: Vec<bool>, expected
 async fn bulk_unread_status_mixed_existing_and_nonexistent() {
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let mut params = Params::default_basic();
     params.mail_settings = Some(ApiMailSettings {
@@ -168,7 +168,7 @@ async fn bulk_unread_status_mixed_existing_and_nonexistent() {
 async fn bulk_unread_status_preserves_order() {
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let mut params = Params::default_basic();
     params.mail_settings = Some(ApiMailSettings {
@@ -240,7 +240,7 @@ async fn bulk_unread_status_preserves_order() {
 async fn bulk_unread_status_with_duplicates() {
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let mut params = Params::default_basic();
     params.mail_settings = Some(ApiMailSettings {
@@ -297,7 +297,7 @@ async fn bulk_unread_status_with_duplicates() {
 async fn bulk_unread_status_ignores_deleted_messages() {
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let mut params = Params::default_basic();
     params.mail_settings = Some(ApiMailSettings {

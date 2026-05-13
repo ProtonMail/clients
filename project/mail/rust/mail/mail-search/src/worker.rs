@@ -220,7 +220,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
     ///
     /// This is important because indexing is slow, so we want to batch as many as possible.
     pub(crate) async fn process_batch(&self) -> Result<bool, StashError> {
-        let tether = self.mail_stash.connection().await?;
+        let tether = self.mail_stash.connection();
 
         // Check how many intents are pending
         let mut pending_count = SearchIndexIntent::pending_count(&tether).await?;
@@ -316,7 +316,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
 
         // Delete dead letter intents
         if !dead_letter_intents.is_empty() {
-            let mut tether = self.mail_stash.connection().await?;
+            let mut tether = self.mail_stash.connection();
             tether
                 .write_tx::<_, (), StashError>(async |bond| {
                     for intent in &dead_letter_intents {
@@ -359,7 +359,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
                 );
 
                 // Success - delete the intent (content_hash was already saved to separate table in index_message)
-                let mut tether = self.mail_stash.connection().await?;
+                let mut tether = self.mail_stash.connection();
                 tether
                     .write_tx::<_, (), StashError>(async |bond| {
                         intent.delete(bond).await?;
@@ -384,7 +384,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
                             "Deferring intent for message {} (no remote ID yet)",
                             intent.message_id
                         );
-                        let mut tether = self.mail_stash.connection().await?;
+                        let mut tether = self.mail_stash.connection();
                         tether
                             .write_tx::<_, (), StashError>(async |bond| {
                                 intent.defer(bond, DEFER_DELAY_SECONDS).await
@@ -399,7 +399,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
                         );
 
                         let mut intent = intent;
-                        let mut tether = self.mail_stash.connection().await?;
+                        let mut tether = self.mail_stash.connection();
                         tether
                             .write_tx::<_, (), StashError>(async |bond| {
                                 intent.mark_failed(bond).await
@@ -492,7 +492,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
             crate::traits::MessageMetadata::compute_content_hash(&body_to_index, Some(&metadata));
 
         // Check if content hash matches stored hash (duplicate detection)
-        let tether_check = self.mail_stash.connection().await?;
+        let tether_check = self.mail_stash.connection();
         let should_skip =
             SearchIndexIntent::content_hash_matches(message_id, &content_hash, &tether_check)
                 .await
@@ -710,7 +710,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
         // Batch delete intents that were skipped or duplicate
         if !intents_to_delete.is_empty() {
             let to_delete = std::mem::take(&mut intents_to_delete);
-            let mut tether = self.mail_stash.connection().await?;
+            let mut tether = self.mail_stash.connection();
             tether
                 .write_tx::<_, (), StashError>(async |bond| {
                     for intent in &to_delete {
@@ -723,7 +723,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
 
         // Defer intents without remote IDs (don't block the queue)
         if !intents_to_defer.is_empty() {
-            let mut tether = self.mail_stash.connection().await?;
+            let mut tether = self.mail_stash.connection();
             tether
                 .write_tx::<_, (), StashError>(async |bond| {
                     for intent in &intents_to_defer {
@@ -781,7 +781,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
                     messages_to_index.len()
                 );
                 let cleanup_start = Instant::now();
-                let mut tether = self.mail_stash.connection().await?;
+                let mut tether = self.mail_stash.connection();
                 tether
                     .write_tx::<_, (), StashError>(async |bond| {
                         for (intent, _, _, _, content_hash) in &messages_to_index {
@@ -827,7 +827,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
                     messages_to_index.len(),
                     e
                 );
-                let mut tether = self.mail_stash.connection().await?;
+                let mut tether = self.mail_stash.connection();
                 tether
                     .write_tx::<_, (), StashError>(async |bond| {
                         for (mut intent, _, _, _, _) in messages_to_index {
@@ -877,7 +877,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
 
                 // Save content hash to separate table after successful indexing
                 // This persists the hash even after intent deletion, enabling future duplicate detection
-                let mut tether = self.mail_stash.connection().await?;
+                let mut tether = self.mail_stash.connection();
                 tether
                     .write_tx::<_, (), StashError>(async |bond| {
                         SearchIndexIntent::save_content_hash(message_id, &content_hash, bond).await
@@ -892,7 +892,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
                 Err(WorkerError::MissingRemoteId)
             }
             PrepareIndexResult::Skip => {
-                let mut tether = self.mail_stash.connection().await?;
+                let mut tether = self.mail_stash.connection();
                 tether
                     .write_tx::<_, (), StashError>(async |bond| {
                         SearchIndexIntent {
@@ -909,7 +909,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
             }
             PrepareIndexResult::SkipDuplicate => {
                 // Delete intent since content hasn't changed
-                let mut tether = self.mail_stash.connection().await?;
+                let mut tether = self.mail_stash.connection();
                 tether
                     .write_tx::<_, (), StashError>(async |bond| {
                         SearchIndexIntent {
@@ -950,7 +950,7 @@ impl<P: MessageDataProvider> SearchIndexWorker<P> {
         self.search_service.remove_message(&remote_id).await?;
 
         // Delete content hash when message is removed from index
-        let mut tether = self.mail_stash.connection().await?;
+        let mut tether = self.mail_stash.connection();
         tether
             .write_tx::<_, (), StashError>(async |bond| {
                 SearchIndexIntent::delete_content_hash(message_id, bond).await

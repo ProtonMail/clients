@@ -59,7 +59,7 @@ async fn count_incoming_defaults_for_domain(
 async fn test_basic_block_sender() {
     let test_ctx = MailTestContext::new().await;
     let user_ctx = test_ctx.uninitialized_mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     let email = "block_me@example.com";
 
@@ -105,7 +105,7 @@ async fn test_basic_block_sender() {
 async fn test_basic_unblock_sender() {
     let test_ctx = MailTestContext::new().await;
     let user_ctx = test_ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let email = "unblock_me@example.com";
 
@@ -151,7 +151,7 @@ async fn test_basic_unblock_sender() {
 async fn test_double_block_idempotent() {
     let test_ctx = MailTestContext::new().await;
     let user_ctx = test_ctx.uninitialized_mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     let email = "double_block@example.com";
 
@@ -187,7 +187,7 @@ async fn test_double_block_idempotent() {
 async fn test_double_unblock_idempotent() {
     let test_ctx = MailTestContext::new().await;
     let user_ctx = test_ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let email = "double_unblock@example.com";
 
@@ -244,7 +244,7 @@ async fn test_double_unblock_idempotent() {
 async fn test_block_unblock_cycle() {
     let test_ctx = MailTestContext::new().await;
     let user_ctx = test_ctx.uninitialized_mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     let email = "cycle_test@example.com";
 
@@ -302,7 +302,7 @@ async fn test_block_unblock_cycle() {
 async fn test_remote_block_failure_with_local_rollback() {
     let test_ctx = MailTestContext::new().await;
     let user_ctx = test_ctx.uninitialized_mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     let email = "fail_block@example.com";
 
@@ -340,7 +340,7 @@ async fn test_remote_block_failure_with_local_rollback() {
 async fn test_remote_unblock_failure_with_proper_error_handling() {
     let test_ctx = MailTestContext::new().await;
     let user_ctx = test_ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let email = "fail_unblock@example.com";
 
@@ -387,7 +387,7 @@ async fn test_remote_unblock_failure_with_proper_error_handling() {
 async fn test_block_sender_when_inbox_location_exists() {
     let test_ctx = MailTestContext::new().await;
     let user_ctx = test_ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let email = "inbox_to_block@example.com";
 
@@ -449,7 +449,7 @@ async fn test_block_sender_when_inbox_location_exists() {
 async fn test_block_sender_when_spam_location_exists() {
     let test_ctx = MailTestContext::new().await;
     let user_ctx = test_ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let email = "spam_to_block@example.com";
 
@@ -511,7 +511,7 @@ async fn test_block_sender_when_spam_location_exists() {
 async fn test_unblock_sender_when_inbox_location_exists_should_not_work() {
     let test_ctx = MailTestContext::new().await;
     let user_ctx = test_ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let email = "inbox_unblock_attempt@example.com";
 
@@ -570,7 +570,7 @@ async fn test_unblock_sender_when_inbox_location_exists_should_not_work() {
 async fn test_unblock_sender_when_spam_location_exists_should_not_work() {
     let test_ctx = MailTestContext::new().await;
     let user_ctx = test_ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let email = "spam_unblock_attempt@example.com";
 
@@ -634,7 +634,7 @@ async fn test_api_returning_domain() {
      */
     let test_ctx = MailTestContext::new().await;
     let user_ctx = test_ctx.uninitialized_mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     let email = "block_me@example.com";
     let domain = "example.com";

@@ -278,12 +278,7 @@ impl MessagesState {
             TuiWatchHandle::from_watcher_handle(handle, move || {
                 let ctx = ctx.clone();
                 async move {
-                    let Ok(tether) = ctx.user_stash().connection().await else {
-                        return Some(Messages::DisplayError(
-                            None,
-                            anyhow!("Failed acquire db connection"),
-                        ));
-                    };
+                    let tether = ctx.user_stash().connection();
                     Some(
                         match MailMessage::in_conversation(
                             conversation_id,
@@ -342,7 +337,7 @@ impl MessagesState {
             #[allow(clippy::redundant_closure_call)] // Poor's man try blocks
             let c: Result<_> = (|| async move {
                 let mail_stash = ctx.user_stash();
-                let tether = mail_stash.connection().await?;
+                let tether = mail_stash.connection();
                 let local_id = metadata.id();
 
                 let decrypted = MailMessage::message_body(&ctx, local_id)
@@ -458,7 +453,7 @@ impl MessagesState {
                     let id = state.msg.id();
                     let ctx = ctx.clone();
                     return Command::popup_from_future("Message Headers", async move {
-                        let tether = ctx.user_stash().connection().await?;
+                        let tether = ctx.user_stash().connection();
                         let mdata = MessageBodyMetadata::find_first(
                             "WHERE local_message_id = ?",
                             params![id],
@@ -644,7 +639,7 @@ impl MessagesState {
                 let user_ctx = Arc::clone(&user_ctx);
 
                 async move {
-                    let mut tether = user_ctx.user_stash().connection().await?;
+                    let mut tether = user_ctx.user_stash().connection();
                     Attachment::get_attachment(&user_ctx, mdata.local_id.unwrap(), &mut tether)
                         .await
                         .map(|att| {
@@ -716,8 +711,8 @@ impl MessagesState {
                         )),
                         Command::task(async move {
                             let result = async {
-                                let mut tether = ctx.user_stash().connection().await?;
-                                let tether2 = ctx.user_stash().connection().await?;
+                                let mut tether = ctx.user_stash().connection();
+                                let tether2 = ctx.user_stash().connection();
                                 rsvp.answer(&ctx, &mut tether, &tether2, answer)
                                     .await
                                     .context("Couldn't answer the invitation")
@@ -827,7 +822,7 @@ impl MessagesState {
                     "Reporting a message as a phishing atempt will send the message to us, so we can analyze it and improve our filters. This means that we will be able to see the contents of the message in full.",
                 )
                 .on_accept(Command::from_future(async move {
-                    MailMessage::action_report_phishing(ctx.action_queue(), id, &ctx.user_stash().connection().await?)
+                    MailMessage::action_report_phishing(ctx.action_queue(), id, &ctx.user_stash().connection())
                         .await
                         .context("Failed to star message")
                 }));
@@ -1680,7 +1675,7 @@ fn label_message(
     let ctx2 = ctx.clone();
     let f = async move {
         MailMessage::action_label_as(
-            &ctx2.user_stash().connection().await?,
+            &ctx2.user_stash().connection(),
             ctx2.action_queue(),
             source_label_id,
             conversation_ids,
@@ -1710,7 +1705,7 @@ fn label_message(
                     )),
                     Command::task(async move {
                         if let Err(e) = async {
-                            let mut tether = ctx.user_stash().connection().await?;
+                            let mut tether = ctx.user_stash().connection();
                             undo.undo(ctx.action_queue(), &mut tether)
                                 .await
                                 .context("Error undoing message labelling")
@@ -1742,7 +1737,7 @@ fn move_message(
     // TODO: refactor into common undo toast
     Command::task(async move {
         match async {
-            let tether = ctx.user_stash().connection().await?;
+            let tether = ctx.user_stash().connection();
             MailMessage::action_move(&tether, ctx.action_queue(), label_id, ids).await
         }
         .await
@@ -1760,7 +1755,7 @@ fn move_message(
                     )),
                     Command::task(async move {
                         if let Err(e) = async {
-                            let mut tether = ctx.user_stash().connection().await?;
+                            let mut tether = ctx.user_stash().connection();
                             undo.undo(ctx.action_queue(), &mut tether)
                                 .await
                                 .context("Error undoing conversation labelling")

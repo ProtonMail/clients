@@ -149,7 +149,7 @@ impl EventSubscriber<EventManagerContext, CoreEventSource> for CoreEventSubscrib
             };
             let user_id = ctx.user_id().clone();
             let mail_stash = ctx.mail_stash().clone();
-            let mut conn = mail_stash.connection().await?;
+            let mut conn = mail_stash.connection();
 
             let mut rebase_change_set = RebaseChangeSet::default();
 

@@ -105,7 +105,7 @@ async fn test_store_and_delete_remote_items(
 ) {
     // * RollbackItem is correctly stored *
     let (mail_stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
     let queue = Queue::new(mail_stash.clone()).await.unwrap();
     tether
         .write_tx::<_, _, StashError>(async |tx| {
@@ -136,7 +136,7 @@ async fn test_store_and_delete_remote_items(
 
     let (_mock, api) = start_server(&tether, BATCH_SIZE).await;
 
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
     RollbackItem::sync_all(&api, &mut tether, BATCH_SIZE, &queue)
         .await
         .unwrap();
@@ -383,7 +383,7 @@ async fn mock_label(mock_server: &MockServer, items: Vec<RollbackItem>) {
 #[tokio::test]
 async fn test_rollback_skips_nonexistent_conversation() {
     let (mail_stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
     let queue = Queue::new(mail_stash.clone()).await.unwrap();
 
     let existing_conv_id = "existing_conv_123";
@@ -476,7 +476,7 @@ async fn test_label_rollback_with_parent_dependencies() {
     use mail_core_api::services::proton::LabelType;
 
     let (mail_stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
     let queue = Queue::new(mail_stash.clone()).await.unwrap();
 
     // Set up a label hierarchy: grandparent -> parent -> child
@@ -635,7 +635,7 @@ async fn test_label_rollback_with_circular_parent_reference() {
     use mail_core_api::services::proton::LabelType;
 
     let (mail_stash, _tempdir) = new_test_connection_file().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
     let queue = Queue::new(mail_stash.clone()).await.unwrap();
 
     // Set up labels where child's parent is also being rolled back (circular reference)

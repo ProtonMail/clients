@@ -62,7 +62,7 @@ impl<T: RemoteSource> DataScrollerSource<T> {
     ) -> Result<MailPaginatorJoinHandle, MailContextError> {
         info!("Initializing MailScroller Source");
 
-        let mut tether = ctx.user_stash().connection().await?;
+        let mut tether = ctx.user_stash().connection();
         let label = self.get_label(&tether).await?;
         let remote_label_ids = self
             .build_remote_label_ids(label.remote_id.clone().unwrap(), &tether)
@@ -363,7 +363,7 @@ impl<T: RemoteSource> MailScrollerSource for DataScrollerSource<T> {
         &self,
         ctx: &MailUserContext,
     ) -> Result<Vec<Self::Item>, MailContextError> {
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
 
         match &self.state {
             MailScrollerState::Synced(state) => Ok(state.visible_elements(&tether).await?),
@@ -372,7 +372,7 @@ impl<T: RemoteSource> MailScrollerSource for DataScrollerSource<T> {
     }
 
     async fn seen_count(&self, ctx: &MailUserContext) -> Result<u64, MailContextError> {
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
 
         match &self.state {
             MailScrollerState::Synced(state) => Ok(state.seen_count(&tether).await?),
@@ -381,7 +381,7 @@ impl<T: RemoteSource> MailScrollerSource for DataScrollerSource<T> {
     }
 
     async fn synced_total(&self, ctx: &MailUserContext) -> Result<u64, MailContextError> {
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
 
         match &self.state {
             MailScrollerState::Synced(state) => Ok(state.synced_count(&tether).await?),
@@ -390,7 +390,7 @@ impl<T: RemoteSource> MailScrollerSource for DataScrollerSource<T> {
     }
 
     async fn all_total(&self, ctx: &MailUserContext) -> Result<u64, MailContextError> {
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
         let total = T::total(
             self.local_label_id,
             self.unread,
@@ -403,7 +403,7 @@ impl<T: RemoteSource> MailScrollerSource for DataScrollerSource<T> {
     }
 
     async fn has_more(&self, ctx: &MailUserContext) -> Result<bool, MailContextError> {
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
         let has_more = self.state.has_more_synced(&tether).await?;
 
         Ok(has_more)
@@ -414,7 +414,7 @@ impl<T: RemoteSource> MailScrollerSource for DataScrollerSource<T> {
         &mut self,
         ctx: &MailUserContext,
     ) -> Result<(Vec<Self::Item>, MailPaginatorJoinHandle), MailContextError> {
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
         let label = self.get_label(&tether).await?;
         let total = T::total(
             self.local_label_id,
@@ -509,7 +509,7 @@ impl<T: RemoteSource> MailScrollerSource for DataScrollerSource<T> {
     ) -> Result<MailPaginatorJoinHandle, MailContextError> {
         info!("Syncing newest items");
 
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
         let label = self.get_label(&tether).await?;
         let remote_label_ids = self
             .build_remote_label_ids(label.remote_id.clone().unwrap(), &tether)
@@ -583,7 +583,7 @@ impl<T: RemoteSource> MailScrollerSource for DataScrollerSource<T> {
             self.category_view = view;
         }
 
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
         self.state = MailScrollerState::synced(
             self.local_label_id,
             self.unread,
@@ -607,7 +607,7 @@ impl<T: RemoteSource> MailScrollerSource for DataScrollerSource<T> {
         if let Some(scroller) = self.state.as_synced() {
             info!("Clearing cache for label {}", self.local_label_id);
 
-            let mut tether = ctx.user_stash().connection().await?;
+            let mut tether = ctx.user_stash().connection();
             let cursor = scroller.load_end_cursor(&tether).await?;
 
             tether.write_tx(async |tx| cursor.delete(tx).await).await?;

@@ -103,7 +103,7 @@ async fn test_scroller_reads_correct_items_within_visible_range() {
     const REMOTE_LABEL_ID: &str = "rid1";
 
     let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
     let mut data = btree_map! {
         REMOTE_LABEL_ID: test_conversations(100, 100),
         "rid2": test_conversations(50, 0),
@@ -231,7 +231,7 @@ async fn test_cashed_scroller_reads_correct_items_within_visible_range() {
     const REMOTE_LABEL_ID: &str = "rid1";
 
     let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
     let mut data = btree_map! {
         REMOTE_LABEL_ID: test_conversations(100, 100),
         "rid2": test_conversations(50, 0),
@@ -483,7 +483,7 @@ async fn test_cashed_scroller_reads_last_two_pages_together_when_last_page_is_no
     const REMOTE_LABEL_ID: &str = "rid1";
 
     let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
     let mut data = btree_map! {
         REMOTE_LABEL_ID: test_conversations(5, 100),
         "rid2": test_conversations(50, 0),
@@ -547,7 +547,7 @@ async fn test_cashed_scroller_reads_last_two_pages_together_when_last_page_is_no
 #[tokio::test]
 async fn allow_different_filter_types_to_be_stored_in_database() {
     let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
     let local_label_id = SystemLabel::Inbox.local_id(&tether).await.unwrap().unwrap();
     // Create new entries for each filter type
     let mut scroller_all = ConversationScrollData::builder()
@@ -851,7 +851,7 @@ async fn allow_different_filter_types_to_be_stored_in_database() {
 #[tokio::test]
 async fn test_cashed_scroller_correctly_reads_empty_conversations_from_the_trash() {
     let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
     let trash_remote_id = SystemLabel::Trash.remote_id();
     let trash = Label::find_by_remote_id(trash_remote_id, &tether)
         .await
@@ -924,7 +924,7 @@ async fn test_create_or_get_local_fix_preserves_api_conversations_with_labels() 
     // pass the filter and reach the prefetcher successfully.
 
     let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
 
     // Set up inbox label
     let inbox_remote_id = SystemLabel::Inbox.remote_id();
@@ -1080,7 +1080,7 @@ async fn cached_cursor_with_categories(
 #[tokio::test]
 async fn test_category_filter_social_shows_only_matching_conversations() {
     let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
     let inbox = SystemLabel::Inbox.load(&tether).await.unwrap().unwrap();
     let mut social = SystemLabel::CategorySocial
         .load(&tether)
@@ -1135,7 +1135,7 @@ async fn test_category_filter_social_shows_only_matching_conversations() {
 #[tokio::test]
 async fn test_category_filter_default_shows_all_conversations_from_disabled_categories() {
     let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
     let inbox = SystemLabel::Inbox.load(&tether).await.unwrap().unwrap();
     let primary = SystemLabel::CategoryDefault
         .load(&tether)
@@ -1230,7 +1230,7 @@ async fn test_category_filter_default_shows_all_conversations_from_disabled_cate
 #[tokio::test]
 async fn test_category_round_trip_with_composite_key() {
     let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
 
     let inbox = SystemLabel::Inbox.load(&tether).await.unwrap().unwrap();
     let social = SystemLabel::CategorySocial
@@ -1320,7 +1320,7 @@ async fn test_category_round_trip_with_composite_key() {
 #[tokio::test]
 async fn test_unsorted_category_normalizes_to_canonical_form() {
     let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
 
     let inbox = SystemLabel::Inbox.load(&tether).await.unwrap().unwrap();
     let social = SystemLabel::CategorySocial
@@ -1389,7 +1389,7 @@ async fn test_unsorted_category_normalizes_to_canonical_form() {
 #[tokio::test]
 async fn test_cached_scroller_with_category_does_not_collide_with_empty_category() {
     let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
 
     let inbox = SystemLabel::Inbox.load(&tether).await.unwrap().unwrap();
     let social = SystemLabel::CategorySocial

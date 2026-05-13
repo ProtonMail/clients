@@ -438,7 +438,7 @@ impl Context {
     /// When a user first authenticates via the login flow, a new account is created,
     /// and all subsequent sessions are associated with that account.
     pub async fn get_accounts(&self) -> CoreContextResult<Vec<CoreAccount>> {
-        let tether = self.account_stash().connection().await?;
+        let tether = self.account_stash().connection();
         Ok(CoreAccount::all(&tether).await?)
     }
 
@@ -462,7 +462,7 @@ impl Context {
     /// including the authentication tokens granted by the API, the state of the session,
     /// and the user's key passphrase (once known).
     pub async fn get_sessions(&self) -> CoreContextResult<Vec<CoreSession>> {
-        let tether = self.account_stash().connection().await?;
+        let tether = self.account_stash().connection();
         Ok(CoreSession::all(&tether).await?)
     }
 
@@ -500,7 +500,7 @@ impl Context {
     /// The receiver is a channel over which change events are sent, such as when a new session is created,
     /// an existing session is updated, or a session is deleted.
     pub async fn watch_sessions(&self) -> CoreContextResult<(Vec<CoreSession>, WatcherHandle)> {
-        let tether = self.account_stash().connection().await?;
+        let tether = self.account_stash().connection();
         let sessions = CoreSession::all(&tether).await?;
         let handle = CoreSession::watch(self.account_stash()).await?;
 
@@ -514,7 +514,7 @@ impl Context {
         &self,
         user_id: UserId,
     ) -> CoreContextResult<Vec<CoreSession>> {
-        let tether = self.account_stash().connection().await?;
+        let tether = self.account_stash().connection();
         Ok(CoreSession::find_by_user_id(user_id, &tether).await?)
     }
 
@@ -537,7 +537,7 @@ impl Context {
     /// This is a convenience method that enables retrieving a single account without requiring
     /// the full set of accounts to be loaded first.
     pub async fn get_account(&self, user_id: UserId) -> CoreContextResult<Option<CoreAccount>> {
-        let tether = self.account_stash().connection().await?;
+        let tether = self.account_stash().connection();
         Ok(CoreAccount::find_by_id(user_id, &tether).await?)
     }
 
@@ -546,7 +546,7 @@ impl Context {
         &self,
         user_id: UserId,
     ) -> CoreContextResult<Option<CoreAccountState>> {
-        let tether = self.account_stash().connection().await?;
+        let tether = self.account_stash().connection();
         let Some(account) = CoreAccount::find_by_id(user_id.clone(), &tether).await? else {
             return Ok(None);
         };
@@ -566,7 +566,7 @@ impl Context {
         &self,
         session_id: SessionId,
     ) -> CoreContextResult<Option<CoreSession>> {
-        let tether = self.account_stash().connection().await?;
+        let tether = self.account_stash().connection();
         Ok(CoreSession::find_by_id(session_id, &tether).await?)
     }
 
@@ -575,7 +575,7 @@ impl Context {
         &self,
         session_id: SessionId,
     ) -> CoreContextResult<Option<CoreSessionState>> {
-        let tether = self.account_stash().connection().await?;
+        let tether = self.account_stash().connection();
         let Some(session) = CoreSession::find_by_id(session_id, &tether).await? else {
             return Ok(None);
         };
@@ -585,7 +585,7 @@ impl Context {
 
     /// Get the account considered to be the primary account.
     pub async fn get_primary_account(&self) -> CoreContextResult<Option<CoreAccount>> {
-        let tether = self.account_stash().connection().await?;
+        let tether = self.account_stash().connection();
         for account in CoreAccount::by_primary_seq(&tether).await? {
             let Some(state) = self.get_account_state(account.remote_id.clone()).await? else {
                 continue;
@@ -601,7 +601,7 @@ impl Context {
 
     /// Set the account considered to be the primary account.
     pub async fn set_primary_account(&self, user_id: UserId) -> CoreContextResult<()> {
-        let mut tether = self.account_stash().connection().await?;
+        let mut tether = self.account_stash().connection();
 
         let seq_max = CoreAccount::primary_seq_max(&tether).await?;
 
@@ -700,7 +700,7 @@ impl Context {
                 orphaned_sessions
             );
 
-            let mut tether = self.account_stash().connection().await?;
+            let mut tether = self.account_stash().connection();
             tether
                 .write_tx(async |tx| CoreSession::delete_by_ids(orphaned_sessions, tx).await)
                 .await?;
@@ -783,9 +783,8 @@ impl Context {
 
         if let Some(user_ctx) = user_ctx_opt {
             tracing::info!("Clear all user data from database");
-            if let Ok(tether) = user_ctx.mail_stash().connection().await
-                && let Err(e) = nuke::drop_database_tables(tether).await
-            {
+            let tether = user_ctx.mail_stash().connection();
+            if let Err(e) = nuke::drop_database_tables(tether).await {
                 tracing::error!("Could not clean user database, details: `{e}`");
             }
         } else {
@@ -844,7 +843,7 @@ impl Context {
             .await?;
 
         tracing::info!("Remove account");
-        let mut tether = self.account_stash().connection().await?;
+        let mut tether = self.account_stash().connection();
         tether
             .write_tx(async |tx| {
                 CoreAccount::delete_by_id(user_id, tx)
@@ -930,8 +929,7 @@ impl Context {
         let keychain = Arc::clone(&self.key_chain);
         let store = AuthStore::new(account_stash, keychain, user_id, session_id);
         let api_config = RealApiConfig::from(self.api_config.clone());
-        let app_settings =
-            AppSettings::get_or_default(&self.account_stash().connection().await?).await;
+        let app_settings = AppSettings::get_or_default(&self.account_stash().connection()).await;
 
         let network_monitor_service = self.get_service::<NetworkMonitorService>();
 
@@ -964,8 +962,7 @@ impl Context {
         connection_monitor: ConnectionMonitor,
     ) -> CoreContextResult<ApiSession> {
         let api_config = RealApiConfig::from(self.api_config.clone());
-        let app_settings =
-            AppSettings::get_or_default(&self.account_stash().connection().await?).await;
+        let app_settings = AppSettings::get_or_default(&self.account_stash().connection()).await;
 
         let mut builder = ApiSession::builder()
             .with_config(api_config)
@@ -1062,8 +1059,7 @@ impl Context {
 
         let network_monitor_service = self.get_service::<NetworkMonitorService>();
 
-        let app_settings =
-            AppSettings::get_or_default(&self.account_stash().connection().await?).await;
+        let app_settings = AppSettings::get_or_default(&self.account_stash().connection()).await;
 
         let builder = ApiSession::builder()
             .with_config(RealApiConfig::from(self.api_config.clone()))
@@ -1418,11 +1414,7 @@ async fn recover_stuck_migration_sessions(ctx: Arc<Context>) -> Result<(), CoreC
     use mail_core_api::services::proton::ProtonAccount;
 
     let sessions = {
-        let tether = ctx
-            .account_stash()
-            .connection()
-            .inspect_err(|e| error!(?e, "failed to get account stash connection"))
-            .await?;
+        let tether = ctx.account_stash().connection();
 
         CoreSession::all(&tether)
             .inspect_err(|e| error!(?e, "failed to list sessions"))

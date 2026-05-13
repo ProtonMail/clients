@@ -152,7 +152,7 @@ async fn event_fetches_missing_dependencies() {
     };
 
     user_context.apply_event(event).await.unwrap();
-    let tether = user_context.user_stash().connection().await.unwrap();
+    let tether = user_context.user_stash().connection();
 
     // Address, labels and label counters should have been created.
     assert!(
@@ -221,8 +221,6 @@ async fn test_session_deletion_cleans_mail_caches() {
     ctx.context
         .account_stash()
         .connection()
-        .await
-        .unwrap()
         .tx(async |tx| {
             CoreSession::delete_by_id(session_id.clone(), tx).await?;
             Ok::<_, mail_stash::stash::StashError>(())
@@ -421,7 +419,7 @@ async fn event_fetches_missing_nested_dependencies() {
     };
 
     user_context.apply_event(event).await.unwrap();
-    let tether = user_context.user_stash().connection().await.unwrap();
+    let tether = user_context.user_stash().connection();
 
     // Address, labels and label counters should have been created.
     assert!(
@@ -615,7 +613,7 @@ async fn events_skips_unresolved_labels() {
     };
 
     user_context.apply_event(event).await.unwrap();
-    let tether = user_context.user_stash().connection().await.unwrap();
+    let tether = user_context.user_stash().connection();
 
     // Address, labels and label counters should have been created.
     assert!(
@@ -795,7 +793,7 @@ mod v6 {
         };
 
         user_context.apply_mail_event_v6(event).await.unwrap();
-        let tether = user_context.user_stash().connection().await.unwrap();
+        let tether = user_context.user_stash().connection();
 
         let local_label_id = Label::remote_id_counterpart(label_id.clone(), &tether)
             .await

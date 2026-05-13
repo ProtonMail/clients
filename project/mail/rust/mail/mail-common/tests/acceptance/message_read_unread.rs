@@ -101,7 +101,7 @@ async fn mark_message_read(messages: &[TestCase], expected_unread: usize) {
     // * Create all given messages in mail_stash
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let mut params = Params::default_basic();
     params.mail_settings = Some(ApiMailSettings {
@@ -132,15 +132,12 @@ async fn mark_message_read(messages: &[TestCase], expected_unread: usize) {
 
     ctx.initialize_uninitialized_ctx(&user_ctx).await;
 
-    let mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::inbox(),
-    )
-    .await
-    .unwrap();
+    let mailbox = Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::inbox())
+        .await
+        .unwrap();
     mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
@@ -186,7 +183,7 @@ async fn mark_message_unread(messages: &[TestCase], expected_unread: usize) {
     // * Create all given messages in mail_stash
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     let mut params = Params::default_basic();
     params.mail_settings = Some(ApiMailSettings {
@@ -216,15 +213,12 @@ async fn mark_message_unread(messages: &[TestCase], expected_unread: usize) {
 
     ctx.initialize_uninitialized_ctx(&user_ctx).await;
 
-    let mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::inbox(),
-    )
-    .await
-    .unwrap();
+    let mailbox = Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::inbox())
+        .await
+        .unwrap();
     mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
@@ -286,7 +280,7 @@ mod rebase {
     ) -> (MailTestContext, Arc<MailUserContext>, Vec<Message>) {
         let ctx = MailTestContext::new().await;
         let user_ctx = ctx.uninitialized_mail_user_context().await;
-        let mut tether = user_ctx.user_stash().connection().await.unwrap();
+        let mut tether = user_ctx.user_stash().connection();
         let params = Params::default_basic();
         ctx.setup_user(params.clone()).await;
         ctx.initialize_uninitialized_ctx(&user_ctx).await;
@@ -334,7 +328,7 @@ mod rebase {
                 .await
         })
         .await;
-        let mut tether = user_ctx.user_stash().connection().await.unwrap();
+        let mut tether = user_ctx.user_stash().connection();
 
         let mut original_message = messages.into_iter().next().unwrap();
 
@@ -383,7 +377,7 @@ mod rebase {
     #[tokio::test]
     async fn rebase_mark_read_only_modifies_changed() {
         let (_test_ctx, user_ctx, messages) = setup(vec![true, true]).await;
-        let mut tether = user_ctx.user_stash().connection().await.unwrap();
+        let mut tether = user_ctx.user_stash().connection();
         let mut iter = messages.into_iter();
         let mut original_message1 = iter.next().unwrap();
         let mut original_message2 = iter.next().unwrap();
@@ -455,7 +449,7 @@ mod rebase {
                 .await
         })
         .await;
-        let mut tether = user_ctx.user_stash().connection().await.unwrap();
+        let mut tether = user_ctx.user_stash().connection();
 
         let mut original_message = messages.into_iter().next().unwrap();
 
@@ -526,7 +520,7 @@ mod rebase {
     #[tokio::test]
     async fn rebase_mark_unread_only_modifies_changed() {
         let (_test_ctx, user_ctx, messages) = setup(vec![false, false]).await;
-        let mut tether = user_ctx.user_stash().connection().await.unwrap();
+        let mut tether = user_ctx.user_stash().connection();
         let mut iter = messages.into_iter();
         let mut original_message1 = iter.next().unwrap();
         let mut original_message2 = iter.next().unwrap();

@@ -57,7 +57,7 @@ impl FeatureFlagsService {
         let response = api.get_unleash_feature_flags(context).await?;
         info!("Fetched {} featured flags from API", response.toggles.len());
 
-        let mut tether = ctx.account_stash().connection().await?;
+        let mut tether = ctx.account_stash().connection();
 
         let mut flags = FeatureFlag::all(&tether)
             .await
@@ -106,7 +106,7 @@ impl FeatureFlagsService {
     pub async fn get(&self, key: &str) -> CoreContextResult<Option<bool>> {
         let ctx = self.ctx.upgrade().context("Could not upgrade context")?;
         let feature_flag = {
-            let tether = ctx.account_stash().connection().await?;
+            let tether = ctx.account_stash().connection();
             FeatureFlag::by_name(key, &tether).await?
         };
         Ok(feature_flag.map(|flag| flag.enabled))
@@ -117,7 +117,7 @@ impl FeatureFlagsService {
         use mail_stash::orm::Model;
 
         let ctx = self.ctx.upgrade().context("Could not upgrade context")?;
-        let mut tether = ctx.account_stash().connection().await?;
+        let mut tether = ctx.account_stash().connection();
         let mut flag = FeatureFlag::by_name(key, &tether)
             .await?
             .unwrap_or(FeatureFlag {
@@ -142,10 +142,7 @@ impl FeatureFlagsService {
             warn!("Failed to upgrade context");
             return vec![];
         };
-        let Ok(tether) = ctx.account_stash().connection().await else {
-            warn!("Failed to connect to account mail_stash");
-            return vec![];
-        };
+        let tether = ctx.account_stash().connection();
         let flags = FeatureFlag::all(&tether)
             .await
             .inspect_err(|err| warn!("Failed to fetch feature flags: {}", err))

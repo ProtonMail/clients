@@ -295,7 +295,7 @@ mod tests {
     async fn drop_database_tables_smoke() {
         let ctx = TestContext::new().await;
         let uctx = ctx.user_context().await;
-        let tether = uctx.mail_stash().connection().await.unwrap();
+        let tether = uctx.mail_stash().connection();
 
         tether
             .execute("CREATE TABLE foos (id INT NOT NULL PRIMARY KEY)", vec![])
@@ -312,7 +312,7 @@ mod tests {
 
         drop_database_tables(tether).await.unwrap();
 
-        let tether = uctx.mail_stash().connection().await.unwrap();
+        let tether = uctx.mail_stash().connection();
 
         assert!(!has_table(&tether, "foos").await);
         assert!(!has_table(&tether, "bars").await);

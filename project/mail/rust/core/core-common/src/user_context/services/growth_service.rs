@@ -78,7 +78,7 @@ impl GrowthService {
             created_at: UnixTimestamp::now(),
         };
 
-        let mut tether = account_stash.connection().await?;
+        let mut tether = account_stash.connection();
         tether
             .write_tx(async |tx| measurement.save(tx).await)
             .await?;
@@ -143,7 +143,7 @@ impl GrowthService {
             created_at: UnixTimestamp::now(),
         };
 
-        let mut tether = ctx.account_stash().connection().await?;
+        let mut tether = ctx.account_stash().connection();
         tether
             .write_tx(async |tx| measurement.save(tx).await)
             .await?;
@@ -233,7 +233,7 @@ impl GrowthService {
         service: &GrowthService,
     ) -> anyhow::Result<()> {
         let measurements = {
-            let tether = ctx.account_stash().connection().await?;
+            let tether = ctx.account_stash().connection();
             Measurement::fetch_batch(MEASUREMENT_BATCH_SIZE, &tether).await?
         };
 
@@ -277,7 +277,7 @@ impl GrowthService {
             );
         }
 
-        let mut tether = ctx.account_stash().connection().await?;
+        let mut tether = ctx.account_stash().connection();
         tether
             .write_tx(async |tx| Measurement::delete_by_ids(measurement_ids, tx).await)
             .await?;
@@ -309,7 +309,7 @@ impl GrowthService {
 
         if !telemetry_enabled {
             trace!("Telemetry disabled for user, clearing measurements");
-            let mut tether = ctx.account_stash().connection().await?;
+            let mut tether = ctx.account_stash().connection();
             tether
                 .write_tx(async |tx| Measurement::delete_all(tx).await)
                 .await?;
@@ -354,13 +354,7 @@ impl GrowthService {
                         .initialization_watcher()
                         .clone();
 
-                    let tether = match ctx.mail_stash().connection().await {
-                        Ok(t) => t,
-                        Err(e) => {
-                            error!("GrowthService: Db connection failed: {e:?}");
-                            return;
-                        }
-                    };
+                    let tether = ctx.mail_stash().connection();
 
                     // We want to drop context ASAP, otherwise `wait_for_dependencies` will
                     // hold the context for too long.

@@ -418,7 +418,7 @@ async fn prepare_sync_test_data(
         .mock_get_full_contact(test_remote_full_contact)
         .await;
 
-    let mut tether = stash.connection().await.unwrap();
+    let mut tether = stash.connection();
     let contacts = Contact::sync(session)
         .await
         .expect("failed to download contacts");
@@ -453,7 +453,7 @@ async fn prepare_sync_test_data_partial(
     let contacts = Contact::sync(session)
         .await
         .expect("failed to download contacts");
-    let mut tether = stash.connection().await.unwrap();
+    let mut tether = stash.connection();
     tether
         .sync_write_tx(move |tx| contacts.store(tx))
         .await
@@ -543,7 +543,7 @@ async fn test_sync_and_load_contacts() {
         .mock_get_all_contact_emails_request(create_test_remote_contact_emails())
         .await;
 
-    let mut tether = stash.connection().await.unwrap();
+    let mut tether = stash.connection();
     let contacts = Contact::sync(&session)
         .await
         .expect("failed to download contacts");
@@ -583,7 +583,7 @@ async fn test_sync_and_load_contacts_mixed() {
     )
     .await;
 
-    let tether = stash.connection().await.unwrap();
+    let tether = stash.connection();
 
     let remote_id = test_contacts.first().unwrap().id.clone();
     let mut contact = Contact::find_by_remote_id(remote_id, &tether)
@@ -663,7 +663,7 @@ async fn sync_and_delete_event_contact() {
     .expect("failed to execute event");
 
     // Were the  deletions successful?
-    let conn = stash.connection().await.unwrap();
+    let conn = stash.connection();
 
     let contacts = Contact::find("LIMIT 100", vec![], &conn)
         .await
@@ -721,7 +721,7 @@ async fn test_sync_and_modify_event_contact() {
     .await
     .expect("failed to execute event");
 
-    let conn = stash.connection().await.unwrap();
+    let conn = stash.connection();
 
     let mut contact = Contact::find_by_remote_id(remote_id, &conn)
         .await
@@ -828,7 +828,7 @@ async fn contact_list() {
     )
     .await;
 
-    let tether = stash.connection().await.unwrap();
+    let tether = stash.connection();
     let contact_list = Contact::contact_list(&tether).await.unwrap();
 
     assert_eq!(contact_list.len(), 1);

@@ -35,7 +35,7 @@ impl DraftSendResultWatcher {
         mail_stash: Stash<UserDb>,
         mode: DraftSendResultWatcherMode,
     ) -> Result<Self, StashError> {
-        let conn = mail_stash.connection().await?;
+        let conn = mail_stash.connection();
 
         let all_unseen = Self::load_send_results(mode, &conn).await?;
 
@@ -59,7 +59,7 @@ impl DraftSendResultWatcher {
                 .map_err(|_| StashError::WatcherError("Connection Lost".to_owned()))?;
 
             let mut all_unseen =
-                Self::load_send_results(self.mode, &self.mail_stash.connection().await?).await?;
+                Self::load_send_results(self.mode, &self.mail_stash.connection()).await?;
 
             if all_unseen.is_empty() {
                 continue;
@@ -109,7 +109,7 @@ impl DraftAttachmentObserver {
         metadata_id: MetadataId,
         mail_stash: Stash<UserDb>,
     ) -> Result<Self, StashError> {
-        let conn = mail_stash.connection().await?;
+        let conn = mail_stash.connection();
 
         let current = DraftAttachmentMetadata::find_by_metadata_id(metadata_id, &conn).await?;
 
@@ -136,7 +136,7 @@ impl DraftAttachmentObserver {
                 .await
                 .map_err(|_| StashError::WatcherError("Connection Lost".to_owned()))?;
 
-            let conn = self.mail_stash.connection().await?;
+            let conn = self.mail_stash.connection();
             let current = DraftAttachmentMetadata::find_by_metadata_id(self.id, &conn).await?;
             let new_state_set = HashSet::from_iter(
                 current

@@ -91,7 +91,7 @@ async fn test_search_indexing_intents_queued_on_message_events() {
         .unwrap();
 
     // Step 2: Verify messages were created and collect their local IDs
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
     let msg1 = Message::find_by_remote_id(message1.id.clone(), &tether)
         .await
         .unwrap()

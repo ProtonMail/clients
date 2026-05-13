@@ -961,7 +961,7 @@ impl EncryptedMessageBody {
             mail_search_perf::prefetch_timing::PrefetchStopwatch::start_decrypt_phase();
         let raw_decrypted_body = self.as_raw_decrypted_body(address_keys, pgp);
 
-        let mut tether = ctx.user_stash().connection().await?;
+        let mut tether = ctx.user_stash().connection();
         match raw_decrypted_body.clone().into_raw_decrypted_body() {
             Ok(raw_body) => {
                 let decrypted_body = raw_body.processed_body().map_err(|e| {

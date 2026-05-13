@@ -272,7 +272,7 @@ impl Composer {
             }
         };
 
-        let tether = mail_stash.connection().await?;
+        let tether = mail_stash.connection();
         let attachment_infos = Self::build_attachment_infos(draft.metadata_id, &tether).await?;
         drop(tether);
 
@@ -424,12 +424,7 @@ impl Composer {
                 "Preparing Attachment".to_owned(),
             )),
             Command::task(async move {
-                let Ok(mut tether) = context.user_stash().connection().await else {
-                    return Command::message(Messages::DisplayError(
-                        None,
-                        anyhow!("Failed acquire db connection"),
-                    ));
-                };
+                let mut tether = context.user_stash().connection();
                 let Ok(address_id) = draft.address_id().await else {
                     return Command::batch([
                         Command::message(Messages::DismissBackgroundProgress),
@@ -534,7 +529,7 @@ impl Composer {
             )),
             Command::task(async move {
                 let r = async {
-                    let tether = ctx.user_stash().connection().await?;
+                    let tether = ctx.user_stash().connection();
                     let attachment = Attachment::find_by_id(id, &tether)
                         .await?
                         .ok_or(AttachmentDispositionSwapError::AttachmentNotFound(id))?;
@@ -563,7 +558,7 @@ impl Composer {
         let metadata_id = self.draft.metadata_id;
         Command::task(async move {
             match async {
-                let tether = context.user_stash().connection().await?;
+                let tether = context.user_stash().connection();
                 DraftAttachment::build_list(metadata_id, &tether).await
             }
             .await

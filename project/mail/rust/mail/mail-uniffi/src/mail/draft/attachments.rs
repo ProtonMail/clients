@@ -193,7 +193,7 @@ impl AttachmentList {
             let path = PathBuf::from(path);
 
             let address_id = self.draft.address_id().await?;
-            let mut tether = ctx.user_stash().connection().await?;
+            let mut tether = ctx.user_stash().connection();
 
             let result = RealAttachment::create_local(
                 &ctx,
@@ -235,7 +235,7 @@ impl AttachmentList {
             let path = PathBuf::from(path);
 
             let address_id = self.draft.address_id().await?;
-            let mut tether = ctx.user_stash().connection().await?;
+            let mut tether = ctx.user_stash().connection();
 
             let result = RealAttachment::create_local(
                 &ctx,

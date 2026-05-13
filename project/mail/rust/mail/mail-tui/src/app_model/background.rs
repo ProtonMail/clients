@@ -145,12 +145,7 @@ impl BackgroundModel {
             let mut user_stats = BTreeMap::new();
             let mut has_unsent_messages = false;
             for user_ctx in user_ctxs {
-                let Ok(tether) = user_ctx.user_stash().connection().await else {
-                    return Command::message(Messages::DisplayError(
-                        None,
-                        anyhow!("Failed to acquire db connection"),
-                    ));
-                };
+                let tether = user_ctx.user_stash().connection();
                 let user = match User::find_by_id(user_ctx.user_id().clone(), &tether).await {
                     Ok(user) => user,
                     Err(e) => {

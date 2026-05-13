@@ -480,7 +480,7 @@ impl MailContext {
     ) -> MailContextResult<LoginFlow> {
         let key = self.core_context.get_encryption_key()?;
 
-        let tether = self.core_context.account_stash().connection().await?;
+        let tether = self.core_context.account_stash().connection();
 
         let account = CoreAccount::find_by_id(user_id.clone(), &tether)
             .await?

@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [mail-uniffi-v0.165.6] - 2026-05-13
+
+### Features
+
+- Implement UnreadLiveQueryCallback returning unread count in `on_update` method - proton/clients/monorepo!2390
+- Implement category view for the mail TUI app
+
+
 ## [mail-uniffi-v0.165.5] - 2026-05-11
 
 ### Changed

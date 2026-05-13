@@ -1,7 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{CONTACTS_V4, ContactBasic, ContactGroupId};
-use crate::{ContactFull, ContactId};
+use crate::{CONTACTS_V4, ContactBasic, ContactFull, ContactGroupId, ContactId};
 use lattice::{LtContract, LtNoQueryParams, LtSerdeQueryParams, LtSlimAPIJSON};
 use serde::{Deserialize, Serialize};
 use smart_default::SmartDefault;

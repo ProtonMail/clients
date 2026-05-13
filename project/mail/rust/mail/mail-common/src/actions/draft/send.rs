@@ -442,7 +442,7 @@ impl Send {
         let recipients = action.recipients.clone();
         let crypto_mail_settings = mail_settings.crypto_mail_settings();
         let mut send_prefs_task = ctx.spawn_ex(async move |ctx| {
-            let tether = ctx.user_stash().connection().await?;
+            let tether = ctx.user_stash().connection();
             let pgp = new_pgp_provider();
             load_prefs(
                 &ctx,

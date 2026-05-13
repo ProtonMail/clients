@@ -73,7 +73,7 @@ async fn test_scroller_reads_correct_items_within_visible_range() {
     const REMOTE_LABEL_ID: &str = "rid1";
 
     let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
     let mut data = btree_map! {
         REMOTE_LABEL_ID: test_message(100, 100),
         "rid2": test_message(50, 0),
@@ -209,7 +209,7 @@ async fn test_cashed_scroller_reads_correct_items_within_visible_range() {
     const REMOTE_LABEL_ID: &str = "rid1";
 
     let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
     let mut data = btree_map! {
         REMOTE_LABEL_ID: test_message(100, 100),
         "rid2": test_message(50, 0),
@@ -455,7 +455,7 @@ async fn test_cashed_scroller_reads_last_two_pages_together_when_last_page_is_no
     const REMOTE_LABEL_ID: &str = "rid1";
 
     let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
     let mut data = btree_map! {
         REMOTE_LABEL_ID: test_message(5, 100),
         "rid2": test_message(50, 0),
@@ -519,7 +519,7 @@ async fn test_cashed_scroller_reads_last_two_pages_together_when_last_page_is_no
 #[tokio::test]
 async fn allow_different_filter_types_to_be_stored_in_database() {
     let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
     let local_label_id = SystemLabel::Inbox.local_id(&tether).await.unwrap().unwrap();
     let mut scroller_all = MessageScrollData::builder()
         .local_label_id(local_label_id)
@@ -788,7 +788,7 @@ async fn cached_cursor_with_categories(
 #[tokio::test]
 async fn test_category_filter_social_shows_only_matching_messages() {
     let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
     let address = create_address(&mut tether).await;
     let raid = address.remote_id.clone().unwrap();
     let inbox = SystemLabel::Inbox.load(&tether).await.unwrap().unwrap();
@@ -895,7 +895,7 @@ async fn test_category_filter_social_shows_only_matching_messages() {
 #[tokio::test]
 async fn test_category_filter_default_shows_all_messages_from_disabled_categories() {
     let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
     let address = create_address(&mut tether).await;
     let raid = address.remote_id.clone().unwrap();
     let inbox = SystemLabel::Inbox.load(&tether).await.unwrap().unwrap();

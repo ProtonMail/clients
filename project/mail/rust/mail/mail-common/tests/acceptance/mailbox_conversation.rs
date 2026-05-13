@@ -67,23 +67,20 @@ async fn test_new_mailbox_sync_conversations() {
     let user_ctx = ctx.mail_user_context().await;
 
     // Create a mailbox
-    let mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::inbox(),
-    )
-    .await
-    .unwrap();
+    let mailbox = Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::inbox())
+        .await
+        .unwrap();
 
     // Sync mailbox 1 - this should fire a network request
     mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
         .await
         .unwrap();
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
     // Get conversations for mailbox.
     let conversation = Conversation::find_first("", vec![], &tether)
         .await
@@ -225,23 +222,20 @@ async fn test_new_mailbox_syncs_new_conversation_messages_on_push_notification()
     let user_ctx = ctx.mail_user_context().await;
 
     // Create a mailbox
-    let mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::inbox(),
-    )
-    .await
-    .unwrap();
+    let mailbox = Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::inbox())
+        .await
+        .unwrap();
 
     // Sync mailbox 1 - this should fire a network request
     mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
         .await
         .unwrap();
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
     // Get conversations for mailbox.
     let conversation = Conversation::find_first("", vec![], &tether)
         .await
@@ -291,7 +285,7 @@ async fn test_new_mailbox_syncs_new_conversation_messages_on_push_notification()
 
     let conv = Conversation::find_by_id(
         result.conversation.local_id,
-        &user_ctx.user_stash().connection().await.unwrap(),
+        &user_ctx.user_stash().connection(),
     )
     .await
     .unwrap()
@@ -368,23 +362,20 @@ async fn test_opening_conversation_with_trashed_message() {
     let user_ctx = ctx.mail_user_context().await;
 
     // Create a mailbox
-    let mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::inbox(),
-    )
-    .await
-    .unwrap();
+    let mailbox = Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::inbox())
+        .await
+        .unwrap();
 
     // Sync mailbox 1 - this should fire a network request
     mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
         .await
         .unwrap();
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
     // Get conversations for mailbox.
     let conversation = Conversation::find_first("", vec![], &tether)
         .await
@@ -552,23 +543,20 @@ async fn test_new_mailbox_syncs_new_conversation_if_total_does_not_add_up() {
     let user_ctx = ctx.mail_user_context().await;
 
     // Create a mailbox
-    let mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::inbox(),
-    )
-    .await
-    .unwrap();
+    let mailbox = Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::inbox())
+        .await
+        .unwrap();
 
     // Sync mailbox 1 - this should fire a network request
     mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
         .await
         .unwrap();
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     // Get conversations for mailbox.
     let conversation = Conversation::find_first("", vec![], &tether)
         .await
@@ -601,7 +589,7 @@ async fn test_new_mailbox_syncs_new_conversation_if_total_does_not_add_up() {
     // simulate fetch new bringing in an updated value that modifies the total amount
     let mut conv = Conversation::find_by_id(
         result.conversation.local_id,
-        &user_ctx.user_stash().connection().await.unwrap(),
+        &user_ctx.user_stash().connection(),
     )
     .await
     .unwrap()
@@ -634,7 +622,7 @@ async fn test_new_mailbox_syncs_new_conversation_if_total_does_not_add_up() {
 
     let conv = Conversation::find_by_id(
         result.conversation.local_id,
-        &user_ctx.user_stash().connection().await.unwrap(),
+        &user_ctx.user_stash().connection(),
     )
     .await
     .unwrap()
@@ -679,7 +667,7 @@ async fn conversation_and_messages_fetches_missing_dependenceis() {
 
     let user_ctx = ctx.mail_user_context().await;
 
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     tether
         .write_tx(async |tx| conversation.save(tx).await)
         .await
@@ -742,7 +730,7 @@ async fn conversation_and_messages_from_push_notification_fetches_missing_depend
 
     let user_ctx = ctx.mail_user_context().await;
 
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     tether
         .write_tx(async |tx| conversation.save(tx).await)
         .await
@@ -799,23 +787,20 @@ async fn push_notification_sync_returns_post_rebase_conversation() {
 
     let user_ctx = ctx.mail_user_context().await;
 
-    let mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::inbox(),
-    )
-    .await
-    .unwrap();
+    let mailbox = Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::inbox())
+        .await
+        .unwrap();
 
     mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
         .await
         .unwrap();
 
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
     let conversation = Conversation::find_first("", vec![], &tether)
         .await
         .unwrap()

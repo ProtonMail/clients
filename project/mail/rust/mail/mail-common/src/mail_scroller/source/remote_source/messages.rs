@@ -224,7 +224,7 @@ impl RemoteMessageScrollerSource {
 
         log_response(&response);
 
-        let mut tether = ctx.user_stash().connection().await?;
+        let mut tether = ctx.user_stash().connection();
 
         // ---
 
@@ -297,7 +297,7 @@ impl RemoteMessageScrollerSource {
 
         log_response(&response);
 
-        let mut tether = ctx.user_stash().connection().await?;
+        let mut tether = ctx.user_stash().connection();
 
         // ---
 
@@ -381,7 +381,7 @@ impl RemoteMessageScrollerSource {
 
         log_response(&response);
 
-        let mut tether = ctx.user_stash().connection().await?;
+        let mut tether = ctx.user_stash().connection();
 
         // ---
 

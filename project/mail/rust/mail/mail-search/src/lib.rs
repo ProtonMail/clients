@@ -309,7 +309,7 @@ mod tests {
         }
 
         // 4. Queue intents in a transaction (simulating MessageBody::store)
-        let mut tether = mail_stash.connection().await.unwrap();
+        let mut tether = mail_stash.connection();
         tether
             .write_tx::<_, (), SE>(async |bond| {
                 for &local_id in &message_ids {
@@ -321,7 +321,7 @@ mod tests {
             .unwrap();
 
         // 5. Verify intents were created
-        let tether = mail_stash.connection().await.unwrap();
+        let tether = mail_stash.connection();
         let intents = SearchIndexIntent::get_pending_batch(&tether, 10)
             .await
             .unwrap();
@@ -346,7 +346,7 @@ mod tests {
         assert!(processed, "Worker should have processed the batch");
 
         // 7. Verify intents were deleted (worker deletes them after successful indexing)
-        let tether = mail_stash.connection().await.unwrap();
+        let tether = mail_stash.connection();
         let remaining_intents = SearchIndexIntent::get_pending_batch(&tether, 10)
             .await
             .unwrap();

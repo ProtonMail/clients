@@ -82,7 +82,7 @@ async fn create_empty_draft() {
     draft.save().await.unwrap();
 
     // Load the draft.
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
     let draft_message_id = draft.message_id().await.unwrap().unwrap();
     let draft_conversation_id = draft.conversation_id().await.unwrap().unwrap();
 
@@ -292,7 +292,7 @@ dJyN3/sZg/QCLSAKstzw1RgqWAoUdWL9p04IvSDmb7fwbUspBOpZMBZfJp6OfrHt
 
     user_ctx.execute_all_send_actions().await.unwrap();
 
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
     let draft_message_id = draft.message_id().await.unwrap().unwrap();
 
     // Opening the draft and check if all the information is up to date
@@ -333,7 +333,7 @@ async fn create_draft_reply_without_body_is_error() {
     ctx.setup_user(params.clone()).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let (mut existing_message, _, _) = Message::from_api_data(remote_existing_message, &tether)
         .await
@@ -377,7 +377,7 @@ async fn create_draft_reply_should_fail_for_drafts() {
     ctx.setup_user(params.clone()).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let (mut existing_message, _, _) = Message::from_api_data(remote_existing_message, &tether)
         .await
@@ -422,7 +422,7 @@ async fn metadata_is_create_for_existing_not_opened_draft() {
         .await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let mut message = Message::from_api_metadata(message.metadata, &tether)
         .await
@@ -528,7 +528,7 @@ async fn draft_save_failure_creates_send_result_with_correct_origin() {
     // Execute action.
     user_ctx.execute_all_send_actions().await.unwrap_err();
 
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     let send_result =
         DraftSendResult::find_by_id(draft.message_id().await.unwrap().unwrap(), &tether)
@@ -616,7 +616,7 @@ async fn create_draft_reply_with_override_impl(
     ctx.setup_user(params.clone()).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let (mut existing_message, _, _) =
         Message::from_api_data(remote_existing_message.clone(), &tether)
@@ -980,7 +980,7 @@ async fn new_draft_conversation_remote_id_updated_externally() {
     draft.save().await.unwrap();
 
     // Load the draft.
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     let draft_message_id = draft.message_id().await.unwrap().unwrap();
     let draft_conversation_id = draft.conversation_id().await.unwrap().unwrap();
 
@@ -1080,7 +1080,7 @@ async fn already_sent_error_move_draft_to_sent_and_schedules_rollback() {
     user_ctx.execute_all_send_actions().await.unwrap();
 
     // Load the draft.
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
     let draft_message_id = draft.message_id().await.unwrap().unwrap();
 
     draft.set_subject("Modified".to_owned()).await.unwrap();
@@ -1138,7 +1138,7 @@ async fn attach_public_key_empty_draft() {
     ctx.setup_user(params.clone()).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     // Create draft.
     let draft = Draft::empty(&user_ctx).await.unwrap();
@@ -1265,7 +1265,7 @@ async fn open_draft_resets_password() {
     draft.save().await.unwrap();
 
     // Load the draft.
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
     let draft_message_id = draft.message_id().await.unwrap().unwrap();
 
     // Execute action.
@@ -1310,7 +1310,7 @@ async fn create_draft_reply_with_invalid_address_produces_address_validation_err
     ctx.setup_user(params.clone()).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let (mut existing_message, _, _) =
         Message::from_api_data(remote_existing_message.clone(), &tether)
@@ -1396,7 +1396,7 @@ async fn open_draft_catches_invalid_address() {
     let user_ctx = ctx.mail_user_context().await;
 
     // Create draft.
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     let draft = Draft::empty(&user_ctx).await.unwrap();
 
     draft.save().await.unwrap();
@@ -1468,7 +1468,7 @@ async fn open_draft_detects_sender_alias() {
     let user_ctx = ctx.mail_user_context().await;
 
     // Create draft.
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     let local_address_id = Address::remote_id_counterpart(params.addresses[0].id.clone(), &tether)
         .await
         .unwrap()
@@ -1615,7 +1615,7 @@ async fn prepare_draft_reply_attach_public_key(
     remote_existing_message.body.attachments.reverse();
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     if pre_attach_public_key {
         let addresses = Address::find("ORDER BY display_order ASC LIMIT 1", vec![], &tether)
@@ -1764,7 +1764,7 @@ async fn replying_to_expiring_message_inherits_expiration() {
     ctx.setup_user(params.clone()).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let (mut existing_message, _, _) =
         Message::from_api_data(remote_existing_message.clone(), &tether)
@@ -1852,7 +1852,7 @@ async fn draft_save_handles_save_with_new_message_if_remote_message_already_exis
     ctx.setup_user(params.clone()).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let (mut existing_message, _, _) =
         Message::from_api_data(remote_existing_message.clone(), &tether)
@@ -1910,7 +1910,7 @@ async fn draft_save_handles_save_with_new_message_if_remote_message_already_exis
     // new draft before the server has a chance to respond. We also setup the conversation remote
     // id to simulate a reply scenario.
 
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     let mut new_message = Message::from_api_metadata(message.metadata.clone(), &tether)
         .await
         .unwrap();
@@ -1963,7 +1963,7 @@ async fn draft_reply_handles_conversation_id_change_on_new_subject() {
     ctx.setup_user(params.clone()).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let (mut existing_message, _, _) =
         Message::from_api_data(remote_existing_message.clone(), &tether)
@@ -2078,7 +2078,7 @@ async fn draft_reply_handles_conversation_id_change_multiple_times_without_destr
     ctx.setup_user(params.clone()).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let (mut existing_message, _, _) =
         Message::from_api_data(remote_existing_message.clone(), &tether)
@@ -2116,8 +2116,6 @@ async fn draft_reply_handles_conversation_id_change_multiple_times_without_destr
     user_ctx
         .user_stash()
         .connection()
-        .await
-        .unwrap()
         .write_tx(async |tx| conv.save(tx).await)
         .await
         .unwrap();
@@ -2233,7 +2231,7 @@ async fn draft_reply_handles_conversation_id_change_on_new_subject_from_place_ho
     ctx.setup_user(params.clone()).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let existing_converation_remote_id = ConversationId::from("already_exists_conv");
     let mut existing_conversation = Conversation {

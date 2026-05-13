@@ -42,7 +42,7 @@ async fn test_new_mailbox_sync_conversations() {
 
     // Create a mailbox
     let mailbox1 = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
+        &user_ctx.user_stash().connection(),
         params.labels.get(&ApiLabelType::Label).unwrap()[0]
             .id
             .clone(),
@@ -52,7 +52,7 @@ async fn test_new_mailbox_sync_conversations() {
 
     // Create another mailbox
     let mailbox2 = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
+        &user_ctx.user_stash().connection(),
         params.labels.get(&ApiLabelType::Label).unwrap()[1]
             .id
             .clone(),
@@ -63,7 +63,7 @@ async fn test_new_mailbox_sync_conversations() {
     // Sync mailbox 1 - this should fire a network request
     mailbox1
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
@@ -73,7 +73,7 @@ async fn test_new_mailbox_sync_conversations() {
     // Sync mailbox 2 - this should also fire a network request
     mailbox2
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
@@ -83,7 +83,7 @@ async fn test_new_mailbox_sync_conversations() {
     // Try syncing mailbox1 again - this should not fire any network requests
     mailbox1
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
@@ -93,7 +93,7 @@ async fn test_new_mailbox_sync_conversations() {
     // Try syncing mailbox2 again - this should not fire any network requests
     mailbox2
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
@@ -160,7 +160,7 @@ async fn test_new_mailbox_sync_messages() {
 
     // Create a mailbox
     let mailbox1 = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
+        &user_ctx.user_stash().connection(),
         params.labels.get(&ApiLabelType::Label).unwrap()[0]
             .id
             .clone(),
@@ -170,7 +170,7 @@ async fn test_new_mailbox_sync_messages() {
 
     // Create another mailbox
     let mailbox2 = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
+        &user_ctx.user_stash().connection(),
         params.labels.get(&ApiLabelType::Label).unwrap()[1]
             .id
             .clone(),
@@ -181,7 +181,7 @@ async fn test_new_mailbox_sync_messages() {
     // Sync mailbox 1 - this should fire a network request
     mailbox1
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
@@ -191,7 +191,7 @@ async fn test_new_mailbox_sync_messages() {
     // Sync mailbox 2 - this should also fire a network request
     mailbox2
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
@@ -201,7 +201,7 @@ async fn test_new_mailbox_sync_messages() {
     // Try syncing mailbox1 again - this should not fire any network requests
     mailbox1
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
@@ -211,7 +211,7 @@ async fn test_new_mailbox_sync_messages() {
     // Try syncing mailbox2 again - this should not fire any network requests
     mailbox2
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
@@ -279,25 +279,21 @@ async fn test_new_mailbox_always_sync_messages_for_drafts_and_sent() {
     let user_ctx = ctx.mail_user_context().await;
 
     // Create a drafts mailbox
-    let mailbox_drafts = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::drafts(),
-    )
-    .await
-    .unwrap();
+    let mailbox_drafts =
+        Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::drafts())
+            .await
+            .unwrap();
 
     // Create sent mailbox
-    let mailbox_sent = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::sent(),
-    )
-    .await
-    .unwrap();
+    let mailbox_sent =
+        Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::sent())
+            .await
+            .unwrap();
 
     // Check that mailboxes always sync messages.
     mailbox_drafts
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
@@ -306,7 +302,7 @@ async fn test_new_mailbox_always_sync_messages_for_drafts_and_sent() {
 
     mailbox_sent
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )

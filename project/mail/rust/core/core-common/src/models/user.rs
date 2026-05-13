@@ -157,7 +157,7 @@ impl User {
             watcher,
             Self::INIT_KEY,
             &[],
-            mail_stash.connection().await?,
+            mail_stash.connection(),
             async move || Ok(Self::sync_user_and_settings(api).await?),
             |tx, res| {
                 res.store(tx)?;

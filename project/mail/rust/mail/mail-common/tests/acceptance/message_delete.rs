@@ -24,7 +24,7 @@ async fn smoke() {
     .await;
 
     let queue = user_ctx.action_queue();
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let label = SystemLabel::Inbox.load(&tether).await.unwrap().unwrap();
     let mut msg_counter = msg_counter(&label, &mut tether).await;
@@ -77,7 +77,7 @@ async fn revert() {
     let (_test_ctx, user_ctx, _) = setup(5, async |_, _| {}).await;
 
     let queue = user_ctx.action_queue();
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let label = SystemLabel::Inbox.load(&tether).await.unwrap().unwrap();
     let mut msg_counter = msg_counter(&label, &mut tether).await;
@@ -134,7 +134,7 @@ async fn rebase() {
         })
         .collect::<Vec<_>>();
 
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let label = SystemLabel::Inbox.load(&tether).await.unwrap().unwrap();
     let mut msg_counter = msg_counter(&label, &mut tether).await;
@@ -239,7 +239,7 @@ async fn setup(
 ) -> (MailTestContext, Arc<MailUserContext>, Vec<Message>) {
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     let params = Params::default_basic();
     ctx.setup_user(params.clone()).await;
     ctx.initialize_uninitialized_ctx(&user_ctx).await;

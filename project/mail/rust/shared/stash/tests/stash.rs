@@ -65,7 +65,7 @@ mod concurrency_basic_sync {
         let db_dir = tempfile::tempdir().unwrap();
         let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
-        let conn = mail_stash.connection().await.unwrap();
+        let conn = mail_stash.connection();
 
         // Create a table
         conn.execute(r#"CREATE TABLE test_kv (value TEXT NOT NULL)"#, vec![])
@@ -92,7 +92,7 @@ mod concurrency_basic_sync {
         let db_dir = tempfile::tempdir().unwrap();
         let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
-        let mut conn = mail_stash.connection().await.unwrap();
+        let mut conn = mail_stash.connection();
         let result = conn
             .write_tx(async |tx| {
                 // Create a table
@@ -125,7 +125,7 @@ mod concurrency_basic_sync {
         let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
         let result = tokio::spawn(async move {
-            let mut conn = mail_stash.connection().await.unwrap();
+            let mut conn = mail_stash.connection();
             conn.write_tx(async |tx| {
                 // Create a table
                 tx.execute(r#"CREATE TABLE test_kv (value TEXT NOT NULL)"#, vec![])
@@ -165,7 +165,7 @@ mod concurrency_async_functions {
         let db_dir = tempfile::tempdir().unwrap();
         let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
-        let conn = mail_stash.connection().await.unwrap();
+        let conn = mail_stash.connection();
 
         create_table(&conn).await;
         insert(&conn, "test").await;
@@ -180,7 +180,7 @@ mod concurrency_async_functions {
         let db_dir = tempfile::tempdir().unwrap();
         let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
-        let mut conn = mail_stash.connection().await.unwrap();
+        let mut conn = mail_stash.connection();
 
         let result = conn
             .write_tx::<_, _, StashError>(async |tx| {
@@ -206,7 +206,7 @@ mod concurrency_async_threads {
         let db_dir = tempfile::tempdir().unwrap();
         let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
-        let conn = mail_stash.connection().await.unwrap();
+        let conn = mail_stash.connection();
 
         let result = async_spawn(async move {
             create_table(&conn).await;
@@ -227,7 +227,7 @@ mod concurrency_async_threads {
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
 
         let result = async_spawn(async move {
-            let mut conn = mail_stash.connection().await.unwrap();
+            let mut conn = mail_stash.connection();
             conn.write_tx::<_, _, StashError>(async |tx| {
                 create_table_tx(tx).await;
                 insert_tx(tx, "test").await;
@@ -250,13 +250,13 @@ mod concurrency_async_threads {
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
         let stash1 = mail_stash.clone();
         let stash2 = mail_stash.clone();
-        let conn = mail_stash.connection().await.unwrap();
+        let conn = mail_stash.connection();
 
         create_table(&conn).await;
 
         // First thread, with first transaction
         let handle1 = async_spawn(async move {
-            let mut conn1 = stash1.connection().await.unwrap();
+            let mut conn1 = stash1.connection();
             conn1
                 .write_tx::<_, _, StashError>(async |tx| {
                     insert_tx(tx, "test1").await;
@@ -268,7 +268,7 @@ mod concurrency_async_threads {
 
         // Second thread, with second transaction
         let handle2 = async_spawn(async move {
-            let mut conn2 = stash2.connection().await.unwrap();
+            let mut conn2 = stash2.connection();
             conn2
                 .write_tx::<_, _, StashError>(async |tx| {
                     insert_tx(tx, "test2").await;
@@ -311,7 +311,7 @@ mod concurrency_std_threads {
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
         let stash1 = mail_stash.clone();
         let stash2 = mail_stash.clone();
-        let conn = mail_stash.connection().await.unwrap();
+        let conn = mail_stash.connection();
 
         create_table(&conn).await;
 
@@ -319,7 +319,7 @@ mod concurrency_std_threads {
         let handle1 = spawn(move || {
             let rt = Runtime::new().unwrap();
             rt.block_on(async {
-                let mut conn1 = stash1.connection().await.unwrap();
+                let mut conn1 = stash1.connection();
                 conn1
                     .write_tx::<_, _, StashError>(async |tx| {
                         insert_tx(tx, "test1").await;
@@ -334,7 +334,7 @@ mod concurrency_std_threads {
         let handle2 = spawn(move || {
             let rt = Runtime::new().unwrap();
             rt.block_on(async {
-                let mut conn2 = stash2.connection().await.unwrap();
+                let mut conn2 = stash2.connection();
                 conn2
                     .write_tx::<_, _, StashError>(async |tx| {
                         insert_tx(tx, "test2").await;
@@ -376,7 +376,7 @@ mod concurrency_mixed {
         let db_dir = tempfile::tempdir().unwrap();
         let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
-        let conn = mail_stash.connection().await.unwrap();
+        let conn = mail_stash.connection();
         let stash1 = mail_stash.clone();
         let stash2 = mail_stash.clone();
         let stash3 = mail_stash.clone();
@@ -393,7 +393,7 @@ mod concurrency_mixed {
         let handle1 = spawn(move || {
             let rt = Runtime::new().unwrap();
             rt.block_on(async {
-                let mut conn1 = stash1.connection().await.unwrap();
+                let mut conn1 = stash1.connection();
                 conn1
                     .write_tx::<_, _, StashError>(async |tx| {
                         insert_tx(tx, "test1").await;
@@ -410,7 +410,7 @@ mod concurrency_mixed {
         let handle2 = spawn(move || {
             let rt = Runtime::new().unwrap();
             rt.block_on(async {
-                let mut conn2 = stash2.connection().await.unwrap();
+                let mut conn2 = stash2.connection();
                 conn2
                     .write_tx::<_, _, StashError>(async |tx| {
                         insert_tx(tx, "test2").await;
@@ -424,7 +424,7 @@ mod concurrency_mixed {
         // Third thread (std), with no transaction
         let handle3 = spawn(move || {
             Runtime::new().unwrap().block_on(async {
-                let conn3 = stash3.connection().await.unwrap();
+                let conn3 = stash3.connection();
                 insert(&conn3, "test3").await;
                 sleep(Duration::from_millis(100)).await;
                 query(&conn3, "test3").await
@@ -433,7 +433,7 @@ mod concurrency_mixed {
 
         // Fourth thread (async), with third transaction
         let handle4 = async_spawn(async move {
-            let mut conn4 = stash4.connection().await.unwrap();
+            let mut conn4 = stash4.connection();
             conn4
                 .write_tx::<_, _, StashError>(async |tx| {
                     insert_tx(tx, "test4").await;
@@ -447,7 +447,7 @@ mod concurrency_mixed {
 
         // Fifth thread (async), with fourth transaction
         let handle5 = async_spawn(async move {
-            let mut conn5 = stash5.connection().await.unwrap();
+            let mut conn5 = stash5.connection();
             conn5
                 .write_tx::<_, _, StashError>(async |tx| {
                     insert_tx(tx, "test5").await;
@@ -460,7 +460,7 @@ mod concurrency_mixed {
 
         // Sixth thread (async), with no transaction
         let handle6 = async_spawn(async move {
-            let conn6 = stash6.connection().await.unwrap();
+            let conn6 = stash6.connection();
             insert(&conn6, "test6").await;
             sleep(Duration::from_millis(100)).await;
             query(&conn6, "test6").await
@@ -474,15 +474,15 @@ mod concurrency_mixed {
         let result5 = handle5.await.unwrap();
         let result6 = handle6.await.unwrap();
 
-        let conn7 = stash7.connection().await.unwrap();
+        let conn7 = stash7.connection();
         // Additional write queries
         conn7
             .execute(r#"INSERT INTO test_kv (value) VALUES ("test7")"#, vec![])
             .await
             .unwrap();
-        let conn8 = stash8.connection().await.unwrap();
+        let conn8 = stash8.connection();
         insert(&conn8, "test8").await;
-        let mut conn9 = stash9.connection().await.unwrap();
+        let mut conn9 = stash9.connection();
         let result9 = conn9
             .write_tx::<_, _, StashError>(async |tx| {
                 insert_tx(tx, "test9").await;
@@ -589,7 +589,7 @@ mod orm_tests {
     #[tokio::test]
     async fn test_orm() -> anyhow::Result<()> {
         let mail_stash = Stash::new(None)?;
-        let mut tether = mail_stash.connection().await?;
+        let mut tether = mail_stash.connection();
 
         tether
             .write_tx::<_, _, StashError>(async |tx| {
@@ -664,7 +664,7 @@ mod read_tx_tests {
         let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
 
-        let setup_conn = mail_stash.connection().await.unwrap();
+        let setup_conn = mail_stash.connection();
         setup_conn
             .execute(r#"CREATE TABLE test_foo (foo INTEGER NOT NULL)"#, vec![])
             .await
@@ -680,7 +680,7 @@ mod read_tx_tests {
         let writer_stash = mail_stash.clone();
         let writer = tokio::spawn(async move {
             start_write_rx.await.unwrap();
-            let mut conn = writer_stash.connection().await.unwrap();
+            let mut conn = writer_stash.connection();
             conn.write_tx::<_, _, StashError>(async |tx| {
                 tx.execute(r#"UPDATE test_foo SET foo = 6"#, vec![]).await?;
                 Ok(())
@@ -691,7 +691,7 @@ mod read_tx_tests {
         });
 
         let reader_stash = mail_stash.clone();
-        let mut reader_conn = reader_stash.connection().await.unwrap();
+        let mut reader_conn = reader_stash.connection();
         let mut start_write_tx = Some(start_write_tx);
         let mut write_done_rx = Some(write_done_rx);
         reader_conn
@@ -728,7 +728,7 @@ mod read_tx_tests {
         let mail_stash: Stash<UserDb> =
             Stash::new(Some(&db_dir.path().join("test"))).expect("Failed to create Stash");
 
-        let mut conn = mail_stash.connection().await.unwrap();
+        let mut conn = mail_stash.connection();
         conn.execute(r#"CREATE TABLE test_foo (foo INTEGER NOT NULL)"#, vec![])
             .await
             .unwrap();

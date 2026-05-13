@@ -16,7 +16,7 @@ async fn logout_and_delete_user_data_preserves_account_metadata() {
         .await
         .unwrap();
 
-    let tether = real_ctx.account_stash().connection().await.unwrap();
+    let tether = real_ctx.account_stash().connection();
     // No sessions exist
     assert!(CoreSession::all(&tether).await.unwrap().is_empty());
 
@@ -46,7 +46,7 @@ async fn delete_account_does_not_preserve_account_metadata() {
 
     assert!(!real_ctx.user_db_path(&user_id).exists());
 
-    let tether = real_ctx.account_stash().connection().await.unwrap();
+    let tether = real_ctx.account_stash().connection();
     // No sessions exist
     assert!(CoreSession::all(&tether).await.unwrap().is_empty());
 

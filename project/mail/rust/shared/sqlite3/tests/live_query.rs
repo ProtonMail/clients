@@ -37,7 +37,7 @@ async fn test_tracker() {
     let dir = tempfile::TempDir::new().expect("failed to create temp dir");
     let db_path = dir.path().join("sqlite.db");
     let mail_stash: Stash<UserDb> = Stash::new(Some(&db_path)).expect("Failed to create Stash");
-    let conn = mail_stash.connection().await.unwrap();
+    let conn = mail_stash.connection();
 
     conn.execute(
         "CREATE TABLE foo (id INTEGER PRIMARY KEY AUTOINCREMENT, bar INTEGER)",
@@ -56,7 +56,7 @@ async fn test_tracker() {
     for _ in 0..3 {
         let stash_clone = mail_stash.clone();
         let h = spawn_async(async move {
-            let mut conn = stash_clone.connection().await.unwrap();
+            let mut conn = stash_clone.connection();
             conn.write_tx(async |tx| {
                 tx.execute("INSERT INTO foo VALUES (null, 10)", vec![])
                     .await

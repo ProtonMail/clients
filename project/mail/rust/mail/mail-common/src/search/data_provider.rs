@@ -40,7 +40,7 @@ impl MessageDataProvider for StashMessageDataProvider {
         &self,
         message_id: mail_search::LocalMessageId,
     ) -> Result<Option<(String, bool)>, Self::Error> {
-        let tether = self.mail_stash.connection().await?;
+        let tether = self.mail_stash.connection();
 
         // Convert u64 to mail-common's LocalMessageId
         let local_id: MailLocalMessageId = message_id.into();
@@ -101,7 +101,7 @@ impl MessageDataProvider for StashMessageDataProvider {
         &self,
         message_id: mail_search::LocalMessageId,
     ) -> Result<Option<MessageId>, Self::Error> {
-        let tether = self.mail_stash.connection().await?;
+        let tether = self.mail_stash.connection();
 
         // Convert u64 to mail-common's LocalMessageId
         let local_id: MailLocalMessageId = message_id.into();
@@ -113,7 +113,7 @@ impl MessageDataProvider for StashMessageDataProvider {
         &self,
         message_id: mail_search::LocalMessageId,
     ) -> Result<bool, Self::Error> {
-        let tether = self.mail_stash.connection().await?;
+        let tether = self.mail_stash.connection();
 
         // Convert u64 to mail-common's LocalMessageId
         let local_id: MailLocalMessageId = message_id.into();
@@ -129,7 +129,7 @@ impl MessageDataProvider for StashMessageDataProvider {
         &self,
         message_id: mail_search::LocalMessageId,
     ) -> Result<Option<MessageMetadata>, Self::Error> {
-        let tether = self.mail_stash.connection().await?;
+        let tether = self.mail_stash.connection();
 
         // Convert u64 to mail-common's LocalMessageId
         let local_id: MailLocalMessageId = message_id.into();

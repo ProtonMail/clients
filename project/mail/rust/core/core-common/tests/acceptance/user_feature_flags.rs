@@ -64,7 +64,7 @@ async fn test_user_feature_flags_warm_start_immediate_return() {
     {
         let past = UnixTimestamp::new(12);
         let user_context = ctx.user_context().await;
-        let mut tether = user_context.mail_stash().connection().await.unwrap();
+        let mut tether = user_context.mail_stash().connection();
         let mut cached_x = UserFeatureFlag::unleash("CachedFeatureX", past);
         let mut cached_y = UserFeatureFlag::unleash("CachedFeatureY", past);
 
@@ -136,7 +136,7 @@ async fn test_user_feature_flags_warm_start_background_refresh() {
     {
         let past = UnixTimestamp::new(10);
         let user_context = ctx.user_context().await;
-        let mut tether = user_context.mail_stash().connection().await.unwrap();
+        let mut tether = user_context.mail_stash().connection();
         let mut existing_flag = UserFeatureFlag::unleash("ExistingFeature", past);
 
         tether
@@ -196,7 +196,7 @@ async fn test_user_feature_flags_warm_start_background_refresh() {
 
     {
         let user_context = ctx.user_context().await;
-        let tether = user_context.mail_stash().connection().await.unwrap();
+        let tether = user_context.mail_stash().connection();
         let existing_flag = UserFeatureFlag::by_name("ExistingFeature", &tether)
             .await
             .unwrap();
@@ -216,7 +216,7 @@ async fn test_user_feature_flags_network_failure_preserves_cache() {
     {
         let past = UnixTimestamp::new(5);
         let user_context = ctx.user_context().await;
-        let mut tether = user_context.mail_stash().connection().await.unwrap();
+        let mut tether = user_context.mail_stash().connection();
         let mut cached_flag = UserFeatureFlag::unleash("CachedFlag", past);
 
         tether
@@ -363,7 +363,7 @@ async fn test_legacy_feature_flags_writable_property() {
     assert_eq!(feature_flags.get("ReadOnlyFlag").await.unwrap(), Some(true));
 
     {
-        let tether = user_context.mail_stash().connection().await.unwrap();
+        let tether = user_context.mail_stash().connection();
         let writable_flag = UserFeatureFlag::by_name("WritableFlag", &tether)
             .await
             .unwrap()
@@ -385,7 +385,7 @@ async fn test_legacy_feature_flags_disappearing_gets_removed() {
     {
         let past = UnixTimestamp::new(10);
         let user_context = ctx.user_context().await;
-        let mut tether = user_context.mail_stash().connection().await.unwrap();
+        let mut tether = user_context.mail_stash().connection();
         let mut existing_flag =
             UserFeatureFlag::legacy("DisappearingFlag", true, FlagMutability::Mutable, past);
 
@@ -432,7 +432,7 @@ async fn test_legacy_feature_flags_disappearing_gets_removed() {
     assert_eq!(feature_flags.get("DisappearingFlag").await.unwrap(), None);
 
     {
-        let tether = user_context.mail_stash().connection().await.unwrap();
+        let tether = user_context.mail_stash().connection();
         let flag = UserFeatureFlag::by_name("DisappearingFlag", &tether)
             .await
             .unwrap();
@@ -484,7 +484,7 @@ async fn test_unleash_vs_legacy_collision_unleash_wins() {
     );
 
     {
-        let tether = user_context.mail_stash().connection().await.unwrap();
+        let tether = user_context.mail_stash().connection();
         let flag = UserFeatureFlag::by_name("CollidingFlag", &tether)
             .await
             .unwrap()
@@ -534,7 +534,7 @@ async fn test_legacy_feature_flags_expired_filtering() {
     );
 
     {
-        let tether = user_context.mail_stash().connection().await.unwrap();
+        let tether = user_context.mail_stash().connection();
         let expired_flag = UserFeatureFlag::by_name("ExpiredFlag", &tether)
             .await
             .unwrap();
@@ -555,7 +555,7 @@ async fn test_legacy_feature_flag_becomes_expired_disabled() {
     {
         let past = UnixTimestamp::new(10);
         let user_context = ctx.user_context().await;
-        let mut tether = user_context.mail_stash().connection().await.unwrap();
+        let mut tether = user_context.mail_stash().connection();
         let mut existing_flag =
             UserFeatureFlag::legacy("BecomingExpiredFlag", true, FlagMutability::Mutable, past);
 
@@ -603,7 +603,7 @@ async fn test_legacy_feature_flag_becomes_expired_disabled() {
     );
 
     {
-        let tether = user_context.mail_stash().connection().await.unwrap();
+        let tether = user_context.mail_stash().connection();
         let flag = UserFeatureFlag::by_name("BecomingExpiredFlag", &tether)
             .await
             .unwrap();
@@ -678,7 +678,7 @@ async fn test_mixed_unleash_and_legacy_sources() {
     );
 
     {
-        let tether = user_context.mail_stash().connection().await.unwrap();
+        let tether = user_context.mail_stash().connection();
         let unleash_flag = UserFeatureFlag::by_name("UnleashOnlyFlag", &tether)
             .await
             .unwrap()
@@ -891,7 +891,7 @@ async fn test_override_writable_legacy_flag_success() {
     assert_eq!(executed_count, 1);
 
     {
-        let tether = user_context.mail_stash().connection().await.unwrap();
+        let tether = user_context.mail_stash().connection();
         let flag = UserFeatureFlag::by_name("WritableFlag", &tether)
             .await
             .unwrap()
@@ -934,7 +934,7 @@ async fn test_override_non_writable_flag_fails() {
 
     assert!(result.is_err());
     {
-        let tether = user_context.mail_stash().connection().await.unwrap();
+        let tether = user_context.mail_stash().connection();
         let flag = UserFeatureFlag::by_name("ReadOnlyFlag", &tether)
             .await
             .unwrap()
@@ -962,7 +962,7 @@ async fn test_override_locally_non_existent_flag_works_offline() {
     user_context.queue().queue_action(action).await.unwrap();
 
     {
-        let tether = user_context.mail_stash().connection().await.unwrap();
+        let tether = user_context.mail_stash().connection();
         let flag = UserFeatureFlag::by_name("NonExistentFlag", &tether)
             .await
             .unwrap()
@@ -1023,7 +1023,7 @@ async fn test_override_locally_non_existent_flag_works_if_backend_knows_it() {
     assert_eq!(executed_count, 1);
 
     {
-        let tether = user_context.mail_stash().connection().await.unwrap();
+        let tether = user_context.mail_stash().connection();
         let flag = UserFeatureFlag::by_name("NonExistentFlag", &tether)
             .await
             .unwrap()
@@ -1062,7 +1062,7 @@ async fn test_override_locally_non_existent_flag_fails_if_backend_does_not_know_
     user_context.queue().queue_action(action).await.unwrap();
 
     {
-        let tether = user_context.mail_stash().connection().await.unwrap();
+        let tether = user_context.mail_stash().connection();
         let flag = UserFeatureFlag::by_name("NonExistentFlag", &tether)
             .await
             .unwrap();
@@ -1075,7 +1075,7 @@ async fn test_override_locally_non_existent_flag_fails_if_backend_does_not_know_
     assert!(result.is_err());
 
     {
-        let tether = user_context.mail_stash().connection().await.unwrap();
+        let tether = user_context.mail_stash().connection();
         let flag = UserFeatureFlag::by_name("NonExistentFlag", &tether)
             .await
             .unwrap();
@@ -1178,7 +1178,7 @@ async fn test_override_flag_state_preservation() {
     assert_eq!(executed_count, 1);
 
     {
-        let tether = user_context.mail_stash().connection().await.unwrap();
+        let tether = user_context.mail_stash().connection();
         let flag = UserFeatureFlag::by_name("StateTestFlag", &tether)
             .await
             .unwrap()
@@ -1199,7 +1199,7 @@ async fn test_override_flag_state_preservation() {
     assert_eq!(executed_count, 1);
 
     {
-        let tether = user_context.mail_stash().connection().await.unwrap();
+        let tether = user_context.mail_stash().connection();
         let flag = UserFeatureFlag::by_name("StateTestFlag", &tether)
             .await
             .unwrap()
@@ -1248,7 +1248,7 @@ async fn test_override_flag_api_failure_rollback() {
     let _result = user_context.queue().new_executor().execute_all().await;
 
     {
-        let tether = user_context.mail_stash().connection().await.unwrap();
+        let tether = user_context.mail_stash().connection();
         let flag = UserFeatureFlag::by_name("APIFailFlag", &tether)
             .await
             .unwrap()
@@ -1292,7 +1292,7 @@ async fn test_override_local_only_not_yet_executed_remotely() {
     user_context.queue().queue_action(action).await.unwrap();
 
     {
-        let tether = user_context.mail_stash().connection().await.unwrap();
+        let tether = user_context.mail_stash().connection();
         let flag = UserFeatureFlag::by_name("LocalOnlyFlag", &tether)
             .await
             .unwrap()
@@ -1314,7 +1314,7 @@ async fn test_override_local_only_not_yet_executed_remotely() {
     feature_flags.refresh().await.unwrap();
 
     {
-        let tether = user_context.mail_stash().connection().await.unwrap();
+        let tether = user_context.mail_stash().connection();
         let flag = UserFeatureFlag::by_name("LocalOnlyFlag", &tether)
             .await
             .unwrap()
@@ -1420,7 +1420,7 @@ async fn test_backend_returns_stale_data_after_override() {
     assert_eq!(executed_count, 1);
 
     {
-        let tether = user_context.mail_stash().connection().await.unwrap();
+        let tether = user_context.mail_stash().connection();
         let flag = UserFeatureFlag::by_name("StaleDataFlag", &tether)
             .await
             .unwrap()
@@ -1437,7 +1437,7 @@ async fn test_backend_returns_stale_data_after_override() {
     feature_flags.refresh().await.unwrap();
 
     {
-        let tether = user_context.mail_stash().connection().await.unwrap();
+        let tether = user_context.mail_stash().connection();
         let flag = UserFeatureFlag::by_name("StaleDataFlag", &tether)
             .await
             .unwrap()
@@ -1535,7 +1535,7 @@ async fn test_override_flag_api_failure_preserves_existing_override() {
 
     {
         let user_context = ctx.user_context().await;
-        let mut tether = user_context.mail_stash().connection().await.unwrap();
+        let mut tether = user_context.mail_stash().connection();
         let mut existing_flag = UserFeatureFlag::legacy(
             "ExistingOverrideFlag",
             true,
@@ -1581,7 +1581,7 @@ async fn test_override_flag_api_failure_preserves_existing_override() {
     let _result = user_context.queue().new_executor().execute_all().await;
 
     {
-        let tether = user_context.mail_stash().connection().await.unwrap();
+        let tether = user_context.mail_stash().connection();
         let flag = UserFeatureFlag::by_name("ExistingOverrideFlag", &tether)
             .await
             .unwrap()
@@ -1659,7 +1659,7 @@ async fn test_proton_can_override_user_overridden_flag() {
     assert_eq!(executed_count, 1);
 
     {
-        let tether = user_context.mail_stash().connection().await.unwrap();
+        let tether = user_context.mail_stash().connection();
         let flag = UserFeatureFlag::by_name("RatingBoosterFlag", &tether)
             .await
             .unwrap()
@@ -1704,7 +1704,7 @@ async fn test_proton_can_override_user_overridden_flag() {
     );
 
     {
-        let tether = user_context.mail_stash().connection().await.unwrap();
+        let tether = user_context.mail_stash().connection();
         let flag = UserFeatureFlag::by_name("RatingBoosterFlag", &tether)
             .await
             .unwrap()

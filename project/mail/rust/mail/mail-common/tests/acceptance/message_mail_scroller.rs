@@ -55,7 +55,7 @@ async fn test_message_mail_scroller_reads_correct_items_within_visible_range_for
     const REMOTE_LABEL_ID: &str = "rid1";
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let mut data = hash_map! {
         vec![REMOTE_LABEL_ID]: test_messages(100, 100),
@@ -146,7 +146,7 @@ async fn test_message_mail_scroller_reads_one_item_from_online_scroll_data() {
     ctx.setup_user(params.clone()).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     let local_label_id = SystemLabel::Inbox.local_id(&tether).await.unwrap().unwrap();
     let page_size = 5;
@@ -179,7 +179,7 @@ async fn test_message_mail_scroller_reads_one_item_from_online_scroll_data() {
 async fn test_message_mail_scroller_reads_two_pages_from_online_scroll_data() {
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     let page_size = 5;
     let label = SystemLabel::Inbox;
     let remote_label_id = label.remote_id();
@@ -314,7 +314,7 @@ async fn test_message_mail_scroller_reads_two_pages_from_online_scroll_data() {
 async fn test_message_mail_scroller_notificate_about_changes() {
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     let page_size = 5;
     let local_label_id = SystemLabel::Inbox.local_id(&tether).await.unwrap().unwrap();
     let params = setup_api_message_pages(&ctx, page_size, 1..=3).await;
@@ -444,7 +444,7 @@ async fn test_message_mail_scroller_notificate_about_changes() {
 async fn all_scheduled_is_displayed_in_ascending_order() {
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     let page_size = 5;
     let local_label_id = SystemLabel::Scheduled
         .local_id(&tether)
@@ -528,7 +528,7 @@ async fn all_scheduled_is_displayed_in_ascending_order() {
 async fn delete_all() {
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
     let label = SystemLabel::Trash.load(&tether).await.unwrap().unwrap();
 
     // ---
@@ -827,7 +827,7 @@ pub async fn mock_get_messages_page(
 async fn test_snooze_time_pagination_fix_works() {
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     let local_label_id = SystemLabel::Inbox.local_id(&tether).await.unwrap().unwrap();
 
     let mut messages = vec![];

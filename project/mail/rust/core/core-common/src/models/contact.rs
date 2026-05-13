@@ -26,7 +26,7 @@ pub async fn initialize_contacts(
         watcher,
         Contact::INIT_KEY,
         &[Label::INIT_KEY],
-        mail_stash.connection().await?,
+        mail_stash.connection(),
         async move || Ok(Contact::sync(api).await?),
         |tx, res| {
             res.store(tx)?;

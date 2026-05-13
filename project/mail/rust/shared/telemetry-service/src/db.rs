@@ -24,11 +24,7 @@ impl TelemetryDb {
 #[async_trait]
 impl TelemetryDbEx for TelemetryDb {
     async fn get_events(&self, limit: u32) -> core_telemetry::Result<Vec<TelemetryEvent>> {
-        let tether = self
-            .stash
-            .connection()
-            .await
-            .map_err(|e| TelemetryError::Database { msg: e.to_string() })?;
+        let tether = self.stash.connection();
 
         let rows = TelemetryEventRow::find("LIMIT ?", params![limit], &tether)
             .await
@@ -46,11 +42,7 @@ impl TelemetryDbEx for TelemetryDb {
     }
 
     async fn insert_events(&self, events: Vec<TelemetryEvent>) -> core_telemetry::Result<()> {
-        let mut tether = self
-            .stash
-            .connection()
-            .await
-            .map_err(|e| TelemetryError::Database { msg: e.to_string() })?;
+        let mut tether = self.stash.connection();
 
         tether
             .write_tx(async |tx| {
@@ -73,11 +65,7 @@ impl TelemetryDbEx for TelemetryDb {
             return Ok(());
         }
 
-        let mut tether = self
-            .stash
-            .connection()
-            .await
-            .map_err(|e| TelemetryError::Database { msg: e.to_string() })?;
+        let mut tether = self.stash.connection();
 
         tether
             .write_tx(async |tx| {

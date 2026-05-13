@@ -33,7 +33,6 @@ impl EventStore<EventManagerContext> for CoreEventLoopContext {
         // independently.
         ctx.mail_stash()
             .connection()
-            .await?
             .write_tx(async |tx| {
                 store_event_id_query(CORE_EVENT_TYPE_ID, id.clone(), tx).await?;
                 store_event_id_query(CONTACT_EVENT_TYPE_ID, id.clone(), tx).await?;
@@ -51,7 +50,7 @@ pub async fn load_event_id(
     ctx: &UserContext,
     key: &'static str,
 ) -> anyhow::Result<Option<core_event_loop::EventId>> {
-    let tether = ctx.mail_stash().connection().await?;
+    let tether = ctx.mail_stash().connection();
     match load_event_id_query(key, &tether).await {
         Ok(value) => Ok(value.map(|id| id.into_inner().into())),
         Err(e) => {
@@ -80,7 +79,6 @@ pub async fn store_event_id(
 ) -> anyhow::Result<()> {
     ctx.mail_stash()
         .connection()
-        .await?
         .write_tx(async |tx| store_event_id_query(key, id, tx).await)
         .await
         .map_err(|e: StashError| {

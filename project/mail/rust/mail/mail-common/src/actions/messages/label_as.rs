@@ -127,7 +127,6 @@ impl UndoLabelAsMessages {
             let (label, unread) = move_action.action.0.build_undo_states();
             queue
                 .tether()
-                .await?
                 .write_tx::<_, _, AppError>(async |tx| {
                     let metadata = Metadata::builder().with_dependency(move_action.id).build();
                     queue

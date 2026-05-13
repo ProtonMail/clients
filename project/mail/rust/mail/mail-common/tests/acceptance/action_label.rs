@@ -27,7 +27,7 @@ async fn test_labeling_conversation_with_custom_label() {
     // General setup
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     // Set up test data
     let remote_label_name = "selected";
@@ -36,12 +36,10 @@ async fn test_labeling_conversation_with_custom_label() {
     let remote_labels = hash_map! {
         ApiLabelType::Label: vec![remote_label.clone()],
     };
-    let inbox_mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::inbox(),
-    )
-    .await
-    .unwrap();
+    let inbox_mailbox =
+        Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::inbox())
+            .await
+            .unwrap();
     let inbox_remote_label = ApiLabel::get_api_label_with_given_id(LabelId::inbox());
     let inbox_local_label = inbox_mailbox.get_local_label(&tether).await;
 
@@ -72,7 +70,7 @@ async fn test_labeling_conversation_with_custom_label() {
 
     inbox_mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
@@ -83,12 +81,10 @@ async fn test_labeling_conversation_with_custom_label() {
         .await
         .unwrap()
         .unwrap();
-    let custom_label_mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        remote_label_id.clone(),
-    )
-    .await
-    .expect("failed to create mailbox");
+    let custom_label_mailbox =
+        Mailbox::with_remote_id(&user_ctx.user_stash().connection(), remote_label_id.clone())
+            .await
+            .expect("failed to create mailbox");
     let custom_label_local_label = custom_label_mailbox.get_local_label(&tether).await;
     let local_conversation_id = local_conversation.id();
 
@@ -183,26 +179,22 @@ async fn test_labeling_conversation_with_custom_label() {
 async fn test_labeling_conversation_with_starred_label() {
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let remote_conversation_id = "first";
-    let inbox_mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::inbox(),
-    )
-    .await
-    .unwrap();
+    let inbox_mailbox =
+        Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::inbox())
+            .await
+            .unwrap();
     let inbox_remote_label = ApiLabel::get_api_label_with_given_id(LabelId::inbox());
     let inbox_local_label = Label::load(inbox_mailbox.label_id(), &tether)
         .await
         .unwrap()
         .unwrap();
-    let starred_mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::starred(),
-    )
-    .await
-    .expect("failed to create mailbox");
+    let starred_mailbox =
+        Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::starred())
+            .await
+            .expect("failed to create mailbox");
     let starred_local_label = Label::load(starred_mailbox.label_id(), &tether)
         .await
         .unwrap()
@@ -231,7 +223,7 @@ async fn test_labeling_conversation_with_starred_label() {
 
     inbox_mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
@@ -348,19 +340,17 @@ async fn test_labeling_fails_when_labelling_folders() {
     ctx.mock_get_conversations(conversations, 1).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
-    let inbox_mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::inbox(),
-    )
-    .await
-    .unwrap();
+    let inbox_mailbox =
+        Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::inbox())
+            .await
+            .unwrap();
 
     // Sync the mailbox
     inbox_mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )

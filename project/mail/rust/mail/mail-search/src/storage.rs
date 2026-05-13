@@ -77,11 +77,7 @@ impl StashBlobStorage {
             return Ok(());
         }
 
-        let mut tether = self
-            .mail_stash
-            .connection()
-            .await
-            .map_err(|e| SearchError::BlobStorage(format!("Failed to get connection: {e}")))?;
+        let mut tether = self.mail_stash.connection();
 
         let timestamp = chrono::Utc::now().timestamp();
         let count = blobs.len();
@@ -111,11 +107,7 @@ impl StashBlobStorage {
 impl BlobStorage for StashBlobStorage {
     async fn load(&self, name: &str) -> Result<Option<Vec<u8>>, SearchError> {
         let name_owned = name.to_owned();
-        let tether = self
-            .mail_stash
-            .connection()
-            .await
-            .map_err(|e| SearchError::BlobStorage(format!("Failed to get connection: {e}")))?;
+        let tether = self.mail_stash.connection();
 
         let raw = tether
             .sync_query(move |conn| {
@@ -160,11 +152,7 @@ impl BlobStorage for StashBlobStorage {
         let compressed_len = data_owned.len();
         let timestamp = chrono::Utc::now().timestamp();
 
-        let mut tether = self
-            .mail_stash
-            .connection()
-            .await
-            .map_err(|e| SearchError::BlobStorage(format!("Failed to get connection: {e}")))?;
+        let mut tether = self.mail_stash.connection();
 
         tether
             .write_tx::<_, (), SE>(async |bond| {
@@ -192,11 +180,7 @@ impl BlobStorage for StashBlobStorage {
 
         let name_owned = name.to_owned();
 
-        let mut tether = self
-            .mail_stash
-            .connection()
-            .await
-            .map_err(|e| SearchError::BlobStorage(format!("Failed to get connection: {e}")))?;
+        let mut tether = self.mail_stash.connection();
 
         let deleted = tether
             .write_tx::<_, bool, SE>(async |bond| {
@@ -221,11 +205,7 @@ impl BlobStorage for StashBlobStorage {
     async fn clear_all(&self) -> Result<(), SearchError> {
         use mail_stash::stash::StashError as SE;
 
-        let mut tether = self
-            .mail_stash
-            .connection()
-            .await
-            .map_err(|e| SearchError::BlobStorage(format!("Failed to get connection: {e}")))?;
+        let mut tether = self.mail_stash.connection();
 
         let deleted_count = tether
             .write_tx::<_, usize, SE>(async |bond| {

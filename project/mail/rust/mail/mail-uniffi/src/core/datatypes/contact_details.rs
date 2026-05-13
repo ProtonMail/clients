@@ -31,7 +31,7 @@ pub async fn get_contact_details(
 
     uniffi_async(async move {
         let ctx = ctx.user_context();
-        let mut tether = ctx.mail_stash().connection().await?;
+        let mut tether = ctx.mail_stash().connection();
         let pgp = proton_crypto::new_pgp_provider();
         let unlocked_user_keys = ctx
             .crypto_key_service()

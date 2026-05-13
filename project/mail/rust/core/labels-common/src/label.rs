@@ -505,11 +505,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_remote_label_add() {
-        let mut tether = new_label_test_connection()
-            .await
-            .connection()
-            .await
-            .unwrap();
+        let mut tether = new_label_test_connection().await.connection();
         let labels = test_labels();
         tether
             .write_tx::<_, _, StashError>(async |tx| {
@@ -525,11 +521,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_remote_label_add_1_char_long_name() {
-        let mut tether = new_label_test_connection()
-            .await
-            .connection()
-            .await
-            .unwrap();
+        let mut tether = new_label_test_connection().await.connection();
         let label = test_label(random_string(1).as_str());
         tether
             .write_tx::<_, _, StashError>(async |tx| Label::from(label.clone()).save(tx).await)
@@ -540,11 +532,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_remote_label_add_100_char_long_name() {
-        let mut tether = new_label_test_connection()
-            .await
-            .connection()
-            .await
-            .unwrap();
+        let mut tether = new_label_test_connection().await.connection();
         let label = test_label(random_string(100).as_str());
         tether
             .write_tx(async |tx| Label::from(label.clone()).save(tx).await)
@@ -555,11 +543,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_remote_label_update() {
-        let mut tether = new_label_test_connection()
-            .await
-            .connection()
-            .await
-            .unwrap();
+        let mut tether = new_label_test_connection().await.connection();
         tether.execute("DELETE FROM labels", vec![]).await.unwrap();
         let mut labels = test_labels()
             .into_iter()
@@ -615,11 +599,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_delete_remote() {
-        let mut tether = new_label_test_connection()
-            .await
-            .connection()
-            .await
-            .unwrap();
+        let mut tether = new_label_test_connection().await.connection();
         let mut labels = test_labels();
 
         tether
@@ -656,11 +636,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_local_label() {
-        let mut tether = new_label_test_connection()
-            .await
-            .connection()
-            .await
-            .unwrap();
+        let mut tether = new_label_test_connection().await.connection();
         tether
             .write_tx::<_, _, StashError>(async |tx| {
                 for t in [
@@ -699,11 +675,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_local_label_1_char_long_name() {
-        let mut tether = new_label_test_connection()
-            .await
-            .connection()
-            .await
-            .unwrap();
+        let mut tether = new_label_test_connection().await.connection();
         tether
             .write_tx::<_, _, StashError>(async |tx| {
                 for t in [LabelType::Label, LabelType::Folder] {
@@ -738,11 +710,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_local_label_100_char_long_name() {
-        let mut tether = new_label_test_connection()
-            .await
-            .connection()
-            .await
-            .unwrap();
+        let mut tether = new_label_test_connection().await.connection();
         tether
             .write_tx::<_, _, StashError>(async |tx| {
                 for t in [LabelType::Label, LabelType::Folder] {
@@ -777,11 +745,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_local_label_has_ascending_order_per_type() {
-        let mut tether = new_label_test_connection()
-            .await
-            .connection()
-            .await
-            .unwrap();
+        let mut tether = new_label_test_connection().await.connection();
         tether
             .write_tx::<_, _, StashError>(async |tx| {
                 for t in [
@@ -838,11 +802,7 @@ mod tests {
 
     #[tokio::test]
     async fn update_local_label() {
-        let mut tether = new_label_test_connection()
-            .await
-            .connection()
-            .await
-            .unwrap();
+        let mut tether = new_label_test_connection().await.connection();
         tether
             .write_tx::<_, _, StashError>(async |tx| {
                 let mut new_label = Label {
@@ -919,7 +879,7 @@ mod tests {
     #[tokio::test]
     async fn test_watch_label() {
         let mail_stash = new_label_test_connection().await;
-        let mut tether = mail_stash.connection().await.unwrap();
+        let mut tether = mail_stash.connection();
         let mut label = tether
             .write_tx::<_, _, StashError>(async |tx| {
                 let mut label: Label = ApiLabel {

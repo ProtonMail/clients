@@ -88,24 +88,20 @@ impl ImageLoader {
         mut url: Url,
     ) -> Result<AttachmentData, ImageLoaderError<C>> {
         let ctx = self.ctx.upgrade().ok_or(ImageLoaderError::LostContext)?;
-        let use_proxy;
-
-        match policy {
+        let use_proxy = match policy {
             ImagePolicy::Safe => {
                 if url.scheme() == "http" {
                     url.set_scheme("https").unwrap();
                 }
 
-                let tether = ctx.user_stash().connection().await?;
+                let tether = ctx.user_stash().connection();
 
-                use_proxy = MailSettings::get_or_default(&tether)
+                MailSettings::get_or_default(&tether)
                     .await
-                    .is_proxy_enabled();
+                    .is_proxy_enabled()
             }
 
-            ImagePolicy::Unsafe => {
-                use_proxy = false;
-            }
+            ImagePolicy::Unsafe => false,
         };
 
         let (data, content_type) = if use_proxy {
@@ -372,7 +368,7 @@ mod tests {
         // ---
         // Update mail settings
 
-        let mut tether = uctx.user_stash().connection().await.unwrap();
+        let mut tether = uctx.user_stash().connection();
 
         tether
             .write_tx(async |bond| {

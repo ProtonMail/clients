@@ -318,7 +318,7 @@ impl IncomingDefault {
             watcher,
             Self::INIT_KEY,
             &[Address::INIT_KEY],
-            mail_stash.connection().await?,
+            mail_stash.connection(),
             async || Ok(Self::sync(api).await?),
             |tx, res| {
                 Self::replace_all_sync(res.into_iter().map(IncomingDefault::from).collect(), tx)?;

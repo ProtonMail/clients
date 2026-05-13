@@ -200,7 +200,7 @@ impl Conversation {
         queue: &Queue<UserDb>,
         ids: Vec<LocalConversationId>,
     ) -> LabelAsResult {
-        let tether = queue.mail_stash().connection().await?;
+        let tether = queue.mail_stash().connection();
 
         let label_id = Label::remote_id_counterpart(LabelId::starred(), &tether)
             .await?
@@ -213,7 +213,7 @@ impl Conversation {
         queue: &Queue<UserDb>,
         ids: Vec<LocalConversationId>,
     ) -> LabelAsResult {
-        let tether = queue.mail_stash().connection().await?;
+        let tether = queue.mail_stash().connection();
 
         let label_id = Label::remote_id_counterpart(LabelId::starred(), &tether)
             .await?
@@ -3394,7 +3394,7 @@ impl StoreLabelCounters {
             watcher,
             Self::INIT_KEY,
             &[Label::INIT_KEY],
-            mail_stash.connection().await?,
+            mail_stash.connection(),
             async || Ok(Self::fetch(api).await?),
             |tx, this| Ok(this.store(tx)?),
         )

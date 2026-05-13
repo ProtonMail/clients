@@ -637,9 +637,8 @@ impl MailUserContext {
                 let Some(ctx) = ctx.upgrade() else {
                     return;
                 };
-                if let Ok(mut tether) = ctx.user_stash().connection().await
-                    && let Err(e) = Message::delete_expired(&mut tether).await
-                {
+                let mut tether = ctx.user_stash().connection();
+                if let Err(e) = Message::delete_expired(&mut tether).await {
                     error!("Error in background task deleting expired messages: {e:?}");
                 }
                 drop(ctx);
@@ -795,7 +794,7 @@ impl MailUserContext {
 
     pub async fn user(&self) -> MailContextResult<User> {
         let mail_stash = self.user_stash();
-        let tether = mail_stash.connection().await?;
+        let tether = mail_stash.connection();
         let user_id = self.user_id();
         let real_user = User::load(user_id.clone(), &tether)
             .await?

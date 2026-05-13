@@ -12,7 +12,7 @@ use proton_crypto_account::keys::{ArmoredPrivateKey, KeyId, LockedKey, UserKeys 
 
 #[tokio::test]
 async fn test_core_store_and_load_user() {
-    let mut tether = new_core_test_connection().await.connection().await.unwrap();
+    let mut tether = new_core_test_connection().await.connection();
     tether
         .write_tx::<_, _, StashError>(async |tx| {
             let mut user = new_test_user();
@@ -30,7 +30,7 @@ async fn test_core_store_and_load_user() {
 
 #[tokio::test]
 async fn test_core_user_space_updates() {
-    let mut tether = new_core_test_connection().await.connection().await.unwrap();
+    let mut tether = new_core_test_connection().await.connection();
     let mut user = new_test_user();
     tether
         .write_tx::<_, _, StashError>(async |tx| {
@@ -61,7 +61,7 @@ async fn test_core_user_space_updates() {
 }
 #[tokio::test]
 async fn test_core_store_and_load_user_settings() {
-    let mut tether = new_core_test_connection().await.connection().await.unwrap();
+    let mut tether = new_core_test_connection().await.connection();
 
     let user_id = UserId::from("USER");
 

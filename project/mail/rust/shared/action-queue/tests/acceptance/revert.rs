@@ -38,8 +38,6 @@ async fn network_failure_causes_revert_on_apply() {
         queue
             .mail_stash()
             .connection()
-            .await
-            .unwrap()
             .ext_get_value(key)
             .await
             .unwrap()
@@ -68,8 +66,6 @@ async fn network_failure_causes_revert_on_queue() {
         queue
             .mail_stash()
             .connection()
-            .await
-            .unwrap()
             .ext_get_value(key)
             .await
             .unwrap()
@@ -92,8 +88,6 @@ async fn network_failure_causes_revert_on_queue() {
         queue
             .mail_stash()
             .connection()
-            .await
-            .unwrap()
             .ext_get_value(key)
             .await
             .unwrap()
@@ -115,7 +109,7 @@ async fn revert_cancels_all_dependent_actions() {
     let value4 = 400_u32;
 
     {
-        let mut conn = queue.mail_stash().connection().await.unwrap();
+        let mut conn = queue.mail_stash().connection();
         conn.write_tx(async |tx| tx.ext_insert_value(key, value).await)
             .await
             .unwrap();
@@ -164,8 +158,6 @@ async fn revert_cancels_all_dependent_actions() {
         queue
             .mail_stash()
             .connection()
-            .await
-            .unwrap()
             .ext_get_value(key)
             .await
             .unwrap()
@@ -186,8 +178,6 @@ async fn revert_cancels_all_dependent_actions() {
         queue
             .mail_stash()
             .connection()
-            .await
-            .unwrap()
             .ext_get_value(key)
             .await
             .unwrap()

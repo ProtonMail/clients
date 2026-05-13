@@ -64,12 +64,7 @@ async fn test_feature_flags_warm_start_immediate_return() {
 
     {
         let past = UnixTimestamp::new(12);
-        let mut tether = ctx
-            .core_context()
-            .account_stash()
-            .connection()
-            .await
-            .unwrap();
+        let mut tether = ctx.core_context().account_stash().connection();
         let mut cached_x = FeatureFlag {
             name: "CachedFeatureX".to_string(),
             enabled: true,
@@ -133,12 +128,7 @@ async fn test_feature_flags_warm_start_background_refresh() {
 
     {
         let past = UnixTimestamp::new(10);
-        let mut tether = ctx
-            .core_context()
-            .account_stash()
-            .connection()
-            .await
-            .unwrap();
+        let mut tether = ctx.core_context().account_stash().connection();
         let mut existing_flag = FeatureFlag {
             name: "ExistingFeature".to_string(),
             enabled: true,
@@ -199,12 +189,7 @@ async fn test_feature_flags_warm_start_background_refresh() {
     );
 
     {
-        let tether = ctx
-            .core_context()
-            .account_stash()
-            .connection()
-            .await
-            .unwrap();
+        let tether = ctx.core_context().account_stash().connection();
         let existing_flag = FeatureFlag::by_name("ExistingFeature", &tether)
             .await
             .unwrap();
@@ -223,12 +208,7 @@ async fn test_feature_flags_network_failure_preserves_cache() {
 
     {
         let past = UnixTimestamp::new(5);
-        let mut tether = ctx
-            .core_context()
-            .account_stash()
-            .connection()
-            .await
-            .unwrap();
+        let mut tether = ctx.core_context().account_stash().connection();
         let mut cached_flag = FeatureFlag {
             name: "CachedFlag".to_string(),
             enabled: true,

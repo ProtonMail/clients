@@ -10,7 +10,7 @@ use proton_crypto_account::keys::AddressKeys as RealAddressKeys;
 
 #[tokio::test]
 async fn count_test() {
-    let mut tether = new_core_test_connection().await.connection().await.unwrap();
+    let mut tether = new_core_test_connection().await.connection();
     tether
         .write_tx::<_, _, StashError>(async |tx| {
             for i in 0..10 {

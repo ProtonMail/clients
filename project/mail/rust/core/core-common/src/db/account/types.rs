@@ -679,7 +679,7 @@ pub struct CoreSessionObserver {
 
 impl CoreSessionObserver {
     pub async fn new(mail_stash: Stash<AccountDb>) -> Result<Self, StashError> {
-        let tether = mail_stash.connection().await?;
+        let tether = mail_stash.connection();
         let existing = CoreSession::all(&tether)
             .await?
             .into_iter()
@@ -702,7 +702,7 @@ impl CoreSessionObserver {
                 .await
                 .map_err(|e| StashError::WatcherError(e.to_string()))?;
 
-            let tether = self.mail_stash.connection().await?;
+            let tether = self.mail_stash.connection();
             // Get all sessions
             let current = CoreSession::all(&tether)
                 .await?

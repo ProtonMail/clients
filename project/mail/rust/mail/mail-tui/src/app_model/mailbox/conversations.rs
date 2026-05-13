@@ -608,7 +608,7 @@ fn move_conversation(
     Command::task(async move {
         // TODO: refactor into common undo toast
         match async {
-            let tether = ctx.user_stash().connection().await?;
+            let tether = ctx.user_stash().connection();
             Conversation::action_move(&tether, ctx.action_queue(), label_id, ids).await
         }
         .await
@@ -626,7 +626,7 @@ fn move_conversation(
                     )),
                     Command::task(async move {
                         if let Err(e) = async {
-                            let mut tether = ctx.user_stash().connection().await?;
+                            let mut tether = ctx.user_stash().connection();
                             undo.undo(ctx.action_queue(), &mut tether)
                                 .await
                                 .context("Error undoing conversation labelling")
@@ -696,7 +696,7 @@ fn label_conversation(
     let ctx2 = ctx.clone();
     let f = async move {
         Conversation::action_label_as(
-            &ctx2.user_stash().connection().await?,
+            &ctx2.user_stash().connection(),
             ctx2.action_queue(),
             source_label_id,
             conversation_ids,
@@ -725,7 +725,7 @@ fn label_conversation(
                     )),
                     Command::task(async move {
                         if let Err(e) = async {
-                            let mut tether = ctx.user_stash().connection().await?;
+                            let mut tether = ctx.user_stash().connection();
                             undo.undo(ctx.action_queue(), &mut tether)
                                 .await
                                 .context("Error undoing conversation labelling")
@@ -758,7 +758,7 @@ fn delete_all(ctx: Arc<MailUserContext>, id: LocalLabelId) -> Command<Messages> 
         .on_accept(Command::task(async move {
             let result = async {
                 let queue = ctx.action_queue();
-                let tether = ctx.user_stash().connection().await?;
+                let tether = ctx.user_stash().connection();
 
                 MailMessage::action_delete_all_in_label(queue, id, &tether).await
             };

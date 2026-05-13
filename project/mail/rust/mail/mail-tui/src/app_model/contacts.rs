@@ -1,4 +1,3 @@
-use anyhow::anyhow;
 use crossterm::event::{Event, KeyCode, KeyModifiers};
 use futures::FutureExt;
 use itertools::Itertools;
@@ -369,7 +368,7 @@ impl ContactsModel {
         Command::task(async move {
             let ctx = ctx.user_context();
             match async {
-                let mut tether = ctx.mail_stash().connection().await?;
+                let mut tether = ctx.mail_stash().connection();
                 let pgp = proton_crypto::new_pgp_provider();
                 let unlocked_user_keys = ctx
                     .crypto_key_service()
@@ -449,12 +448,7 @@ impl ContactsModel {
             TuiWatchHandle::from_watcher_handle(handle, move || {
                 let ctx = ctx.clone();
                 async move {
-                    let Ok(tether) = ctx.user_stash().connection().await else {
-                        return Some(Messages::DisplayError(
-                            None,
-                            anyhow!("Failed to acquire db connection"),
-                        ));
-                    };
+                    let tether = ctx.user_stash().connection();
                     Some(match Self::load_contacts(&tether).await {
                         Ok(list) => Message::LoadContacts(list).into(),
                         Err(e) => {
@@ -475,7 +469,7 @@ impl ContactsModel {
         ctx: Arc<MailUserContext>,
         background_command: Command<Messages>,
     ) -> anyhow::Result<Command<Messages>> {
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
         let list = Self::load_contacts(&tether).await?;
         Ok(Command::batch([
             Command::Message(Messages::DismissBackgroundProgress),
@@ -570,7 +564,7 @@ impl AppStateHandler for ContactsModel {
                         if cfg!(debug_assertions) {
                             let ctx = self.ctx.clone();
                             Command::task(async move {
-                                let tether = ctx.user_stash().connection().await.unwrap();
+                                let tether = ctx.user_stash().connection();
                                 let group_from_db =
                                     Contact::contact_group_by_id(&tether, group_clone.local_id)
                                         .await

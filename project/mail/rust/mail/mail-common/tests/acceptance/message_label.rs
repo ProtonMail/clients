@@ -53,18 +53,15 @@ async fn label_message() {
         .await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     // Create a mailbox and sync.
-    let mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::inbox(),
-    )
-    .await
-    .unwrap();
+    let mailbox = Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::inbox())
+        .await
+        .unwrap();
     mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
@@ -122,18 +119,15 @@ async fn unlabel_message() {
         .await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     // Create a mailbox and sync.
-    let mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::inbox(),
-    )
-    .await
-    .unwrap();
+    let mailbox = Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::inbox())
+        .await
+        .unwrap();
     mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
@@ -194,18 +188,16 @@ async fn message_action_read_unread() {
     ctx.mock_messages_ok().await;
 
     let user_context = ctx.mail_user_context().await;
-    let tether = user_context.user_stash().connection().await.unwrap();
+    let tether = user_context.user_stash().connection();
 
     // Create a mailbox and sync.
-    let mailbox = Mailbox::with_remote_id(
-        &user_context.user_stash().connection().await.unwrap(),
-        LabelId::inbox(),
-    )
-    .await
-    .unwrap();
+    let mailbox =
+        Mailbox::with_remote_id(&user_context.user_stash().connection(), LabelId::inbox())
+            .await
+            .unwrap();
     mailbox
         .sync(
-            &mut user_context.user_stash().connection().await.unwrap(),
+            &mut user_context.user_stash().connection(),
             user_context.session(),
             10,
         )
@@ -261,18 +253,16 @@ async fn message_action_delete() {
     ctx.mock_messages_ok().await;
 
     let user_context = ctx.mail_user_context().await;
-    let tether = user_context.user_stash().connection().await.unwrap();
+    let tether = user_context.user_stash().connection();
 
     // Create a mailbox and sync.
-    let mailbox = Mailbox::with_remote_id(
-        &user_context.user_stash().connection().await.unwrap(),
-        LabelId::inbox(),
-    )
-    .await
-    .unwrap();
+    let mailbox =
+        Mailbox::with_remote_id(&user_context.user_stash().connection(), LabelId::inbox())
+            .await
+            .unwrap();
     mailbox
         .sync(
-            &mut user_context.user_stash().connection().await.unwrap(),
+            &mut user_context.user_stash().connection(),
             user_context.session(),
             10,
         )
@@ -339,17 +329,14 @@ async fn message_action_ham() {
     ctx.mock_empty_label(LabelId::inbox()).await;
 
     let user_context = ctx.mail_user_context().await;
-    let tether = user_context.user_stash().connection().await.unwrap();
+    let tether = user_context.user_stash().connection();
     // Create a mailbox and sync.
-    let mailbox = Mailbox::with_remote_id(
-        &user_context.user_stash().connection().await.unwrap(),
-        LabelId::spam(),
-    )
-    .await
-    .unwrap();
+    let mailbox = Mailbox::with_remote_id(&user_context.user_stash().connection(), LabelId::spam())
+        .await
+        .unwrap();
     mailbox
         .sync(
-            &mut user_context.user_stash().connection().await.unwrap(),
+            &mut user_context.user_stash().connection(),
             user_context.session(),
             10,
         )

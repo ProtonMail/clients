@@ -55,8 +55,6 @@ async fn test_session_delete_subscriber() {
     real_ctx
         .account_stash()
         .connection()
-        .await
-        .unwrap()
         .write_tx(async |tx: &WriteTx<'_, AccountDb>| {
             assert_eq!(CoreSession::all(tx).await.unwrap().len(), 1);
             assert!(
@@ -81,7 +79,7 @@ async fn test_force_logout_account_locally_deletes_sessions() {
     let user_ctx = ctx.user_context().await;
     let user_id = user_ctx.user_id().clone();
 
-    let tether = ctx.context().account_stash().connection().await.unwrap();
+    let tether = ctx.context().account_stash().connection();
     assert_eq!(
         CoreSession::find_by_user_id(user_id.clone(), &tether)
             .await
@@ -95,7 +93,7 @@ async fn test_force_logout_account_locally_deletes_sessions() {
         .await
         .unwrap();
 
-    let tether = ctx.context().account_stash().connection().await.unwrap();
+    let tether = ctx.context().account_stash().connection();
     assert_eq!(
         CoreSession::find_by_user_id(user_id.clone(), &tether)
             .await
@@ -116,7 +114,7 @@ async fn test_session_observer_triggers_full_logout_on_session_deletion() {
     let session_id = user_ctx.session_id().clone();
 
     // Verify session exists before deletion
-    let tether = ctx.context().account_stash().connection().await.unwrap();
+    let tether = ctx.context().account_stash().connection();
     assert_eq!(
         CoreSession::find_by_user_id(user_id.clone(), &tether)
             .await
@@ -134,8 +132,6 @@ async fn test_session_observer_triggers_full_logout_on_session_deletion() {
     ctx.context()
         .account_stash()
         .connection()
-        .await
-        .unwrap()
         .write_tx(async |tx: &WriteTx<'_, AccountDb>| {
             CoreSession::delete_by_id(session_id.clone(), tx).await?;
             Ok::<_, StashError>(())
@@ -148,7 +144,7 @@ async fn test_session_observer_triggers_full_logout_on_session_deletion() {
 
     // Verify that SessionObserverService automatically performed full cleanup:
     // 1. Session should be deleted (already done above)
-    let tether = ctx.context().account_stash().connection().await.unwrap();
+    let tether = ctx.context().account_stash().connection();
     assert_eq!(
         CoreSession::find_by_user_id(user_id.clone(), &tether)
             .await
@@ -177,7 +173,7 @@ async fn test_manual_logout_with_session_observer_double_cleanup() {
     let user_id = user_ctx.user_id().clone();
 
     // Verify initial state - session exists
-    let tether = ctx.context().account_stash().connection().await.unwrap();
+    let tether = ctx.context().account_stash().connection();
     assert_eq!(
         CoreSession::find_by_user_id(user_id.clone(), &tether)
             .await
@@ -209,7 +205,7 @@ async fn test_manual_logout_with_session_observer_double_cleanup() {
     tokio::time::sleep(Duration::from_millis(500)).await;
 
     // Verify final state: sessions are deleted
-    let tether = ctx.context().account_stash().connection().await.unwrap();
+    let tether = ctx.context().account_stash().connection();
     let remaining_sessions = CoreSession::find_by_user_id(user_id.clone(), &tether)
         .await
         .unwrap();
@@ -230,9 +226,8 @@ async fn test_manual_logout_with_session_observer_double_cleanup() {
             pool_size: Some(1),
             ..Default::default()
         });
-        if let Ok(mail_stash) = user_stash
-            && let Ok(tether) = mail_stash.connection().await
-        {
+        if let Ok(mail_stash) = user_stash {
+            let tether = mail_stash.connection();
             let tables = tether
                     .query_values::<_, String>(
                         "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",

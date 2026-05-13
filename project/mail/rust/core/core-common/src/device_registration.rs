@@ -160,7 +160,7 @@ pub async fn registered_device_task_step(
         }
     };
 
-    let tether = ctx.account_stash().connection().await?;
+    let tether = ctx.account_stash().connection();
     let sessions =
         get_unregistered_and_active_sessions(&tether, &state.registered_sessions).await?;
     if sessions.is_empty() {

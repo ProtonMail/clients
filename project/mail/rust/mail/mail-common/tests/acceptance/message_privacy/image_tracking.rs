@@ -35,7 +35,7 @@ async fn image_trackers_detected_with_no_images() {
         .await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     let service = user_ctx.get_service::<TrackerService>();
 
     let mailbox = Mailbox::with_remote_id(&tether, LabelId::inbox())
@@ -100,7 +100,7 @@ async fn image_trackers_detected_with_safe_images() {
         .await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let service = user_ctx.get_service::<TrackerService>();
 
@@ -166,7 +166,7 @@ async fn image_trackers_detected_with_single_tracker() {
         .await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let service = user_ctx.get_service::<TrackerService>();
 
@@ -244,7 +244,7 @@ async fn image_trackers_detected_with_mixed_images() {
         .await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let service = user_ctx.get_service::<TrackerService>();
 
@@ -332,7 +332,7 @@ async fn image_trackers_detected_with_multiple_trackers() {
         .await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let service = user_ctx.get_service::<TrackerService>();
 
@@ -403,7 +403,7 @@ async fn get_tracker_info_returns_correct_data() {
         .await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let mailbox = Mailbox::with_remote_id(&tether, LabelId::inbox())
         .await
@@ -534,7 +534,7 @@ async fn image_trackers_not_checked_when_proxy_disabled() {
         .await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let service = user_ctx.get_service::<TrackerService>();
 

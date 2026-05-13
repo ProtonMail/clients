@@ -35,7 +35,7 @@ async fn test_update_list_toolbar_actions() {
     // General setup
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     let params = test_init_params();
 
@@ -135,7 +135,7 @@ async fn test_update_list_toolbar_actions() {
 async fn test_update_message_toolbar_actions() {
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     let params = test_init_params();
     ctx.setup_user(params.clone()).await;
@@ -216,7 +216,7 @@ async fn test_update_conversation_toolbar_actions() {
     // General setup
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     let params = test_init_params();
 
@@ -309,7 +309,7 @@ async fn test_update_conversation_toolbar_actions() {
 async fn test_api_failure_handling() {
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     let params = test_init_params();
     ctx.setup_user(params.clone()).await;

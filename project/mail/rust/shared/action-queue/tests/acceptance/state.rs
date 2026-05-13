@@ -29,8 +29,6 @@ async fn state_preserved_after_local_change() {
         queue
             .mail_stash()
             .connection()
-            .await
-            .unwrap()
             .ext_get_value(ACTION_KEY)
             .await
             .unwrap()
@@ -63,8 +61,6 @@ async fn rebase_state() {
     queue
         .mail_stash()
         .connection()
-        .await
-        .unwrap()
         .write_tx(async |tx| tx.ext_insert_value(ACTION_KEY, 100).await)
         .await
         .unwrap();
@@ -79,8 +75,6 @@ async fn rebase_state() {
         queue
             .mail_stash()
             .connection()
-            .await
-            .unwrap()
             .ext_get_value(ACTION_KEY)
             .await
             .unwrap()

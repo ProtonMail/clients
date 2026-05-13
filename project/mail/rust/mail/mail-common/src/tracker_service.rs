@@ -50,7 +50,7 @@ impl TrackerService {
         utm_stripped: BTreeSet<StrippedUTM>,
     ) -> Result<(), StashError> {
         let ctx = self.ctx.upgrade().context("Could not find the context")?;
-        let mut tether = ctx.user_stash().connection().await?;
+        let mut tether = ctx.user_stash().connection();
 
         let mut found_trackers = Vec::new();
         let now = UnixTimestamp::now();
@@ -152,7 +152,7 @@ impl TrackerService {
 
     pub async fn get_info(&self, message_id: LocalMessageId) -> Result<PrivacyInfo, StashError> {
         let ctx = self.ctx.upgrade().context("Could not find the context")?;
-        let tether = ctx.user_context().mail_stash().connection().await?;
+        let tether = ctx.user_context().mail_stash().connection();
 
         Self::get_info_inner(&tether, message_id).await
     }
@@ -233,7 +233,7 @@ impl TrackerService {
 
     pub async fn watch(&self, message_id: LocalMessageId) -> Result<PrivacyWatchData, StashError> {
         let ctx = self.ctx.upgrade().context("Could not find the context")?;
-        let tether = ctx.user_context().mail_stash().connection().await?;
+        let tether = ctx.user_context().mail_stash().connection();
         let initial = Self::get_info_inner(&tether, message_id).await?;
 
         let handle = tether.subscribe_to(move |sender| Box::new(PrivacyDataWatcher { sender }))?;

@@ -390,13 +390,7 @@ impl MailUserSession {
         let stash = ctx.user_stash().clone();
 
         async_runtime().block_on(async {
-            let tether = match stash.connection().await {
-                Ok(t) => t,
-                Err(e) => {
-                    tracing::error!("Failed to get DB connection: {:?}", e);
-                    return Ok(vec![]);
-                }
-            };
+            let tether = stash.connection();
 
             let result = tether
                 .sync_query(|conn| {
@@ -440,13 +434,7 @@ impl MailUserSession {
         let stash = ctx.user_stash().clone();
 
         async_runtime().block_on(async {
-            let tether = match stash.connection().await {
-                Ok(t) => t,
-                Err(e) => {
-                    tracing::error!("Failed to get DB connection: {:?}", e);
-                    return Ok(vec![]);
-                }
-            };
+            let tether = stash.connection();
 
             let result = tether
                 .sync_query(move |conn| {
@@ -503,13 +491,7 @@ impl MailUserSession {
         let stash = ctx.user_stash().clone();
 
         async_runtime().block_on(async {
-            let tether = match stash.connection().await {
-                Ok(t) => t,
-                Err(e) => {
-                    tracing::error!("Failed to get DB connection: {:?}", e);
-                    return Ok(0);
-                }
-            };
+            let tether = stash.connection();
 
             let result = tether
                 .sync_query(|conn| {
@@ -537,13 +519,7 @@ impl MailUserSession {
         let stash = ctx.user_stash().clone();
 
         async_runtime().block_on(async {
-            let tether = match stash.connection().await {
-                Ok(t) => t,
-                Err(e) => {
-                    tracing::error!("Failed to get DB connection: {:?}", e);
-                    return Ok(0);
-                }
-            };
+            let tether = stash.connection();
 
             let result = tether
                 .sync_query(|conn| {
@@ -574,15 +550,7 @@ impl MailUserSession {
         let stash = ctx.user_stash().clone();
 
         async_runtime().block_on(async {
-            let mut tether = match stash.connection().await {
-                Ok(t) => t,
-                Err(e) => {
-                    tracing::error!("Failed to get DB connection: {:?}", e);
-                    return Err(UserSessionError::Other(ProtonError::Unexpected(
-                        UnexpectedError::Network,
-                    )));
-                }
-            };
+            let mut tether = stash.connection();
 
             tether
                 .sync_write_tx(move |tx| {
@@ -943,7 +911,7 @@ impl MailUserSession {
     ) -> Result<DecryptedAttachment, ActionError> {
         let ctx = self.ctx()?;
         uniffi_async(async move {
-            let mut tether = ctx.user_stash().connection().await?;
+            let mut tether = ctx.user_stash().connection();
             Attachment::get_attachment(&ctx, local_attachment_id.into(), &mut tether)
                 .await
                 .map(DecryptedAttachment::try_from)?

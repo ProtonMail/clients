@@ -129,7 +129,7 @@ async fn main() {
         .await
         .unwrap();
 
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     tokio::fs::write(&tmp_file, b"Hello world attachment")
         .await

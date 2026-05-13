@@ -44,7 +44,7 @@ where
         async {
             cache.fetch_event_data(event, ctx.get_contact_api()).await?;
 
-            let mut tether = ctx.get_contact_stash().connection().await?;
+            let mut tether = ctx.get_contact_stash().connection();
             let mut changeset = RebaseChangeSet::default();
             tether
                 .write_tx(async |tx| {
@@ -156,7 +156,7 @@ where
         let api = ctx.get_contact_api().clone();
         let all_remote_labels =
             ctx.spawn_contact_task(async move { Label::fetch_contact_labels(&api).await });
-        let mut tether = ctx.get_contact_stash().connection().await?;
+        let mut tether = ctx.get_contact_stash().connection();
         let mut all_local_labels: HashMap<_, _> = Label::all_contact_groups(&tether)
             .await?
             .into_iter()

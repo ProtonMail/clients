@@ -41,13 +41,10 @@ async fn discard_before_save_only_deletes_metadata() {
     user_ctx.execute_all_send_actions().await.unwrap();
 
     assert!(
-        DraftMetadata::find_by_id(
-            draft.metadata_id,
-            &user_ctx.user_stash().connection().await.unwrap()
-        )
-        .await
-        .unwrap()
-        .is_none()
+        DraftMetadata::find_by_id(draft.metadata_id, &user_ctx.user_stash().connection())
+            .await
+            .unwrap()
+            .is_none()
     );
 }
 
@@ -77,13 +74,10 @@ async fn discard_by_message_id() {
     user_ctx.execute_all_send_actions().await.unwrap();
 
     assert!(
-        DraftMetadata::find_by_id(
-            draft.metadata_id,
-            &user_ctx.user_stash().connection().await.unwrap()
-        )
-        .await
-        .unwrap()
-        .is_none()
+        DraftMetadata::find_by_id(draft.metadata_id, &user_ctx.user_stash().connection())
+            .await
+            .unwrap()
+            .is_none()
     );
 }
 
@@ -147,7 +141,7 @@ async fn discard_draft_after_save_marks_message_deleted() {
     // Check the message is marked as deleted.
     let message = Message::find_by_remote_id(
         message.metadata.id.clone(),
-        &user_ctx.user_stash().connection().await.unwrap(),
+        &user_ctx.user_stash().connection(),
     )
     .await
     .unwrap()
@@ -223,7 +217,7 @@ async fn discard_draft_by_message_id() {
     // queue discard.
     Draft::action_discard(
         message_id,
-        &user_ctx.user_stash().connection().await.unwrap(),
+        &user_ctx.user_stash().connection(),
         user_ctx.action_queue(),
         user_ctx.origin(),
     )
@@ -233,7 +227,7 @@ async fn discard_draft_by_message_id() {
     // Check the message is marked as deleted.
     let message = Message::find_by_remote_id(
         message.metadata.id.clone(),
-        &user_ctx.user_stash().connection().await.unwrap(),
+        &user_ctx.user_stash().connection(),
     )
     .await
     .unwrap()
@@ -272,7 +266,7 @@ async fn discard_new_draft_after_cancelled_or_failed_save_action_deletes_local_d
     ctx.setup_user(params.clone()).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     // Create draft.
     let draft = Draft::empty(&user_ctx).await.unwrap();
@@ -343,7 +337,7 @@ async fn delete_new_draft_after_cancelled_or_failed_save_action_deletes_local_da
     ctx.setup_user(params.clone()).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     // Create draft.
     let draft = Draft::empty(&user_ctx).await.unwrap();
@@ -430,7 +424,7 @@ async fn discard_reply_draft_after_cancelled_or_failed_save_action_only_deletes_
     .await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let (mut existing_message, _, _) =
         Message::from_api_data(remote_existing_message.clone(), &tether)
@@ -535,7 +529,7 @@ async fn delete_reply_draft_after_cancelled_or_failed_save_action_only_deletes_m
     }
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let (mut existing_message, _, _) =
         Message::from_api_data(remote_existing_message.clone(), &tether)
@@ -669,7 +663,7 @@ async fn discard_draft_failure_undeletes_message() {
     // Check the message is marked as deleted.
     let local_message = Message::find_by_remote_id(
         message.metadata.id.clone(),
-        &user_ctx.user_stash().connection().await.unwrap(),
+        &user_ctx.user_stash().connection(),
     )
     .await
     .unwrap()
@@ -682,7 +676,7 @@ async fn discard_draft_failure_undeletes_message() {
 
     let message = Message::find_by_remote_id(
         message.metadata.id.clone(),
-        &user_ctx.user_stash().connection().await.unwrap(),
+        &user_ctx.user_stash().connection(),
     )
     .await
     .unwrap()

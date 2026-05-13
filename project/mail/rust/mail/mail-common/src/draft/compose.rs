@@ -264,7 +264,7 @@ pub(super) async fn encrypt_draft_body(
     let draft_body = DraftBody { body };
     let pgp = new_pgp_provider();
 
-    let tether = ctx.user_stash().connection().await?;
+    let tether = ctx.user_stash().connection();
     let unlocked_keys = ctx
         .crypto_key_service()
         .load_with_tether(ctx.user_context(), &tether)

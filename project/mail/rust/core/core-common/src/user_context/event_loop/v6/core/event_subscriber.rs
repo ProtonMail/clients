@@ -45,7 +45,7 @@ impl EventSubscriber<EventManagerContext, CoreEventSourceV6> for CoreEventV6Subs
         async {
             cache.fetch_event_data(event, ctx.session()).await?;
 
-            let mut tether = ctx.user_stash.connection().await?;
+            let mut tether = ctx.user_stash.connection();
             tether
                 .write_tx(async |tx| {
                     if event.users.as_ref().is_some_and(|v| !v.is_empty()) {
@@ -147,7 +147,7 @@ pub async fn refresh_core(ctx: &UserContext) -> EventSubscriberResult<()> {
         let api = ctx.session().clone();
         let all_remote_labels = ctx.spawn(async move { Label::fetch_contact_labels(&api).await });
 
-        let mut tether = ctx.mail_stash().connection().await?;
+        let mut tether = ctx.mail_stash().connection();
         let mut all_local_addresses: HashMap<_, _> = Address::all(&tether)
             .await?
             .into_iter()

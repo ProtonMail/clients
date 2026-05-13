@@ -28,7 +28,7 @@ impl AddressService {
             )));
         };
 
-        let tether = ctx.mail_stash().connection().await?;
+        let tether = ctx.mail_stash().connection();
 
         let address = Address::find_first(
             "WHERE send=1 AND receive=1 AND status=? ORDER BY display_order".to_owned(),

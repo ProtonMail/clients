@@ -47,7 +47,7 @@ impl TelemetryService {
     }
 
     async fn telemetry_enabled(&self) -> Result<bool, String> {
-        let tether = self.stash.connection().await.map_err(|e| e.to_string())?;
+        let tether = self.stash.connection();
 
         let telemetry_enabled = tether
             .query_value_opt::<i64>("SELECT telemetry FROM user_settings LIMIT 1", params![])

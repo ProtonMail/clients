@@ -176,7 +176,7 @@ impl EventSubscriber<EventManagerContext, MailEventSourceV5> for MailEventV5Subs
             // TODO: to be replaced with fetching of elements from API.
             let mut event: MailEvent = event.clone().into();
 
-            let mut tether = ctx.user_context.mail_stash().connection().await?;
+            let mut tether = ctx.user_context.mail_stash().connection();
             let mut data = PostEventSyncData::default();
 
             // Check for missing dependencies. Sometimes when lot of messages/conversations get moved

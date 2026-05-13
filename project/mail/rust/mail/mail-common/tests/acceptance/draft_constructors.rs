@@ -214,8 +214,6 @@ mod mailto {
             async |uctx| {
                 uctx.user_stash()
                     .connection()
-                    .await
-                    .unwrap()
                     .write_tx(async |bond| {
                         let mut settings = MailSettings::get_or_default(bond).await;
 

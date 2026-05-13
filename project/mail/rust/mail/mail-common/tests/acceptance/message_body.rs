@@ -44,21 +44,18 @@ async fn mailbox_message_body_simple() {
     let user_ctx = ctx.mail_user_context().await;
 
     // Create a mailbox and sync.
-    let mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::inbox(),
-    )
-    .await
-    .unwrap();
+    let mailbox = Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::inbox())
+        .await
+        .unwrap();
     mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
         .await
         .unwrap();
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     // Resolve local id.
     let saved_message = Message::load(1.into(), &tether)
         .await
@@ -119,23 +116,20 @@ async fn mailbox_message_body_mime() {
 
     let user_ctx = ctx.mail_user_context().await;
 
-    let mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::inbox(),
-    )
-    .await
-    .unwrap();
+    let mailbox = Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::inbox())
+        .await
+        .unwrap();
 
     mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
         .await
         .unwrap();
 
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let saved_message = Message::load(1.into(), &tether)
         .await
@@ -244,23 +238,20 @@ async fn mailbox_message_retains_pgp_attachments() {
 
     let user_ctx = ctx.mail_user_context().await;
 
-    let mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::inbox(),
-    )
-    .await
-    .unwrap();
+    let mailbox = Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::inbox())
+        .await
+        .unwrap();
 
     mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
         .await
         .unwrap();
 
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let saved_message = Message::load(1.into(), &tether)
         .await
@@ -357,23 +348,20 @@ async fn pgp_mime_attachments_retrievable_via_get_attachments() {
 
     let user_ctx = ctx.mail_user_context().await;
 
-    let mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::inbox(),
-    )
-    .await
-    .unwrap();
+    let mailbox = Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::inbox())
+        .await
+        .unwrap();
 
     mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
         .await
         .unwrap();
 
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let saved_message = Message::load(1.into(), &tether)
         .await
@@ -399,7 +387,7 @@ async fn pgp_mime_attachments_retrievable_via_get_attachments() {
     assert_eq!(pgp_attachments[0].filename, "attachment1.txt");
     assert_eq!(pgp_attachments[0].mime_type, MimeType::text_plain());
 
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
     for (index, attachment) in pgp_attachments.into_iter().enumerate() {
         let data = Attachment::get_attachment(&user_ctx, attachment.local_id.unwrap(), &mut tether)
             .await
@@ -435,7 +423,7 @@ async fn message_body_failed_to_decrypt() {
         .await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let (saved_message, decrypted_body) = Message::force_sync_message_and_body(
         &user_ctx,

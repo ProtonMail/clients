@@ -138,7 +138,7 @@ pub async fn historic_load_messages(
 ) -> Result<HistoricLoadResult, MailContextError> {
     let page_size = page_size.unwrap_or(100);
     let stash = user_ctx.user_stash().clone();
-    let mut tether = stash.connection().await?;
+    let mut tether = stash.connection();
 
     let (remote_label_id, not_found): (LabelId, &'static str) = match label_id {
         Some(id) => (id, "Label not found"),
@@ -360,10 +360,10 @@ pub async fn fetch_all_messages(
         let mut dependency_fetcher = DependencyFetcher::new();
         for message in &messages_to_save {
             dependency_fetcher
-                .check_api_message_metadata(message, &stash.connection().await?)
+                .check_api_message_metadata(message, &stash.connection())
                 .await?;
         }
-        let mut tether = stash.connection().await?;
+        let mut tether = stash.connection();
         dependency_fetcher
             .fetch_and_store(session, &mut tether)
             .await?;
@@ -692,13 +692,7 @@ async fn maybe_apply_prefetch_backpressure(user_ctx: &MailUserContext) {
 }
 
 async fn load_pending_index_intent_count(user_ctx: &MailUserContext) -> Option<usize> {
-    let tether = match user_ctx.user_stash().connection().await {
-        Ok(tether) => tether,
-        Err(e) => {
-            warn!("Failed to read pending index intents (stash connection): {e}");
-            return None;
-        }
-    };
+    let tether = user_ctx.user_stash().connection();
     match SearchIndexIntent::pending_count(&tether).await {
         Ok(count) => Some(usize::try_from(count).unwrap_or(0)),
         Err(e) => {
@@ -787,7 +781,7 @@ pub async fn wait_until_prefetch_and_search_index_idle(
     let wait_start = Instant::now();
 
     // Track peak counts to handle cases where new intents are created during processing
-    let tether_initial = stash.connection().await?;
+    let tether_initial = stash.connection();
     let initial_index_pending =
         usize::try_from(SearchIndexIntent::pending_count(&tether_initial).await?).unwrap_or(0);
     drop(tether_initial);
@@ -799,7 +793,7 @@ pub async fn wait_until_prefetch_and_search_index_idle(
     loop {
         let prefetch_pending = prefetch_actions_pending_count(user_ctx.action_queue()).await?;
 
-        let tether = stash.connection().await?;
+        let tether = stash.connection();
         let index_pending =
             usize::try_from(SearchIndexIntent::pending_count(&tether).await?).unwrap_or(0);
         drop(tether);

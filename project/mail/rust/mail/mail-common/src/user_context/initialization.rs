@@ -65,7 +65,7 @@ impl MailUserContext {
     /// Checks whether initialization process finished suscesfully.
     ///
     pub async fn is_initialized(&self) -> Result<bool, MailContextError> {
-        let tether = self.user_stash().connection().await?;
+        let tether = self.user_stash().connection();
         let state = InitializedComponent::state(Self::CONTEXT_INIT_KEY, &tether).await?;
         Ok(matches!(state, InitializedComponentState::Succeeded))
     }
@@ -75,7 +75,7 @@ impl MailUserContext {
         &self,
         watcher: &InitializationWatcher,
     ) -> Result<(), DependencyInitializationError> {
-        let tether = self.user_stash().connection().await?;
+        let tether = self.user_stash().connection();
         InitializedComponent::wait_for_dependencies(&[Self::CONTEXT_INIT_KEY], watcher, &tether)
             .await
     }
@@ -156,7 +156,7 @@ async fn initialize_event_loop(
         watcher,
         EVENT_INIT_KEY,
         &[],
-        mail_stash.connection().await?,
+        mail_stash.connection(),
         async || {
             // This is a little bit of a hack. The way of how this
             // event loop initialization is currently written,
@@ -238,7 +238,7 @@ impl InitializationMediator {
         );
 
         if options.resync_user {
-            let mut tether = ctx.user_stash().connection().await?;
+            let mut tether = ctx.user_stash().connection();
 
             tether
                 .write_tx(async |tx| {
@@ -343,7 +343,7 @@ impl InitializationMediator {
                 InitializedComponent::set_state(
                     MailUserContext::CONTEXT_INIT_KEY,
                     InitializedComponentState::Succeeded,
-                    &mut ctx.user_stash().connection().await?,
+                    &mut ctx.user_stash().connection(),
                 )
                 .await?;
 
@@ -354,7 +354,7 @@ impl InitializationMediator {
                 InitializedComponent::set_state(
                     MailUserContext::CONTEXT_INIT_KEY,
                     InitializedComponentState::Failed,
-                    &mut ctx.user_stash().connection().await?,
+                    &mut ctx.user_stash().connection(),
                 )
                 .await?;
 

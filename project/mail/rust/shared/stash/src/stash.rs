@@ -551,8 +551,8 @@ impl<Db: DatabaseMarker> Stash<Db> {
     /// * [`Stash::transaction()`]
     /// * [`Tether::transaction()`]
     ///
-    pub async fn connection(&self) -> Result<Tether<Db>, StashError> {
-        Ok(Tether::new(self))
+    pub fn connection(&self) -> Tether<Db> {
+        Tether::new(self)
     }
 
     /// Subscribes to notifications of changes to a specific table.

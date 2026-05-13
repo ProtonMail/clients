@@ -50,7 +50,7 @@ fn error_response() -> ResponseTemplate {
 async fn test_enable_next_message_on_move() {
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     let params = test_init_params();
 
@@ -89,7 +89,7 @@ async fn test_enable_next_message_on_move() {
 async fn test_disable_next_message_on_move() {
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     let params = test_init_params();
 
@@ -128,7 +128,7 @@ async fn test_disable_next_message_on_move() {
 async fn test_next_message_on_move_api_failure() {
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
 
     let params = test_init_params();
     ctx.setup_user(params.clone()).await;

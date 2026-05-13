@@ -125,7 +125,7 @@ impl MailUserContext {
 
     async fn queue_item_rollback(&self) -> Result<(), ActionError<RollbackAction, UserDb>> {
         // Only queue rollback if there is actually anything to rollback.
-        let tether = self.user_stash().connection().await?;
+        let tether = self.user_stash().connection();
         if RollbackItem::count("", vec![], &tether).await? == 0 {
             return Ok(());
         }
@@ -153,7 +153,7 @@ impl MailUserContext {
     }
 
     async fn verify_and_cleanup_deleted_items(&self) -> Result<(), MailContextError> {
-        let mut tether = self.user_stash().connection().await?;
+        let mut tether = self.user_stash().connection();
         tether
             .run_write_tx(async |tx| {
                 DeletedItem::verify_and_cleanup(tx).await?;

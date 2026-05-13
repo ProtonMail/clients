@@ -157,7 +157,7 @@ impl CryptoKeyService {
         &'a self,
         ctx: &'a UserContext,
     ) -> Result<KeySelector<'a, KeyLoader<'a>>, StashError> {
-        let tether = ctx.mail_stash().connection().await?;
+        let tether = ctx.mail_stash().connection();
         let key_loader = KeyLoader::new(ctx, Connection::CtxTether(tether), &self.cache);
         Ok(KeySelector::new(&self.user_id, key_loader))
     }
@@ -213,10 +213,7 @@ impl<'a> KeyLoader<'a> {
         internal_only: bool,
         response: &APIPublicAddressKeys,
     ) {
-        let Ok(mut tether) = ctx.mail_stash().connection().await else {
-            tracing::error!("Failed to retrive database connection");
-            return;
-        };
+        let mut tether = ctx.mail_stash().connection();
 
         match tether
             .write_tx(async |tx| {
@@ -431,12 +428,7 @@ impl ContactPublicKeyLoader for KeyLoader<'_> {
 
         // Sync the most recent full contact including its v-cards from the backend (one DB tx).
         let session = self.ctx.session();
-        let mut tether_for_tx = self
-            .ctx
-            .mail_stash()
-            .connection()
-            .await
-            .map_err(CryptoKeyLoadingError::DB)?;
+        let mut tether_for_tx = self.ctx.mail_stash().connection();
         if let Err(e) = Contact::force_sync_with_card(local_contact_id, session, &mut tether_for_tx)
             .await
             .inspect_err(|e| error!("Failed to force sync contact: {e}"))

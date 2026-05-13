@@ -15,15 +15,11 @@ fn account_db() -> Migrator<AccountDb> {
 }
 
 pub async fn migrate_account_db(mail_stash: &Stash<AccountDb>) -> Result<usize, MigratorError> {
-    account_db()
-        .migrate(&mut mail_stash.connection().await?)
-        .await
+    account_db().migrate(&mut mail_stash.connection()).await
 }
 
 pub async fn verify_account_db(mail_stash: &Stash<AccountDb>) -> Result<(), MigratorError> {
-    account_db()
-        .verify(&mut mail_stash.connection().await?)
-        .await
+    account_db().verify(&mut mail_stash.connection()).await
 }
 
 fn core_db() -> Migrator<UserDb> {
@@ -34,7 +30,7 @@ fn core_db() -> Migrator<UserDb> {
 }
 
 pub async fn migrate_core_db(mail_stash: &Stash<UserDb>) -> Result<usize, MigratorError> {
-    let mut tether = mail_stash.connection().await?;
+    let mut tether = mail_stash.connection();
 
     // Create action queue tables first as we can have items that depend on this.
     // This is safe to call multiple times as the migration code guarantees that
@@ -48,5 +44,5 @@ pub async fn migrate_core_db(mail_stash: &Stash<UserDb>) -> Result<usize, Migrat
 }
 
 pub async fn verify_core_db(mail_stash: &Stash<UserDb>) -> Result<(), MigratorError> {
-    core_db().verify(&mut mail_stash.connection().await?).await
+    core_db().verify(&mut mail_stash.connection()).await
 }

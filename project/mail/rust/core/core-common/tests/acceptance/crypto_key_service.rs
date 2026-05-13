@@ -19,7 +19,7 @@ async fn fetch_public_keys_requires_network_success() {
     let pgp = new_pgp_provider();
     let email = "foo@params.com";
 
-    let tether = user_ctx.mail_stash().connection().await.unwrap();
+    let tether = user_ctx.mail_stash().connection();
 
     let result = user_ctx
         .crypto_key_service()
@@ -70,7 +70,7 @@ async fn fetch_public_keys_stores_in_cache() {
     )
     .await;
 
-    let tether = user_ctx.mail_stash().connection().await.unwrap();
+    let tether = user_ctx.mail_stash().connection();
 
     user_ctx
         .crypto_key_service()
@@ -98,7 +98,7 @@ async fn fetch_public_keys_loads_cached_version_when_network_fails() {
     let user_ctx = ctx.user_context().await;
     mock_keys_failure(ctx.mock_server()).await;
     let email = "foo@params.com";
-    let mut tether = user_ctx.mail_stash().connection().await.unwrap();
+    let mut tether = user_ctx.mail_stash().connection();
     tether
         .write_tx(async |tx| {
             let response = APIPublicAddressKeys {

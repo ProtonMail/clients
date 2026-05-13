@@ -26,7 +26,7 @@ use velcro::hash_map;
 async fn action_label_as_without_archive() {
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let inbox_label = Label::find_first("WHERE remote_id = ?", params![LabelId::inbox()], &tether)
         .await
@@ -78,15 +78,12 @@ async fn action_label_as_without_archive() {
         .await;
     ctx.initialize_uninitialized_ctx(&user_ctx).await;
 
-    let mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::inbox(),
-    )
-    .await
-    .unwrap();
+    let mailbox = Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::inbox())
+        .await
+        .unwrap();
     mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
@@ -189,7 +186,7 @@ async fn action_label_as_without_archive() {
 async fn action_label_as_with_archive() {
     let ctx = MailTestContext::new().await;
     let user_ctx = ctx.uninitialized_mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let inbox_label = Label::find_first("WHERE remote_id = ?", params![LabelId::inbox()], &tether)
         .await
@@ -297,15 +294,12 @@ async fn action_label_as_with_archive() {
 
     ctx.initialize_uninitialized_ctx(&user_ctx).await;
 
-    let mailbox = Mailbox::with_remote_id(
-        &user_ctx.user_stash().connection().await.unwrap(),
-        LabelId::inbox(),
-    )
-    .await
-    .unwrap();
+    let mailbox = Mailbox::with_remote_id(&user_ctx.user_stash().connection(), LabelId::inbox())
+        .await
+        .unwrap();
     mailbox
         .sync(
-            &mut user_ctx.user_stash().connection().await.unwrap(),
+            &mut user_ctx.user_stash().connection(),
             user_ctx.session(),
             10,
         )
@@ -541,7 +535,7 @@ mod rebase {
         ctx.setup_user(params.clone()).await;
         let user_ctx = ctx.mail_user_context().await;
 
-        let tether = &mut user_ctx.user_stash().connection().await.unwrap();
+        let tether = &mut user_ctx.user_stash().connection();
 
         let mut conv_data1 = velcro::hash_map! {
             vec![LabelId::inbox(),custom_label_id1(),custom_label_id2()]: vec![
@@ -620,7 +614,7 @@ mod rebase {
     async fn simple() {
         let (_test_ctx, user_ctx, mut original_conv, _) = setup().await;
 
-        let tether = &mut user_ctx.user_stash().connection().await.unwrap();
+        let tether = &mut user_ctx.user_stash().connection();
 
         let local_inbox = local_label_id(LabelId::inbox(), tether).await;
         let local_custom_label_id3 = local_label_id(custom_label_id3(), tether).await;
@@ -750,7 +744,7 @@ mod rebase {
         })
         .await;
 
-        let tether = &mut user_ctx.user_stash().connection().await.unwrap();
+        let tether = &mut user_ctx.user_stash().connection();
 
         let local_inbox = local_label_id(LabelId::inbox(), tether).await;
         let local_custom_label_id3 = local_label_id(custom_label_id3(), tether).await;
@@ -782,7 +776,7 @@ mod rebase {
     async fn rebase_reverts_to_last_updated_state() {
         let (_test_ctx, user_ctx, original_conv, _) = setup().await;
 
-        let tether = &mut user_ctx.user_stash().connection().await.unwrap();
+        let tether = &mut user_ctx.user_stash().connection();
 
         let local_inbox = local_label_id(LabelId::inbox(), tether).await;
         let local_custom_label_id1 = local_label_id(custom_label_id1(), tether).await;
@@ -890,7 +884,7 @@ mod rebase {
     async fn rebase_only_targets_modified_items() {
         let (_test_ctx, user_ctx, mut original_conv1, mut original_conv2) = setup().await;
 
-        let tether = &mut user_ctx.user_stash().connection().await.unwrap();
+        let tether = &mut user_ctx.user_stash().connection();
 
         let local_inbox = local_label_id(LabelId::inbox(), tether).await;
         let local_custom_label_id3 = local_label_id(custom_label_id3(), tether).await;
@@ -1015,7 +1009,7 @@ mod rebase {
         })
         .await;
 
-        let tether = &mut user_ctx.user_stash().connection().await.unwrap();
+        let tether = &mut user_ctx.user_stash().connection();
 
         let local_inbox = local_label_id(LabelId::inbox(), tether).await;
         let local_custom_label_id3 = local_label_id(custom_label_id3(), tether).await;

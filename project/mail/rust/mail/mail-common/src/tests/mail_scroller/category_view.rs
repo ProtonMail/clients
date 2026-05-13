@@ -72,7 +72,7 @@ async fn store_single_unseen_in_category(category: &Label, bond: &WriteTx<'_>) {
 #[tokio::test]
 async fn test_category_label_has_unseen_items_from_db() {
     let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
     let mut social = SystemLabel::CategorySocial
         .load(&tether)
         .await
@@ -106,7 +106,7 @@ async fn test_category_label_has_unseen_items_from_db() {
 #[tokio::test]
 async fn test_load_available_filters_display_and_carries_unseen_items_to_primary() {
     let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
     let default = SystemLabel::CategoryDefault
         .load(&tether)
         .await
@@ -174,7 +174,7 @@ async fn test_load_available_filters_display_and_carries_unseen_items_to_primary
 #[tokio::test]
 async fn test_expanded_filter_ids_category_default() {
     let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
     let mut social = SystemLabel::CategorySocial
         .load(&tether)
         .await
@@ -250,7 +250,7 @@ async fn test_expanded_filter_ids_category_default() {
 #[tokio::test]
 async fn test_load_returns_empty_when_setting_disabled() {
     let mail_stash = new_test_connection().await;
-    let tether = mail_stash.connection().await.unwrap();
+    let tether = mail_stash.connection();
     // No MailSettings stored → mail_category_view defaults to false.
     let inbox_id = SystemLabel::Inbox.local_id(&tether).await.unwrap().unwrap();
     let view = CategoryView::load(inbox_id, &tether).await.unwrap();
@@ -269,7 +269,7 @@ async fn test_load_returns_empty_when_setting_disabled() {
 #[tokio::test]
 async fn test_settings_toggle_enabled_to_disabled_produces_empty_view() {
     let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
 
     tether
         .write_tx::<_, _, StashError>(async |bond| {
@@ -315,7 +315,7 @@ async fn test_settings_toggle_enabled_to_disabled_produces_empty_view() {
 #[tokio::test]
 async fn test_settings_toggle_disabled_to_enabled_populates_view() {
     let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
 
     // Start with feature disabled (no MailSettings row → defaults to false).
     let inbox_id = SystemLabel::Inbox.local_id(&tether).await.unwrap().unwrap();
@@ -347,7 +347,7 @@ async fn test_settings_toggle_disabled_to_enabled_populates_view() {
 #[tokio::test]
 async fn test_unrelated_settings_change_does_not_alter_category_view() {
     let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
 
     tether
         .write_tx::<_, _, StashError>(async |bond| {
@@ -392,7 +392,7 @@ async fn test_unrelated_settings_change_does_not_alter_category_view() {
 #[tokio::test]
 async fn test_settings_change_noop_for_non_inbox_label() {
     let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection().await.unwrap();
+    let mut tether = mail_stash.connection();
 
     tether
         .write_tx::<_, _, StashError>(async |bond| {

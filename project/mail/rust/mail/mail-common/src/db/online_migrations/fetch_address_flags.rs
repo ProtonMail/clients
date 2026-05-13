@@ -27,8 +27,7 @@ async fn get_addresses(ctx: &Weak<MailUserContext>) -> MailContextResult<Vec<Add
         .upgrade()
         .ok_or(MailContextError::LostContext)?
         .user_stash()
-        .connection()
-        .await?;
+        .connection();
 
     let addresses = Address::find("WHERE flags IS NULL", Vec::new(), &tether).await?;
 
@@ -104,8 +103,7 @@ async fn update_address(
         .upgrade()
         .ok_or(MailContextError::LostContext)?
         .user_stash()
-        .connection()
-        .await?;
+        .connection();
 
     tether
         .write_tx(async |bond| {
@@ -152,7 +150,7 @@ mod tests {
             addr
         };
 
-        let mut tether = muctx.user_stash().connection().await.unwrap();
+        let mut tether = muctx.user_stash().connection();
 
         tether
             .write_tx(async |bond| {

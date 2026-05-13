@@ -711,7 +711,7 @@ impl DraftActor {
         })?;
 
         let mut body = String::new();
-        let mut tether = context.user_stash().connection().await?;
+        let mut tether = context.user_stash().connection();
 
         let address_id = context
             .user_context()
@@ -1746,7 +1746,7 @@ impl DraftActor {
             match message {
                 DraftActorMessage::GetExpirationTime(sender) => {
                     let r = async {
-                        let tether = ctx.user_stash().connection().await?;
+                        let tether = ctx.user_stash().connection();
                         draft.expiration_time(&tether).await
                     }
                     .await;
@@ -1755,7 +1755,7 @@ impl DraftActor {
 
                 DraftActorMessage::SetExpirationTime { time, sender } => {
                     let r = async {
-                        let mut tether = ctx.user_stash().connection().await?;
+                        let mut tether = ctx.user_stash().connection();
                         draft.set_expiration_time(&mut tether, time).await
                     }
                     .await;
@@ -1764,7 +1764,7 @@ impl DraftActor {
 
                 DraftActorMessage::RemovePassword(sender) => {
                     let r = async {
-                        let mut tether = ctx.user_stash().connection().await?;
+                        let mut tether = ctx.user_stash().connection();
                         draft.remove_password(&mut tether).await
                     }
                     .await;
@@ -1817,7 +1817,7 @@ impl DraftActor {
 
                 DraftActorMessage::IsPasswordProtected(sender) => {
                     let r = async {
-                        let tether = ctx.user_stash().connection().await?;
+                        let tether = ctx.user_stash().connection();
                         draft.is_password_protected(&tether).await
                     }
                     .await;
@@ -1891,7 +1891,7 @@ impl DraftActor {
 
                 DraftActorMessage::GetAttachments(sender) => {
                     let r = async {
-                        let tether = ctx.user_stash().connection().await?;
+                        let tether = ctx.user_stash().connection();
                         draft.attachments(&tether).await
                     }
                     .await;
@@ -1943,7 +1943,7 @@ impl DraftActor {
 
                 DraftActorMessage::GetMessageId(sender) => {
                     let r = async {
-                        let tether = ctx.user_stash().connection().await?;
+                        let tether = ctx.user_stash().connection();
                         draft.message_id(&tether).await.map_err(Into::into)
                     }
                     .await;
@@ -1952,7 +1952,7 @@ impl DraftActor {
 
                 DraftActorMessage::GetConversationId(sender) => {
                     let r = async {
-                        let tether = ctx.user_stash().connection().await?;
+                        let tether = ctx.user_stash().connection();
                         draft.conversation_id(&tether).await.map_err(Into::into)
                     }
                     .await;
@@ -1974,7 +1974,7 @@ impl DraftActor {
                     sender,
                 } => {
                     let r = async {
-                        let tether = ctx.user_stash().connection().await?;
+                        let tether = ctx.user_stash().connection();
                         let queue = ctx.action_queue();
                         draft
                             .schedule_send(delivery_time, queue, &tether, ctx.origin())
@@ -1990,7 +1990,7 @@ impl DraftActor {
 
                 DraftActorMessage::Send { sender } => {
                     let r = async {
-                        let tether = ctx.user_stash().connection().await?;
+                        let tether = ctx.user_stash().connection();
                         let queue = ctx.action_queue();
                         draft.send(queue, &tether, ctx.origin()).await
                     }
@@ -2008,7 +2008,7 @@ impl DraftActor {
 
                 DraftActorMessage::SenderAddresses(sender) => {
                     let r = async {
-                        let tether = ctx.user_stash().connection().await?;
+                        let tether = ctx.user_stash().connection();
                         draft.sender_addresses(&tether).await
                     }
                     .await;
@@ -2017,7 +2017,7 @@ impl DraftActor {
 
                 DraftActorMessage::Save { sender } => {
                     let r = async {
-                        let tether = ctx.user_stash().connection().await?;
+                        let tether = ctx.user_stash().connection();
                         let queue = ctx.action_queue();
                         draft.save(queue, &tether, ctx.origin()).await
                     }
@@ -2365,7 +2365,7 @@ impl DraftActor {
 
                 DraftActorMessage::ValidateExpirationFeature(sender) => {
                     let r = async {
-                        let tether = ctx.user_stash().connection().await?;
+                        let tether = ctx.user_stash().connection();
 
                         let metadata = DraftMetadata::find_by_id(draft.metadata_id, &tether)
                             .await?
@@ -2576,7 +2576,7 @@ impl DraftAutoSaver {
         draft: &mut draft_v1::Draft,
     ) -> Result<(), MailContextError> {
         let queue = ctx.action_queue();
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
         draft.save(queue, &tether, ctx.origin()).await?;
         self.reset_save_state();
         Ok(())

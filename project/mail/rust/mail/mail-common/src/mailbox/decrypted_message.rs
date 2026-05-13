@@ -225,7 +225,7 @@ impl DecryptedMessageBody {
                 let span = tracing::Span::current();
                 let fut = ctx.spawn_ex(move |ctx| {
                     async move {
-                        let tether = &mut ctx.user_stash().connection().await?;
+                        let tether = &mut ctx.user_stash().connection();
                         att.content_data(&ctx, tether).await
                     }
                     .instrument(span)
@@ -462,7 +462,7 @@ impl DecryptedMessageBody {
                     Err(_) => return Err(MailContextError::TaskCancelled),
                 },
                 None => {
-                    let tether = &mut ctx.user_stash().connection().await?;
+                    let tether = &mut ctx.user_stash().connection();
                     att.content_data(ctx, tether).await?
                 }
             }
@@ -574,7 +574,7 @@ impl DecryptedMessageBody {
 
         // ---
 
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
 
         let Some(address) = Address::find_by_remote_id(self.address_id.clone(), &tether).await?
         else {
@@ -609,7 +609,7 @@ impl DecryptedMessageBody {
         if let Some(invite) = invite {
             debug!("Analyzing invite attachment");
 
-            let mut tether = ctx.user_stash().connection().await?;
+            let mut tether = ctx.user_stash().connection();
 
             let ics = Attachment::get_attachment(ctx, invite, &mut tether)
                 .await
@@ -796,10 +796,7 @@ impl PrivacyLockBuilder {
             return UiLock::default_incoming();
         };
 
-        let Ok(tether) = ctx.user_stash().connection().await else {
-            warn!("Could not acquire db connection");
-            return UiLock::default_incoming();
-        };
+        let tether = ctx.user_stash().connection();
 
         let pgp = new_pgp_provider();
         let verification_prefs = match ctx

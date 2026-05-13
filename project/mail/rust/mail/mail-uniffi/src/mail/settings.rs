@@ -20,7 +20,7 @@ pub async fn mail_settings(ctx: &MailUserSession) -> Result<MailSettings, UserSe
     let mail_stash = ctx.user_stash()?;
 
     Ok(uniffi_async::<_, MailContextError, _>(async move {
-        let tether = mail_stash.connection().await?;
+        let tether = mail_stash.connection();
 
         Ok(RealMailSettings::get_or_default(&tether).await)
     })
@@ -36,7 +36,7 @@ pub fn mail_settings_sync(ctx: &MailUserSession) -> Result<MailSettings, UserSes
 
     Ok(async_runtime()
         .block_on(async move {
-            let tether = mail_stash.connection().await?;
+            let tether = mail_stash.connection();
 
             Ok::<_, MailContextError>(RealMailSettings::get_or_default(&tether).await)
         })
@@ -62,7 +62,7 @@ pub async fn watch_mail_settings(
 
     uniffi_async(async move {
         let mail_stash = ctx.user_stash();
-        let tether = mail_stash.connection().await?;
+        let tether = mail_stash.connection();
 
         let settings = RealMailSettings::all(&tether)
             .await?
@@ -103,7 +103,7 @@ impl CustomSettings {
 
         uniffi_async::<_, RealProtonMailError, _>(async move {
             let user = ctx.user().await?;
-            let tether = ctx.user_stash().connection().await?;
+            let tether = ctx.user_stash().connection();
             let settings = RealCustomSettings::get_or_default(&tether).await?;
             let status = RealMobileSignatureStatus::new(&user, &settings);
 
@@ -146,7 +146,7 @@ impl CustomSettings {
         let ctx = self.ctx()?;
 
         uniffi_async::<_, RealProtonMailError, _>(async move {
-            let tether = ctx.user_stash().connection().await?;
+            let tether = ctx.user_stash().connection();
             let settings = RealCustomSettings::get_or_default(&tether).await?;
 
             Ok(settings.swipe_to_adjacent_conversation())

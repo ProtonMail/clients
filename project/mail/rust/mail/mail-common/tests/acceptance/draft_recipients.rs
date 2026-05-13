@@ -268,7 +268,7 @@ async fn lock_calculation() {
         .await;
 
     let user_ctx = ctx.mail_user_context().await;
-    let mut tether = user_ctx.user_stash().connection().await.unwrap();
+    let mut tether = user_ctx.user_stash().connection();
 
     let draft_metadata = tether
         .write_tx(async |tx| DraftMetadata::empty(tx).await)

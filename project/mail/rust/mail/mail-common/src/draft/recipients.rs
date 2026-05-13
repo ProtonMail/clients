@@ -971,10 +971,7 @@ impl<'l, T: OnBackgroundValidationComplete + OnPrivacyLockUpdate> ValidatingReci
             .core_context()
             .task_service()
             .spawn_cancellable(self.cancellation_token.clone(), async move {
-                let Ok(tether) = ctx.user_stash().connection().await else {
-                    warn!("Failed to acquire db connection");
-                    return;
-                };
+                let tether = ctx.user_stash().connection();
 
                 let mut update_statuses = Vec::with_capacity(to_validate.len());
                 for email in to_validate {
@@ -1096,15 +1093,7 @@ async fn calculate_privacy_locks(
     mime_type: EmailMimeType,
     emails: Vec<PrivateEmail>,
 ) -> RecipientPrivacyLockUpdate {
-    let Ok(tether) = ctx.user_stash().connection().await else {
-        warn!("Failed to acquire db connection");
-        return RecipientPrivacyLockUpdate {
-            updates: emails
-                .into_iter()
-                .map(|email| (email, PrivacyLockState::default()))
-                .collect(),
-        };
-    };
+    let tether = ctx.user_stash().connection();
 
     let Ok(Some(metadata)) = DraftMetadata::load(draft_id, &tether).await else {
         warn!("Failed to load draft metadata");

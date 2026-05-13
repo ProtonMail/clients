@@ -181,7 +181,7 @@ async fn test_has_valid_sender_address_complex_scenario() {
 }
 
 async fn setup(ctx: &UserContext, addresses: Vec<Address>) {
-    let mut tether = ctx.mail_stash().connection().await.unwrap();
+    let mut tether = ctx.mail_stash().connection();
     tether
         .write_tx(async move |tx| {
             for mut address in addresses {

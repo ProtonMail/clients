@@ -64,7 +64,7 @@ async fn sidebar_system_labels(
     let user_ctx = ctx.mail_user_context().await;
 
     let mail_stash = user_ctx.user_stash();
-    let tether = mail_stash.connection().await.unwrap();
+    let tether = mail_stash.connection();
 
     // Action
     let result = Sidebar.system_labels(&tether).await.unwrap();
@@ -72,7 +72,7 @@ async fn sidebar_system_labels(
     // Tests
     let result: Vec<_> = result.iter().map(|l| l.local_id).collect();
     let mut to_expect = Vec::with_capacity(expected.len());
-    let tether = user_ctx.user_stash().connection().await.unwrap();
+    let tether = user_ctx.user_stash().connection();
     for label_id in expected {
         to_expect.push(
             Label::remote_id_counterpart(label_id.clone(), &tether)

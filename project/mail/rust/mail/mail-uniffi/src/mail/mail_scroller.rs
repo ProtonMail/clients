@@ -438,11 +438,7 @@ async fn ffi_category_view<T: MailScrollerItem>(
         .upgrade()
         .ok_or(MailContextError::MissingContext)
         .map_err(RealProtonMailError::from)?;
-    let tether: Tether = ctx
-        .user_stash()
-        .connection()
-        .await
-        .map_err(RealProtonMailError::from)?;
+    let tether: Tether = ctx.user_stash().connection();
     let available = scroller
         .resolved_category_view(&tether)
         .await
@@ -973,7 +969,7 @@ impl SearchScroller {
         let ctx = mailbox.ctx().map_err(MailScrollerError::Other)?;
 
         uniffi_async::<_, RealProtonMailError, _>(async move {
-            let tether = ctx.user_stash().connection().await?;
+            let tether = ctx.user_stash().connection();
             let local_id = LocalMessageId::from(u64::from(message_id));
 
             let positions: Option<Vec<CommonSearchMatchPosition>> =

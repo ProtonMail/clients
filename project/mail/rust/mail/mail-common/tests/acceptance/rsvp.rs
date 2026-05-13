@@ -111,8 +111,8 @@ async fn fetch_and_answer() {
 
     ctx.core_context().clock().pretend(now.clone());
 
-    let mut db = user_ctx.user_stash().connection().await.unwrap();
-    let db2 = user_ctx.user_stash().connection().await.unwrap();
+    let mut db = user_ctx.user_stash().connection();
+    let db2 = user_ctx.user_stash().connection();
 
     // ---
 

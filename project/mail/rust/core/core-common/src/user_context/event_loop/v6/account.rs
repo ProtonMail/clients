@@ -82,7 +82,6 @@ pub(crate) async fn handle_user_update_event(
     ctx.context
         .account_stash()
         .connection()
-        .await?
         .write_tx::<_, _, StashError>(async |tx| update_account_data(user, tx).await)
         .await
         .map_err(|e: StashError| {
@@ -102,7 +101,6 @@ pub(crate) async fn handle_user_refresh(
     ctx.context
         .account_stash()
         .connection()
-        .await?
         .write_tx::<_, _, AccountEventSubscriberError>(async |tx| {
             update_account_data(user, tx).await.map_err(|e| {
                 AccountEventSubscriberError::Other(anyhow!("Failed apply refresh changes: {e}"))

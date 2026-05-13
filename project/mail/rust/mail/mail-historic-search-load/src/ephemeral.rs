@@ -210,7 +210,7 @@ pub async fn ephemeral_index_only_messages(
                     },
                 };
 
-                let tether = user_ctx.user_stash().connection().await?;
+                let tether = user_ctx.user_stash().connection();
                 let address_keys = user_ctx
                     .crypto_key_service()
                     .load_with_tether(user_ctx.user_context(), &tether)

@@ -21,7 +21,7 @@ struct PendingOnlineMigration {
 #[instrument(skip_all)]
 pub async fn run(ctx: &Arc<MailUserContext>) -> MailContextResult<()> {
     let migrations = {
-        let tether = ctx.user_stash().connection().await?;
+        let tether = ctx.user_stash().connection();
 
         PendingOnlineMigration::all(&tether).await?
     };
@@ -116,8 +116,7 @@ async fn migrate(
         .upgrade()
         .ok_or(MailContextError::LostContext)?
         .user_stash()
-        .connection()
-        .await?;
+        .connection();
 
     tether
         .write_tx(async |bond| migration.delete(bond).await)
@@ -151,13 +150,7 @@ mod tests {
     #[tokio::test]
     async fn smoke() {
         let ctx = MailTestContext::new().await;
-        let tether = ctx
-            .user_context()
-            .await
-            .mail_stash()
-            .connection()
-            .await
-            .unwrap();
+        let tether = ctx.user_context().await.mail_stash().connection();
 
         tether
             .execute(
@@ -191,8 +184,6 @@ mod tests {
             .await
             .mail_stash()
             .connection()
-            .await
-            .unwrap()
             .query_values::<_, String>(
                 "SELECT name AS value FROM pending_online_migrations",
                 Vec::new(),
@@ -213,7 +204,7 @@ mod tests {
         SIGNAL.with(|signal| {
             *signal.lock() = Some(tx);
         });
-        let mut tether = user_ctx.user_stash().connection().await.unwrap();
+        let mut tether = user_ctx.user_stash().connection();
 
         let remote_id1 = ContactId::from("Contact1");
         let remote_id2 = ContactId::from("Contact2");

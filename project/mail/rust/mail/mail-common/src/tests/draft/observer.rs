@@ -20,7 +20,7 @@ use mail_stash::stash::{StashError, WriteTx};
 async fn draft_send_observer_only_triggers_for_new_items_empty_db() {
     let (mail_stash, _db_dir) = new_test_connection_file().await;
 
-    let mut conn = mail_stash.connection().await.unwrap();
+    let mut conn = mail_stash.connection();
     conn.write_tx::<_, _, StashError>(async |tx| {
         create_test_messages(2, tx).await;
         Ok(())
@@ -91,7 +91,7 @@ async fn draft_send_observer_only_triggers_for_new_items_empty_db() {
 async fn draft_send_observer_only_triggers_for_new_items_with_existing() {
     let (mail_stash, _db_dir) = new_test_connection_file().await;
 
-    let mut conn = mail_stash.connection().await.unwrap();
+    let mut conn = mail_stash.connection();
     conn.write_tx::<_, _, StashError>(async |tx| {
         create_test_messages(5, tx).await;
 
@@ -188,7 +188,7 @@ async fn draft_send_observer_only_triggers_for_new_items_with_existing() {
 async fn draft_send_observer_re_triggers_for_same_message_with_different_error() {
     let (mail_stash, _db_dir) = new_test_connection_file().await;
 
-    let mut conn = mail_stash.connection().await.unwrap();
+    let mut conn = mail_stash.connection();
     conn.write_tx::<_, _, StashError>(async |tx| {
         create_test_messages(2, tx).await;
         Ok(())
@@ -261,7 +261,7 @@ async fn draft_send_observer_only_triggers_when_send_action_is_queued() {
         retries: 0,
         _phantom: std::marker::PhantomData::<UserDb>,
     };
-    let mut conn = mail_stash.connection().await.unwrap();
+    let mut conn = mail_stash.connection();
     let mut draft_metadata = DraftMetadata::builder()
         .local_message_id(LocalMessageId::from(2))
         .build();
@@ -339,7 +339,7 @@ async fn draft_send_observer_only_triggers_when_send_action_is_queued() {
 async fn draft_attachment_observer_updates_when_attachment_is_removed() {
     let (mail_stash, _db_dir) = new_test_connection_file().await;
 
-    let mut conn = mail_stash.connection().await.unwrap();
+    let mut conn = mail_stash.connection();
     let mut attachment = Attachment {
         local_id: None,
         attachment_type: Default::default(),

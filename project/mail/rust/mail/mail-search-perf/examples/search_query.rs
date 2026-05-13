@@ -224,34 +224,29 @@ async fn main() -> Result<(), anyhow::Error> {
                         },
                     };
 
-                    let tether = user_ctx.user_stash().connection().await;
-                    let snippet = match tether {
-                        Ok(tether) => {
-                            match user_ctx
-                                .crypto_key_service()
-                                .load_with_tether(user_ctx.user_context(), &tether)
-                                .address_keys(&pgp, &address_id)
-                                .await
-                                .map(AddressKeySelector::into_raw_keys)
-                            {
-                                Ok(keys) => match encrypted.decrypt(&pgp, &keys) {
-                                    Ok(raw) => match raw.processed_body() {
-                                        Ok(body) => {
-                                            let text = match &body {
-                                                DecryptedBody::Plain(t) => t.clone(),
-                                                _ => html_to_text_fast(body.body()),
-                                            };
-                                            let chars: String = text.chars().take(200).collect();
-                                            chars
-                                        }
-                                        Err(e) => format!("[body processing error: {e}]"),
-                                    },
-                                    Err(e) => format!("[decrypt error: {e}]"),
-                                },
-                                Err(e) => format!("[key error: {e}]"),
-                            }
-                        }
-                        Err(e) => format!("[db error: {e}]"),
+                    let tether = user_ctx.user_stash().connection();
+                    let snippet = match user_ctx
+                        .crypto_key_service()
+                        .load_with_tether(user_ctx.user_context(), &tether)
+                        .address_keys(&pgp, &address_id)
+                        .await
+                        .map(AddressKeySelector::into_raw_keys)
+                    {
+                        Ok(keys) => match encrypted.decrypt(&pgp, &keys) {
+                            Ok(raw) => match raw.processed_body() {
+                                Ok(body) => {
+                                    let text = match &body {
+                                        DecryptedBody::Plain(t) => t.clone(),
+                                        _ => html_to_text_fast(body.body()),
+                                    };
+                                    let chars: String = text.chars().take(200).collect();
+                                    chars
+                                }
+                                Err(e) => format!("[body processing error: {e}]"),
+                            },
+                            Err(e) => format!("[decrypt error: {e}]"),
+                        },
+                        Err(e) => format!("[key error: {e}]"),
                     };
                     println!("       body: {}", snippet.replace('\n', " "));
                 }

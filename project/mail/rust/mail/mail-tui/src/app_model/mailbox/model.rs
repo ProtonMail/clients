@@ -73,7 +73,7 @@ pub struct MailboxModel {
 impl MailboxModel {
     pub async fn new(ctx: Arc<MailUserContext>) -> MailContextResult<Self> {
         let mail_stash = ctx.user_stash();
-        let tether = mail_stash.connection().await?;
+        let tether = mail_stash.connection();
         let mailbox = Mailbox::with_remote_id(&tether, LabelId::inbox()).await?;
 
         let label = LabelWithCounters::load(mailbox.label_id(), &tether)
@@ -121,12 +121,7 @@ impl MailboxModel {
             self.create_background_worker(),
             Command::task(async move {
                 let mail_stash = ctx.user_stash();
-                let Ok(tether) = mail_stash.connection().await else {
-                    return Command::message(Messages::DisplayError(
-                        None,
-                        anyhow!("Failed to acquire db connection"),
-                    ));
-                };
+                let tether = mail_stash.connection();
                 let label = match LabelWithCounters::load(mbox.label_id(), &tether).await {
                     Ok(Some(label)) => label,
                     Ok(None) => {
@@ -157,12 +152,7 @@ impl MailboxModel {
         let label_id = self.label.local_id.unwrap();
         let mail_stash = self.ctx.user_stash().to_owned();
         Command::task(async move {
-            let Ok(tether) = mail_stash.connection().await else {
-                return Command::message(Messages::DisplayError(
-                    None,
-                    anyhow!("Failed to acquire db connection"),
-                ));
-            };
+            let tether = mail_stash.connection();
             let label = Label::find_by_id(label_id, &tether).await;
             let handle = LabelWithCounters::watch(&mail_stash).await;
             let label_and_recevier = label.and_then(|l| handle.map(|h| (l, h)));
@@ -173,12 +163,7 @@ impl MailboxModel {
                             TuiWatchHandle::from_watcher_handle(handle, move || {
                                 let mail_stash = mail_stash.clone();
                                 async move {
-                                    let Ok(tether) = mail_stash.connection().await else {
-                                        return Some(Messages::DisplayError(
-                                            None,
-                                            anyhow!("Failed to acquire db connection"),
-                                        ));
-                                    };
+                                    let tether = mail_stash.connection();
                                     let label_id = label.local_id.unwrap();
                                     LabelWithCounters::load(label_id, &tether)
                                         .await
@@ -309,7 +294,7 @@ impl MailboxModel {
             let mail_stash = ctx.user_stash();
             Command::message(
                 match async {
-                    let tether = mail_stash.connection().await?;
+                    let tether = mail_stash.connection();
                     Mailbox::new(&tether, label_id).await
                 }
                 .await

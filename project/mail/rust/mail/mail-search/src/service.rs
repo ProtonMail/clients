@@ -125,11 +125,7 @@ impl MailSearchService {
             ))));
         }
 
-        let mut tether = self
-            .mail_stash
-            .connection()
-            .await
-            .map_err(|e| SearchServiceError::Migration(format!("stash connection: {e}")))?;
+        let mut tether = self.mail_stash.connection();
 
         tether
             .sync_write_tx(move |tx| {

@@ -813,7 +813,13 @@ async fn test_conversation_create_starred() {
     };
     let (mail_stash, _db_dir) = new_test_connection_file().await;
     let mut tether = mail_stash.connection();
-    tether.execute("DELETE FROM labels", vec![]).await.unwrap();
+    tether
+        .write_tx::<_, _, StashError>(async |tx| {
+            tx.execute("DELETE FROM labels", vec![]).await?;
+            Ok(())
+        })
+        .await
+        .unwrap();
     create_address(&mut tether).await;
     create_labels(&mut tether).await;
     tether

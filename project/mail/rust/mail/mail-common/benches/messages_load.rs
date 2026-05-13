@@ -80,10 +80,14 @@ pub fn current_benchmark(c: &mut Criterion) {
         runtime.block_on(async { setup_and_create_messages(&mail_stash, 100).await });
         b.iter(|| {
             runtime.block_on(async {
-                let tether = mail_stash.connection();
-                tether.execute("BEGIN", vec![]).await.unwrap();
-                let _ = Message::all(&tether).await.unwrap();
-                tether.execute("END", vec![]).await.unwrap();
+                let mut tether = mail_stash.connection();
+                tether
+                    .read_tx::<_, _, StashError>(async |tx| {
+                        let _ = Message::all(tx).await.unwrap();
+                        Ok(())
+                    })
+                    .await
+                    .unwrap();
             })
         })
     });

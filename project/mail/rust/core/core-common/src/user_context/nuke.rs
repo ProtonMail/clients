@@ -19,7 +19,7 @@ const DB_SYSTEM_TABLES: &[&str] = &["sqlite_sequence"];
 pub async fn drop_database_tables(mut tether: Tether) -> Result<(), StashError> {
     info!("Dropping database tables");
 
-    tether.execute("PRAGMA foreign_keys = OFF", vec![]).await?;
+    tether.pragma("foreign_keys = OFF").await?;
 
     let tables = tether
         .query_values::<_, String>("SELECT name FROM sqlite_master WHERE type='table'", vec![])
@@ -51,7 +51,7 @@ pub async fn drop_database_tables(mut tether: Tether) -> Result<(), StashError> 
         })
         .await;
 
-    tether.execute("PRAGMA foreign_keys = ON", vec![]).await?;
+    tether.pragma("foreign_keys = ON").await?;
 
     result
 }
@@ -295,15 +295,16 @@ mod tests {
     async fn drop_database_tables_smoke() {
         let ctx = TestContext::new().await;
         let uctx = ctx.user_context().await;
-        let tether = uctx.mail_stash().connection();
+        let mut tether = uctx.mail_stash().connection();
 
         tether
-            .execute("CREATE TABLE foos (id INT NOT NULL PRIMARY KEY)", vec![])
-            .await
-            .unwrap();
-
-        tether
-            .execute("CREATE TABLE bars (id INT NOT NULL PRIMARY KEY)", vec![])
+            .write_tx::<_, _, StashError>(async |tx| {
+                tx.execute("CREATE TABLE foos (id INT NOT NULL PRIMARY KEY)", vec![])
+                    .await?;
+                tx.execute("CREATE TABLE bars (id INT NOT NULL PRIMARY KEY)", vec![])
+                    .await?;
+                Ok(())
+            })
             .await
             .unwrap();
 

@@ -4,7 +4,7 @@ use std::collections::BTreeSet;
 use mail_stash::UserDb;
 use mail_stash::macros::Model;
 use mail_stash::orm::Model;
-use mail_stash::stash::Stash;
+use mail_stash::stash::{Stash, StashError};
 use serde::{Deserialize, Serialize};
 use sqlite_watcher::watcher::TableObserver;
 use tokio::spawn as spawn_async;
@@ -37,12 +37,16 @@ async fn test_tracker() {
     let dir = tempfile::TempDir::new().expect("failed to create temp dir");
     let db_path = dir.path().join("sqlite.db");
     let mail_stash: Stash<UserDb> = Stash::new(Some(&db_path)).expect("Failed to create Stash");
-    let conn = mail_stash.connection();
+    let mut conn = mail_stash.connection();
 
-    conn.execute(
-        "CREATE TABLE foo (id INTEGER PRIMARY KEY AUTOINCREMENT, bar INTEGER)",
-        vec![],
-    )
+    conn.write_tx::<_, _, StashError>(async |tx| {
+        tx.execute(
+            "CREATE TABLE foo (id INTEGER PRIMARY KEY AUTOINCREMENT, bar INTEGER)",
+            vec![],
+        )
+        .await?;
+        Ok(())
+    })
     .await
     .expect("failed to create table");
 

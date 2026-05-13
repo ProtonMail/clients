@@ -150,13 +150,17 @@ mod tests {
     #[tokio::test]
     async fn smoke() {
         let ctx = MailTestContext::new().await;
-        let tether = ctx.user_context().await.mail_stash().connection();
+        let mut tether = ctx.user_context().await.mail_stash().connection();
 
         tether
-            .execute(
-                "INSERT INTO pending_online_migrations (name) VALUES ('test-ok'), ('test-err')",
-                Vec::new(),
-            )
+            .write_tx::<_, _, mail_stash::stash::StashError>(async |tx| {
+                tx.execute(
+                    "INSERT INTO pending_online_migrations (name) VALUES ('test-ok'), ('test-err')",
+                    Vec::new(),
+                )
+                .await?;
+                Ok(())
+            })
             .await
             .unwrap();
 
@@ -268,10 +272,14 @@ mod tests {
             .unwrap();
 
         tether
-            .execute(
-                "INSERT OR IGNORE INTO pending_online_migrations (name) VALUES ('fetch-contact-emails')",
-                Vec::new(),
-            )
+            .write_tx::<_, _, mail_stash::stash::StashError>(async |tx| {
+                tx.execute(
+                    "INSERT OR IGNORE INTO pending_online_migrations (name) VALUES ('fetch-contact-emails')",
+                    Vec::new(),
+                )
+                .await?;
+                Ok(())
+            })
             .await
             .unwrap();
 

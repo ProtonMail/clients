@@ -144,6 +144,20 @@ impl Mailbox {
         let label_id = self.label_id();
         let view_mode = self.view_mode();
 
+        match stash.connection().await {
+            Ok(tether) => match resolve_unread(label_id, view_mode, category, &tether).await {
+                Ok(initial) => {
+                    let _ = tx.send(initial);
+                }
+                Err(e) => {
+                    tracing::error!("Couldn't resolve initial unread count: `{e}`");
+                }
+            },
+            Err(e) => {
+                tracing::error!("Couldn't acquire connection for initial unread count: `{e}`");
+            }
+        }
+
         ctx.spawn(async move {
             while notify_rx.recv_async().await.is_ok() {
                 if let Ok(tether) = stash.connection().await {

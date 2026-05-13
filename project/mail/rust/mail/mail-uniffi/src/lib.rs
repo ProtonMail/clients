@@ -230,21 +230,30 @@ impl WatchHandle {
     }
 }
 
+/// Spawns a task that forwards channel values to `callback`.
+///
+/// **Latest-wins coalescing**: after each `recv_async`, the channel is drained
+/// and only the most recent value is delivered. Callbacks that don't care about
+/// the value can pass `move |_| ...` — tag-only subscribers via
+/// [`declare_live_query_tagger!`] coalesce by design. Payload-bearing
+/// subscribers receive only the latest value per drain cycle; if intermediate
+/// values matter, do not use this helper.
 pub fn watch_channel_inner<T: Send + 'static>(
     ctx: &impl Spawner,
     channel: flume::Receiver<T>,
-    callback: impl Fn() + Send + Sync + 'static,
+    callback: impl Fn(T) + Send + Sync + 'static,
 ) -> JoinHandle<()> {
-    // use a one-shot channel to act as an early exit strategy.
     ctx.spawn_task(async move {
         let callback = Arc::new(callback);
         loop {
-            if channel.recv_async().await.is_err() {
+            let Ok(val) = channel.recv_async().await else {
                 return;
-            }
-
+            };
+            let mut sequential_updates: Vec<_> = channel.drain().collect();
+            let val = sequential_updates.pop().unwrap_or(val);
             let callback = callback.clone();
-            let callback = move || callback();
+            let callback = move || callback(val);
+
             _ = async_runtime().spawn_blocking(callback).await;
         }
     })
@@ -301,7 +310,7 @@ macro_rules! declare_live_query_tagger {
                 handle: ::mail_stash::stash::WatcherHandle,
                 callback: Box<dyn $crate::LiveQueryCallback>,
             ) -> Arc<$crate::WatchHandle> {
-                let task_handle = $crate::watch_channel_inner(ctx, handle.receiver, move || {
+                let task_handle = $crate::watch_channel_inner(ctx, handle.receiver, move |_| {
                     Self::tag_sync(callback.as_ref());
                 });
 

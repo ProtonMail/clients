@@ -6,41 +6,15 @@
   ...
 }:
 
-let
-  # Sometimes we have to escape paths provided by nix in order to cross compile properly the rust code in iOS
-  filterPkgIn =
-    pkg: variable:
-    "${variable}=\"$(echo \"\$${variable}\" | tr \":\" \"\\n\" | grep -v \"${pkg}\" | paste -sd \":\")\"";
-
-  filterPkg =
-    pkg:
-    let
-      vars = [
-        "PATH"
-        "NIX_CFLAGS_COMPILE"
-        "NIX_LDFLAGS"
-        "XDG_DATA_DIRS"
-      ];
-
-    in
-    lib.strings.concatMapStringsSep " " (var: filterPkgIn pkg var) vars;
-
-in
 {
-  enterShell = pkgs.lib.optionalString pkgs.stdenv.isDarwin ''
-    # NOTE: on macOS, Go and other derivations bring in an 'xcodebuild' dependency
-    # that will mess with the native Xcode.app, preventing developers from running
-    # the iOS app on their machines
-    #
-    # Here we're filtering the /bin path to the 'xcodebuild' dependency brought in,
-    # so that 'xcodebuild' resolves to the version installed outside the devshell.
-    export ${filterPkgIn "xcbuild" "PATH"};
-    export ${filterPkgIn "clang" "PATH"};
-    export ${filterPkgIn "cctools-binutils" "PATH"};
-    unset DEVELOPER_DIR;
-    unset SDKROOT;
-    unset LD;
+  # On macOS, defer to the host Xcode toolchain (xcrun/xcodebuild/clang) for
+  # iOS cross-compiles. devenv's defaults inject pkgs.apple-sdk into packages,
+  # which sets DEVELOPER_DIR/SDKROOT and puts xcbuild's xcrun on PATH ahead of
+  # the host one. Setting apple.sdk = null both removes that package and tells
+  # the stdenv override to drop apple-sdk hooks from extraBuildInputs.
+  apple.sdk = lib.mkIf pkgs.stdenv.isDarwin null;
 
+  enterShell = ''
     echo "Helper scripts you can run to make your development richer:"
     echo
     ${pkgs.gnused}/bin/sed -e 's| |••|g' -e 's|=| |' <<EOF | ${pkgs.util-linuxMinimal}/bin/column -t | ${pkgs.gnused}/bin/sed -e 's|^|  |' -e 's|••| |g'
@@ -137,7 +111,22 @@ in
       exec = ''
         pushd "$DEVENV_ROOT"
 
-        ${filterPkg "libiconv"} ./mail/mail-uniffi/ios/build-local.sh
+        # Nix's cc-wrapper bakes -mmacos-version-min and a MacOSX sysroot
+        # into clang invocations, which conflicts with the iOS target flags
+        # that cc-rs build scripts and rustc's linker step emit. Point both
+        # cc-rs (CC_*/CXX_*) and rustc's linker (CARGO_TARGET_*_LINKER) at
+        # the host Xcode clang for iOS targets — the nix wrapper is bypassed
+        # for these targets only; native builds still use the nix toolchain.
+        ios_sim_clang="$(xcrun --sdk iphonesimulator -f clang)"
+        ios_clang="$(xcrun --sdk iphoneos -f clang)"
+        export CC_aarch64_apple_ios_sim="$ios_sim_clang"
+        export CXX_aarch64_apple_ios_sim="$(xcrun --sdk iphonesimulator -f clang++)"
+        export CC_aarch64_apple_ios="$ios_clang"
+        export CXX_aarch64_apple_ios="$(xcrun --sdk iphoneos -f clang++)"
+        export CARGO_TARGET_AARCH64_APPLE_IOS_SIM_LINKER="$ios_sim_clang"
+        export CARGO_TARGET_AARCH64_APPLE_IOS_LINKER="$ios_clang"
+
+        ./mail/mail-uniffi/ios/build-local.sh
 
         popd
       '';

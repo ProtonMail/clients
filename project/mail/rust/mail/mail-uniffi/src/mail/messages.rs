@@ -39,6 +39,7 @@ use mail_common::{
     ActionErrorReason as RealActionErrorReason, ProtonMailError as RealProtonMailError,
 };
 use mail_core_api::services::proton::PrivateEmail;
+use mail_core_common::datatypes::LocalLabelId;
 use mail_core_common::models::Label as RealLabel;
 use mail_core_common::utils::MapVec;
 use mail_stash::orm::Model as _;
@@ -563,14 +564,20 @@ pub async fn watch_message(
 #[tracing::instrument(skip_all)]
 pub async fn scroll_messages_for_label(
     mailbox: Arc<Mailbox>,
+    enabled_category: Option<Id>,
     callback: Box<dyn MessageScrollerLiveQueryCallback>,
 ) -> Result<Arc<MessageScroller>, ActionError> {
     let context = mailbox.ctx()?;
 
     uniffi_async(async move {
         let label_id = mailbox.label_id();
-        let (scroller, handle) =
-            MailScroller::messages(context.as_weak(), label_id.into(), 50).await?;
+        let (scroller, handle) = MailScroller::messages(
+            context.as_weak(),
+            label_id.into(),
+            50,
+            enabled_category.map(LocalLabelId::from),
+        )
+        .await?;
 
         let handle = spawn_message_scroller_watcher(&context, handle, callback);
 
@@ -589,13 +596,19 @@ pub async fn scroll_messages_for_label(
 pub async fn scroller_search(
     mailbox: Arc<Mailbox>,
     options: PaginatorSearchOptions,
+    enabled_category: Option<Id>,
     callback: Box<dyn MessageScrollerLiveQueryCallback>,
 ) -> Result<Arc<SearchScroller>, ActionError> {
     let context = mailbox.ctx()?;
 
     uniffi_async(async move {
-        let (scroller, handle) =
-            MailScroller::search(context.as_weak(), options.into(), 50).await?;
+        let (scroller, handle) = MailScroller::search(
+            context.as_weak(),
+            options.into(),
+            50,
+            enabled_category.map(LocalLabelId::from),
+        )
+        .await?;
 
         let handle = spawn_message_scroller_watcher(&context, handle, callback);
         let scroller = SearchScroller::new(scroller, handle);

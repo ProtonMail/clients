@@ -274,7 +274,7 @@ impl AppStateHandler for LoginModel {
         frame.set_cursor_position(Position { x, y });
     }
 
-    fn view_help_bar(&mut self, frame: &mut Frame, area: Rect) {
+    fn view_top_bar(&mut self, frame: &mut Frame, area: Rect) {
         frame.render_widget(
             Line::from(vec![
                 Span::styled("Enter: ", Style::new().bold()),

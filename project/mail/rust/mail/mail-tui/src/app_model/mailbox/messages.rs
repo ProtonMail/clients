@@ -114,7 +114,9 @@ fn handle_scroller_update(update: ScrollerUpdate<MailMessage>) -> Messages {
             tracing::error!("{e:?}");
             e.into()
         }
-        ScrollerUpdate::CategoryViewChanged { .. } => MessageMessage::ScrollerFetchNewEnd.into(),
+        ScrollerUpdate::CategoryViewChanged { category_view, .. } => {
+            MessageMessage::CategoryViewUpdated(category_view).into()
+        }
         ScrollerUpdate::Status(update) => match update {
             ScrollerStatusUpdate::FetchNewStart(_) => MessageMessage::ScrollerFetchNewStart.into(),
             ScrollerStatusUpdate::FetchNewEnd(_) => MessageMessage::ScrollerFetchNewEnd.into(),
@@ -151,7 +153,7 @@ impl MessagesState {
         recipient_display_mode: MessageRecipientDisplayMode,
     ) -> MailContextResult<(Self, Command<Messages>)> {
         let (scroller, handle) =
-            RealMailScroller::messages(ctx.as_weak(), label_id, ITEM_LIMIT).await?;
+            RealMailScroller::messages(ctx.as_weak(), label_id, ITEM_LIMIT, None).await?;
 
         let (scroller, command) =
             MailScroller::new::<MailMessage>(scroller, handle, handle_scroller_update).await;
@@ -200,9 +202,13 @@ impl MessagesState {
         ctx: Arc<MailUserContext>,
         keywords: String,
     ) -> MailContextResult<(Self, Command<Messages>)> {
-        let (scroller, handle) =
-            RealMailScroller::search(ctx.as_weak(), SearchOptions::from(&keywords), ITEM_LIMIT)
-                .await?;
+        let (scroller, handle) = RealMailScroller::search(
+            ctx.as_weak(),
+            SearchOptions::from(&keywords),
+            ITEM_LIMIT,
+            None,
+        )
+        .await?;
 
         let (scroller, command) =
             MailScroller::new::<MailMessage>(scroller, handle, handle_scroller_update).await;
@@ -881,6 +887,9 @@ impl MessagesState {
             }
             MessageMessage::ScrollerFetchNewEnd => {
                 self.fetching_new = false;
+            }
+            MessageMessage::CategoryViewUpdated(categories) => {
+                return Command::message(Message::CategoryViewUpdated(categories));
             }
         }
 

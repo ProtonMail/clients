@@ -623,7 +623,7 @@ impl AppStateHandler for ContactsModel {
         }
     }
 
-    fn view_help_bar(&mut self, frame: &mut Frame, area: Rect) {
+    fn view_top_bar(&mut self, frame: &mut Frame, area: Rect) {
         frame.render_widget(
             Line::from(vec![
                 Span::from(" ▲: ").bold(),

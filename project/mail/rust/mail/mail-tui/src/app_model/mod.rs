@@ -97,7 +97,7 @@ pub trait AppStateHandler {
     fn help_options(&self) -> Vec<(&'static str, &'static str)>;
 
     /// Called to provide contextual help that is displayed at the top.
-    fn view_help_bar(&mut self, frame: &mut Frame, area: Rect);
+    fn view_top_bar(&mut self, frame: &mut Frame, area: Rect);
 
     /// How many lines the help bar is.
     fn help_bar_lines(&self) -> u16 {
@@ -473,7 +473,7 @@ impl Model<Messages> for AppModel {
             return;
         }
 
-        self.state.view_help_bar(frame, help_area);
+        self.state.view_top_bar(frame, help_area);
         self.state.view(frame, view_area);
         self.state.view_status_bar(frame, view_status_area);
 
@@ -572,15 +572,15 @@ impl AppStateHandler for AppState {
         }
     }
 
-    fn view_help_bar(&mut self, frame: &mut Frame, area: Rect) {
+    fn view_top_bar(&mut self, frame: &mut Frame, area: Rect) {
         match self {
-            AppState::SessionSelect(state) => state.view_help_bar(frame, area),
-            AppState::Login(state) => state.view_help_bar(frame, area),
-            AppState::TwoFA(state) => state.view_help_bar(frame, area),
-            AppState::ContextInit(state) => state.view_help_bar(frame, area),
-            AppState::Mailbox(state) => state.view_help_bar(frame, area),
-            AppState::Contacts(state) => state.view_help_bar(frame, area),
-            AppState::Background(state) => state.view_help_bar(frame, area),
+            AppState::SessionSelect(state) => state.view_top_bar(frame, area),
+            AppState::Login(state) => state.view_top_bar(frame, area),
+            AppState::TwoFA(state) => state.view_top_bar(frame, area),
+            AppState::ContextInit(state) => state.view_top_bar(frame, area),
+            AppState::Mailbox(state) => state.view_top_bar(frame, area),
+            AppState::Contacts(state) => state.view_top_bar(frame, area),
+            AppState::Background(state) => state.view_top_bar(frame, area),
             AppState::MboxPassowrd(state) => state.view_status_bar(frame, area),
         }
     }

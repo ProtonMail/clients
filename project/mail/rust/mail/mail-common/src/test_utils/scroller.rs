@@ -601,7 +601,8 @@ impl TestScroller<ContextualConversation> {
         page_size: usize,
     ) -> Result<Self, MailContextError> {
         let (scroller, handle) =
-            MailScroller::conversations(user_ctx.as_weak(), local_label_id, page_size).await?;
+            MailScroller::conversations(user_ctx.as_weak(), local_label_id, page_size, None)
+                .await?;
 
         Self::new(scroller, handle).await
     }
@@ -612,7 +613,8 @@ impl TestScroller<ContextualConversation> {
         page_size: usize,
     ) -> Result<Self, MailContextError> {
         let (scroller, handle) =
-            MailScroller::conversations(user_ctx.as_weak(), local_label_id, page_size).await?;
+            MailScroller::conversations(user_ctx.as_weak(), local_label_id, page_size, None)
+                .await?;
 
         Ok(Self::new_instant(scroller, handle))
     }
@@ -625,7 +627,7 @@ impl TestScroller<Message> {
         page_size: usize,
     ) -> Result<Self, MailContextError> {
         let (scroller, handle) =
-            MailScroller::messages(user_ctx.as_weak(), local_label_id, page_size).await?;
+            MailScroller::messages(user_ctx.as_weak(), local_label_id, page_size, None).await?;
 
         Self::new(scroller, handle).await
     }
@@ -636,7 +638,7 @@ impl TestScroller<Message> {
         page_size: usize,
     ) -> Result<Self, MailContextError> {
         let (scroller, handle) =
-            MailScroller::search(user_ctx.as_weak(), options, page_size).await?;
+            MailScroller::search(user_ctx.as_weak(), options, page_size, None).await?;
 
         Self::new(scroller, handle).await
     }

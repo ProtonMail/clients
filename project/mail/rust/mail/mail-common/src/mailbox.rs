@@ -1,19 +1,21 @@
 pub mod attachments;
 pub mod decrypted_message;
+mod unread_count_watcher;
 
 use crate::datatypes::{MessageRecipientDisplayMode, ViewMode};
+use crate::mailbox::unread_count_watcher::{UnreadCountHandle, UnreadCountWatcher};
 use crate::models::{ConversationCounter, MailLabel, MessageCounter};
-use crate::{AppError, MailContextResult};
+use crate::{AppError, MailContextResult, MailUserContext};
 pub use attachments::DecryptedAttachment;
 use mail_core_api::services::proton::LabelId;
 use mail_core_common::datatypes::LocalLabelId;
 use mail_core_common::models::{Label, ModelExtension as _, ModelIdExtension as _};
-use mail_stash::UserDb;
 use mail_stash::orm::Model;
-use mail_stash::stash::{Stash, Tether, WatcherHandle};
+use mail_stash::stash::{Tether, WatcherHandle};
 use parking_lot::RwLock;
 use std::sync::Arc;
 use tracing::{debug, instrument};
+use unread_count_watcher::{UnreadWatchScope, resolve_unread};
 
 /// Represents an open label through which one can access the messages or conversations.
 ///
@@ -127,14 +129,52 @@ impl Mailbox {
     ///
     pub async fn watch_unread_count(
         &self,
-        mail_stash: &Stash<UserDb>,
-    ) -> MailContextResult<WatcherHandle> {
-        let watcher = match self.view_mode() {
-            ViewMode::Conversations => ConversationCounter::watch(mail_stash).await?,
-            ViewMode::Messages => MessageCounter::watch(mail_stash).await?,
-        };
+        ctx: &MailUserContext,
+        category: Option<LocalLabelId>,
+    ) -> MailContextResult<UnreadCountHandle> {
+        let stash = ctx.user_stash().to_owned();
+        let scope = UnreadWatchScope::new(self.view_mode(), category);
+        let WatcherHandle {
+            handle,
+            receiver: notify_rx,
+            ..
+        } = UnreadCountWatcher::watch(scope, &stash).await?;
 
-        Ok(watcher)
+        let (tx, rx) = flume::unbounded::<u64>();
+        let label_id = self.label_id();
+        let view_mode = self.view_mode();
+
+        let tether = stash.connection();
+        match resolve_unread(label_id, view_mode, category, &tether).await {
+            Ok(initial) => {
+                let _ = tx.send(initial);
+            }
+            Err(e) => {
+                tracing::error!("Couldn't resolve initial unread count: `{e}`");
+            }
+        }
+
+        ctx.spawn(async move {
+            while notify_rx.recv_async().await.is_ok() {
+                let tether = stash.connection();
+                let count = match resolve_unread(label_id, view_mode, category, &tether).await {
+                    Ok(count) => count,
+                    Err(e) => {
+                        tracing::error!("Couldnt resolve the unread count due to an error: `{e}`");
+                        continue;
+                    }
+                };
+
+                if tx.send(count).is_err() {
+                    break;
+                }
+            }
+        });
+
+        Ok(UnreadCountHandle {
+            drop_handle: handle,
+            receiver: rx,
+        })
     }
 }
 
@@ -144,6 +184,10 @@ struct MailboxState {
     view_mode: ViewMode,
     recipient_display_mode: MessageRecipientDisplayMode,
 }
+
+#[cfg(test)]
+#[path = "tests/mailbox/watch_unread_count.rs"]
+mod watch_unread_count_tests;
 
 #[cfg(any(feature = "test-utils", test))]
 mod test_utils {

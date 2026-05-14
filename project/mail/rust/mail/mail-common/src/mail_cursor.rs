@@ -392,9 +392,10 @@ mod tests {
         let page_size = 5;
         let inbox = LocalLabelId::from(1);
 
-        let (scroller, handle) = MailScroller::new(uctx.clone(), source.clone(), page_size, inbox)
-            .await
-            .unwrap();
+        let (scroller, handle) =
+            MailScroller::new(uctx.clone(), source.clone(), page_size, inbox, None)
+                .await
+                .unwrap();
 
         scroller.force_refresh().unwrap();
 

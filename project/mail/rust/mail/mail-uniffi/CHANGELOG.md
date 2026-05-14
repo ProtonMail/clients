@@ -5,11 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [mail-uniffi-v0.166.1] - 2026-05-12
+## [mail-uniffi-v0.166.2] - 2026-05-13
+
+### Changed
+
+- Change order of the catergory labels to match the web order
 
 ### Features
 
-- enable foundation search for mobile(ffi) and TUI
+- Implement UnreadLiveQueryCallback returning unread count in `on_update` method - proton/clients/monorepo!2390
+- Implement category view for the mail TUI app
+- [ET-6193] [Breaking] Scroller now accepts additional optional field of the enabled category
+- [Breaking] Mailbox::watch_unread_count now accepts optional `category: Id` parameter
+- [ET-6153] [Breaking] Add unread counters for category labels
+
+
+## [mail-uniffi-v0.166.1] - 2026-05-12
+
+### Changed
+
+- [ET-6194] Stash is now using MPMC pattern for read workers - proton/clients/monorepo!2316
+
+### Features
+
+- enable foundation search for mobile(ffi) and TUI - proton/clients/monorepo!2347
 - R foundation search 2.0.0-preview1 - proton/clients/monorepo!2276
 - [NGC-901] Sort attendees - proton/clients/monorepo!2008
 

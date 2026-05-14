@@ -23,7 +23,7 @@ use mail_common::models::Conversation as RealConversation;
 use mail_common::{
     ActionErrorReason as RealActionErrorReason, ProtonMailError as RealProtonMailError,
 };
-use mail_core_common::datatypes::{SystemLabel, WeekStart as RealWeekStart};
+use mail_core_common::datatypes::{LocalLabelId, SystemLabel, WeekStart as RealWeekStart};
 use mail_core_common::models::Label as RealLabel;
 use mail_core_common::utils::MapVec;
 use mail_stash::orm::Model;
@@ -377,14 +377,20 @@ pub async fn move_conversations(
 #[tracing::instrument(skip_all)]
 pub async fn scroll_conversations_for_label(
     mailbox: Arc<Mailbox>,
+    enabled_category: Option<Id>,
     callback: Box<dyn ConversationScrollerLiveQueryCallback>,
 ) -> Result<Arc<ConversationScroller>, ActionError> {
     let context = mailbox.ctx()?;
 
     uniffi_async(async move {
         let label_id = mailbox.label_id();
-        let (scroller, handle) =
-            MailScroller::conversations(context.as_weak(), label_id.into(), 50).await?;
+        let (scroller, handle) = MailScroller::conversations(
+            context.as_weak(),
+            label_id.into(),
+            50,
+            enabled_category.map(LocalLabelId::from),
+        )
+        .await?;
 
         let handle = spawn_conversation_scroller_watcher(&context, handle, callback);
         let scroller = ConversationScroller::new(scroller, handle, context.as_weak());

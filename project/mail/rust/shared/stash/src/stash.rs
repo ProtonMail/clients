@@ -387,25 +387,20 @@ impl Query {
 }
 
 /// Configuration used to create mail_stash database pool.
-///
 #[derive(Default, Clone, Copy)]
 pub struct StashConfiguration<'a> {
     /// The path to the SQLite database file. If `None`, an in-memory
     /// database is created.
     pub path: Option<&'a Path>,
-    /// How many connections are used. If `None`, [`MAX_CONNECTIONS`] is used.
-    pub pool_size: Option<u32>,
-    /// How many idle connections are allowed to be maintained before new connections are established
-    /// For `None` the default of [`IDLE_CONNECTIONS`]  or [`pool_size`] will be used whichever is lower.
-    pub idle_count: Option<u32>,
+    /// Number of read workers (each owning one read-only SQLite connection).
+    /// The single write worker is always spawned in addition to this count.
+    /// If `None`, defaults to `available_parallelism() - 1` (min 1, fallback 8).
+    pub read_worker_count: Option<usize>,
 }
 
 impl<'a> StashConfiguration<'a> {
     pub fn test() -> Self {
-        Self {
-            idle_count: Some(0),
-            ..Default::default()
-        }
+        Self::default()
     }
 
     pub fn test_with_path(path: &'a Path) -> Self {
@@ -485,15 +480,14 @@ impl<Db: DatabaseMarker> Stash<Db> {
         watcher: &Arc<Watcher>,
     ) -> Result<Arc<StashConnectionPool>, StashError> {
         let StashConfiguration {
-            path, pool_size, ..
+            path,
+            read_worker_count,
         } = config;
 
         match path {
             Some(p) => debug!("Opening {:?}", p),
             None => debug!("Opening in-memory database"),
         }
-
-        let read_worker_count = pool_size.map(|s| s as usize);
 
         // Pragmas valid on both RW and RO connections. `synchronous`, `busy_timeout`,
         // `foreign_keys`, `temp_store`, `recursive_triggers`, `cache_size` are all
@@ -1175,16 +1169,16 @@ impl<Db: DatabaseMarker> Debug for Tether<Db> {
     }
 }
 
-pub(crate) struct PooledTether {
+pub(crate) struct WriteWorker {
     pub(crate) sender: flume::Sender<TracedOperation>,
 }
-impl PooledTether {
-    pub(crate) fn new(connection: Connection, watcher: &Arc<Watcher>, number: usize) -> Self {
+impl WriteWorker {
+    pub(crate) fn new(connection: Connection, watcher: &Arc<Watcher>) -> Self {
         let (sender, receiver) = flume::bounded(2);
         let watcher_cloned = watcher.clone();
 
         thread::Builder::new()
-            .name(format!("Tether Worker {number:02}"))
+            .name("Write Worker".into())
             .spawn(move || {
                 Self::thread_loop(connection, receiver, watcher_cloned.as_ref());
             })
@@ -1198,7 +1192,7 @@ impl PooledTether {
         receiver: flume::Receiver<TracedOperation>,
         watcher: &Watcher,
     ) {
-        let mut sm = TetheredWorkerStateMachine {
+        let mut sm = WriteWorkerStateMachine {
             transaction: None,
             connection: &connection,
             state: State::new(),
@@ -1216,7 +1210,7 @@ impl PooledTether {
     }
 }
 
-impl Drop for PooledTether {
+impl Drop for WriteWorker {
     fn drop(&mut self) {
         let _ = self.sender.send(Operation::Quit.into());
     }
@@ -1552,10 +1546,11 @@ impl<Db: DatabaseMarker, RT: RunTransaction<Db>> RunTransaction<Db> for &mut RT 
     }
 }
 
-/// This encapsulates the logic of handling [`TetherOperation`]s.
-/// An actor owning a queue in `Tether` should create this. This should be cleaned up when that
-/// `Tether` gets dropped.
-struct TetheredWorkerStateMachine<'a> {
+/// State machine driving the single write worker thread. Owns the write
+/// `Connection`, the optional in-flight `Transaction`, and the sqlite_watcher
+/// state for change notifications. Read workers do not use a state machine —
+/// they run `read_worker_loop` directly.
+struct WriteWorkerStateMachine<'a> {
     /// The transaction that might or might not be active
     transaction: Option<Transaction<'a>>,
     /// The sender we use to communicate with the main worker thread.
@@ -1564,7 +1559,7 @@ struct TetheredWorkerStateMachine<'a> {
     watcher: &'a Watcher,
 }
 
-impl<'a> TetheredWorkerStateMachine<'a> {
+impl<'a> WriteWorkerStateMachine<'a> {
     /// Handles a database operation.
     ///
     /// This function processes a database operation that the tethered worker

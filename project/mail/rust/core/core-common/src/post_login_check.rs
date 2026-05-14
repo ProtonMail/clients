@@ -126,8 +126,7 @@ impl DefaultPostLoginValidator {
         }
         let user_stash = match Stash::new(StashConfiguration {
             path: Some(&user_db_path),
-            pool_size: Some(2),
-            ..Default::default()
+            read_worker_count: Some(2),
         }) {
             Ok(user_stash) => user_stash,
             Err(err) => {

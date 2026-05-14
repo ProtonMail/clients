@@ -223,8 +223,7 @@ async fn test_manual_logout_with_session_observer_double_cleanup() {
         use mail_stash::stash::{Stash, StashConfiguration};
         let user_stash: Result<Stash<UserDb>, _> = Stash::new(StashConfiguration {
             path: Some(&user_db_path),
-            pool_size: Some(1),
-            ..Default::default()
+            read_worker_count: Some(1),
         });
         if let Ok(mail_stash) = user_stash {
             let tether = mail_stash.connection();

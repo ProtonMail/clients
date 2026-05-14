@@ -1,4 +1,4 @@
-use crate::stash::{PooledTether, TracedOperation, spawn_read_worker};
+use crate::stash::{TracedOperation, WriteWorker, spawn_read_worker};
 pub use rusqlite;
 use rusqlite::{Connection, Error, OpenFlags};
 use sqlite_watcher::connection::State;
@@ -32,7 +32,7 @@ const RO_OPEN_FLAGS: OpenFlags = OpenFlags::SQLITE_OPEN_READ_ONLY
 pub struct StashConnectionPool {
     pub(crate) ro_sender: flume::Sender<TracedOperation>,
     span: Span,
-    pub(crate) write_worker: PooledTether,
+    pub(crate) write_worker: WriteWorker,
     /// Keeps the temp directory alive for the lifetime of the pool
     _source: Source,
 }
@@ -94,7 +94,7 @@ impl StashConnectionPool {
         // theoretical edge cases where the file exists but is not yet in WAL mode,
         // lock in the wrong page size.
         let write_conn = Self::create_connection(&source, &init_fns.rw, OpenFlags::default())?;
-        let write_worker = PooledTether::new(write_conn, watcher, read_worker_count);
+        let write_worker = WriteWorker::new(write_conn, watcher);
 
         let (ro_sender, ro_receiver) = flume::bounded(READ_CHANNEL_CAPACITY);
 

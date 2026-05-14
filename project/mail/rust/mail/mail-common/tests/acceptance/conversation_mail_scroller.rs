@@ -2699,15 +2699,16 @@ async fn test_category_view_filters_conversations_and_emits_updates() {
         .await;
     assert_eq!(test_scroller.items().len(), 2);
 
-    // Clear category filter (None) — all 3 Inbox conversations are visible again.
+    // Clear category filter (None) — Should not change active category
+    // Only way to disable the category view is to update MailSettings
     test_scroller.change_category_view(None).unwrap();
-    test_scroller
-        .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 3 })
-        .await;
-    test_scroller
-        .match_next_update(TestUpdate::CategoryViewChanged { labels: 2 })
-        .await;
-    assert_eq!(test_scroller.items().len(), 3);
+    let category_view = test_scroller.category_view().await.unwrap();
+
+    assert_eq!(
+        category_view.enabled,
+        Some(social_local_id),
+        "Category filter clearing is forbidden"
+    );
 }
 
 /// Like `test_category_view_filters_conversations_and_emits_updates` but

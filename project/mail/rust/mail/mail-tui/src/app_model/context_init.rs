@@ -95,7 +95,7 @@ impl AppStateHandler for ContextInitModel {
         );
     }
 
-    fn view_help_bar(&mut self, _: &mut Frame, _: Rect) {}
+    fn view_top_bar(&mut self, _: &mut Frame, _: Rect) {}
 
     fn view_status_bar(&mut self, _: &mut Frame, _: Rect) {}
     fn help_options(&self) -> Vec<(&'static str, &'static str)> {

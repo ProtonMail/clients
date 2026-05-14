@@ -1,4 +1,5 @@
 mod backdrop;
+pub mod category_tabs;
 mod centered_throbber;
 mod conversations;
 mod labels;

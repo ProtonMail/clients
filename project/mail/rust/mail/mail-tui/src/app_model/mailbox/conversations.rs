@@ -68,7 +68,7 @@ impl ConversationsState {
         label_id: LocalLabelId,
     ) -> MailContextResult<(Self, Command<Messages>)> {
         let (scroller, handle) =
-            RealMailScroller::conversations(ctx.as_weak(), label_id, ITEM_LIMIT).await?;
+            RealMailScroller::conversations(ctx.as_weak(), label_id, ITEM_LIMIT, None).await?;
 
         let (scroller, command) = MailScroller::new(scroller, handle, |update| match update {
             ScrollerUpdate::List(update) => match update {
@@ -91,8 +91,8 @@ impl ConversationsState {
                 tracing::error!("{e:?}");
                 e.into()
             }
-            ScrollerUpdate::CategoryViewChanged { .. } => {
-                ConversationMessage::ScrollerFetchNewEnd.into()
+            ScrollerUpdate::CategoryViewChanged { category_view, .. } => {
+                ConversationMessage::CategoryViewUpdated(category_view).into()
             }
             ScrollerUpdate::Status(update) => match update {
                 ScrollerStatusUpdate::FetchNewStart(_) => {
@@ -427,6 +427,9 @@ impl ConversationsState {
                     ConversationMessage::ScrollerFetchNewEnd => {
                         self.fetching_new = false;
                         Command::none()
+                    }
+                    ConversationMessage::CategoryViewUpdated(categories) => {
+                        Command::message(Message::CategoryViewUpdated(categories))
                     }
 
                     _ => Command::None,

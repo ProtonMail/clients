@@ -17,7 +17,7 @@ use chrono::{DateTime, Local};
 use composer::recipient_list::TuiRecipientList;
 use mail_api::mail_core_api::services::proton::{AddressId, PrivateEmail};
 use mail_common::datatypes::{
-    ContextualConversation, LocalAttachmentId, LocalConversationId, LocalMessageId,
+    CategoryLabel, ContextualConversation, LocalAttachmentId, LocalConversationId, LocalMessageId,
 };
 use mail_common::decrypted_message::PrivacyLockBuilder;
 use mail_common::draft::RecipientGroupId;
@@ -64,6 +64,7 @@ pub enum Message {
     ForcePollEventStart,
     ForcePollEventFinish,
     OpenUserFeatureFlags,
+    CategoryViewUpdated(Vec<CategoryLabel>),
 }
 
 pub struct LabelAs<T: LocalIdMarker> {
@@ -97,6 +98,7 @@ pub enum ConversationMessage {
     DeleteAll(LocalLabelId),
     ScrollerFetchNewStart,
     ScrollerFetchNewEnd,
+    CategoryViewUpdated(Vec<CategoryLabel>),
 }
 
 impl From<ConversationMessage> for Messages {
@@ -130,6 +132,7 @@ pub enum MessageMessage {
     ScrollerFetchNewStart,
     ScrollerFetchNewEnd,
     UpdatePrivacyLock(Option<UiLock>),
+    CategoryViewUpdated(Vec<CategoryLabel>),
 }
 
 impl<I: Into<Messages>> From<I> for Command<Messages> {

@@ -1,6 +1,7 @@
 use std::collections::BTreeSet;
 
 use crate::MailContextError;
+use crate::datatypes::ViewMode;
 use crate::models::{LabelWithCounters, MailSettings};
 use mail_api_labels::LabelId;
 use mail_core_common::datatypes::{LocalLabelId, SystemLabel};
@@ -74,6 +75,9 @@ impl CategoryView {
         {
             return Err(MailContextError::CategoryNotSupported);
         }
+        // Do not allow to disable category with Some(enabled) field
+        let enable = enable.or(self.enabled);
+
         self.enabled = enable;
 
         if enable.is_none() {
@@ -112,14 +116,25 @@ impl CategoryView {
         let remote_ids = SystemLabel::category_labels().map(|sl| sl.remote_id());
         let all_lwcs = LabelWithCounters::from_remote_ids(tether, remote_ids).await?;
 
+        let view_mode = MailSettings::get_or_default(tether).await.view_mode;
+
         // Aggregate unseen from labels not in self.available (i.e. display=false).
-        // These carry over to CategoryDefault.has_unseen_items.
-        let unavailable_has_unseen = all_lwcs.iter().any(|lwc| {
-            !lwc.label
-                .local_id
-                .is_some_and(|id| self.available.contains(&id))
-                && (lwc.unread_msg > 0 || lwc.unread_conv > 0)
-        });
+        // These carry over to CategoryDefault.
+        let unavailable_unread: u64 = all_lwcs
+            .iter()
+            .filter(|lwc| {
+                !lwc.label
+                    .local_id
+                    .is_some_and(|id| self.available.contains(&id))
+            })
+            .map(|lwc| {
+                if view_mode == ViewMode::Conversations {
+                    lwc.unread_conv
+                } else {
+                    lwc.unread_msg
+                }
+            })
+            .sum();
 
         Ok(all_lwcs
             .into_iter()
@@ -130,16 +145,14 @@ impl CategoryView {
             })
             .filter_map(|lwc| {
                 let system_label = SystemLabel::from_rid(lwc.label.remote_id.as_ref()?)?;
-                let local_id = lwc.label.id();
                 let is_default = system_label == SystemLabel::CategoryDefault;
-                Some(CategoryLabel {
-                    local_id,
+                Some(CategoryLabel::new(
                     system_label,
-                    has_unseen_items: lwc.unread_msg > 0
-                        || lwc.unread_conv > 0
-                        || (is_default && unavailable_has_unseen),
-                    enabled: enabled == Some(local_id),
-                })
+                    &lwc,
+                    view_mode,
+                    if is_default { unavailable_unread } else { 0 },
+                    enabled == Some(lwc.id()),
+                ))
             })
             .collect())
     }

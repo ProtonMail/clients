@@ -50,6 +50,7 @@ impl EventSubscriber<EventManagerContext, CoreEventSourceV6> for CoreEventV6Subs
                 .tx(async |tx| {
                     if event.users.as_ref().is_some_and(|v| !v.is_empty()) {
                         debug!("Handling user event");
+                        ctx.key_manager.clear_cache();
                         if let Some(user) = cache.get_user_mut() {
                             let mut user: User = user.clone().into();
                             user.remote_id = Some(ctx.user_id().clone());
@@ -67,6 +68,7 @@ impl EventSubscriber<EventManagerContext, CoreEventSourceV6> for CoreEventV6Subs
 
                     if let Some(events) = &event.addresses {
                         debug!("Handling address event");
+                        ctx.key_manager.clear_cache();
                         let mut changeset = RebaseChangeSet::default();
                         for event in events {
                             Address::handle_event(

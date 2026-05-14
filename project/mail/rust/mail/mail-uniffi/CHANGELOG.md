@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [mail-uniffi-v0.164.26] - 2026-05-14
+
+### Features
+
+- Use userCountry to filter out feature flags - proton/clients/monorepo!1356
+
+### Fixes
+
+- Revert to using GET for fetching unleash flags - proton/clients/monorepo!1558
+- Clear keycache on user or address event - proton/clients/monorepo!2406
+
+
 ## [mail-uniffi-v0.164.25] - 2026-05-14
 
 ### Features

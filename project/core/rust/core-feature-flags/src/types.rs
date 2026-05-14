@@ -31,10 +31,18 @@ pub struct UnleashToggle {
 #[serde(rename_all = "snake_case")]
 pub struct UnleashToggleVariant {
     pub name: String,
+    #[serde(default = "default_variant_enabled")]
+    pub enabled: bool,
     #[serde(default = "default_feature_enabled")]
     pub feature_enabled: bool,
     #[serde(default)]
     pub payload: Option<UnleashTogglePayload>,
+}
+
+fn default_variant_enabled() -> bool {
+    // If `enabled` is missing, assume the variant is active. Mirrors
+    // `default_feature_enabled` rationale.
+    true
 }
 
 fn default_feature_enabled() -> bool {

@@ -2,9 +2,10 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use mail_core_api::services::proton::{
-    GetUnleashFeaturesResponse, UnleashToggle, UnleashToggleVariant,
+    GetUnleashFeaturesResponse, UnleashToggle, UnleashTogglePayload, UnleashTogglePayloadType,
+    UnleashToggleVariant,
 };
-use mail_core_common::datatypes::UnixTimestamp;
+use mail_core_common::datatypes::{FeatureFlagPayloadType, UnixTimestamp, Variant, VariantPayload};
 use mail_core_common::device::{DeviceInfo, DeviceInfoProvider, DynDeviceInfoProvider};
 use mail_core_common::models::FeatureFlag;
 use mail_core_common::services::FeatureFlagsService;
@@ -74,11 +75,19 @@ async fn test_feature_flags_warm_start_immediate_return() {
             name: "CachedFeatureX".to_string(),
             enabled: true,
             modify_time: past,
+            variant_name: None,
+            variant_enabled: None,
+            variant_payload_type: None,
+            variant_payload_value: None,
         };
         let mut cached_y = FeatureFlag {
             name: "CachedFeatureY".to_string(),
             enabled: true,
             modify_time: past,
+            variant_name: None,
+            variant_enabled: None,
+            variant_payload_type: None,
+            variant_payload_value: None,
         };
 
         tether
@@ -143,6 +152,10 @@ async fn test_feature_flags_warm_start_background_refresh() {
             name: "ExistingFeature".to_string(),
             enabled: true,
             modify_time: past,
+            variant_name: None,
+            variant_enabled: None,
+            variant_payload_type: None,
+            variant_payload_value: None,
         };
 
         tether
@@ -233,6 +246,10 @@ async fn test_feature_flags_network_failure_preserves_cache() {
             name: "CachedFlag".to_string(),
             enabled: true,
             modify_time: past,
+            variant_name: None,
+            variant_enabled: None,
+            variant_payload_type: None,
+            variant_payload_value: None,
         };
 
         tether
@@ -375,7 +392,387 @@ async fn wait_for_flag(
 fn test_unleash_variant() -> UnleashToggleVariant {
     UnleashToggleVariant {
         name: "enabled".to_string(),
+        enabled: true,
         feature_enabled: true,
         payload: None,
     }
+}
+
+fn variant_named(name: &str) -> UnleashToggleVariant {
+    UnleashToggleVariant {
+        name: name.to_string(),
+        enabled: true,
+        feature_enabled: true,
+        payload: None,
+    }
+}
+
+fn variant_with_payload(
+    name: &str,
+    ty: UnleashTogglePayloadType,
+    value: &str,
+) -> UnleashToggleVariant {
+    UnleashToggleVariant {
+        name: name.to_string(),
+        enabled: true,
+        feature_enabled: true,
+        payload: Some(UnleashTogglePayload {
+            ty,
+            value: value.to_string(),
+        }),
+    }
+}
+
+#[tokio::test]
+async fn test_feature_flags_variant_persists() {
+    let ctx = TestContext::new().await;
+
+    let mock_response = GetUnleashFeaturesResponse {
+        toggles: vec![UnleashToggle {
+            name: "VariantFeature".to_string(),
+            enabled: true,
+            impression_data: false,
+            variant: variant_with_payload("foo", UnleashTogglePayloadType::Json, r#"{"bar":1}"#),
+        }],
+    };
+
+    Mock::given(method("GET"))
+        .and(path("/api/feature/v2/frontend"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(mock_response))
+        .named("Variant persists fetch")
+        .mount(ctx.mock_server())
+        .await;
+
+    let feature_flags = ctx.context().feature_flags();
+    feature_flags.refresh().await.unwrap();
+    wait_for_flag(feature_flags, "VariantFeature", 10, 100).await;
+
+    let variant = feature_flags
+        .get_feature_flag_variant("VariantFeature")
+        .await
+        .unwrap();
+    assert_eq!(
+        variant,
+        Some(Variant {
+            name: "foo".to_string(),
+            enabled: true,
+            payload: Some(VariantPayload {
+                ty: FeatureFlagPayloadType::Json,
+                value: r#"{"bar":1}"#.to_string(),
+            }),
+        })
+    );
+}
+
+#[tokio::test]
+async fn test_feature_flags_variant_without_payload() {
+    let ctx = TestContext::new().await;
+
+    let mock_response = GetUnleashFeaturesResponse {
+        toggles: vec![UnleashToggle {
+            name: "NamedOnly".to_string(),
+            enabled: true,
+            impression_data: false,
+            variant: variant_named("just-a-name"),
+        }],
+    };
+
+    Mock::given(method("GET"))
+        .and(path("/api/feature/v2/frontend"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(mock_response))
+        .named("Variant without payload")
+        .mount(ctx.mock_server())
+        .await;
+
+    let feature_flags = ctx.context().feature_flags();
+    feature_flags.refresh().await.unwrap();
+    wait_for_flag(feature_flags, "NamedOnly", 10, 100).await;
+
+    let variant = feature_flags
+        .get_feature_flag_variant("NamedOnly")
+        .await
+        .unwrap();
+    assert_eq!(
+        variant,
+        Some(Variant {
+            name: "just-a-name".to_string(),
+            enabled: true,
+            payload: None,
+        })
+    );
+}
+
+#[tokio::test]
+async fn test_feature_flags_variant_changes_between_refreshes() {
+    let ctx = TestContext::new().await;
+
+    Mock::given(method("GET"))
+        .and(path("/api/feature/v2/frontend"))
+        .respond_with(RespondNthTime::new(
+            1,
+            ResponseTemplate::new(200).set_body_json(GetUnleashFeaturesResponse {
+                toggles: vec![UnleashToggle {
+                    name: "Mutating".to_string(),
+                    enabled: true,
+                    impression_data: false,
+                    variant: variant_with_payload(
+                        "alpha",
+                        UnleashTogglePayloadType::String,
+                        "first",
+                    ),
+                }],
+            }),
+            ResponseTemplate::new(200).set_body_json(GetUnleashFeaturesResponse {
+                toggles: vec![UnleashToggle {
+                    name: "Mutating".to_string(),
+                    enabled: true,
+                    impression_data: false,
+                    variant: variant_with_payload(
+                        "beta",
+                        UnleashTogglePayloadType::String,
+                        "second",
+                    ),
+                }],
+            }),
+        ))
+        .named("Variant changes")
+        .mount(ctx.mock_server())
+        .await;
+
+    let feature_flags = ctx.context().feature_flags();
+
+    feature_flags.refresh().await.unwrap();
+    wait_for_flag(feature_flags, "Mutating", 10, 100).await;
+    let first = feature_flags
+        .get_feature_flag_variant("Mutating")
+        .await
+        .unwrap();
+    assert_eq!(
+        first,
+        Some(Variant {
+            name: "alpha".to_string(),
+            enabled: true,
+            payload: Some(VariantPayload {
+                ty: FeatureFlagPayloadType::String,
+                value: "first".to_string(),
+            }),
+        })
+    );
+
+    feature_flags.refresh().await.unwrap();
+    let second = feature_flags
+        .get_feature_flag_variant("Mutating")
+        .await
+        .unwrap();
+    assert_eq!(
+        second,
+        Some(Variant {
+            name: "beta".to_string(),
+            enabled: true,
+            payload: Some(VariantPayload {
+                ty: FeatureFlagPayloadType::String,
+                value: "second".to_string(),
+            }),
+        })
+    );
+}
+
+#[tokio::test]
+async fn test_feature_flags_variant_disappears_when_toggle_drops_out() {
+    let ctx = TestContext::new().await;
+
+    Mock::given(method("GET"))
+        .and(path("/api/feature/v2/frontend"))
+        .respond_with(RespondNthTime::new(
+            1,
+            ResponseTemplate::new(200).set_body_json(GetUnleashFeaturesResponse {
+                toggles: vec![UnleashToggle {
+                    name: "Vanishing".to_string(),
+                    enabled: true,
+                    impression_data: false,
+                    variant: variant_with_payload("x", UnleashTogglePayloadType::Number, "42"),
+                }],
+            }),
+            ResponseTemplate::new(200)
+                .set_body_json(GetUnleashFeaturesResponse { toggles: vec![] }),
+        ))
+        .named("Toggle drops out")
+        .mount(ctx.mock_server())
+        .await;
+
+    let feature_flags = ctx.context().feature_flags();
+
+    feature_flags.refresh().await.unwrap();
+    wait_for_flag(feature_flags, "Vanishing", 10, 100).await;
+    assert_eq!(feature_flags.get("Vanishing").await.unwrap(), Some(true));
+
+    feature_flags.refresh().await.unwrap();
+    assert_eq!(feature_flags.get("Vanishing").await.unwrap(), Some(false));
+    let variant = feature_flags
+        .get_feature_flag_variant("Vanishing")
+        .await
+        .unwrap();
+    assert_eq!(variant, None);
+}
+
+#[tokio::test]
+async fn test_feature_flags_variant_payload_types_round_trip() {
+    let ctx = TestContext::new().await;
+
+    let mock_response = GetUnleashFeaturesResponse {
+        toggles: vec![
+            UnleashToggle {
+                name: "AsJson".to_string(),
+                enabled: true,
+                impression_data: false,
+                variant: variant_with_payload("v", UnleashTogglePayloadType::Json, r#"{"a":1}"#),
+            },
+            UnleashToggle {
+                name: "AsCsv".to_string(),
+                enabled: true,
+                impression_data: false,
+                variant: variant_with_payload("v", UnleashTogglePayloadType::Csv, "a,b,c"),
+            },
+            UnleashToggle {
+                name: "AsString".to_string(),
+                enabled: true,
+                impression_data: false,
+                variant: variant_with_payload("v", UnleashTogglePayloadType::String, "hello"),
+            },
+            UnleashToggle {
+                name: "AsNumber".to_string(),
+                enabled: true,
+                impression_data: false,
+                variant: variant_with_payload("v", UnleashTogglePayloadType::Number, "7"),
+            },
+        ],
+    };
+
+    Mock::given(method("GET"))
+        .and(path("/api/feature/v2/frontend"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(mock_response))
+        .named("All payload types")
+        .mount(ctx.mock_server())
+        .await;
+
+    let feature_flags = ctx.context().feature_flags();
+    feature_flags.refresh().await.unwrap();
+    wait_for_flag(feature_flags, "AsNumber", 10, 100).await;
+
+    let cases = [
+        ("AsJson", FeatureFlagPayloadType::Json, r#"{"a":1}"#),
+        ("AsCsv", FeatureFlagPayloadType::Csv, "a,b,c"),
+        ("AsString", FeatureFlagPayloadType::String, "hello"),
+        ("AsNumber", FeatureFlagPayloadType::Number, "7"),
+    ];
+    for (name, ty, value) in cases {
+        let variant = feature_flags.get_feature_flag_variant(name).await.unwrap();
+        assert_eq!(
+            variant,
+            Some(Variant {
+                name: "v".to_string(),
+                enabled: true,
+                payload: Some(VariantPayload {
+                    ty,
+                    value: value.to_string(),
+                }),
+            }),
+            "round-trip failure for {name}"
+        );
+    }
+}
+
+#[tokio::test]
+async fn test_feature_flags_variant_feature_disabled() {
+    let ctx = TestContext::new().await;
+
+    let mock_response = GetUnleashFeaturesResponse {
+        toggles: vec![UnleashToggle {
+            name: "DisabledFeature".to_string(),
+            enabled: true,
+            impression_data: false,
+            variant: UnleashToggleVariant {
+                name: "treatment".to_string(),
+                enabled: true,
+                feature_enabled: false,
+                payload: Some(UnleashTogglePayload {
+                    ty: UnleashTogglePayloadType::String,
+                    value: "hello".to_string(),
+                }),
+            },
+        }],
+    };
+
+    Mock::given(method("GET"))
+        .and(path("/api/feature/v2/frontend"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(mock_response))
+        .named("Feature disabled, variant still set")
+        .mount(ctx.mock_server())
+        .await;
+
+    let feature_flags = ctx.context().feature_flags();
+    feature_flags.refresh().await.unwrap();
+
+    assert_eq!(
+        feature_flags.get("DisabledFeature").await.unwrap(),
+        Some(false)
+    );
+    let variant = feature_flags
+        .get_feature_flag_variant("DisabledFeature")
+        .await
+        .unwrap();
+    assert_eq!(
+        variant,
+        Some(Variant {
+            name: "treatment".to_string(),
+            enabled: true,
+            payload: Some(VariantPayload {
+                ty: FeatureFlagPayloadType::String,
+                value: "hello".to_string(),
+            }),
+        })
+    );
+}
+
+#[tokio::test]
+async fn test_feature_flags_variant_disabled_but_feature_enabled() {
+    let ctx = TestContext::new().await;
+
+    let mock_response = GetUnleashFeaturesResponse {
+        toggles: vec![UnleashToggle {
+            name: "NoTreatment".to_string(),
+            enabled: true,
+            impression_data: false,
+            variant: UnleashToggleVariant {
+                name: "disabled".to_string(),
+                enabled: false,
+                feature_enabled: true,
+                payload: None,
+            },
+        }],
+    };
+
+    Mock::given(method("GET"))
+        .and(path("/api/feature/v2/frontend"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(mock_response))
+        .named("Variant disabled, feature on")
+        .mount(ctx.mock_server())
+        .await;
+
+    let feature_flags = ctx.context().feature_flags();
+    feature_flags.refresh().await.unwrap();
+
+    assert_eq!(feature_flags.get("NoTreatment").await.unwrap(), Some(true));
+    let variant = feature_flags
+        .get_feature_flag_variant("NoTreatment")
+        .await
+        .unwrap();
+    assert_eq!(
+        variant,
+        Some(Variant {
+            name: "disabled".to_string(),
+            enabled: false,
+            payload: None,
+        })
+    );
 }

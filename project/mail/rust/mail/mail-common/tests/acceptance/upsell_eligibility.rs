@@ -147,6 +147,7 @@ async fn save_role(ctx: &MailUserContext, role: Role, tx: &Bond<'_>) -> Result<(
 fn test_unleash_variant() -> UnleashToggleVariant {
     UnleashToggleVariant {
         name: "enabled".to_string(),
+        enabled: true,
         feature_enabled: true,
         payload: None,
     }

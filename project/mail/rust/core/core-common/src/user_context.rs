@@ -340,15 +340,14 @@ impl UserContext {
 
         let mail_stash = task::spawn_blocking(move || {
             #[cfg(feature = "foundation_search_lab_harness")]
-            let pool_size = Some(32);
+            let read_worker_count = Some(32);
             #[cfg(not(feature = "foundation_search_lab_harness"))]
-            let pool_size = None;
+            let read_worker_count = None;
 
             Stash::new(StashConfiguration {
                 path: Some(&path),
-                // Lab-only tuning: allow larger DB pool for high-concurrency prefetch/index runs.
-                pool_size,
-                ..Default::default()
+                // Lab-only tuning: 32 read workers for high-concurrency prefetch/index runs.
+                read_worker_count,
             })
         })
         .await

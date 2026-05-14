@@ -32,8 +32,7 @@ pub fn current_benchmark(c: &mut Criterion) {
         let db_path = temp_dir.path().join("sqlite3.db");
         let stash_config = StashConfiguration {
             path: Some(&db_path),
-            pool_size: None,
-            idle_count: None,
+            read_worker_count: None,
         };
         let mail_stash = Stash::new(stash_config).unwrap();
         let (label_id, address_id) = runtime.block_on(async { setup_db(&mail_stash).await });
@@ -56,8 +55,7 @@ pub fn current_benchmark(c: &mut Criterion) {
         let db_path = temp_dir.path().join("sqlite3.db");
         let stash_config = StashConfiguration {
             path: Some(&db_path),
-            pool_size: None,
-            idle_count: None,
+            read_worker_count: None,
         };
         let mail_stash = Stash::new(stash_config).unwrap();
         runtime.block_on(async { setup_and_create_messages(&mail_stash, 100).await });
@@ -73,8 +71,7 @@ pub fn current_benchmark(c: &mut Criterion) {
         let db_path = temp_dir.path().join("sqlite3.db");
         let stash_config = StashConfiguration {
             path: Some(&db_path),
-            pool_size: None,
-            idle_count: None,
+            read_worker_count: None,
         };
         let mail_stash = Stash::new(stash_config).unwrap();
         runtime.block_on(async { setup_and_create_messages(&mail_stash, 100).await });

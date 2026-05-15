@@ -9,7 +9,6 @@ use std::ops::{Deref, DerefMut};
 use zeroize::Zeroize;
 
 /// A wrapper around `UserKeys` that implements `Zeroize` and redacts debug output.
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", serde(transparent))]
@@ -112,7 +111,6 @@ impl fmt::Debug for LtCoreSensitiveUserKeys {
 }
 
 /// A wrapper around `AddressKeys` that implements `Zeroize` and redacts debug output.
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", serde(transparent))]

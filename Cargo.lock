@@ -37,7 +37,9 @@ dependencies = [
  "account-db-op",
  "account-validator-password",
  "anyhow",
+ "async-compat",
  "async-trait",
+ "bitflags 2.11.1",
  "core-client-info-op",
  "core-common-types",
  "core-device-info-op",
@@ -54,6 +56,8 @@ dependencies = [
  "core-muon-op",
  "core-observability",
  "core-proc",
+ "core-proton-map",
+ "core-sensitive-data",
  "core-user-manager",
  "core-validator",
  "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -148,15 +152,19 @@ version = "0.1.0"
 dependencies = [
  "account-crux",
  "anyhow",
+ "core-kotlin-facet-postprocess",
  "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "regex",
+ "proton-crypto-account",
 ]
 
 [[package]]
 name = "account-db"
 version = "0.1.0"
 dependencies = [
+ "bitflags 2.11.1",
+ "core-common-types",
  "core-keystore-op",
+ "core-proton-map",
  "deadpool-diesel",
  "derive_more 2.1.1",
  "diesel",
@@ -166,6 +174,7 @@ dependencies = [
  "futures",
  "lattice",
  "libsqlite3-sys",
+ "num_enum",
  "proton-crypto-account",
  "serde",
  "serde_json",
@@ -2121,13 +2130,12 @@ dependencies = [
  "core-fido-op",
  "core-hv-op",
  "core-keystore-op",
+ "core-kotlin-facet-postprocess",
  "core-logging-op",
  "core-message",
  "core-muon-op",
  "core-validator",
  "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "lattice",
- "regex",
 ]
 
 [[package]]
@@ -2194,6 +2202,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "core-proc",
+ "core-proton-map",
  "coset",
  "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "derive_more 2.1.1",
@@ -2269,6 +2278,13 @@ dependencies = [
  "facet",
  "serde",
  "thiserror 2.0.18",
+]
+
+[[package]]
+name = "core-kotlin-facet-postprocess"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
 ]
 
 [[package]]
@@ -2389,6 +2405,24 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.117",
+]
+
+[[package]]
+name = "core-proton-map"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
+
+[[package]]
+name = "core-sensitive-data"
+version = "0.1.0"
+dependencies = [
+ "facet",
+ "serde",
+ "zeroize",
 ]
 
 [[package]]
@@ -5595,8 +5629,8 @@ version = "0.1.0"
 dependencies = [
  "async-compat",
  "bitflags 2.11.1",
+ "core-sensitive-data",
  "derive_more 2.1.1",
- "facet",
  "futures",
  "lattice",
  "mail-muon",

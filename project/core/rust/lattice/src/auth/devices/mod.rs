@@ -18,7 +18,6 @@ pub use put_auth_devices_device_id_admin::LtAuthPutDevicesDeviceIDAdminReq;
 
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
@@ -30,7 +29,6 @@ pub struct LtAuthAssociatedDevice {
 
 #[repr(i32)]
 #[derive(IntoPrimitive, TryFromPrimitive)]
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", serde(into = "i32", try_from = "i32"))]
@@ -43,7 +41,6 @@ pub enum LtAuthDeviceState {
     NoSession = 5,
 }
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]

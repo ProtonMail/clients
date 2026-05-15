@@ -2,12 +2,10 @@ use std::borrow::Cow;
 
 use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON};
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LtCoreGetOrganizationsSettingsReq;
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]

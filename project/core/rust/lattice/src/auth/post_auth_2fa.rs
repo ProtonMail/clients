@@ -5,7 +5,6 @@ use passkey::types::webauthn::CredentialRequestOptions;
 use crate::auth::LtAuthFidoKeyId;
 use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method, Sensitive};
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
@@ -25,7 +24,6 @@ pub struct LtAuthPostSessionsForks {
     pub user_code: Option<String>,
 }
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
@@ -52,7 +50,6 @@ pub enum LtAuthTwoFactorProof {
     },
 }
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
@@ -72,7 +69,6 @@ pub struct LtAuthPost2fa {
     pub tfa_proof: LtAuthTwoFactorProof,
 }
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]

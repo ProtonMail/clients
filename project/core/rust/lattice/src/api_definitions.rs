@@ -10,6 +10,5 @@ pub struct LtApiResponse<T> {
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Display)]
 pub struct LtApiCode(pub u32);

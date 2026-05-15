@@ -173,6 +173,9 @@ path = "project/core/rust/core-event-loop"
 [workspace.dependencies.core-keystore-op]
 path = "project/core/rust/core-keystore-op"
 
+[workspace.dependencies.core-kotlin-facet-postprocess]
+path = "project/core/rust/core-kotlin-facet-postprocess"
+
 [workspace.dependencies.core-message]
 path = "project/core/rust/core-message"
 
@@ -201,6 +204,12 @@ features = ["full-base", "transport-reqwest-rustls"]
 
 [workspace.dependencies.core-proc]
 path = "project/core/rust/core-proc"
+
+[workspace.dependencies.core-proton-map]
+path = "project/core/rust/core-proton-map"
+
+[workspace.dependencies.core-sensitive-data]
+path = "project/core/rust/core-sensitive-data"
 
 [workspace.dependencies.core-fido-op]
 path = "project/core/rust/core-fido-op"

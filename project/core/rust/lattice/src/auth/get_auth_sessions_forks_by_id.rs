@@ -2,7 +2,6 @@ use std::borrow::Cow;
 
 use crate::{LtContract, LtNoQueryParams, LtSlimAPIJSON, UnauthReq, auth::LtAuthApiSession};
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LtAuthGetSessionsForksByIdReq {
@@ -24,7 +23,6 @@ impl LtContract for LtAuthGetSessionsForksByIdReq {
     }
 }
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]

@@ -5,14 +5,12 @@ use crate::{
     core::LtCoreEvents,
 };
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LtCoreGetEventsIdReq {
     pub event_id: LtAuthEventId,
 }
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
@@ -35,14 +33,12 @@ impl LtContract for LtCoreGetEventsIdReq {
 
 impl AuthReq for LtCoreGetEventsIdReq {}
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LtCoreGetEventsIdRawReq {
     pub event_id: LtAuthEventId,
 }
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LtCoreGetEventsIdRawRes(pub String);
 
@@ -84,12 +80,10 @@ impl LtContract for LtCoreGetEventsIdRawReq {
 
 impl AuthReq for LtCoreGetEventsIdRawReq {}
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LtCoreGetEventsLatestReq;
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]

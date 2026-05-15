@@ -1,0 +1,19 @@
+[package]
+  name = "core-sensitive-data"
+  version = "0.1.0"
+  edition.workspace = true
+
+[features]
+  default = []
+  # JSON and similar; transparent around the inner value when the inner type supports serde.
+  serde = ["dep:serde"]
+  # Crux / Facet typegen: `Sensitive` implements `Facet` and is treated as opaque (no nested shape).
+  facet = ["dep:facet"]
+
+[dependencies]
+  facet = { workspace = true, optional = true }
+  serde = { workspace = true, optional = true }
+  zeroize = { workspace = true }
+
+[lints]
+  workspace = true

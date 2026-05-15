@@ -359,7 +359,6 @@ derivative = "=2.2.0"
 diesel = { version = '2.3.7', features = ["serde_json", "sqlite"] }
 diesel_migrations = "2.3.1"
 ext-php-rs = "0.15.3"
-facet_generate = "=0.13.1"
 flate2 = "1.1"
 flume = "0.12"
 function_name = "0.3.0"

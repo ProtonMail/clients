@@ -1,10 +1,12 @@
 use crate::app::Command;
 use crate::app_model::Popup;
+use crate::app_model::feature_flag_variant_fmt::variant_suffix_span;
 use crate::messages::Messages;
 use crate::widgets::utils::ScrollableState;
 use crate::widgets::{ScrollableList, ScrollableListState, TextInput, TextInputState};
 use mail_common::MailUserContext;
 use mail_core_common::actions::user_feature_flags::OverrideFlag;
+use mail_core_common::datatypes::Variant;
 use mail_core_common::models::{ModelExtension, UserFeatureFlag};
 use ratatui::Frame;
 use ratatui::crossterm::event::{Event, KeyCode, KeyModifiers};
@@ -20,6 +22,7 @@ struct FlagInfo {
     writable: bool,
     source: String,
     overridden: bool,
+    variant: Option<Variant>,
 }
 
 pub struct UserFeatureFlagsPopup {
@@ -72,6 +75,7 @@ impl UserFeatureFlagsPopup {
                     writable: flag.writable,
                     source: format!("{:?}", flag.source),
                     overridden: flag.overridden_to.is_some(),
+                    variant: flag.variant(),
                 })
                 .collect();
 
@@ -211,7 +215,11 @@ impl Popup for UserFeatureFlagsPopup {
                     Style::default().fg(Color::DarkGray)
                 };
 
-                ListItem::from(text).style(style)
+                let mut spans = vec![Span::styled(text, style)];
+                if let Some(suffix) = variant_suffix_span(flag.variant.as_ref()) {
+                    spans.push(suffix);
+                }
+                ListItem::from(Line::from(spans))
             })
             .collect();
 
@@ -233,7 +241,8 @@ impl Popup for UserFeatureFlagsPopup {
             ]),
             Line::from(vec![
                 Span::raw("[W]: Writable | "),
-                Span::raw("*: Overridden"),
+                Span::raw("*: Overridden | "),
+                Span::raw("dim text: variant info"),
             ]),
         ];
         frame.render_widget(Paragraph::new(help), help_area);

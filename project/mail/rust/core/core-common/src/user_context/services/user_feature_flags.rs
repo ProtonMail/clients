@@ -10,7 +10,7 @@ use mail_core_api::{
     services::proton::{
         FeatureFlagsApi as _, GetLegacyFeatureFlagsOptions, GetLegacyFeaturesResponse,
         GetUnleashFeaturesResponse, LegacyFeatureFlag, LegacyFeatureFlagType,
-        MAX_LEGACY_FEATURES_PER_PAGE,
+        MAX_LEGACY_FEATURES_PER_PAGE, UnleashToggleVariant,
     },
     session::Session,
 };
@@ -24,7 +24,7 @@ use mail_stash::{
 
 use crate::{
     Context, CoreContextError, CoreContextResult, UserContext,
-    datatypes::{UnixTimestamp, UserFeatureFlagSource},
+    datatypes::{UnixTimestamp, UserFeatureFlagSource, Variant},
     models::{ModelExtension, UserFeatureFlag},
     services::FeatureFlagsService,
     utils::Paginatable,
@@ -79,14 +79,30 @@ impl UserFeatureFlagsService {
                     overridden_to: None,
                     overridden_at: None,
                     modify_time,
+                    variant_name: None,
+                    variant_enabled: None,
+                    variant_payload_type: None,
+                    variant_payload_value: None,
                 });
 
-            // Currently we are ignoring variants,
-            // and Unleash API says that feature is always enabled
-            flag.enabled = true;
+            let UnleashToggleVariant {
+                name,
+                enabled,
+                feature_enabled,
+                payload,
+            } = toggle.variant;
+            let (payload_type, payload_value) = match payload {
+                Some(p) => (Some(p.ty.into()), Some(p.value)),
+                None => (None, None),
+            };
+            flag.enabled = feature_enabled;
             flag.source = UserFeatureFlagSource::Unleash;
             flag.writable = false;
             flag.modify_time = modify_time;
+            flag.variant_name = Some(name);
+            flag.variant_enabled = Some(enabled);
+            flag.variant_payload_type = payload_type;
+            flag.variant_payload_value = payload_value;
         }
     }
 
@@ -125,6 +141,10 @@ impl UserFeatureFlagsService {
                         overridden_to: None,
                         overridden_at: None,
                         modify_time: now,
+                        variant_name: None,
+                        variant_enabled: None,
+                        variant_payload_type: None,
+                        variant_payload_value: None,
                     },
                     FlagPersistence::Persist,
                 )
@@ -177,6 +197,10 @@ impl UserFeatureFlagsService {
             // The easiest way to do so is to mark everything as disabled and then in `set_flags_from_unleash` mark
             // every present flag as enabled.
             flag.enabled = false;
+            flag.variant_name = None;
+            flag.variant_enabled = None;
+            flag.variant_payload_type = None;
+            flag.variant_payload_value = None;
         }
 
         Self::set_flags_from_unleash(&mut flags, response, modify_time);
@@ -266,6 +290,15 @@ impl UserFeatureFlagsService {
             UserFeatureFlag::by_name(key, &tether).await?
         };
         Ok(feature_flag.map(|flag| flag.is_enabled()))
+    }
+
+    pub async fn get_feature_flag_variant(&self, key: &str) -> CoreContextResult<Option<Variant>> {
+        let ctx = self.ctx.upgrade().context("Could not upgrade context")?;
+        let feature_flag = {
+            let tether = ctx.mail_stash().connection().await?;
+            UserFeatureFlag::by_name(key, &tether).await?
+        };
+        Ok(feature_flag.and_then(|flag| flag.variant()))
     }
 
     pub async fn list_all(&self) -> Vec<(String, bool)> {

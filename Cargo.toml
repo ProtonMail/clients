@@ -173,9 +173,6 @@ path = "project/core/rust/core-event-loop"
 [workspace.dependencies.core-keystore-op]
 path = "project/core/rust/core-keystore-op"
 
-[workspace.dependencies.core-kotlin-facet-postprocess]
-path = "project/core/rust/core-kotlin-facet-postprocess"
-
 [workspace.dependencies.core-message]
 path = "project/core/rust/core-message"
 

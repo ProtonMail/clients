@@ -152,9 +152,7 @@ version = "0.1.0"
 dependencies = [
  "account-crux",
  "anyhow",
- "core-kotlin-facet-postprocess",
  "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "proton-crypto-account",
 ]
 
 [[package]]
@@ -2124,13 +2122,11 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "core-client-info-op",
- "core-common-types",
  "core-db-op",
  "core-device-info-op",
  "core-fido-op",
  "core-hv-op",
  "core-keystore-op",
- "core-kotlin-facet-postprocess",
  "core-logging-op",
  "core-message",
  "core-muon-op",
@@ -2278,13 +2274,6 @@ dependencies = [
  "facet",
  "serde",
  "thiserror 2.0.18",
-]
-
-[[package]]
-name = "core-kotlin-facet-postprocess"
-version = "0.1.0"
-dependencies = [
- "anyhow",
 ]
 
 [[package]]

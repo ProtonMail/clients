@@ -2559,16 +2559,16 @@ async fn test_cached_scroller_no_items_lost_with_tied_snooze_and_time() {
 /// Verifies that:
 /// - `category_view()` returns the correct initial state (CategoryDefault auto-enabled, available
 ///   categories reflect DB `display` flags).
-/// - `change_category_view` applies the SQL category filter and emits both a list update
-///   (`ReplaceFrom`) and a `CategoryViewChanged` update in that order.
+/// - `change_category_view` applies the SQL category filter and emits both a
+///   `CategoryViewChanged` update and a list update (`ReplaceFrom`) in that order.
 /// - Switching between categories and clearing the filter (`None`) all produce the correct
 ///   conversation counts and update payloads.
 ///
 /// # Update ordering
 ///
 /// After each `change_category_view` call the scroller emits exactly two updates:
-///   1. `ReplaceFrom` — the filtered list refresh from `reset`.
-///   2. `CategoryViewChanged` — the resolved category labels.
+///   1. `CategoryViewChanged` — the resolved category labels (emitted before `reset`).
+///   2. `ReplaceFrom` — the filtered list refresh from `reset`.
 ///
 /// `ConversationCounter.total` for Inbox is zeroed after seeding so that
 /// `try_fetch_first_page` never schedules a spurious background `FetchMore`
@@ -2676,10 +2676,10 @@ async fn test_category_view_filters_conversations_and_emits_updates() {
         .change_category_view(Some(social_local_id))
         .unwrap();
     test_scroller
-        .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 2 })
+        .match_next_update(TestUpdate::CategoryViewChanged { labels: 2 })
         .await;
     test_scroller
-        .match_next_update(TestUpdate::CategoryViewChanged { labels: 2 })
+        .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 2 })
         .await;
     assert_eq!(test_scroller.items().len(), 2);
 
@@ -2852,9 +2852,9 @@ async fn test_category_view_clears_on_change_label_to_all_mail() {
 /// conversations to the DB and the conversations are immediately visible.
 ///
 /// Update sequence after `change_category_view`:
-///   1. `ReplaceFrom { items: 2 }` — reset awaits the first-page API task (strict mock fires),
+///   1. `CategoryViewChanged` — resolved category labels (emitted before `reset`).
+///   2. `ReplaceFrom { items: 2 }` — reset awaits the first-page API task (strict mock fires),
 ///      saves 2 Social convs, then `refresh(true)` reads 2 visible items → `ReplaceFrom{2}`.
-///   2. `CategoryViewChanged` — resolved category labels.
 ///
 /// Cursor assertion is performed after the update sequence; the quiet_tx inside the API task
 /// has already committed before `reset()` returns `ReplaceFrom`.
@@ -2978,10 +2978,10 @@ async fn test_category_view_first_page_sends_multi_label_ids_to_api() {
         .change_category_view(Some(social_local_id))
         .unwrap();
     test_scroller
-        .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 2 })
+        .match_next_update(TestUpdate::CategoryViewChanged { labels: 2 })
         .await;
     test_scroller
-        .match_next_update(TestUpdate::CategoryViewChanged { labels: 2 })
+        .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 2 })
         .await;
     assert_eq!(test_scroller.items().len(), 2);
 
@@ -3014,8 +3014,9 @@ async fn test_category_view_first_page_sends_multi_label_ids_to_api() {
 /// include the Social label to pass the scroller's EXISTS category filter.
 ///
 /// Update sequence:
-///   1. `change_category_view` → `ReplaceFrom{2}` + `CategoryViewChanged`
-///      (reset() awaits strict first-page mock; 2 Social convs committed; next-page task queued)
+///   1. `change_category_view` → `CategoryViewChanged` + `ReplaceFrom{2}`
+///      (CategoryViewChanged is emitted first; then reset() awaits strict first-page mock;
+///      2 Social convs committed; next-page task queued)
 ///   2. `fetch_more()` → awaits next-page task → strict AnchorID + 2-label mock fires →
 ///      sync() reloads end cursor → `Append{2}` (Social second page)
 ///
@@ -3192,10 +3193,10 @@ async fn test_category_view_next_page_sends_multi_label_ids_to_api() {
         .change_category_view(Some(social_local_id))
         .unwrap();
     test_scroller
-        .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 2 })
+        .match_next_update(TestUpdate::CategoryViewChanged { labels: 2 })
         .await;
     test_scroller
-        .match_next_update(TestUpdate::CategoryViewChanged { labels: 2 })
+        .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 2 })
         .await;
     assert_eq!(test_scroller.items().len(), 2);
 
@@ -3300,10 +3301,10 @@ async fn test_total_reflects_active_category_after_change_category_view() {
         .change_category_view(Some(social_local_id))
         .unwrap();
     test_scroller
-        .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 2 })
+        .match_next_update(TestUpdate::CategoryViewChanged { labels: 2 })
         .await;
     test_scroller
-        .match_next_update(TestUpdate::CategoryViewChanged { labels: 2 })
+        .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 2 })
         .await;
 
     let total = test_scroller.total().await.unwrap();
@@ -3657,10 +3658,10 @@ async fn test_disabling_active_non_primary_category_falls_back_to_primary() {
         .change_category_view(Some(social_local_id))
         .unwrap();
     scroller
-        .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 2 })
+        .match_next_update(TestUpdate::CategoryViewChanged { labels: 2 })
         .await;
     scroller
-        .match_next_update(TestUpdate::CategoryViewChanged { labels: 2 })
+        .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 2 })
         .await;
     assert_eq!(scroller.items().len(), 2);
 

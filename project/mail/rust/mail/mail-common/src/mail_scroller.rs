@@ -1054,8 +1054,6 @@ where
                         .await
                         .map_err(|e| anyhow!("Failed to send category filter update: {e:?}"))?;
                 }
-
-                self.emit_category_view_changed(src).await?;
             }
 
             ScrollerCommand::CategoryViewChanged(src) => {
@@ -1415,6 +1413,7 @@ where
             .await
             .change_state(&ctx, None, None, None, Some(view))
             .await?;
+        self.emit_category_view_changed(src).await?;
         self.reset(src).await
     }
 

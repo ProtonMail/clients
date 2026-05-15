@@ -1,6 +1,7 @@
 pub mod background;
 pub mod contacts;
 pub mod context_init;
+mod feature_flag_variant_fmt;
 pub mod global_feature_flags_popup;
 pub mod login;
 pub mod mailbox;

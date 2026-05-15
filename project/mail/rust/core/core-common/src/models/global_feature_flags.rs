@@ -4,7 +4,7 @@ use mail_stash::orm::Model;
 use mail_stash::stash::{StashError, Tether, WriteTx};
 use smart_default::SmartDefault;
 
-use crate::datatypes::UnixTimestamp;
+use crate::datatypes::{FeatureFlagPayloadType, UnixTimestamp, Variant, VariantPayload};
 use crate::models::ModelExtension;
 
 #[derive(Debug, Clone, PartialEq, Model, SmartDefault)]
@@ -19,6 +19,18 @@ pub struct FeatureFlag {
 
     #[DbField]
     pub modify_time: UnixTimestamp,
+
+    #[DbField]
+    pub variant_name: Option<String>,
+
+    #[DbField]
+    pub variant_enabled: Option<bool>,
+
+    #[DbField]
+    pub variant_payload_type: Option<FeatureFlagPayloadType>,
+
+    #[DbField]
+    pub variant_payload_value: Option<String>,
 }
 
 impl FeatureFlag {
@@ -35,5 +47,23 @@ impl FeatureFlag {
         }
 
         Ok(())
+    }
+
+    #[must_use]
+    pub fn variant(&self) -> Option<Variant> {
+        let name = self.variant_name.clone()?;
+        let enabled = self.variant_enabled?;
+        let payload = match (self.variant_payload_type, &self.variant_payload_value) {
+            (Some(ty), Some(value)) => Some(VariantPayload {
+                ty,
+                value: value.clone(),
+            }),
+            _ => None,
+        };
+        Some(Variant {
+            name,
+            enabled,
+            payload,
+        })
     }
 }

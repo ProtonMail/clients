@@ -102,4 +102,3 @@ test-utils = [
   "mail-contacts-common/test-utils",
 ]
 events-v6 = []
-foundation_search_lab_harness = []

@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use std::time::Instant;
 
+use crate::continuation::HistoricFetchContinuation;
 use futures::stream::{self, StreamExt};
 use mail_api::MAX_PAGE_ELEMENT_COUNT;
 use mail_api::services::proton::{ProtonMail, common::MessageId, requests::GetMessagesOptions};
@@ -20,6 +21,8 @@ use mail_html_transformer::html_to_text_fast;
 use mail_search::MessageMetadata;
 use tracing::info;
 
+use crate::ephemeral_timing::{EphemeralTimingCollector, EphemeralTimingStats};
+
 #[derive(Debug, Clone)]
 pub struct EphemeralHistoricLoadResult {
     pub messages_fetched: usize,
@@ -27,6 +30,7 @@ pub struct EphemeralHistoricLoadResult {
     pub messages_skipped_missing_body: usize,
     pub oldest_message_time: Option<u64>,
     pub oldest_message_remote_id: Option<String>,
+    pub timing: EphemeralTimingStats,
 }
 
 pub async fn ephemeral_index_only_messages(
@@ -35,27 +39,38 @@ pub async fn ephemeral_index_only_messages(
     max_messages: usize,
     page_size: usize,
     concurrent_body_fetches: usize,
+    continuation: Option<HistoricFetchContinuation>,
 ) -> Result<EphemeralHistoricLoadResult, MailContextError> {
+    let mut timing = EphemeralTimingCollector::default();
     let remote_label_id = label_id.unwrap_or_else(LabelId::all_mail);
     let session = user_ctx.session();
     let effective_page_size = page_size.min(MAX_PAGE_ELEMENT_COUNT);
-    let has_fixture_source = mail_search_perf::fixture_bodies::is_initialized()
-        || mail_search_perf::fixture_bodies::is_real_bodies_initialized();
 
-    if !has_fixture_source {
-        info!(
-            "Ephemeral mode: no fixture source → will fetch + decrypt bodies from API (no SQLite writes, concurrency={})",
-            concurrent_body_fetches
-        );
-    }
+    info!(
+        "Ephemeral historic load: fetch + decrypt bodies from API (no SQLite writes, concurrency={})",
+        concurrent_body_fetches
+    );
 
+    let mut total_pages: usize = if continuation.is_some() { 1 } else { 0 };
+    let mut last_message_id = continuation.as_ref().map(|c| c.anchor_message_id.clone());
+    let mut last_message_time = continuation.as_ref().map(|c| c.anchor_time);
     let mut page_requests: u32 = 0;
     let mut total_fetched = 0usize;
     let mut total_indexed = 0usize;
     let mut total_skipped_missing_body = 0usize;
-    let mut last_message_id: Option<MessageId> = None;
-    let mut last_message_time: Option<u64> = None;
     let mut oldest_saved: Option<(u64, MessageId)> = None;
+
+    if let Some(c) = &continuation {
+        if c.anchor_message_id.as_str().is_empty() {
+            return Err(MailContextError::Other(anyhow::anyhow!(
+                "Historic fetch continuation: anchor_message_id must not be empty"
+            )));
+        }
+        info!(
+            "Resuming ephemeral historic fetch from anchor time={} id={}",
+            c.anchor_time, c.anchor_message_id
+        );
+    }
 
     loop {
         if total_fetched >= max_messages {
@@ -67,7 +82,7 @@ pub async fn ephemeral_index_only_messages(
 
         let mut opts = GetMessagesOptions {
             label_id: Some(vec![remote_label_id.clone()]),
-            page_size: if page_requests == 1 {
+            page_size: if total_pages == 0 {
                 effective_page_size as u64
             } else {
                 (effective_page_size as u64) + 1
@@ -78,9 +93,8 @@ pub async fn ephemeral_index_only_messages(
             ..Default::default()
         };
 
-        if page_requests > 1 {
-            let anchor_time =
-                last_message_time.expect("anchor_time should exist after first page");
+        if total_pages > 0 {
+            let anchor_time = last_message_time.expect("anchor_time should exist after first page");
             let anchor_id = last_message_id
                 .as_ref()
                 .expect("anchor_id should exist after first page")
@@ -98,7 +112,7 @@ pub async fn ephemeral_index_only_messages(
         }
 
         let mut messages = response.messages;
-        if page_requests > 1
+        if total_pages > 0
             && !messages.is_empty()
             && let Some(last_id) = &last_message_id
         {
@@ -125,136 +139,115 @@ pub async fn ephemeral_index_only_messages(
         let mut page_docs: Vec<(MessageId, String, MessageMetadata)> =
             Vec::with_capacity(page_fetched);
 
-        if has_fixture_source {
-            for message in &messages {
-                let remote_id = message.id.clone();
-                let body = match mail_search_perf::fixture_bodies::try_substitute_perf_body(
-                    remote_id.as_str(),
-                ) {
-                    Ok(Some(sub)) => match sub.mime {
-                        mail_search_perf::DeclaredFixtureMime::TextHtml => {
-                            html_to_text_fast(&sub.body)
-                        }
-                        mail_search_perf::DeclaredFixtureMime::TextPlain => sub.body,
-                    },
-                    Ok(None) => {
-                        total_skipped_missing_body =
-                            total_skipped_missing_body.saturating_add(1);
-                        continue;
+        let message_ids: Vec<_> = messages.iter().map(|m| m.id.clone()).collect();
+
+        let session_clone = session.clone();
+        let fetched_bodies: std::collections::HashMap<String, Result<_, _>> =
+            stream::iter(message_ids)
+                .map(|mid| {
+                    let s = session_clone.clone();
+                    let key = mid.to_string();
+                    async move {
+                        (
+                            key,
+                            ProtonMail::get_message(&s, mid).await.map(|r| r.message),
+                        )
                     }
-                    Err(e) => {
-                        tracing::debug!("Fixture/real-body miss for {}: {e}", remote_id);
-                        total_skipped_missing_body =
-                            total_skipped_missing_body.saturating_add(1);
-                        continue;
-                    }
-                };
-                push_doc(
-                    &mut page_docs,
-                    &mut oldest_saved,
-                    message,
-                    remote_id,
-                    body,
-                );
-            }
-        } else {
-            // API path: fetch each body, decrypt in-memory, zero SQLite writes
-            let message_ids: Vec<_> = messages.iter().map(|m| m.id.clone()).collect();
+                })
+                .buffer_unordered(concurrent_body_fetches)
+                .collect::<Vec<_>>()
+                .await
+                .into_iter()
+                .collect();
 
-            let session_clone = session.clone();
-            let fetched_bodies: std::collections::HashMap<String, Result<_, _>> =
-                stream::iter(message_ids)
-                    .map(|mid| {
-                        let s = session_clone.clone();
-                        let key = mid.to_string();
-                        async move {
-                            (
-                                key,
-                                ProtonMail::get_message(&s, mid).await.map(|r| r.message),
-                            )
-                        }
-                    })
-                    .buffer_unordered(concurrent_body_fetches)
-                    .collect::<Vec<_>>()
-                    .await
-                    .into_iter()
-                    .collect();
+        let pgp = proton_crypto::new_pgp_provider();
 
-            let pgp = proton_crypto::new_pgp_provider();
-
-            for meta_msg in &messages {
-                let Some(body_result) = fetched_bodies.get(meta_msg.id.as_str()) else {
-                    tracing::warn!("Body fetch result missing for {}", meta_msg.id);
+        for meta_msg in &messages {
+            let Some(body_result) = fetched_bodies.get(meta_msg.id.as_str()) else {
+                tracing::warn!("Body fetch result missing for {}", meta_msg.id);
+                total_skipped_missing_body += 1;
+                continue;
+            };
+            let api_msg = match body_result {
+                Ok(m) => m.clone(),
+                Err(e) => {
+                    tracing::warn!("Failed to fetch body for {}: {e}", meta_msg.id);
                     total_skipped_missing_body += 1;
                     continue;
-                };
-                let api_msg = match body_result {
-                    Ok(m) => m.clone(),
-                    Err(e) => {
-                        tracing::warn!("Failed to fetch body for {}: {e}", meta_msg.id);
-                        total_skipped_missing_body += 1;
-                        continue;
-                    }
-                };
+                }
+            };
 
-                let remote_id = meta_msg.id.clone();
-                let address_id = api_msg.metadata.address_id.clone();
+            let remote_id = meta_msg.id.clone();
+            let address_id = api_msg.metadata.address_id.clone();
 
-                let encrypted = EncryptedMessageBody {
-                    encrypted_body: api_msg.body.body,
-                    metadata: MessageBodyMetadata {
-                        remote_message_id: Some(remote_id.clone()),
-                        mime_type: api_msg.body.mime_type.into(),
-                        ..Default::default()
-                    },
-                };
+            let encrypted = EncryptedMessageBody {
+                encrypted_body: api_msg.body.body,
+                metadata: MessageBodyMetadata {
+                    remote_message_id: Some(remote_id.clone()),
+                    mime_type: api_msg.body.mime_type.into(),
+                    ..Default::default()
+                },
+            };
 
-                let tether = user_ctx.user_stash().connection();
-                let address_keys = user_ctx
-                    .crypto_key_service()
-                    .load_with_tether(user_ctx.user_context(), &tether)
-                    .address_keys(&pgp, &address_id)
-                    .await
-                    .map(AddressKeySelector::into_raw_keys)
-                    .map_err(|e| {
-                        MailContextError::Other(anyhow::anyhow!(
-                            "Key loading failed for {}: {e}",
-                            remote_id
-                        ))
-                    })?;
-                drop(tether);
+            let tether = user_ctx.user_stash().connection();
+            let address_keys = user_ctx
+                .crypto_key_service()
+                .load_with_tether(user_ctx.user_context(), &tether)
+                .address_keys(&pgp, &address_id)
+                .await
+                .map(AddressKeySelector::into_raw_keys)
+                .map_err(|e| {
+                    MailContextError::Other(anyhow::anyhow!(
+                        "Key loading failed for {}: {e}",
+                        remote_id
+                    ))
+                })?;
+            drop(tether);
 
-                let raw_decrypted = match encrypted.decrypt(&pgp, &address_keys) {
-                    Ok(raw) => raw,
-                    Err(e) => {
-                        tracing::warn!("Decrypt failed for {}: {e}", remote_id);
-                        total_skipped_missing_body += 1;
-                        continue;
-                    }
-                };
+            let decrypt_start = Instant::now();
+            let raw_decrypted = match encrypted.decrypt(&pgp, &address_keys) {
+                Ok(raw) => raw,
+                Err(e) => {
+                    timing.record_decrypt(decrypt_start.elapsed());
+                    tracing::warn!("Decrypt failed for {}: {e}", remote_id);
+                    total_skipped_missing_body += 1;
+                    continue;
+                }
+            };
 
-                let decrypted_body = match raw_decrypted.processed_body() {
-                    Ok(body) => body,
-                    Err(e) => {
-                        tracing::warn!("Body processing failed for {}: {e}", remote_id);
-                        total_skipped_missing_body += 1;
-                        continue;
-                    }
-                };
+            let decrypted_body = match raw_decrypted.processed_body() {
+                Ok(body) => body,
+                Err(e) => {
+                    timing.record_decrypt(decrypt_start.elapsed());
+                    tracing::warn!("Body processing failed for {}: {e}", remote_id);
+                    total_skipped_missing_body += 1;
+                    continue;
+                }
+            };
+            timing.record_decrypt(decrypt_start.elapsed());
 
-                let body_text = match &decrypted_body {
-                    DecryptedBody::Plain(text) if !looks_like_html(text) => text.clone(),
-                    _ => html_to_text_fast(decrypted_body.body()),
-                };
+            let body_text = match &decrypted_body {
+                DecryptedBody::Plain(text) => {
+                    let strip_start = Instant::now();
+                    let stripped = html_to_text_fast(text);
+                    timing.record_html_strip(strip_start.elapsed());
+                    stripped
+                }
+                DecryptedBody::Mime(_) => {
+                    let strip_start = Instant::now();
+                    let stripped = html_to_text_fast(decrypted_body.body());
+                    timing.record_html_strip(strip_start.elapsed());
+                    stripped
+                }
+            };
 
-                push_doc(
-                    &mut page_docs,
-                    &mut oldest_saved,
-                    meta_msg,
-                    remote_id,
-                    body_text,
-                );
-            }
+            push_doc(
+                &mut page_docs,
+                &mut oldest_saved,
+                meta_msg,
+                remote_id,
+                body_text,
+            );
         }
         let body_elapsed = body_start.elapsed();
 
@@ -271,16 +264,16 @@ pub async fn ephemeral_index_only_messages(
                 .map_err(|e| {
                     MailContextError::Other(anyhow::anyhow!("Direct batch index failed: {e}"))
                 })?;
+            timing.record_index_only(index_start.elapsed(), refs.len());
             total_indexed += refs.len();
         }
         let index_elapsed = index_start.elapsed();
 
-        // Pagination anchor must follow the API scroll order (desc by time → last row is oldest
-        // on the page), even when every message on the page was skipped (no body / fixture miss).
         if let Some(anchor) = messages.last() {
             last_message_id = Some(anchor.id.clone());
             last_message_time = Some(anchor.time);
         }
+        total_pages = total_pages.saturating_add(1);
 
         info!(
             "Ephemeral page {}: fetched={} indexed={} skipped={} | metadata={:.1}ms bodies={:.1}ms index={:.1}ms total={:.1}ms",
@@ -314,12 +307,8 @@ pub async fn ephemeral_index_only_messages(
         messages_skipped_missing_body: total_skipped_missing_body,
         oldest_message_time,
         oldest_message_remote_id,
+        timing: timing.snapshot(),
     })
-}
-
-fn looks_like_html(s: &str) -> bool {
-    let trimmed = s.trim_start();
-    trimmed.starts_with('<') && (trimmed.starts_with("<!") || trimmed.starts_with("<html"))
 }
 
 fn push_doc(

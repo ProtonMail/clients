@@ -4,7 +4,10 @@ use mail_stash::stash::{StashError, Tether, WriteTx};
 use mail_stash::utils::{IterMapToSql, placeholders_n};
 use mail_stash::{UserDb, params};
 
-use crate::datatypes::{FlagMutability, UnixTimestamp, UserFeatureFlagSource};
+use crate::datatypes::{
+    FeatureFlagPayloadType, FlagMutability, UnixTimestamp, UserFeatureFlagSource, Variant,
+    VariantPayload,
+};
 
 #[derive(Debug, Clone, PartialEq, Model)]
 #[TableName("user_feature_flags")]
@@ -30,6 +33,18 @@ pub struct UserFeatureFlag {
 
     #[DbField]
     pub modify_time: UnixTimestamp,
+
+    #[DbField]
+    pub variant_name: Option<String>,
+
+    #[DbField]
+    pub variant_enabled: Option<bool>,
+
+    #[DbField]
+    pub variant_payload_type: Option<FeatureFlagPayloadType>,
+
+    #[DbField]
+    pub variant_payload_value: Option<String>,
 }
 
 impl UserFeatureFlag {
@@ -43,6 +58,10 @@ impl UserFeatureFlag {
             overridden_to: None,
             overridden_at: None,
             modify_time,
+            variant_name: None,
+            variant_enabled: None,
+            variant_payload_type: None,
+            variant_payload_value: None,
         }
     }
 
@@ -61,6 +80,10 @@ impl UserFeatureFlag {
             overridden_to: None,
             overridden_at: None,
             modify_time,
+            variant_name: None,
+            variant_enabled: None,
+            variant_payload_type: None,
+            variant_payload_value: None,
         }
     }
 
@@ -106,5 +129,23 @@ impl UserFeatureFlag {
     #[must_use]
     pub fn is_enabled(&self) -> bool {
         self.overridden_to.unwrap_or(self.enabled)
+    }
+
+    #[must_use]
+    pub fn variant(&self) -> Option<Variant> {
+        let name = self.variant_name.clone()?;
+        let enabled = self.variant_enabled?;
+        let payload = match (self.variant_payload_type, &self.variant_payload_value) {
+            (Some(ty), Some(value)) => Some(VariantPayload {
+                ty,
+                value: value.clone(),
+            }),
+            _ => None,
+        };
+        Some(Variant {
+            name,
+            enabled,
+            payload,
+        })
     }
 }

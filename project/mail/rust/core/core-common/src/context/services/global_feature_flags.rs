@@ -1,10 +1,12 @@
 use crate::app_events::{OnEnterForegroundEvent, OnUserContextMapChanged};
-use crate::datatypes::UnixTimestamp;
+use crate::datatypes::{UnixTimestamp, Variant};
 use crate::models::{FeatureFlag, ModelExtension};
 use crate::services::{DeviceInfoService, Service};
 use crate::{Context, CoreContextError, CoreContextResult, Origin};
 use anyhow::{Context as _, Result};
-use mail_core_api::services::proton::{FeatureFlagsApi as _, GetUnleashFeaturesContext};
+use mail_core_api::services::proton::{
+    FeatureFlagsApi as _, GetUnleashFeaturesContext, UnleashToggleVariant,
+};
 use mail_core_api::session::Session;
 use mail_stash::stash::WatcherHandle;
 use mail_stash::watcher::TableWatcher;
@@ -68,8 +70,12 @@ impl FeatureFlagsService {
                     flag.name.clone(),
                     FeatureFlag {
                         // If the flag is not fetched from API but exists in the database,
-                        // we mark it as disabled.
+                        // we mark it as disabled and clear any stale variant data.
                         enabled: false,
+                        variant_name: None,
+                        variant_enabled: None,
+                        variant_payload_type: None,
+                        variant_payload_value: None,
                         ..flag
                     },
                 )
@@ -85,11 +91,27 @@ impl FeatureFlagsService {
                     name: toggle.name,
                     enabled: false,
                     modify_time,
+                    variant_name: None,
+                    variant_enabled: None,
+                    variant_payload_type: None,
+                    variant_payload_value: None,
                 });
 
-            // Currently we are ignoring variants,
-            // and Unleash API says that feature is always enabled
-            flag.enabled = true;
+            let UnleashToggleVariant {
+                name,
+                enabled,
+                feature_enabled,
+                payload,
+            } = toggle.variant;
+            let (payload_type, payload_value) = match payload {
+                Some(p) => (Some(p.ty.into()), Some(p.value)),
+                None => (None, None),
+            };
+            flag.enabled = feature_enabled;
+            flag.variant_name = Some(name);
+            flag.variant_enabled = Some(enabled);
+            flag.variant_payload_type = payload_type;
+            flag.variant_payload_value = payload_value;
             flag.modify_time = modify_time;
         }
 
@@ -111,6 +133,15 @@ impl FeatureFlagsService {
         Ok(feature_flag.map(|flag| flag.enabled))
     }
 
+    pub async fn get_feature_flag_variant(&self, key: &str) -> CoreContextResult<Option<Variant>> {
+        let ctx = self.ctx.upgrade().context("Could not upgrade context")?;
+        let feature_flag = {
+            let tether = ctx.account_stash().connection();
+            FeatureFlag::by_name(key, &tether).await?
+        };
+        Ok(feature_flag.and_then(|flag| flag.variant()))
+    }
+
     #[cfg(feature = "test-utils")]
     pub async fn test_override(&self, key: &str, value: bool) -> CoreContextResult<()> {
         use mail_stash::orm::Model;
@@ -123,6 +154,10 @@ impl FeatureFlagsService {
                 name: key.to_owned(),
                 enabled: false,
                 modify_time: UnixTimestamp::now(),
+                variant_name: None,
+                variant_enabled: None,
+                variant_payload_type: None,
+                variant_payload_value: None,
             });
         flag.enabled = value;
         tether.write_tx(async |tx| flag.save(tx).await).await?;

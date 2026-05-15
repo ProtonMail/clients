@@ -1,6 +1,5 @@
 use derive_more::Display;
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Display)]
@@ -8,7 +7,6 @@ pub struct LoginFailedErrorDetails {
     pub login_failed_reason: LoginFailedReason,
 }
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Display)]
 #[repr(C)]

@@ -2,11 +2,9 @@ use std::borrow::Cow;
 
 use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, UnauthReq};
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LtAuthGetPasswordPoliciesReq;
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
@@ -14,7 +12,6 @@ pub struct LtAuthGetPasswordPoliciesRes {
     pub password_policies: Vec<LtAuthPasswordPolicyRes>,
 }
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
@@ -44,7 +41,6 @@ pub struct LtAuthPasswordPolicyRes {
 }
 
 #[repr(i32)]
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
 #[cfg_attr(feature = "serde", serde(into = "i32", try_from = "i32"))]

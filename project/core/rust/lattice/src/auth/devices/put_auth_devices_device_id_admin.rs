@@ -5,7 +5,6 @@ use crate::{
 };
 
 /// `PUT /auth/v4/devices/{deviceId}/admin` — request org-admin help (no request body; `LtEmptyBody`).
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LtAuthPutDevicesDeviceIDAdminReq {

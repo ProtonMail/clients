@@ -64,7 +64,6 @@ use crate::core::keys::LtCoreSensitiveAddressKeys;
 /// Async user initialization flag
 #[repr(i32)]
 #[derive(IntoPrimitive, TryFromPrimitive)]
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", serde(into = "i32", try_from = "i32"))]
@@ -74,7 +73,6 @@ pub enum LtCoreAsyncUserInitialization {
 }
 
 /// Represents a signed key with its data and signature.
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
@@ -96,7 +94,6 @@ impl From<proton_crypto_account::keys::LocalSignedKeyList> for LtCoreSignedKeyLi
 }
 
 /// Represents an address key input for key setup.
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
@@ -132,7 +129,6 @@ pub struct LtCoreAddressKeyInput {
 }
 
 /// The address of a user (copied from `proton-api-core`)
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
@@ -178,7 +174,6 @@ pub struct LtCoreAddress {
 
 /// Address-level bit flags returned by the API.
 #[derive(From, Into)]
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
 pub struct LtCoreAddressFlags(i32);
@@ -196,7 +191,6 @@ bitflags::bitflags! {
         const UsernameReclaimed = 1 << 7;
     }
 }
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
@@ -221,7 +215,6 @@ pub struct LtCoreAddressSignedKeyList {
 
 /// Represents the status of an address.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[derive(
     Clone,
     Copy,
@@ -247,7 +240,6 @@ pub enum LtCoreAddressStatus {
 
 /// This enum defines different categories of addresses with assigned integer values.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[derive(
     Clone,
     Copy,
@@ -277,7 +269,6 @@ pub enum LtCoreAddressType {
     External = 5,
 }
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
@@ -288,7 +279,6 @@ pub struct LtCoreU2FKey {
     pub compromised: Option<i32>,
 }
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
@@ -304,7 +294,6 @@ pub struct LtCoreEvents {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct LtCoreEventItem<Id> {
     #[cfg_attr(feature = "serde", serde(rename = "ID"))]
@@ -318,7 +307,6 @@ pub struct LtCoreEventItem<Id> {
 #[derive(Debug, Clone, Copy)]
 #[derive(PartialEq, Eq, Hash)]
 #[derive(IntoPrimitive, TryFromPrimitive)]
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(into = "u8", try_from = "u8"))]
 pub enum LtCoreEventAction {

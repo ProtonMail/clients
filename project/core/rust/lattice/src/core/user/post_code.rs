@@ -2,7 +2,6 @@ use std::borrow::Cow;
 
 use crate::{LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method, UnauthReq};
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -16,7 +15,6 @@ pub struct LtCorePostCodeReq {
     pub platform: Option<String>,
 }
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "kebab-case", tag = "Type"))]
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -26,7 +24,6 @@ pub enum LtCoreCodeMethod {
     Sms(LtCoreCodeSmsMethod),
 }
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -34,7 +31,6 @@ pub struct LtCoreCodeEmailMethod {
     pub destination: LtCoreCodeDestinationEmail,
 }
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -42,7 +38,6 @@ pub struct LtCoreCodeSmsMethod {
     pub destination: LtCoreCodeDestinationSms,
 }
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -52,7 +47,6 @@ pub struct LtCoreCodeDestinationEmail {
     pub address: String,
 }
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -61,7 +55,6 @@ pub struct LtCoreCodeDestinationSms {
     pub phone: String,
 }
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
 #[derive(Debug, Clone, PartialEq, Eq)]

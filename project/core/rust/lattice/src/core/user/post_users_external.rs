@@ -23,7 +23,6 @@ pub struct LtCorePostUsersExternalReq {
     pub referrer: Option<String>,
 }
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]

@@ -14,7 +14,6 @@ pub struct LtCoreGetSettings2faRegisterRes {
     pub registered_keys: Vec<LtAuthFidoKey>,
 }
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LtCoreGetSettings2faRegisterReq;

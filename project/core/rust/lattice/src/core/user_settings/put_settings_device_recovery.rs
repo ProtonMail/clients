@@ -4,7 +4,6 @@ use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, M
 
 use super::LtCoreUserSettings;
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]

@@ -13,7 +13,6 @@ use crate::{Sensitive, core::keys::LtCoreSensitiveUserKeys};
 /// The type of account to create.
 #[repr(u8)]
 #[derive(IntoPrimitive, TryFromPrimitive)]
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", serde(into = "u8", try_from = "u8"))]
@@ -25,7 +24,6 @@ pub enum LtCoreCreateUserType {
 }
 
 /// Represents the SRP verifier data for authentication.
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
@@ -47,7 +45,6 @@ pub struct LtCoreSrpVerifier {
 /// Indicates whether the username should be parsed as a full email address.
 #[repr(u8)]
 #[derive(IntoPrimitive, TryFromPrimitive)]
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 #[cfg_attr(feature = "serde", serde(into = "u8", try_from = "u8"))]
@@ -60,8 +57,6 @@ pub enum LtCoreParseDomain {
 }
 
 /// Definition: bundles/AccountInternalBundle/src/Application/User/GetUserInfoQueryHandler.php
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
-#[cfg_attr(feature = "facet", facet(namespace = "CoreCruxTypes"))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
@@ -99,13 +94,11 @@ pub struct LtCoreUser {
     pub services: LtCoreProductGroup,
     pub mnemonic_status: LtCoreMnemonicStatus,
     pub role: LtCoreMemberRole,
-    #[cfg_attr(feature = "facet", facet(rename = "is_private"))]
     #[cfg_attr(feature = "serde", serde(with = "crate::helpers::bool_int"))]
     pub private: bool,
     pub delinquent: LtCoreDelinquentState,
     #[cfg_attr(feature = "serde", serde(with = "crate::helpers::bool_int"))]
     pub billed: bool,
-    #[cfg_attr(feature = "facet", facet(namespace = "CoreCruxTypes"))]
     pub keys: LtCoreSensitiveUserKeys,
     #[cfg_attr(feature = "serde", serde(with = "crate::helpers::bool_int"))]
     pub to_migrate: bool,
@@ -116,8 +109,6 @@ pub struct LtCoreUser {
 }
 
 /// Definition: bundles/AccountLegacyBundle/src/Model/UserUsage.php
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
-#[cfg_attr(feature = "facet", facet(namespace = "CoreCruxTypes"))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
@@ -131,8 +122,6 @@ pub struct LtCoreProductUsedSpace {
 }
 
 /// Definition: apps/Account/app/Dto/AccountRecoveryAttempt.php
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
-#[cfg_attr(feature = "facet", facet(namespace = "CoreCruxTypes"))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
@@ -151,8 +140,6 @@ pub struct LtCoreAccountRecoveryAttempt {
 /// Definition: apps/Account/app/Enum/AccountRecoveryAttemptState.php
 #[repr(i32)]
 #[derive(IntoPrimitive, TryFromPrimitive)]
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
-#[cfg_attr(feature = "facet", facet(namespace = "CoreCruxTypes"))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", serde(into = "i32", try_from = "i32"))]
@@ -166,8 +153,6 @@ pub enum LtCoreAccountRecoveryAttemptState {
 /// Definition: apps/Account/app/Enum/AccountRecoveryAttemptCancellationReason.php
 #[repr(u8)]
 #[derive(IntoPrimitive, TryFromPrimitive)]
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
-#[cfg_attr(feature = "facet", facet(namespace = "CoreCruxTypes"))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 // Note: using u8 here to match the repr and the TryFrom implementation
@@ -178,8 +163,6 @@ pub enum LtCoreAccountRecoveryAttemptCancellationReason {
 }
 
 /// Definition: bundles/AccountBundle/src/User/UserFlags.php
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
-#[cfg_attr(feature = "facet", facet(namespace = "CoreCruxTypes"))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
@@ -205,8 +188,6 @@ pub struct LtCoreUserFlags {
 
 /// Definition: bundles/CoreBundle/src/Enum/ProductGroup.php
 #[derive(From, Into)]
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
-#[cfg_attr(feature = "facet", facet(namespace = "CoreCruxTypes"))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
@@ -229,8 +210,6 @@ bitflags::bitflags! {
 
 /// Definition: apps/Account/app/Enum/UserLockedFlag.php
 #[derive(From, Into)]
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
-#[cfg_attr(feature = "facet", facet(namespace = "CoreCruxTypes"))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
@@ -249,8 +228,6 @@ bitflags::bitflags! {
 /// Definition: bundles/AccountBundle/src/Enum/MnemonicStatus.php
 #[repr(i32)]
 #[derive(IntoPrimitive, TryFromPrimitive)]
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
-#[cfg_attr(feature = "facet", facet(namespace = "CoreCruxTypes"))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
 #[cfg_attr(feature = "serde", serde(into = "i32", try_from = "i32"))]
@@ -274,8 +251,6 @@ pub enum LtCoreMnemonicStatus {
 /// Definition: bundles/AccountBundle/src/User/UserType.php
 #[repr(i32)]
 #[derive(IntoPrimitive, TryFromPrimitive)]
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
-#[cfg_attr(feature = "facet", facet(namespace = "CoreCruxTypes"))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
 #[cfg_attr(feature = "serde", serde(into = "i32", try_from = "i32"))]
@@ -292,8 +267,6 @@ pub enum LtCoreUserType {
 /// Definition: bundles/AccountBundle/src/Organization/MemberRole.php
 #[repr(i32)]
 #[derive(IntoPrimitive, TryFromPrimitive)]
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
-#[cfg_attr(feature = "facet", facet(namespace = "CoreCruxTypes"))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
 #[cfg_attr(feature = "serde", serde(into = "i32", try_from = "i32"))]
@@ -306,8 +279,6 @@ pub enum LtCoreMemberRole {
 /// Definition: bundles/NewPaymentsBundle/src/ValueObject/DelinquentState.php
 #[repr(i32)]
 #[derive(IntoPrimitive, TryFromPrimitive)]
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
-#[cfg_attr(feature = "facet", facet(namespace = "CoreCruxTypes"))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
 #[cfg_attr(feature = "serde", serde(into = "i32", try_from = "i32"))]

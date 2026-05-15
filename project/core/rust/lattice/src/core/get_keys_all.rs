@@ -4,7 +4,6 @@ use proton_crypto_account::keys::APIPublicAddressKeys;
 
 use crate::{AuthReq, LatticeError, LtContract, LtRequestQueryParams, LtSlimAPIJSON, Sensitive};
 
-#[cfg_attr(feature = "facet", derive(facet::Facet))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LtCoreGetKeysAllReq {

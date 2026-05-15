@@ -5,27 +5,28 @@
 
 [features]
   core = ["auth", "dep:passkey", "dep:bitflags", "dep:proton-crypto-account", "dep:num_enum"]
-  auth = ["dep:passkey", "dep:bitflags"]
+  auth = ["dep:passkey", "dep:bitflags", "dep:num_enum"]
   default = []
   quark = ["dep:regex"]
-  facet = ["dep:facet"]
-  serde = ["dep:serde", "dep:serde_json", "bitflags?/serde"]
+  serde = ["dep:serde", "dep:serde_json", "bitflags?/serde", "core-sensitive-data/serde"]
   muon = ["dep:muon"]
   observability = ["serde"]
-  full = ["core", "auth", "muon", "serde", "facet", "observability", "quark", "serde_qs"]
+  full = ["core", "auth", "muon", "serde", "observability", "quark"]
   serde_qs = ["dep:serde_qs", "dep:url", "serde"]
   mail-muon-v1 = ["dep:mail-muon"]
 
 [dependencies]
+  core-sensitive-data.workspace = true
   serde = { optional = true, version = "^1.0.228", features = ["derive"] }
   serde_json = { optional = true, version = "1.0.149" }
   serde_qs = { workspace = true, optional = true }
-  facet = { workspace = true, optional = true }
   zeroize = { version = "1.8.2" }
   derive_more = { workspace = true }
   passkey = { optional = true, version = "0.4" }
   bitflags = { optional = true, version = "2" }
-  proton-crypto-account = { optional = true, workspace = true, features = ["facet"] }
+  proton-crypto-account = { optional = true, workspace = true, default-features = false, features = [
+    "rustpgp",
+  ] }
   num_enum = { workspace = true, optional = true }
   muon = { workspace = true, optional = true }
   regex = { optional = true, version = "1.10" }
@@ -41,7 +42,7 @@
   lattice = { path = ".", features = ["full"] }
   totp-rs = { version = "5.7" }
   proton-crypto = { workspace = true }
-  proton-crypto-account = { workspace = true, features = ["facet", "rustpgp"] }
+  proton-crypto-account = { workspace = true, default-features = false, features = ["rustpgp"] }
 
   # SSO test dependencies (TLS via rustls; no default-tls/charset/http2/system-proxy)
   reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }

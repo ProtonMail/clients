@@ -27,13 +27,11 @@ if [ ! -d "$IOS_REPO_ROOT/ProtonPackages/proton_app_uniffi" ]; then
     exit 1
 fi
 
-# `rust-build/build_ios_framework_uniffi.sh` reads CARGO_FEATURES (default there is only
-# `stdout_logging`). For local iOS SDK builds, turn on foundation search by default:
-#   - foundation_search: local body indexing + search UI hooks (e.g. scroller highlighting)
-#   - foundation_search_index_timing: index timing instrumentation
-#   - foundation_search_lab_harness: historic load orchestration + perf/fixture APIs (UniFFI)
-# Override for a minimal build: CARGO_FEATURES=stdout_logging ./mail/mail-uniffi/ios/build-local.sh
-: "${CARGO_FEATURES:=stdout_logging,foundation_search,foundation_search_index_timing,foundation_search_lab_harness}"
+# `rust-build/build_ios_framework_uniffi.sh` reads CARGO_FEATURES (its fallback is only
+# `stdout_logging`). `mail-uniffi` crate defaults already enable `foundation_search`; this script only adds stdout_logging unless
+# you override CARGO_FEATURES. Index timing, lab harness, and SQLite historic are not
+# separate features on `mail-uniffi` yet (see follow-up commits); do not pass unknown names.
+: "${CARGO_FEATURES:=stdout_logging}"
 export CARGO_FEATURES
 
 TMP_DIR="/tmp/$(uuidgen)"

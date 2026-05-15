@@ -48,30 +48,6 @@ impl MailUserSession {
         Arc::new(Self { ctx })
     }
 
-    #[cfg(feature = "foundation_search_lab_harness")]
-    fn initialize_real_bodies_api_from_path_impl(
-        config_path: &str,
-    ) -> Result<(), UserSessionError> {
-        use std::path::Path;
-
-        let file = mail_search_perf::fixture_bodies::load_remote_fixture_config_from_path(
-            Path::new(config_path),
-        )
-        .map_err(|e| {
-            tracing::error!("Failed to load remote fixture config: {}", e);
-            UserSessionError::Other(ProtonError::Unexpected(UnexpectedError::Network))
-        })?;
-        let config = file.chunked_bodies.ok_or_else(|| {
-            tracing::error!("Fixture config has no chunked_bodies section");
-            UserSessionError::Other(ProtonError::Unexpected(UnexpectedError::Network))
-        })?;
-
-        mail_search_perf::fixture_bodies::initialize_real_bodies_api(config).map_err(|e| {
-            tracing::error!("Failed to initialize real bodies from HTTP: {}", e);
-            UserSessionError::Other(ProtonError::Unexpected(UnexpectedError::Network))
-        })
-    }
-
     pub(crate) fn ptr(&self) -> MailUserContextPtr {
         self.ctx.clone()
     }
@@ -118,89 +94,20 @@ impl MailUserSession {
     }
 }
 
-/// Historic load (optional `mail-historic-search-load` dependency).
-#[cfg(feature = "foundation_search_historic_load")]
-#[uniffi_export]
-impl MailUserSession {
-    /// Trigger historic load: fetch messages from server and queue for indexing/prefetch
-    ///
-    /// This is a debug/testing function that fetches messages from the server and queues them
-    /// for indexing (if they have bodies) or prefetch (if they need bodies).
-    ///
-    /// # Arguments
-    /// * `label_id` - Optional label ID string (defaults to All Mail if None)
-    /// * `max_messages` - Optional maximum number of messages to process
-    /// * `page_size` - Optional page size for fetching (default: 100)
-    /// * `continuation` - Optional anchor from a previous result’s oldest message; fetches the next **older** messages instead of restarting from newest
-    ///
-    /// # Returns
-    /// A `HistoricLoadResult` with counts of fetched, indexed, and prefetched messages
-    pub async fn historic_load(
-        &self,
-        label_id: Option<String>,
-        max_messages: Option<u64>,
-        page_size: Option<u64>,
-        continuation: Option<crate::mail::datatypes::HistoricLoadContinuation>,
-    ) -> Result<crate::mail::datatypes::HistoricLoadResult, UserSessionError> {
-        use mail_api::services::proton::common::MessageId;
-        use mail_core_api::services::proton::LabelId as RealLabelId;
-        use mail_historic_search_load::{HistoricFetchContinuation, historic_load_messages};
-
-        let ctx = self.ctx()?;
-
-        let label_id = label_id.map(RealLabelId::from);
-        let max_messages = max_messages.map(|n| usize::try_from(n).unwrap_or(usize::MAX));
-        let page_size = page_size.map(|n| usize::try_from(n).unwrap_or(usize::MAX));
-
-        let continuation_inner = match continuation {
-            None => None,
-            Some(c) => {
-                let id = c.anchor_message_id.trim();
-                if id.is_empty() {
-                    return Err(UserSessionError::Other(ProtonError::Unexpected(
-                        UnexpectedError::InvalidArgument,
-                    )));
-                }
-                Some(HistoricFetchContinuation {
-                    anchor_time: c.anchor_time,
-                    anchor_message_id: MessageId::from(id.to_owned()),
-                })
-            }
-        };
-
-        uniffi_async(async move {
-            let result =
-                historic_load_messages(&ctx, label_id, max_messages, page_size, continuation_inner)
-                    .await
-                    .map_err(RealProtonMailError::from)?;
-
-            Result::<_, RealProtonMailError>::Ok(crate::mail::datatypes::HistoricLoadResult {
-                messages_fetched: result.messages_fetched as u64,
-                messages_indexed: result.messages_indexed as u64,
-                messages_prefetched: result.messages_prefetched as u64,
-                oldest_saved_message_time: result.oldest_saved_message_time,
-                oldest_saved_message_remote_id: result.oldest_saved_message_remote_id,
-            })
-        })
-        .await
-        .map_err(UserSessionError::from)
-    }
-}
-
-/// Ephemeral historic load: fetch + decrypt + index directly — zero SQLite writes.
-#[cfg(feature = "foundation_search_lab_harness")]
+/// Ephemeral historic load (`mail-historic-ephemeral-load`).
+#[cfg(feature = "foundation_search")]
 #[uniffi_export]
 impl MailUserSession {
     /// Ephemeral historic load: skip all SQLite writes.
     ///
-    /// Fetches metadata pages from the API, obtains bodies (from fixtures if loaded, otherwise
-    /// fetches + decrypts from the API in-memory), and indexes directly into Foundation Search.
+    /// Fetches metadata pages from the API, fetches + decrypts bodies from the Proton API,
+    /// and indexes directly into Foundation Search.
     ///
     /// # Arguments
     /// * `label_id` - Optional label ID string (defaults to All Mail if None)
     /// * `max_messages` - Maximum number of messages to process
     /// * `page_size` - Page size for metadata fetching (capped to API max of 200)
-    /// * `concurrent_body_fetches` - Max concurrent API body fetches (only used when no fixture source)
+    /// * `concurrent_body_fetches` - Max concurrent API body fetches
     /// * `continuation` - Optional anchor from a previous result’s oldest message; fetches the next older messages instead of restarting from newest
     pub async fn historic_load_ephemeral(
         &self,
@@ -212,7 +119,9 @@ impl MailUserSession {
     ) -> Result<crate::mail::datatypes::EphemeralHistoricLoadResult, UserSessionError> {
         use mail_api::services::proton::common::MessageId;
         use mail_core_api::services::proton::LabelId as RealLabelId;
-        use mail_historic_search_load::{HistoricFetchContinuation, ephemeral_index_only_messages};
+        use mail_historic_ephemeral_load::{
+            HistoricFetchContinuation, ephemeral_index_only_messages,
+        };
 
         let ctx = self.ctx()?;
         let label_id = label_id.map(RealLabelId::from);
@@ -261,385 +170,21 @@ impl MailUserSession {
         .map_err(UserSessionError::from)
     }
 
-    /// Search the Foundation Search index and return raw hits with server-fetched metadata.
-    ///
-    /// For each index hit, fetches the message from the Proton API to populate
-    /// subject/sender/time. This works even in ephemeral mode where messages
-    /// are not stored locally.
-    pub async fn search_index_raw(
-        &self,
-        query: String,
-    ) -> Result<crate::mail::datatypes::RawSearchResult, UserSessionError> {
-        use mail_api::services::proton::{ProtonMail, common::MessageId};
-
-        let ctx = self.ctx()?;
-        let q = query.clone();
-
-        uniffi_async(async move {
-            let start = std::time::Instant::now();
-            let found = ctx
-                .search_service()
-                .search_local_with_metadata(&q)
-                .await
-                .map_err(|e| RealProtonMailError::from(e.into_inner()))?;
-            let search_elapsed_ms = start.elapsed().as_millis() as u64;
-
-            let session = ctx.session().clone();
-            let mut hits = Vec::with_capacity(found.len());
-
-            for entry in &found {
-                let remote_id = entry.identifier().to_string();
-                let score = f64::from(entry.score());
-                let mid = MessageId::from(remote_id.clone());
-
-                match ProtonMail::get_message(&session, mid).await {
-                    Ok(resp) => {
-                        let meta = &resp.message.metadata;
-                        hits.push(crate::mail::datatypes::RawSearchHit {
-                            remote_id,
-                            score,
-                            subject: Some(meta.subject.clone()),
-                            sender: Some(
-                                meta.sender.address.as_clear_text_str().to_owned(),
-                            ),
-                            time: Some(meta.time),
-                        });
-                    }
-                    Err(e) => {
-                        tracing::warn!("Failed to fetch message {}: {e}", remote_id);
-                        hits.push(crate::mail::datatypes::RawSearchHit {
-                            remote_id,
-                            score,
-                            subject: None,
-                            sender: None,
-                            time: None,
-                        });
-                    }
-                }
-            }
-
-            let total_elapsed_ms = start.elapsed().as_millis() as u64;
-            tracing::info!(
-                "Raw search: {} hits, index={search_elapsed_ms}ms, total={total_elapsed_ms}ms (including {} API fetches)",
-                hits.len(),
-                found.len(),
-            );
-
-            Result::<_, RealProtonMailError>::Ok(crate::mail::datatypes::RawSearchResult {
-                hits,
-                query,
-                elapsed_ms: total_elapsed_ms,
-            })
-        })
-        .await
-        .map_err(UserSessionError::from)
-    }
-}
-
-/// Real email bodies from S3 chunked bucket (replaces old fixture/Lambda approach)
-#[cfg(feature = "foundation_search_lab_harness")]
-#[uniffi_export]
-impl MailUserSession {
-    /// Start downloading real email bodies from the chunked HTTPS bucket.
-    ///
-    /// Reads `FIXTURE_REMOTE_CONFIG_PATH` (UTF-8 JSON with a `chunked_bodies` block — see
-    /// `fixture_remote.config.example.json`), then downloads `_index.json` and chunk files.
-    /// Bodies stay encrypted in memory; decryption runs lazily during prefetch.
-    ///
-    /// On Android, prefer [`Self::initialize_real_bodies_api_from_path`]: there is no shell
-    /// environment for `FIXTURE_REMOTE_CONFIG_PATH`.
-    pub fn initialize_real_bodies_api(&self) -> Result<(), UserSessionError> {
-        use crate::errors::ProtonError;
-        use crate::errors::unexpected::UnexpectedError;
-
-        let path = std::env::var("FIXTURE_REMOTE_CONFIG_PATH").map_err(|_| {
-            tracing::error!("FIXTURE_REMOTE_CONFIG_PATH is not set");
-            UserSessionError::Other(ProtonError::Unexpected(UnexpectedError::Network))
-        })?;
-        Self::initialize_real_bodies_api_from_path_impl(&path)
-    }
-
-    /// Same as [`Self::initialize_real_bodies_api`], but reads the UTF-8 JSON from `config_path`
-    /// (absolute path). Hosts: same shape as `fixture_remote.config.example.json` (`batch_api`
-    /// optional, `chunked_bodies` required for S3/HTTPS bodies).
-    pub fn initialize_real_bodies_api_from_path(
-        &self,
-        config_path: &str,
-    ) -> Result<(), UserSessionError> {
-        Self::initialize_real_bodies_api_from_path_impl(config_path)
-    }
-
-    /// Check if the real-bodies store has been initialized (loader started)
-    #[must_use]
-    pub fn is_real_bodies_initialized(&self) -> bool {
-        mail_search_perf::fixture_bodies::is_real_bodies_initialized()
-    }
-
-    /// Check if all chunks have finished downloading
-    #[must_use]
-    pub fn is_real_bodies_loading_complete(&self) -> bool {
-        mail_search_perf::fixture_bodies::is_real_bodies_loading_complete()
-    }
-
-    /// Get the number of real bodies currently loaded (encrypted, in memory)
-    #[must_use]
-    pub fn real_bodies_loaded(&self) -> u64 {
-        mail_search_perf::fixture_bodies::real_bodies_loaded() as u64
-    }
-
-    /// Reset the fixture body index to start from the beginning.
-    /// Call before historic_load to ensure bodies are served from the start.
-    pub fn reset_fixture_bodies(&self) {
-        mail_search_perf::fixture_bodies::reset_index();
-    }
-
-    /// Tear down the in-memory chunked real-bodies store (AWS mock / S3 fixture path).
-    ///
-    /// After this, historic load body prefetch uses the live Proton API instead of substituted
-    /// bodies from the bundled remote fixture config.
-    pub fn shutdown_real_bodies_api(&self) {
-        mail_search_perf::fixture_bodies::shutdown_real_bodies_api();
-    }
-}
-
-/// Database inspection methods for debugging
-#[cfg(feature = "foundation_search")]
-#[uniffi_export]
-impl MailUserSession {
-    /// Get search index blob statistics
-    ///
-    /// Returns a list of blob names and their sizes in bytes
-    pub fn get_search_index_blobs(&self) -> Result<Vec<SearchIndexBlob>, UserSessionError> {
-        let ctx = self.ctx()?;
-        let stash = ctx.user_stash().clone();
-
-        async_runtime().block_on(async {
-            let tether = stash.connection();
-
-            let result = tether
-                .sync_query(|conn| {
-                    let mut stmt = conn.prepare(
-                        "SELECT blob_name, length(blob_data) as size FROM search_index_blobs ORDER BY size DESC",
-                    )?;
-                    let rows = stmt.query_map([], |row| {
-                        Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?))
-                    })?;
-                    let mut results = vec![];
-                    for row in rows {
-                        if let Ok((name, size)) = row {
-                            results.push(SearchIndexBlob {
-                                name,
-                                size: size.cast_unsigned(),
-                            });
-                        }
-                    }
-                    Ok(results)
-                })
-                .await;
-
-            match result {
-                Ok(blobs) => Ok(blobs),
-                Err(e) => {
-                    tracing::error!("Failed to query search index blobs: {:?}", e);
-                    Ok(vec![])
-                }
-            }
-        })
-    }
-
-    /// Get sample message bodies from the database
-    ///
-    /// Returns the first N message bodies with their IDs and a preview
-    pub fn get_message_body_samples(
-        &self,
-        limit: u32,
-    ) -> Result<Vec<MessageBodySample>, UserSessionError> {
-        let ctx = self.ctx()?;
-        let stash = ctx.user_stash().clone();
-
-        async_runtime().block_on(async {
-            let tether = stash.connection();
-
-            let result = tether
-                .sync_query(move |conn| {
-                    // body is BLOB, so we read it as Vec<u8> and convert to string
-                    let mut stmt = conn.prepare(&format!(
-                        "SELECT message_id, length(body), body FROM raw_message_body LIMIT {limit}"
-                    ))?;
-                    let rows = stmt.query_map([], |row| {
-                        let id: i64 = row.get(0)?;
-                        let size: i64 = row.get(1)?;
-                        let body_bytes: Vec<u8> = row.get(2)?;
-                        Ok((id, size, body_bytes))
-                    })?;
-                    let mut results = vec![];
-                    for row in rows {
-                        if let Ok((id, size, body_bytes)) = row {
-                            // Try to convert body to string, take first 100 chars
-                            let preview = if body_bytes.is_empty() {
-                                "(empty)".to_string()
-                            } else {
-                                // Try UTF-8 first, fall back to lossy conversion
-                                let text = String::from_utf8_lossy(&body_bytes);
-                                let preview: String = text.chars().take(100).collect();
-                                if preview.is_empty() {
-                                    format!("(binary: {} bytes)", body_bytes.len())
-                                } else {
-                                    preview
-                                }
-                            };
-                            results.push(MessageBodySample {
-                                message_id: id.cast_unsigned(),
-                                size: size.cast_unsigned(),
-                                preview,
-                            });
-                        }
-                    }
-                    Ok(results)
-                })
-                .await;
-
-            match result {
-                Ok(samples) => Ok(samples),
-                Err(e) => {
-                    tracing::error!("Failed to query message bodies: {:?}", e);
-                    Ok(vec![])
-                }
-            }
-        })
-    }
-
-    /// Get total count of indexed messages
-    pub fn get_indexed_message_count(&self) -> Result<u64, UserSessionError> {
-        let ctx = self.ctx()?;
-        let stash = ctx.user_stash().clone();
-
-        async_runtime().block_on(async {
-            let tether = stash.connection();
-
-            let result = tether
-                .sync_query(|conn| {
-                    Ok(conn.query_row(
-                        "SELECT COUNT(*) FROM search_index_content_hashes",
-                        [],
-                        |row| row.get::<_, i64>(0),
-                    )?)
-                })
-                .await;
-
-            match result {
-                Ok(count) => Ok(count.cast_unsigned()),
-                Err(e) => {
-                    tracing::error!("Failed to count indexed messages: {:?}", e);
-                    Ok(0)
-                }
-            }
-        })
-    }
-
-    /// Get total count of stored message bodies
-    pub fn get_stored_body_count(&self) -> Result<u64, UserSessionError> {
-        let ctx = self.ctx()?;
-        let stash = ctx.user_stash().clone();
-
-        async_runtime().block_on(async {
-            let tether = stash.connection();
-
-            let result = tether
-                .sync_query(|conn| {
-                    Ok(
-                        conn.query_row("SELECT COUNT(*) FROM raw_message_body", [], |row| {
-                            row.get::<_, i64>(0)
-                        })?,
-                    )
-                })
-                .await;
-
-            match result {
-                Ok(count) => Ok(count.cast_unsigned()),
-                Err(e) => {
-                    tracing::error!("Failed to count message bodies: {:?}", e);
-                    Ok(0)
-                }
-            }
-        })
-    }
-
-    /// Deletes rows from Foundation Search lab tables (`search_index_blobs`, `search_index_content_hashes`,
-    /// `search_index_intents`) so a historic load / indexing run can start from a clean slate.
+    /// Clears Foundation Search index tables and resets the in-memory engine (historic load lab).
     pub fn clear_foundation_search_index_tables(&self) -> Result<(), UserSessionError> {
-        use mail_stash::stash::StashError;
-
         let ctx = self.ctx()?;
-        let stash = ctx.user_stash().clone();
-
-        async_runtime().block_on(async {
-            let mut tether = stash.connection();
-
-            tether
-                .sync_write_tx(move |tx| {
-                    tx.execute_batch(
-                        "DELETE FROM search_index_blobs;
-                         DELETE FROM search_index_content_hashes;
-                         DELETE FROM search_index_intents;",
-                    )
-                    .map_err(StashError::ExecutionError)?;
-                    Ok(())
-                })
-                .await
-                .map_err(|e| {
-                    tracing::error!("Failed to clear search index tables: {:?}", e);
-                    UserSessionError::Other(ProtonError::Unexpected(UnexpectedError::Internal))
-                })
-        })
-    }
-
-    /// Clears Foundation Search index tables and rebuilds the in-memory search engine with the
-    /// given `maximum_token_bucket_size` (see `proton_foundation_search::index::text::TextIndex`).
-    ///
-    /// `0` yields many small blobs per commit; larger values allow more token-entry weight per
-    /// bucket (fewer blobs). Must be `<=` [`mail_common::search::LAB_MAX_TOKEN_BUCKET_SIZE`].
-    /// This wipes the same rows as [`Self::clear_foundation_search_index_tables`].
-    pub fn apply_foundation_search_max_token_bucket_size(
-        &self,
-        max_token_bucket_size: u64,
-    ) -> Result<(), UserSessionError> {
-        use mail_common::search::LAB_MAX_TOKEN_BUCKET_SIZE;
-
-        let ctx = self.ctx()?;
-        if max_token_bucket_size > LAB_MAX_TOKEN_BUCKET_SIZE as u64 {
-            return Err(UserSessionError::Other(ProtonError::Unexpected(
-                UnexpectedError::InvalidArgument,
-            )));
-        }
-        let max = usize::try_from(max_token_bucket_size).unwrap_or(0);
         let task_service = ctx.core_context().task_service().task_service_arc();
 
         async_runtime().block_on(async {
             ctx.search_service()
-                .rebuild_engine_with_max_token_bucket_size(task_service, max)
+                .clear_index_tables(task_service)
                 .await
                 .map_err(|e| {
-                    tracing::error!("apply_foundation_search_max_token_bucket_size: {e}");
+                    tracing::error!("clear_foundation_search_index_tables: {e}");
                     UserSessionError::Other(ProtonError::Unexpected(UnexpectedError::Internal))
                 })
         })
     }
-}
-
-/// Search index blob info
-#[derive(Debug, Clone, uniffi::Record)]
-pub struct SearchIndexBlob {
-    pub name: String,
-    pub size: u64,
-}
-
-/// Message body sample for debugging
-#[derive(Debug, Clone, uniffi::Record)]
-pub struct MessageBodySample {
-    pub message_id: u64,
-    pub size: u64,
-    pub preview: String,
 }
 
 declare_live_query_tagger!(WatchAddressesMarker);

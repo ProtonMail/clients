@@ -956,9 +956,6 @@ impl EncryptedMessageBody {
             .upgrade()
             .ok_or(MailContextError::MissingContext)?;
 
-        #[cfg(feature = "foundation_search_lab_harness")]
-        let prefetch_sw =
-            mail_search_perf::prefetch_timing::PrefetchStopwatch::start_decrypt_phase();
         let raw_decrypted_body = self.as_raw_decrypted_body(address_keys, pgp);
 
         let mut tether = ctx.user_stash().connection();
@@ -968,8 +965,6 @@ impl EncryptedMessageBody {
                     error!("Failed to process message body: {e}");
                     MailContextError::Crypto
                 })?;
-                #[cfg(feature = "foundation_search_lab_harness")]
-                let prefetch_sw = prefetch_sw.record_decrypt_done();
                 tether
                     .write_tx::<_, _, MailContextError>(async |tx| {
                         raw_decrypted_body
@@ -1023,8 +1018,6 @@ impl EncryptedMessageBody {
                         Ok(self.metadata.save(tx).await?)
                     })
                     .await?;
-                #[cfg(feature = "foundation_search_lab_harness")]
-                prefetch_sw.record_store_and_index_done();
 
                 Ok(DecryptedMessageBody::from_decrypted_body(
                     ctx,
@@ -1039,8 +1032,6 @@ impl EncryptedMessageBody {
                     "Failed to decrypt message body ({:?}): {}",
                     self.metadata.remote_message_id, error.error
                 );
-                #[cfg(feature = "foundation_search_lab_harness")]
-                let prefetch_sw = prefetch_sw.record_decrypt_done();
                 tether
                     .write_tx(async move |tx| {
                         raw_decrypted_body
@@ -1051,8 +1042,6 @@ impl EncryptedMessageBody {
                             .await
                     })
                     .await?;
-                #[cfg(feature = "foundation_search_lab_harness")]
-                prefetch_sw.record_store_and_index_done();
 
                 // In the `Ok` code path we extract message's mime type from the
                 // decrypted body - since in this case we've got no decrypted

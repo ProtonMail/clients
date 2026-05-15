@@ -89,7 +89,7 @@ members = [
     "project/mail/rust/mail/mail-api",
     "project/mail/rust/mail/mail-common",
     "project/mail/rust/mail/mail-common-derive",
-    "project/mail/rust/mail/mail-historic-search-load",
+    "project/mail/rust/mail/mail-historic-ephemeral-load",
     "project/mail/rust/mail/mail-html-transformer",
     "project/mail/rust/mail/mail-html-transformer-fuzz",
     "project/mail/rust/mail/mail-search",
@@ -600,9 +600,9 @@ path = "project/mail/rust/mail/mail-search"
 version = "0.1"
 path = "project/mail/rust/mail/mail-search-perf"
 
-[workspace.dependencies.mail-historic-search-load]
+[workspace.dependencies.mail-historic-ephemeral-load]
 version = "0.1"
-path = "project/mail/rust/mail/mail-historic-search-load"
+path = "project/mail/rust/mail/mail-historic-ephemeral-load"
 
 [workspace.dependencies.mail-uniffi]
 path = "project/mail/rust/mail/mail-uniffi"

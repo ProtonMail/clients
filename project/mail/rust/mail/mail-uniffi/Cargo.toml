@@ -33,8 +33,7 @@ core-event-loop = { workspace = true }
 mail-api = { workspace = true }
 mail-api-payments = { workspace = true }
 mail-common = { workspace = true, features = ["proton_mail_error_log"] }
-mail-historic-search-load = { workspace = true, optional = true }
-mail-search-perf = { workspace = true, optional = true }
+mail-historic-ephemeral-load = { workspace = true, optional = true }
 mail-observability = { workspace = true }
 mail-telemetry = { workspace = true }
 mail-task-service = { workspace = true }
@@ -65,25 +64,14 @@ zeroizing-alloc = { workspace = true }
 
 [features]
 default = ["foundation_search"]
-# Foundation Search: Local body text search indexing
-# When enabled, message bodies are indexed locally for offline full-text search.
-foundation_search = ["mail-common/foundation_search"]
-# Forward only: flag is implemented in mail-common / mail-search; needed for CARGO_FEATURES on -p mail-uniffi.
-foundation_search_index_timing = ["mail-common/foundation_search_index_timing"]
-foundation_search_historic_load = [
-  "foundation_search",
-  "dep:mail-historic-search-load",
+# Foundation Search: local indexing, lab/debug FFI, and ephemeral historic load (API → index).
+foundation_search = [
+  "mail-common/foundation_search",
+  "dep:mail-historic-ephemeral-load",
 ]
 # Enable stdout logging for iOS (logs appear in Xcode console)
 # Works in both debug and release builds
 stdout_logging = []
-# Lab harness: perf fixtures (`from_fixture` APIs, chunked/JSONL, remote bodies) + historic orchestration on `mail-common`.
-foundation_search_lab_harness = [
-  "mail-common/foundation_search_lab_harness",
-  "foundation_search_historic_load",
-  "dep:mail-search-perf",
-  "mail-historic-search-load/foundation_search_lab_harness",
-]
 
 [dev-dependencies]
 mail-api = { workspace = true }

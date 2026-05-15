@@ -339,15 +339,9 @@ impl UserContext {
         let path = path.to_owned();
 
         let mail_stash = task::spawn_blocking(move || {
-            #[cfg(feature = "foundation_search_lab_harness")]
-            let read_worker_count = Some(32);
-            #[cfg(not(feature = "foundation_search_lab_harness"))]
-            let read_worker_count = None;
-
             Stash::new(StashConfiguration {
                 path: Some(&path),
-                // Lab-only tuning: 32 read workers for high-concurrency prefetch/index runs.
-                read_worker_count,
+                read_worker_count: None,
             })
         })
         .await

@@ -109,15 +109,6 @@ impl RawMessageBody {
         }
     }
 
-    /// Create a RawMessageBody from a fixture string (historic-load / perf scaffolding; `foundation_search_lab_harness`).
-    #[cfg(feature = "foundation_search_lab_harness")]
-    pub fn from_fixture(body: &str) -> Self {
-        Self::ok(RawDecryptedBody::Plain {
-            raw_body: body.as_bytes().to_vec(),
-            signatures: vec![],
-        })
-    }
-
     #[instrument(skip_all, fields(id=%id))]
     pub async fn load(id: LocalMessageId, tether: &Tether) -> Result<Option<Self>, StashError> {
         let rows = tether

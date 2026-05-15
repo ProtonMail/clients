@@ -1,0 +1,25 @@
+[package]
+name = "mail-historic-ephemeral-load"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license = "AGPL-3.0-only"
+description = "Ephemeral historic load: API metadata + bodies → Foundation Search (no SQLite writes)."
+publish = false
+
+[dependencies]
+anyhow = { workspace = true }
+futures = { workspace = true }
+mail-api = { workspace = true }
+mail-common = { path = "../mail-common", default-features = true, features = [
+  "foundation_search",
+] }
+mail-core-api = { workspace = true, features = ["sql"] }
+mail-crypto-inbox = { workspace = true }
+mail-html-transformer = { workspace = true }
+mail-search = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+
+[lints]
+workspace = true

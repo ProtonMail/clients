@@ -7,8 +7,6 @@ pub mod events;
 mod images;
 mod initialization;
 
-#[cfg(feature = "foundation_search_lab_harness")]
-use crate::actions::BATCH_PREFETCH_ACTION_GROUP;
 use crate::actions::PREFETCH_ROLLBACK_ACTION_GROUP;
 use crate::actions::draft::{SEND_ACTION_GROUP, SHARE_EXT_ACTION_GROUP};
 use crate::db::online_migrations;
@@ -80,14 +78,6 @@ use tracing::{error, instrument};
 const DEFAULT_SEND_QUEUE_POOL_SIZE: usize = 4;
 const DEFAULT_DEFAULT_QUEUE_POOL_SIZE: usize = 1;
 
-#[cfg(feature = "foundation_search_lab_harness")]
-// Lab benchmark note:
-// Historic-load test runs (22k messages, page_size=200, ephemeral fixture mode) showed that
-// prefetch rollback throughput plateaued around 20 workers; lower values (e.g. 6-12) underutilized
-// fixture-fed indexing and increased wall-clock completion time. Keep this at 20 unless new
-// benchmark runs demonstrate a better throughput/resource trade-off.
-const DEFAULT_PREFETCH_ROLLBACK_QUEUE_POOL_SIZE: usize = 20;
-#[cfg(not(feature = "foundation_search_lab_harness"))]
 const DEFAULT_PREFETCH_ROLLBACK_QUEUE_POOL_SIZE: usize = 1;
 const DEFAULT_SHARE_EXT_QUEUE_POOL_SIZE: usize = 2;
 
@@ -97,8 +87,6 @@ const DEFAULT_PREFETCH_BOUND: usize = 10;
 pub struct DefaultQueueExecutor {
     pub default: QueueAutoExecutorPool<UserDb>,
     pub prefetch_rollback: QueueAutoExecutorPool<UserDb>,
-    #[cfg(feature = "foundation_search_lab_harness")]
-    pub batch_prefetch: QueueAutoExecutorPool<UserDb>,
 }
 
 impl DefaultQueueExecutor {
@@ -110,34 +98,24 @@ impl DefaultQueueExecutor {
     pub fn pause(&self) {
         self.default.pause();
         self.prefetch_rollback.pause();
-        #[cfg(feature = "foundation_search_lab_harness")]
-        self.batch_prefetch.pause();
     }
 
     pub fn pause_prefetch_rollback(&self) {
         self.prefetch_rollback.pause();
-        #[cfg(feature = "foundation_search_lab_harness")]
-        self.batch_prefetch.pause();
     }
 
     pub fn resume(&self) {
         self.default.resume();
         self.prefetch_rollback.resume();
-        #[cfg(feature = "foundation_search_lab_harness")]
-        self.batch_prefetch.resume();
     }
 
     pub fn resume_prefetch_rollback(&self) {
         self.prefetch_rollback.resume();
-        #[cfg(feature = "foundation_search_lab_harness")]
-        self.batch_prefetch.resume();
     }
 
     pub fn terminate(&self) {
         self.default.terminate();
         self.prefetch_rollback.terminate();
-        #[cfg(feature = "foundation_search_lab_harness")]
-        self.batch_prefetch.terminate();
     }
 }
 
@@ -394,16 +372,6 @@ impl MailUserContext {
                     .with_cyclic_service(TrackerService::new)
                     .with_cyclic_service(UpsellEligibilityService::new);
 
-            #[cfg(feature = "foundation_search_lab_harness")]
-            {
-                use mail_search_perf::message_body_cache::{
-                    FixtureBodiesMessageBodyCache, MessageBodyCache,
-                };
-                use std::sync::Arc;
-                let cache: Arc<dyn MessageBodyCache> = Arc::new(FixtureBodiesMessageBodyCache);
-                builder = builder.with_service(cache);
-            }
-
             // Initialize Foundation Search service with Stash connection pool
             // Extract TaskService from the context to ensure proper lifecycle management.
             // The TaskService is extracted from BackgroundAwareTaskService which wraps it.
@@ -460,21 +428,9 @@ impl MailUserContext {
                                 user_context.as_ref(),
                                 span.clone(),
                             );
-                            #[cfg(feature = "foundation_search_lab_harness")]
-                            let batch_prefetch = QueueAutoExecutorPool::new(
-                                user_context.queue(),
-                                &BATCH_PREFETCH_ACTION_GROUP,
-                                NonZeroUsize::new(DEFAULT_PREFETCH_ROLLBACK_QUEUE_POOL_SIZE).unwrap(),
-                                mail_context.core_context().as_ref(),
-                                true,
-                                user_context.as_ref(),
-                                span.clone(),
-                            );
                             DefaultQueueExecutor {
                                 default,
                                 prefetch_rollback,
-                                #[cfg(feature = "foundation_search_lab_harness")]
-                                batch_prefetch,
                             }
                         })
                         .with_service(EventPollQueueExecutor {
@@ -588,18 +544,6 @@ impl MailUserContext {
         self.services
             .get(&TypeId::of::<T>())
             .and_then(|service| service.downcast_ref::<T>())
-    }
-
-    #[cfg(feature = "foundation_search_lab_harness")]
-    pub(crate) fn try_search_perf_substitute_body(
-        &self,
-        remote_id: &str,
-    ) -> Result<Option<mail_search_perf::SubstituteBody>, anyhow::Error> {
-        use mail_search_perf::message_body_cache::MessageBodyCache;
-        use std::sync::Arc;
-        self.get_service::<Arc<dyn MessageBodyCache>>()
-            .try_substitute_body(remote_id)
-            .map_err(|e| anyhow::anyhow!(e))
     }
 
     pub fn has_service<T: Any + Send + Sync + 'static>(&self) -> bool {

@@ -1330,32 +1330,16 @@ impl From<mail_core_api::session::Fork> for Fork {
 }
 
 /// Anchor for the next historic load: continue with messages **older** than this (server sort).
-#[cfg(feature = "foundation_search_historic_load")]
+#[cfg(feature = "foundation_search")]
 #[derive(Debug, Clone, Eq, PartialEq, UniffiRecord)]
 pub struct HistoricLoadContinuation {
     pub anchor_time: u64,
-    /// Same as `oldest_saved_message_remote_id` from the previous [`HistoricLoadResult`].
+    /// Same as `oldest_message_remote_id` from the previous [`EphemeralHistoricLoadResult`].
     pub anchor_message_id: String,
 }
 
-/// Result of a historic load operation
-#[cfg(feature = "foundation_search_historic_load")]
-#[derive(Debug, Clone, Eq, PartialEq, UniffiRecord)]
-pub struct HistoricLoadResult {
-    /// Number of messages fetched from server
-    pub messages_fetched: u64,
-    /// Number of messages queued for indexing (had bodies)
-    pub messages_indexed: u64,
-    /// Number of messages queued for prefetch (needed bodies)
-    pub messages_prefetched: u64,
-    /// Unix time in seconds: oldest message in the fetched batch (newest-first fetch; with a max count, this bounds the youngest-N window)
-    pub oldest_saved_message_time: Option<u64>,
-    /// Remote id of that oldest message; use with `anchor_time` as [`HistoricLoadContinuation`] to load the next older slice.
-    pub oldest_saved_message_remote_id: Option<String>,
-}
-
 /// Result of an ephemeral historic load (zero SQLite writes — index directly into Foundation Search)
-#[cfg(feature = "foundation_search_lab_harness")]
+#[cfg(feature = "foundation_search")]
 #[derive(Debug, Clone, Eq, PartialEq, UniffiRecord)]
 pub struct EphemeralHistoricLoadResult {
     pub messages_fetched: u64,
@@ -1363,23 +1347,4 @@ pub struct EphemeralHistoricLoadResult {
     pub messages_skipped_missing_body: u64,
     pub oldest_message_time: Option<u64>,
     pub oldest_message_remote_id: Option<String>,
-}
-
-#[cfg(feature = "foundation_search_lab_harness")]
-#[derive(Debug, Clone, UniffiRecord)]
-pub struct RawSearchHit {
-    pub remote_id: String,
-    pub score: f64,
-    /// Populated by fetching from the server when the message is not stored locally.
-    pub subject: Option<String>,
-    pub sender: Option<String>,
-    pub time: Option<u64>,
-}
-
-#[cfg(feature = "foundation_search_lab_harness")]
-#[derive(Debug, Clone, UniffiRecord)]
-pub struct RawSearchResult {
-    pub hits: Vec<RawSearchHit>,
-    pub query: String,
-    pub elapsed_ms: u64,
 }

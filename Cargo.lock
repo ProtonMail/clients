@@ -1219,7 +1219,7 @@ dependencies = [
  "calendar-loop",
  "calendar-net",
  "calendar-telemetry",
- "crux_core 0.17.0 (git+https://github.com/redbadger/crux?rev=04347ef20277faa80f041c9b99ee79fcdb39b7d1)",
+ "crux_core 0.17.0 (git+https://github.com/Patryk27/crux?branch=0.17-patched)",
  "facet",
  "futures",
  "itertools 0.14.0",
@@ -1240,7 +1240,7 @@ dependencies = [
  "calendar-components-crux",
  "calendar-db",
  "clap",
- "crux_core 0.17.0 (git+https://github.com/redbadger/crux?rev=04347ef20277faa80f041c9b99ee79fcdb39b7d1)",
+ "crux_core 0.17.0 (git+https://github.com/Patryk27/crux?branch=0.17-patched)",
  "glob",
  "regex",
 ]
@@ -1260,7 +1260,7 @@ dependencies = [
  "calendar-net-muon",
  "calendar-telemetry",
  "console_error_panic_hook",
- "crux_core 0.17.0 (git+https://github.com/redbadger/crux?rev=04347ef20277faa80f041c9b99ee79fcdb39b7d1)",
+ "crux_core 0.17.0 (git+https://github.com/Patryk27/crux?branch=0.17-patched)",
  "facet",
  "futures",
  "itertools 0.14.0",
@@ -1285,7 +1285,7 @@ dependencies = [
  "anyhow",
  "calendar-crux",
  "clap",
- "crux_core 0.17.0 (git+https://github.com/redbadger/crux?rev=04347ef20277faa80f041c9b99ee79fcdb39b7d1)",
+ "crux_core 0.17.0 (git+https://github.com/Patryk27/crux?branch=0.17-patched)",
  "glob",
  "regex",
 ]
@@ -1393,7 +1393,7 @@ name = "calendar-keychain"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "crux_core 0.17.0 (git+https://github.com/redbadger/crux?rev=04347ef20277faa80f041c9b99ee79fcdb39b7d1)",
+ "crux_core 0.17.0 (git+https://github.com/Patryk27/crux?branch=0.17-patched)",
  "facet",
  "serde",
  "thiserror 2.0.18",
@@ -1422,7 +1422,7 @@ name = "calendar-net"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "crux_core 0.17.0 (git+https://github.com/redbadger/crux?rev=04347ef20277faa80f041c9b99ee79fcdb39b7d1)",
+ "crux_core 0.17.0 (git+https://github.com/Patryk27/crux?branch=0.17-patched)",
  "derive_more 2.1.1",
  "facet",
  "http",
@@ -1506,7 +1506,7 @@ dependencies = [
  "calendar-telemetry",
  "clap",
  "crossterm",
- "crux_core 0.17.0 (git+https://github.com/redbadger/crux?rev=04347ef20277faa80f041c9b99ee79fcdb39b7d1)",
+ "crux_core 0.17.0 (git+https://github.com/Patryk27/crux?branch=0.17-patched)",
  "futures",
  "jiff",
  "keyring",
@@ -2700,15 +2700,16 @@ dependencies = [
 [[package]]
 name = "crux_core"
 version = "0.17.0"
-source = "git+https://github.com/redbadger/crux?rev=04347ef20277faa80f041c9b99ee79fcdb39b7d1#04347ef20277faa80f041c9b99ee79fcdb39b7d1"
+source = "git+https://github.com/Patryk27/crux?branch=0.17-patched#3231d2f102a477cfd1b8b5bf5e379ef4411dac36"
 dependencies = [
  "anyhow",
  "bincode",
  "crossbeam-channel",
- "crux_macros 0.8.0 (git+https://github.com/redbadger/crux?rev=04347ef20277faa80f041c9b99ee79fcdb39b7d1)",
+ "crux_macros 0.8.0 (git+https://github.com/Patryk27/crux?branch=0.17-patched)",
  "facet",
  "facet_generate",
  "futures",
+ "include_dir 0.7.4",
  "log",
  "serde",
  "serde-generate",
@@ -2735,7 +2736,7 @@ dependencies = [
 [[package]]
 name = "crux_macros"
 version = "0.8.0"
-source = "git+https://github.com/redbadger/crux?rev=04347ef20277faa80f041c9b99ee79fcdb39b7d1#04347ef20277faa80f041c9b99ee79fcdb39b7d1"
+source = "git+https://github.com/Patryk27/crux?branch=0.17-patched#3231d2f102a477cfd1b8b5bf5e379ef4411dac36"
 dependencies = [
  "darling 0.23.0",
  "heck 0.5.0",

@@ -2,7 +2,8 @@ use crate::protocol::DeviceInfo;
 use crate::protocol::proton::{PostAuthInfoRequest, PostAuthInfoResponse, ProtonAuth as _};
 use derive_more::From;
 use mail_api_shared::ApiServiceResult;
-use mail_muon::{ProtonRequest, ProtonResponse, common::Sender};
+use mail_muon::common::Sender;
+use mail_muon::{ProtonRequest, ProtonResponse};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

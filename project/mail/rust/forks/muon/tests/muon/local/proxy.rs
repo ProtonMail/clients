@@ -1,9 +1,9 @@
 use anyhow::Result;
+use mail_muon::GET;
 use mail_muon::common::ConstProxy;
 use mail_muon::test::proxy;
-use mail_muon::test::server::{Server, HTTPS};
+use mail_muon::test::server::{HTTPS, Server};
 use mail_muon::util::ProtonRequestExt;
-use mail_muon::GET;
 use std::sync::Arc;
 
 #[mail_muon::test]

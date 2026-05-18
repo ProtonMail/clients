@@ -1,5 +1,5 @@
-use crate::atlas::{new_atlas_store, new_client, PASS, USER};
-use anyhow::{bail, Result};
+use crate::atlas::{PASS, USER, new_atlas_store, new_client};
+use anyhow::{Result, bail};
 use derive_more::Error;
 use futures::prelude::*;
 use mail_muon::client::flow::LoginFlow;

@@ -1,13 +1,9 @@
-use crate::MailContextError;
-use crate::MailUserContext;
 use crate::datatypes::{MimeType, attachment};
 use crate::draft::compose::{REPLY_PREFIX, apply_prefix_to_subject, resolve_sender_alias};
 use crate::draft::send::MailType;
 use crate::draft::{SendError, send};
-use crate::models::AttachmentType;
-use crate::models::Message;
-use crate::models::MessageBodyMetadata;
-use crate::models::{Attachment, MailSettings};
+use crate::models::{Attachment, AttachmentType, MailSettings, Message, MessageBodyMetadata};
+use crate::{MailContextError, MailUserContext};
 use anyhow::Context;
 use mail_api::services::proton::ProtonMail;
 use mail_api::services::proton::common::MessageId;
@@ -22,13 +18,9 @@ use mail_crypto_inbox::message::EncryptableDraft;
 use mail_crypto_inbox::proton_crypto::crypto::PGPProviderSync;
 use mail_stash::orm::Model as _;
 use mail_stash::stash::Tether;
-use proton_crypto_account::keys::EmailMimeType;
-use proton_crypto_account::keys::PrimaryUnlockedAddressKey;
-use proton_crypto_account::keys::UnlockedAddressKeys;
+use proton_crypto_account::keys::{EmailMimeType, PrimaryUnlockedAddressKey, UnlockedAddressKeys};
 use std::slice;
-use tracing::debug;
-use tracing::error;
-use tracing::warn;
+use tracing::{debug, error, warn};
 
 pub(crate) struct RsvpMail<'a, P>
 where

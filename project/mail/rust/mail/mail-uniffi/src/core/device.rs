@@ -1,6 +1,7 @@
 use futures::FutureExt;
 use mail_core_common::device as device_info;
-use std::{ops::Deref, sync::Arc};
+use std::ops::Deref;
+use std::sync::Arc;
 
 pub type DynDeviceInfoProvider = Arc<dyn DeviceInfoProvider>;
 

@@ -126,7 +126,7 @@
 
 use crate::client::Client;
 use crate::error::Result;
-use crate::http::{StatusErr, POST};
+use crate::http::{POST, StatusErr};
 use crate::rest::auth;
 use crate::rest::auth::v4::fido2;
 use crate::util::{ByteSliceErr, ByteSliceExt};

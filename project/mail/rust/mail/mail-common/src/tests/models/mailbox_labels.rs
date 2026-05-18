@@ -1,9 +1,7 @@
 use crate::models::MailboxLabels;
 use mail_common::test_utils::db::new_test_connection;
-use mail_core_common::{
-    datatypes::{LabelColor, LabelType},
-    models::Label,
-};
+use mail_core_common::datatypes::{LabelColor, LabelType};
+use mail_core_common::models::Label;
 use mail_stash::orm::Model;
 use mail_stash::stash::StashError;
 

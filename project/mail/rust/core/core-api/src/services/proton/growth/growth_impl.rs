@@ -1,12 +1,12 @@
-use mail_muon::{POST, ProtonRequest, ProtonResponse, common::Sender, http::HttpReqExt};
+use mail_muon::common::Sender;
+use mail_muon::http::HttpReqExt;
+use mail_muon::{POST, ProtonRequest, ProtonResponse};
 
 use crate::service::ApiServiceResult;
 
-use super::{
-    GROWTH_V1, ProtonGrowth,
-    requests::{PostMeasurementEventRequest, PostMeasurementEventsRequest},
-    responses::PostMeasurementEventResponse,
-};
+use super::requests::{PostMeasurementEventRequest, PostMeasurementEventsRequest};
+use super::responses::PostMeasurementEventResponse;
+use super::{GROWTH_V1, ProtonGrowth};
 
 impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> ProtonGrowth for This {
     async fn post_measurement(

@@ -5,7 +5,7 @@ use hyper::rt::{Executor, Read, ReadBuf, ReadBufCursor as Cursor, Write};
 use pin_project::pin_project;
 use std::io::Result as IoResult;
 use std::pin::Pin;
-use std::task::{ready, Context, Poll};
+use std::task::{Context, Poll, ready};
 
 if_rt_async! {{
     struct HyperSleep(futures_timer::Delay);

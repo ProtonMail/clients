@@ -1,9 +1,7 @@
-use mail_stash::{
-    AccountDb,
-    macros::Model,
-    orm::Model,
-    stash::{StashError, Tether, WriteTx},
-};
+use mail_stash::AccountDb;
+use mail_stash::macros::Model;
+use mail_stash::orm::Model;
+use mail_stash::stash::{StashError, Tether, WriteTx};
 use smart_default::SmartDefault;
 
 use crate::datatypes::UnixTimestamp;

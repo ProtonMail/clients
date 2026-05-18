@@ -3,7 +3,8 @@
 mod tests;
 
 use super::SwipeAction;
-use crate::{AppError, models::MailSettings};
+use crate::AppError;
+use crate::models::MailSettings;
 use mail_core_common::datatypes::{LocalLabelId, SystemLabel};
 use mail_stash::stash::Tether;
 

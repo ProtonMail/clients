@@ -1,15 +1,15 @@
-use crate::common::prelude::*;
 use crate::common::IntoDyn;
-use crate::dns::{fmt_msg, impl_doh_service, Dns, DnsResolver, DynDohService};
-use crate::http::{Accept, DynBoundHttpConnector, DynHttpConnector, HttpReqExt, GET};
+use crate::common::prelude::*;
+use crate::dns::{Dns, DnsResolver, DynDohService, fmt_msg, impl_doh_service};
+use crate::http::{Accept, DynBoundHttpConnector, DynHttpConnector, GET, HttpReqExt};
 use crate::rt::DynResolver;
 use crate::util::ByteSliceExt;
 use crate::{Error, ErrorKind, Result};
 use async_trait::async_trait;
 use derive_more::Display;
+use hickory_proto::ProtoError;
 use hickory_proto::op::Message;
 use hickory_proto::serialize::binary::{BinDecodable, BinEncodable};
-use hickory_proto::ProtoError;
 use std::borrow::Borrow;
 
 /// A DNS client that uses a public DNS-over-HTTPS server.

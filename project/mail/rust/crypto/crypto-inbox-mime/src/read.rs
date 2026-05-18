@@ -5,8 +5,7 @@ use std::ops::Range;
 use std::path::Path;
 use std::str::FromStr;
 
-use mail_parser::{Header, MimeHeaders};
-use mail_parser::{Message, MessageParser};
+use mail_parser::{Header, Message, MessageParser, MimeHeaders};
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
 

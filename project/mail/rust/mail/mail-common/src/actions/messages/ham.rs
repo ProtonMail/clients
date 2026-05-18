@@ -3,9 +3,8 @@ use crate::datatypes::{LocalMessageId, MessageFlags, RollbackItemType};
 use crate::models::{Message, RollbackItem};
 use futures::future::try_join_all;
 use mail_action_queue::action::{
-    Action, ActionDependencyKeys, DefaultVersionConverter, Type, WriterGuard,
+    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
 };
-use mail_action_queue::action::{ActionId, Handler};
 use mail_action_queue::rebase::{RebaseChangeSet, RebaseKey};
 use mail_api::services::proton::ProtonMail;
 use mail_core_api::session::Session;

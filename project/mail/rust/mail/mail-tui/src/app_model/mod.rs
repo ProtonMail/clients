@@ -24,8 +24,9 @@ use crate::app_model::twofa::TwoFaModel;
 use crate::keychain::AppKeyChain;
 use crate::messages::Messages;
 use crate::widgets::utils::ScrollableState;
-use crate::widgets::{Backdrop, ScrollableParagraph};
-use crate::widgets::{ScrollableListState, ScrollableParagraphState};
+use crate::widgets::{
+    Backdrop, ScrollableListState, ScrollableParagraph, ScrollableParagraphState,
+};
 use anyhow::anyhow;
 use chrono::Local;
 use crossterm::event::KeyModifiers;
@@ -35,8 +36,7 @@ use mail_core_common::event_loop::EventPollMode;
 use mail_core_common::services::SessionObserverService;
 use mail_core_common::{OnSessionDeletedResponse, Origin};
 use mail_issue_reporter_service::NoopIssueReporter;
-use mail_log_service::LogService;
-use mail_log_service::WorkerGuard;
+use mail_log_service::{LogService, WorkerGuard};
 use mail_network_monitor_service::{OsNetworkStatus, RequestNetworkStatus};
 use ratatui::crossterm::event::{Event, KeyCode, KeyEventKind};
 use ratatui::layout::{Constraint, Flex};

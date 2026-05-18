@@ -35,9 +35,7 @@ use rusqlite::{
 };
 use sqlite_watcher::connection::State;
 use sqlite_watcher::statement::Statement;
-use sqlite_watcher::watcher::DropRemoveTableObserverHandle;
-use sqlite_watcher::watcher::TableObserver;
-use sqlite_watcher::watcher::Watcher;
+use sqlite_watcher::watcher::{DropRemoveTableObserverHandle, TableObserver, Watcher};
 use std::any::Any;
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};

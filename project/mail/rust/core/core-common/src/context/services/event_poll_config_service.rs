@@ -1,5 +1,6 @@
 use super::Service;
-use crate::{CoreContextError, event_loop::EventPollMode};
+use crate::CoreContextError;
+use crate::event_loop::EventPollMode;
 use async_trait::async_trait;
 
 pub struct EventPollConfigService {

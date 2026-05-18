@@ -3,17 +3,15 @@ use crate::core::datatypes::UnixTimestamp;
 use crate::errors::{ProtonError, RsvpEventGetResult, VoidAnswerRsvpResult};
 use crate::uniffi_async;
 use itertools::Itertools;
-use mail_calendar_api_v1 as cal_api;
-use mail_calendar_common as cal;
-use mail_common::ProtonMailError as RealProtonMailError;
-use mail_common::Unexpected;
-use mail_common::{self as mail, MailUserContext};
+use mail_common::{
+    self as mail, MailUserContext, ProtonMailError as RealProtonMailError, Unexpected,
+};
 use mail_core_common::datatypes::UnixTimestamp as RealUnixTimestamp;
-use mail_ical as ical;
 use parking_lot::Mutex;
 use std::sync::Arc;
 use tracing::{error, warn};
 use uniffi::{Enum, Object, Record};
+use {mail_calendar_api_v1 as cal_api, mail_calendar_common as cal, mail_ical as ical};
 
 #[derive(Object)]
 pub struct RsvpEventServiceProvider {

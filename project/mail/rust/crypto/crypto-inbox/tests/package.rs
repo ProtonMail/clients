@@ -1,8 +1,6 @@
-use mail_crypto_inbox::{
-    message::packages::{EncryptablePackage, PackageMimeType},
-    proton_crypto::crypto::{
-        DataEncoding, Decryptor, DecryptorSync, PGPProviderSync, VerifiedData,
-    },
+use mail_crypto_inbox::message::packages::{EncryptablePackage, PackageMimeType};
+use mail_crypto_inbox::proton_crypto::crypto::{
+    DataEncoding, Decryptor, DecryptorSync, PGPProviderSync, VerifiedData,
 };
 
 mod common;

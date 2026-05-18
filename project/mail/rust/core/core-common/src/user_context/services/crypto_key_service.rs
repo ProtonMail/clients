@@ -1,35 +1,38 @@
 use async_trait::async_trait;
-use mail_contacts_common::{
-    contact::Contact, contact_card::ContactCard, contact_email::ContactEmail, error::ContactError,
+use mail_contacts_common::contact::Contact;
+use mail_contacts_common::contact_card::ContactCard;
+use mail_contacts_common::contact_email::ContactEmail;
+use mail_contacts_common::error::ContactError;
+use mail_core_api::consts::CoreBundle;
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::{
+    AddressId, GetKeysAllOptions, PrivateEmailRef, ProtonAccount, UserId,
 };
-use mail_core_api::{
-    consts::CoreBundle,
-    service::ApiServiceError,
-    services::proton::{AddressId, GetKeysAllOptions, PrivateEmailRef, ProtonAccount, UserId},
+use mail_core_key_manager::cache::MemoryKeyCache;
+use mail_core_key_manager::error::{ApiError, KeyHandlingError, LoadingError, LoadingResult};
+use mail_core_key_manager::proton_crypto_account::salts::KeySecret;
+use mail_core_key_manager::traits::{
+    AddressWithKeys, CacheAccess, ContactPublicKeyLoader, KeySecretLoader, LockedPrivateKeyLoader,
+    PublicKeyLoader, SignedVCard,
 };
 use mail_core_key_manager::{
     AddressId as KeyManagerAddressId, KeySelector, PublicAddressKeyApiFetchPolicy,
     PublicAddressKeyContactFetchPolicy, UserId as KeyManagerUserId,
-    cache::MemoryKeyCache,
-    error::{ApiError, KeyHandlingError, LoadingError, LoadingResult},
-    proton_crypto_account::salts::KeySecret,
-    traits::{
-        AddressWithKeys, CacheAccess, ContactPublicKeyLoader, KeySecretLoader,
-        LockedPrivateKeyLoader, PublicKeyLoader, SignedVCard,
-    },
 };
 use mail_shared_types::{ModelIdExtension, UnixTimestamp};
+use mail_stash::macros::DbRecord;
+use mail_stash::sql_using_serde;
 use mail_stash::stash::{StashError, Tether, WriteTx};
-use mail_stash::{macros::DbRecord, sql_using_serde};
+use proton_crypto_account::contacts::ContactCardType;
+use proton_crypto_account::errors::EncryptionPreferencesError;
 use proton_crypto_account::keys::{APIPublicAddressKeyGroup, APIPublicAddressKeys, UserKeys};
-use proton_crypto_account::{contacts::ContactCardType, errors::EncryptionPreferencesError};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tracing::{debug, error};
 
+use crate::UserContext;
 use crate::datatypes::AddressStatus;
-use crate::models::Address;
-use crate::{UserContext, models::User};
+use crate::models::{Address, User};
 use indoc::indoc;
 use mail_stash::orm::Model;
 use mail_stash::params;

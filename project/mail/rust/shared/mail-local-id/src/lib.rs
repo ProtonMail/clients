@@ -121,7 +121,7 @@ macro_rules! declare_local_id_type {
             PartialEq,
             PartialOrd,
             serde::Serialize,
-            serde::Deserialize,
+            serde::Deserialize
         )]
         pub struct $name(u64);
     };

@@ -5,23 +5,17 @@ use mail_api::services::proton::common::ConversationId;
 use mail_api::services::proton::prelude::RunningTasks;
 use mail_api::services::proton::responses::GetMessagesResponse;
 use mail_common::test_utils::db::new_test_connection_file;
-use mail_common::{
-    api_conversation, api_label, api_message_meta, conversation, label, message,
-    test_utils::utils::create_address,
-};
-use mail_core_api::services::proton::GetLabelsByIdsOptions;
-use mail_core_api::services::proton::GetLabelsResponse;
+use mail_common::test_utils::utils::create_address;
+use mail_common::{api_conversation, api_label, api_message_meta, conversation, label, message};
+use mail_core_api::services::proton::{GetLabelsByIdsOptions, GetLabelsResponse};
 use mail_core_api::session::{Config, EnvId, Session};
-use mail_core_common::models::ModelExtension;
-use mail_core_common::models::ModelIdExtension;
+use mail_core_common::models::{ModelExtension, ModelIdExtension};
 use mail_core_common::test_utils::test_context::MockApiEnv;
 use mail_core_common::test_utils::utils::mock_auth_endpoints;
 use serde_json::json;
 use test_case::test_case;
-use wiremock::{
-    Mock, MockServer, ResponseTemplate,
-    matchers::{body_json, method, path, query_param_contains},
-};
+use wiremock::matchers::{body_json, method, path, query_param_contains};
+use wiremock::{Mock, MockServer, ResponseTemplate};
 
 #[test_case(vec![
     conversation!(remote_id: Some("123".into())).into(),

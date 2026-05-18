@@ -9,8 +9,7 @@ use mail_api::services::proton::request_data::{
 use mail_api::services::proton::response_data::{
     Conversation as ApiConversation, ConversationLabel, MessageFlags, MessageRecipient,
 };
-use mail_common::datatypes::LocalMessageId;
-use mail_common::datatypes::{MimeType, SystemLabelId};
+use mail_common::datatypes::{LocalMessageId, MimeType, SystemLabelId};
 use mail_common::draft::compose::DEFAULT_SUBJECT;
 use mail_common::draft::observers::{DraftSendResultWatcher, DraftSendResultWatcherMode};
 use mail_common::draft::recipients::RecipientEntry;
@@ -28,19 +27,15 @@ use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTest
 use mail_common::{MailContextError, MailUserContext, draft};
 use mail_contacts_api::mocks::ContactsMockServerExt;
 use mail_core_api::consts::{CoreBundle, Mail};
-use mail_core_api::services::proton::ContactFull;
 use mail_core_api::services::proton::common::ApiErrorInfo;
 use mail_core_api::services::proton::{
-    Action, ContactCard as ApiContactCard, ContactEmail as ApiContactEmail, ContactEmailId,
-    ContactId, ContactSendingPreferences as ApiContactSendingPreferences, ContactUID, EventId,
-    GetKeysAllResponse,
-};
-use mail_core_api::services::proton::{
-    Address as ApiAddress, AddressFlags as ApiAddressFlags,
+    Action, Address as ApiAddress, AddressFlags as ApiAddressFlags, AddressId,
     AddressSignedKeyList as ApiAddressSignedKeyList, AddressStatus as ApiAddressStatus,
-    AddressType as ApiAddressType,
+    AddressType as ApiAddressType, ContactCard as ApiContactCard, ContactEmail as ApiContactEmail,
+    ContactEmailId, ContactFull, ContactId,
+    ContactSendingPreferences as ApiContactSendingPreferences, ContactUID, EventId,
+    GetKeysAllResponse, LabelId, UserId,
 };
-use mail_core_api::services::proton::{AddressId, LabelId, UserId};
 use mail_core_common::datatypes::UnixTimestamp;
 use mail_core_common::models::{Contact, ModelExtension};
 use mail_crypto_inbox::keys::PackageCryptoType;

@@ -12,9 +12,9 @@ use crossterm::event::KeyModifiers;
 use mail_common::datatypes::folder_banner::{AutoDeleteBanner, AutoDeleteState};
 use mail_common::datatypes::{ContextualConversation, IncludeSwitch, LocalConversationId};
 use mail_common::models::{Conversation, LabelWithCounters, Message as MailMessage};
-use mail_common::{MailContextResult, MailUserContext, Mailbox};
 use mail_common::{
-    MailScroller as RealMailScroller, ScrollerListUpdate, ScrollerStatusUpdate, ScrollerUpdate,
+    MailContextResult, MailScroller as RealMailScroller, MailUserContext, Mailbox,
+    ScrollerListUpdate, ScrollerStatusUpdate, ScrollerUpdate,
 };
 use mail_core_common::datatypes::LocalLabelId;
 use ratatui::Frame;

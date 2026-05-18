@@ -2,9 +2,8 @@
 #[path = "../tests/models/draft_metadata.rs"]
 mod draft_metadata;
 
-use crate::datatypes::LocalMessageId;
 use crate::datatypes::attachment::ContentId;
-use crate::datatypes::{LocalAttachmentId, LocalConversationId};
+use crate::datatypes::{LocalAttachmentId, LocalConversationId, LocalMessageId};
 use crate::draft::send::EoData;
 use crate::draft::{
     AttachmentDispositionSwapError, AttachmentUploadError, DraftExpirationTime, Error,
@@ -27,12 +26,11 @@ use mail_core_api::services::proton::{AddressId, PrivateEmail};
 use mail_core_common::datatypes::UnixTimestamp;
 use mail_core_common::db::account::{EncryptedPassword, SessionEncryptionKey};
 use mail_core_common::models::ModelIdExtension;
-use mail_stash::exports::SqliteError;
+use mail_stash::exports::{SqliteError, *};
 use mail_stash::macros::{DbRecord, Model};
 use mail_stash::orm::{Model, ModelHooks};
 use mail_stash::stash::{Stash, StashError, Tether, WatcherHandle, WriteTx};
-use mail_stash::{UserDb, exports::*};
-use mail_stash::{params, sql_using_serde};
+use mail_stash::{UserDb, params, sql_using_serde};
 use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
 use sqlite_watcher::watcher::TableObserver;
@@ -43,7 +41,18 @@ use tracing::error;
 use typed_builder::TypedBuilder;
 
 /// Identifier for draft [`DraftMetadata`]
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
+#[derive(
+    Debug,
+    Copy,
+    Clone,
+    Eq,
+    PartialEq,
+    Hash,
+    Ord,
+    PartialOrd,
+    Serialize,
+    Deserialize
+)]
 pub struct MetadataId(pub u64);
 
 impl Display for MetadataId {
@@ -564,7 +573,15 @@ impl DraftSendResult {
 ///
 /// Unfortunately we can not re-use [`DraftSaveSendErrorReason`] as we can not take ownership of
 /// the error so we have to do our own conversion.
-#[derive(serde::Serialize, serde::Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(
+    serde::Serialize,
+    serde::Deserialize,
+    Debug,
+    Clone,
+    Eq,
+    PartialEq,
+    Hash
+)]
 pub enum DraftSendFailure {
     Save(DraftSendFailureSave),
     Send(DraftSendFailureSend),
@@ -575,7 +592,15 @@ pub enum DraftSendFailure {
     Internal,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(
+    serde::Serialize,
+    serde::Deserialize,
+    Debug,
+    Clone,
+    Eq,
+    PartialEq,
+    Hash
+)]
 pub enum DraftSendFailureSave {
     AddressDisabled(String),
     AddressDoesNotHavePrimaryKey(AddressId),
@@ -584,7 +609,15 @@ pub enum DraftSendFailureSave {
     MessageDoesNotExist,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(
+    serde::Serialize,
+    serde::Deserialize,
+    Debug,
+    Clone,
+    Eq,
+    PartialEq,
+    Hash
+)]
 pub enum DraftSendFailureSend {
     NoRecipients,
     RecipientEmailInvalid(PrivateEmail),
@@ -600,7 +633,15 @@ pub enum DraftSendFailureSend {
     BadRequest(String),
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(
+    serde::Serialize,
+    serde::Deserialize,
+    Debug,
+    Clone,
+    Eq,
+    PartialEq,
+    Hash
+)]
 pub enum DraftSendFailureAttachment {
     Crypto(String),
     TooManyAttachments,
@@ -613,7 +654,15 @@ pub enum DraftSendFailureAttachment {
     Other(String),
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(
+    serde::Serialize,
+    serde::Deserialize,
+    Debug,
+    Clone,
+    Eq,
+    PartialEq,
+    Hash
+)]
 pub enum DraftSendFailureDispositionSwap {
     AttachmentDoesNotExist,
     AttachmentMessagedDoesNotExist,
@@ -623,7 +672,17 @@ pub enum DraftSendFailureDispositionSwap {
 sql_using_serde!(DraftSendFailure);
 
 /// Track the origin/context of this draft status
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, Hash, TryFrom)]
+#[derive(
+    Debug,
+    Copy,
+    Clone,
+    Eq,
+    PartialEq,
+    Serialize,
+    Deserialize,
+    Hash,
+    TryFrom
+)]
 #[try_from(repr)]
 #[repr(u8)]
 pub enum DraftSendResultOrigin {

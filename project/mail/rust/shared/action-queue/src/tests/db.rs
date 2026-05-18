@@ -4,8 +4,8 @@ use crate::action::{
 };
 use crate::queue::ActionRequeueReason;
 use crate::tests::common::{NoopActionHandler, TestDb};
-use mail_stash::stash::StashConfiguration;
-use mail_stash::{orm::Model, stash::Stash};
+use mail_stash::orm::Model;
+use mail_stash::stash::{Stash, StashConfiguration};
 use pretty_assertions::assert_eq;
 use serde::{Deserialize, Serialize};
 use tracing::subscriber::set_global_default;

@@ -1,10 +1,6 @@
-use crate::{
-    Transformer,
-    transforms::{
-        ColorMode,
-        styles::{BrowserCapabilities, IncludeFullStaticCss, InjectDarkModeOptions},
-    },
-};
+use crate::Transformer;
+use crate::transforms::ColorMode;
+use crate::transforms::styles::{BrowserCapabilities, IncludeFullStaticCss, InjectDarkModeOptions};
 
 #[test]
 fn inject_style_text_color_stylesheet_query_supported() {
@@ -251,13 +247,9 @@ fn inject_style_for_message_that_handles_dark_mode_natively_but_sender_is_untrus
 }
 
 mod regressions {
-    use crate::{
-        Transformer,
-        transforms::{
-            ColorMode,
-            styles::{BrowserCapabilities, IncludeFullStaticCss},
-        },
-    };
+    use crate::Transformer;
+    use crate::transforms::ColorMode;
+    use crate::transforms::styles::{BrowserCapabilities, IncludeFullStaticCss};
     use test_case::test_case;
 
     // Bugs caught live

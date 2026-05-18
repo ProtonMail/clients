@@ -1,8 +1,9 @@
-use std::{fmt::Display, str::FromStr};
+use std::fmt::Display;
+use std::str::FromStr;
 
-use proton_crypto_account::{
-    keys::VerificationPreferences,
-    proton_crypto::crypto::{PublicKey, VerificationError, VerificationResult},
+use proton_crypto_account::keys::VerificationPreferences;
+use proton_crypto_account::proton_crypto::crypto::{
+    PublicKey, VerificationError, VerificationResult,
 };
 
 use crate::keys::{PackageCryptoType, SendPreferences};

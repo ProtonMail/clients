@@ -1,4 +1,5 @@
-use std::{collections::HashMap, sync::OnceLock};
+use std::collections::HashMap;
+use std::sync::OnceLock;
 
 pub fn mime_extensions() -> &'static HashMap<&'static str, &'static str> {
     static HASHMAP: OnceLock<HashMap<&'static str, &'static str>> = OnceLock::new();

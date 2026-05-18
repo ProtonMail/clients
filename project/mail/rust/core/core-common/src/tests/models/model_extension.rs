@@ -1,11 +1,12 @@
-use crate::{
-    datatypes::{AddressFlags, AddressKeys, AddressSignedKeyList, AddressStatus, AddressType},
-    models::Address,
-    tests::common::new_core_test_connection,
+use crate::datatypes::{
+    AddressFlags, AddressKeys, AddressSignedKeyList, AddressStatus, AddressType,
 };
+use crate::models::Address;
+use crate::tests::common::new_core_test_connection;
 use mail_core_api::services::proton::AddressId;
+use mail_stash::orm::Model;
+use mail_stash::params;
 use mail_stash::stash::StashError;
-use mail_stash::{orm::Model, params};
 use proton_crypto_account::keys::AddressKeys as RealAddressKeys;
 
 #[tokio::test]

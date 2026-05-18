@@ -5,15 +5,10 @@ mod profiler;
 use criterion::{Criterion, criterion_group, criterion_main};
 use std::hint::black_box;
 
-use mail_html_transformer::{
-    Transformer, message_detector, remote_content,
-    sanitizer::{self, StripStyleSheets},
-    transforms::{
-        self,
-        styles::{BrowserCapabilities, IncludeFullStaticCss},
-    },
-    utm,
-};
+use mail_html_transformer::sanitizer::{self, StripStyleSheets};
+use mail_html_transformer::transforms::styles::{BrowserCapabilities, IncludeFullStaticCss};
+use mail_html_transformer::transforms::{self};
+use mail_html_transformer::{Transformer, message_detector, remote_content, utm};
 
 static AMOS_HTTP: &str = include_str!("./amos_http.html");
 static AMOS_LANDING: &str = include_str!("./amos_landing.html");

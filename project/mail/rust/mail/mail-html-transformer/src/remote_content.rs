@@ -6,14 +6,9 @@ mod tests;
 
 use crate::css_parser::{parse_style_attribute, parse_stylesheet};
 use crate::utils::parse_url;
-use html5ever::LocalName;
-use html5ever::namespace_url;
-use html5ever::ns;
-use kuchikiki::Attributes;
-use kuchikiki::ExpandedName;
-use kuchikiki::NodeData;
+use html5ever::{LocalName, namespace_url, ns};
 use kuchikiki::iter::NodeEdge;
-use kuchikiki::{Attribute, NodeRef};
+use kuchikiki::{Attribute, Attributes, ExpandedName, NodeData, NodeRef};
 use lightningcss::printer::PrinterOptions;
 use lightningcss::properties::custom::Function;
 use lightningcss::values::url::Url;

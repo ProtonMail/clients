@@ -1,5 +1,7 @@
 #![allow(clippy::pedantic)]
-use std::{fs::File, os::raw::c_int, path::Path};
+use std::fs::File;
+use std::os::raw::c_int;
+use std::path::Path;
 
 use criterion::profiler::Profiler;
 use pprof::ProfilerGuard;

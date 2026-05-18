@@ -122,7 +122,8 @@ impl TextDecorator for Decorator {
 #[cfg(test)]
 mod test {
     use super::*;
-    use std::{fs, io::Cursor};
+    use std::fs;
+    use std::io::Cursor;
 
     #[test]
     fn with_decorate_links() {

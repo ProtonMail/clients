@@ -1,13 +1,12 @@
 use mail_common::datatypes::SystemLabelId;
 use std::collections::BTreeMap;
 
-use crate::datatypes::LocalConversationId;
 use crate::datatypes::labels::{ScrollOrderDir, ScrollOrderField};
-use crate::datatypes::{ContextualConversation, ReadFilter};
+use crate::datatypes::{ContextualConversation, LocalConversationId, ReadFilter};
 use crate::models::{
-    CachedScrollData, CanonicalCategory, ConversationScrollData, MailSettings, ScrollData,
+    CachedScrollData, CanonicalCategory, Conversation, ConversationScrollData, MailSettings,
+    ScrollCursor, ScrollData,
 };
-use crate::models::{Conversation, ScrollCursor};
 use crate::{self as mail_common, CategoryView};
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::common::ConversationId;

@@ -1,7 +1,8 @@
 use anyhow::{Context, Result};
 use clap::Parser;
 use mail_ical::VCalendar;
-use std::{fs, path::PathBuf};
+use std::fs;
+use std::path::PathBuf;
 
 #[derive(Clone, Debug, Parser)]
 pub struct PrintCmd {

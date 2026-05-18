@@ -1,13 +1,12 @@
-use mail_api::services::proton::response_data::IncomingDefault as ApiIncomingDefault;
-use mail_api::services::proton::response_data::IncomingDefaultLocation as ApiIncomingDefaultLocation;
+use mail_api::services::proton::response_data::{
+    IncomingDefault as ApiIncomingDefault, IncomingDefaultLocation as ApiIncomingDefaultLocation,
+};
 use mail_common::models::{IncomingDefault, IncomingDefaultLocation};
 use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
 use mail_stash::orm::Model;
 use mail_stash::stash::StashError;
-use wiremock::{
-    Mock, ResponseTemplate,
-    matchers::{method, path},
-};
+use wiremock::matchers::{method, path};
+use wiremock::{Mock, ResponseTemplate};
 
 fn default_api_incoming_default(email: &str) -> ApiIncomingDefault {
     ApiIncomingDefault {

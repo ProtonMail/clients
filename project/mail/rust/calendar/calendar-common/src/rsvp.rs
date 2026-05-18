@@ -2,22 +2,25 @@ mod answer;
 mod fetch;
 
 use itertools::Itertools;
-use jiff::{
-    Zoned,
-    civil::{Date, Weekday},
-};
+use jiff::Zoned;
+use jiff::civil::{Date, Weekday};
 use mail_calendar_api_v1::{
     CalendarAttendeeId, CalendarAttendeeStatus, CalendarAttendeeToken, CalendarBootstrap,
     CalendarColor, CalendarEvent, CalendarEventId, CalendarEventRecurrenceId, CalendarEventUid,
     CalendarId,
 };
-use mail_core_api::{service::ApiServiceError, services::proton::AddressId, session::Session};
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::AddressId;
+use mail_core_api::session::Session;
 use mail_crypto_calendar::Error as CryptoError;
 use mail_ical::{self as ical};
 use proton_crypto::crypto::PGPProviderSync;
 use proton_crypto_account::keys::UnlockedAddressKeys;
 use serde_json::Value as JsonValue;
-use std::{collections::HashMap, error::Error, fmt, num::NonZeroU32};
+use std::collections::HashMap;
+use std::error::Error;
+use std::fmt;
+use std::num::NonZeroU32;
 use thiserror::Error;
 use tracing::instrument;
 

@@ -7,7 +7,7 @@ use http_body::{Body as HttpBody, Frame, SizeHint};
 use muon_proc::autoimpl;
 use pin_project::pin_project;
 use std::convert::Infallible;
-use std::pin::{pin, Pin};
+use std::pin::{Pin, pin};
 use std::task::{Context, Poll};
 
 /// The poll result of an HTTP body.

@@ -10,7 +10,8 @@ pub use event_subscriber::*;
 use mail_action_queue::queue::Queue;
 use mail_api_session::session::Session;
 use mail_issue_reporter_service::{IssueLevel, IssueReportKeys};
-use mail_stash::{UserDb, stash::Stash};
+use mail_stash::UserDb;
+use mail_stash::stash::Stash;
 use tokio::task::JoinHandle;
 
 pub const CONTACT_EVENT_TYPE_ID: &str = "proton-contact-event";

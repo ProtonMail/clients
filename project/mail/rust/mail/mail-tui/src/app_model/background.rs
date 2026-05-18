@@ -7,9 +7,9 @@ use anyhow::anyhow;
 use crossterm::event::{Event, KeyCode};
 use futures::FutureExt;
 use mail_common::{
-    BackgroundExecutionContext, BackgroundExecutionResult, BackgroundExecutionStatus,
+    BackgroundExecutionContext, BackgroundExecutionResult, BackgroundExecutionStatus, MailContext,
+    MailContextResult, MailUserContext,
 };
-use mail_common::{MailContext, MailContextResult, MailUserContext};
 use mail_core_common::models::{ModelExtension, User};
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Margin, Rect};

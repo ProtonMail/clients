@@ -1,5 +1,4 @@
-use crate::parameters::pid::Pid;
-use crate::parameters::pid::is_pid_param;
+use crate::parameters::pid::{Pid, is_pid_param};
 
 #[test]
 fn pid_struct() {

@@ -6,7 +6,7 @@ use derive_more::{Debug, Display, From, Into};
 use futures::prelude::*;
 use itertools::Itertools;
 use muon_proc::autoimpl;
-use std::any::{type_name, Any, TypeId};
+use std::any::{Any, TypeId, type_name};
 use std::collections::HashMap;
 use std::error::Error as StdError;
 use std::fmt::{Formatter, Result};

@@ -388,7 +388,8 @@ impl<'a> DirtyVCalendar<'a> {
 #[cfg(feature = "php")]
 mod php {
     use super::*;
-    use ext_php_rs::{binary_slice::BinarySlice, prelude::*};
+    use ext_php_rs::binary_slice::BinarySlice;
+    use ext_php_rs::prelude::*;
 
     #[derive(Clone, Debug, ZvalConvert)]
     struct PhpParseResult {

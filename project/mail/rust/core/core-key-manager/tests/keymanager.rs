@@ -1,34 +1,30 @@
-use std::sync::{
-    Arc,
-    atomic::{AtomicUsize, Ordering},
-};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use async_trait::async_trait;
+use mail_core_key_manager::cache::MemoryKeyCache;
+use mail_core_key_manager::error::{
+    KeyHandlingError, KeyManagerBuilderError, LoadingError, LoadingResult,
+};
+use mail_core_key_manager::traits::{
+    AddressWithKeys, ContactPublicKeyLoader, KeySecretLoader, LockedPrivateKeyLoader,
+    PublicKeyLoader, SignedVCard,
+};
 use mail_core_key_manager::{
     AddressId, KeyManager, KeyManagerBuilder, PublicAddressKeyApiFetchPolicy,
     PublicAddressKeyContactFetchPolicy, UserId,
-    cache::MemoryKeyCache,
-    error::{KeyHandlingError, KeyManagerBuilderError, LoadingError, LoadingResult},
-    traits::{
-        AddressWithKeys, ContactPublicKeyLoader, KeySecretLoader, LockedPrivateKeyLoader,
-        PublicKeyLoader, SignedVCard,
-    },
 };
-use proton_crypto_account::{
-    keys::{
-        APIPublicAddressKeyGroup, APIPublicAddressKeys, APIPublicKey, APIPublicKeySource,
-        AddressKeyForEmailSelector, AddressKeys, CryptoMailSettings, KeyFlag, KeyId,
-        LocalAddressKey, LocalUserKey, LockedKey, UserKeys,
-    },
-    proton_crypto::{
-        ProtonPGP,
-        crypto::{
-            DataEncoding, KeyGenerator, KeyGeneratorAlgorithm, KeyGeneratorSync, PGPProviderSync,
-            UnixTimestamp,
-        },
-    },
-    salts::KeySecret,
+use proton_crypto_account::keys::{
+    APIPublicAddressKeyGroup, APIPublicAddressKeys, APIPublicKey, APIPublicKeySource,
+    AddressKeyForEmailSelector, AddressKeys, CryptoMailSettings, KeyFlag, KeyId, LocalAddressKey,
+    LocalUserKey, LockedKey, UserKeys,
 };
+use proton_crypto_account::proton_crypto::ProtonPGP;
+use proton_crypto_account::proton_crypto::crypto::{
+    DataEncoding, KeyGenerator, KeyGeneratorAlgorithm, KeyGeneratorSync, PGPProviderSync,
+    UnixTimestamp,
+};
+use proton_crypto_account::salts::KeySecret;
 
 struct TestAccount {
     user_id: UserId,
@@ -131,7 +127,8 @@ fn setup_signed_contact_card<P: PGPProviderSync>(
     unlocked_user_key: &proton_crypto_account::keys::UnlockedUserKey<P>,
     email: &str,
 ) -> SignedVCard {
-    use base64::{Engine as _, engine::general_purpose::STANDARD};
+    use base64::Engine as _;
+    use base64::engine::general_purpose::STANDARD;
     use proton_crypto_account::contacts::EncryptableAndSignableCard;
 
     let key = provider

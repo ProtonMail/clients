@@ -18,11 +18,10 @@ use mail_common::test_utils::scroller::StoreLabeledModelMap as _;
 use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
 use mail_common::{Mailbox, conv_id, conversation, message, msg_id};
 use mail_core_api::services::proton::{
-    Address as ApiAddress, DelinquentState, Flags as ApiFlags, Label as ApiLabel,
-    ProductUsedSpace as ApiProductUsedSpace, Role as ApiRole, User as ApiUser,
-    UserMnemonicStatus as ApiUserMnemonicStatus, UserType as ApiUserType,
+    Address as ApiAddress, AddressId, DelinquentState, Flags as ApiFlags, Label as ApiLabel,
+    LabelId, LabelType as ApiLabelType, ProductUsedSpace as ApiProductUsedSpace, Role as ApiRole,
+    User as ApiUser, UserId, UserMnemonicStatus as ApiUserMnemonicStatus, UserType as ApiUserType,
 };
-use mail_core_api::services::proton::{AddressId, LabelId, LabelType as ApiLabelType, UserId};
 use mail_core_common::datatypes::SystemLabel;
 use mail_core_common::models::{
     Address, Label, ModelExtension as _, ModelIdExtension as _, PaidSubscription,

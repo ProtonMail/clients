@@ -3,7 +3,7 @@ use crate::common::prelude::*;
 use crate::env::DynEnv;
 use crate::headers::{AppVersionHeader, UserAgentHeader};
 use crate::http::prelude::*;
-use crate::middleware::{OnSendRetryHandler, Status429Handler, Status5xxHandler};
+use crate::middleware::{OnSendRetryHandler, Status5xxHandler, Status429Handler};
 use crate::{App, Client, Result, Sealed};
 use std::collections::VecDeque;
 

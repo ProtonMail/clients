@@ -1,11 +1,10 @@
 use indoc::indoc;
 use mail_sqlite3::Migration;
-use mail_stash::{
-    UserDb, params,
-    stash::{StashError, WriteTx},
-};
+use mail_stash::stash::{StashError, WriteTx};
+use mail_stash::{UserDb, params};
 
-use crate::{datatypes::LocalMessageId, models::Message};
+use crate::datatypes::LocalMessageId;
+use crate::models::Message;
 
 pub struct RestoreNonExpiredMessages;
 

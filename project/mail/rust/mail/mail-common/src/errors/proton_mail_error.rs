@@ -2,18 +2,14 @@ use super::mail_error_reason::*;
 use crate::actions::MailActionError;
 use crate::draft::{
     AttachmentDispositionSwapError, AttachmentRemoveError, AttachmentUploadError,
-    CancelScheduleSendError, Error, ExpirationError, PackageError, PasswordError, SendError,
-    SenderAddressChangeError,
+    CancelScheduleSendError, DiscardError as DraftDiscardError, Error, Error as DraftError,
+    ExpirationError, ExpirationError as DraftExpirationError, OpenError as DraftOpenError,
+    PackageError, PasswordError, PasswordError as DraftPasswordError, SaveError as DraftSaveError,
+    SendError, SendError as DraftSendError, SenderAddressChangeError, UndoError as DraftUndoError,
 };
 use crate::errors::api_service_error::UserApiServiceError;
 use crate::errors::unexpected::Unexpected;
-use crate::{
-    AppError, MailContextError, SidebarError, draft::DiscardError as DraftDiscardError,
-    draft::Error as DraftError, draft::ExpirationError as DraftExpirationError,
-    draft::OpenError as DraftOpenError, draft::PasswordError as DraftPasswordError,
-    draft::SaveError as DraftSaveError, draft::SendError as DraftSendError,
-    draft::UndoError as DraftUndoError,
-};
+use crate::{AppError, MailContextError, SidebarError};
 use core_event_loop::v6::EventSubscriberError;
 use core_event_loop::{EventLoopError, EventProviderError};
 use mail_action_queue::action::Action;

@@ -1,6 +1,6 @@
+use crate::Result;
 use crate::common::{BoxFut, Sender, SenderLayer};
 use crate::http::{HttpReq, HttpRes};
-use crate::Result;
 use derive_more::{AsRef, Deref, Display};
 use muon_proc::autoimpl;
 use std::borrow::Borrow;

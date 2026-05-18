@@ -43,7 +43,8 @@ use sanitizer::StripStyleSheets;
 use std::collections::BTreeSet;
 use std::fmt::{Display, Formatter};
 use std::io::Read;
-use transforms::{ColorMode, keep_spaces_and_escape_gt_and_lt, styles::BrowserCapabilities};
+use transforms::styles::BrowserCapabilities;
+use transforms::{ColorMode, keep_spaces_and_escape_gt_and_lt};
 use utm::StrippedUTM;
 
 // NOTE: each new transformation pass should be its own module.
@@ -313,6 +314,5 @@ mod integration_tests {
     // I get a really strange linker error if I `import cpuprofiler as _`.
     // TODO: Report this bug to rustc.
     // use cpuprofiler as _;
-    use criterion as _;
-    use pprof as _;
+    use {criterion as _, pprof as _};
 }

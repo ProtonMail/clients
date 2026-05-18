@@ -1,7 +1,5 @@
-use mail_crypto_inbox::{
-    message::{DecryptableMessage, EncryptableDraft, GettablePGPMessage},
-    proton_crypto::crypto::{AccessKeyInfo, DataEncoding, PGPProviderSync},
-};
+use mail_crypto_inbox::message::{DecryptableMessage, EncryptableDraft, GettablePGPMessage};
+use mail_crypto_inbox::proton_crypto::crypto::{AccessKeyInfo, DataEncoding, PGPProviderSync};
 
 mod common;
 use common::{

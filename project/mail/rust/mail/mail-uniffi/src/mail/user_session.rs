@@ -21,8 +21,10 @@ use mail_account_uniffi::login::ProcessTargetDeviceQrError;
 use mail_account_uniffi::password::PasswordFlow;
 use mail_account_uniffi::password_validator::PasswordValidatorService;
 use mail_common::models::Attachment;
-use mail_common::{MailContextError, MailUserContext};
-use mail_common::{ProtonMailError as RealProtonMailError, UpsellEligibilityService};
+use mail_common::{
+    MailContextError, MailUserContext, ProtonMailError as RealProtonMailError,
+    UpsellEligibilityService,
+};
 use mail_core_api::services::proton::ProtonAuth;
 use mail_core_common::UserContext;
 use mail_core_common::actions::user_feature_flags::OverrideFlag;

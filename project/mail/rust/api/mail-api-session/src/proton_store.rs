@@ -3,8 +3,8 @@ use futures::TryFutureExt;
 use mail_muon::client::Auth;
 use mail_muon::env::EnvId;
 use mail_muon::store::{Store as MuonStore, StoreError as MuonStoreError};
-use std::sync::Weak;
-use std::{borrow::Borrow, sync::Arc};
+use std::borrow::Borrow;
+use std::sync::{Arc, Weak};
 use tokio::sync::RwLock;
 
 use crate::store::Store;

@@ -2,8 +2,7 @@ use crate::actions::{
     ConversationOrMessage, GenericActionData, GenericLabelRelatedActionData, MailActionError,
     filter_responses_by_codes,
 };
-use crate::datatypes::LocalConversationId;
-use crate::datatypes::RollbackItemType;
+use crate::datatypes::{LocalConversationId, RollbackItemType};
 use crate::models::{Conversation, Message};
 use anyhow::Context;
 use mail_action_queue::action::{

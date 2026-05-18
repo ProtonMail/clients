@@ -15,8 +15,8 @@ use mail_core_common::datatypes::EncryptedPushNotification as RealEncryptedPushN
 
 use crate::core::datatypes::RemoteId;
 use crate::core::{FFIKeyChain, OSKeyChain, StoredSession};
-use crate::errors::VoidActionResult;
-use crate::{errors::ActionError, uniffi_async};
+use crate::errors::{ActionError, VoidActionResult};
+use crate::uniffi_async;
 
 use super::MailSession;
 

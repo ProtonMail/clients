@@ -20,16 +20,13 @@
 //!   - **Attachment**
 //!
 //! NOTE: There is no streaming API at the moment.
-use std::{
-    borrow::Cow,
-    io::{self, Write},
-};
+use std::borrow::Cow;
+use std::io::{self, Write};
 
-use mail_builder::{
-    encoders::{base64::base64_encode_mime, quoted_printable::quoted_printable_encode},
-    headers::content_type::ContentType,
-    mime::{BodyPart, MimePart},
-};
+use mail_builder::encoders::base64::base64_encode_mime;
+use mail_builder::encoders::quoted_printable::quoted_printable_encode;
+use mail_builder::headers::content_type::ContentType;
+use mail_builder::mime::{BodyPart, MimePart};
 
 use crate::Disposition;
 

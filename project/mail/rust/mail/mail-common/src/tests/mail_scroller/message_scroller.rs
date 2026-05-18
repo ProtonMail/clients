@@ -2,14 +2,13 @@ use std::collections::BTreeMap;
 
 use crate as mail_common;
 use crate::CategoryView;
-use crate::datatypes::LocalMessageId;
-use crate::datatypes::ReadFilter;
-use crate::datatypes::labels::ScrollOrderDir;
-use crate::datatypes::labels::ScrollOrderField;
+use crate::datatypes::labels::{ScrollOrderDir, ScrollOrderField};
+use crate::datatypes::{LocalMessageId, ReadFilter};
 use crate::mail_scroller::conversation_scroller::save_conversation_with_labels;
-use crate::models::MailSettings;
-use crate::models::{CachedScrollData, CanonicalCategory, MessageScrollData, ScrollCursor};
-use crate::models::{Message, ScrollData};
+use crate::models::{
+    CachedScrollData, CanonicalCategory, MailSettings, Message, MessageScrollData, ScrollCursor,
+    ScrollData,
+};
 use mail_api::services::proton::common::MessageId;
 use mail_common::test_utils::db::new_test_connection;
 use mail_common::test_utils::utils::create_address;

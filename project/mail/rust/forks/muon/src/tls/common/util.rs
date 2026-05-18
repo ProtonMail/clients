@@ -1,7 +1,7 @@
+use crate::Result;
 use crate::common::{DynSocket, Host, IntoDyn, Name, Socket};
 use crate::rt::{Dialer, DialerLayer};
 use crate::tls::{Alpn, DynTlsUpgrader, TlsUpgrader};
-use crate::Result;
 use async_trait::async_trait;
 use futures::TryFutureExt;
 use muon_proc::autoimpl;

@@ -1,9 +1,8 @@
 //! Collection of interfaces required for OS integration.
 mod keychain;
 
-use std::fs;
-use std::io;
 use std::path::{Path, PathBuf};
+use std::{fs, io};
 
 pub use keychain::*;
 use tokio::task::spawn_blocking;

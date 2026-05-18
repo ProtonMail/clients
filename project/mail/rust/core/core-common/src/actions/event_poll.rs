@@ -2,14 +2,11 @@ use crate::UserContext;
 use core_event_loop::EventLoopError;
 use core_event_loop::v6::EventSubscriberError;
 use mail_action_queue::action::{
-    ActionDependencyKeys, ActionGroup, FactoryResult, VersionConverter, VersionConverterError,
-    deserialize,
+    self, Action, ActionDependencyKeys, ActionGroup, ActionId, FactoryResult, Handler, Priority,
+    Type, VersionConverter, VersionConverterError, WriterGuard, WriterGuardError, deserialize,
 };
+use mail_action_queue::queue::ActionRequeueReason;
 use mail_action_queue::rebase::RebaseChangeSet;
-use mail_action_queue::{
-    action::{self, Action, ActionId, Handler, Priority, Type, WriterGuard, WriterGuardError},
-    queue::ActionRequeueReason,
-};
 use mail_stash::UserDb;
 use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};

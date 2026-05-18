@@ -1,7 +1,8 @@
 use anyhow::{Context, Result, anyhow};
 use clap::Parser;
 use mail_ical::{VCalendar, ValidatedVCalendar};
-use std::{fs, path::PathBuf};
+use std::fs;
+use std::path::PathBuf;
 
 #[derive(Clone, Debug, Parser)]
 pub struct ConvertCmd {

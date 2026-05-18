@@ -1,17 +1,11 @@
-use std::{
-    io::{self, Write},
-    string::FromUtf8Error,
-};
+use std::io::{self, Write};
+use std::string::FromUtf8Error;
 
-use proton_crypto_account::{
-    keys::PrimaryUnlockedAddressKey,
-    proton_crypto::{
-        CryptoError,
-        crypto::{
-            AsPublicKeyRef, DataEncoding, DetachedSignatureVariant, Encryptor, EncryptorSync,
-            PGPProviderSync, SigningMode, WritingMode,
-        },
-    },
+use proton_crypto_account::keys::PrimaryUnlockedAddressKey;
+use proton_crypto_account::proton_crypto::CryptoError;
+use proton_crypto_account::proton_crypto::crypto::{
+    AsPublicKeyRef, DataEncoding, DetachedSignatureVariant, Encryptor, EncryptorSync,
+    PGPProviderSync, SigningMode, WritingMode,
 };
 
 use crate::keys::{InboxSessionKey, KeyPacket, SessionKeyError};

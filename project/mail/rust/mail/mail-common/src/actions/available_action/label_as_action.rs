@@ -3,10 +3,8 @@
 mod tests;
 
 use itertools::Itertools;
-use mail_core_common::{
-    datatypes::{LabelColor, LabelType, LocalLabelId},
-    models::Label,
-};
+use mail_core_common::datatypes::{LabelColor, LabelType, LocalLabelId};
+use mail_core_common::models::Label;
 use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

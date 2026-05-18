@@ -274,7 +274,8 @@ pub struct ParsedVTimeZone {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Sign, UtcOffset, ics, utils::*};
+    use crate::utils::*;
+    use crate::{Sign, UtcOffset, ics};
     use pretty_assertions as pa;
 
     fn tz() -> VTimeZone {

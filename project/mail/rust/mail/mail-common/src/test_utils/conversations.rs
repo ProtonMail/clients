@@ -15,8 +15,8 @@ use mail_api::services::proton::responses::{
     PutConversationsSnoozeResponse, PutConversationsUnlabelResponse,
     PutConversationsUnsnoozeResponse,
 };
-use mail_core_api::services::proton::{Label as ApiLabel, LabelId};
-use mail_core_api::services::proton::{ProtonIdMarker, common::ApiErrorInfo};
+use mail_core_api::services::proton::common::ApiErrorInfo;
+use mail_core_api::services::proton::{Label as ApiLabel, LabelId, ProtonIdMarker};
 use serde_json;
 use std::collections::HashSet;
 use wiremock::matchers::{body_json, method, path};

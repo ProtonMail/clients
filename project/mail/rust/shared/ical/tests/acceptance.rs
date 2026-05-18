@@ -3,7 +3,8 @@ use jiff::Zoned;
 use mail_ical::*;
 use pretty_assertions as pa;
 use std::fmt::Write;
-use std::{fs, path::Path};
+use std::fs;
+use std::path::Path;
 use test_case::test_case;
 
 #[test]

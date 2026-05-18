@@ -2,8 +2,9 @@ use crate::core::datatypes::{ApiConfig, AppDetails, AppProtection, AppSettings, 
 use crate::core::device::{DeviceInfoProviderWrap, DynDeviceInfoProvider};
 use crate::core::measurement::{MeasurementEventType, MeasurementValue};
 use crate::core::verification::{ChallengeNotifierWrap, DynChallengeNotifier};
-use crate::core::{FFIKeyChain, StoredAccountState, StoredSession, StoredSessionState};
-use crate::core::{OSKeyChain, StoredAccount};
+use crate::core::{
+    FFIKeyChain, OSKeyChain, StoredAccount, StoredAccountState, StoredSession, StoredSessionState,
+};
 use crate::errors::unexpected::UnexpectedError;
 use crate::errors::{
     OtherErrorReason, PinAuthError, PinSetError, ProtonError, SessionReason, UserSessionError,
@@ -13,17 +14,20 @@ use crate::mail::MailUserSession;
 use crate::mail::logging::init_log;
 use crate::mail::state::MailUserContextMap;
 use crate::version::rust_sdk_version;
-use crate::{AsyncLiveQueryCallback, declare_live_query_tagger};
-use crate::{LiveQueryCallback, WatchHandle, async_runtime, async_runtime_slim, uniffi_async};
+use crate::{
+    AsyncLiveQueryCallback, LiveQueryCallback, WatchHandle, async_runtime, async_runtime_slim,
+    declare_live_query_tagger, uniffi_async,
+};
 use mail_core_common::services::{GrowthService, SessionObserverService};
 
 use chrono::Local;
 use futures::TryFutureExt;
 use mail_account_uniffi::login::LoginFlow;
 use mail_account_uniffi::signup::SignupFlow;
-use mail_common::{ContextErrorReason, MailErrorReason, ProtonMailError as RealProtonMailError};
-use mail_common::{MailContext, MailContextError};
-use mail_common::{NewMailUserContextOptions, Unexpected};
+use mail_common::{
+    ContextErrorReason, MailContext, MailContextError, MailErrorReason, NewMailUserContextOptions,
+    ProtonMailError as RealProtonMailError, Unexpected,
+};
 use mail_core_common::db::account::SessionEncryptionKey;
 use mail_core_common::event_loop::EventPollMode;
 use mail_core_common::models::{AppSettings as RealAppSettings, PinProtection};

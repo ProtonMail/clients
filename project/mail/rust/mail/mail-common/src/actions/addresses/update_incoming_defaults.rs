@@ -4,9 +4,8 @@ use crate::MailUserContext;
 use crate::actions::MailActionError;
 use crate::models::IncomingDefault;
 use mail_action_queue::action::{
-    Action, ActionDependencyKeys, DefaultVersionConverter, Type, WriterGuard,
+    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
 };
-use mail_action_queue::action::{ActionId, Handler};
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_core_api::session::Session;
 use mail_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;

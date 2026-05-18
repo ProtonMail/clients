@@ -1,10 +1,10 @@
 mod attachments;
 
 use self::attachments::*;
-use crate::datatypes::LocalMessageId;
-use crate::datatypes::{Disposition, MimeType};
+use crate::datatypes::{Disposition, LocalMessageId, MimeType};
+use crate::draft::compose::html_to_text;
 use crate::draft::recipients::ValidationState;
-use crate::draft::{CancelScheduleSendError, PackageError, SendError, compose::html_to_text};
+use crate::draft::{CancelScheduleSendError, PackageError, SendError};
 use crate::models::{Attachment, AttachmentType, DraftMetadata, Message};
 use crate::{AppError, MailContextError, MailContextResult, MailUserContext};
 use anyhow::anyhow;

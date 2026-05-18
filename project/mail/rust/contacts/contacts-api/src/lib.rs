@@ -9,10 +9,9 @@ pub use contact_lattice::{
     ContactBasic, ContactCard, ContactEmail, ContactEvent, ContactEventV6, ContactFull,
     ContactGroup, ContactGroupId, ContactLabelEventV6, ContactRootEventV6,
     ContactSendingPreferences, GetContactEventLatestRequest, GetContactResponse,
-    GetContactsEmailsResponse, GetContactsResponse, PutDeleteContactResponse,
-    PutDeleteContactsResponse,
+    GetContactsEmailsOptions, GetContactsEmailsResponse, GetContactsOptions, GetContactsResponse,
+    PutDeleteContactResponse, PutDeleteContactsRequest, PutDeleteContactsResponse,
 };
-pub use contact_lattice::{GetContactsEmailsOptions, GetContactsOptions, PutDeleteContactsRequest};
 
 pub use contact_lattice::{ContactEmailId, ContactId, ContactUID};
 use mail_api_event_types::Action;

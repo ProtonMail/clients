@@ -514,7 +514,8 @@ mod php {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{ics, utils::*};
+    use crate::ics;
+    use crate::utils::*;
     use test_case::test_case;
 
     #[test]

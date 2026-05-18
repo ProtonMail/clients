@@ -1,11 +1,10 @@
-use crate::{keys::InboxSessionKey, message::errors::MessageError};
-use base64::{Engine, prelude::BASE64_STANDARD};
-use proton_crypto_account::{
-    keys::PrimaryUnlockedAddressKey,
-    proton_crypto::crypto::{
-        DataEncoding, Decryptor, DecryptorSync, Encryptor, EncryptorSync, PGPMessage,
-        PGPProviderSync,
-    },
+use crate::keys::InboxSessionKey;
+use crate::message::errors::MessageError;
+use base64::Engine;
+use base64::prelude::BASE64_STANDARD;
+use proton_crypto_account::keys::PrimaryUnlockedAddressKey;
+use proton_crypto_account::proton_crypto::crypto::{
+    DataEncoding, Decryptor, DecryptorSync, Encryptor, EncryptorSync, PGPMessage, PGPProviderSync,
 };
 
 use super::GettablePGPMessage;

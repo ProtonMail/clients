@@ -4,17 +4,17 @@ mod tests;
 
 use crate::css_parser::{parse_style_attribute, parse_stylesheet};
 use crate::utils::parse_url;
-use html5ever::ns;
-use html5ever::{LocalName, namespace_url};
-use kuchikiki::{Attribute, ExpandedName, NodeData, NodeRef, iter::NodeEdge};
+use html5ever::{LocalName, namespace_url, ns};
+use kuchikiki::iter::NodeEdge;
+use kuchikiki::{Attribute, ExpandedName, NodeData, NodeRef};
 use lightningcss::printer::PrinterOptions;
 use lightningcss::properties::custom::{Function, Token, TokenOrValue, Variable};
 use lightningcss::values::image::Image;
 use lightningcss::values::url::Url;
 use lightningcss::visitor::{Visit, VisitTypes, Visitor};
+use std::collections::HashSet;
 use std::convert::Infallible;
-use std::sync::OnceLock;
-use std::{collections::HashSet, sync::LazyLock};
+use std::sync::{LazyLock, OnceLock};
 use tracing::warn;
 use velcro::hash_set;
 

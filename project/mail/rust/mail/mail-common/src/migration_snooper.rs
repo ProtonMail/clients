@@ -1,7 +1,8 @@
 use anyhow::Error;
 use async_trait::async_trait;
 use mail_core_api::services::proton::UserId;
-use mail_core_common::{Context, migration_snooper::MigrationSnooper};
+use mail_core_common::Context;
+use mail_core_common::migration_snooper::MigrationSnooper;
 use mail_stash::AccountDb;
 use mail_stash::macros::Model;
 use mail_stash::orm::Model;
@@ -101,7 +102,8 @@ impl PostLoginMobileMigrationPayload {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mail_core_common::{CoreContextError, test_utils::test_context::TestContext};
+    use mail_core_common::CoreContextError;
+    use mail_core_common::test_utils::test_context::TestContext;
 
     #[tokio::test]
     async fn test() {

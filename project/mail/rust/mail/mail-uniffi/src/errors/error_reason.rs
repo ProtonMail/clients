@@ -1,4 +1,5 @@
-use crate::{UniffiEnum, mail::Origin};
+use crate::UniffiEnum;
+use crate::mail::Origin;
 use mail_common::{
     ActionErrorReason as RealActionErrorReason, ContextErrorReason as RealContextErrorReason,
     DraftAttachmentDispositionSwapErrorReason as RealDraftAttachmentDispositionSwapErrorReason,

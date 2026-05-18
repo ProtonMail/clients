@@ -1,11 +1,8 @@
-use mail_stash::{
-    UserDb,
-    macros::Model,
-    orm::Model,
-    params,
-    stash::{StashError, Tether, WriteTx},
-    utils::{IterMapToSql, placeholders_n},
-};
+use mail_stash::macros::Model;
+use mail_stash::orm::Model;
+use mail_stash::stash::{StashError, Tether, WriteTx};
+use mail_stash::utils::{IterMapToSql, placeholders_n};
+use mail_stash::{UserDb, params};
 
 use crate::datatypes::{FlagMutability, UnixTimestamp, UserFeatureFlagSource};
 

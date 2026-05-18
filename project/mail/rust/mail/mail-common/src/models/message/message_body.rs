@@ -6,11 +6,9 @@ use mail_crypto_inbox::message::RawDecryptedBody;
 use mail_sqlite3::rusqlite;
 use mail_sqlite3::rusqlite::types::ToSqlOutput;
 use mail_stash::exports::{FromSql, FromSqlError, ToSql, Value};
-use mail_stash::{
-    macros::DbRecord,
-    params,
-    stash::{StashError, Tether, WriteTx},
-};
+use mail_stash::macros::DbRecord;
+use mail_stash::params;
+use mail_stash::stash::{StashError, Tether, WriteTx};
 use rusqlite::types;
 #[cfg(feature = "foundation_search")]
 use tracing::debug;

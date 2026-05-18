@@ -16,21 +16,17 @@ pub use self::generic_mobile_actions::*;
 pub use self::mobile_actions_builder::*;
 use crate::actions::conversations::label_as::UndoLabelAsConversations;
 use crate::actions::conversations::r#move::UndoMoveToConversations;
-use crate::actions::messages::UndoLabelAsMessages;
-use crate::actions::messages::UndoMoveToMessages;
+use crate::actions::messages::{UndoLabelAsMessages, UndoMoveToMessages};
 use crate::actions::notifications_quick_actions::PushNotificationActionHandler;
-use crate::datatypes::{LocalConversationId, LocalMessageId};
-use crate::datatypes::{RollbackItemType, SystemLabelId};
-use crate::models::RollbackItem;
-use crate::models::{MailLabel, Message};
+use crate::datatypes::{LocalConversationId, LocalMessageId, RollbackItemType, SystemLabelId};
+use crate::models::{MailLabel, Message, RollbackItem};
 use crate::{AppError, MailUserContext};
 use addresses::{block, unblock, update_incoming_defaults};
 use anyhow::{Context, anyhow};
 use indoc::formatdoc;
-use mail_action_queue::action::Action;
 use mail_action_queue::action::{
-    self, ActionDependencyKey, ActionDependencyKeys, ActionGroup, ActionId, FactoryError, Handler,
-    WriterGuard, WriterGuardError,
+    self, Action, ActionDependencyKey, ActionDependencyKeys, ActionGroup, ActionId, FactoryError,
+    Handler, WriterGuard, WriterGuardError,
 };
 use mail_action_queue::queue::{ActionRequeueReason, Queue};
 use mail_action_queue::rebase::{RebaseChangeSet, RebaseKey};
@@ -45,8 +41,7 @@ use mail_core_common::action_queue::CoreActionError;
 use mail_core_common::actions::dependency_builder::{
     ActionDependencyKeysBuilder, LocalIdActionDepExt,
 };
-use mail_core_common::datatypes::LocalLabelId;
-use mail_core_common::datatypes::SystemLabel;
+use mail_core_common::datatypes::{LocalLabelId, SystemLabel};
 use mail_core_common::models::{Label, LabelError, ModelIdExtension};
 use mail_sqlite3::rusqlite::ToSql;
 use mail_stash::UserDb;

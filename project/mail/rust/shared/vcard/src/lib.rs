@@ -28,9 +28,7 @@ pub mod vcard;
 use ::url::Url;
 pub use properties::*;
 
-pub use crate::errors::VCardError;
-pub use crate::errors::VCardResult;
-pub use crate::errors::VcardValidationError;
+pub use crate::errors::{VCardError, VCardResult, VcardValidationError};
 pub use crate::parameters::ParameterType;
 use crate::parameters::pid::is_pid_param;
 use crate::parameters::preference::is_pref_param;

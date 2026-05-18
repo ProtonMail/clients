@@ -2,9 +2,9 @@ use crate::AppError;
 use crate::actions::{ActionMoveData, MailActionError};
 use crate::models::Message;
 use mail_action_queue::action::{
-    Action, ActionDependencyKeys, FactoryResult, Type, VersionConverter, WriterGuard,
+    Action, ActionDependencyKeys, ActionId, FactoryResult, Handler, Type, VersionConverter,
+    WriterGuard,
 };
-use mail_action_queue::action::{ActionId, Handler};
 use mail_action_queue::enqueue;
 use mail_action_queue::queue::Queue;
 use mail_action_queue::rebase::RebaseChangeSet;

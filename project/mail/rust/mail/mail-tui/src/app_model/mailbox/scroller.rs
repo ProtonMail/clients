@@ -5,7 +5,8 @@ use futures::FutureExt;
 use mail_common::{
     MailScroller as RealMailScroller, MailScrollerHandle, MailScrollerItem, ScrollerUpdate,
 };
-use std::{ops::Deref, sync::Arc};
+use std::ops::Deref;
+use std::sync::Arc;
 
 pub struct MailScroller<T>
 where

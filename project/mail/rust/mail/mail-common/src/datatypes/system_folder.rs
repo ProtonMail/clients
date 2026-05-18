@@ -3,7 +3,18 @@ use mail_core_api::services::proton::LabelId;
 use mail_core_common::models::Label;
 use serde::{Deserialize, Serialize};
 
-#[derive(Copy, Clone, Debug, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
+#[derive(
+    Copy,
+    Clone,
+    Debug,
+    Deserialize,
+    Eq,
+    Hash,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize
+)]
 #[repr(u8)]
 pub enum MovableSystemFolder {
     Inbox = 0,

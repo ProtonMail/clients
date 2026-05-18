@@ -1,12 +1,9 @@
 use crate::test_utils::test_context::TestContext;
-use mail_core_api::services::proton::Label as ApiLabel;
-use mail_core_api::services::proton::LabelId;
-use mail_core_api::services::proton::PatchLabelRequest;
-use mail_core_api::services::proton::{GetLabelsResponse, PatchLabelResponse};
-use wiremock::MockBuilder;
-use wiremock::Times;
+use mail_core_api::services::proton::{
+    GetLabelsResponse, Label as ApiLabel, LabelId, PatchLabelRequest, PatchLabelResponse,
+};
 use wiremock::matchers::{body_json, method, path};
-use wiremock::{Mock, ResponseTemplate};
+use wiremock::{Mock, MockBuilder, ResponseTemplate, Times};
 
 impl TestContext {
     // Gets 3 labels called Label1, Label2, Label3

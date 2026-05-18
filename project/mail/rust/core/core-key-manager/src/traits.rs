@@ -1,18 +1,16 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use proton_crypto_account::{
-    contacts::{ContactCardType, DecryptableVerifiableCard},
-    keys::{APIPublicAddressKeyGroup, APIPublicAddressKeys, AddressKeys, UserKeys},
-    salts::KeySecret,
+use proton_crypto_account::contacts::{ContactCardType, DecryptableVerifiableCard};
+use proton_crypto_account::keys::{
+    APIPublicAddressKeyGroup, APIPublicAddressKeys, AddressKeys, UserKeys,
 };
+use proton_crypto_account::salts::KeySecret;
 
-use crate::{
-    cache::MemoryKeyCache,
-    error::LoadingResult,
-    ids::{AddressId, UserId},
-    policy::{PublicAddressKeyApiFetchPolicy, PublicAddressKeyContactFetchPolicy},
-};
+use crate::cache::MemoryKeyCache;
+use crate::error::LoadingResult;
+use crate::ids::{AddressId, UserId};
+use crate::policy::{PublicAddressKeyApiFetchPolicy, PublicAddressKeyContactFetchPolicy};
 
 /// Local model with the information needed to load address keys.
 #[derive(Debug, Clone, PartialEq, Eq)]

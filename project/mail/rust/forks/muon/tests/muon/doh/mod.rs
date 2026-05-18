@@ -9,7 +9,7 @@ use mail_muon::rt::{AsyncDialer, AsyncResolver, AsyncSpawner, DynResolver, Resol
 use mail_muon::test::store::TestStore;
 use mail_muon::tls::{BaseTrustAnchor, BaseVerifier, RustlsTls, TlsExt, TlsPin, TlsPinSet};
 use mail_muon::util::*;
-use mail_muon::{autoimpl, App, Client, GET};
+use mail_muon::{App, Client, GET, autoimpl};
 
 #[tokio::test]
 async fn test_doh_normal_routing() -> Result<()> {

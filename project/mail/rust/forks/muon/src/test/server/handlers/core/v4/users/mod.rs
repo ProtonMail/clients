@@ -1,10 +1,10 @@
 use crate::rest::core::v4::keys::Key;
 use crate::rest::core::v4::users::User;
-use crate::rest::{core, Bool};
+use crate::rest::{Bool, core};
 use crate::test::server::backend::{Backend, UserId};
 use crate::test::server::error::ServerRes;
-use axum::extract::{Request, State};
 use axum::Json;
+use axum::extract::{Request, State};
 use itertools::Itertools;
 
 /// Handle `GET /core/v4/users`.

@@ -1,16 +1,14 @@
 use std::convert::Infallible;
 
-use lightningcss::{
-    printer::PrinterOptions,
-    properties::Property,
-    values::color::{CssColor, HSL},
-    visit_types,
-    visitor::{Visit, Visitor},
-};
+use lightningcss::printer::PrinterOptions;
+use lightningcss::properties::Property;
+use lightningcss::values::color::{CssColor, HSL};
+use lightningcss::visit_types;
+use lightningcss::visitor::{Visit, Visitor};
 
+use crate::transforms::styles::colors::{HSLExt, css_to_hsla};
 use crate::transforms::styles::{
     ColorPurpose, DARK_MODE_BACKGROUND_COLOR, NewProperty, OldProperty, PropertyWithPurpose,
-    colors::{HSLExt, css_to_hsla},
 };
 
 use super::colors::ShouldModifyTransparentColors;

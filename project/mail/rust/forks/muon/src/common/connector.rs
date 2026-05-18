@@ -7,8 +7,8 @@
 //! [`Connector`]: crate::common::Connector
 //! [`Sender`]: crate::common::Sender
 
-use crate::common::{DynSender, IntoDyn, Server};
 use crate::Result;
+use crate::common::{DynSender, IntoDyn, Server};
 use async_trait::async_trait;
 use muon_proc::{autoimpl, derive_dyn};
 use std::sync::Arc;

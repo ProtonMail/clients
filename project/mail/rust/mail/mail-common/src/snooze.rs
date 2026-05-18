@@ -1,8 +1,6 @@
 use chrono::{DateTime, Datelike, Days, NaiveTime, TimeZone, Weekday};
-use mail_core_common::{
-    datatypes::{UnixTimestamp, WeekStart},
-    models::User,
-};
+use mail_core_common::datatypes::{UnixTimestamp, WeekStart};
+use mail_core_common::models::User;
 
 /// Snooze options for a given day.
 ///

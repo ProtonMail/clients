@@ -20,18 +20,20 @@ use crate::mail::state::MailUserContextPtr;
 use crate::mail::{ImagePolicy, MailUserSession};
 use crate::{async_runtime, uniffi_async};
 use chrono::Local;
-use mail_common::ProtonMailError as RealProtonMailError;
+use mail_common::draft::compose::{
+    DraftAddressValidationError as RealDraftAddressValidationError,
+    DraftAddressValidationResult as RealDraftAddressValidationResult,
+};
 use mail_common::draft::recipients::ExpirationFeatureSupportReport;
 use mail_common::draft::{
     Draft as RealDraft, DraftActorOptions, DraftEvent,
     DraftExpirationTime as RealDraftExpirationTime, DraftSyncStatus as RealDraftSyncStatus, EoData,
     RecipientGroupId, ReplyMode, ScheduleSendOptions,
-    compose::DraftAddressValidationError as RealDraftAddressValidationError,
-    compose::DraftAddressValidationResult as RealDraftAddressValidationResult,
 };
-use mail_common::models::DraftSendResult as RealDraftSendResult;
-use mail_common::models::{DraftMetadata, MessageMimeType as RealMessageMimeType};
-use mail_common::{MailContextError, MailUserContext};
+use mail_common::models::{
+    DraftMetadata, DraftSendResult as RealDraftSendResult, MessageMimeType as RealMessageMimeType,
+};
+use mail_common::{MailContextError, MailUserContext, ProtonMailError as RealProtonMailError};
 use mail_core_api::services::proton::PrivateEmail;
 use mail_mailto::Mailto;
 use recipients::ComposerRecipientList;

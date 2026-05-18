@@ -1,10 +1,11 @@
-use proton_crypto_account::{
-    errors::{AccountCryptoError, EncryptionPreferencesError, KeyError, KeySelectionError},
-    proton_crypto::CryptoError,
+use proton_crypto_account::errors::{
+    AccountCryptoError, EncryptionPreferencesError, KeyError, KeySelectionError,
 };
+use proton_crypto_account::proton_crypto::CryptoError;
 use thiserror::Error;
 
-use crate::{UserId, ids::AddressId};
+use crate::UserId;
+use crate::ids::AddressId;
 
 pub type LoadingResult<T> = std::result::Result<T, LoadingError>;
 

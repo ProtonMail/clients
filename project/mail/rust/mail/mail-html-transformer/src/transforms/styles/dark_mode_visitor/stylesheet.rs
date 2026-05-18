@@ -1,16 +1,13 @@
 use std::convert::Infallible;
 
-use lightningcss::{
-    printer::PrinterOptions,
-    rules::CssRule,
-    traits::ToCss,
-    visit_types,
-    visitor::{Visit, Visitor},
-};
+use lightningcss::printer::PrinterOptions;
+use lightningcss::rules::CssRule;
+use lightningcss::traits::ToCss;
+use lightningcss::visit_types;
+use lightningcss::visitor::{Visit, Visitor};
 
-use crate::transforms::styles::{
-    Selector, StylesheetOverrides, dark_mode_visitor::declaration_block::ShouldRemoveImportant,
-};
+use crate::transforms::styles::dark_mode_visitor::declaration_block::ShouldRemoveImportant;
+use crate::transforms::styles::{Selector, StylesheetOverrides};
 
 use super::colors::ShouldModifyTransparentColors;
 use super::declaration_block::{DeclarationBlockVisitor, ShouldStoreOverriddenProps};

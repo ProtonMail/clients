@@ -12,8 +12,6 @@ use crate::mail::mail_scroller::{
 use crate::mail::{MailUserSession, Mailbox};
 use crate::{LiveQueryCallback, WatchHandle, declare_live_query_tagger, uniffi_async};
 use itertools::Itertools;
-use mail_common::MailScroller;
-use mail_common::Unexpected;
 use mail_common::datatypes::{
     ContextualConversation, ContextualConversationAndMessages, ConversationViewOptions,
     LocalConversationId, MobileAction as RealMobileAction,
@@ -21,7 +19,8 @@ use mail_common::datatypes::{
 };
 use mail_common::models::Conversation as RealConversation;
 use mail_common::{
-    ActionErrorReason as RealActionErrorReason, ProtonMailError as RealProtonMailError,
+    ActionErrorReason as RealActionErrorReason, MailScroller,
+    ProtonMailError as RealProtonMailError, Unexpected,
 };
 use mail_core_common::datatypes::{LocalLabelId, SystemLabel, WeekStart as RealWeekStart};
 use mail_core_common::models::Label as RealLabel;

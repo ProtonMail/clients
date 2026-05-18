@@ -193,9 +193,8 @@ mod php {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::TzId;
-    use crate::ics;
     use crate::utils::*;
+    use crate::{TzId, ics};
 
     #[test]
     fn dates() {

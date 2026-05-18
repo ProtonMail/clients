@@ -3,8 +3,10 @@ use crate::draft::compose::PM_SIGNATURE;
 use crate::migration_snooper::PostLoginMobileMigrationPayload;
 use crate::{AppError, MailUserContext};
 use mail_core_api::services::proton::UserId;
-use mail_core_common::models::{InitializationError, InitializationWatcher, User};
-use mail_core_common::{datatypes::InitializationKey, models::InitializedComponent};
+use mail_core_common::datatypes::InitializationKey;
+use mail_core_common::models::{
+    InitializationError, InitializationWatcher, InitializedComponent, User,
+};
 use mail_stash::exports::{
     FromSql, FromSqlError, FromSqlResult, SqliteError, ToSql, ToSqlOutput, Transaction, Value,
     ValueRef,

@@ -1,7 +1,7 @@
 use crate::actions::refresh::ActionRefresh;
-use crate::datatypes::ConversationLabelsCount;
-use crate::datatypes::MessageLabelsCount;
-use crate::datatypes::{LocalConversationId, LocalMessageId};
+use crate::datatypes::{
+    ConversationLabelsCount, LocalConversationId, LocalMessageId, MessageLabelsCount,
+};
 use crate::models::IncomingDefault;
 use crate::prefetch::PrefetchJob;
 use crate::user_context::events::conversations::handle_conversation_events;

@@ -11,11 +11,8 @@ use mail_core_api::services::proton::{
     UserMnemonicStatus as ApiUserMnemonicStatus, UserSettings as ApiUserSettings,
     UserType as ApiUserType, WeekStart as ApiWeekStart,
 };
-use wiremock::Times;
-use wiremock::{
-    Mock, ResponseTemplate,
-    matchers::{method, path},
-};
+use wiremock::matchers::{method, path};
+use wiremock::{Mock, ResponseTemplate, Times};
 
 impl TestContext {
     #[function_name::named]

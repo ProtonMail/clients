@@ -1,9 +1,7 @@
 use futures::future::BoxFuture;
-use std::{
-    future::Future,
-    pin::Pin,
-    sync::{Arc, LazyLock, Weak},
-};
+use std::future::Future;
+use std::pin::Pin;
+use std::sync::{Arc, LazyLock, Weak};
 use tokio::task::JoinHandle;
 use tracing::warn;
 

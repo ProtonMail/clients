@@ -1,7 +1,7 @@
 //! An HTTP connector, responsible for returning a sender for a given server.
 
-use crate::common::prelude::*;
 use crate::common::Scheme::*;
+use crate::common::prelude::*;
 use crate::http::hyper::sender::{new_http1_sender, new_http2_sender};
 use crate::http::hyper::tunnel::HttpTunnelExt;
 use crate::http::{DynHttpSender, HttpReq, HttpRes};

@@ -26,14 +26,12 @@
 use crate::services::proton::common::{AttachmentId, ConversationId, ExternalId, MessageId};
 use mail_core_api::services::proton::common::ApiErrorInfo;
 use mail_core_api::services::proton::{
-    Action, CoreEvent, EventId, LabelEvent, PrivateEmail, PrivateString, UserId,
+    Action, AddressId, CoreEvent, EventId, LabelEvent, LabelId, PrivateEmail, PrivateString, UserId,
 };
-use mail_core_api::services::proton::{AddressId, LabelId};
 use mail_crypto_inbox::attachment::{
     AttachmentEncryptedSignature, AttachmentSignature, KeyPackets,
 };
-use serde::Deserialize;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use serde_with::{BoolFromInt, DefaultOnNull, serde_as};
 use smart_default::SmartDefault;
@@ -104,7 +102,17 @@ pub enum MessageButtons {
 }
 
 /// TODO: Document this enum.
-#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, Eq, Hash, PartialEq)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Default,
+    Serialize,
+    Deserialize,
+    Eq,
+    Hash,
+    PartialEq
+)]
 pub enum MimeType {
     /// TODO: Document this variant.
     #[serde(rename = "application/json")]

@@ -1,5 +1,5 @@
-use crate::atlas::{new_builder, PASS, USER};
-use anyhow::{bail, Ok, Result};
+use crate::atlas::{PASS, USER, new_builder};
+use anyhow::{Ok, Result, bail};
 use futures::future;
 use mail_muon::client::flow::LoginFlow;
 use mail_muon::{Client, GET};

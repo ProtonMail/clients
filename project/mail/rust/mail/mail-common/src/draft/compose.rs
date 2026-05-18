@@ -1,9 +1,7 @@
 use crate::datatypes::{MessageRecipient, MessageSender, ParsedHeaderValue};
+use crate::draft::draft_v1::{AttachmentRemovalId, DraftAttachmentRemovalQueuer};
 use crate::draft::recipients::{ContactGroupResolver, MaybeEmptyString, RecipientList};
-use crate::draft::{
-    Error, ReplyMode, SaveError, SenderAddressChangeError, draft_v1, draft_v1::AttachmentRemovalId,
-    draft_v1::DraftAttachmentRemovalQueuer,
-};
+use crate::draft::{Error, ReplyMode, SaveError, SenderAddressChangeError, draft_v1};
 use crate::models::{
     Attachment, CustomSettings, DraftAttachmentMetadata, MailSettings, Message,
     MessageBodyMetadata, MessageMimeType, MetadataId,
@@ -30,8 +28,7 @@ use mail_html_transformer::transforms::styles::{
 use mail_html_transformer::{Html2TextOptions, Transformer};
 use mail_stash::orm::Model as _;
 use mail_stash::stash::{StashError, Tether};
-use std::fmt::Display;
-use std::fmt::Write as _;
+use std::fmt::{Display, Write as _};
 use tracing::error;
 
 #[cfg(test)]

@@ -7,7 +7,16 @@ pub use proton_crypto_account::salts::KeySecret;
 pub use mail_muon::client::{Auth, Tokens};
 
 /// The password mode as reported by the API during authentication.
-#[derive(Clone, Copy, Debug, Deserialize_repr, Serialize_repr, Eq, Hash, PartialEq)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Deserialize_repr,
+    Serialize_repr,
+    Eq,
+    Hash,
+    PartialEq
+)]
 #[repr(u8)]
 pub enum PasswordMode {
     One = 1,

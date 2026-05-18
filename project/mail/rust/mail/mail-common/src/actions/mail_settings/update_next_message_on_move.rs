@@ -6,7 +6,8 @@ use mail_action_queue::action::{
     Action, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
-use mail_api::services::proton::{ProtonMail, request_data::PutNextMessageOnMoveRequest};
+use mail_api::services::proton::ProtonMail;
+use mail_api::services::proton::request_data::PutNextMessageOnMoveRequest;
 use mail_core_api::session::Session;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;

@@ -1,6 +1,5 @@
 use crate::datatypes::SystemLabelId;
-use mail_core_api::services::proton::Label as ApiLabel;
-use mail_core_api::services::proton::LabelId;
+use mail_core_api::services::proton::{Label as ApiLabel, LabelId};
 use mail_core_common::datatypes::LabelType;
 
 pub trait ApiLabelTestUtils {

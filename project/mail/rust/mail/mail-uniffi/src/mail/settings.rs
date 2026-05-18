@@ -1,14 +1,14 @@
+use super::MailUserSession;
+use super::datatypes::MailSettings;
 use super::state::MailUserContextPtr;
-use super::{MailUserSession, datatypes::MailSettings};
 use crate::errors::unexpected::UnexpectedError;
 use crate::errors::{ProtonError, UserSessionError};
 use crate::{LiveQueryCallback, WatchHandle, declare_live_query_tagger, uniffi_async};
-use mail_common::ProtonMailError as RealProtonMailError;
 use mail_common::models::{
     CustomSettings as RealCustomSettings, MailSettings as RealMailSettings,
     MobileSignatureStatus as RealMobileSignatureStatus,
 };
-use mail_common::{MailContextError, MailUserContext};
+use mail_common::{MailContextError, MailUserContext, ProtonMailError as RealProtonMailError};
 use mail_core_common::models::ModelExtension;
 use mail_uniffi_runtime::async_runtime;
 use std::sync::Arc;

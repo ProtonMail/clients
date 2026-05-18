@@ -8,8 +8,7 @@ use mail_common::datatypes::SystemLabelId;
 use mail_common::models::Message;
 use mail_common::test_utils::init::Params as TestParams;
 use mail_common::test_utils::test_context::MailTestContext;
-use mail_core_api::services::proton::Label as ApiLabel;
-use mail_core_api::services::proton::{LabelId, LabelType as ApiLabelType};
+use mail_core_api::services::proton::{Label as ApiLabel, LabelId, LabelType as ApiLabelType};
 use mail_stash::orm::Model;
 
 #[tokio::test]

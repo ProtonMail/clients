@@ -1,12 +1,12 @@
 use std::io::{self};
 
 use base64::Engine;
-use mail_crypto_inbox::{
-    attachment::{
-        AttachmentEncryptedSignature, AttachmentSignature, DecryptableAttachment,
-        EncryptableAttachment, EncryptedAttachmentMetadata, KeyPackets, encrypt_and_sign_to_writer,
-    },
-    proton_crypto::crypto::{Decryptor, DecryptorSync, PGPProviderSync, SessionKey},
+use mail_crypto_inbox::attachment::{
+    AttachmentEncryptedSignature, AttachmentSignature, DecryptableAttachment,
+    EncryptableAttachment, EncryptedAttachmentMetadata, KeyPackets, encrypt_and_sign_to_writer,
+};
+use mail_crypto_inbox::proton_crypto::crypto::{
+    Decryptor, DecryptorSync, PGPProviderSync, SessionKey,
 };
 
 mod common;

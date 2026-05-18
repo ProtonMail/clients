@@ -1,9 +1,7 @@
+use crate::AppError;
 use crate::datatypes::labels::color_to_display;
+use crate::datatypes::labels::hierarchy::{self, Hierarchy};
 use crate::datatypes::{MovableSystemFolder, SystemLabelId};
-use crate::{
-    AppError,
-    datatypes::labels::hierarchy::{self, Hierarchy},
-};
 use mail_core_api::services::proton::LabelId;
 use mail_core_common::datatypes::{LabelColor, LabelType, LocalLabelId, SystemLabel};
 use mail_core_common::models::{Label, ModelIdExtension};

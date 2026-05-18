@@ -1,6 +1,7 @@
+use crate::datatypes::theme::MailTheme;
 use crate::datatypes::{
     MessageRecipient, MobileAction, MobileSetting, MobileSettings, MovableSystemFolder,
-    SystemLabelId, theme::MailTheme,
+    SystemLabelId,
 };
 use crate::decrypted_message::ThemeOpts;
 use crate::models::{Conversation, MailSettings, Message};

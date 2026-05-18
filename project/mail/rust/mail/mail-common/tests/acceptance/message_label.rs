@@ -1,22 +1,19 @@
 use mail_api::services::proton::common::{ConversationId, MessageId};
-use mail_api::services::proton::response_data::{ConversationCount, MessageCount};
 use mail_api::services::proton::response_data::{
-    MailSettings as ApiMailSettings, Message as ApiMessage, MessageBody as ApiMessageBody,
-    MessageFlags as ApiMessageFlags, MessageMetadata as ApiMessageMetadata,
-    MimeType as ApiMimeType, ViewMode as ApiViewMode,
+    ConversationCount, MailSettings as ApiMailSettings, Message as ApiMessage,
+    MessageBody as ApiMessageBody, MessageCount, MessageFlags as ApiMessageFlags,
+    MessageMetadata as ApiMessageMetadata, MimeType as ApiMimeType, ViewMode as ApiViewMode,
 };
 use mail_common::Mailbox;
-use mail_common::datatypes::MessageFlags;
-use mail_common::datatypes::SystemLabelId;
+use mail_common::datatypes::{MessageFlags, SystemLabelId};
 use mail_common::models::Message;
 use mail_common::test_utils::init::Params as TestParams;
 use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
 use mail_core_api::services::proton::{
-    Address as ApiAddress, DelinquentState, Flags as ApiFlags, Label as ApiLabel,
-    ProductUsedSpace as ApiProductUsedSpace, Role as ApiRole, User as ApiUser,
-    UserMnemonicStatus as ApiUserMnemonicStatus, UserType as ApiUserType,
+    Address as ApiAddress, AddressId, DelinquentState, Flags as ApiFlags, Label as ApiLabel,
+    LabelId, LabelType as ApiLabelType, ProductUsedSpace as ApiProductUsedSpace, Role as ApiRole,
+    User as ApiUser, UserId, UserMnemonicStatus as ApiUserMnemonicStatus, UserType as ApiUserType,
 };
-use mail_core_api::services::proton::{AddressId, LabelId, LabelType as ApiLabelType, UserId};
 use mail_core_common::datatypes::SystemLabel;
 use mail_core_common::models::{Label, ModelExtension, ModelIdExtension, PaidSubscription};
 use mail_core_common::test_utils::addresses::ApiAddressTestUtils;

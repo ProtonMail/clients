@@ -1,44 +1,29 @@
 use itertools::Itertools;
-use mail_api::services::proton::{
-    common::MessageId,
-    prelude::{GetMessagesResponse, RunningTasks},
-    response_data::MessageMetadata as ApiMessageMetadata,
+use mail_api::services::proton::common::MessageId;
+use mail_api::services::proton::prelude::{GetMessagesResponse, RunningTasks};
+use mail_api::services::proton::response_data::MessageMetadata as ApiMessageMetadata;
+use mail_common::datatypes::labels::ScrollOrderField;
+use mail_common::datatypes::{ReadFilter, SystemLabelId};
+use mail_common::models::{Conversation, LabelExt, Message, MessageCounter, MessageScrollData};
+use mail_common::test_utils::init::Params as TestParams;
+use mail_common::test_utils::scroller::{
+    StoreLabeledModelMap, TestScroller, UNIQUE_CONV_ID, save_single_message, test_messages,
 };
-use mail_common::{api_message_meta, datatypes::labels::ScrollOrderField};
-use mail_common::{conv_id, message, msg_id};
-use mail_common::{
-    datatypes::ReadFilter,
-    models::{Conversation, Message, MessageCounter, MessageScrollData},
-};
-use mail_common::{
-    datatypes::SystemLabelId,
-    test_utils::{init::Params as TestParams, test_context::MailTestContext},
-};
-use mail_common::{
-    models::LabelExt,
-    test_utils::{
-        scroller::{
-            StoreLabeledModelMap, TestScroller, UNIQUE_CONV_ID, save_single_message, test_messages,
-        },
-        test_context::MailUserContextTestExtension,
-    },
-};
+use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
+use mail_common::{api_message_meta, conv_id, message, msg_id};
 use mail_core_api::services::proton::LabelId;
-use mail_core_common::{
-    datatypes::SystemLabel,
-    models::{Address, Label, ModelIdExtension},
-};
+use mail_core_common::datatypes::SystemLabel;
+use mail_core_common::models::{Address, Label, ModelIdExtension};
 use velcro::hash_map;
 
 use mail_common::datatypes::labels::ScrollOrderDir;
 use mail_stash::orm::Model;
 use mail_stash::params;
 use mail_stash::stash::StashError;
-use std::{collections::HashMap, vec};
-use wiremock::{
-    Mock, ResponseTemplate, Times,
-    matchers::{method, path, query_param_contains},
-};
+use std::collections::HashMap;
+use std::vec;
+use wiremock::matchers::{method, path, query_param_contains};
+use wiremock::{Mock, ResponseTemplate, Times};
 
 fn expected_messages(
     n: usize,

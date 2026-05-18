@@ -1,7 +1,8 @@
 use super::*;
 use file::embedded_migrations;
 use include_dir::{Dir, include_dir};
-use mail_stash::{UserDb, stash::Stash};
+use mail_stash::UserDb;
+use mail_stash::stash::Stash;
 
 #[tokio::test]
 async fn test_migration() {

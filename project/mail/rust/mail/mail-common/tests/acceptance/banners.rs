@@ -1,20 +1,16 @@
 use mail_api::services::proton::common::MessageId;
-use mail_api::services::proton::response_data::IncomingDefault as ApiIncomingDefault;
-use mail_api::services::proton::response_data::IncomingDefaultLocation as ApiIncomingDefaultLocation;
-use mail_common::datatypes::ParsedHeaders;
-use mail_common::datatypes::SystemLabelId as _;
+use mail_api::services::proton::response_data::{
+    IncomingDefault as ApiIncomingDefault, IncomingDefaultLocation as ApiIncomingDefaultLocation,
+};
 use mail_common::datatypes::message_banner::MessageBanner;
-use mail_common::datatypes::{MessageFlags, MimeType};
+use mail_common::datatypes::{MessageFlags, MimeType, ParsedHeaders, SystemLabelId as _};
 use mail_common::decrypted_message::DecryptedMessageBody;
-use mail_common::models::IncomingDefault;
-use mail_common::models::IncomingDefaultLocation;
-use mail_common::models::MailSettings;
-use mail_common::models::MessageBodyMetadata;
-use mail_common::models::MessageMimeType;
-use mail_common::models::{Conversation, RawMessageBody};
+use mail_common::models::{
+    Conversation, IncomingDefault, IncomingDefaultLocation, MailSettings, MessageBodyMetadata,
+    MessageMimeType, RawMessageBody,
+};
 use mail_core_api::services::proton::LabelId;
-use mail_core_common::models::Address;
-use mail_core_common::models::ModelExtension as _;
+use mail_core_common::models::{Address, ModelExtension as _};
 
 use mail_common::test_utils::init::Params;
 use mail_stash::orm::Model;
@@ -23,14 +19,11 @@ use test_case::test_case;
 
 use mail_common::models::Message;
 
-use mail_common::test_utils::test_context::MailTestContext;
-use mail_common::test_utils::test_context::MailUserContextTestExtension;
+use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
 use mail_stash::stash::StashError;
 use velcro::hash_map;
-use wiremock::Mock;
-use wiremock::MockServer;
-use wiremock::ResponseTemplate;
 use wiremock::matchers::{method, path};
+use wiremock::{Mock, MockServer, ResponseTemplate};
 
 fn default_api_incoming_default() -> ApiIncomingDefault {
     ApiIncomingDefault {

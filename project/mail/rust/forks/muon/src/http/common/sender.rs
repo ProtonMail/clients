@@ -1,7 +1,7 @@
 use crate::common::prelude::*;
+use crate::http::DohHostLayer;
 use crate::http::common::pool::{Pool, PooledSender, TryGet};
 use crate::http::prelude::*;
-use crate::http::DohHostLayer;
 use crate::util::TryRace;
 use crate::{ErrorKind, Result};
 use futures::TryFutureExt;
@@ -49,7 +49,12 @@ impl HttpSender {
     async fn send_with(&self, sender: PooledSender, req: HttpReq) -> Result<HttpRes> {
         let timeout = req.get_allowed_time();
 
-        match sender.send(req).with_timeout(timeout).map_err(ErrorKind::send).await {
+        match sender
+            .send(req)
+            .with_timeout(timeout)
+            .map_err(ErrorKind::send)
+            .await
+        {
             Ok(Ok(res)) => {
                 sender.repool().await;
                 Ok(res)

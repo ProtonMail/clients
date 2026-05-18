@@ -1,17 +1,15 @@
 use proton_crypto_account::proton_crypto::CryptoInfoError;
-use proton_crypto_account::proton_crypto::crypto::VerificationError;
 use proton_crypto_account::proton_crypto::crypto::{
-    AsPublicKeyRef, DataEncoding, Decryptor, DecryptorSync, PGPProviderSync, VerificationResult,
-    VerifiedData,
+    AsPublicKeyRef, DataEncoding, Decryptor, DecryptorSync, PGPProviderSync, VerificationError,
+    VerificationResult, VerifiedData,
 };
 
 use mail_crypto_inbox_mime::{MimeProcessor, ProcessMime, ProcessedMessage};
 
 use crate::message;
 
-use super::GettablePGPMessage;
-use super::MessageError;
 use super::utils::to_sanitized_string;
+use super::{GettablePGPMessage, MessageError};
 
 /// A raw decrypted message body.
 ///

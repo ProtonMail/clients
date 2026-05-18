@@ -1,7 +1,7 @@
 use anyhow::Result;
+use mail_muon::GET;
 use mail_muon::rt::{AsyncSpawner, PollWith};
 use mail_muon::test::server::Server;
-use mail_muon::GET;
 use std::sync::Arc;
 
 #[mail_muon::test]

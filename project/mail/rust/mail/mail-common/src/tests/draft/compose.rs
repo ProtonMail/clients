@@ -1,24 +1,20 @@
 pub use super::*;
-use crate::datatypes::LocalConversationId;
-use crate::datatypes::LocalMessageId;
-use crate::datatypes::MessageFlags;
-use crate::datatypes::MimeType;
-use crate::datatypes::SystemLabelId;
-use crate::datatypes::attachment;
-use crate::datatypes::{Disposition, MessageRecipient, MessageRecipients, MessageSender};
-use crate::datatypes::{LocalAttachmentId, ParsedHeaders};
+use crate::datatypes::{
+    Disposition, LocalAttachmentId, LocalConversationId, LocalMessageId, MessageFlags,
+    MessageRecipient, MessageRecipients, MessageSender, MimeType, ParsedHeaders, SystemLabelId,
+    attachment,
+};
 use crate::decrypted_message::DecryptedMessageBody;
-use crate::draft::MetadataId;
-use crate::draft::Recipient;
 use crate::draft::draft_v1::Draft;
 use crate::draft::recipients::{MaybeEmptyString, NullContactGroupResolver};
+use crate::draft::{MetadataId, Recipient};
 use crate::models::{Attachment, MessageBodyMetadata, MessageReplyTo};
 use insta::assert_snapshot;
 use mail_api::services::proton::prelude::ConversationId;
 use mail_core_api::services::proton::LabelId;
-use mail_core_common::datatypes::AddressFlags;
-use mail_core_common::datatypes::{AddressStatus, AddressType, LocalAddressId};
-use mail_core_common::datatypes::{UserMnemonicStatus, UserType};
+use mail_core_common::datatypes::{
+    AddressFlags, AddressStatus, AddressType, LocalAddressId, UserMnemonicStatus, UserType,
+};
 use mail_core_common::models::{PaidSubscription, Role, User};
 use std::str::FromStr;
 use test_case::test_case;

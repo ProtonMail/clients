@@ -5,12 +5,10 @@ mod utils;
 
 pub use self::search::*;
 use super::MailPaginatorJoinHandle;
-use crate::datatypes::labels::ScrollOrderDir;
-use crate::{
-    MailContextError, MailUserContext,
-    datatypes::{ReadFilter, labels::ScrollOrderField},
-    models::ScrollData,
-};
+use crate::datatypes::ReadFilter;
+use crate::datatypes::labels::{ScrollOrderDir, ScrollOrderField};
+use crate::models::ScrollData;
+use crate::{MailContextError, MailUserContext};
 use mail_core_api::services::proton::LabelId;
 use mail_core_common::datatypes::LocalLabelId;
 

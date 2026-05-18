@@ -1,8 +1,6 @@
 use mail_core_api::services::proton::{EventId, GetEventsLatestResponse};
-use wiremock::{
-    Mock, ResponseTemplate,
-    matchers::{method, path},
-};
+use wiremock::matchers::{method, path};
+use wiremock::{Mock, ResponseTemplate};
 
 use super::test_context::MailTestContext;
 

@@ -1,8 +1,6 @@
+use crate::event_loop::event_provider::CoreEventProviderError;
 use crate::event_loop::v6::CoreEventLoopV6Context;
-use crate::{
-    event_loop::event_provider::CoreEventProviderError,
-    services::event_loop_service::EventManagerContext,
-};
+use crate::services::event_loop_service::EventManagerContext;
 use async_trait::async_trait;
 use core_event_loop::{EventProvider, EventProviderError, EventProviderResult, RawEvent};
 use mail_core_api::services::proton::ProtonCore;

@@ -6,8 +6,7 @@ use mail_api::services::proton::response_data::{
 };
 use mail_core_api::services::proton::LabelId;
 use mail_core_common::datatypes::{LabelColor, LabelType, LocalLabelId};
-use mail_core_common::models::Label;
-use mail_core_common::models::ModelIdExtension;
+use mail_core_common::models::{Label, ModelIdExtension};
 use mail_stash::orm::Model;
 use mail_stash::stash::{StashError, Tether};
 use std::collections::BTreeMap;

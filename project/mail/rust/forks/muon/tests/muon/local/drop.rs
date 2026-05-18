@@ -1,6 +1,6 @@
 use anyhow::Result;
-use mail_muon::test::server::Server;
 use mail_muon::GET;
+use mail_muon::test::server::Server;
 use std::sync::Arc;
 
 #[mail_muon::test]

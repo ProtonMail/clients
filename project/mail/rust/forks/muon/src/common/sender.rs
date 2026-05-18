@@ -5,8 +5,8 @@
 //! can send requests, as well as the `SenderLayer` trait, which is implemented
 //! by types that can add additional functionality to a sender.
 
-use crate::common::{BoxFut, IntoDyn};
 use crate::Result;
+use crate::common::{BoxFut, IntoDyn};
 use muon_proc::{autoimpl, derive_dyn};
 use std::sync::Arc;
 

@@ -5,10 +5,8 @@ use flume::Receiver;
 use mail_core_common::datatypes::LocalLabelId;
 use tracing::instrument;
 
-use crate::{
-    MailContextError, MailUserContext,
-    actions::{conversations, messages},
-};
+use crate::actions::{conversations, messages};
+use crate::{MailContextError, MailUserContext};
 
 pub type PrefetchNotify = OnceLock<flume::Sender<Vec<PrefetchJob>>>;
 

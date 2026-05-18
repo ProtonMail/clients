@@ -9,10 +9,10 @@ use crate::mail::datatypes::{MessageRecipientDisplayMode, ViewMode};
 use crate::mail::state::MailUserContextPtr;
 use crate::mail::unread::UnreadLiveQueryCallback;
 use crate::{WatchHandle, uniffi_async, watch_channel_inner};
-use mail_common::MailUserContext;
-use mail_common::Mailbox as RealMailbox;
-use mail_common::ProtonMailError as RealProtonMailError;
 use mail_common::datatypes::SystemLabelId;
+use mail_common::{
+    MailUserContext, Mailbox as RealMailbox, ProtonMailError as RealProtonMailError,
+};
 use mail_core_api::services::proton::LabelId as RealLabelId;
 use mail_core_api::session::Session;
 use mail_stash::UserDb;

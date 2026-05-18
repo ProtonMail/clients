@@ -3,9 +3,10 @@ use crate::UniffiEnum;
 use crate::errors::SnoozeErrorReason;
 
 use derive_more::From;
-use mail_common::MailErrorReason as RealMailErrorReason;
-use mail_common::ProtonMailError as RealProtonMailError;
-use mail_common::SnoozeErrorReason as RealSnoozeErrorReason;
+use mail_common::{
+    MailErrorReason as RealMailErrorReason, ProtonMailError as RealProtonMailError,
+    SnoozeErrorReason as RealSnoozeErrorReason,
+};
 
 #[derive(Debug, From, UniffiEnum)]
 pub enum SnoozeError {

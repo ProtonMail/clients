@@ -1,4 +1,5 @@
-use mail_stash::{UserDb, macros::Model};
+use mail_stash::UserDb;
+use mail_stash::macros::Model;
 
 #[derive(Debug, Clone, PartialEq, Model)]
 #[TableName("telemetry_events")]

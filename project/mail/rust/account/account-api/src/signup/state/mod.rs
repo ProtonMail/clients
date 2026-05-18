@@ -1,12 +1,11 @@
-use crate::prelude::Address;
+use crate::prelude::{Address, User};
 use crate::protocol::PostLoginValidator;
 use crate::shared::SecureString;
 use crate::signup::state::want_create::WantCreate;
 use crate::signup::state::want_password::WantPassword;
 use crate::signup::state::want_recovery::WantRecovery;
 use crate::signup::state::want_username::WantUsername;
-use crate::signup::{Behavior, ChallengeInfo};
-use crate::{prelude::User, signup::SignupError};
+use crate::signup::{Behavior, ChallengeInfo, SignupError};
 use complete::Complete;
 use derive_more::{Display, From, TryInto};
 use mail_api_session::store::DynStore;

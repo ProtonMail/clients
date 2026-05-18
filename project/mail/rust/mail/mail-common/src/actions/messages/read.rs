@@ -2,9 +2,8 @@ use crate::actions::{GenericActionData, MailActionError, filter_responses_by_cod
 use crate::datatypes::{LocalMessageId, RollbackItemType};
 use crate::models::Message;
 use mail_action_queue::action::{
-    Action, ActionDependencyKeys, DefaultVersionConverter, Type, WriterGuard,
+    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
 };
-use mail_action_queue::action::{ActionId, Handler};
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::ProtonMail;
 use mail_core_api::consts::General;

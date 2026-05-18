@@ -4,7 +4,8 @@
 //! across both list action and message action tests to maximize code reuse.
 
 use crate::actions::{ListAction, MessageAction};
-use crate::datatypes::{MobileAction, MovableSystemFolder, SystemLabelId, theme::MailTheme};
+use crate::datatypes::theme::MailTheme;
+use crate::datatypes::{MobileAction, MovableSystemFolder, SystemLabelId};
 use crate::decrypted_message::ThemeOpts;
 use crate::models::Message;
 use mail_core_api::services::proton::LabelId;

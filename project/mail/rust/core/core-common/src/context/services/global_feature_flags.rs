@@ -1,9 +1,8 @@
 use crate::app_events::{OnEnterForegroundEvent, OnUserContextMapChanged};
 use crate::datatypes::UnixTimestamp;
 use crate::models::{FeatureFlag, ModelExtension};
-use crate::services::DeviceInfoService;
-use crate::{Context, services::Service};
-use crate::{CoreContextError, CoreContextResult, Origin};
+use crate::services::{DeviceInfoService, Service};
+use crate::{Context, CoreContextError, CoreContextResult, Origin};
 use anyhow::{Context as _, Result};
 use mail_core_api::services::proton::{FeatureFlagsApi as _, GetUnleashFeaturesContext};
 use mail_core_api::session::Session;

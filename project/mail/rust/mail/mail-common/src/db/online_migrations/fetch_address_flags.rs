@@ -1,12 +1,11 @@
 use crate::{MailContextError, MailContextResult, MailUserContext};
-use mail_core_api::{
-    consts::General,
-    service::ApiServiceError,
-    services::proton::{AddressId, ProtonAccount as _},
-};
+use mail_core_api::consts::General;
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::{AddressId, ProtonAccount as _};
 use mail_core_common::models::{Address, ModelExtension};
 use mail_stash::orm::Model;
-use std::{sync::Weak, time::Duration};
+use std::sync::Weak;
+use std::time::Duration;
 use tokio::time;
 use tracing::{debug, info, instrument};
 
@@ -123,7 +122,8 @@ mod tests {
     use super::*;
     use crate::test_utils::test_context::MailTestContext;
     use mail_core_api::services::proton::{Address as ApiAddress, AddressFlags as ApiAddressFlags};
-    use mail_core_common::{datatypes::AddressFlags, test_utils::addresses::ApiAddressTestUtils};
+    use mail_core_common::datatypes::AddressFlags;
+    use mail_core_common::test_utils::addresses::ApiAddressTestUtils;
 
     #[tokio::test]
     async fn smoke() {

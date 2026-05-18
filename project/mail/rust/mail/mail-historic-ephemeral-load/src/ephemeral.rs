@@ -4,15 +4,13 @@ use std::time::Instant;
 use crate::continuation::{HistoricFetchContinuation, resolve_effective_continuation};
 use futures::stream::{self, StreamExt};
 use mail_api::MAX_PAGE_ELEMENT_COUNT;
-use mail_api::services::proton::{ProtonMail, common::MessageId, requests::GetMessagesOptions};
-use mail_common::{
-    MailContextError, MailUserContext,
-    datatypes::{
-        EncryptedMessageBody, SystemLabelId,
-        labels::{ScrollOrderDir, ScrollOrderField},
-    },
-    models::MessageBodyMetadata,
-};
+use mail_api::services::proton::ProtonMail;
+use mail_api::services::proton::common::MessageId;
+use mail_api::services::proton::requests::GetMessagesOptions;
+use mail_common::datatypes::labels::{ScrollOrderDir, ScrollOrderField};
+use mail_common::datatypes::{EncryptedMessageBody, SystemLabelId};
+use mail_common::models::MessageBodyMetadata;
+use mail_common::{MailContextError, MailUserContext};
 use mail_core_api::services::proton::LabelId;
 use mail_crypto_inbox::message::{DecryptableMessage as _, DecryptedBody};
 use mail_crypto_inbox::proton_crypto;

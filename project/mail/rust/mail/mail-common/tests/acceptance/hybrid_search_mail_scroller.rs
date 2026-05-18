@@ -12,15 +12,12 @@ use fixtures::hybrid_search_fixture;
 use itertools::Itertools;
 use mail_api::services::proton::common::MessageId;
 use mail_api::services::proton::prelude::RunningTasks;
-use mail_common::api_message_meta;
 use mail_common::datatypes::{AlmostAllMail, SearchOptions, SystemLabelId};
 use mail_common::models::{MailSettings, Message};
-use mail_common::msg_id;
+use mail_common::test_utils::init::Params as TestParams;
 use mail_common::test_utils::scroller::{TestScroller, save_single_message};
-use mail_common::test_utils::{
-    init::Params as TestParams,
-    test_context::{MailTestContext, MailUserContextTestExtension},
-};
+use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
+use mail_common::{api_message_meta, msg_id};
 use mail_core_api::services::proton::LabelId;
 use mail_core_common::datatypes::SystemLabel;
 use mail_core_common::models::ModelIdExtension;

@@ -1,5 +1,5 @@
-use anyhow::Result;
 use crate::tls::{TlsCertDer, TrustAnchor};
+use anyhow::Result;
 use rcgen::{BasicConstraints, Certificate, CertificateParams, IsCa, KeyPair};
 
 /// A custom trust anchor.

@@ -1,6 +1,7 @@
 use core::str;
 
-use base64::{Engine as _, prelude::BASE64_STANDARD as BASE_64};
+use base64::Engine as _;
+use base64::prelude::BASE64_STANDARD as BASE_64;
 use mail_crypto_inbox::message::{GettablePGPMessage, SessionKeyAndDataPacketsExtractable};
 use mail_crypto_inbox::proton_crypto::crypto::{
     DataEncoding, Decryptor, DecryptorSync, Encryptor, EncryptorSync, PGPProviderSync,

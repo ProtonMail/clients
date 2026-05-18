@@ -3,34 +3,29 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use base64::{Engine as _, engine::general_purpose::STANDARD};
+use base64::Engine as _;
+use base64::engine::general_purpose::STANDARD;
+use mail_core_key_manager::cache::MemoryKeyCache;
+use mail_core_key_manager::traits::{
+    AddressWithKeys, CacheAccess, ContactPublicKeyLoader, KeySecretLoader, LockedPrivateKeyLoader,
+    PublicKeyLoader, SignedVCard,
+};
 use mail_core_key_manager::{
     AddressId, KeyManager, KeySelector, PublicAddressKeyApiFetchPolicy,
     PublicAddressKeyContactFetchPolicy, UserId,
-    cache::MemoryKeyCache,
-    traits::{
-        AddressWithKeys, CacheAccess, ContactPublicKeyLoader, KeySecretLoader,
-        LockedPrivateKeyLoader, PublicKeyLoader, SignedVCard,
-    },
 };
-use proton_crypto_account::{
-    contacts::EncryptableAndSignableCard,
-    keys::{
-        APIPublicAddressKeyGroup, APIPublicAddressKeys, APIPublicKey, APIPublicKeySource,
-        AddressKeys, CryptoMailSettings, KeyFlag, KeyId, LocalAddressKey, LocalUserKey, LockedKey,
-        UnlockedUserKey, UserKeys,
-    },
-    proton_crypto::{
-        ProtonPGP,
-        crypto::{
-            DataEncoding, Decryptor, DecryptorSync, Encryptor, EncryptorSync, KeyGenerator,
-            KeyGeneratorAlgorithm, KeyGeneratorSync, PGPProviderSync, VerifiedData, Verifier,
-            VerifierSync,
-        },
-        crypto_clock,
-    },
-    salts::KeySecret,
+use proton_crypto_account::contacts::EncryptableAndSignableCard;
+use proton_crypto_account::keys::{
+    APIPublicAddressKeyGroup, APIPublicAddressKeys, APIPublicKey, APIPublicKeySource, AddressKeys,
+    CryptoMailSettings, KeyFlag, KeyId, LocalAddressKey, LocalUserKey, LockedKey, UnlockedUserKey,
+    UserKeys,
 };
+use proton_crypto_account::proton_crypto::crypto::{
+    DataEncoding, Decryptor, DecryptorSync, Encryptor, EncryptorSync, KeyGenerator,
+    KeyGeneratorAlgorithm, KeyGeneratorSync, PGPProviderSync, VerifiedData, Verifier, VerifierSync,
+};
+use proton_crypto_account::proton_crypto::{ProtonPGP, crypto_clock};
+use proton_crypto_account::salts::KeySecret;
 
 #[tokio::main]
 #[allow(clippy::print_stdout)]

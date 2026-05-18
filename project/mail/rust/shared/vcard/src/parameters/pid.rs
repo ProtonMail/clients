@@ -1,9 +1,7 @@
 use std::fmt::Debug;
 
-use crate::{
-    ParameterType,
-    errors::{VCardParameterError, VCardParameterResult},
-};
+use crate::ParameterType;
+use crate::errors::{VCardParameterError, VCardParameterResult};
 use regex::Regex;
 
 /// The PID parameter is used to identify a specific property among multiple instances.

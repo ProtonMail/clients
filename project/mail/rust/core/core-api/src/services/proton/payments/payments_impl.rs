@@ -3,8 +3,8 @@ use crate::services::proton::payments::{PAYMENTS_V5, ProtonPayments};
 use crate::services::proton::prelude::*;
 use bytes::Bytes;
 use mail_muon::common::Sender;
-use mail_muon::{GET, POST, serde_to_query, util::ProtonRequestExt};
-use mail_muon::{ProtonRequest, ProtonResponse};
+use mail_muon::util::ProtonRequestExt;
+use mail_muon::{GET, POST, ProtonRequest, ProtonResponse, serde_to_query};
 
 impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> ProtonPayments for This {
     async fn get_payments_status(

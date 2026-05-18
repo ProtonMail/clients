@@ -2,21 +2,31 @@ use std::fmt::{Display, Formatter};
 
 use indoc::indoc;
 use mail_action_queue::rebase::RebaseChangeSet;
-use mail_contacts_api::ContactGroup as ApiContactGroup;
-use mail_contacts_api::{ContactApi, ContactGroupId};
+use mail_contacts_api::{ContactApi, ContactGroup as ApiContactGroup, ContactGroupId};
 use mail_core_api::service::ApiServiceError;
 use mail_shared_types::{Action, ModelIdExtension};
 use mail_stash::exports::{FromSql, FromSqlResult, SqliteError, ToSql, ToSqlOutput, ValueRef};
+use mail_stash::macros::Model;
 use mail_stash::orm::Model;
-use mail_stash::rusqlite;
 use mail_stash::stash::{StashError, WriteTx};
-use mail_stash::{UserDb, macros::Model};
+use mail_stash::{UserDb, rusqlite};
 use serde::{Deserialize, Serialize};
 use tracing::{instrument, warn};
 
 use crate::local_ids::{LocalContactEmailId, LocalContactGroupId, LocalContactId};
 
-#[derive(Clone, Debug, Default, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
+#[derive(
+    Clone,
+    Debug,
+    Default,
+    Deserialize,
+    Eq,
+    Hash,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize
+)]
 pub struct ContactGroupColor(String);
 
 impl ContactGroupColor {

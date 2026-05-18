@@ -1,12 +1,11 @@
-use std::{borrow::Borrow, sync::Arc};
+use std::borrow::Borrow;
+use std::sync::Arc;
 
 use crate::core::datatypes::AccountDetails;
 use mail_core_api::services::proton::SessionId;
+use mail_core_common::datatypes::{PasswordMode, TfaStatus};
+use mail_core_common::db::account::{CoreAccount, CoreSession};
 use mail_core_common::{CoreAccountState, CoreSessionState};
-use mail_core_common::{
-    datatypes::{PasswordMode, TfaStatus},
-    db::account::{CoreAccount, CoreSession},
-};
 use uniffi::{Enum, Record};
 
 /// Represents an account known to the system.

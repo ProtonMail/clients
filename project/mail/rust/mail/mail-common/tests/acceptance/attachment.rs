@@ -1,6 +1,5 @@
 use futures::future::try_join_all;
-use mail_common::datatypes::LocalAttachmentId;
-use mail_common::datatypes::SystemLabelId;
+use mail_common::datatypes::{LocalAttachmentId, SystemLabelId};
 use mail_common::models::{Attachment, Conversation};
 use mail_common::test_utils::attachment::{
     testdata_attachment_data, testdata_expected_attachment_decrypted,

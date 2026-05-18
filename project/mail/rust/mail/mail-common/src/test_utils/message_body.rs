@@ -8,13 +8,12 @@ use mail_api::services::proton::response_data::{
 };
 use mail_core_api::auth::UserKeySecret;
 use mail_core_api::services::proton::{
-    Address as ApiAddress, AddressFlags as ApiAddressFlags,
+    Address as ApiAddress, AddressFlags as ApiAddressFlags, AddressId,
     AddressSignedKeyList as ApiAddressSignedKeyList, AddressStatus as ApiAddressStatus,
-    AddressType as ApiAddressType, DelinquentState, Flags as ApiFlags,
-    ProductUsedSpace as ApiProductUsedSpace, Role as ApiRole, User as ApiUser,
+    AddressType as ApiAddressType, DelinquentState, Flags as ApiFlags, LabelId,
+    ProductUsedSpace as ApiProductUsedSpace, Role as ApiRole, User as ApiUser, UserId,
     UserMnemonicStatus as ApiUserMnemonicStatus, UserType as ApiUserType,
 };
-use mail_core_api::services::proton::{AddressId, LabelId, UserId};
 use mail_core_common::models::PaidSubscription;
 use mail_crypto_inbox::proton_crypto::crypto::KeyGeneratorAlgorithm;
 use mail_crypto_inbox::proton_crypto::{new_pgp_provider, new_srp_provider};

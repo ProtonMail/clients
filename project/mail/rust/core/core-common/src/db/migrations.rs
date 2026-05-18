@@ -3,7 +3,8 @@
 mod tests;
 
 use include_dir::{Dir, include_dir};
-use mail_sqlite3::{Migrator, MigratorError, file::embedded_migrations};
+use mail_sqlite3::file::embedded_migrations;
+use mail_sqlite3::{Migrator, MigratorError};
 use mail_stash::stash::Stash;
 use mail_stash::{AccountDb, UserDb};
 

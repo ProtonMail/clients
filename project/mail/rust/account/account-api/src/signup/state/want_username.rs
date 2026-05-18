@@ -1,14 +1,14 @@
 use crate::protocol::ApiServiceObservabilityResponse;
+use crate::requests::ParseDomain;
 use crate::shared::challenge::Behavior;
 use crate::signup::SignupError;
 use crate::signup::state::want_password::WantPassword;
 use crate::signup::state::{StateData, StateResult, Username};
-use crate::{AccountApi, ApiError, requests::ParseDomain};
+use crate::{AccountApi, ApiError};
 use derive_more::Display;
 use futures::TryFutureExt;
 use mail_muon::Client;
-use mail_observability::PreLoginMetricRecorder;
-use mail_observability::metric;
+use mail_observability::{PreLoginMetricRecorder, metric};
 use serde::{Deserialize, Serialize};
 use tracing::info;
 

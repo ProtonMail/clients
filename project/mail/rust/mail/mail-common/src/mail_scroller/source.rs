@@ -10,16 +10,18 @@ pub use self::hybrid_search::*;
 #[cfg(feature = "foundation_search")]
 pub use self::local_search::*;
 pub use self::remote_source::*;
-use crate::datatypes::SearchOptions;
-use crate::datatypes::{ContextualConversation, LocalConversationId, LocalMessageId, ReadFilter};
+use crate::datatypes::{
+    ContextualConversation, LocalConversationId, LocalMessageId, ReadFilter, SearchOptions,
+};
 use crate::mail_scroller::CategoryView;
 use crate::models::Message;
 use crate::traits::ScrollerEq;
 use crate::{MailContextError, MailUserContext};
 use mail_core_common::datatypes::LocalLabelId;
 use mail_stash::orm::Model;
+use std::fmt::Debug;
+use std::future::Future;
 use std::hash::Hash;
-use std::{fmt::Debug, future::Future};
 use tokio::task::JoinHandle;
 
 pub type MailPaginatorJoinHandle = Option<JoinHandle<Result<(), MailContextError>>>;

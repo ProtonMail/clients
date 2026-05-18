@@ -1,18 +1,14 @@
 use std::collections::HashSet;
 
-use mail_crypto_inbox::{
-    keys::{PackageCryptoType, SendPreferences},
-    lock_icon::{
-        LockColor, LockIcon, LockTooltip, MailVerificationStatus, UiLock, XPmContentEncryption,
-        XPmOrigin, XPmRecipientAuthentication, XPmRecipientEncryption,
-    },
-    message::packages::PackageMimeType,
-    proton_crypto::{
-        crypto::{DataEncoding, PGPProviderSync, PublicKey},
-        keytransparency::VerificationError,
-        new_pgp_provider,
-    },
+use mail_crypto_inbox::keys::{PackageCryptoType, SendPreferences};
+use mail_crypto_inbox::lock_icon::{
+    LockColor, LockIcon, LockTooltip, MailVerificationStatus, UiLock, XPmContentEncryption,
+    XPmOrigin, XPmRecipientAuthentication, XPmRecipientEncryption,
 };
+use mail_crypto_inbox::message::packages::PackageMimeType;
+use mail_crypto_inbox::proton_crypto::crypto::{DataEncoding, PGPProviderSync, PublicKey};
+use mail_crypto_inbox::proton_crypto::keytransparency::VerificationError;
+use mail_crypto_inbox::proton_crypto::new_pgp_provider;
 use proton_crypto_account::keys::{KeyOwnership, VerificationPreferences};
 
 mod common;

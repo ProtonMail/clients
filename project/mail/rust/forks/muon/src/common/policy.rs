@@ -195,9 +195,11 @@ mod tests {
 
     #[test]
     fn test_jitter_bounds() {
-        assert!((0..100)
-            .map(|_| jitter(1.s()))
-            .all(|j| 0.s() <= j && j <= 1.s()));
+        assert!(
+            (0..100)
+                .map(|_| jitter(1.s()))
+                .all(|j| 0.s() <= j && j <= 1.s())
+        );
     }
 
     #[test]

@@ -1,8 +1,6 @@
 #![allow(dead_code)]
 
 //! Everything related to processing a decrypted message.
-use crate::ImagePolicy;
-use crate::TrackerService;
 use crate::actions::messages::UnsubscribeNewsletter;
 use crate::datatypes::attachment::ContentId;
 use crate::datatypes::message_banner::MessageBanner;
@@ -13,17 +11,21 @@ use crate::models::{
     MessageMimeType, RawMessageBody,
 };
 use crate::rsvp::RsvpEventId;
-use crate::{AppError, MailContextError, MailContextResult, MailUserContext};
+use crate::{
+    AppError, ImagePolicy, MailContextError, MailContextResult, MailUserContext, TrackerService,
+};
 use anyhow::Context;
 use mail_action_queue::action::ActionId;
 use mail_calendar_common::{self as cal, RsvpError};
 use mail_core_api::services::proton::AddressId;
 
 use mail_core_common::models::{Address, ModelExtension, ModelIdExtension};
-use mail_core_common::services::crypto_key_service::mail_core_key_manager::PublicAddressKeyApiFetchPolicy;
-use mail_core_common::services::crypto_key_service::mail_core_key_manager::PublicAddressKeyContactFetchPolicy;
-use mail_crypto_inbox::lock_icon::{MailVerificationStatus, XPmOrigin};
-use mail_crypto_inbox::lock_icon::{UiLock, XPmContentEncryption, XPmRecipientEncryption};
+use mail_core_common::services::crypto_key_service::mail_core_key_manager::{
+    PublicAddressKeyApiFetchPolicy, PublicAddressKeyContactFetchPolicy,
+};
+use mail_crypto_inbox::lock_icon::{
+    MailVerificationStatus, UiLock, XPmContentEncryption, XPmOrigin, XPmRecipientEncryption,
+};
 use mail_crypto_inbox::mail_crypto_inbox_mime::{ProcessedBodyType, ProcessedMessage};
 use mail_crypto_inbox::message::DecryptedBody;
 use mail_crypto_inbox::proton_crypto::crypto::VerificationError;
@@ -37,8 +39,7 @@ use mail_stash::orm::Model;
 use mail_stash::stash::Tether;
 use parking_lot::Mutex;
 use proton_crypto_account::proton_crypto::new_pgp_provider;
-use std::collections::BTreeSet;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap, HashSet};
 use std::str::FromStr;
 use std::sync::Arc;
 use tokio::fs;

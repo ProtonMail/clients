@@ -1,24 +1,20 @@
 use std::sync::Arc;
 
-use proton_crypto_account::{
-    keys::{
-        AddressKeyForEmailSelector, AddressKeySelector, PinnedPublicKeys, PublicAddressKeys,
-        UnlockedAddressKeys, UnlockedUserKeys, UserKeySelector,
-    },
-    proton_crypto::crypto::PGPProviderSync,
+use proton_crypto_account::keys::{
+    AddressKeyForEmailSelector, AddressKeySelector, PinnedPublicKeys, PublicAddressKeys,
+    UnlockedAddressKeys, UnlockedUserKeys, UserKeySelector,
 };
+use proton_crypto_account::proton_crypto::crypto::PGPProviderSync;
 use tracing::{debug, error};
 
-use crate::{
-    Result,
-    cache::{MemoryKeyCache, WrappedKeyCache},
-    error::{KeyHandlingError, KeyManagerBuilderError},
-    ids::{AddressId, UserId},
-    policy::{PublicAddressKeyApiFetchPolicy, PublicAddressKeyContactFetchPolicy},
-    traits::{
-        AddressWithKeys, CacheAccess, ContactPublicKeyLoader, KeySecretLoader,
-        LockedPrivateKeyLoader, PublicKeyLoader,
-    },
+use crate::Result;
+use crate::cache::{MemoryKeyCache, WrappedKeyCache};
+use crate::error::{KeyHandlingError, KeyManagerBuilderError};
+use crate::ids::{AddressId, UserId};
+use crate::policy::{PublicAddressKeyApiFetchPolicy, PublicAddressKeyContactFetchPolicy};
+use crate::traits::{
+    AddressWithKeys, CacheAccess, ContactPublicKeyLoader, KeySecretLoader, LockedPrivateKeyLoader,
+    PublicKeyLoader,
 };
 
 use futures::join;

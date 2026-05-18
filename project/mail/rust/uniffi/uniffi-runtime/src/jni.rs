@@ -1,5 +1,4 @@
-use jni::JavaVM;
-use jni::sys;
+use jni::{JavaVM, sys};
 use std::ffi;
 use std::sync::OnceLock;
 

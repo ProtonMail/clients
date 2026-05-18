@@ -1,9 +1,7 @@
-use crate::datatypes::LocalConversationId;
-use crate::datatypes::attachment::ContentId;
-use crate::datatypes::attachment::MimeType;
+use crate::datatypes::attachment::{ContentId, MimeType};
 use crate::datatypes::{
     AttachmentEncryptedSignature, AttachmentMetadata, AttachmentSignature, Disposition, KeyPackets,
-    LocalAttachmentId, LocalMessageId, MessageSender, attachment,
+    LocalAttachmentId, LocalConversationId, LocalMessageId, MessageSender, attachment,
 };
 use crate::models::*;
 use crate::{AppError, MailContextError, MailContextResult, MailUserContext};
@@ -29,15 +27,11 @@ use mail_crypto_inbox::attachment::{
 };
 use mail_crypto_inbox::proton_crypto::crypto::OpenPGPFingerprint;
 use mail_crypto_inbox::proton_crypto::new_pgp_provider;
-use mail_stash::UserDb;
-use mail_stash::exports::Connection;
-use mail_stash::exports::Transaction;
-use mail_stash::exports::{SqliteError, ToSql};
+use mail_stash::exports::{Connection, SqliteError, ToSql, Transaction};
 use mail_stash::macros::Model;
-use mail_stash::orm::Model;
-use mail_stash::orm::ModelHooks;
+use mail_stash::orm::{Model, ModelHooks};
 use mail_stash::stash::{StashError, Tether, WriteTx};
-use mail_stash::{params, sql_using_serde};
+use mail_stash::{UserDb, params, sql_using_serde};
 use serde::{Deserialize, Serialize};
 use std::os::unix::fs::MetadataExt;
 use std::path::Path;

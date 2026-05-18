@@ -1,58 +1,42 @@
 use core::ops::Range;
 use itertools::Itertools;
-use mail_api::services::proton::common::MessageId;
+use mail_api::services::proton::common::{ConversationId, MessageId};
 use mail_api::services::proton::prelude::{
-    ConversationEvent, GetConversationsCountResponse, MailEvent, RunningTasks,
+    ConversationEvent, GetConversationsCountResponse, GetConversationsResponse, MailEvent,
+    RunningTasks,
 };
-use mail_api::services::proton::response_data::ConversationCount;
-use mail_api::services::proton::{
-    common::ConversationId, prelude::GetConversationsResponse,
-    response_data::Conversation as ApiConversation,
-    response_data::ConversationLabel as ApiConversationLabel,
-    response_data::MessageMetadata as ApiMessageMetadata,
+use mail_api::services::proton::response_data::{
+    Conversation as ApiConversation, ConversationCount, ConversationLabel as ApiConversationLabel,
+    MessageMetadata as ApiMessageMetadata,
 };
-use mail_common::datatypes::{ConversationViewOptions, IncludeSwitch};
+use mail_common::datatypes::labels::{ScrollOrderDir, ScrollOrderField};
 use mail_common::datatypes::{
-    SystemLabelId,
-    labels::{ScrollOrderDir, ScrollOrderField},
+    ContextualConversation, ConversationViewOptions, IncludeSwitch, ReadFilter, SystemLabelId,
 };
 use mail_common::models::{
-    CachedScrollData, CanonicalCategory, ConversationLabel, LabelExt, LabelWithCounters,
-    MailSettings, Message, MessageCounter, ScrollData,
+    CachedScrollData, CanonicalCategory, Conversation, ConversationCounter, ConversationLabel,
+    ConversationScrollData, LabelExt, LabelWithCounters, MailSettings, Message, MessageCounter,
+    ScrollData,
 };
-use mail_common::test_utils::{
-    init::Params as TestParams,
-    scroller::{
-        StoreLabeledModelMap, TestScroller, TestUpdate, save_single_conversation,
-        test_conversations,
-    },
-    test_context::MailUserContextTestExtension,
+use mail_common::test_utils::db::new_test_connection;
+use mail_common::test_utils::init::Params as TestParams;
+use mail_common::test_utils::scroller::{
+    StoreLabeledModelMap, TestScroller, TestUpdate, save_single_conversation, test_conversations,
 };
-use mail_common::{
-    conv_id, conv_label, conversation, label, lbl_id,
-    test_utils::{db::new_test_connection, test_context::MailTestContext},
-};
-use mail_common::{
-    datatypes::{ContextualConversation, ReadFilter},
-    models::{Conversation, ConversationCounter, ConversationScrollData},
-};
+use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
+use mail_common::{conv_id, conv_label, conversation, label, lbl_id};
 use mail_core_api::services::proton::{Action, EventId, LabelId};
-use mail_core_common::models::ModelExtension;
-use mail_core_common::{
-    datatypes::SystemLabel,
-    models::{Label, ModelIdExtension},
-};
+use mail_core_common::datatypes::SystemLabel;
+use mail_core_common::models::{Label, ModelExtension, ModelIdExtension};
 use mail_network_monitor_service::OsNetworkStatus;
 use mail_stash::orm::Model;
 use mail_stash::stash::StashError;
-use std::{collections::HashMap, time::Duration};
+use std::collections::HashMap;
+use std::time::Duration;
 use test_case::test_case;
 use velcro::hash_map;
-use wiremock::matchers::{query_param, query_param_is_missing};
-use wiremock::{
-    Mock, Request, ResponseTemplate, Times,
-    matchers::{method, path, query_param_contains},
-};
+use wiremock::matchers::{method, path, query_param, query_param_contains, query_param_is_missing};
+use wiremock::{Mock, Request, ResponseTemplate, Times};
 
 macro_rules! assert_scroller_content {
     ($scroller:expr, $len:expr, $expected:expr) => {

@@ -1,9 +1,8 @@
 use serde::Deserialize;
 use std::collections::HashMap;
-use std::env;
 use std::fmt::Write;
-use std::fs;
 use std::path::Path;
+use std::{env, fs};
 
 const WORLD_TERRITORY_ID: &str = "001";
 

@@ -4,9 +4,8 @@ use crate::models::Message;
 use crate::{AppError, MailUserContext};
 use anyhow::Context as _;
 use mail_action_queue::action::{
-    Action, ActionDependencyKeys, DefaultVersionConverter, Type, WriterGuard,
+    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
 };
-use mail_action_queue::action::{ActionId, Handler};
 use mail_action_queue::rebase::{RebaseChangeSet, RebaseKey};
 use mail_api::services::proton::ProtonMail;
 use mail_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;

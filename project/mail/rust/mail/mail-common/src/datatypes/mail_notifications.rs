@@ -2,14 +2,14 @@
 
 use crate::MailContextError;
 use mail_api::services::proton::common::MessageId;
-use mail_api::services::push_notifications::DecryptedEmailPushNotificationAction as ApiDecryptedEmailPushNotificationAction;
-use mail_api::services::push_notifications::DecryptedInboxPushNotification as ApiDecryptedInboxPushNotification;
-use mail_api::services::push_notifications::NotificationSender as ApiNotificationSender;
+use mail_api::services::push_notifications::{
+    DecryptedEmailPushNotificationAction as ApiDecryptedEmailPushNotificationAction,
+    DecryptedInboxPushNotification as ApiDecryptedInboxPushNotification,
+    NotificationSender as ApiNotificationSender,
+};
 use mail_core_api::services::proton::{PrivateEmail, PrivateString};
-use mail_core_common::datatypes::EncryptedPushNotification;
-use mail_core_common::datatypes::StoredDevicePrivateKey;
-use mail_core_common::os::KeyChain;
-use mail_core_common::os::KeyChainExt;
+use mail_core_common::datatypes::{EncryptedPushNotification, StoredDevicePrivateKey};
+use mail_core_common::os::{KeyChain, KeyChainExt};
 use proton_crypto_account::keys::PGPDeviceKey;
 use proton_crypto_account::proton_crypto;
 use secrecy::ExposeSecret;

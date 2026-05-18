@@ -181,11 +181,9 @@ pub fn css_to_hsla(color: &CssColor) -> Result<HSL, ()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use lightningcss::{
-        printer::PrinterOptions,
-        traits::{Parse, ToCss},
-        values::color::CssColor,
-    };
+    use lightningcss::printer::PrinterOptions;
+    use lightningcss::traits::{Parse, ToCss};
+    use lightningcss::values::color::CssColor;
     use pretty_assertions::assert_eq;
     use test_case::test_case;
 

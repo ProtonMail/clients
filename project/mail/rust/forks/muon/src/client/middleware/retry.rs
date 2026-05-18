@@ -1,6 +1,6 @@
+use crate::Result;
 use crate::common::{BoxFut, Sender, SenderLayer};
 use crate::http::{HttpReq, HttpRes};
-use crate::Result;
 use futures_timer::Delay;
 use muon_proc::autoimpl;
 use std::borrow::Borrow;

@@ -1,9 +1,7 @@
 use mail_common::Sidebar;
 use mail_common::test_utils::init::Params as TestParams;
 use mail_common::test_utils::test_context::MailTestContext;
-use mail_core_api::services::proton::Label as ApiLabel;
-use mail_core_api::services::proton::LabelId;
-use mail_core_api::services::proton::LabelType;
+use mail_core_api::services::proton::{Label as ApiLabel, LabelId, LabelType};
 use test_case::test_case;
 use velcro::hash_map;
 

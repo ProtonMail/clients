@@ -4,7 +4,8 @@ use mail_muon::common::Sender;
 use mail_muon::http::HttpReqExt;
 use mail_muon::{GET, PUT, ProtonRequest, ProtonResponse, serde_to_query};
 use serde::{Deserialize, Serialize};
-use serde_with::{StringWithSeparator, formats::CommaSeparator, serde_as};
+use serde_with::formats::CommaSeparator;
+use serde_with::{StringWithSeparator, serde_as};
 use smart_default::SmartDefault;
 
 pub use core_feature_flags::{

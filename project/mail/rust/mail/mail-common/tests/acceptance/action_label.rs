@@ -11,9 +11,9 @@ use mail_common::test_utils::init::Params as TestParams;
 use mail_common::test_utils::labels::ApiLabelTestUtils;
 use mail_common::test_utils::mailbox::MailboxTestUtils;
 use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
-use mail_core_api::services::proton::LabelId;
-use mail_core_api::services::proton::LabelType as ApiLabelType;
-use mail_core_api::services::proton::{Address as ApiAddress, Label as ApiLabel};
+use mail_core_api::services::proton::{
+    Address as ApiAddress, Label as ApiLabel, LabelId, LabelType as ApiLabelType,
+};
 use mail_core_common::datatypes::LabelType;
 use mail_core_common::models::{Address, Label, ModelIdExtension};
 use mail_core_common::test_utils::addresses::ApiAddressTestUtils;

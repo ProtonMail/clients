@@ -1,4 +1,6 @@
-use std::{borrow::Borrow, fmt, ops::Deref};
+use std::borrow::Borrow;
+use std::fmt;
+use std::ops::Deref;
 
 /// New type wrapper which hides all but the first character of the email address from Display and
 /// Debug formatters to preserve user privacy.
@@ -10,7 +12,15 @@ use std::{borrow::Borrow, fmt, ops::Deref};
 ///
 /// `foo@bar.com` is printed as `fXX@XX.XXX`
 #[derive(
-    Default, Clone, serde::Deserialize, Eq, Hash, PartialEq, Ord, PartialOrd, serde::Serialize,
+    Default,
+    Clone,
+    serde::Deserialize,
+    Eq,
+    Hash,
+    PartialEq,
+    Ord,
+    PartialOrd,
+    serde::Serialize
 )]
 pub struct PrivateEmail(String);
 
@@ -138,7 +148,15 @@ impl<'s> From<&'s str> for PrivateEmailRef<'s> {
 
 /// New type wrapper which hides the string from Display and Debug outputs.
 #[derive(
-    Default, Clone, serde::Deserialize, Eq, Hash, PartialEq, Ord, PartialOrd, serde::Serialize,
+    Default,
+    Clone,
+    serde::Deserialize,
+    Eq,
+    Hash,
+    PartialEq,
+    Ord,
+    PartialOrd,
+    serde::Serialize
 )]
 pub struct PrivateString(String);
 

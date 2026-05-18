@@ -1,6 +1,8 @@
 use mail_calendar_common as cal;
 use mail_core_common::models::ContactEmail;
-use mail_stash::{UserDb, orm::Model, stash::Stash};
+use mail_stash::UserDb;
+use mail_stash::orm::Model;
+use mail_stash::stash::Stash;
 use tracing::warn;
 
 #[derive(Debug)]

@@ -1,19 +1,15 @@
-use crate::proton_layers::CookieJarLayer;
-use crate::proton_layers::SetCryptoClockLayer;
-use crate::proton_layers::SetDefaultServiceTypeLayer;
-use crate::proton_layers::SetDefaultTimeoutLayer;
+use crate::proton_layers::{
+    CookieJarLayer, SetCryptoClockLayer, SetDefaultServiceTypeLayer, SetDefaultTimeoutLayer,
+};
 use crate::proton_store::MuonStoreImpl;
 use crate::session::Config;
 use crate::store::Store;
-use crate::verification::ChallengeNotifierLayer;
-use crate::verification::DynChallengeNotifier;
+use crate::verification::{ChallengeNotifierLayer, DynChallengeNotifier};
 use cookie::CookieJar;
 use mail_muon::App;
 use mail_muon::client::InfoProvider;
 use mail_muon::client::middleware::{DisplayLogger, Tagger};
-use mail_muon::common::ConstProxy;
-use mail_muon::common::IntoDyn;
-use mail_muon::common::ParseEndpointErr;
+use mail_muon::common::{ConstProxy, IntoDyn, ParseEndpointErr};
 use mail_muon::dns::{GoogleDoh, Quad9Doh};
 use mail_muon::error::ParseAppVersionErr;
 use mail_task_service::Tokio;

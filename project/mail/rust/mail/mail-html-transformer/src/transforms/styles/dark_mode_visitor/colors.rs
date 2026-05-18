@@ -1,11 +1,11 @@
 use std::convert::Infallible;
 
-use lightningcss::{values::color::CssColor, visit_types, visitor::Visitor};
+use lightningcss::values::color::CssColor;
+use lightningcss::visit_types;
+use lightningcss::visitor::Visitor;
 
-use crate::transforms::styles::{
-    ColorPurpose,
-    colors::{HSLExt, css_to_hsla, hsla_for_dark_mode},
-};
+use crate::transforms::styles::ColorPurpose;
+use crate::transforms::styles::colors::{HSLExt, css_to_hsla, hsla_for_dark_mode};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ShouldModifyTransparentColors {

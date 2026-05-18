@@ -10,15 +10,14 @@ use mail_common::models::{Conversation, ConversationCounter, LabelWithCounters, 
 use mail_common::test_utils::conversations::ApiConversationTestUtils;
 use mail_common::test_utils::init::Params as TestParams;
 use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
-use mail_core_api::services::proton::LabelId;
-use mail_core_api::services::proton::LabelType as ApiLabelType;
-use mail_core_api::services::proton::{Address as ApiAddress, Label as ApiLabel};
+use mail_core_api::services::proton::{
+    Address as ApiAddress, Label as ApiLabel, LabelId, LabelType as ApiLabelType,
+};
 use mail_core_common::models::{Address, Label, ModelIdExtension};
 use mail_core_common::test_utils::addresses::ApiAddressTestUtils;
 use mail_stash::orm::Model;
 use mail_stash::params;
-use mail_stash::stash::StashError;
-use mail_stash::stash::Tether;
+use mail_stash::stash::{StashError, Tether};
 use std::collections::HashMap;
 use velcro::hash_map;
 

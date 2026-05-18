@@ -4,16 +4,15 @@ use crate::{AppError, MailContextError, MailUserContext};
 use mail_core_api::services::proton::LabelId;
 use mail_core_common::datatypes::{LabelType, LocalLabelId};
 use mail_core_common::models::Label;
+use mail_stash::orm::Model;
 use mail_stash::params;
-use mail_stash::stash::StashError;
-use mail_stash::{orm::Model, stash::Tether};
+use mail_stash::stash::{StashError, Tether};
 use tracing::error;
 
-use crate::datatypes::ShowMoved;
-use crate::datatypes::SystemLabelId;
 use crate::datatypes::labels::custom_folder::CustomFolder;
 use crate::datatypes::labels::custom_labels::CustomLabel;
 use crate::datatypes::labels::system_labels::SystemLabel;
+use crate::datatypes::{ShowMoved, SystemLabelId};
 use crate::models::{LabelWithCounters, MailSettings};
 
 #[derive(Debug, thiserror::Error)]

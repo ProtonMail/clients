@@ -21,8 +21,9 @@ use core::fmt::{Debug, Display};
 use core::future::Future;
 use indoc::formatdoc;
 use rusqlite::types::FromSql;
-use rusqlite::{Connection, Error as SqliteError, Row, ToSql, Transaction};
-use rusqlite::{Params, params_from_iter};
+use rusqlite::{
+    Connection, Error as SqliteError, Params, Row, ToSql, Transaction, params_from_iter,
+};
 use serde::de::Error as DeserializationError;
 use serde::ser::Error as SerializationError;
 use std::vec::IntoIter;

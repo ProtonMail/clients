@@ -1,9 +1,8 @@
-use crate::{MailContextError, datatypes::SystemLabelId};
+use crate::MailContextError;
+use crate::datatypes::SystemLabelId;
 use mail_core_api::services::proton::LabelId;
-use mail_core_common::{
-    datatypes::{LocalLabelId, SystemLabel},
-    models::{Label, ModelIdExtension},
-};
+use mail_core_common::datatypes::{LocalLabelId, SystemLabel};
+use mail_core_common::models::{Label, ModelIdExtension};
 use mail_stash::stash::Tether;
 
 #[derive(Debug, Clone, Copy, PartialEq)]

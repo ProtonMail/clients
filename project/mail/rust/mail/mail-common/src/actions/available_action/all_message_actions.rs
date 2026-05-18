@@ -2,9 +2,11 @@
 #[path = "../../tests/actions/available_actions/all_message_actions.rs"]
 mod tests;
 
-use crate::actions::MovableSystemFolderAction;
-use crate::actions::{ActionContext, GenericAction, GenericMobileActions};
-use crate::datatypes::{MobileAction, theme::MailTheme};
+use crate::actions::{
+    ActionContext, GenericAction, GenericMobileActions, MovableSystemFolderAction,
+};
+use crate::datatypes::MobileAction;
+use crate::datatypes::theme::MailTheme;
 use crate::decrypted_message::ThemeOpts;
 use mail_core_api::services::proton::LabelId;
 

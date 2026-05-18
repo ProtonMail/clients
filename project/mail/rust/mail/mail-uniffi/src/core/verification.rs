@@ -1,14 +1,17 @@
 use super::datatypes::AppDetails;
+use crate::core::datatypes::ApiConfig;
 use crate::errors::ProtonError;
 use crate::errors::unexpected::UnexpectedError;
-use crate::{core::datatypes::ApiConfig, uniffi_async};
+use crate::uniffi_async;
 use futures::{FutureExt, TryFutureExt};
 use itertools::Itertools;
-use mail_common::ProtonMailError as RealProtonMailError;
-use mail_common::Unexpected;
-use mail_common::UserApiServiceError as RealUserApiServiceError;
+use mail_common::{
+    ProtonMailError as RealProtonMailError, Unexpected,
+    UserApiServiceError as RealUserApiServiceError,
+};
 use mail_core_api::verification as hv;
-use std::{ops::Deref, sync::Arc};
+use std::ops::Deref;
+use std::sync::Arc;
 use tracing::error;
 
 pub type DynChallengeNotifier = Arc<dyn ChallengeNotifier>;

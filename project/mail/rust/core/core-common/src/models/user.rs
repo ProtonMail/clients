@@ -7,10 +7,8 @@ use crate::datatypes::{
 };
 use derive_more::TryFrom;
 use mail_core_api::service::ApiServiceError;
-use mail_core_api::services::proton::User as ApiUser;
-use mail_core_api::services::proton::UserId;
 use mail_core_api::services::proton::{
-    DelinquentState as ApiDelinquentState, ProtonAccount, Role as ApiRole,
+    DelinquentState as ApiDelinquentState, ProtonAccount, Role as ApiRole, User as ApiUser, UserId,
 };
 use mail_stash::UserDb;
 use mail_stash::exports::{
@@ -18,8 +16,7 @@ use mail_stash::exports::{
 };
 use mail_stash::macros::Model;
 use mail_stash::orm::{Model, ModelHooks};
-use mail_stash::stash::Stash;
-use mail_stash::stash::StashError;
+use mail_stash::stash::{Stash, StashError};
 use serde::{Deserialize, Serialize};
 use smart_default::SmartDefault;
 
@@ -251,7 +248,18 @@ bitflags::bitflags! {
     }
 }
 
-#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize, TryFrom)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Default,
+    Deserialize,
+    Eq,
+    Hash,
+    PartialEq,
+    Serialize,
+    TryFrom
+)]
 #[try_from(repr)]
 #[repr(u32)]
 pub enum Role {
@@ -299,7 +307,18 @@ impl ToSql for Role {
     }
 }
 
-#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize, TryFrom)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Default,
+    Deserialize,
+    Eq,
+    Hash,
+    PartialEq,
+    Serialize,
+    TryFrom
+)]
 #[try_from(repr)]
 #[repr(u32)]
 pub enum DelinquentState {

@@ -6,35 +6,29 @@ mod message_body;
 mod message_mime_type;
 pub use self::message_body::*;
 pub use self::message_mime_type::*;
-use crate::actions::messages::DeleteAllMessagesInLabel;
-use crate::actions::messages::Ham;
-use crate::actions::messages::Read;
-use crate::actions::messages::ReportPhishing;
-use crate::actions::messages::Unread;
-use crate::actions::messages::{Delete, UndoLabelAsArchiveMessages};
-use crate::actions::messages::{LabelAs, UndoLabelAsMessages};
-use crate::actions::messages::{Move, UndoMoveToMessages};
+use crate::actions::messages::{
+    Delete, DeleteAllMessagesInLabel, Ham, LabelAs, Move, Read, ReportPhishing,
+    UndoLabelAsArchiveMessages, UndoLabelAsMessages, UndoMoveToMessages, Unread,
+};
 use crate::actions::{
     ActionMoveData, AllListActions, AllMessageActions, LabelAsData, LabelAsOutput, LabelPair,
     MovableSystemFolderAction, Undo,
 };
-use crate::datatypes::ConversationViewOptions;
-use crate::datatypes::MimeType;
 use crate::datatypes::dependencies::DependencyFetcher;
+use crate::datatypes::{ConversationViewOptions, MimeType};
 use crate::models::*;
 use crate::{MailContextError, find_in_query};
 use futures::try_join;
 use indoc::{formatdoc, indoc};
-use mail_action_queue::action::ActionGroup;
-use mail_action_queue::action::MetadataBuilder;
+use mail_action_queue::action::{ActionGroup, MetadataBuilder};
 use mail_action_queue::enqueue;
-use mail_action_queue::queue::MultiActionError;
-use mail_action_queue::queue::{ActionError as QueueActionError, Queue, QueuedActionOutput};
+use mail_action_queue::queue::{
+    ActionError as QueueActionError, MultiActionError, Queue, QueuedActionOutput,
+};
 use mail_core_api::session::Session;
 use mail_core_common::services::TelemetryService;
 use mail_core_common::utils::MapVec as _;
-use mail_sqlite3::rusqlite::Transaction;
-use mail_sqlite3::rusqlite::params_from_iter;
+use mail_sqlite3::rusqlite::{Transaction, params_from_iter};
 use mail_stash::UserDb;
 use mail_stash::exports::Connection;
 use mail_stash::orm::DbRecord;
@@ -43,19 +37,18 @@ use mail_stash::utils::{ConnectionExt, MapToSql, placeholders, placeholders_n};
 use proton_crypto_account::keys::AddressKeySelector;
 use sqlite_watcher::watcher::TableObserver;
 
-use crate::MailContextResult;
 use crate::actions::{
     ConversationOrMessage, LabelAsAction, MessageActionSheet, MoveAction, filter_responses,
 };
 use crate::datatypes::{
     AttachmentMetadata, CustomLabel, DeletedItemType, Disposition, EncryptedMessageBody,
-    ExclusiveLocation, LocalMessageId, MessageFlags, MessageLabelsCount, MessageRecipients,
-    MessageSender, MobileAction, ParsedHeaders, ReadFilter, RollbackItemType, SystemLabelId,
+    ExclusiveLocation, LocalConversationId, LocalMessageId, MessageFlags, MessageLabelsCount,
+    MessageRecipients, MessageSender, MobileAction, ParsedHeaderValue, ParsedHeaders, ReadFilter,
+    RollbackItemType, SystemLabelId,
 };
-use crate::datatypes::{LocalConversationId, ParsedHeaderValue};
 use crate::decrypted_message::ThemeOpts;
 use crate::mailbox::decrypted_message::DecryptedMessageBody;
-use crate::{AppError, MailUserContext};
+use crate::{AppError, MailContextResult, MailUserContext};
 use anyhow::{Context, anyhow};
 use itertools::Itertools;
 use mail_action_queue::rebase::RebaseChangeSet;
@@ -71,8 +64,7 @@ use mail_api::services::proton::response_data::{
 use mail_api::services::proton::responses::GetMessagesResponse;
 use mail_common_derive::ScrollerEq;
 use mail_core_api::service::ApiServiceError;
-use mail_core_api::services::proton::{AddressId, LabelId};
-use mail_core_api::services::proton::{PrivateEmail, PrivateString};
+use mail_core_api::services::proton::{AddressId, LabelId, PrivateEmail, PrivateString};
 use mail_core_common::datatypes::{
     LabelType, LocalAddressId, LocalLabelId, SystemLabel, UnixTimestamp,
 };
@@ -85,9 +77,8 @@ use mail_stash::orm::{Model, ModelHooks};
 use mail_stash::params;
 use mail_stash::stash::{RunTransaction, Stash, StashError, Tether, WatcherHandle, WriteTx};
 use mail_telemetry::LatencyEvents;
-use std::collections::HashSet;
 use std::collections::hash_map::Entry as HmEntry;
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::future::Future;
 use std::sync::Arc;
 use tracing::{debug, error, info, trace, warn};

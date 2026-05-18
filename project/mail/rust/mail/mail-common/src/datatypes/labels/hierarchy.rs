@@ -1,6 +1,8 @@
 use super::custom_folder::CustomFolder;
 use itertools::Itertools;
-use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
+use std::cell::RefCell;
+use std::collections::BTreeMap;
+use std::rc::Rc;
 
 pub trait Hierarchy: Send + Sized + Clone {
     fn local_id(&self) -> u64;

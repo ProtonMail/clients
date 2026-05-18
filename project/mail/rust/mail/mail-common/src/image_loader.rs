@@ -1,13 +1,9 @@
-use crate::{
-    MailUserContext,
-    datatypes::attachment::ContentId,
-    models::{AttachmentData, MailSettings},
-};
-use mail_core_api::{
-    service::{ApiServiceError, ApiServiceResult},
-    services::proton::ProtonCore,
-    utils::HeadersExt,
-};
+use crate::MailUserContext;
+use crate::datatypes::attachment::ContentId;
+use crate::models::{AttachmentData, MailSettings};
+use mail_core_api::service::{ApiServiceError, ApiServiceResult};
+use mail_core_api::services::proton::ProtonCore;
+use mail_core_api::utils::HeadersExt;
 use mail_stash::stash::StashError;
 use reqwest::Method;
 use std::sync::Weak;
@@ -219,10 +215,8 @@ mod tests {
     use mail_core_common::datatypes::ImageProxy;
     use mail_stash::orm::Model;
     use test_case::test_case;
-    use wiremock::{
-        Mock, ResponseTemplate,
-        matchers::{method, path, query_param},
-    };
+    use wiremock::matchers::{method, path, query_param};
+    use wiremock::{Mock, ResponseTemplate};
 
     struct TestCase {
         given_cfg: ImageProxy,

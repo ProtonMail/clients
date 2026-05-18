@@ -1,7 +1,6 @@
 use anyhow::bail;
 use async_trait::async_trait;
-use std::ops::Deref;
-use std::ops::DerefMut;
+use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 

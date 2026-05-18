@@ -1,11 +1,10 @@
 use crate::async_runtime;
 use crate::errors::UserSessionError;
 use crate::mail::MailSession;
-use mail_common::MailContext;
-use mail_common::ProtonMailError as RealProtonMailError;
 use mail_common::{
     BackgroundExecutionContext, BackgroundExecutionResult as RealBackgroundExecutionResult,
-    BackgroundExecutionStatus as RealBackgroundExecutionStatus,
+    BackgroundExecutionStatus as RealBackgroundExecutionStatus, MailContext,
+    ProtonMailError as RealProtonMailError,
 };
 use std::sync::{Arc, Weak};
 use std::time::Duration;

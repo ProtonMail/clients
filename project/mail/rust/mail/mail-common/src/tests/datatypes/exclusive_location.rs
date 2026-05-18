@@ -1,8 +1,6 @@
 use super::{ExclusiveLocation, SystemLabel};
-use crate::{
-    datatypes::LabelType::{self, *},
-    datatypes::SystemLabelId,
-};
+use crate::datatypes::LabelType::{self, *};
+use crate::datatypes::SystemLabelId;
 use mail_core_api::services::proton::LabelId;
 use mail_core_common::models::Label;
 use test_case::test_case;

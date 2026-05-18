@@ -1,5 +1,5 @@
 use crate::deps::url::Url;
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use std::fmt::{Display, Formatter, Result as FmtResult};

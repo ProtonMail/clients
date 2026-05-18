@@ -1,4 +1,5 @@
-use crate::{MailContextError, models::LabelExt};
+use crate::MailContextError;
+use crate::models::LabelExt;
 use mail_api::services::proton::prelude::RunningTasks;
 use mail_core_api::services::proton::LabelId;
 use mail_core_common::models::{Label, ModelIdExtension};

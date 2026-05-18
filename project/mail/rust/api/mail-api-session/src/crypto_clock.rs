@@ -3,9 +3,8 @@
 use std::time::SystemTime;
 
 use parking_lot::{Once, RwLock};
-use proton_crypto_account::proton_crypto::{
-    CryptoClockProvider, crypto::UnixTimestamp, crypto_clock,
-};
+use proton_crypto_account::proton_crypto::crypto::UnixTimestamp;
+use proton_crypto_account::proton_crypto::{CryptoClockProvider, crypto_clock};
 
 /// Represents a clock for crypto operations that tracks time
 /// via unix timestamps from the http responses.

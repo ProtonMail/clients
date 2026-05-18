@@ -1,8 +1,7 @@
 use self::services::{EventLoopService, InitializationService};
 
 use crate::actions::event_poll::EventPoll as EventPollAction;
-use crate::context::services::TelemetryService;
-use crate::context::services::{SessionObserverService, UserMetricService};
+use crate::context::services::{SessionObserverService, TelemetryService, UserMetricService};
 use crate::datatypes::AccountDetails;
 use crate::db::account::CoreAccount;
 use crate::db::migrations::{migrate_core_db, verify_core_db};

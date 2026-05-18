@@ -7,14 +7,12 @@ use serde::{Deserialize, Serialize};
 use tokio::sync::watch;
 
 // To break cyclic dependency
-use mail_core_common::{
-    datatypes::{DeviceEnvironment, RegisteredDevice},
-    device_registration::{RegisteredDeviceTaskState, registered_device_task_step},
+use mail_core_common::datatypes::{DeviceEnvironment, RegisteredDevice};
+use mail_core_common::device_registration::{
+    RegisteredDeviceTaskState, registered_device_task_step,
 };
-use wiremock::{
-    Mock, Request, ResponseTemplate,
-    matchers::{body_partial_json, method, path},
-};
+use wiremock::matchers::{body_partial_json, method, path};
+use wiremock::{Mock, Request, ResponseTemplate};
 
 #[tokio::test]
 async fn initial_registration() {

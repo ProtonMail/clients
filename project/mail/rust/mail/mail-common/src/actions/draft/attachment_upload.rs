@@ -1,7 +1,6 @@
 use crate::actions::draft::{SEND_ACTION_GROUP, save_attachment_error};
-use crate::datatypes::Disposition;
 use crate::datatypes::attachment::CombinedAttachmentDisposition;
-use crate::datatypes::{LocalAttachmentId, LocalMessageId};
+use crate::datatypes::{Disposition, LocalAttachmentId, LocalMessageId};
 use crate::draft::AttachmentUploadError;
 use crate::models::{
     Attachment, AttachmentType, DraftAttachmentMetadata, DraftAttachmentUploadState, DraftMetadata,

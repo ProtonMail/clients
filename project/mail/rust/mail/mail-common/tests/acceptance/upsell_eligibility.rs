@@ -4,13 +4,12 @@ use mail_common::{
     FF_UPSELL_UNLIMITED_CHILD, FF_UPSELL_UNLIMITED_PARENT, MailUserContext,
     UpsellEligibilityService,
 };
-use mail_core_api::services::proton::User as ApiUser;
 use mail_core_api::services::proton::{
     GetLegacyFeaturesResponse, GetUnleashFeaturesResponse, UnleashToggle, UnleashToggleVariant,
+    User as ApiUser,
 };
 use mail_core_common::datatypes::{UpsellEligibility, UpsellType};
-use mail_core_common::models::{ModelExtension, Role};
-use mail_core_common::models::{PaidSubscription, User};
+use mail_core_common::models::{ModelExtension, PaidSubscription, Role, User};
 use mail_core_common::test_utils::users::DEFAULT_USER;
 use mail_stash::orm::Model;
 use mail_stash::stash::{StashError, WriteTx};

@@ -34,9 +34,7 @@ pub use marker::{AccountDb, UserDb};
 /// import them from the `mail_stash-macros` crate directly.
 ///
 pub mod macros {
-    pub use mail_stash_macros::DbRecord;
-    pub use mail_stash_macros::Model;
-    pub use mail_stash_macros::ModelRaw;
+    pub use mail_stash_macros::{DbRecord, Model, ModelRaw};
 }
 
 /// Re-exported external types.
@@ -61,6 +59,5 @@ pub use rusqlite;
 /// Use of crates that are used in integration tests, to prevent lint warnings.
 #[cfg(test)]
 mod integration_test_package_usage {
-    use futures as _;
-    use tempfile as _;
+    use {futures as _, tempfile as _};
 }

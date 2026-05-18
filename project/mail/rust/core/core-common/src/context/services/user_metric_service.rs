@@ -8,9 +8,9 @@ use super::Service;
 use crate::{CoreContextError, UserContext};
 use mail_core_api::connection_status::ConnectionStatus;
 use mail_core_api::services::proton::ProtonData;
+use mail_observability::store::InMemoryMetricStore;
 use mail_observability::{
     ObservabilityMetric, into_metrics_element, steal_from_pre_login_metric_store,
-    store::InMemoryMetricStore,
 };
 
 const OBSERVABILITY_SEND_INTERVAL_SECS: u64 = 60;

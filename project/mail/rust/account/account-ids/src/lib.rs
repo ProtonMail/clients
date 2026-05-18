@@ -1,8 +1,6 @@
 //! Account-related ID newtypes.
 
-pub use mail_proton_ids::PrivateEmail;
-pub use mail_proton_ids::ProtonIdMarker;
-pub use mail_proton_ids::declare_proton_id;
+pub use mail_proton_ids::{PrivateEmail, ProtonIdMarker, declare_proton_id};
 
 // Core IDs
 declare_proton_id! { pub UserId }

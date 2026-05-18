@@ -5,13 +5,13 @@
 //! SRP material and a challenge to be shared with the server.
 use std::string::FromUtf8Error;
 
-use base64::{Engine, prelude::BASE64_STANDARD};
-use proton_crypto_account::proton_crypto::{
-    CryptoError,
-    crypto::{DataEncoding, Encryptor, EncryptorSync, PGPProviderSync},
-    generate_secure_random_bytes,
-    srp::{ClientVerifier, SRPProvider},
+use base64::Engine;
+use base64::prelude::BASE64_STANDARD;
+use proton_crypto_account::proton_crypto::crypto::{
+    DataEncoding, Encryptor, EncryptorSync, PGPProviderSync,
 };
+use proton_crypto_account::proton_crypto::srp::{ClientVerifier, SRPProvider};
+use proton_crypto_account::proton_crypto::{CryptoError, generate_secure_random_bytes};
 use zeroize::Zeroizing;
 
 #[derive(Debug, thiserror::Error)]

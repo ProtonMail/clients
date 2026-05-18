@@ -4,10 +4,8 @@
 //! when new intents are available. This solves both the multi-account support
 //! issue and the race condition (watcher only fires after transaction commits).
 
-use mail_stash::{
-    UserDb,
-    stash::{Stash, StashError, WatcherHandle},
-};
+use mail_stash::UserDb;
+use mail_stash::stash::{Stash, StashError, WatcherHandle};
 use sqlite_watcher::watcher::TableObserver;
 use std::collections::BTreeSet;
 

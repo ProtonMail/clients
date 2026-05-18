@@ -33,9 +33,9 @@ use mail_common::draft::{Draft, ReplyMode};
 use mail_common::models::{
     Attachment, IncomingDefault, LabelWithCounters, Message as MailMessage, MessageBodyMetadata,
 };
-use mail_common::{AppError, MailContextResult, MailUserContext, Mailbox, RsvpEvent};
 use mail_common::{
-    MailScroller as RealMailScroller, ScrollerListUpdate, ScrollerStatusUpdate, ScrollerUpdate,
+    AppError, MailContextResult, MailScroller as RealMailScroller, MailUserContext, Mailbox,
+    RsvpEvent, ScrollerListUpdate, ScrollerStatusUpdate, ScrollerUpdate,
 };
 use mail_core_common::datatypes::LocalLabelId;
 use mail_core_common::os::safe_write;

@@ -1,6 +1,6 @@
+use crate::Auth;
 use crate::env::{Env, EnvId};
 use crate::store::{Store, StoreError};
-use crate::Auth;
 use async_trait::async_trait;
 use std::sync::{Arc, RwLock};
 

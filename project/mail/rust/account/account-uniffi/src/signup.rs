@@ -3,14 +3,12 @@
 //! Implements the sign-up flow.
 
 use crate::login::PostLoginValidationError;
-use crate::password_validator::PasswordType;
-use crate::password_validator::PasswordValidatorService;
+use crate::password_validator::{PasswordType, PasswordValidatorService};
 use crate::user_behavior::UserBehavior;
 use itertools::Itertools;
 use mail_account_api::countries::Country as RealCountry;
-use mail_account_api::signup::SignupError as RealSignupError;
-use mail_account_api::signup::SignupFlow as RealSignupFlow;
 use mail_account_api::signup::state::StateKind;
+use mail_account_api::signup::{SignupError as RealSignupError, SignupFlow as RealSignupFlow};
 use mail_core_common::post_login_check::PostLoginValidationError as RealPostLoginValidationError;
 use mail_muon::common::IntoDyn;
 use mail_uniffi_runtime::{async_runtime, uniffi_async};

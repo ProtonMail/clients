@@ -1,8 +1,6 @@
 use super::test_context::MailTestContext;
-use wiremock::{
-    Mock, ResponseTemplate,
-    matchers::{method, path, query_param},
-};
+use wiremock::matchers::{method, path, query_param};
+use wiremock::{Mock, ResponseTemplate};
 
 impl MailTestContext {
     #[function_name::named]

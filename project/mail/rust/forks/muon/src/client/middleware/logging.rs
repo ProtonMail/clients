@@ -1,7 +1,7 @@
+use crate::Result;
 use crate::common::{BoxFut, Sender, SenderLayer};
 use crate::http::{HttpReq, HttpRes};
 use crate::middleware::Tag;
-use crate::Result;
 use tracing::Level;
 
 /// Logs an event at the given level.

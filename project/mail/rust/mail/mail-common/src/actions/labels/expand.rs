@@ -1,6 +1,7 @@
+use crate::AppError;
+use crate::actions::MailActionError;
 use crate::datatypes::RollbackItemType;
 use crate::models::RollbackItem;
-use crate::{AppError, actions::MailActionError};
 use mail_action_queue::action::{
     Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
 };

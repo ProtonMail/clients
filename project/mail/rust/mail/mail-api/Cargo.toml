@@ -39,6 +39,7 @@ mail-api = { path = ".", features = ["mocks"] }
 mail-log-service = { workspace = true }
 tempfile = { workspace = true }
 mail-issue-reporter-service = { workspace = true }
+itertools = { workspace = true }
 
 
 [lints]

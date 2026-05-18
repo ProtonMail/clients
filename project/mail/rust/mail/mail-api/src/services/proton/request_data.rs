@@ -386,3 +386,10 @@ pub struct PutNextMessageOnMoveRequest {
     #[serde_as(as = "BoolFromInt")]
     pub next_message_on_move: bool,
 }
+
+#[serde_as]
+#[derive(Clone, Debug, Serialize, Eq, PartialEq)]
+#[serde(rename_all = "PascalCase")]
+pub struct PutMailCategoryViewRequest {
+    pub mail_category_view: bool,
+}

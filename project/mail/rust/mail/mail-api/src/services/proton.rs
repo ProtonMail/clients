@@ -153,6 +153,11 @@ pub trait ProtonMail {
         request: PutNextMessageOnMoveRequest,
     ) -> ApiServiceResult<PutNextMessageOnMoveResponse>;
 
+    async fn put_mail_category_view(
+        &self,
+        request: PutMailCategoryViewRequest,
+    ) -> ApiServiceResult<PutMailCategoryViewResponse>;
+
     async fn put_conversations_delete(
         &self,
         conversation_ids: Vec<ConversationId>,

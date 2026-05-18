@@ -307,6 +307,18 @@ impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> ProtonMail for This {
             .into_body_json()?)
     }
 
+    async fn put_mail_category_view(
+        &self,
+        request: PutMailCategoryViewRequest,
+    ) -> ApiServiceResult<PutMailCategoryViewResponse> {
+        Ok(PUT!("{MAIL_V4}/settings/mail-category-view")
+            .body_json(request)?
+            .send_with(self)
+            .await?
+            .ok()?
+            .into_body_json()?)
+    }
+
     async fn put_conversations_delete(
         &self,
         ids: Vec<ConversationId>,

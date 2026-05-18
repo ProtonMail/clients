@@ -1,11 +1,17 @@
 //! Historic load smoke / perf example (ephemeral API-only path: no SQLite message writes).
 //!
 //! Offline JSONL / remote fixture body substitution was removed; this mode uses the live API.
-//! A SQLite historic path is reintroduced in a follow-up change set.
 //!
 //! ```text
+//! # First batch (saves checkpoint + index when --persist-db)
 //! cargo run -p mail-search-perf --example historic_load_test --features foundation_search -- \\
-//!   --username <email> --password <pass> ...
+//!   --username <email> --password <pass> \\
+//!   --max-messages 100 --persist-db
+//!
+//! # Next older batch (reuse DB + implicit checkpoint)
+//! cargo run -p mail-search-perf --example historic_load_test --features foundation_search -- \\
+//!   --username <email> --password <pass> \\
+//!   --max-messages 100 --persist-db --reuse-db --resume-from-checkpoint
 //! ```
 //!
 //! Add `foundation_search_index_timing` for indexing timing output.
@@ -19,8 +25,7 @@ use std::path::PathBuf;
 use std::time::Instant;
 
 use clap::Parser;
-use mail_historic_ephemeral_load::EphemeralHistoricLoadResult;
-use mail_historic_ephemeral_load::ephemeral_index_only_messages;
+use mail_historic_ephemeral_load::{EphemeralHistoricLoadResult, ephemeral_index_only_messages};
 use mail_stash::params;
 use tempfile::TempDir;
 use tracing::info;
@@ -46,6 +51,12 @@ struct Args {
     /// Persist the database to ./historic_load_test_db/ for inspection after run
     #[clap(long, default_value = "false")]
     persist_db: bool,
+    /// With `--persist-db`, keep `historic_load_test_db/` and restore it before login (for resume runs)
+    #[clap(long, default_value = "false")]
+    reuse_db: bool,
+    /// Load the saved SQLite checkpoint and fetch the next older messages (All Mail label)
+    #[clap(long, default_value = "false")]
+    resume_from_checkpoint: bool,
     /// Disable telemetry event writes for cleaner perf runs
     #[clap(long, default_value = "false")]
     no_telemetry: bool,
@@ -55,6 +66,27 @@ struct Args {
     /// Run a search query after the load and print results (e.g. --search-query "Youngsters")
     #[clap(long)]
     search_query: Option<String>,
+}
+
+async fn log_stored_checkpoint(
+    user_ctx: &mail_common::MailUserContext,
+    heading: &str,
+) -> anyhow::Result<()> {
+    match user_ctx
+        .search_service()
+        .load_ephemeral_historic_checkpoint()
+        .await
+    {
+        Ok(Some(cp)) => {
+            info!(
+                "{heading}: anchor_time={} anchor_message_id={}",
+                cp.anchor_time, cp.anchor_message_id
+            );
+        }
+        Ok(None) => info!("{heading}: (no checkpoint row)"),
+        Err(e) => info!("{heading}: failed to read ({e})"),
+    }
+    Ok(())
 }
 
 #[tokio::main]
@@ -73,31 +105,62 @@ async fn main() -> Result<(), anyhow::Error> {
         max_messages,
         page_size,
         persist_db,
+        reuse_db,
+        resume_from_checkpoint,
         no_telemetry,
         ephemeral_concurrency,
         search_query,
     } = Args::parse();
+
+    if reuse_db && !persist_db {
+        anyhow::bail!("--reuse-db requires --persist-db");
+    }
 
     let persist_dir = if persist_db {
         let dir = std::env::current_dir()
             .unwrap_or_else(|_| PathBuf::from("."))
             .join("historic_load_test_db");
 
-        historic_load_persist::remove_dir_all_if_exists(&dir)?;
-
-        info!("Database will be persisted to: {:?}", dir);
+        if reuse_db {
+            if dir.exists() {
+                info!("Reusing persisted database directory: {dir:?}");
+            } else {
+                info!("--reuse-db set but {dir:?} does not exist yet; starting fresh");
+            }
+        } else {
+            historic_load_persist::remove_dir_all_if_exists(&dir)?;
+            info!("Database will be persisted to: {dir:?}");
+        }
         Some(dir)
     } else {
+        if reuse_db || resume_from_checkpoint {
+            anyhow::bail!("--reuse-db and --resume-from-checkpoint require --persist-db");
+        }
         None
     };
 
     let tmp_dir = TempDir::new().unwrap();
     info!("Using temporary directory: {:?}", tmp_dir.path());
 
+    if let Some(ref dir) = persist_dir
+        && reuse_db
+    {
+        let restored = historic_load_persist::restore_mail_databases_if_present(dir, &tmp_dir)?;
+        if resume_from_checkpoint && !restored {
+            anyhow::bail!(
+                "--resume-from-checkpoint with --reuse-db but no database found in {dir:?}"
+            );
+        }
+    }
+
     let ctx = historic_load_core::new_mail_context(&tmp_dir).await?;
     let user_ctx =
         historic_load_core::login_and_user_context(&ctx, username, password, email_password)
             .await?;
+
+    if resume_from_checkpoint {
+        log_stored_checkpoint(&user_ctx, "Checkpoint before load").await?;
+    }
 
     if no_telemetry {
         let mut tether = user_ctx.user_stash().connection();
@@ -112,8 +175,8 @@ async fn main() -> Result<(), anyhow::Error> {
     }
 
     info!(
-        "Starting ephemeral historic load (max_messages: {}, page_size: {})...",
-        max_messages, page_size
+        "Starting ephemeral historic load (max_messages: {}, page_size: {}, resume_from_checkpoint: {})...",
+        max_messages, page_size, resume_from_checkpoint
     );
 
     mail_search_perf::prefetch_timing::PrefetchStopwatch::reset_counters();
@@ -125,11 +188,11 @@ async fn main() -> Result<(), anyhow::Error> {
 
     let result: EphemeralHistoricLoadResult = ephemeral_index_only_messages(
         &user_ctx,
-        None,
         max_messages,
         page_size,
         ephemeral_concurrency,
         None,
+        resume_from_checkpoint,
     )
     .await
     .map_err(|e| anyhow::anyhow!("Ephemeral historic load failed: {}", e))?;
@@ -151,6 +214,8 @@ async fn main() -> Result<(), anyhow::Error> {
     if let Some(id) = &result.oldest_message_remote_id {
         info!("Oldest message remote id in fetched batch: {}", id);
     }
+
+    log_stored_checkpoint(&user_ctx, "Checkpoint after load").await?;
 
     if result.messages_fetched > 0 {
         info!(
@@ -229,6 +294,10 @@ async fn main() -> Result<(), anyhow::Error> {
         historic_load_persist::persist_mail_databases(&tmp_dir, persist_dir, user_ctx.user_id())
             .await?;
         info!("Database persisted to: {:?}", persist_dir);
+        info!(
+            "Inspect checkpoint: sqlite3 {:?}/user/*.db \"SELECT * FROM ephemeral_historic_load_checkpoint;\"",
+            persist_dir
+        );
         info!("Inspect with: ./mail/mail-search-perf/scripts/inspect-historic-load-db.sh");
     }
 

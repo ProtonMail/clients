@@ -77,3 +77,47 @@ pub async fn persist_mail_databases(
 
     Ok(())
 }
+
+/// Copy persisted session/user DBs into a fresh temp dir so a later run can resume checkpoints/index.
+///
+/// Returns `true` if anything was restored.
+pub fn restore_mail_databases_if_present(
+    persist_dir: &Path,
+    tmp_dir: &TempDir,
+) -> anyhow::Result<bool> {
+    let session_src = persist_dir.join("session").join("account.db");
+    let user_src_dir = persist_dir.join("user");
+    let mut restored = false;
+
+    if session_src.exists() {
+        let session_dst_dir = tmp_dir.path().join("session");
+        std::fs::create_dir_all(&session_dst_dir)
+            .with_context(|| format!("create_dir_all {session_dst_dir:?}"))?;
+        let dest = session_dst_dir.join("account.db");
+        std::fs::copy(&session_src, &dest)
+            .with_context(|| format!("copy session DB {:?} -> {:?}", session_src, dest))?;
+        info!("Restored session DB from {session_src:?}");
+        restored = true;
+    }
+
+    if user_src_dir.is_dir() {
+        let user_dst_dir = tmp_dir.path().join("user");
+        std::fs::create_dir_all(&user_dst_dir)
+            .with_context(|| format!("create_dir_all {user_dst_dir:?}"))?;
+        for entry in std::fs::read_dir(&user_src_dir)
+            .with_context(|| format!("read_dir {user_src_dir:?}"))?
+        {
+            let entry = entry?;
+            let path = entry.path();
+            if path.extension().is_some_and(|e| e == "db") {
+                let dest = user_dst_dir.join(entry.file_name());
+                std::fs::copy(&path, &dest)
+                    .with_context(|| format!("copy user DB {:?} -> {:?}", path, dest))?;
+                info!("Restored user DB from {path:?}");
+                restored = true;
+            }
+        }
+    }
+
+    Ok(restored)
+}

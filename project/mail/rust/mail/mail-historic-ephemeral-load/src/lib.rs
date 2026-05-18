@@ -11,6 +11,6 @@ pub mod ephemeral_timing;
 
 mod ephemeral;
 
-pub use continuation::HistoricFetchContinuation;
+pub use continuation::{HistoricFetchContinuation, resolve_effective_continuation};
 pub use ephemeral::{EphemeralHistoricLoadResult, ephemeral_index_only_messages};
 pub use ephemeral_timing::{EphemeralTimingCollector, EphemeralTimingStats};

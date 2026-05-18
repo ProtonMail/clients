@@ -104,54 +104,52 @@ impl MailUserSession {
     /// and indexes directly into Foundation Search.
     ///
     /// # Arguments
-    /// * `label_id` - Optional label ID string (defaults to All Mail if None)
     /// * `max_messages` - Maximum number of messages to process
     /// * `page_size` - Page size for metadata fetching (capped to API max of 200)
     /// * `concurrent_body_fetches` - Max concurrent API body fetches
-    /// * `continuation` - Optional anchor from a previous result’s oldest message; fetches the next older messages instead of restarting from newest
+    /// * `continuation` - Optional explicit anchor (overrides checkpoint DB when set)
+    /// * `resume_from_checkpoint` - When `continuation` is None, load anchor from SQLite and continue older mail
     pub async fn historic_load_ephemeral(
         &self,
-        label_id: Option<String>,
         max_messages: u64,
         page_size: u64,
         concurrent_body_fetches: u64,
         continuation: Option<crate::mail::datatypes::HistoricLoadContinuation>,
+        resume_from_checkpoint: bool,
     ) -> Result<crate::mail::datatypes::EphemeralHistoricLoadResult, UserSessionError> {
         use mail_api::services::proton::common::MessageId;
-        use mail_core_api::services::proton::LabelId as RealLabelId;
         use mail_historic_ephemeral_load::{
             HistoricFetchContinuation, ephemeral_index_only_messages,
         };
 
         let ctx = self.ctx()?;
-        let label_id = label_id.map(RealLabelId::from);
         let max_messages = usize::try_from(max_messages).unwrap_or(usize::MAX);
         let page_size = usize::try_from(page_size).unwrap_or(200);
         let concurrent = usize::try_from(concurrent_body_fetches).unwrap_or(10);
         let continuation_inner = match continuation {
             None => None,
             Some(c) => {
-                let id = c.anchor_message_id.trim();
-                if id.is_empty() {
-                    return Err(UserSessionError::Other(ProtonError::Unexpected(
-                        UnexpectedError::InvalidArgument,
-                    )));
-                }
-                Some(HistoricFetchContinuation {
+                let cont = HistoricFetchContinuation {
                     anchor_time: c.anchor_time,
-                    anchor_message_id: MessageId::from(id.to_owned()),
-                })
+                    anchor_message_id: MessageId::from(c.anchor_message_id.trim().to_owned()),
+                };
+                cont.validate().map_err(|_| {
+                    UserSessionError::Other(ProtonError::Unexpected(
+                        UnexpectedError::InvalidArgument,
+                    ))
+                })?;
+                Some(cont)
             }
         };
 
         uniffi_async(async move {
             let result = ephemeral_index_only_messages(
                 &ctx,
-                label_id,
                 max_messages,
                 page_size,
                 concurrent,
                 continuation_inner,
+                resume_from_checkpoint,
             )
             .await
             .map_err(RealProtonMailError::from)?;
@@ -168,6 +166,29 @@ impl MailUserSession {
         })
         .await
         .map_err(UserSessionError::from)
+    }
+
+    /// Returns the saved All Mail ephemeral historic-load checkpoint (if any).
+    pub fn get_ephemeral_historic_load_checkpoint(
+        &self,
+    ) -> Result<Option<crate::mail::datatypes::HistoricLoadContinuation>, UserSessionError> {
+        let ctx = self.ctx()?;
+
+        async_runtime().block_on(async {
+            ctx.search_service()
+                .load_ephemeral_historic_checkpoint()
+                .await
+                .map(|opt| {
+                    opt.map(|cp| crate::mail::datatypes::HistoricLoadContinuation {
+                        anchor_time: cp.anchor_time,
+                        anchor_message_id: cp.anchor_message_id.into_inner(),
+                    })
+                })
+                .map_err(|e| {
+                    tracing::error!("get_ephemeral_historic_load_checkpoint: {e}");
+                    UserSessionError::Other(ProtonError::Unexpected(UnexpectedError::Internal))
+                })
+        })
     }
 
     /// Clears Foundation Search index tables and resets the in-memory engine (historic load lab).

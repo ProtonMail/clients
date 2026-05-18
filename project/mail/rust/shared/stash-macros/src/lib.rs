@@ -209,6 +209,19 @@ pub fn db_record_derive(input: TokenStream) -> TokenStream {
 ///     value: i32, }
 /// ```
 ///
+#[proc_macro_derive(ModelRaw)]
+pub fn model_raw_derive(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = &input.ident;
+    let generics = &input.generics;
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
+    (quote! {
+        impl #impl_generics mail_stash::orm::ModelRaw for #name #ty_generics #where_clause {}
+    })
+    .into()
+}
+
 #[proc_macro_derive(Model, attributes(DbField, IdField, ModelHooks, TableName, Database))]
 pub fn model_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);

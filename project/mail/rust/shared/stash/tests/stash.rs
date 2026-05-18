@@ -529,11 +529,11 @@ mod orm_tests {
     use crate::params;
     use mail_stash::{
         UserDb,
-        orm::{Model, ModelHooks},
+        orm::{Model, ModelHooks, ModelRaw},
         stash::{Stash, StashError},
         utils::ConnectionExt,
     };
-    use mail_stash_macros::Model;
+    use mail_stash_macros::{Model, ModelRaw};
     use rusqlite::{Connection, Transaction};
 
     #[derive(Clone, Debug, Eq, Model, PartialEq)]
@@ -653,6 +653,95 @@ mod orm_tests {
             })
             .await
             .unwrap();
+        Ok(())
+    }
+
+    #[derive(Clone, Debug, Eq, Model, ModelRaw, PartialEq)]
+    #[TableName("raw_model")]
+    #[ModelHooks]
+    #[Database(UserDb)]
+    struct RawModel {
+        #[IdField(autoincrement)]
+        id: Option<u64>,
+
+        hook_call_count: u64,
+
+        #[DbField]
+        value: String,
+    }
+
+    impl ModelHooks for RawModel {
+        fn before_save(&mut self, _: &Transaction<'_>) -> Result<(), StashError> {
+            self.hook_call_count += 1;
+            Ok(())
+        }
+
+        fn after_save(&mut self, _: &Transaction<'_>) -> Result<(), StashError> {
+            self.hook_call_count += 1;
+            Ok(())
+        }
+
+        fn after_load(&mut self, _: &Connection) -> Result<(), StashError> {
+            self.hook_call_count += 1;
+            Ok(())
+        }
+    }
+
+    #[tokio::test]
+    async fn test_model_raw_bypasses_hooks() -> anyhow::Result<()> {
+        let stash = Stash::new(None)?;
+        let mut tether = stash.connection();
+
+        tether
+            .write_tx::<_, _, StashError>(async |tx| {
+                tx.execute(
+                    r#"CREATE TABLE raw_model
+                    (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        value TEXT NOT NULL
+                    )"#,
+                    vec![],
+                )
+                .await
+            })
+            .await?;
+
+        let mut record = RawModel {
+            id: None,
+            hook_call_count: 0,
+            value: "hello".to_owned(),
+        };
+
+        // save_raw: neither before_save nor after_save should fire
+        tether
+            .write_tx::<_, _, StashError>(async |tx| record.save_raw(tx).await)
+            .await?;
+        assert_eq!(
+            record.hook_call_count, 0,
+            "save_raw must not call save hooks"
+        );
+
+        // load_raw: after_load should not fire
+        let loaded = tether
+            .sync_query(move |conn| RawModel::load_by_id_raw_sync(record.id.unwrap(), conn))
+            .await?
+            .unwrap();
+        assert_eq!(
+            loaded.hook_call_count, 0,
+            "load_raw must not call after_load"
+        );
+
+        // Confirm the hooked path does fire hooks, to verify the hooks work at all
+        let mut record2 = RawModel {
+            id: None,
+            hook_call_count: 0,
+            value: "world".to_owned(),
+        };
+        tether
+            .write_tx::<_, _, StashError>(async |tx| record2.save(tx).await)
+            .await?;
+        assert!(record2.hook_call_count > 0, "normal save must call hooks");
+
         Ok(())
     }
 }

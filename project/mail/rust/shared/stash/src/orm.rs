@@ -642,3 +642,120 @@ pub trait ModelHooks {
         Ok(())
     }
 }
+
+/// Opt-in extension of [`Model`] that provides save/load methods which bypass all [`ModelHooks`].
+///
+/// Derive with `#[derive(ModelRaw)]` on any struct that already derives [`Model`].
+/// All methods have default implementations — the derive just opts the struct into the trait.
+pub trait ModelRaw: Model {
+    fn insert_raw_sync(&mut self, tx: &Transaction<'_>) -> StashResult<()> {
+        let id: Self::IdType =
+            tx.query_row_col(Self::INSERT_QUERY, params_from_iter(self.field_values()))?;
+        self.set_id_value(id);
+        Ok(())
+    }
+
+    fn update_raw_sync(&mut self, tx: &Transaction<'_>) -> StashResult<()> {
+        let mut query = tx.prepare_cached(Self::UPDATE_QUERY)?;
+        let id = self.id();
+        let params = self.field_values().chain([&id as &dyn ToSql]);
+        let affected: usize = query.execute(params_from_iter(params))?;
+        if affected == 0 {
+            return Err(StashError::NoRowsUpdated);
+        }
+        Ok(())
+    }
+
+    fn save_raw_sync(&mut self, tx: &Transaction<'_>) -> StashResult<()> {
+        if let Ok(id) = self.id_value()
+            && tx.query_row_col::<u64>(Self::COUNT_QUERY, (id,))? != 0
+        {
+            return self.update_raw_sync(tx);
+        }
+        self.insert_raw_sync(tx)
+    }
+
+    fn find_raw_sync(
+        query_logic: impl AsRef<str>,
+        params: impl Params,
+        conn: &Connection,
+    ) -> StashResult<Vec<Self>> {
+        let query = format!(
+            "SELECT * FROM {table} {query_logic}",
+            query_logic = query_logic.as_ref(),
+            table = Self::table_name(),
+        );
+        Self::model_find(query, params, conn)
+    }
+
+    fn find_first_raw_sync(
+        query_logic: impl AsRef<str>,
+        params: impl Params,
+        conn: &Connection,
+    ) -> StashResult<Option<Self>> {
+        let query = format!(
+            "SELECT * FROM {table} {query_logic} LIMIT 1",
+            query_logic = query_logic.as_ref(),
+            table = Self::table_name(),
+        );
+        Self::model_find_first(query, params, conn)
+    }
+
+    fn load_by_id_raw_sync(id: Self::IdType, conn: &Connection) -> StashResult<Option<Self>> {
+        let query = format!("WHERE {id_field} = ?", id_field = Self::id_field_name());
+        Self::find_first_raw_sync(query, (id,), conn)
+    }
+
+    async fn save_raw(&mut self, bond: &WriteTx<'_, Self::Database>) -> StashResult<()> {
+        let mut this = self.clone();
+        *self = bond
+            .sync_bridge(move |tx| {
+                this.save_raw_sync(tx)?;
+                Ok(this)
+            })
+            .await?;
+        Ok(())
+    }
+
+    async fn insert_raw(&mut self, bond: &WriteTx<'_, Self::Database>) -> StashResult<()> {
+        let mut this = self.clone();
+        *self = bond
+            .sync_bridge(move |tx| {
+                this.insert_raw_sync(tx)?;
+                Ok(this)
+            })
+            .await?;
+        Ok(())
+    }
+
+    async fn update_raw(&mut self, bond: &WriteTx<'_, Self::Database>) -> StashResult<()> {
+        let mut this = self.clone();
+        *self = bond
+            .sync_bridge(move |tx| {
+                this.update_raw_sync(tx)?;
+                Ok(this)
+            })
+            .await?;
+        Ok(())
+    }
+
+    fn find_raw(
+        query_logic: impl Into<String>,
+        params: Vec<Box<dyn ToSql + Send>>,
+        tether: &Tether<Self::Database>,
+    ) -> impl Future<Output = StashResult<Vec<Self>>> + Send {
+        let query_logic = query_logic.into();
+        tether.sync_query(move |conn| {
+            Self::find_raw_sync(&query_logic, params_from_iter(params), conn)
+        })
+    }
+
+    async fn load_raw(
+        id: Self::IdType,
+        tether: &Tether<Self::Database>,
+    ) -> StashResult<Option<Self>> {
+        tether
+            .sync_query(move |conn| Self::load_by_id_raw_sync(id, conn))
+            .await
+    }
+}

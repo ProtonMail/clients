@@ -44,6 +44,19 @@ Example:
 # Creates project/pass/ with all necessary files and configuration
 ```
 
+## Code formatting
+
+The monorepo is formatted by a Bazel target. Run it from the root before
+pushing:
+
+```sh
+bazel run //:format
+```
+
+Setup and troubleshooting: [`tools/dprint/README.md`](tools/dprint/README.md).
+Rationale:
+[`doc/000004-monorepo-wide-formatting.md`](doc/000004-monorepo-wide-formatting.md).
+
 ## Conventions
 
 ### Commits

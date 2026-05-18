@@ -6254,6 +6254,7 @@ dependencies = [
  "bytes",
  "indexmap 2.14.0",
  "insta",
+ "itertools 0.14.0",
  "mail-account-api",
  "mail-api",
  "mail-api-utils",

@@ -121,7 +121,10 @@ pub trait ProtonMail {
         options: GetConversationsOptions,
     ) -> ApiServiceResult<GetConversationsResponse>;
 
-    async fn get_conversations_count(&self) -> ApiServiceResult<GetConversationsCountResponse>;
+    async fn get_conversations_count(
+        &self,
+        options: GetConversationsCountOptions,
+    ) -> ApiServiceResult<GetConversationsCountResponse>;
 
     async fn get_conversations_count_for_labels(
         &self,
@@ -134,7 +137,10 @@ pub trait ProtonMail {
         options: GetMessagesOptions,
     ) -> ApiServiceResult<GetMessagesResponse>;
 
-    async fn get_messages_count(&self) -> ApiServiceResult<GetMessagesCountResponse>;
+    async fn get_messages_count(
+        &self,
+        options: GetMessagesCountOptions,
+    ) -> ApiServiceResult<GetMessagesCountResponse>;
 
     async fn get_messages_count_for_labels(
         &self,

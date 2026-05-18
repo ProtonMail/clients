@@ -1048,7 +1048,7 @@ impl Conversation {
     pub async fn fetch_counts<PM: ProtonMail>(
         api: &PM,
     ) -> Result<Vec<ConversationLabelsCount>, ApiServiceError> {
-        api.get_conversations_count()
+        api.get_conversations_count(Default::default())
             .await
             .map(|r| r.counts.map_vec())
     }

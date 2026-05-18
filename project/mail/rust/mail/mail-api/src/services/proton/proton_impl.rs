@@ -197,8 +197,12 @@ impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> ProtonMail for This {
             .into_body_json()?)
     }
 
-    async fn get_conversations_count(&self) -> ApiServiceResult<GetConversationsCountResponse> {
+    async fn get_conversations_count(
+        &self,
+        options: GetConversationsCountOptions,
+    ) -> ApiServiceResult<GetConversationsCountResponse> {
         Ok(GET!("{MAIL_V4}/conversations/count")
+            .query(serde_to_query(options)?)
             .send_with(self)
             .await?
             .ok()?
@@ -251,8 +255,12 @@ impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> ProtonMail for This {
             .into_body_json()?)
     }
 
-    async fn get_messages_count(&self) -> ApiServiceResult<GetMessagesCountResponse> {
+    async fn get_messages_count(
+        &self,
+        options: GetMessagesCountOptions,
+    ) -> ApiServiceResult<GetMessagesCountResponse> {
         Ok(GET!("{MAIL_V4}/messages/count")
+            .query(serde_to_query(options)?)
             .send_with(self)
             .await?
             .ok()?

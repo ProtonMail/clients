@@ -300,7 +300,7 @@ impl MailEventCache {
         let session = session.clone();
         tasks.push(Box::pin(async move {
             session
-                .get_messages_count()
+                .get_messages_count(Default::default())
                 .await
                 .inspect_err(|e| error!("Failed to fetch message counters: {e}"))
                 .map(|r| FetchData::MessagesCount(r.counts))
@@ -315,7 +315,7 @@ impl MailEventCache {
         let session = session.clone();
         tasks.push(Box::pin(async move {
             session
-                .get_conversations_count()
+                .get_conversations_count(Default::default())
                 .await
                 .inspect_err(|e| error!("Failed to fetch conversation counters: {e}"))
                 .map(|r| FetchData::ConversationCount(r.counts))

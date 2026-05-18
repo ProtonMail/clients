@@ -36,6 +36,7 @@ pub use marker::{AccountDb, UserDb};
 pub mod macros {
     pub use mail_stash_macros::DbRecord;
     pub use mail_stash_macros::Model;
+    pub use mail_stash_macros::ModelRaw;
 }
 
 /// Re-exported external types.

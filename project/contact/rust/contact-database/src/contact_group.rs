@@ -46,17 +46,17 @@ pub trait RoContactGroupTable {
 pub trait RwContactGroupTable: RoContactGroupTable {
     async fn create_contact_group(
         &self,
-        contact_email: NewContactGroup,
+        contact_group: NewContactGroup,
     ) -> Result<ContactGroup, Self::Error>;
 
     async fn upsert_contact_group(
         &self,
-        contact_email: UpsertableContactGroup,
+        contact_group: UpsertableContactGroup,
     ) -> Result<ContactGroup, Self::Error>;
 
     async fn upsert_contact_groups(
         &self,
-        contact_email: impl IntoIterator<Item = UpsertableContactGroup>,
+        contact_group: impl IntoIterator<Item = UpsertableContactGroup>,
     ) -> Result<Vec<ContactGroup>, Self::Error>;
 
     async fn update_contact_group(&self, contact_email: &ContactGroup) -> Result<(), Self::Error>;

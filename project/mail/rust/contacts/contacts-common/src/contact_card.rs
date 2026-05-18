@@ -3,7 +3,7 @@ use mail_stash::UserDb;
 use mail_stash::macros::Model;
 use proton_crypto_account::contacts::{ContactCardType, DecryptableVerifiableCard};
 
-use crate::local_ids::LocalContactId;
+use crate::local_ids::{LocalContactCardId, LocalContactId};
 
 /// Represents a contact card.
 ///
@@ -15,7 +15,7 @@ use crate::local_ids::LocalContactId;
 #[Database(UserDb)]
 pub struct ContactCard {
     #[IdField(autoincrement)]
-    pub local_id: Option<LocalContactId>,
+    pub local_id: Option<LocalContactCardId>,
 
     #[DbField]
     pub local_contact_id: Option<LocalContactId>,

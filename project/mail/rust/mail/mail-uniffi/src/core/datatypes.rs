@@ -63,6 +63,7 @@ pub use self::issue_report::*;
 pub use self::timestamp::*;
 use itertools::Itertools;
 use mail_api::services::proton::common::MessageId;
+use mail_contacts_common::local_ids::LocalContactCardId;
 use mail_core_api::session::EnvIdExt;
 use mail_muon::common::{IntoDyn, ParseEndpointErr};
 use mail_muon::env::EnvId;
@@ -1246,6 +1247,7 @@ impl_into_id!(LocalAttachmentId);
 impl_into_id!(LocalMessageId);
 impl_into_id!(LocalConversationId);
 impl_into_id!(LocalContactGroupId);
+impl_into_id!(LocalContactCardId);
 
 /// Remote ID
 ///

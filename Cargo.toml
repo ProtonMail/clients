@@ -840,6 +840,9 @@ path = "project/contact/rust/contact-lattice"
 [workspace.dependencies.contact-database]
 path = "project/contact/rust/contact-database"
 
+[workspace.dependencies.contact-service]
+path = "project/contact/rust/contact-service"
+
 [patch.proton]
 mail-muon = { path = "project/mail/rust/forks/muon" }
 

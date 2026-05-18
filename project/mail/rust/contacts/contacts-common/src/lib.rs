@@ -4,6 +4,7 @@ pub mod contact_details;
 pub mod contact_email;
 pub mod contact_group;
 pub mod contact_list;
+pub mod database;
 pub mod db;
 pub mod error;
 pub mod events;

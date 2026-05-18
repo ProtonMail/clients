@@ -41,6 +41,10 @@ core-event-loop = { workspace = true }
 mail-issue-reporter-service = { workspace = true }
 mail-api-session = { workspace = true }
 mail-labels-common = { workspace = true, optional = true }
+mail-db-stash = { workspace = true }
+contact-database = { workspace = true }
+contact-service = { workspace = true }
+mail-db = { workspace = true }
 
 [dev-dependencies]
 mail-contacts-api = { workspace = true, features = ["mocks"] }

@@ -1,7 +1,8 @@
 use base64::DecodeError;
 use ical::parser::ParserError;
 use mail_vcard::VCardError;
-use proton_crypto_account::{errors::CardCryptoError, proton_crypto::CryptoError};
+use proton_crypto_account::errors::CardCryptoError;
+use proton_crypto_account::proton_crypto::CryptoError;
 use thiserror::Error;
 
 pub type Result<T> = std::result::Result<T, ContactKeyExtractionError>;

@@ -1,9 +1,8 @@
-use crate::ApiError;
-use crate::DelinquentState;
 use crate::login::state::State;
 use crate::protocol::{MigrationSnooper, PostLoginValidationError, PostLoginValidator};
 use crate::shared::SecureString;
 use crate::shared::challenge::{Behavior, ChallengeInfo};
+use crate::{ApiError, DelinquentState};
 use mail_api_session::ids::{SessionId, UserId};
 use mail_api_session::session::Session;
 use mail_api_session::store::{StoreError, UserData};

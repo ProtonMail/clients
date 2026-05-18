@@ -1,7 +1,7 @@
+use crate::Result;
 use crate::common::prelude::*;
 use crate::tls::TlsCert;
 use crate::tls::VerifyRes::*;
-use crate::Result;
 use muon_proc::{autoimpl, derive_dyn};
 use std::fmt::Debug;
 use std::sync::Arc;

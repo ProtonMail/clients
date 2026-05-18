@@ -3,10 +3,8 @@ use crate::context::services::Service;
 use async_trait::async_trait;
 use jiff::Zoned;
 use parking_lot::{Mutex, RwLock};
-use std::{
-    sync::atomic::{AtomicBool, Ordering},
-    time::{Duration, Instant},
-};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::{Duration, Instant};
 use tracing::{debug, instrument};
 
 #[derive(Debug, Default)]

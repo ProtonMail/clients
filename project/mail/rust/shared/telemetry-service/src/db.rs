@@ -2,11 +2,10 @@ use anyhow::anyhow;
 use async_trait::async_trait;
 
 use core_telemetry::{TelemetryDbEx, TelemetryError, TelemetryEvent};
-use mail_stash::UserDb;
 use mail_stash::orm::Model;
-use mail_stash::params;
 use mail_stash::stash::{Stash, StashError};
 use mail_stash::utils::MapToSql as _;
+use mail_stash::{UserDb, params};
 
 use crate::TelemetryEventRow;
 

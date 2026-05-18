@@ -1,5 +1,4 @@
-use super::common::DefaultError;
-use super::common::new_queue_typed;
+use super::common::{DefaultError, new_queue_typed};
 use mail_action_queue::action::{
     Action, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard, WriterGuardError,
 };

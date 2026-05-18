@@ -66,7 +66,8 @@ async fn query_tx(tx: &WriteTx<'_>, value: &str) -> Vec<String> {
 
 #[cfg(test)]
 mod concurrency_basic_sync {
-    use mail_stash::{UserDb, stash::Stash};
+    use mail_stash::UserDb;
+    use mail_stash::stash::Stash;
 
     #[tokio::test]
     async fn basic_query_without_transactions() {
@@ -166,7 +167,8 @@ mod concurrency_basic_sync {
 #[cfg(test)]
 mod concurrency_async_functions {
     use super::*;
-    use mail_stash::{UserDb, stash::StashError};
+    use mail_stash::UserDb;
+    use mail_stash::stash::StashError;
 
     #[tokio::test]
     async fn basic_query_without_transactions() {
@@ -207,7 +209,8 @@ mod concurrency_async_functions {
 #[cfg(test)]
 mod concurrency_async_threads {
     use super::*;
-    use mail_stash::{UserDb, stash::StashError};
+    use mail_stash::UserDb;
+    use mail_stash::stash::StashError;
 
     #[tokio::test]
     async fn basic_query_without_transactions() {
@@ -309,7 +312,8 @@ mod concurrency_async_threads {
 #[cfg(test)]
 mod concurrency_std_threads {
     use super::*;
-    use mail_stash::{UserDb, stash::StashError};
+    use mail_stash::UserDb;
+    use mail_stash::stash::StashError;
     use tokio::runtime::Runtime;
 
     #[tokio::test]
@@ -376,7 +380,8 @@ mod concurrency_std_threads {
 #[cfg(test)]
 mod concurrency_mixed {
     use super::*;
-    use mail_stash::{UserDb, stash::StashError};
+    use mail_stash::UserDb;
+    use mail_stash::stash::StashError;
     use tokio::runtime::Runtime;
 
     #[tokio::test]
@@ -527,12 +532,10 @@ mod concurrency_mixed {
 
 mod orm_tests {
     use crate::params;
-    use mail_stash::{
-        UserDb,
-        orm::{Model, ModelHooks, ModelRaw},
-        stash::{Stash, StashError},
-        utils::ConnectionExt,
-    };
+    use mail_stash::UserDb;
+    use mail_stash::orm::{Model, ModelHooks, ModelRaw};
+    use mail_stash::stash::{Stash, StashError};
+    use mail_stash::utils::ConnectionExt;
     use mail_stash_macros::{Model, ModelRaw};
     use rusqlite::{Connection, Transaction};
 

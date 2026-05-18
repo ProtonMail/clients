@@ -5,20 +5,16 @@ use crate::mail::MailUserSession;
 use crate::uniffi_async;
 use mail_common::{MailContextError, ProtonMailError as RealProtonMailError};
 use mail_core_api::services::proton::ContactId;
-use mail_core_common::datatypes::contact_details::ContactDetailAddress as RealAddress;
-use mail_core_common::datatypes::contact_details::ContactDetailsEmail as RealContactDetailsEmail;
-use mail_core_common::datatypes::contact_details::ContactField as RealContactField;
-use mail_core_common::datatypes::contact_details::ContactGroup as RealContactGroup;
-use mail_core_common::datatypes::contact_details::ExtendedName as RealExtendedName;
-use mail_core_common::datatypes::contact_details::Gender as RealGender;
-use mail_core_common::datatypes::contact_details::InspectableContactDetails as RealContactDetails;
-use mail_core_common::datatypes::contact_details::Telephone as RealTelephone;
-use mail_core_common::datatypes::contact_details::VCardUrl as RealVCardUrl;
-use mail_core_common::datatypes::contact_details::VCardUrlValue as RealVCardUrlValue;
-use mail_core_common::datatypes::contact_details::VcardPropType as RealVcardPropType;
+use mail_core_common::datatypes::contact_details::{
+    ContactDetailAddress as RealAddress, ContactDetailsEmail as RealContactDetailsEmail,
+    ContactField as RealContactField, ContactGroup as RealContactGroup,
+    ExtendedName as RealExtendedName, Gender as RealGender,
+    InspectableContactDetails as RealContactDetails, Telephone as RealTelephone,
+    VCardUrl as RealVCardUrl, VCardUrlValue as RealVCardUrlValue,
+    VcardPropType as RealVcardPropType,
+};
 use mail_core_common::utils::MapVec as _;
-use mail_vcard::values::date_and_or_time::DateAndOrTimeValue;
-use mail_vcard::values::date_and_or_time::MaybeDateAndOrTime;
+use mail_vcard::values::date_and_or_time::{DateAndOrTimeValue, MaybeDateAndOrTime};
 use proton_crypto_account::keys::UserKeySelector;
 
 #[uniffi_export]

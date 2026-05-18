@@ -1,5 +1,4 @@
-use crate::datatypes::AttachmentMetadata;
-use crate::datatypes::LocalAttachmentId;
+use crate::datatypes::{AttachmentMetadata, LocalAttachmentId};
 use crate::draft::SaveError;
 use crate::models::{
     Attachment, DraftAttachmentInternalDispositionError, DraftAttachmentInternalError,

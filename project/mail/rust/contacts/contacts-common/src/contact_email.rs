@@ -4,11 +4,12 @@ use mail_core_api::services::proton::{
     ContactEmail as ApiContactEmail, ContactEmailId, ContactId, PrivateEmail,
 };
 use mail_shared_types::{ModelIdExtension, UnixTimestamp};
+use mail_stash::macros::Model as ModelDerive;
 use mail_stash::orm::{Model, ModelHooks};
 use mail_stash::rusqlite::{self};
 use mail_stash::stash::{StashError, Tether};
 use mail_stash::utils::ConnectionExt;
-use mail_stash::{UserDb, macros::Model as ModelDerive, params};
+use mail_stash::{UserDb, params};
 
 use crate::contact::Contact;
 use crate::contact_group::ContactGroup;

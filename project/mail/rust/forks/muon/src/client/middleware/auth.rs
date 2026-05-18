@@ -1,8 +1,8 @@
 use crate::auth::{Auth, Tokens};
-use crate::client::headers::{AuthTokenHeader, AuthUidHeader};
 use crate::client::ClientInternalStorage;
+use crate::client::headers::{AuthTokenHeader, AuthUidHeader};
 use crate::common::{BoxFut, Sender, SenderLayer};
-use crate::http::{HttpReq, HttpReqExt, HttpRes, Status, StatusErr, POST};
+use crate::http::{HttpReq, HttpReqExt, HttpRes, POST, Status, StatusErr};
 use crate::rest::auth;
 use crate::store::{AuthVersion, SafeStore, StoreWriteGuard};
 use crate::{Error, ErrorKind, InfoProvider, Result};
@@ -60,8 +60,8 @@ impl AuthLayer {
 
         let (ver, auth) = if let Auth::None = auth {
             info!("attempting to get unauth session");
-            let res = new_unauth_session(inner, self.stores.local(), &ver, self.provider.clone())
-                .await?;
+            let res =
+                new_unauth_session(inner, self.stores.local(), &ver, self.provider.clone()).await?;
 
             info!("create unauth session succeeded, sync to persistent store");
             self.stores.sync_stores().await;
@@ -228,7 +228,9 @@ where
 
         Err(AuthLayerErr::StatusErr(StatusErr(code, _))) if code.requires_logout() => {
             if code == StatusCode::BAD_REQUEST {
-                error!("non-existent auth session. Received a 400 from the backend. This indicates a problem with the refresh logic. It could be that the same token was refreshed twice. Please check!");
+                error!(
+                    "non-existent auth session. Received a 400 from the backend. This indicates a problem with the refresh logic. It could be that the same token was refreshed twice. Please check!"
+                );
             } else {
                 error!("non-existent auth session");
             }
@@ -239,8 +241,7 @@ where
         Err(err) => {
             error!(%err, "unexpected error during auth refresh");
             return match err {
-                AuthLayerErr::Auth(_)
-                | AuthLayerErr::StoreState(_) => Err(AuthErr::Refresh.into()),
+                AuthLayerErr::Auth(_) | AuthLayerErr::StoreState(_) => Err(AuthErr::Refresh.into()),
                 AuthLayerErr::StatusErr(StatusErr(code, _)) if !code.is_server_error() => {
                     Err(AuthErr::Refresh.into())
                 }

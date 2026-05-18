@@ -12,19 +12,16 @@
 
 use std::fmt::Display;
 
-use proton_crypto_account::{
-    keys::{
-        ContactType, CryptoMailSettings, DecryptedAddressKey, EmailMimeType, EncryptionPreferences,
-        PGPScheme, PinnedPublicKeys, PublicAddressKeys, RecipientPublicKeyModel,
-    },
-    proton_crypto::{
-        crypto::{PrivateKey, PublicKey, UnixTimestamp},
-        keytransparency::KTVerificationResult,
-    },
+use proton_crypto_account::keys::{
+    ContactType, CryptoMailSettings, DecryptedAddressKey, EmailMimeType, EncryptionPreferences,
+    PGPScheme, PinnedPublicKeys, PublicAddressKeys, RecipientPublicKeyModel,
 };
+use proton_crypto_account::proton_crypto::crypto::{PrivateKey, PublicKey, UnixTimestamp};
+use proton_crypto_account::proton_crypto::keytransparency::KTVerificationResult;
 use serde_repr::Serialize_repr;
 
-use crate::{keys::SendPreferencesError, message::packages::PackageMimeType};
+use crate::keys::SendPreferencesError;
+use crate::message::packages::PackageMimeType;
 
 use super::CryptoPackageTypeError;
 

@@ -1,11 +1,9 @@
 use std::convert::Infallible;
 
-use lightningcss::{
-    properties::{Property, PropertyId},
-    vendor_prefix::VendorPrefix,
-    visit_types,
-    visitor::{Visit, Visitor},
-};
+use lightningcss::properties::{Property, PropertyId};
+use lightningcss::vendor_prefix::VendorPrefix;
+use lightningcss::visit_types;
+use lightningcss::visitor::{Visit, Visitor};
 
 use crate::transforms::styles::{ColorPurpose, PropertyWithPurpose};
 

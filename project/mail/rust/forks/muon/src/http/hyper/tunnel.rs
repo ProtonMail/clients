@@ -1,7 +1,7 @@
-use crate::common::{DynSocket, IntoDyn, Socket, WithTimeout, HTTP_PROXY_CONNECT};
+use crate::common::{DynSocket, HTTP_PROXY_CONNECT, IntoDyn, Socket, WithTimeout};
+use crate::http::Body;
 use crate::http::hyper::compat::{HyperIo, HyperRt};
 use crate::http::hyper::sender::SendWith;
-use crate::http::Body;
 use crate::rt::DynSpawner;
 use crate::{Error, ErrorKind, Result};
 use async_trait::async_trait;

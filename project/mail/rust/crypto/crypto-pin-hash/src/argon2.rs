@@ -1,9 +1,7 @@
-use argon2::{
-    Argon2,
-    password_hash::{
-        Error as Argon2Error, PasswordHash, PasswordHasher, PasswordVerifier, SaltString,
-        rand_core::OsRng,
-    },
+use argon2::Argon2;
+use argon2::password_hash::rand_core::OsRng;
+use argon2::password_hash::{
+    Error as Argon2Error, PasswordHash, PasswordHasher, PasswordVerifier, SaltString,
 };
 use std::str::FromStr;
 use thiserror::Error;

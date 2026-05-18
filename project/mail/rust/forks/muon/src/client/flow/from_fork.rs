@@ -1,10 +1,10 @@
+use crate::Tokens;
 use crate::auth::Auth;
 use crate::client::Client;
 use crate::flow::{FlowErr, UserIdErr};
-use crate::http::{Status, GET};
+use crate::http::{GET, Status};
 use crate::rest::auth;
 use crate::util::ByteSliceExt;
-use crate::Tokens;
 
 /// A flow for acquiring a fork.
 #[must_use]

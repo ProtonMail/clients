@@ -5,9 +5,9 @@
 use crate::common::BoxErr;
 pub use crate::http::HttpReqExt as ProtonRequestExt;
 use async_trait::async_trait;
-use data_encoding::{DecodeError, BASE32_NOPAD, BASE64, BASE64URL_NOPAD};
-use futures::prelude::*;
+use data_encoding::{BASE32_NOPAD, BASE64, BASE64URL_NOPAD, DecodeError};
 use futures::TryFutureExt;
+use futures::prelude::*;
 use itertools::Itertools;
 use muon_proc::autoimpl;
 use num::cast::AsPrimitive;
@@ -23,7 +23,7 @@ use std::iter::once;
 use std::marker::PhantomData;
 use std::pin::Pin;
 use std::string::FromUtf8Error;
-use std::task::{ready, Context, Poll};
+use std::task::{Context, Poll, ready};
 use std::time::Duration;
 use thiserror::Error;
 

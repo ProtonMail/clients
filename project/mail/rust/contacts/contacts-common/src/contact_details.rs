@@ -2,13 +2,11 @@ use anyhow::Context as _;
 use core::fmt;
 use indexmap::IndexSet;
 use itertools::Itertools as _;
-use mail_avatar::AvatarInformation;
-use mail_avatar::proton_color;
+use mail_avatar::{AvatarInformation, proton_color};
 use mail_contacts_api::ContactGroupId;
 use mail_core_api::services::proton::{ContactId, PrivateEmail};
 use mail_core_api::session::Session;
-use mail_shared_types::MapVec as _;
-use mail_shared_types::ModelExtension;
+use mail_shared_types::{MapVec as _, ModelExtension};
 use mail_stash::orm::Model as _;
 use mail_stash::stash::Tether;
 use mail_vcard::address::Address as VcardAddress;
@@ -29,8 +27,7 @@ use url::Url;
 
 use crate::contact::Contact;
 use crate::contact_email::ContactEmail;
-use crate::contact_group::ContactGroup as ContactGroupModel;
-use crate::contact_group::ContactGroupColor;
+use crate::contact_group::{ContactGroup as ContactGroupModel, ContactGroupColor};
 use crate::local_ids::LocalContactId;
 
 /// Represents some data known from the vCard in a form more suitable for human consumption than a

@@ -4,8 +4,9 @@ use crate::errors::{ProtonError, UserSessionError};
 use crate::mail::datatypes::PrivacyInfo;
 use crate::mail::user_session::MailUserSession;
 use crate::uniffi_async;
-use mail_common::{MailContextError, ProtonMailError as RealProtonMailError};
-use mail_common::{MailUserContext, TrackerService};
+use mail_common::{
+    MailContextError, MailUserContext, ProtonMailError as RealProtonMailError, TrackerService,
+};
 use mail_stash::stash::WatcherHandle;
 use mail_uniffi_runtime::async_runtime;
 use std::sync::{Arc, Weak};

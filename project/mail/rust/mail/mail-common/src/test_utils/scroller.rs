@@ -1,35 +1,28 @@
-use std::{collections::HashMap, fmt::Display, sync::Arc, time::Duration};
+use std::collections::HashMap;
+use std::fmt::Display;
+use std::sync::Arc;
+use std::time::Duration;
 
 use mail_core_api::services::proton::LabelId;
-use mail_core_common::{
-    datatypes::LocalLabelId,
-    models::{Label, ModelExtension, ModelIdExtension},
-};
-use mail_stash::{
-    orm::Model,
-    params,
-    stash::{StashError, Tether, WriteTx},
-};
+use mail_core_common::datatypes::LocalLabelId;
+use mail_core_common::models::{Label, ModelExtension, ModelIdExtension};
+use mail_stash::orm::Model;
+use mail_stash::params;
+use mail_stash::stash::{StashError, Tether, WriteTx};
 
-use crate::{
-    actions::ConversationOrMessage,
-    conv_id, conversation,
-    datatypes::{ContextualConversation, IncludeSwitch, ReadFilter, SearchOptions},
-    label, lbl_id,
-    mail_scroller::MailScrollerItem,
-    message,
-    models::{Conversation, ConversationCounter, Message, MessageCounter},
-    msg_id,
-    traits::ScrollerEq,
-};
+use crate::actions::ConversationOrMessage;
+use crate::datatypes::{ContextualConversation, IncludeSwitch, ReadFilter, SearchOptions};
+use crate::mail_scroller::MailScrollerItem;
+use crate::models::{Conversation, ConversationCounter, Message, MessageCounter};
+use crate::traits::ScrollerEq;
+use crate::{conv_id, conversation, label, lbl_id, message, msg_id};
 
 use super::utils::{create_address, test_address};
 
-use crate::mail_scroller::ScrollerListUpdate;
-use crate::{
-    MailContextError, MailUserContext,
-    mail_scroller::{CategoryView, MailScroller, MailScrollerHandle, ScrollerUpdate},
+use crate::mail_scroller::{
+    CategoryView, MailScroller, MailScrollerHandle, ScrollerListUpdate, ScrollerUpdate,
 };
+use crate::{MailContextError, MailUserContext};
 
 pub const UNIQUE_CONV_ID: &str = "unique_conv_id_for_storing_messages";
 

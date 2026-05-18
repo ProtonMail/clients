@@ -1,29 +1,25 @@
 use super::MailPaginatorJoinHandle;
-use crate::AppError;
 use crate::datatypes::dependencies::DependencyFetcher;
 use crate::datatypes::labels::ScrollOrderField;
-use crate::models::MailBusyLabel;
-use crate::{
-    MailContextError, MailUserContext,
-    datatypes::{ReadFilter, SearchOptions},
-    mail_scroller::{CategoryView, MailScrollerSource},
-    models::{Message, MessageCounter, MessageLabel, SearchScrollData},
-};
+use crate::datatypes::{ReadFilter, SearchOptions};
+use crate::mail_scroller::{CategoryView, MailScrollerSource};
+use crate::models::{MailBusyLabel, Message, MessageCounter, MessageLabel, SearchScrollData};
+use crate::{AppError, MailContextError, MailUserContext};
 use mail_action_queue::queue::Queue;
 use mail_action_queue::rebase::RebaseChangeSet;
-use mail_api::services::proton::{
-    ProtonMail, common::MessageId, prelude::GetMessagesOptions,
-    response_data::MessageMetadata as ApiMessageMetadata,
-};
-use mail_core_api::{services::proton::LabelId, session::Session};
+use mail_api::services::proton::ProtonMail;
+use mail_api::services::proton::common::MessageId;
+use mail_api::services::proton::prelude::GetMessagesOptions;
+use mail_api::services::proton::response_data::MessageMetadata as ApiMessageMetadata;
+use mail_core_api::services::proton::LabelId;
+use mail_core_api::session::Session;
 use mail_core_common::datatypes::{LocalLabelId, UnixTimestamp};
 use mail_core_common::models::{Label, ModelExtension, ModelIdExtension};
 use mail_stash::UserDb;
-use mail_stash::{
-    orm::Model,
-    stash::{StashError, Tether},
-};
-use std::{cmp, sync::Arc};
+use mail_stash::orm::Model;
+use mail_stash::stash::{StashError, Tether};
+use std::cmp;
+use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::{debug, error, info, instrument};
 

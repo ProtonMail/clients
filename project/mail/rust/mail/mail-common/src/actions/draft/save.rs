@@ -3,10 +3,9 @@ use crate::actions::draft::{
     SEND_ACTION_GROUP, local_all_draft_label_id, local_all_mail_label_id, local_draft_label_id,
     local_sent_label_id,
 };
-use crate::datatypes::LocalAttachmentId;
 use crate::datatypes::{
-    AttachmentMetadata, Disposition, LocalMessageId, MessageSender, MessageSenders, MimeType,
-    RollbackItemType, SystemLabelId,
+    AttachmentMetadata, Disposition, LocalAttachmentId, LocalMessageId, MessageSender,
+    MessageSenders, MimeType, RollbackItemType, SystemLabelId,
 };
 use crate::draft::compose::maybe_sanitize;
 use crate::draft::recipients::RecipientList;

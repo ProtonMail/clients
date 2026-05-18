@@ -1,10 +1,8 @@
 use itertools::Itertools;
-use mail_common::datatypes::attachment::ContentId;
-use mail_common::datatypes::attachment::MimeType;
+use mail_common::datatypes::attachment::{ContentId, MimeType};
 use mail_common::datatypes::message_banner::MessageBanner;
 use mail_common::datatypes::{AttachmentMetadata, SystemLabelId};
-use mail_common::models::{Attachment, Message};
-use mail_common::models::{MessageMimeType, RawMessageBody};
+use mail_common::models::{Attachment, Message, MessageMimeType, RawMessageBody};
 use mail_common::test_utils::message_body::{
     TEST_MESSAGE_BODY_DECRYPTED, TEST_MESSAGE_BODY_MIME_DECRYPTED,
     TEST_MESSAGE_BODY_MIME_SIGNATURE, TEST_USER_ID, message_body_test_message_mime,

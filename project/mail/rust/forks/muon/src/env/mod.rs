@@ -24,11 +24,11 @@
 //! By default, environments can not be extended unless the `unsealed` feature
 //! is activated.
 
+use crate::Sealed;
 use crate::app::AppVersion;
 use crate::common::{Host, IntoDyn, Server};
 use crate::tls::TlsPinSet;
 use crate::util::IntoIterExt;
-use crate::Sealed;
 use derive_more::{AsRef, FromStr};
 use muon_proc::derive_dyn;
 use std::sync::Arc;

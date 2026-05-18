@@ -23,7 +23,8 @@ use mail_common::actions::{LabelAsOutput as RealLabelAsOutput, Undo as RealUndo}
 use mail_common::datatypes::{
     AlmostAllMail as RealAlmostAllMail, AttachmentMetadata as RealAttachmentMetadata,
     ComposerDirection as RealComposerDirection, ComposerMode as RealComposerMode,
-    CustomLabel as RealCustomLabel, Disposition as RealDisposition,
+    ContextualConversation, CustomLabel as RealCustomLabel, Disposition as RealDisposition,
+    ExclusiveLocation as RealExclusiveLocation, HiddenMessagesBanner as RealHiddenMessagesBanner,
     LabelDescription as RealLabelDescription, MessageButtons as RealMessageButtons,
     MessageFlags as RealMessageFlags, MessageRecipient as RealMessageRecipient,
     MessageRecipientDisplayMode as RealMessageRecipientDisplayMode,
@@ -33,10 +34,6 @@ use mail_common::datatypes::{
     PgpScheme as RealPgpScheme, PmSignature as RealPmSignature, ShowImages as RealShowImages,
     ShowMoved as RealShowMoved, SpamAction as RealSpamAction, SwipeAction as RealSwipeAction,
     ViewLayout as RealViewLayout, ViewMode as RealViewMode,
-};
-use mail_common::datatypes::{
-    ContextualConversation, ExclusiveLocation as RealExclusiveLocation,
-    HiddenMessagesBanner as RealHiddenMessagesBanner,
 };
 use mail_common::draft::recipients::MaybeEmptyString;
 use mail_common::models::{

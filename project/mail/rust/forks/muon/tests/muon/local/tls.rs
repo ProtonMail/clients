@@ -1,7 +1,7 @@
 use anyhow::Result;
-use mail_muon::test::server::{Server, HTTPS};
-use mail_muon::tls::{RustlsTls, TokioTls};
 use mail_muon::GET;
+use mail_muon::test::server::{HTTPS, Server};
+use mail_muon::tls::{RustlsTls, TokioTls};
 use std::sync::Arc;
 
 #[mail_muon::test(scheme(HTTPS))]

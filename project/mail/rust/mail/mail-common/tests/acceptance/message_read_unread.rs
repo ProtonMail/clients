@@ -1,8 +1,8 @@
 use itertools::Itertools;
 use mail_api::services::proton::common::MessageId;
-use mail_api::services::proton::response_data::MailSettings as ApiMailSettings;
-use mail_api::services::proton::response_data::MessageMetadata as ApiMessageMetadata;
-use mail_api::services::proton::response_data::ViewMode as ApiViewMode;
+use mail_api::services::proton::response_data::{
+    MailSettings as ApiMailSettings, MessageMetadata as ApiMessageMetadata, ViewMode as ApiViewMode,
+};
 use mail_common::Mailbox;
 use mail_common::datatypes::SystemLabelId;
 use mail_common::models::{Conversation, Message};

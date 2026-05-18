@@ -1,20 +1,17 @@
 use crate::test_utils::test_context::TestContext;
 use mail_core_api::service::ApiErrorInfo;
-use mail_core_api::services::proton::AddressFlags;
-use mail_core_api::services::proton::AddressId;
-use mail_core_api::services::proton::AddressSignedKeyList as ApiAddressSignedKeyList;
 use mail_core_api::services::proton::{
-    Address as ApiAddress, AddressStatus as ApiAddressStatus, AddressType as ApiAddressType,
+    Address as ApiAddress, AddressFlags, AddressId,
+    AddressSignedKeyList as ApiAddressSignedKeyList, AddressStatus as ApiAddressStatus,
+    AddressType as ApiAddressType, GetAddressResponse, GetAddressesResponse,
 };
-use mail_core_api::services::proton::{GetAddressResponse, GetAddressesResponse};
 use proton_crypto_account::keys::{
     AddressKeys as ApiAddressKeys, ArmoredPrivateKey, EncryptedKeyToken, KeyFlag, KeyId,
     KeyTokenSignature, LockedKey,
 };
 use std::sync::LazyLock;
-use wiremock::Times;
 use wiremock::matchers::{method, path};
-use wiremock::{Mock, ResponseTemplate};
+use wiremock::{Mock, ResponseTemplate, Times};
 
 pub static MY_ADDRESS_ID: LazyLock<AddressId> = LazyLock::new(|| AddressId::from("MyRemoteId"));
 

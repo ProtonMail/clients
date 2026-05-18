@@ -1,7 +1,5 @@
-use crate::{
-    MailContextError,
-    mail_scroller::{MailScroller, MailScrollerItem},
-};
+use crate::MailContextError;
+use crate::mail_scroller::{MailScroller, MailScrollerItem};
 use anyhow::anyhow;
 use derive_more::Debug;
 use itertools::Itertools;
@@ -249,15 +247,13 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        MailContextError, MailUserContext,
-        datatypes::{ReadFilter, SearchOptions},
-        mail_scroller::{
-            CategoryView, MailPaginatorJoinHandle, MailScrollerHandle, MailScrollerSource,
-            ScrollerListUpdate, ScrollerUpdate,
-        },
-        test_utils::test_context::MailTestContext,
+    use crate::datatypes::{ReadFilter, SearchOptions};
+    use crate::mail_scroller::{
+        CategoryView, MailPaginatorJoinHandle, MailScrollerHandle, MailScrollerSource,
+        ScrollerListUpdate, ScrollerUpdate,
     };
+    use crate::test_utils::test_context::MailTestContext;
+    use crate::{MailContextError, MailUserContext};
     use derive_more::Debug;
     use mail_common_derive::ScrollerEq;
     use mail_core_common::datatypes::LocalLabelId;

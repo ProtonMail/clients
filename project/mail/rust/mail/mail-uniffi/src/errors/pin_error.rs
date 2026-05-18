@@ -1,8 +1,7 @@
 use super::{PinAuthErrorReason, PinSetErrorReason, ProtonError};
 use crate::UniffiEnum;
 use derive_more::From;
-use mail_common::MailErrorReason as RealMailErrorReason;
-use mail_common::ProtonMailError as RealProtonMailError;
+use mail_common::{MailErrorReason as RealMailErrorReason, ProtonMailError as RealProtonMailError};
 
 #[derive(Debug, From, UniffiEnum)]
 pub enum PinSetError {

@@ -1,7 +1,7 @@
-use crate::atlas::{new_client, PASS, USER};
-use anyhow::{bail, Result};
-use mail_muon::client::flow::LoginFlow;
+use crate::atlas::{PASS, USER, new_client};
+use anyhow::{Result, bail};
 use mail_muon::GET;
+use mail_muon::client::flow::LoginFlow;
 use serde_json::Value;
 
 #[tokio::test]

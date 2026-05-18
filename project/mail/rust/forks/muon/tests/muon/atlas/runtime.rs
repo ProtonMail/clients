@@ -1,7 +1,7 @@
 use crate::atlas::new_builder;
 use anyhow::Result;
-use mail_muon::rt::PollWith;
 use mail_muon::GET;
+use mail_muon::rt::PollWith;
 
 #[tokio::test]
 async fn test_runtime_dispatcher() -> Result<()> {

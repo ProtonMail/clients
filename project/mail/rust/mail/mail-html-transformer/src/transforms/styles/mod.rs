@@ -1,5 +1,4 @@
-use std::collections::BTreeMap;
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fmt::Write;
 use std::sync::LazyLock;
 
@@ -11,15 +10,12 @@ use dark_mode_visitor::{StyleAttributeVisitor, StylesheetVisitor};
 use html5ever::LocalName;
 use itertools::Itertools;
 use kuchikiki::{Attribute, ElementData, NodeDataRef, NodeRef};
+use lightningcss::printer::PrinterOptions;
+use lightningcss::properties::Property;
+use lightningcss::stylesheet::{StyleAttribute, StyleSheet};
 use lightningcss::traits::{Parse, ToCss};
-use lightningcss::values::color::{CssColor, HSL};
-use lightningcss::{
-    printer::PrinterOptions,
-    properties::Property,
-    stylesheet::{StyleAttribute, StyleSheet},
-    values::color::RGBA,
-    visitor::Visit,
-};
+use lightningcss::values::color::{CssColor, HSL, RGBA};
+use lightningcss::visitor::Visit;
 use support_level::DarkStyleSupportLevel;
 
 use crate::transforms::styles::colors::{HSLExt, hsla_for_dark_mode};

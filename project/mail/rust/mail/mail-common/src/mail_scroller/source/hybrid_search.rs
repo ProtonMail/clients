@@ -1,9 +1,8 @@
 use super::MailPaginatorJoinHandle;
-use crate::AppError;
 use crate::datatypes::SearchOptions;
 use crate::mail_scroller::{CategoryView, MailScrollerSource};
 use crate::models::{MailBusyLabel, Message, MessageCounter, MessageLabel, SearchScrollData};
-use crate::{MailContextError, MailUserContext};
+use crate::{AppError, MailContextError, MailUserContext};
 use mail_core_api::services::proton::LabelId;
 use mail_core_common::datatypes::LocalLabelId;
 use mail_core_common::models::{Label, ModelIdExtension};

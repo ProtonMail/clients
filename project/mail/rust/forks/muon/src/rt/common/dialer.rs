@@ -6,8 +6,8 @@
 //! Given a list of IP addresses and a port, a `Dialer` attempts to connect to
 //! one of them on the given port, returning a `Socket` if successful.
 
-use crate::common::{DynSocket, IntoDyn};
 use crate::Result;
+use crate::common::{DynSocket, IntoDyn};
 use async_trait::async_trait;
 use muon_proc::{autoimpl, derive_dyn};
 use std::net::{IpAddr, SocketAddr};

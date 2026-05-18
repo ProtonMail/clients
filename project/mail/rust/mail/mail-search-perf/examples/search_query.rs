@@ -23,9 +23,8 @@ use std::time::Instant;
 
 use clap::Parser;
 use flate2::read::GzDecoder;
-use mail_search::FoundationSearchEngine;
-use mail_search::SearchError;
 use mail_search::traits::BlobStorage;
+use mail_search::{FoundationSearchEngine, SearchError};
 use mail_stash::rusqlite;
 use tempfile::TempDir;
 
@@ -191,7 +190,8 @@ async fn main() -> Result<(), anyhow::Error> {
         }
 
         if let Some(ref user_ctx) = user_ctx {
-            use mail_api::services::proton::{ProtonMail, common::MessageId};
+            use mail_api::services::proton::ProtonMail;
+            use mail_api::services::proton::common::MessageId;
             use mail_crypto_inbox::message::{DecryptableMessage as _, DecryptedBody};
             use mail_crypto_inbox::proton_crypto;
             use mail_crypto_inbox::proton_crypto_account::keys::AddressKeySelector;

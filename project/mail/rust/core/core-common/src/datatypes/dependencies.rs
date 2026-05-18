@@ -1,18 +1,12 @@
 use std::collections::HashSet;
 
-use crate::{
-    CoreContextError,
-    models::{Contact, ContactEmail},
-};
-use mail_core_api::{
-    services::proton::{ContactEmail as ApiContactEmail, ContactId},
-    session::Session,
-};
-use mail_stash::{
-    UserDb,
-    stash::{RunTransaction, Tether},
-};
-use mail_stash::{orm::Model, params};
+use crate::CoreContextError;
+use crate::models::{Contact, ContactEmail};
+use mail_core_api::services::proton::{ContactEmail as ApiContactEmail, ContactId};
+use mail_core_api::session::Session;
+use mail_stash::orm::Model;
+use mail_stash::stash::{RunTransaction, Tether};
+use mail_stash::{UserDb, params};
 
 #[derive(Default)]
 pub struct ContactsDependencyFetcher {

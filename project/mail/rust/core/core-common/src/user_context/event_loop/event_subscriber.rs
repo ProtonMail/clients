@@ -1,19 +1,15 @@
 use std::sync::{Arc, Weak};
 
-use crate::{
-    CoreContextError, UserContext,
-    datatypes::Refresh,
-    models::{Address, Contact, Label, User},
-    services::event_loop_service::EventManagerContext,
-};
+use crate::datatypes::Refresh;
+use crate::models::{Address, Contact, Label, User};
+use crate::services::event_loop_service::EventManagerContext;
+use crate::{CoreContextError, UserContext};
 use anyhow::Context;
 use async_trait::async_trait;
 use core_event_loop::{EventLoopError, RefreshFlag};
 use mail_core_api::services::proton::UserId;
-use mail_stash::{
-    orm::Model,
-    stash::{StashError, WriteTx},
-};
+use mail_stash::orm::Model;
+use mail_stash::stash::{StashError, WriteTx};
 use tracing::{debug, error, info, warn};
 
 pub mod macros {
@@ -59,8 +55,9 @@ use crate::event_loop::events::LabelEvent;
 use crate::event_loop::v6;
 use crate::event_loop::v6::CoreEventCache;
 use crate::user_context::event_loop::events::{AddressEvent, ContactEvent, CoreEvent};
-use core_event_loop::v6::{EventSource, EventSubscriberResult};
-use core_event_loop::v6::{EventSubscriber, EventSubscriberError};
+use core_event_loop::v6::{
+    EventSource, EventSubscriber, EventSubscriberError, EventSubscriberResult,
+};
 use mail_action_queue::action::ActionGroup;
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_core_api::service::ApiServiceError;

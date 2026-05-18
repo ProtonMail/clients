@@ -1,8 +1,7 @@
 use crate::actions::{
     GenericActionData, GenericLabelRelatedActionData, MailActionError, filter_responses,
 };
-use crate::datatypes::LocalConversationId;
-use crate::datatypes::{LocalMessageId, RollbackItemType};
+use crate::datatypes::{LocalConversationId, LocalMessageId, RollbackItemType};
 use crate::models::{Conversation, Message};
 #[cfg(feature = "foundation_search")]
 use crate::search::MailSearchService;

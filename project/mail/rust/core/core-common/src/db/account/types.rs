@@ -5,25 +5,21 @@ mod tests;
 use crate::datatypes::{AccountDetails, AuthScopes, AvatarInformation, PasswordMode, TfaStatus};
 use crate::models::ModelExtension;
 use crate::os::StoreInKeyChain;
-use aes_gcm::aead::Nonce;
 use aes_gcm::aead::consts::U12;
+use aes_gcm::aead::{Aead, AeadCore, KeyInit, Nonce, OsRng};
 use aes_gcm::aes::Aes256;
-use aes_gcm::{
-    Aes256Gcm, AesGcm, Key, KeySizeUser,
-    aead::{Aead, AeadCore, KeyInit, OsRng},
-};
+use aes_gcm::{Aes256Gcm, AesGcm, Key, KeySizeUser};
 use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
 use derive_more::{AsRef, Deref};
 use mail_core_api::auth::{Tokens, UserKeySecret};
 
 use mail_core_api::services::proton::{SessionId, UserId};
-use mail_stash::AccountDb;
 use mail_stash::exports::{FromSql, FromSqlResult, SqliteError, ToSql, ToSqlOutput, ValueRef};
 use mail_stash::macros::Model;
 use mail_stash::orm::Model;
 use mail_stash::stash::{Stash, StashError, Tether, WatcherHandle};
-use mail_stash::{params, sql_using_serde};
+use mail_stash::{AccountDb, params, sql_using_serde};
 use secrecy::{ExposeSecret, SecretString};
 use serde::{Deserialize, Serialize};
 use sqlite_watcher::watcher::TableObserver;

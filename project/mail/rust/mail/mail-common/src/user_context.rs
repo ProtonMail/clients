@@ -50,8 +50,9 @@ use mail_core_common::services::crypto_key_service::mail_core_key_manager::{
 use mail_core_common::services::event_loop_service::EventManagerContext;
 use mail_core_common::services::{
     EventLoopService, EventPollConfigService, NetworkMonitorService, UserIssueReporterService,
+    UserMetricService,
 };
-use mail_core_common::{Context as CoreContext, Origin, UserContext, services::UserMetricService};
+use mail_core_common::{Context as CoreContext, Origin, UserContext};
 use mail_crypto_inbox::keys::{ComposerPreference, SendPreferences};
 use mail_crypto_inbox::proton_crypto::CryptoClockProvider;
 use mail_crypto_inbox::proton_crypto::crypto::PGPProviderSync;

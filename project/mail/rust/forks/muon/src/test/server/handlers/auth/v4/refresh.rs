@@ -1,9 +1,9 @@
 use crate::rest::auth;
 use crate::test::server::backend::Backend;
-use crate::test::server::error::{cerr, ServerRes};
+use crate::test::server::error::{ServerRes, cerr};
+use axum::Json;
 use axum::extract::State;
 use axum::http::header::HeaderMap;
-use axum::Json;
 use std::borrow::ToOwned;
 
 /// Handle `POST /auth/v4/refresh`.

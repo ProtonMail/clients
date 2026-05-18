@@ -1,10 +1,8 @@
 use std::sync::Arc;
 
-use crate::{
-    errors::{UserSessionError, VoidSessionResult},
-    mail::MailUserSession,
-    uniffi_async,
-};
+use crate::errors::{UserSessionError, VoidSessionResult};
+use crate::mail::MailUserSession;
+use crate::uniffi_async;
 
 use super::datatypes::IssueReport;
 use mail_common::{MailContextError, ProtonMailError as RealProtonMailError};

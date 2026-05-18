@@ -1,13 +1,12 @@
 //! Implements the cryptography package logic to send emails via the API.
-use std::{fmt, str::FromStr};
+use std::fmt;
+use std::str::FromStr;
 
-use proton_crypto_account::{
-    keys::{EmailMimeType, PrimaryUnlockedAddressKey},
-    proton_crypto::{
-        crypto::{DataEncoding, Encryptor, EncryptorSync, PGPProviderSync, SessionKeyAlgorithm},
-        utils::remove_trailing_spaces,
-    },
+use proton_crypto_account::keys::{EmailMimeType, PrimaryUnlockedAddressKey};
+use proton_crypto_account::proton_crypto::crypto::{
+    DataEncoding, Encryptor, EncryptorSync, PGPProviderSync, SessionKeyAlgorithm,
 };
+use proton_crypto_account::proton_crypto::utils::remove_trailing_spaces;
 
 use crate::keys::InboxSessionKey;
 

@@ -13,17 +13,11 @@ use mail_core_common::models::{
     InitializationError, InitializationWatcher, InitializedComponent, Label, LabelError,
     ModelIdExtension,
 };
-use mail_stash::UserDb;
-use mail_stash::exports::Row;
-use mail_stash::orm::{ConversionError, DbRecord};
-use mail_stash::stash::{Stash, WatcherHandle};
+use mail_stash::exports::{Row, ToSql};
+use mail_stash::orm::{ConversionError, DbRecord, Model};
+use mail_stash::stash::{Stash, StashError, Tether, WatcherHandle};
 use mail_stash::utils::{IterMapToSql, placeholders};
-use mail_stash::{
-    exports::ToSql,
-    orm::Model,
-    params,
-    stash::{StashError, Tether},
-};
+use mail_stash::{UserDb, params};
 use sqlite_watcher::watcher::TableObserver;
 use std::collections::BTreeSet;
 use std::ops::Deref;

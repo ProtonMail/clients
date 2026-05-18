@@ -1,13 +1,13 @@
 use itertools::Itertools;
 use mail_api::services::proton::common::ConversationId;
 use mail_api::services::proton::prelude::MessageId;
-use mail_api::services::proton::response_data::Conversation as ApiConversation;
-use mail_api::services::proton::response_data::ConversationLabel as ApiConversationLabel;
-use mail_api::services::proton::response_data::MessageMetadata as ApiMessageMetadata;
+use mail_api::services::proton::response_data::{
+    Conversation as ApiConversation, ConversationLabel as ApiConversationLabel,
+    MessageMetadata as ApiMessageMetadata,
+};
 use mail_common::Mailbox;
 use mail_common::datatypes::SystemLabelId;
-use mail_common::models::ConversationCounter;
-use mail_common::models::{Conversation, Message};
+use mail_common::models::{Conversation, ConversationCounter, Message};
 use mail_common::test_utils::init::Params;
 use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
 use mail_core_api::services::proton::{AddressId, LabelId};

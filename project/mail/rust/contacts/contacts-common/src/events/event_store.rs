@@ -1,7 +1,8 @@
 use crate::events::{CONTACT_EVENT_TYPE_ID, ContactEventLoopV6Context, ContactEventStorageContext};
 use async_trait::async_trait;
 use core_event_loop::store::EventStore;
-use mail_stash::{params, stash::StashError};
+use mail_stash::params;
+use mail_stash::stash::StashError;
 
 #[async_trait]
 impl<T: ContactEventStorageContext> EventStore<T> for ContactEventLoopV6Context {

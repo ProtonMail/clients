@@ -4,7 +4,8 @@
 #[path = "tests/message_detector.rs"]
 mod tests;
 
-use kuchikiki::{NodeData, NodeRef, Selectors, iter::NodeEdge};
+use kuchikiki::iter::NodeEdge;
+use kuchikiki::{NodeData, NodeRef, Selectors};
 
 use crate::utils::NodeRefExt;
 

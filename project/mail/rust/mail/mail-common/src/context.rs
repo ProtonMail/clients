@@ -9,8 +9,7 @@ use mail_action_queue::action::{self, Action, WriterGuardError};
 use mail_action_queue::queue::{ActionError as QueueActionError, ActionRequeueReason, QueuedError};
 use mail_calendar_common::RsvpError;
 use mail_core_api::service::ApiServiceError;
-use mail_core_api::services::proton::BuildError;
-use mail_core_api::services::proton::{SessionId, UserId};
+use mail_core_api::services::proton::{BuildError, SessionId, UserId};
 use mail_core_api::session::SessionParts;
 use mail_core_api::verification::DynChallengeNotifier;
 use mail_core_common::auth_store::DecryptExt;
@@ -32,9 +31,8 @@ use mail_core_common::services::{
 };
 use mail_core_common::{
     ContactError, Context, CoreAccountState, CoreContextError, CoreContextResult, CoreSessionState,
-    Origin, UserContext,
+    OnSessionDeletedResponse, Origin, UserContext, UserDatabaseInitializer,
 };
-use mail_core_common::{OnSessionDeletedResponse, UserDatabaseInitializer};
 use mail_crypto_inbox::attachment::AttachmentEncryptionError;
 use mail_issue_reporter_service::{
     IssueLevel, IssueReportKeys, IssueReporter, TracedIssueReporter,

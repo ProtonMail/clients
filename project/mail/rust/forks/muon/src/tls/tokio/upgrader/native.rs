@@ -5,7 +5,7 @@ use crate::tls::{
 use crate::{ErrorKind, Result};
 use async_trait::async_trait;
 use tokio_native_tls::native_tls::Certificate;
-use tokio_native_tls::{native_tls, TlsConnector};
+use tokio_native_tls::{TlsConnector, native_tls};
 
 /// A tokio-native-tls upgrader.
 #[derive(Debug)]
@@ -87,8 +87,8 @@ if_sealed! {
 
 mod errors {
     use super::*;
-    use crate::tls::ParseCertErr;
     use crate::Error;
+    use crate::tls::ParseCertErr;
     use thiserror::Error;
 
     #[derive(Debug, Error)]

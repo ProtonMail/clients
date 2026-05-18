@@ -8,7 +8,16 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 const CORE_V4: &str = "/core/v4";
 
 /// In which environment to register the device for push notifications.
-#[derive(Clone, Copy, Debug, Deserialize_repr, Serialize_repr, Eq, Hash, PartialEq)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Deserialize_repr,
+    Serialize_repr,
+    Eq,
+    Hash,
+    PartialEq
+)]
 #[repr(u8)]
 pub enum DeviceEnvironment {
     Google = 4,

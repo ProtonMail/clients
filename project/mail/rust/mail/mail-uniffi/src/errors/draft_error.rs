@@ -6,10 +6,10 @@ use super::{
 };
 use crate::UniffiEnum;
 use derive_more::From;
-use mail_common::MailErrorReason as RealMailErrorReason;
-use mail_common::ProtonMailError as RealProtonMailError;
 use mail_common::{
-    DraftAttachmentUploadErrorReason as RealDraftAttachmentErrorReason, MailErrorReason,
+    DraftAttachmentUploadErrorReason as RealDraftAttachmentErrorReason,
+    MailErrorReason as RealMailErrorReason, MailErrorReason,
+    ProtonMailError as RealProtonMailError,
 };
 
 #[derive(Debug, From, UniffiEnum)]

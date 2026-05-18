@@ -1,5 +1,6 @@
 use crate::{CalendarAttendeeStatus, CalendarColor, CalendarNotification};
-use serde::{Serialize, Serializer, ser::SerializeMap};
+use serde::ser::SerializeMap;
+use serde::{Serialize, Serializer};
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(rename_all = "PascalCase")]

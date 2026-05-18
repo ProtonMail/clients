@@ -3,8 +3,9 @@ use crate::actions::MailActionError;
 use crate::datatypes::{LocalMessageId, MessageFlags, ParsedHeaders};
 use crate::models::Message;
 use anyhow::anyhow;
-use mail_action_queue::action::{Action, DefaultVersionConverter, Type, WriterGuard};
-use mail_action_queue::action::{ActionId, Handler};
+use mail_action_queue::action::{
+    Action, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
+};
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::ProtonMail;
 use mail_core_api::service::ApiServiceError;

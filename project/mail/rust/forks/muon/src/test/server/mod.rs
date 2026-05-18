@@ -11,11 +11,11 @@ use crate::env::{Env, EnvId};
 use crate::tls::{ParseCert, TlsPin, TlsPinSet};
 use crate::util::ByteSliceExt;
 use crate::{App, Client};
-use anyhow::{anyhow, Result};
-use async_channel::{unbounded, Receiver, Sender};
+use anyhow::{Result, anyhow};
+use async_channel::{Receiver, Sender, unbounded};
+use axum::Router;
 use axum::body::Body;
 use axum::routing::{get, post};
-use axum::Router;
 use derive_more::Debug;
 use futures::prelude::*;
 use hyper_util::rt::{TokioExecutor, TokioIo};
@@ -31,7 +31,7 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio::runtime::Handle;
 use tokio::task::JoinHandle;
 use tokio_rustls::server::TlsStream;
-use tokio_rustls::{rustls, TlsAcceptor};
+use tokio_rustls::{TlsAcceptor, rustls};
 use tracing::{debug, error, info};
 
 /// Recorders of all incoming and outgoing messages.

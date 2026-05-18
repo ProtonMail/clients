@@ -3,8 +3,7 @@
 use mail_api_shared::ApiServiceResult;
 use mail_muon::common::Sender;
 use mail_muon::http::HttpReqExt;
-use mail_muon::{DELETE, GET, PATCH, POST, PUT};
-use mail_muon::{ProtonRequest, ProtonResponse, serde_to_query};
+use mail_muon::{DELETE, GET, PATCH, POST, PUT, ProtonRequest, ProtonResponse, serde_to_query};
 
 use crate::{
     GetLabelsByIdsOptions, GetLabelsOptions, GetLabelsResponse, LabelId, LabelType,

@@ -1,35 +1,30 @@
 use super::{MailPaginatorJoinHandle, RemoteSource, utils};
-use crate::datatypes::ConversationLabelsCount;
-use crate::datatypes::DeletedItemType;
 use crate::datatypes::dependencies::DependencyFetcher;
-use crate::datatypes::labels::ScrollOrderDir;
-use crate::datatypes::labels::ScrollOrderField;
-use crate::models::DeletedItem;
-use crate::models::LabelExt;
-use crate::models::Message;
-use crate::prefetch::PrefetchJob;
-use crate::{
-    MailContextError, MailUserContext,
-    datatypes::{ContextualConversation, ReadFilter},
-    models::{CanonicalCategory, Conversation, ConversationScrollData},
+use crate::datatypes::labels::{ScrollOrderDir, ScrollOrderField};
+use crate::datatypes::{
+    ContextualConversation, ConversationLabelsCount, DeletedItemType, ReadFilter,
 };
+use crate::models::{
+    CanonicalCategory, Conversation, ConversationScrollData, DeletedItem, LabelExt, Message,
+};
+use crate::prefetch::PrefetchJob;
+use crate::{MailContextError, MailUserContext};
 use anyhow::anyhow;
 use itertools::Itertools;
 use mail_action_queue::action::ActionGroup;
 use mail_action_queue::queue::Queue;
 use mail_action_queue::rebase::RebaseChangeSet;
-use mail_api::services::proton::prelude::GetMessagesOptions;
-use mail_api::services::proton::{
-    ProtonMail,
-    common::ConversationId,
-    prelude::{GetConversationsOptions, GetConversationsResponse},
-    response_data::MessageMetadata as ApiMessageMetadata,
+use mail_api::services::proton::ProtonMail;
+use mail_api::services::proton::common::ConversationId;
+use mail_api::services::proton::prelude::{
+    GetConversationsOptions, GetConversationsResponse, GetMessagesOptions,
 };
+use mail_api::services::proton::response_data::MessageMetadata as ApiMessageMetadata;
 use mail_core_api::service::ApiServiceError;
-use mail_core_api::{services::proton::LabelId, session::Session};
+use mail_core_api::services::proton::LabelId;
+use mail_core_api::session::Session;
 use mail_core_common::datatypes::{LocalLabelId, UnixTimestamp};
-use mail_core_common::models::Label;
-use mail_core_common::models::ModelExtension;
+use mail_core_common::models::{Label, ModelExtension};
 use mail_stash::UserDb;
 use mail_stash::stash::{Tether, WriteTx};
 use std::ops::ControlFlow;

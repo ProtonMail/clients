@@ -1,49 +1,35 @@
 use mail_api::services::proton::prelude::GetIncomingDefaultResponse;
 use mail_core_api::service::ApiServiceError;
-use mail_core_common::utils::Paginatable;
-use mail_core_common::utils::PaginateOptions;
+use mail_core_common::utils::{Paginatable, PaginateOptions};
 use mail_stash::UserDb;
 use mail_stash::orm::ModelHooks;
 use regex::Regex;
-use serde::Deserialize;
-use serde::Serialize;
-use std::sync::Arc;
-use std::sync::LazyLock;
+use serde::{Deserialize, Serialize};
+use std::sync::{Arc, LazyLock};
 
 use indoc::indoc;
 use mail_api::INCOMING_DEFAULTS_PAGE_SIZE;
 use mail_api::services::proton::ProtonMail;
 use mail_core_api::session::Session;
 use mail_core_common::datatypes::InitializationKey;
-use mail_core_common::models::Address;
-use mail_core_common::models::InitializationError;
-use mail_core_common::models::InitializationWatcher;
-use mail_core_common::models::InitializedComponent;
+use mail_core_common::models::{
+    Address, InitializationError, InitializationWatcher, InitializedComponent,
+};
 use mail_stash::exports::Transaction;
 
 use derive_more::TryFrom;
-use mail_action_queue::queue::ActionError as QueueActionError;
-use mail_action_queue::queue::Queue;
-use mail_action_queue::queue::QueuedActionOutput;
-use mail_core_api::services::proton::IncomingDefaultId;
-use mail_core_api::services::proton::PrivateEmail;
-use mail_stash::exports::FromSql;
-use mail_stash::exports::FromSqlError;
-use mail_stash::exports::SqliteError;
-use mail_stash::exports::ToSql;
-use mail_stash::exports::ToSqlOutput;
-use mail_stash::exports::Value;
+use mail_action_queue::queue::{ActionError as QueueActionError, Queue, QueuedActionOutput};
+use mail_core_api::services::proton::{IncomingDefaultId, PrivateEmail};
+use mail_stash::exports::{FromSql, FromSqlError, SqliteError, ToSql, ToSqlOutput, Value};
 use mail_stash::macros::Model;
 
-use mail_api::services::proton::response_data::IncomingDefault as ApiIncomingDefault;
-use mail_api::services::proton::response_data::IncomingDefaultEvent as ApiIncomingDefaultEvent;
-use mail_api::services::proton::response_data::IncomingDefaultLocation as ApiIncomingDefaultLocation;
+use mail_api::services::proton::response_data::{
+    IncomingDefault as ApiIncomingDefault, IncomingDefaultEvent as ApiIncomingDefaultEvent,
+    IncomingDefaultLocation as ApiIncomingDefaultLocation,
+};
 use mail_stash::orm::Model;
 use mail_stash::params;
-use mail_stash::stash::Stash;
-use mail_stash::stash::StashError;
-use mail_stash::stash::Tether;
-use mail_stash::stash::WriteTx;
+use mail_stash::stash::{Stash, StashError, Tether, WriteTx};
 
 use crate::MailContextError;
 use crate::actions::MailActionError;

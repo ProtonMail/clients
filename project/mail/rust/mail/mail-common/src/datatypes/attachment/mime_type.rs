@@ -1,10 +1,11 @@
 use crate::AppError;
 use mail_stash::sql_using_serde;
 use mime::Mime;
+use std::collections::HashMap;
 use std::fmt;
 use std::iter::repeat;
+use std::str::FromStr;
 use std::sync::LazyLock;
-use std::{collections::HashMap, str::FromStr};
 
 pub type MimeName = &'static str;
 

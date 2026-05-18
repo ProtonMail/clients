@@ -2,7 +2,8 @@ use crate::challenge::HumanVerificationChallenge;
 use async_trait::async_trait;
 use derive_more::Debug;
 use mail_muon::common::{Name, Server};
-use std::{ops::Deref, sync::Arc};
+use std::ops::Deref;
+use std::sync::Arc;
 use url::Url;
 
 /// A dynamic human verification notifier.

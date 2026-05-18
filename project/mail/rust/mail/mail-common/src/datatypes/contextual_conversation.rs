@@ -3,10 +3,9 @@ use super::folder_banner::{AutoDeleteBanner, AutoDeleteState, SpamOrTrash};
 use crate::actions::{
     AllConversationActions, AllListActions, ConversationActionSheet, MovableSystemFolderAction,
 };
-use crate::datatypes::LocalConversationId;
 use crate::datatypes::{
-    AttachmentMetadata, CustomLabel, ExclusiveLocation, LocalMessageId, MessageRecipients,
-    MessageSenders, MobileAction,
+    AttachmentMetadata, CustomLabel, ExclusiveLocation, LocalConversationId, LocalMessageId,
+    MessageRecipients, MessageSenders, MobileAction,
 };
 use crate::models::{
     Attachment, Conversation, ConversationLabel, MailSettings, Message, MessageLabel,

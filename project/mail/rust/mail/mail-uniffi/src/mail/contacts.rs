@@ -1,27 +1,20 @@
 use super::MailUserSession;
-use crate::core::datatypes::{ContactGroupItem, ContactSuggestions};
-use crate::errors::{ActionError, VoidActionResult};
-use crate::{UniffiRecord, watch_channel_inner};
-use crate::{
-    WatchHandle,
-    core::datatypes::{DeviceContact, GroupedContacts, Id},
-    uniffi_async,
+use crate::core::datatypes::{
+    ContactGroupItem, ContactSuggestions, DeviceContact, GroupedContacts, Id,
 };
+use crate::errors::{ActionError, VoidActionResult};
+use crate::{UniffiRecord, WatchHandle, uniffi_async, watch_channel_inner};
 use futures::future::try_join_all;
 use itertools::Itertools;
-use mail_common::ProtonMailError as RealProtonMailError;
-use mail_common::{MailContextError, MailUserContext};
+use mail_common::{MailContextError, MailUserContext, ProtonMailError as RealProtonMailError};
 use mail_core_common::datatypes::DeviceContact as RealDeviceContact;
 use mail_core_common::models::{AppSettings, Contact as RealContact, action_delete_contacts};
 use mail_core_common::utils::MapVec as _;
-use std::{
-    sync::{
-        Arc,
-        atomic::{AtomicBool, Ordering},
-    },
-    time::Duration,
-};
-use tokio::{task, time::interval};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::Duration;
+use tokio::task;
+use tokio::time::interval;
 
 #[uniffi_export]
 #[tracing::instrument(skip_all)]

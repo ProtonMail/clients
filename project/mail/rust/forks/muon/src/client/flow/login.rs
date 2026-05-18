@@ -1,4 +1,4 @@
-use crate::auth::{scope, Auth};
+use crate::auth::{Auth, scope};
 use crate::client::{Client, Fingerprint};
 use crate::flow::{AuthScopeErr, AuthStateErr, FlowErr, SrpServerProofErr, UserIdErr};
 use crate::http::{HttpReqExt, POST};
@@ -98,11 +98,8 @@ impl LoginFlow {
             return_variant_on_error!(res.into_body_json(), client, Self::Failed);
 
         info!(session = %res.session, "generating SRP proofs");
-        let proofs = return_variant_on_error!(
-            gen_proofs(username, password, &res),
-            client,
-            Self::Failed
-        );
+        let proofs =
+            return_variant_on_error!(gen_proofs(username, password, &res), client, Self::Failed);
 
         info!(session = %res.session, "sending auth request");
 
@@ -116,7 +113,9 @@ impl LoginFlow {
         let fingerprint = match extra_info {
             Some(info) => match info.fingerprint {
                 Some(fingerprint) => {
-                    warn!("Warning: with_fingerprint is deprecated. Pass a provider to the mail_muon client using with_info_provider. Muon will use this provider to ask for the fingerprint when needed.");
+                    warn!(
+                        "Warning: with_fingerprint is deprecated. Pass a provider to the mail_muon client using with_info_provider. Muon will use this provider to ask for the fingerprint when needed."
+                    );
                     Some(fingerprint.to_owned())
                 }
                 None => provider_fingerprint,

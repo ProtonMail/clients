@@ -1,8 +1,7 @@
 use crate::draft::compose::validate_sender_address;
-use crate::models::MessageBodyMetadata;
+use crate::models::{Message, MessageBodyMetadata};
 use crate::rsvp::{RsvpKeys, RsvpMail};
-use crate::{AppError, MailContextResult};
-use crate::{MailUserContext, models::Message};
+use crate::{AppError, MailContextResult, MailUserContext};
 use mail_calendar_common::{self as cal, RsvpAnswer, RsvpAnswerError, RsvpError};
 use mail_core_common::models::{Address, User};
 use mail_crypto_inbox::proton_crypto;

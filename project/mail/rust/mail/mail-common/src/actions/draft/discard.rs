@@ -1,7 +1,6 @@
 use crate::MailContextError;
 use crate::actions::draft::SEND_ACTION_GROUP;
-use crate::datatypes::SystemLabelId;
-use crate::datatypes::{LocalConversationId, LocalMessageId};
+use crate::datatypes::{LocalConversationId, LocalMessageId, SystemLabelId};
 use crate::draft::DiscardError;
 use crate::models::{Conversation, DraftMetadata, Message, MetadataId};
 use mail_action_queue::action::{

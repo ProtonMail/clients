@@ -1,8 +1,10 @@
-use std::{collections::HashMap, sync::Weak};
+use std::collections::HashMap;
+use std::sync::Weak;
 
 use mail_core_api::services::proton::UserId;
 
-use crate::{UserContext, app_events::OnUserContextMapChanged};
+use crate::UserContext;
+use crate::app_events::OnUserContextMapChanged;
 
 use super::services::ContextEventService;
 

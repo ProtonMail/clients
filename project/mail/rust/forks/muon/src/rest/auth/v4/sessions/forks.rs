@@ -1,5 +1,5 @@
-use crate::rest::auth::v4::Auth;
 use crate::rest::Bool;
+use crate::rest::auth::v4::Auth;
 use serde::{Deserialize, Serialize};
 
 /// `GET /auth/v4/sessions/forks`

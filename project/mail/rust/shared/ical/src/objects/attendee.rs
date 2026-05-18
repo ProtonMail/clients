@@ -141,7 +141,8 @@ impl IcsWrite<Property> for Attendee {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{ics, utils::*};
+    use crate::ics;
+    use crate::utils::*;
     use pretty_assertions as pa;
     use test_case::test_case;
 

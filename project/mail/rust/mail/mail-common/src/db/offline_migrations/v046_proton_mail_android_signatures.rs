@@ -1,8 +1,6 @@
 use mail_sqlite3::Migration;
-use mail_stash::{
-    UserDb, params,
-    stash::{StashError, WriteTx},
-};
+use mail_stash::stash::{StashError, WriteTx};
+use mail_stash::{UserDb, params};
 
 pub struct AndroidSignaturesMigration;
 

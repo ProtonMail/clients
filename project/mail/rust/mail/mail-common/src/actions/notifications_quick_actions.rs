@@ -1,9 +1,7 @@
-use crate::MailContext;
 use crate::datatypes::LocalMessageId;
+use crate::datatypes::mail_notifications::PushNotificationQuickAction;
 use crate::models::Message;
-use crate::{
-    MailContextResult, MailUserContext, datatypes::mail_notifications::PushNotificationQuickAction,
-};
+use crate::{MailContext, MailContextResult, MailUserContext};
 use mail_action_queue::action::{
     Action, ActionId, Handler, Priority, Type, VersionConverter, VersionConverterError,
     WriterGuard, deserialize,

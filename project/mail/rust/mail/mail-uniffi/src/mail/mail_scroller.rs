@@ -2,18 +2,16 @@ use crate::core::datatypes::Id;
 use crate::errors::MailScrollerError;
 use crate::mail::datatypes::{Conversation, Message, SystemLabel};
 use crate::{PaginatorSearchOptions, WatchHandle, async_runtime, uniffi_async};
-use mail_common::MailContextError;
-use mail_common::MailUserContext;
-use mail_common::ProtonMailError as RealProtonMailError;
 use mail_common::datatypes::{
     CategoryLabel as RealCategoryLabel, ContextualConversation as RealContextualConversation,
     IncludeSwitch as RealIncludeSwitch, ReadFilter as RealReadFilter,
 };
 use mail_common::models::Message as RealMessage;
-use mail_common::{MailCursor as RealMailCursor, NextMailCursorItem};
 use mail_common::{
-    MailScroller as RealMailScroller, MailScrollerHandle, MailScrollerItem, ScrollerListUpdate,
-    ScrollerStatusUpdate, ScrollerUpdate,
+    MailContextError, MailCursor as RealMailCursor, MailScroller as RealMailScroller,
+    MailScrollerHandle, MailScrollerItem, MailUserContext, NextMailCursorItem,
+    ProtonMailError as RealProtonMailError, ScrollerListUpdate, ScrollerStatusUpdate,
+    ScrollerUpdate,
 };
 use mail_core_common::datatypes::LocalLabelId;
 use mail_stash::stash::Tether;

@@ -14,29 +14,28 @@ use proton_crypto_account::keys::{
     UnlockedAddressKey,
 };
 
-use mail_crypto_inbox::{
-    attachment::{
-        AttachmentEncryptedSignature, AttachmentSignature, DecryptableAttachment, KeyPackets,
-    },
-    keys::{
-        ComposerPreference, InboxSessionKey, KeyPacket, PackageCryptoType, SendPreferences,
-        SessionKeyExposed,
-    },
-    message::{
-        DecryptableMessage, DecryptedBody, GettablePGPMessage, SessionKeyAndDataPacketsExtractable,
-        packages::{EncryptablePackage, EncryptedPackageBody, PackageMimeType},
-        to_sanitized_string,
-    },
-    proton_crypto::{
-        crypto::{
-            ArmorerSync, DataEncoding, Decryptor, DecryptorSync, PGPProviderSync,
-            SessionKeyAlgorithm, UnixTimestamp, VerifiedData,
-        },
-        new_pgp_provider,
-    },
+use mail_crypto_inbox::attachment::{
+    AttachmentEncryptedSignature, AttachmentSignature, DecryptableAttachment, KeyPackets,
 };
+use mail_crypto_inbox::keys::{
+    ComposerPreference, InboxSessionKey, KeyPacket, PackageCryptoType, SendPreferences,
+    SessionKeyExposed,
+};
+use mail_crypto_inbox::message::packages::{
+    EncryptablePackage, EncryptedPackageBody, PackageMimeType,
+};
+use mail_crypto_inbox::message::{
+    DecryptableMessage, DecryptedBody, GettablePGPMessage, SessionKeyAndDataPacketsExtractable,
+    to_sanitized_string,
+};
+use mail_crypto_inbox::proton_crypto::crypto::{
+    ArmorerSync, DataEncoding, Decryptor, DecryptorSync, PGPProviderSync, SessionKeyAlgorithm,
+    UnixTimestamp, VerifiedData,
+};
+use mail_crypto_inbox::proton_crypto::new_pgp_provider;
 
-use mail_crypto_inbox_mime::{MimeProcessor, ProcessMime, write::InboxMimeBuilder};
+use mail_crypto_inbox_mime::write::InboxMimeBuilder;
+use mail_crypto_inbox_mime::{MimeProcessor, ProcessMime};
 
 mod common;
 

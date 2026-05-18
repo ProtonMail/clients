@@ -1,10 +1,10 @@
+use crate::Result;
 use crate::client::builder::{BaseBuilder, Transport};
 use crate::common::prelude::*;
 use crate::env::DynEnv;
 use crate::http::*;
 use crate::rt::*;
 use crate::tls::*;
-use crate::Result;
 
 if_dns! {
     use crate::dns::*;

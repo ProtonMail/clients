@@ -1,7 +1,7 @@
 use pin_project::pin_project;
 use std::io::Result as IoResult;
 use std::pin::Pin;
-use std::task::{ready, Context, Poll};
+use std::task::{Context, Poll, ready};
 use tokio::io::ReadBuf;
 
 /// An adapter that converts between `futures` and `tokio` I/O traits.

@@ -1,9 +1,9 @@
 #![allow(dead_code)]
 use mail_api::services::proton::prelude::{ContentDisposition, MailSettings};
 use mail_api::services::proton::request_data::{DraftParams, DraftRecipient, DraftSender};
-use mail_api::services::proton::response_data::AttachmentMetadata;
 use mail_api::services::proton::response_data::{
-    Disposition, Message as ApiMessage, MessageAttachment, MessageAttachmentHeaders,
+    AttachmentMetadata, Disposition, Message as ApiMessage, MessageAttachment,
+    MessageAttachmentHeaders,
 };
 use mail_common::datatypes::{MimeType, SystemLabelId};
 use mail_common::draft::ReplyMode;
@@ -16,11 +16,10 @@ use mail_common::test_utils::message_body::{
     message_body_test_user_info,
 };
 use mail_core_api::services::proton::{
-    Address as ApiAddress, AddressFlags as ApiAddressFlags,
+    Address as ApiAddress, AddressFlags as ApiAddressFlags, AddressId,
     AddressSignedKeyList as ApiAddressSignedKeyList, AddressStatus as ApiAddressStatus,
-    AddressType as ApiAddressType,
+    AddressType as ApiAddressType, LabelId,
 };
-use mail_core_api::services::proton::{AddressId, LabelId};
 use mail_crypto_inbox::attachment::KeyPackets;
 use mail_crypto_inbox::message::EncryptedDraft;
 use mail_crypto_inbox::proton_crypto_account::keys::{

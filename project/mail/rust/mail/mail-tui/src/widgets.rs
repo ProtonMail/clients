@@ -18,10 +18,8 @@ pub use self::scrollable_paragraph::*;
 pub use self::scrollable_table::*;
 pub use self::text_input::*;
 use ratatui::layout::Constraint;
-use ratatui::style::Style;
-use ratatui::style::Stylize as _;
-use ratatui::widgets::Row;
-use ratatui::widgets::{List, Table};
+use ratatui::style::{Style, Stylize as _};
+use ratatui::widgets::{List, Row, Table};
 
 pub trait AsIntoTable {
     fn as_table(&self) -> IntoTable<'_>;

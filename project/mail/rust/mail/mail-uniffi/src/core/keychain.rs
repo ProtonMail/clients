@@ -1,5 +1,4 @@
-use mail_core_common::os::KeyChainEntryKind;
-use mail_core_common::os::{KeyChain, KeyChainError};
+use mail_core_common::os::{KeyChain, KeyChainEntryKind, KeyChainError};
 use secrecy::{ExposeSecret, SecretString};
 
 /// Errors for keychain operations.

@@ -1,9 +1,7 @@
 use async_trait::async_trait;
 
-use crate::{
-    CoreContextError,
-    device::{DeviceInfo, DynDeviceInfoProvider},
-};
+use crate::CoreContextError;
+use crate::device::{DeviceInfo, DynDeviceInfoProvider};
 
 use super::Service;
 

@@ -1,6 +1,8 @@
 use super::MailType;
-use crate::{draft::PackageError, models::Attachment};
-use mail_api::services::proton::{common::AttachmentId, prelude as api};
+use crate::draft::PackageError;
+use crate::models::Attachment;
+use mail_api::services::proton::common::AttachmentId;
+use mail_api::services::proton::prelude as api;
 use std::collections::HashMap;
 use tracing::error;
 

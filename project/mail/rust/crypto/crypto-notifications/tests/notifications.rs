@@ -1,10 +1,7 @@
 use mail_crypto_notifications::{DecryptableNotification, PGPEncryptedNotification};
-use proton_crypto_account::{
-    keys::PGPDeviceKey,
-    proton_crypto::crypto::{
-        AsPublicKeyRef, DataEncoding, Encryptor, EncryptorSync, PGPProviderSync, PrivateKey,
-        PublicKey,
-    },
+use proton_crypto_account::keys::PGPDeviceKey;
+use proton_crypto_account::proton_crypto::crypto::{
+    AsPublicKeyRef, DataEncoding, Encryptor, EncryptorSync, PGPProviderSync, PrivateKey, PublicKey,
 };
 use serde::{Deserialize, Serialize};
 

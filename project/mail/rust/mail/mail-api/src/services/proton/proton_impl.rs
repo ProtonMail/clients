@@ -1,6 +1,7 @@
 use crate::services::proton::prelude::*;
-use crate::services::proton::{MAIL_V4, MAIL_V6, Package, PostSendRequest};
-use crate::services::proton::{PostSendMessageResponse, ProtonMail};
+use crate::services::proton::{
+    MAIL_V4, MAIL_V6, Package, PostSendMessageResponse, PostSendRequest, ProtonMail,
+};
 use crate::{INCOMING_DEFAULTS_PAGE_SIZE, MAX_LIMIT_VALUE_U64, MAX_PAGE_ELEMENT_COUNT_U64};
 use bytes::Bytes;
 use mail_core_api::service::ApiServiceResult;

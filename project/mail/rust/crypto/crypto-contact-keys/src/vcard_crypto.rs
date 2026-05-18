@@ -1,13 +1,13 @@
 use std::io::BufReader;
 
-use base64::{Engine as _, prelude::BASE64_STANDARD as BASE_64};
+use base64::Engine as _;
+use base64::prelude::BASE64_STANDARD as BASE_64;
 use ical::VcardParser;
-use mail_vcard::{parameters::preference::Preference, vcard::VCard};
-use proton_crypto_account::{
-    contacts::DecryptableVerifiableCard,
-    keys::{EmailMimeType, PGPScheme, PinnedPublicKeys, UnlockedUserKeys},
-    proton_crypto::crypto::{DataEncoding, PGPProviderSync, PublicKey},
-};
+use mail_vcard::parameters::preference::Preference;
+use mail_vcard::vcard::VCard;
+use proton_crypto_account::contacts::DecryptableVerifiableCard;
+use proton_crypto_account::keys::{EmailMimeType, PGPScheme, PinnedPublicKeys, UnlockedUserKeys};
+use proton_crypto_account::proton_crypto::crypto::{DataEncoding, PGPProviderSync, PublicKey};
 use tracing::error;
 
 use crate::ContactKeyExtractionError;
@@ -253,7 +253,8 @@ mod tests {
 
     mod extended_preferences {
         use super::*;
-        use mail_vcard::{parameters::Parameters, xtended::Xtended};
+        use mail_vcard::parameters::Parameters;
+        use mail_vcard::xtended::Xtended;
         use pretty_assertions as pa;
         use test_case::test_case;
 

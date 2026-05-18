@@ -3,13 +3,12 @@ use crate::errors::DraftSaveError;
 use crate::mail::datatypes::privacy_lock::PrivacyLock;
 use crate::mail::draft::CachedDraftData;
 use itertools::Itertools;
-use mail_common::MailContextError;
-use mail_common::ProtonMailError;
 use mail_common::draft::recipients::{
     GroupRecipient, Recipient as RealRecipient, RecipientEntry, RecipientError, SingleRecipient,
     ValidationState,
 };
 use mail_common::draft::{Draft as RealDraft, Error, RecipientGroupId};
+use mail_common::{MailContextError, ProtonMailError};
 use mail_core_api::services::proton::PrivateString;
 use non_empty_string::NonEmptyString;
 use std::sync::Arc;

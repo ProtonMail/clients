@@ -1,5 +1,5 @@
-use crate::login::state::{HasSessionId, HasUserId, StateData};
-use crate::login::{LoginError, TfaMethods, state::State};
+use crate::login::state::{HasSessionId, HasUserId, State, StateData};
+use crate::login::{LoginError, TfaMethods};
 use crate::protocol::PostLoginValidator;
 use crate::protocol::proton::{SessionId, UserId};
 use crate::shared::SecureString;

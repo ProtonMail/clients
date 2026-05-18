@@ -3,25 +3,23 @@ use crate::test_utils::test_context::MailTestContext;
 use mail_api::services::proton::common::{ConversationId, MessageId};
 use mail_api::services::proton::prelude::{GetIncomingDefaultResponse, RunningTasks};
 use mail_api::services::proton::request_data::{PutMobileSettings, PutNextMessageOnMoveRequest};
-use mail_api::services::proton::response_data::MessageMetadata;
 use mail_api::services::proton::response_data::{
     AlmostAllMail, Attachment as ApiAttachment, ComposerDirection, ComposerMode,
     Conversation as ApiConversation, ConversationCount as ApiConversationCount,
     ConversationLabel as ApiConversationLabel, IncomingDefault, MailSettings as ApiMailSettings,
-    MessageButtons, MessageCount as ApiMessageCount, MessageMetadata as ApiMessageMetadata,
-    MessageSender as ApiMessageSender, MimeType, PgpScheme, PmSignature, ShowImages, ShowMoved,
-    SwipeAction, ViewLayout, ViewMode,
+    MessageButtons, MessageCount as ApiMessageCount, MessageMetadata,
+    MessageMetadata as ApiMessageMetadata, MessageSender as ApiMessageSender, MimeType, PgpScheme,
+    PmSignature, ShowImages, ShowMoved, SwipeAction, ViewLayout, ViewMode,
 };
 use mail_contacts_api::ContactGroup as ApiContactGroup;
 use mail_contacts_api::mocks::ContactsMockServerExt;
-use mail_core_api::services::proton::GetKeysAllResponse;
 use mail_core_api::services::proton::{
-    Address as ApiAddress, AddressFlags, AddressSignedKeyList, AddressStatus as ApiAddressStatus,
-    AddressType as ApiAddressType, ContactBasic as ApiContactBasic,
-    ContactEmail as ApiContactEmail, Label as ApiLabel, User as ApiUser,
+    Address as ApiAddress, AddressFlags, AddressId, AddressSignedKeyList,
+    AddressStatus as ApiAddressStatus, AddressType as ApiAddressType,
+    ContactBasic as ApiContactBasic, ContactEmail as ApiContactEmail, EventId, GetKeysAllResponse,
+    Label as ApiLabel, LabelId, LabelType as ApiLabelType, User as ApiUser,
     UserSettings as ApiUserSettings,
 };
-use mail_core_api::services::proton::{AddressId, EventId, LabelId, LabelType as ApiLabelType};
 
 use crate::datatypes::SystemLabelId;
 use mail_api::services::proton::responses::{

@@ -7,7 +7,7 @@ use pin_project::pin_project;
 use std::io::Result as IoResult;
 use std::net::SocketAddr;
 use std::pin::Pin;
-use std::task::{ready, Context, Poll};
+use std::task::{Context, Poll, ready};
 use tokio::io::ReadBuf;
 use tokio::net::TcpStream;
 

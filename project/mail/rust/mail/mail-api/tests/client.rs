@@ -2,10 +2,8 @@ mod common;
 
 use crate::common::request;
 use reqwest::StatusCode;
-use wiremock::{
-    Mock, MockServer, ResponseTemplate,
-    matchers::{method, path},
-};
+use wiremock::matchers::{method, path};
+use wiremock::{Mock, MockServer, ResponseTemplate};
 
 #[cfg(test)]
 mod basic {
@@ -41,9 +39,9 @@ mod messages {
     use wiremock::matchers::path_regex;
 
     use mail_api::MAX_PAGE_ELEMENT_COUNT_U64;
-    use mail_api::services::proton::{ProtonMail, requests::GetMessagesOptions};
-    use mail_core_api::session::Session;
-    use mail_core_api::session::{Config, EnvId};
+    use mail_api::services::proton::ProtonMail;
+    use mail_api::services::proton::requests::GetMessagesOptions;
+    use mail_core_api::session::{Config, EnvId, Session};
     use mail_core_common::test_utils::test_context::MockApiEnv;
     use mail_core_common::test_utils::utils::mock_auth_endpoints;
 

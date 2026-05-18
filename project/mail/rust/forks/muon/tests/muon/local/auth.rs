@@ -1,4 +1,4 @@
-use anyhow::{bail, Ok, Result};
+use anyhow::{Ok, Result, bail};
 use async_trait::async_trait;
 use futures::future;
 #[allow(deprecated)]
@@ -166,11 +166,12 @@ async fn test_unauth_session_failure(s: Arc<Server>) -> Result<()> {
 
     // Call an endpoint and we should get an error back if we are not able to
     // establish a session
-    assert!(s
-        .client()
-        .send(POST!("/core/v4/validate/email").body(r#"{"Email":"einstein@pm.me"}"#))
-        .await
-        .is_err());
+    assert!(
+        s.client()
+            .send(POST!("/core/v4/validate/email").body(r#"{"Email":"einstein@pm.me"}"#))
+            .await
+            .is_err()
+    );
 
     Ok(())
 }

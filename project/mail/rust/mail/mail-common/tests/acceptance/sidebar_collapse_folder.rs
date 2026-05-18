@@ -1,10 +1,7 @@
 use mail_common::Sidebar;
-use mail_common::test_utils::init::Params as TestParams;
-use mail_common::test_utils::init::Params;
+use mail_common::test_utils::init::{Params as TestParams, Params};
 use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
-use mail_core_api::services::proton::Label as ApiLabel;
-use mail_core_api::services::proton::LabelId;
-use mail_core_api::services::proton::LabelType;
+use mail_core_api::services::proton::{Label as ApiLabel, LabelId, LabelType};
 use mail_core_common::models::Label;
 use mail_stash::orm::Model;
 use mail_stash::params;

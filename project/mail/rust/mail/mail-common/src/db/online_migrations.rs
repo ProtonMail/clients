@@ -6,7 +6,8 @@ use anyhow::anyhow;
 use itertools::Itertools;
 use mail_core_common::models::ModelExtension;
 use mail_issue_reporter_service::{IssueLevel, IssueReportKeys};
-use mail_stash::{UserDb, macros::Model};
+use mail_stash::UserDb;
+use mail_stash::macros::Model;
 use std::sync::{Arc, Weak};
 use tracing::{Instrument, debug, error, info, instrument};
 
@@ -133,14 +134,14 @@ mod tests {
         ContactEmail as ApiContactEmail, ContactEmailId, ContactFull, ContactId,
         ContactSendingPreferences as ApiContactSendingPreferences, ContactUID, PrivateEmail,
     };
-    use mail_core_common::{
-        datatypes::{ContactSendingPreferences, ContactTypes, UnixTimestamp},
-        models::{Contact, ContactEmail},
-    };
+    use mail_core_common::datatypes::{ContactSendingPreferences, ContactTypes, UnixTimestamp};
+    use mail_core_common::models::{Contact, ContactEmail};
     use mail_stash::orm::Model;
     use parking_lot::Mutex;
-    use std::{time::Duration, vec};
-    use tokio::{sync::oneshot, time};
+    use std::time::Duration;
+    use std::vec;
+    use tokio::sync::oneshot;
+    use tokio::time;
 
     // Exploits the fact that `#[tokio::test]` creates a current-thread runtime
     thread_local! {

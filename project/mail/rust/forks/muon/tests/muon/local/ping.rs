@@ -1,6 +1,6 @@
 use anyhow::Result;
-use mail_muon::test::server::{Server, HTTP, HTTPS};
 use mail_muon::GET;
+use mail_muon::test::server::{HTTP, HTTPS, Server};
 use std::sync::Arc;
 
 #[mail_muon::test(scheme(HTTP))]

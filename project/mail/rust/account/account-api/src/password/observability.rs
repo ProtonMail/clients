@@ -1,8 +1,6 @@
 use super::PasswordError;
-use crate::password::{
-    FlowAuthError,
-    state::{State, StateData},
-};
+use crate::password::FlowAuthError;
+use crate::password::state::{State, StateData};
 use crate::protocol::ApiServiceObservabilityResponse;
 use mail_observability::{PreLoginMetricRecorder, metric};
 use serde::{Deserialize, Serialize};

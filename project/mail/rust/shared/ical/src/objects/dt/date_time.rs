@@ -45,7 +45,9 @@ impl IcsWrite<Value> for DtValueType {
 #[cfg(feature = "php")]
 mod php {
     use super::*;
-    use ext_php_rs::{boxed::ZBox, types::ZendObject, zend::ClassEntry};
+    use ext_php_rs::boxed::ZBox;
+    use ext_php_rs::types::ZendObject;
+    use ext_php_rs::zend::ClassEntry;
 
     fn create_date_time() -> PhpResult<ZBox<ZendObject>> {
         // Unwrap-safety: `DateTimeImmutable` is part of the stdlib

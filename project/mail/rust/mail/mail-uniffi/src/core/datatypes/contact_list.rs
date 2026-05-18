@@ -1,6 +1,5 @@
-use crate::core::datatypes::UnixTimestamp;
+use crate::core::datatypes::{AvatarInformation, Id, UnixTimestamp};
 use crate::{UniffiEnum, UniffiRecord};
-use crate::{core::datatypes::AvatarInformation, core::datatypes::Id};
 use itertools::Itertools;
 use mail_core_common::datatypes::{
     ContactEmailItem as RealContactEmailItem, ContactGroupItem as RealContactGroupItem,

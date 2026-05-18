@@ -2,38 +2,34 @@ use crossterm::event::{Event, KeyCode, KeyModifiers};
 use futures::FutureExt;
 use itertools::Itertools;
 use mail_common::MailUserContext;
-use mail_core_common::{
-    datatypes::{
-        ContactGroupItem, ContactItem, ContactItemType, GroupedContacts, LocalContactId,
-        contact_details::{
-            ContactDetailAddress, ContactDetailsEmail, ContactField, ExtendedName,
-            InspectableContactDetails, Telephone, VCardUrl,
-        },
-    },
-    models::{Contact, ContactListWatcher},
+use mail_core_common::datatypes::contact_details::{
+    ContactDetailAddress, ContactDetailsEmail, ContactField, ExtendedName,
+    InspectableContactDetails, Telephone, VCardUrl,
 };
+use mail_core_common::datatypes::{
+    ContactGroupItem, ContactItem, ContactItemType, GroupedContacts, LocalContactId,
+};
+use mail_core_common::models::{Contact, ContactListWatcher};
 use mail_crypto_inbox::proton_crypto_account::keys::UserKeySelector;
 use mail_stash::stash::Tether;
-use ratatui::{
-    Frame,
-    layout::{Constraint, Flex, Layout, Margin},
-    prelude::Rect,
-    style::{Style, Stylize},
-    text::{Line, Span, Text},
-    widgets::{Block, Borders, Cell, List, ListItem, Row, Table},
-};
+use ratatui::Frame;
+use ratatui::layout::{Constraint, Flex, Layout, Margin};
+use ratatui::prelude::Rect;
+use ratatui::style::{Style, Stylize};
+use ratatui::text::{Line, Span, Text};
+use ratatui::widgets::{Block, Borders, Cell, List, ListItem, Row, Table};
 use std::fmt::Write as _;
 use std::sync::Arc;
 use tracing::error;
 
-use crate::{
-    app::Command,
-    app_model::mailbox::{poll_event_loop, refresh},
-    messages::Messages,
-    widgets::{ScrollableList, ScrollableListState, utils::ScrollableState},
-};
+use crate::app::Command;
+use crate::app_model::mailbox::{poll_event_loop, refresh};
+use crate::messages::Messages;
+use crate::widgets::utils::ScrollableState;
+use crate::widgets::{ScrollableList, ScrollableListState};
 
-use super::{AppState, AppStateHandler, watcher::TuiWatchHandle};
+use super::watcher::TuiWatchHandle;
+use super::{AppState, AppStateHandler};
 
 const CONTACT_DISPLAY_SIZE: u16 = 100;
 const MIN_LIST_DISPLAY_SIZE: u16 = 20;

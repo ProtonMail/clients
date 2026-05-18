@@ -7,11 +7,11 @@ mod mailbox_labels;
 
 use crate::datatypes::{MessageRecipientDisplayMode, SystemLabelId, ViewMode};
 use mail_core_api::services::proton::LabelId;
-use mail_core_common::datatypes::{LabelType, SystemLabel};
-use mail_core_common::{datatypes::LocalLabelId, models::Label};
+use mail_core_common::datatypes::{LabelType, LocalLabelId, SystemLabel};
+use mail_core_common::models::Label;
 use mail_stash::UserDb;
-use mail_stash::stash::Tether;
-use mail_stash::{macros::Model, stash::StashError};
+use mail_stash::macros::Model;
+use mail_stash::stash::{StashError, Tether};
 
 use super::MailSettings;
 

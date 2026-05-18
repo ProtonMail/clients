@@ -1,22 +1,16 @@
 use crate::{CoreContextError, UserContext};
 use anyhow::anyhow;
-use async_zip::Compression;
-use async_zip::ZipDateTime;
-use async_zip::ZipEntryBuilder;
 use async_zip::base::write::ZipFileWriter;
-use chrono::DateTime;
-use chrono::Utc;
+use async_zip::{Compression, ZipDateTime, ZipEntryBuilder};
+use chrono::{DateTime, Utc};
 use futures::io::AsyncWriteExt;
-use mail_core_api::services::proton::BugReportApi as _;
-use mail_core_api::services::proton::PostReportBug;
+use mail_core_api::services::proton::{BugReportApi as _, PostReportBug};
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::io::Cursor;
 use std::path::{Path, PathBuf};
-use tokio::{
-    fs::File,
-    io::{AsyncReadExt, AsyncSeekExt},
-};
+use tokio::fs::File;
+use tokio::io::{AsyncReadExt, AsyncSeekExt};
 use tokio_util::compat::{Compat, TokioAsyncWriteCompatExt};
 use tracing::info;
 

@@ -1,6 +1,6 @@
-use crate::errors::{OtherErrorReason, ProtonError, VoidActionResult};
+use crate::core::datatypes::DeviceEnvironment;
+use crate::errors::{ActionError, OtherErrorReason, ProtonError, VoidActionResult};
 use crate::mail::MailSession;
-use crate::{core::datatypes::DeviceEnvironment, errors::ActionError};
 use mail_common::ProtonMailError as RealProtonMailError;
 use mail_core_common::datatypes::RegisteredDevice as RealRegisteredDevice;
 use mail_core_common::device_registration::spawn_registered_device_task;

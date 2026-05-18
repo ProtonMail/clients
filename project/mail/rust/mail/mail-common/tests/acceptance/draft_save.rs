@@ -9,8 +9,7 @@ use mail_api::services::proton::prelude::{
 use mail_api::services::proton::request_data::{
     DraftAction, DraftAttachmentKeyPackets, DraftRecipient,
 };
-use mail_api::services::proton::response_data::MessageFlags;
-use mail_api::services::proton::response_data::{Disposition, MessageAttachment};
+use mail_api::services::proton::response_data::{Disposition, MessageAttachment, MessageFlags};
 use mail_common::MailContextError;
 use mail_common::datatypes::attachment::{ContentId, MimeType as AttachmentMimeType};
 use mail_common::datatypes::{

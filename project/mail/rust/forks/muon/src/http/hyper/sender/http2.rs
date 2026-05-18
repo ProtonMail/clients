@@ -1,7 +1,7 @@
-use crate::common::prelude::*;
 use crate::common::DynSocket;
+use crate::common::prelude::*;
 use crate::http::hyper::compat::{HyperIo, HyperRt, HyperTimer};
-use crate::http::hyper::sender::{fmt_req, is_retryable, ReadySend, ReadySendMut, SendWith};
+use crate::http::hyper::sender::{ReadySend, ReadySendMut, SendWith, fmt_req, is_retryable};
 use crate::http::{Body, Collect, HttpReq, HttpRes, Version};
 use crate::rt::DynSpawner;
 use crate::{ErrorKind, Result};

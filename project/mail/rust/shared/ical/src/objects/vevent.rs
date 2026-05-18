@@ -533,7 +533,8 @@ pub enum VEventViolation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{CuType, DateTimeViolation, DisplayAlarm, EmailAlarm, Trigger, ics, utils::*};
+    use crate::utils::*;
+    use crate::{CuType, DateTimeViolation, DisplayAlarm, EmailAlarm, Trigger, ics};
     use pretty_assertions as pa;
 
     fn event() -> VEvent {

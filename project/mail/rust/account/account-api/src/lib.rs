@@ -4,10 +4,9 @@
 use crate::prelude::*;
 use crate::protocol::ApiServiceObservabilityResponse;
 use derive_more::Display;
-use mail_muon::{
-    GET, POST, PUT, ProtonRequest, ProtonResponse, Status, common::Sender, http::HttpReqExt,
-    serde_to_query,
-};
+use mail_muon::common::Sender;
+use mail_muon::http::HttpReqExt;
+use mail_muon::{GET, POST, PUT, ProtonRequest, ProtonResponse, Status, serde_to_query};
 use serde::Deserialize;
 use serde_json::Value;
 

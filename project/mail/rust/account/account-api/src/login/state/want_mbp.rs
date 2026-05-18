@@ -2,9 +2,8 @@ use futures::TryFutureExt;
 use mail_api_session::ids::{SessionId, UserId};
 use tracing::info;
 
-use crate::login::PostLoginValidator;
-use crate::login::state::{HasSessionId, HasUserId, StateData};
-use crate::login::{LoginError, state::State};
+use crate::login::state::{HasSessionId, HasUserId, State, StateData};
+use crate::login::{LoginError, PostLoginValidator};
 use crate::shared::SecureString;
 
 /// Represents the login flow state where the user must provide their mailbox password.

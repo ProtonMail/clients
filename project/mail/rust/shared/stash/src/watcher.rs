@@ -1,12 +1,11 @@
-use std::{collections::BTreeSet, marker::PhantomData};
+use std::collections::BTreeSet;
+use std::marker::PhantomData;
 
 use sqlite_watcher::watcher::TableObserver;
 
-use crate::{
-    marker::DatabaseMarker,
-    orm::Model,
-    stash::{Stash, StashError, WatcherHandle},
-};
+use crate::marker::DatabaseMarker;
+use crate::orm::Model;
+use crate::stash::{Stash, StashError, WatcherHandle};
 
 pub trait TypedTableObserver: TableObserver {
     type Database: DatabaseMarker;

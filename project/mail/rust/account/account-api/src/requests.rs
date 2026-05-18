@@ -5,7 +5,16 @@ use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
 /// The type of account to create.
-#[derive(Clone, Copy, Debug, Serialize_repr, Deserialize_repr, Eq, Hash, PartialEq)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Serialize_repr,
+    Deserialize_repr,
+    Eq,
+    Hash,
+    PartialEq
+)]
 #[repr(u8)]
 pub enum CreateUserType {
     Normal = 1,

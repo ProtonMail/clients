@@ -3,7 +3,8 @@ use crate::action::{Action, ActionId};
 use crate::queue::{BroadcastMessage, Queue, QueuedMetadata};
 use std::marker::PhantomData;
 use std::sync::Arc;
-use tokio::sync::broadcast::{Receiver, error::RecvError};
+use tokio::sync::broadcast::Receiver;
+use tokio::sync::broadcast::error::RecvError;
 
 /// This observer only reports failures of a given action type.
 pub struct ActionFailureObserver<T: Action<Db>, Db: mail_stash::marker::DatabaseMarker> {

@@ -4,9 +4,8 @@ use std::time::Duration;
 use core_telemetry::{SyncedEvents, Tcl, TelemetryError, TelemetryEvent};
 use mail_core_api::session::Session;
 use mail_sqlite3::MigratorError;
-use mail_stash::UserDb;
-use mail_stash::params;
 use mail_stash::stash::Stash;
+use mail_stash::{UserDb, params};
 use tokio::time::interval_at;
 use tracing::{debug, error, info, trace};
 

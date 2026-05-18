@@ -7,9 +7,10 @@ use crate::mail::datatypes::labels::custom_labels::SidebarCustomLabel;
 use crate::mail::datatypes::labels::system_labels::SidebarSystemLabel;
 use crate::mail::state::MailUserContextPtr;
 use crate::{LiveQueryCallback, WatchHandle, declare_live_query_tagger, uniffi_async};
-use mail_common::ProtonMailError as RealProtonMailError;
 use mail_common::models::LabelWithCounters as RealLabelWithCounters;
-use mail_common::{MailUserContext, Sidebar as RealSidebar};
+use mail_common::{
+    MailUserContext, ProtonMailError as RealProtonMailError, Sidebar as RealSidebar,
+};
 use mail_core_common::utils::MapVec as _;
 use mail_stash::UserDb;
 use mail_stash::stash::Stash;

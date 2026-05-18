@@ -1,6 +1,6 @@
 use crate::common::BoxFut;
 use crate::rt::Spawner;
-use async_channel::{unbounded, Receiver, Sender};
+use async_channel::{Receiver, Sender, unbounded};
 use async_executor::Executor;
 use futures::executor::block_on;
 use futures::prelude::*;

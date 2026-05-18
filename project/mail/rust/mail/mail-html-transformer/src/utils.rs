@@ -1,6 +1,7 @@
 use std::iter::empty;
 
-use html5ever::{LocalName, Namespace, QualName, namespace_url, ns, tendril::TendrilSink};
+use html5ever::tendril::TendrilSink;
+use html5ever::{LocalName, Namespace, QualName, namespace_url, ns};
 use itertools::Itertools;
 use kuchikiki::{Attribute, ElementData, ExpandedName, NodeDataRef, NodeRef};
 

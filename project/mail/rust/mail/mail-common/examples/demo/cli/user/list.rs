@@ -1,6 +1,7 @@
 use anyhow::Result;
 use mail_common::MailContext;
-use mail_core_common::{CoreAccountState::*, db::account::CoreAccount};
+use mail_core_common::CoreAccountState::*;
+use mail_core_common::db::account::CoreAccount;
 use std::sync::Arc;
 
 /// List available accounts.

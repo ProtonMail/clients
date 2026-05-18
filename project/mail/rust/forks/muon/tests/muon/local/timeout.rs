@@ -3,7 +3,7 @@ use futures_timer::Delay;
 use mail_muon::common::{BoxFut, Sender, SenderLayer};
 use mail_muon::test::server::Server;
 use mail_muon::util::{DurationExt, ProtonRequestExt};
-use mail_muon::{Error, ProtonRequest, ProtonResponse, GET};
+use mail_muon::{Error, GET, ProtonRequest, ProtonResponse};
 use std::sync::Arc;
 
 #[mail_muon::test]

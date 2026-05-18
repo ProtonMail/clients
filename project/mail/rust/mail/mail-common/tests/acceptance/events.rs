@@ -1,11 +1,3 @@
-use mail_core_api::services::proton::prelude::{Address as ApiAddress, Label as ApiLabel};
-use mail_core_api::services::proton::{
-    Action, AddressFlags, AddressId, AddressStatus, AddressType, EventId, LabelId,
-    LabelType as ApiLabelType,
-};
-use mail_core_common::datatypes::LabelType;
-use mail_core_common::models::{Address, Label, ModelIdExtension};
-use proton_crypto_account::keys::AddressKeys;
 use mail_api::services::proton::common::{ConversationId, MessageId};
 use mail_api::services::proton::prelude::{
     Conversation as ApiConversation, ConversationEvent, ConversationLabel as ApiConversationLabel,
@@ -15,6 +7,14 @@ use mail_api::services::proton::response_data::{MailEvent, MessageEvent, Message
 use mail_common::models::{LabelWithCounters, Message};
 use mail_common::test_utils::init::Params;
 use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
+use mail_core_api::services::proton::prelude::{Address as ApiAddress, Label as ApiLabel};
+use mail_core_api::services::proton::{
+    Action, AddressFlags, AddressId, AddressStatus, AddressType, EventId, LabelId,
+    LabelType as ApiLabelType,
+};
+use mail_core_common::datatypes::LabelType;
+use mail_core_common::models::{Address, Label, ModelIdExtension};
+use proton_crypto_account::keys::AddressKeys;
 use wiremock::matchers::query_param;
 
 #[tokio::test]
@@ -640,15 +640,13 @@ async fn events_skips_unresolved_labels() {
 
 #[cfg(feature = "events-v6")]
 mod v6 {
-    use mail_core_common::models::ModelExtension;
     use mail_api::services::proton::prelude::{
         ConversationCount, MailConversationEventV6, MailEventV6, MailLabelEventV6,
         MailMessageEventV6, MessageCount,
     };
-    use mail_common::{
-        datatypes::SystemLabelId,
-        models::{Conversation, ConversationCounter, MessageCounter},
-    };
+    use mail_common::datatypes::SystemLabelId;
+    use mail_common::models::{Conversation, ConversationCounter, MessageCounter};
+    use mail_core_common::models::ModelExtension;
 
     use super::*;
 

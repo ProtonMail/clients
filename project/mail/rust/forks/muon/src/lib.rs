@@ -48,7 +48,7 @@ pub(crate) use auth::*;
 
 pub mod client;
 pub(crate) use client::*;
-pub use client::{headers, Client};
+pub use client::{Client, headers};
 
 pub mod env;
 
@@ -58,8 +58,8 @@ pub use error::{Error, Result};
 
 pub mod http;
 pub use http::{
-    serde_to_query, ContentType, HttpReq as ProtonRequest, HttpRes as ProtonResponse,
-    HttpSender as ProtonSender, Method, Status, StatusErr, Version,
+    ContentType, HttpReq as ProtonRequest, HttpRes as ProtonResponse, HttpSender as ProtonSender,
+    Method, Status, StatusErr, Version, serde_to_query,
 };
 
 pub mod store;

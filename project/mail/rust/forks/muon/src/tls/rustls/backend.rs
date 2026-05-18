@@ -1,7 +1,7 @@
 use crate::common::prelude::*;
 use crate::tls::*;
 use crate::{ErrorKind, Result};
-use futures_rustls::rustls::{crypto, Error};
+use futures_rustls::rustls::{Error, crypto};
 use rustls_platform_verifier::Verifier;
 use std::sync::Arc;
 

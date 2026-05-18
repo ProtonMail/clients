@@ -1,10 +1,7 @@
-use crate::datatypes::ConversationLabelsCount;
-use crate::datatypes::MessageLabelsCount;
+use crate::datatypes::{ConversationLabelsCount, MessageLabelsCount};
 use crate::models::LabelWithCounters;
 use mail_common::test_utils::db::new_test_connection;
-use mail_core_api::services::proton::Label as ApiLabel;
-use mail_core_api::services::proton::LabelId;
-use mail_core_api::services::proton::LabelType as ApiLabelType;
+use mail_core_api::services::proton::{Label as ApiLabel, LabelId, LabelType as ApiLabelType};
 use mail_core_common::models::Label;
 use mail_stash::orm::Model;
 use mail_stash::stash::StashError;

@@ -1,11 +1,11 @@
-use crate::login::PostLoginValidator;
-use crate::login::state::{HasSessionId, HasUserId, StateData};
-use crate::login::{LoginError, state::State};
+use crate::AccountApi;
+use crate::login::state::{HasSessionId, HasUserId, State, StateData};
+use crate::login::{LoginError, PostLoginValidator};
+use crate::prelude::*;
 use crate::protocol::proton::{AddressId, ProtonAccount, SessionId, UserId};
 use crate::requests::{AddressKeyInput, AsyncUserInitialization, SetupKeysRequest};
 use crate::shared::SecureString;
 use crate::shared::crypto::{NewAddrKey, NewUserKey};
-use crate::{AccountApi, prelude::*};
 use futures::TryFutureExt;
 use proton_crypto_account::proton_crypto;
 use proton_crypto_account::proton_crypto::srp::SRPProvider;

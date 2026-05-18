@@ -1,9 +1,9 @@
 use std::ops::Deref;
 
 use mail_db::{Database, Transaction};
-use mail_stash::{
-    marker::DatabaseMarker,
-    stash::{ReadTx as StashReadTx, Stash, StashError, Tether, WriteTx as StashWriteTx},
+use mail_stash::marker::DatabaseMarker;
+use mail_stash::stash::{
+    ReadTx as StashReadTx, Stash, StashError, Tether, WriteTx as StashWriteTx,
 };
 
 pub struct ReadTx<'t, M: DatabaseMarker>(&'t StashReadTx<'t, M>);

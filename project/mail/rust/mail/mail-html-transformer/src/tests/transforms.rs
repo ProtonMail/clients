@@ -1,12 +1,8 @@
 #![allow(clippy::needless_raw_string_hashes)]
 
-use crate::{
-    InsertLinkToken, Transformer,
-    transforms::{
-        ColorMode,
-        styles::{BrowserCapabilities, IncludeFullStaticCss},
-    },
-};
+use crate::transforms::ColorMode;
+use crate::transforms::styles::{BrowserCapabilities, IncludeFullStaticCss};
+use crate::{InsertLinkToken, Transformer};
 #[test]
 fn inject_style() {
     let html = include_str!("../../tests/htmls/empty.html");

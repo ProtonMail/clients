@@ -8,8 +8,10 @@ mod v046_proton_mail_android_signatures;
 mod v061_proton_mail_restore_non_expired_messages;
 
 use include_dir::{Dir, include_dir};
-use mail_sqlite3::{Migrator, MigratorError, file::embedded_migrations};
-use mail_stash::{UserDb, stash::Stash};
+use mail_sqlite3::file::embedded_migrations;
+use mail_sqlite3::{Migrator, MigratorError};
+use mail_stash::UserDb;
+use mail_stash::stash::Stash;
 
 pub async fn run(mail_stash: &Stash<UserDb>) -> Result<usize, MigratorError> {
     const TABLE: &str = "proton_mail_db_version";

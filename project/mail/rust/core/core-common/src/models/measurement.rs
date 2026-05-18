@@ -1,10 +1,7 @@
-use mail_stash::{
-    AccountDb,
-    macros::Model,
-    orm::Model,
-    params,
-    stash::{StashError, Tether},
-};
+use mail_stash::macros::Model;
+use mail_stash::orm::Model;
+use mail_stash::stash::{StashError, Tether};
+use mail_stash::{AccountDb, params};
 
 use crate::datatypes::{LocalMeasurementId, MeasurementData, UnixTimestamp};
 

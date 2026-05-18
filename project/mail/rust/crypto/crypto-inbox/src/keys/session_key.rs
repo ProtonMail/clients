@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
-use base64::{DecodeError, Engine as _, prelude::BASE64_STANDARD as BASE_64};
+use base64::prelude::BASE64_STANDARD as BASE_64;
+use base64::{DecodeError, Engine as _};
 use proton_crypto_account::proton_crypto::crypto::{
     AsPublicKeyRef, Encryptor, EncryptorSync, PGPProviderSync, SessionKey, SessionKeyAlgorithm,
 };

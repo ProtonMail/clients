@@ -1,14 +1,14 @@
 use crate::atlas::{
-    invalid_fingerprint, new_client, valid_fingerprint, PASS, PASS_2FA, TOTP_2FA, USER, USER_2FA,
+    PASS, PASS_2FA, TOTP_2FA, USER, USER_2FA, invalid_fingerprint, new_client, valid_fingerprint,
 };
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use async_trait::async_trait;
 #[allow(deprecated)]
 use mail_muon::client::flow::LoginExtraInfo;
 use mail_muon::client::flow::{ForkFlowResult, LoginFlow, WithSelectorFlow};
 use mail_muon::client::{Fingerprint, InfoProvider};
 use mail_muon::rest::core;
-use mail_muon::{Status, GET, POST};
+use mail_muon::{GET, POST, Status};
 use std::future::Future;
 use std::sync::Arc;
 use totp_rs::{Algorithm, Secret, TOTP};

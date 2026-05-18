@@ -1,8 +1,6 @@
 use fancy_regex::Regex;
-use mail_account_api::{
-    AccountApi, ApiError,
-    prelude::{PasswordPolicyResponse, PasswordPolicyState},
-};
+use mail_account_api::prelude::{PasswordPolicyResponse, PasswordPolicyState};
+use mail_account_api::{AccountApi, ApiError};
 use mail_muon::http::DynHttpSender;
 use secrecy::{ExposeSecret, SecretString};
 use thiserror::Error;

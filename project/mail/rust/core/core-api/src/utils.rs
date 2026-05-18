@@ -1,7 +1,8 @@
 use std::time::Duration;
 
 use crate::services::proton::mail_muon::http::HttpReq;
-use mail_muon::{common::RetryPolicy, http::Headers};
+use mail_muon::common::RetryPolicy;
+use mail_muon::http::Headers;
 
 pub trait HttpReqExt: Sized {
     #[must_use]

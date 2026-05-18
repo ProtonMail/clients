@@ -1,6 +1,7 @@
+use crate::AppError;
 use crate::models::Message;
 use crate::user_context::events::event_model::MessageEvent;
-use crate::{AppError, user_context::events::event_subscriber::PostEventSyncData};
+use crate::user_context::events::event_subscriber::PostEventSyncData;
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_core_api::services::proton::LabelId;
 use mail_stash::stash::WriteTx;

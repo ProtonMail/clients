@@ -6,10 +6,8 @@ use crate::{
 };
 use derive_more::Debug;
 use itertools::{Either, Itertools};
-use jiff::{
-    Zoned,
-    civil::{Date, Weekday},
-};
+use jiff::Zoned;
+use jiff::civil::{Date, Weekday};
 use mail_calendar_api_v1::{
     CalendarAttendeeId, CalendarAttendeeStatus, CalendarBootstrap, CalendarEvent, ProtonCalendar,
 };
@@ -19,7 +17,8 @@ use mail_core_common::validation::is_valid_email_address;
 use mail_crypto_calendar::CalendarEventDecryptor;
 use mail_ical as ical;
 use proton_crypto::crypto::PGPProviderSync;
-use std::{collections::HashMap, num::NonZeroU32};
+use std::collections::HashMap;
+use std::num::NonZeroU32;
 use tracing::{debug, info, instrument, trace, warn};
 
 #[allow(clippy::too_many_arguments)]

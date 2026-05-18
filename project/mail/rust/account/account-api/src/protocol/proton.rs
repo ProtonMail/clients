@@ -6,7 +6,8 @@
 //! without change.
 
 use mail_api_shared::ApiServiceResult;
-use mail_muon::rest::auth::v4::{fido2, tfa::TFA};
+use mail_muon::rest::auth::v4::fido2;
+use mail_muon::rest::auth::v4::tfa::TFA;
 use proton_crypto_account::keys::{APIPublicAddressKeys, AddressKeys, UserKeys};
 use serde::{Deserialize, Serialize};
 use serde_aux::field_attributes::deserialize_default_from_null;
@@ -106,7 +107,16 @@ pub use mail_observability::{PostMetricsRequestData, PostMetricsRequestElement};
 // ---------------------------------------------------------------------------
 
 /// TODO: Document this enum.
-#[derive(Clone, Copy, Debug, Deserialize_repr, Serialize_repr, Eq, Hash, PartialEq)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Deserialize_repr,
+    Serialize_repr,
+    Eq,
+    Hash,
+    PartialEq
+)]
 #[repr(u8)]
 pub enum AddressStatus {
     Disabled = 0,
@@ -115,7 +125,16 @@ pub enum AddressStatus {
 }
 
 /// TODO: Document this enum.
-#[derive(Clone, Copy, Debug, Deserialize_repr, Serialize_repr, Eq, Hash, PartialEq)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Deserialize_repr,
+    Serialize_repr,
+    Eq,
+    Hash,
+    PartialEq
+)]
 #[repr(u8)]
 pub enum AddressType {
     Original = 1,
@@ -126,7 +145,16 @@ pub enum AddressType {
 }
 
 /// TODO: Document this enum.
-#[derive(Clone, Copy, Debug, Deserialize_repr, Serialize_repr, Eq, Hash, PartialEq)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Deserialize_repr,
+    Serialize_repr,
+    Eq,
+    Hash,
+    PartialEq
+)]
 #[repr(u8)]
 pub enum UserMnemonicStatus {
     Disabled = 0,
@@ -423,7 +451,16 @@ pub struct GetSettingsResponse {
 // UserSettings and supporting types
 // ---------------------------------------------------------------------------
 
-#[derive(Clone, Copy, Debug, Deserialize_repr, Serialize_repr, Eq, Hash, PartialEq)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Deserialize_repr,
+    Serialize_repr,
+    Eq,
+    Hash,
+    PartialEq
+)]
 #[repr(u8)]
 pub enum DateFormat {
     Default = 0,
@@ -432,14 +469,32 @@ pub enum DateFormat {
     YyyyMmDd = 3,
 }
 
-#[derive(Clone, Copy, Debug, Deserialize_repr, Serialize_repr, Eq, Hash, PartialEq)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Deserialize_repr,
+    Serialize_repr,
+    Eq,
+    Hash,
+    PartialEq
+)]
 #[repr(u8)]
 pub enum Density {
     Comfortable = 0,
     Compact = 1,
 }
 
-#[derive(Clone, Copy, Debug, Deserialize_repr, Serialize_repr, Eq, Hash, PartialEq)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Deserialize_repr,
+    Serialize_repr,
+    Eq,
+    Hash,
+    PartialEq
+)]
 #[repr(u8)]
 pub enum LogAuth {
     Disabled = 0,
@@ -447,7 +502,16 @@ pub enum LogAuth {
     Advanced = 2,
 }
 
-#[derive(Clone, Copy, Debug, Deserialize_repr, Serialize_repr, Eq, Hash, PartialEq)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Deserialize_repr,
+    Serialize_repr,
+    Eq,
+    Hash,
+    PartialEq
+)]
 #[repr(u8)]
 pub enum TimeFormat {
     Default = 0,
@@ -455,7 +519,16 @@ pub enum TimeFormat {
     H12 = 2,
 }
 
-#[derive(Clone, Copy, Debug, Deserialize_repr, Serialize_repr, Eq, Hash, PartialEq)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Deserialize_repr,
+    Serialize_repr,
+    Eq,
+    Hash,
+    PartialEq
+)]
 #[repr(u8)]
 pub enum WeekStart {
     Default = 0,
@@ -511,7 +584,16 @@ pub struct HighSecurity {
     pub value: bool,
 }
 
-#[derive(Clone, Copy, Debug, Deserialize_repr, Serialize_repr, Eq, Hash, PartialEq)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Deserialize_repr,
+    Serialize_repr,
+    Eq,
+    Hash,
+    PartialEq
+)]
 #[repr(u8)]
 pub enum TfaStatus {
     None = 0,

@@ -1,11 +1,12 @@
-use base64::{Engine, prelude::BASE64_STANDARD};
+use base64::Engine;
+use base64::prelude::BASE64_STANDARD;
 use mail_core_api::services::proton::SessionId;
 use mail_crypto_notifications::{
     DecryptableNotification, NotificationError, PGPEncryptedNotification,
 };
-use proton_crypto_account::{
-    errors::KeySerializationError, keys::PGPDeviceKey, proton_crypto::crypto::PGPProviderSync,
-};
+use proton_crypto_account::errors::KeySerializationError;
+use proton_crypto_account::keys::PGPDeviceKey;
+use proton_crypto_account::proton_crypto::crypto::PGPProviderSync;
 use secrecy::{ExposeSecret, SecretSlice, SecretString};
 use serde::{Deserialize, Serialize};
 use tracing::error;

@@ -1,5 +1,6 @@
 use crate::prelude::*;
-use syn::{fold::Fold, punctuated::Punctuated};
+use syn::fold::Fold;
+use syn::punctuated::Punctuated;
 
 /// Converts a type into a `syn::Expr`.
 /// Used for converting function arguments into expressions for generating function calls.

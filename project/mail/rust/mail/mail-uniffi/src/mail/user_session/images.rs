@@ -1,8 +1,7 @@
 use crate::errors::UserSessionError;
 use crate::mail::MailUserSession;
 use crate::uniffi_async;
-use mail_common::ProtonMailError as RealProtonMailError;
-use mail_common::Unexpected;
+use mail_common::{ProtonMailError as RealProtonMailError, Unexpected};
 use mail_core_common::datatypes::{LightOrDarkMode, SenderImageSize as CoreSenderImageSize};
 
 /// Image size for sender images.

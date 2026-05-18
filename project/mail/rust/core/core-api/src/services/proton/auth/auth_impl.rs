@@ -2,8 +2,8 @@ use crate::service::ApiServiceResult;
 use crate::services::proton::auth::{AUTH_V4, ProtonAuth};
 use crate::services::proton::prelude::*;
 use mail_muon::common::Sender;
-use mail_muon::{GET, POST, util::ProtonRequestExt};
-use mail_muon::{ProtonRequest, ProtonResponse};
+use mail_muon::util::ProtonRequestExt;
+use mail_muon::{GET, POST, ProtonRequest, ProtonResponse};
 
 impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> ProtonAuth for This {
     async fn get_sessions_uuid(&self) -> ApiServiceResult<GetSessionsUuidResponse> {

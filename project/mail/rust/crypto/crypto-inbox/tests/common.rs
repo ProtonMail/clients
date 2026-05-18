@@ -1,8 +1,6 @@
 use mail_crypto_inbox::proton_crypto::crypto::{DataEncoding, PGPProviderSync};
-use proton_crypto_account::{
-    keys::{DecryptedAddressKey, KeyFlag, KeyId, UnlockedAddressKeys},
-    proton_crypto::crypto::{AsPublicKeyRef, PrivateKey, PublicKey},
-};
+use proton_crypto_account::keys::{DecryptedAddressKey, KeyFlag, KeyId, UnlockedAddressKeys};
+use proton_crypto_account::proton_crypto::crypto::{AsPublicKeyRef, PrivateKey, PublicKey};
 
 pub const TEST_DECRYPTION_KEY: &str = "-----BEGIN PGP PRIVATE KEY BLOCK-----
 

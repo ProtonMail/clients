@@ -1,14 +1,13 @@
-use std::{fs, path::PathBuf};
+use std::fs;
+use std::path::PathBuf;
 
 use futures::future::try_join_all;
 use mail_core_common::datatypes::{LightOrDarkMode, SenderImageSize};
 use mail_core_common::test_utils::test_context::TestContext;
 use pretty_assertions::assert_eq;
 use test_case::test_case;
-use wiremock::{
-    Mock, ResponseTemplate,
-    matchers::{method, path, query_param},
-};
+use wiremock::matchers::{method, path, query_param};
+use wiremock::{Mock, ResponseTemplate};
 
 fn test_address() -> String {
     "test@example.com".to_owned()

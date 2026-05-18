@@ -1,9 +1,11 @@
 use std::sync::Arc;
 
-use crate::protocol::ApiServiceObservabilityResponse;
 use crate::protocol::proton::{ProtonAccount, SessionId};
-use crate::protocol::{PassphraseAcquireError, PassphraseProvider};
-use base64::{Engine as _, engine::general_purpose};
+use crate::protocol::{
+    ApiServiceObservabilityResponse, PassphraseAcquireError, PassphraseProvider,
+};
+use base64::Engine as _;
+use base64::engine::general_purpose;
 use futures::TryFutureExt;
 use mail_api_session::auth::{KeySecret, UserKeySecret};
 use mail_api_session::session::SessionParts;
@@ -18,10 +20,9 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use thiserror::Error;
 
-use crate::{
-    ApiError,
-    login::{LoginError, state::complete::Complete},
-};
+use crate::ApiError;
+use crate::login::LoginError;
+use crate::login::state::complete::Complete;
 
 use super::State;
 

@@ -52,8 +52,7 @@ mod contact_list;
 mod issue_report;
 mod timestamp;
 
-use crate::core::resolver::Resolver;
-use crate::core::resolver::ResolverImpl;
+use crate::core::resolver::{Resolver, ResolverImpl};
 
 pub use self::account_details::*;
 pub use self::app_settings::*;
@@ -65,8 +64,7 @@ pub use self::timestamp::*;
 use itertools::Itertools;
 use mail_api::services::proton::common::MessageId;
 use mail_core_api::session::EnvIdExt;
-use mail_muon::common::IntoDyn;
-use mail_muon::common::ParseEndpointErr;
+use mail_muon::common::{IntoDyn, ParseEndpointErr};
 use mail_muon::env::EnvId;
 use mail_stash::orm::Model;
 use tracing::error;

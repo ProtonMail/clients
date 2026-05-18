@@ -1,8 +1,8 @@
 use crate::http::Status;
+use crate::test::server::Config;
 use crate::test::server::backend::Backend;
 use crate::test::server::recorder::Recorder;
 use crate::test::server::responder::Responder;
-use crate::test::server::Config;
 use axum::body::{Body, HttpBody};
 use axum::extract::Request;
 use axum::response::{IntoResponse, Response};

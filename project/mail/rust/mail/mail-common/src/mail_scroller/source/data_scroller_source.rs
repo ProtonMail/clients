@@ -1,17 +1,14 @@
-use super::{
-    MailPaginatorJoinHandle, MailScrollerSource, mail_scroller_state::MailScrollerState,
-    remote_source::RemoteSource,
-};
-use crate::datatypes::SearchOptions;
+use super::mail_scroller_state::MailScrollerState;
+use super::remote_source::RemoteSource;
+use super::{MailPaginatorJoinHandle, MailScrollerSource};
 use crate::datatypes::labels::{ScrollOrderDir, ScrollOrderField};
+use crate::datatypes::{ReadFilter, SearchOptions};
 use crate::mail_scroller::CategoryView;
-use crate::{AppError, MailContextError, MailUserContext, datatypes::ReadFilter};
+use crate::{AppError, MailContextError, MailUserContext};
 use anyhow::anyhow;
 use mail_core_api::services::proton::LabelId;
-use mail_core_common::{
-    datatypes::LocalLabelId,
-    models::{Label, ModelExtension},
-};
+use mail_core_common::datatypes::LocalLabelId;
+use mail_core_common::models::{Label, ModelExtension};
 use mail_stash::stash::Tether;
 use tracing::{debug, info, instrument, warn};
 

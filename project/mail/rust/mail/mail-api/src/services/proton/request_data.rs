@@ -32,7 +32,8 @@ use mail_crypto_inbox::message::packages::PackageMimeType;
 use mail_crypto_inbox::proton_crypto::crypto::SessionKeyAlgorithm;
 use serde::Serialize;
 use serde_repr::Serialize_repr;
-use serde_with::{BoolFromInt, DisplayFromStr, base64::Base64, serde_as};
+use serde_with::base64::Base64;
+use serde_with::{BoolFromInt, DisplayFromStr, serde_as};
 use std::collections::HashMap;
 //  ENUMS
 //==============================================================================

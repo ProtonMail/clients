@@ -4,9 +4,8 @@ use pin_project::pin_project;
 use std::cell::Cell;
 use std::collections::HashMap;
 use std::pin::Pin;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc;
+use std::sync::{Arc, mpsc};
 use std::task::{Context, Poll, Waker};
 use std::time::Duration;
 use std::{io, thread};
@@ -608,7 +607,8 @@ enum Command {
 mod tests {
     use super::*;
     use std::time::Duration;
-    use tokio::{sync::RwLock, task, time};
+    use tokio::sync::RwLock;
+    use tokio::{task, time};
     use tracing::{Instrument, trace_span};
 
     fn service() -> TaskService {

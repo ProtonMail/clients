@@ -4,7 +4,8 @@ use crate::{
     expected_event, expected_offline_event, world,
 };
 use indoc::indoc;
-use jiff::{Zoned, civil::Weekday};
+use jiff::Zoned;
+use jiff::civil::Weekday;
 use mail_calendar_api_v1::{CalendarAttendee, CalendarAttendeeStatus, ProtonCalendarMock};
 use mail_calendar_common::{
     RsvpAttendee, RsvpError, RsvpEventId, RsvpFetchApiError, RsvpFetchError, RsvpIntent,
@@ -12,9 +13,8 @@ use mail_calendar_common::{
 };
 use mail_core_api::session::{Config, Session};
 use mail_core_common::test_utils::test_context::MockApiEnv;
-use mail_ical as ical;
-use pretty_assertions as pa;
 use std::str::FromStr;
+use {mail_ical as ical, pretty_assertions as pa};
 
 /// Make sure we can understand RSVPs that have been auto-imported into the
 /// calendar, but haven't been replied to yet.

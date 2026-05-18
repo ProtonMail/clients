@@ -1,8 +1,7 @@
-use mail_core_api::{
-    auth::{KeySecret, UserKeySecret},
-    store::{MbpMode, UserData},
-};
-use mail_muon::{rest::auth::v4::fido2, util::ByteSliceExt};
+use mail_core_api::auth::{KeySecret, UserKeySecret};
+use mail_core_api::store::{MbpMode, UserData};
+use mail_muon::rest::auth::v4::fido2;
+use mail_muon::util::ByteSliceExt;
 use secrecy::SecretString;
 use uniffi::Record;
 

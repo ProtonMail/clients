@@ -1,21 +1,15 @@
-use crate::{
-    error::KeyHandlingError,
-    ids::{AddressId, UserId},
-};
+use crate::error::KeyHandlingError;
+use crate::ids::{AddressId, UserId};
 use parking_lot::RwLock;
-use proton_crypto_account::{
-    keys::{
-        DecryptedAddressKey, DecryptedUserKey, KeyFlag, KeyId, UnlockedAddressKey,
-        UnlockedAddressKeys, UnlockedUserKey, UnlockedUserKeys,
-    },
-    proton_crypto::crypto::{DataEncoding, PGPProviderSync},
+use proton_crypto_account::keys::{
+    DecryptedAddressKey, DecryptedUserKey, KeyFlag, KeyId, UnlockedAddressKey, UnlockedAddressKeys,
+    UnlockedUserKey, UnlockedUserKeys,
 };
+use proton_crypto_account::proton_crypto::crypto::{DataEncoding, PGPProviderSync};
 use secrecy::{ExposeSecret, SecretSlice};
-use std::{
-    collections::HashMap,
-    sync::Arc,
-    time::{Duration, Instant},
-};
+use std::collections::HashMap;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 /// The default lifetime of user keys in the cache.
 pub const USER_KEY_LIFETIME: Duration = Duration::from_secs(600);

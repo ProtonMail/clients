@@ -162,7 +162,18 @@ impl CanonicalizeScheme {
 ///   - Providers: Custom domains and others like `yahoo.com`, `yahoo.fr`, `yahoo.co.uk`, `aol.com`, `tutanota.com`, `gmx.de`.
 ///
 #[allow(clippy::module_name_repetitions)]
-#[derive(Debug, Deserialize, Serialize, Eq, PartialEq, Hash, Clone, Ord, PartialOrd, Default)]
+#[derive(
+    Debug,
+    Deserialize,
+    Serialize,
+    Eq,
+    PartialEq,
+    Hash,
+    Clone,
+    Ord,
+    PartialOrd,
+    Default
+)]
 #[serde(crate = "self::serde")]
 pub struct CanonicalEmail(String);
 

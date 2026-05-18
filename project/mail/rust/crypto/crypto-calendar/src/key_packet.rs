@@ -1,4 +1,5 @@
-use base64::{Engine, prelude::BASE64_STANDARD};
+use base64::Engine;
+use base64::prelude::BASE64_STANDARD;
 use mail_calendar_api_v1::CalendarEvent;
 
 #[derive(Clone, Debug)]

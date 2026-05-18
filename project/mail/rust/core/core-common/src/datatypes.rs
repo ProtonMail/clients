@@ -74,18 +74,16 @@ use itertools::Itertools;
 use jiff::civil::Weekday;
 use mail_core_api::services::proton::mail_muon::rt::DynResolver;
 use mail_core_api::services::proton::{
-    AddressFlags as ApiAddressFlags, AddressSignedKeyList as ApiAddressSignedKeyList,
+    AddressFlags as ApiAddressFlags, AddressId, AddressSignedKeyList as ApiAddressSignedKeyList,
     AddressStatus as ApiAddressStatus, AddressType as ApiAddressType, DateFormat as ApiDateFormat,
-    Density as ApiDensity, EarlyAccess as ApiEarlyAccess, Email as ApiEmail, FidoKey as ApiFidoKey,
-    Flags as ApiFlags, HighSecurity as ApiHighSecurity, LogAuth as ApiLogAuth,
-    Password as ApiPassword, Phone as ApiPhone, ProductUsedSpace as ApiProductUsedSpace,
-    Referral as ApiReferral, SettingsFlags as ApiSettingsFlags, TimeFormat as ApiTimeFormat,
-    TwoFa as ApiTwoFa, UserMnemonicStatus as ApiUserMnemonicStatus, UserType as ApiUserType,
+    Density as ApiDensity, DeviceEnvironment as ApiDeviceEnvironment,
+    EarlyAccess as ApiEarlyAccess, Email as ApiEmail, FidoKey as ApiFidoKey, Flags as ApiFlags,
+    HighSecurity as ApiHighSecurity, LabelId, LightOrDarkMode as ApiLightOrDarkMode,
+    LogAuth as ApiLogAuth, Password as ApiPassword, Phone as ApiPhone,
+    ProductUsedSpace as ApiProductUsedSpace, Referral as ApiReferral,
+    SettingsFlags as ApiSettingsFlags, TimeFormat as ApiTimeFormat, TwoFa as ApiTwoFa,
+    UserMnemonicStatus as ApiUserMnemonicStatus, UserType as ApiUserType,
     WeekStart as ApiWeekStart,
-};
-use mail_core_api::services::proton::{
-    AddressId, DeviceEnvironment as ApiDeviceEnvironment, LabelId,
-    LightOrDarkMode as ApiLightOrDarkMode,
 };
 use mail_core_api::session::{Config as RealApiConfig, EnvId};
 use mail_stash::exports::{

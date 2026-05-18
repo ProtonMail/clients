@@ -1,6 +1,5 @@
-use crate::login::PostLoginValidator;
-use crate::login::state::StateData;
-use crate::login::{LoginError, state::State};
+use crate::login::state::{State, StateData};
+use crate::login::{LoginError, PostLoginValidator};
 use crate::shared::SecureString;
 use crate::shared::challenge::{Behavior, ChallengeInfo, ChallengePayload};
 use base64::Engine;

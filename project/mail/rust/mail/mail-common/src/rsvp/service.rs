@@ -1,5 +1,6 @@
 use super::{RsvpCache, RsvpContacts};
-use mail_stash::{UserDb, stash::Stash};
+use mail_stash::UserDb;
+use mail_stash::stash::Stash;
 
 pub struct RsvpService {
     cache: RsvpCache,

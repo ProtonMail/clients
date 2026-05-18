@@ -20,18 +20,16 @@ use mail_core_api::services::proton::{
     GetContactsEmailsResponse, GetContactsOptions, GetContactsResponse,
 };
 use mail_core_api::session::Session;
-use mail_shared_types::ModelIdExtension;
-use mail_shared_types::{InitializationKey, MapVec, ModelExtension};
+use mail_shared_types::{InitializationKey, MapVec, ModelExtension, ModelIdExtension};
 use mail_stash::exports::Transaction;
+use mail_stash::macros::Model as ModelDerive;
 use mail_stash::orm::{DbRecord, Model, ModelHooks};
-use mail_stash::rusqlite::Connection;
-use mail_stash::rusqlite::params_from_iter;
+use mail_stash::rusqlite::{Connection, params_from_iter};
 use mail_stash::stash::{
     RunTransaction, Stash, StashError, StashResult, Tether, WatcherHandle, WriteTx,
 };
 use mail_stash::utils::{ConnectionExt, placeholders};
-use mail_stash::{UserDb, macros::Model as ModelDerive};
-use mail_stash::{params, rusqlite};
+use mail_stash::{UserDb, params, rusqlite};
 use mail_vcard::vcard::{PropertyUid, VCard};
 use proton_crypto::crypto::PGPProviderSync;
 use proton_crypto_account::contacts::DecryptableVerifiableCard as _;

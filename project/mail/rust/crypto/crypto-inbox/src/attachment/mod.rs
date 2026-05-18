@@ -10,13 +10,13 @@ pub use decrypt::*;
 mod encrypt;
 pub use encrypt::*;
 
-use base64::{Engine as _, prelude::BASE64_STANDARD as BASE_64};
-use proton_crypto_account::proton_crypto::{
-    CryptoError,
-    crypto::{ArmorerSync, PGPProviderSync},
-};
+use base64::Engine as _;
+use base64::prelude::BASE64_STANDARD as BASE_64;
+use proton_crypto_account::proton_crypto::CryptoError;
+use proton_crypto_account::proton_crypto::crypto::{ArmorerSync, PGPProviderSync};
 
-use crate::{keys::KeyPacket, string_id};
+use crate::keys::KeyPacket;
+use crate::string_id;
 
 string_id! {
     /// Encrypted session keys of an attachment.
@@ -71,7 +71,15 @@ pub enum ArmorEncodingError {
 }
 
 /// A raw binary detached signature over the attachment.
-#[derive(Debug, serde::Deserialize, serde::Serialize, Eq, PartialEq, Hash, Clone)]
+#[derive(
+    Debug,
+    serde::Deserialize,
+    serde::Serialize,
+    Eq,
+    PartialEq,
+    Hash,
+    Clone
+)]
 pub struct BinaryAttachmentSignature(pub Vec<u8>);
 
 impl<T: Into<Vec<u8>>> From<T> for BinaryAttachmentSignature {
@@ -106,7 +114,15 @@ impl BinaryAttachmentSignature {
 }
 
 /// A raw encrypted binary detached signature over the attachment.
-#[derive(Debug, serde::Deserialize, serde::Serialize, Eq, PartialEq, Hash, Clone)]
+#[derive(
+    Debug,
+    serde::Deserialize,
+    serde::Serialize,
+    Eq,
+    PartialEq,
+    Hash,
+    Clone
+)]
 pub struct BinaryAttachmentEncryptedSignature(pub Vec<u8>);
 
 impl<T: Into<Vec<u8>>> From<T> for BinaryAttachmentEncryptedSignature {

@@ -2,11 +2,10 @@ use crate::datatypes::{ProductUsedSpace, Refresh};
 use crate::models::{Address, Contact, ContactEmail, Label, User, UserSettings};
 use crate::utils::MapVec;
 use mail_core_api::services::proton::{
-    AddressEvent as ApiAddressEvent, ContactEmailEvent as ApiContactEmailEvent,
-    ContactEvent as ApiContactEvent, CoreEvent as ApiCoreEvent, EventId,
+    AddressEvent as ApiAddressEvent, AddressId, ContactEmailEvent as ApiContactEmailEvent,
+    ContactEmailId, ContactEvent as ApiContactEvent, ContactId, CoreEvent as ApiCoreEvent, EventId,
     LabelEvent as ApiLabelEvent, LabelId,
 };
-use mail_core_api::services::proton::{AddressId, ContactEmailId, ContactId};
 pub use mail_shared_types::Action;
 
 /// An event related to a [`ContactEmail`] record.

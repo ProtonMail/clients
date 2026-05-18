@@ -2,10 +2,9 @@
 #[path = "tests/db.rs"]
 mod tests;
 
-use crate::action::{self, ActionGroup, Type};
 use crate::action::{
-    Action, ActionDependencyKey, ActionDependencyKeys, ActionId, Metadata, Priority, Resources,
-    WriterGuardError,
+    self, Action, ActionDependencyKey, ActionDependencyKeys, ActionGroup, ActionId, Metadata,
+    Priority, Resources, Type, WriterGuardError,
 };
 use chrono::{DateTime, Utc};
 use include_dir::{Dir, include_dir};
@@ -14,9 +13,9 @@ use mail_sqlite3::MigratorError;
 use mail_sqlite3::file::embedded_migrations;
 use mail_sqlite3::rusqlite::types::ValueRef;
 use mail_stash::exports::{
-    Connection, FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, Transaction,
+    Connection, FromSql, FromSqlError, FromSqlResult, SqliteError, ToSql, ToSqlOutput, Transaction,
+    Value,
 };
-use mail_stash::exports::{SqliteError, Value};
 use mail_stash::macros::{DbRecord, Model};
 use mail_stash::orm::{DbRecord, Model, ModelHooks};
 use mail_stash::params;

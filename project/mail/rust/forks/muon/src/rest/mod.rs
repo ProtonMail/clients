@@ -54,11 +54,7 @@ impl<'de> Deserialize<'de> for Bool {
 
 impl From<bool> for Bool {
     fn from(b: bool) -> Self {
-        if b {
-            Self::True
-        } else {
-            Self::False
-        }
+        if b { Self::True } else { Self::False }
     }
 }
 

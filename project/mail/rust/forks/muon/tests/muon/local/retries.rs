@@ -1,7 +1,7 @@
 use anyhow::Result;
+use mail_muon::GET;
 use mail_muon::common::RetryPolicy;
 use mail_muon::test::server::{Response, Server};
-use mail_muon::GET;
 use std::sync::Arc;
 
 #[mail_muon::test]

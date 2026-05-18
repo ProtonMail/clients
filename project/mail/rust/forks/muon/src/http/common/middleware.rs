@@ -1,9 +1,9 @@
 //! HTTP middleware.
 
+use crate::Result;
 use crate::common::prelude::*;
 use crate::headers::DohHostHeader;
 use crate::http::prelude::*;
-use crate::Result;
 use async_trait::async_trait;
 use std::sync::Arc;
 

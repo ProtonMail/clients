@@ -3,8 +3,7 @@ use crate::actions::draft::{
     SEND_ACTION_GROUP, local_all_draft_label_id, local_all_sent_label_id, local_draft_label_id,
     local_sent_label_id,
 };
-use crate::datatypes::LocalMessageId;
-use crate::datatypes::MessageFlags;
+use crate::datatypes::{LocalMessageId, MessageFlags};
 use crate::draft::UndoError;
 use crate::models::Message;
 use crate::{AppError, MailContextError};

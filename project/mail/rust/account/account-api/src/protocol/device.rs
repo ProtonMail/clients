@@ -3,7 +3,8 @@
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use sha2::Digest;
-use std::{ops::Deref, sync::Arc};
+use std::ops::Deref;
+use std::sync::Arc;
 
 /// A dynamic device info provider.
 pub type DynDeviceInfoProvider = Arc<dyn DeviceInfoProvider>;

@@ -21,7 +21,16 @@ mail_proton_ids::declare_proton_id! {
 }
 
 /// Represents which kind of label we are dealing with.
-#[derive(Clone, Copy, Debug, Deserialize_repr, Eq, Hash, PartialEq, Serialize_repr)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Deserialize_repr,
+    Eq,
+    Hash,
+    PartialEq,
+    Serialize_repr
+)]
 #[repr(u8)]
 pub enum LabelType {
     Label = 1,

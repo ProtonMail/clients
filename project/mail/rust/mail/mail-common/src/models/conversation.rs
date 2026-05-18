@@ -5,30 +5,29 @@ mod conversations;
 use super::network::split_request;
 use crate::actions::conversations::label_as::UndoLabelAsConversations;
 use crate::actions::conversations::r#move::UndoMoveToConversations;
-use crate::actions::conversations::{LabelAs, Snooze, UndoLabelAsArchiveConversations};
-use crate::actions::conversations::{MarkRead, MarkUnread, Move, Unsnooze};
+use crate::actions::conversations::{
+    Delete, LabelAs, MarkRead, MarkUnread, Move, Snooze, UndoLabelAsArchiveConversations, Unsnooze,
+};
 use crate::actions::{
     ActionMoveData, ConversationOrMessage, LabelAsAction, LabelAsData, LabelAsOutput, LabelPair,
     MoveAction, Undo, filter_responses,
 };
 use crate::datatypes::dependencies::DependencyFetcher;
 use crate::datatypes::{
-    AttachmentMetadata, ConversationLabelsCount, CustomLabel, Disposition, ExclusiveLocation,
-    LocalMessageId, MessageAttachmentInfos, MessageLabelsCount, MessageRecipients, MessageSenders,
-    ReadFilter, SystemLabelId,
+    AttachmentMetadata, ConversationLabelsCount, CustomLabel, DeletedItemType, Disposition,
+    ExclusiveLocation, LocalConversationId, LocalMessageId, MessageAttachmentInfos,
+    MessageLabelsCount, MessageRecipients, MessageSenders, ReadFilter, RollbackItemType,
+    SystemLabelId,
 };
-use crate::datatypes::{DeletedItemType, LocalConversationId, RollbackItemType};
 use crate::models::*;
 use crate::snooze::SnoozeOptions;
-use crate::{AppError, actions::conversations::Delete};
-use crate::{MailContextError, find_in_query};
+use crate::{AppError, MailContextError, find_in_query};
 use anyhow::Context;
 use chrono::Local;
 use futures::future;
 use indoc::{formatdoc, indoc};
 use itertools::Itertools;
-use mail_action_queue::action::ActionGroup;
-use mail_action_queue::action::MetadataBuilder;
+use mail_action_queue::action::{ActionGroup, MetadataBuilder};
 
 use derivative::Derivative;
 use mail_action_queue::queue::{ActionError as QueueActionError, Queue, QueuedActionOutput};
@@ -55,11 +54,9 @@ use mail_core_common::models::{
 };
 use mail_core_common::services::NetworkMonitorService;
 use mail_core_common::utils::MapVec as _;
-use mail_stash::exports::{Connection, ToSql};
-use mail_stash::exports::{SqliteError, Transaction};
+use mail_stash::exports::{Connection, SqliteError, ToSql, Transaction};
 use mail_stash::macros::Model;
-use mail_stash::orm::Model;
-use mail_stash::orm::ModelHooks;
+use mail_stash::orm::{Model, ModelHooks};
 use mail_stash::rusqlite::{OptionalExtension, params_from_iter};
 use mail_stash::stash::{RunTransaction, Stash, StashError, Tether, WatcherHandle, WriteTx};
 use mail_stash::utils::{ConnectionExt, IterMapToSql, MapToSql as _, placeholders, placeholders_n};
@@ -2903,7 +2900,18 @@ pub struct ConversationLabel {
     pub deleted: bool,
 }
 
-#[derive(Debug, Copy, Clone, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[derive(
+    Debug,
+    Copy,
+    Clone,
+    Eq,
+    Hash,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+    Deserialize
+)]
 pub struct ContextExpirationTime(UnixTimestamp);
 
 impl Default for ContextExpirationTime {

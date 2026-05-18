@@ -1,8 +1,7 @@
 use super::datatypes::{
-    AllListActions, AllMessageActions, AttachmentMetadata, Message, MessageActionSheet,
-    MobileAction,
+    AllListActions, AllMessageActions, AttachmentMetadata, LabelAsAction, Message,
+    MessageActionSheet, MimeType, MobileAction, MoveAction,
 };
-use super::datatypes::{LabelAsAction, MimeType, MoveAction};
 use super::state::MailUserContextPtr;
 use super::{ImagePolicy, MailUserSession, Mailbox, RsvpEventServiceProvider};
 use crate::core::datatypes::{Id, RemoteId, UnixTimestamp};
@@ -16,13 +15,11 @@ use crate::mail::mail_scroller::{
     MessageScroller, MessageScrollerLiveQueryCallback, SearchScroller,
     spawn_message_scroller_watcher,
 };
-use crate::{LiveQueryCallback, WatchHandle, uniffi_async};
-use crate::{PaginatorSearchOptions, declare_live_query_tagger};
+use crate::{
+    LiveQueryCallback, PaginatorSearchOptions, WatchHandle, declare_live_query_tagger, uniffi_async,
+};
 use itertools::Itertools as _;
 use mail_api::services::proton::common::MessageId;
-use mail_common::MailScroller;
-use mail_common::MailUserContext;
-use mail_common::Unexpected;
 use mail_common::datatypes::message_banner::MessageBanner as RealMessageBanner;
 use mail_common::datatypes::theme::MailTheme as RealMailTheme;
 use mail_common::datatypes::{
@@ -36,7 +33,8 @@ use mail_common::decrypted_message::{
 };
 use mail_common::models::{self, IncomingDefault, Message as RealMessage};
 use mail_common::{
-    ActionErrorReason as RealActionErrorReason, ProtonMailError as RealProtonMailError,
+    ActionErrorReason as RealActionErrorReason, MailScroller, MailUserContext,
+    ProtonMailError as RealProtonMailError, Unexpected,
 };
 use mail_core_api::services::proton::PrivateEmail;
 use mail_core_common::datatypes::LocalLabelId;

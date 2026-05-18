@@ -1,5 +1,4 @@
-use super::common::{DefaultError, TestReadExtension, TestWriteExtension};
-use super::common::{new_factory, new_queue};
+use super::common::{DefaultError, TestReadExtension, TestWriteExtension, new_factory, new_queue};
 use mail_action_queue::action::{
     Action, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
 };

@@ -1,9 +1,9 @@
 use mail_common::test_utils::init::Params as TestParams;
 use mail_common::test_utils::test_context::{MailTestContext, MailUserContextTestExtension};
 use mail_contacts_api::mocks::ContactsMockServerExt;
-use mail_core_api::services::proton::ContactId;
 use mail_core_api::services::proton::{
-    ContactBasic as ApiContactBasic, ContactEmail as ApiContactEmail, ContactSendingPreferences,
+    ContactBasic as ApiContactBasic, ContactEmail as ApiContactEmail, ContactId,
+    ContactSendingPreferences,
 };
 use mail_core_common::models::{Contact, ModelIdExtension, action_delete_contacts};
 use mail_stash::orm::Model;

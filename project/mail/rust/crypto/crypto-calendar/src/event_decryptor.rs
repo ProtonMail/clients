@@ -2,7 +2,8 @@ use crate::{
     DecryptedIcs, EncryptedIcsRef, Error, KeyPacketRef, KeyPackets, Result, SignatureRef,
     UnlockedCalendarKey,
 };
-use base64::{Engine, prelude::BASE64_STANDARD};
+use base64::Engine;
+use base64::prelude::BASE64_STANDARD;
 use derive_more::Debug;
 use proton_crypto::crypto::{
     AsPublicKeyRef, DataEncoding, Decryptor, DecryptorSync, DetachedSignatureVariant,

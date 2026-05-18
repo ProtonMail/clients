@@ -1,4 +1,5 @@
-use base64::{Engine, prelude::BASE64_STANDARD};
+use base64::Engine;
+use base64::prelude::BASE64_STANDARD;
 pub use mail_api_utils::{Paginatable, PaginateOptions, PaginateResponse};
 pub use mail_avatar::{first_grapheme_uppercase, proton_color};
 pub use mail_shared_types::MapVec;

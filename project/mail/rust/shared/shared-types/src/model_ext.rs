@@ -2,12 +2,10 @@ use indoc::formatdoc;
 use itertools::Itertools as _;
 use mail_local_id::LocalIdMarker;
 use mail_proton_ids::ProtonIdMarker;
-use mail_stash::exports::Transaction;
-use mail_stash::exports::{FromSql, SqliteError, ToSql};
+use mail_stash::exports::{FromSql, SqliteError, ToSql, Transaction};
 use mail_stash::orm::Model;
 use mail_stash::params;
-use mail_stash::rusqlite::params_from_iter;
-use mail_stash::rusqlite::{Connection, OptionalExtension};
+use mail_stash::rusqlite::{Connection, OptionalExtension, params_from_iter};
 use mail_stash::stash::{StashError, Tether, WriteTx};
 use mail_stash::utils::{ConnectionExt, IterMapToSql as _, MapToSql as _, placeholders};
 

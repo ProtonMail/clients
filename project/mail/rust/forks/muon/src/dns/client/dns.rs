@@ -1,6 +1,6 @@
-use crate::common::prelude::*;
 use crate::common::IntoDyn;
-use crate::dns::{fmt_msg, impl_dns_service, Dns, DnsResolver, DynDnsService};
+use crate::common::prelude::*;
+use crate::dns::{Dns, DnsResolver, DynDnsService, fmt_msg, impl_dns_service};
 use crate::rt::{DynResolver, DynSpawner, SpawnerExt};
 use crate::{Error, ErrorKind, Result};
 use async_io::Async;
@@ -9,18 +9,18 @@ use derive_more::Display;
 use futures::prelude::*;
 use futures_timer::Delay;
 use hickory_client::client::Client;
-use hickory_client::proto::{udp, DnsHandle};
+use hickory_client::proto::{DnsHandle, udp};
 use hickory_proto::op::Message;
 use hickory_proto::runtime::{RuntimeProvider, Spawn, Time};
 use hickory_proto::udp::UdpClientStream;
 use hickory_proto::xfer::DnsResponse;
-use hickory_proto::{tcp, ProtoError};
+use hickory_proto::{ProtoError, tcp};
 use pin_project::pin_project;
 use std::io::ErrorKind::TimedOut;
 use std::io::Result as IoResult;
 use std::net::{self, Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::pin::Pin;
-use std::task::{ready, Context, Poll};
+use std::task::{Context, Poll, ready};
 use std::time::Duration;
 
 /// A poll result for an I/O operation.

@@ -2,8 +2,7 @@ use crate::datatypes::{
     DateFormat, Density, Email, HighSecurity, LogAuth, NotificationSettings, Password, Phone,
     Referral, SettingsFlags, TimeFormat, TwoFa, WeekStart,
 };
-use mail_core_api::services::proton::UserId;
-use mail_core_api::services::proton::UserSettings as ApiUserSettings;
+use mail_core_api::services::proton::{UserId, UserSettings as ApiUserSettings};
 use mail_stash::UserDb;
 use mail_stash::macros::Model;
 

@@ -5,14 +5,14 @@ use crate::tls::{
 use crate::{ErrorKind, Result};
 use async_trait::async_trait;
 use std::sync::Arc;
+use tokio_rustls::rustls::CertificateError::*;
 use tokio_rustls::rustls::client::danger::{
     HandshakeSignatureValid, ServerCertVerified, ServerCertVerifier,
 };
 use tokio_rustls::rustls::crypto::CryptoProvider;
 use tokio_rustls::rustls::pki_types::{CertificateDer, InvalidDnsNameError, ServerName, UnixTime};
-use tokio_rustls::rustls::CertificateError::*;
-use tokio_rustls::rustls::{crypto, DigitallySignedStruct, Error, OtherError, SignatureScheme};
-use tokio_rustls::{rustls, TlsConnector};
+use tokio_rustls::rustls::{DigitallySignedStruct, Error, OtherError, SignatureScheme, crypto};
+use tokio_rustls::{TlsConnector, rustls};
 /// A Tokio TLS Upgrader that uses rustls
 #[derive(Debug)]
 pub struct TokioUpgrader {
@@ -41,7 +41,7 @@ impl TokioUpgrader {
             debug!("load {} certificates from system", native_certs.certs.len());
             let _ = store.add_parsable_certificates(native_certs.certs);
         } else {
-            warn!("can't load system certificates: {:?}",native_certs.errors);
+            warn!("can't load system certificates: {:?}", native_certs.errors);
         }
 
         let certs = anchor
@@ -259,8 +259,8 @@ if_sealed! {
 
 mod errors {
     use super::*;
-    use crate::tls::ParseCertErr;
     use crate::Error;
+    use crate::tls::ParseCertErr;
     use thiserror::Error;
 
     #[derive(Debug, Error)]

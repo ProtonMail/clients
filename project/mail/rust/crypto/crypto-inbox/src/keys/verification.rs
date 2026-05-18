@@ -1,11 +1,12 @@
-use std::{collections::HashSet, fmt};
+use std::collections::HashSet;
+use std::fmt;
 
-use proton_crypto_account::{
-    keys::{DecryptedAddressKey, PinnedPublicKeys, PublicAddressKeys},
-    proton_crypto::{
-        crypto::{AsPublicKeyRef, OpenPGPFingerprint, PrivateKey, PublicKey},
-        keytransparency::{KT_UNVERIFIED, KT_VERIFIED, KTVerificationResult},
-    },
+use proton_crypto_account::keys::{DecryptedAddressKey, PinnedPublicKeys, PublicAddressKeys};
+use proton_crypto_account::proton_crypto::crypto::{
+    AsPublicKeyRef, OpenPGPFingerprint, PrivateKey, PublicKey,
+};
+use proton_crypto_account::proton_crypto::keytransparency::{
+    KT_UNVERIFIED, KT_VERIFIED, KTVerificationResult,
 };
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]

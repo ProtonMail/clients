@@ -1,12 +1,9 @@
 use std::io;
 
-use proton_crypto_account::proton_crypto::{
-    CryptoError,
-    crypto::{
-        ArmorerSync, AsPublicKeyRef, DataEncoding, Decryptor, DecryptorSync,
-        DetachedSignatureVariant, PGPProviderSync, VerificationResult, VerifiedData,
-        VerifiedDataReader,
-    },
+use proton_crypto_account::proton_crypto::CryptoError;
+use proton_crypto_account::proton_crypto::crypto::{
+    ArmorerSync, AsPublicKeyRef, DataEncoding, Decryptor, DecryptorSync, DetachedSignatureVariant,
+    PGPProviderSync, VerificationResult, VerifiedData, VerifiedDataReader,
 };
 
 use crate::keys::{InboxSessionKey, SessionKeyError};

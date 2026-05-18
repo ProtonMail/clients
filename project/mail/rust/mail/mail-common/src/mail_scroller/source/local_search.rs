@@ -1,10 +1,8 @@
 use super::MailPaginatorJoinHandle;
-use crate::{
-    MailContextError, MailUserContext,
-    datatypes::SearchOptions,
-    mail_scroller::{CategoryView, MailScrollerSource},
-    models::{MailBusyLabel, Message, MessageCounter, MessageLabel, SearchScrollData},
-};
+use crate::datatypes::SearchOptions;
+use crate::mail_scroller::{CategoryView, MailScrollerSource};
+use crate::models::{MailBusyLabel, Message, MessageCounter, MessageLabel, SearchScrollData};
+use crate::{MailContextError, MailUserContext};
 use futures::stream::{self, StreamExt};
 use mail_core_common::datatypes::LocalLabelId;
 use mail_core_common::models::ModelExtension;
@@ -190,9 +188,8 @@ impl LocalSearchScrollerSource {
         use crate::search::search_local_with_keywords;
         use mail_action_queue::action::ActionGroup;
         use mail_action_queue::rebase::RebaseChangeSet;
-        use mail_api::services::proton::{
-            ProtonMail, response_data::MessageMetadata as ApiMessageMetadata,
-        };
+        use mail_api::services::proton::ProtonMail;
+        use mail_api::services::proton::response_data::MessageMetadata as ApiMessageMetadata;
 
         let found_entries = search_service
             .search_local_with_metadata(query)

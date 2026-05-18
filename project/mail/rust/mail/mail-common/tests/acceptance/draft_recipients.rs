@@ -1,21 +1,17 @@
-use mail_common::draft::recipients::OnBackgroundValidationComplete;
-use mail_common::draft::recipients::OnPrivacyLockUpdate;
-use mail_common::draft::recipients::PrivacyLockState;
-use mail_common::draft::recipients::RecipientPrivacyLockUpdate;
-use mail_common::draft::recipients::RecipientValidationUpdate;
 use mail_common::draft::recipients::{
-    Recipient, RecipientEntry, RecipientList, ValidatingRecipientList, ValidationState,
+    OnBackgroundValidationComplete, OnPrivacyLockUpdate, PrivacyLockState, Recipient,
+    RecipientEntry, RecipientList, RecipientPrivacyLockUpdate, RecipientValidationUpdate,
+    ValidatingRecipientList, ValidationState,
 };
-use mail_common::models::DraftMetadata;
-use mail_common::models::MetadataId;
+use mail_common::models::{DraftMetadata, MetadataId};
 use mail_common::test_utils::init::Params;
-use mail_common::test_utils::message_body::message_body_test_params;
-use mail_common::test_utils::message_body::{TEST_USER_ID, message_body_test_user_secret};
+use mail_common::test_utils::message_body::{
+    TEST_USER_ID, message_body_test_params, message_body_test_user_secret,
+};
 use mail_common::test_utils::test_context::MailTestContext;
 use mail_core_api::consts::CoreBundle;
-use mail_core_api::services::proton::GetKeysAllResponse;
-use mail_core_api::services::proton::UserId;
 use mail_core_api::services::proton::common::ApiErrorInfo;
+use mail_core_api::services::proton::{GetKeysAllResponse, UserId};
 use proton_crypto_account::keys::EmailMimeType;
 use test_case::test_case;
 use tokio_util::sync::CancellationToken;

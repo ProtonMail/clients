@@ -305,11 +305,11 @@ use crate::client::flow::{AuthFlow, ForkFlow};
 use crate::common::prelude::*;
 use crate::env::EnvId;
 use crate::error::{ErrorKind, Result};
-use crate::http::{DynHttpSender, HttpReq, HttpRes, DELETE};
+use crate::http::{DELETE, DynHttpSender, HttpReq, HttpRes};
 use crate::middleware::AuthLayer;
 use async_trait::async_trait;
 use futures::channel::mpsc::unbounded;
-use futures::{executor, TryFutureExt};
+use futures::{TryFutureExt, executor};
 use muon_proc::derive_dyn;
 use private::ClientInternalStorage;
 use serde_json::Value;
@@ -725,9 +725,9 @@ impl FromStr for Fingerprint {
 #[cfg(test)]
 mod tests {
     use super::{BoxFut, Sender};
+    use crate::ErrorKind;
     use crate::client::Timeout;
     use crate::http::{HttpReq, HttpRes};
-    use crate::ErrorKind;
     use std::time::Duration;
 
     struct MockedSender;

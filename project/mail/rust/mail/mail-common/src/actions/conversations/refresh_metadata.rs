@@ -1,8 +1,7 @@
-use crate::AppError;
 use crate::actions::{MailActionError, PREFETCH_ROLLBACK_ACTION_GROUP};
 use crate::datatypes::{ConversationViewOptions, LocalConversationId};
-use crate::models::{Conversation, ConversationScrollData};
-use crate::{MailUserContext, models::Message};
+use crate::models::{Conversation, ConversationScrollData, Message};
+use crate::{AppError, MailUserContext};
 use anyhow::anyhow;
 use mail_action_queue::action::{
     Action, ActionGroup, ActionId, DefaultVersionConverter, Handler, Priority, Type, WriterGuard,

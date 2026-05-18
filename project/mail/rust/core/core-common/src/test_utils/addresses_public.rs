@@ -6,10 +6,8 @@ use proton_crypto_account::keys::{
     SignedKeyList,
 };
 use serde::Serialize;
-use wiremock::{
-    Mock, ResponseTemplate,
-    matchers::{method, path, query_param},
-};
+use wiremock::matchers::{method, path, query_param};
+use wiremock::{Mock, ResponseTemplate};
 
 pub const TEST_OTHER_USER_EMAIL: &str = "rust_test2@proton.black";
 pub const TEST_OTHER_USER_ADDRESS_KEY: &str = "-----BEGIN PGP PUBLIC KEY BLOCK-----\nVersion: ProtonMail\n\nxjMEZkX+zBYJKwYBBAHaRw8BAQdAWduKPt5zBtc+9DqBQLoc3zlqIF8jOUPI\nsFwx9Jy2P9jNMXJ1c3RfdGVzdDJAcHJvdG9uLmJsYWNrIDxydXN0X3Rlc3Qy\nQHByb3Rvbi5ibGFjaz7CjAQQFgoAPgWCZkX+zAQLCQcICZBdyhjQnv7YbAMV\nCAoEFgACAQIZAQKbAwIeARYhBE/4qNMBuldcY8XfjF3KGNCe/thsAAB3BgEA\nh7CjEeXYnIkTHq8/r/Ez6BY/rULlzJ5AdQcAjRb9AdEBAOgC2cvq1iTTHIyI\nqaZbSw4BJaLL40Gak3qcrl7h0KkHwqgEEBYIAFoFAmZF/wkJENTSGgVRp7Ls\nFiEENhVDvw2lbaYMs9qU1NIaBVGnsuwsHFRlc3QgT3BlblBHUCBDQSA8dGVz\ndC1vcGVucGdwLWNhQHByb3Rvbi5tZT4FgwDtTgAAAJtWAPkBxJiQ3NSE9o5l\n+38bkvYvPf4vbjwXI+q35E00cX6/nAEApnu8EZsDjBUdGASjbJXav/QvTuSe\nb5cL31u+BkSpyAfOOARmRf7MEgorBgEEAZdVAQUBAQdA8mtOle2xn1hxJX+f\nuujODfm3DSpJNQ4i/3o2ND6UJngDAQgHwngEGBYKACoFgmZF/swJkF3KGNCe\n/thsApsMFiEET/io0wG6V1xjxd+MXcoY0J7+2GwAAFLgAP9PWtGDtDcebw2U\noD0wfFBaiv5ciHonMvExh9COaFoeQAEAs4CVpapPBM7TfVfztTEGi3fEthvh\nDwN8/F95ArvAIAo=\n=SEhN\n-----END PGP PUBLIC KEY BLOCK-----\n";

@@ -1,6 +1,6 @@
 use mail_api_shared::{ApiErrorInfo, ApiServiceError};
-use mail_muon::{ContentType, Method as MuonMethod, Status, common::Sender, http};
-use mail_muon::{ProtonRequest, ProtonResponse};
+use mail_muon::common::Sender;
+use mail_muon::{ContentType, Method as MuonMethod, ProtonRequest, ProtonResponse, Status, http};
 
 use ::mail_muon::http::{HttpReq, HttpRes};
 use lattice::{

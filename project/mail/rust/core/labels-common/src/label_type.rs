@@ -66,7 +66,18 @@ pub const ALL_LABEL_TYPES: [LabelType; 3] =
 pub const MAIL_LABEL_TYPES: [LabelType; 3] =
     [LabelType::Label, LabelType::Folder, LabelType::System];
 
-#[derive(Clone, Debug, Default, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
+#[derive(
+    Clone,
+    Debug,
+    Default,
+    Deserialize,
+    Eq,
+    Hash,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize
+)]
 pub struct LabelColor(String);
 
 impl LabelColor {

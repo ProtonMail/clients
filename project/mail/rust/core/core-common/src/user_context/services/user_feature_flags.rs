@@ -2,33 +2,27 @@
 //! If you are looking for global feature flags,
 //! please see [`crate::services::FeatureFlagsService`].
 
-use std::{collections::BTreeMap, sync::Weak};
+use std::collections::BTreeMap;
+use std::sync::Weak;
 
 use anyhow::Context as _;
-use mail_core_api::{
-    service::ApiServiceError,
-    services::proton::{
-        FeatureFlagsApi as _, GetLegacyFeatureFlagsOptions, GetLegacyFeaturesResponse,
-        GetUnleashFeaturesResponse, LegacyFeatureFlag, LegacyFeatureFlagType,
-        MAX_LEGACY_FEATURES_PER_PAGE,
-    },
-    session::Session,
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::{
+    FeatureFlagsApi as _, GetLegacyFeatureFlagsOptions, GetLegacyFeaturesResponse,
+    GetUnleashFeaturesResponse, LegacyFeatureFlag, LegacyFeatureFlagType,
+    MAX_LEGACY_FEATURES_PER_PAGE,
 };
-use mail_stash::{
-    UserDb,
-    orm::Model,
-    params,
-    stash::{Stash, Tether, WatcherHandle},
-    watcher::TableWatcher,
-};
+use mail_core_api::session::Session;
+use mail_stash::orm::Model;
+use mail_stash::stash::{Stash, Tether, WatcherHandle};
+use mail_stash::watcher::TableWatcher;
+use mail_stash::{UserDb, params};
 
-use crate::{
-    Context, CoreContextError, CoreContextResult, UserContext,
-    datatypes::{UnixTimestamp, UserFeatureFlagSource},
-    models::{ModelExtension, UserFeatureFlag},
-    services::FeatureFlagsService,
-    utils::Paginatable,
-};
+use crate::datatypes::{UnixTimestamp, UserFeatureFlagSource};
+use crate::models::{ModelExtension, UserFeatureFlag};
+use crate::services::FeatureFlagsService;
+use crate::utils::Paginatable;
+use crate::{Context, CoreContextError, CoreContextResult, UserContext};
 
 enum FlagPersistence {
     Persist,

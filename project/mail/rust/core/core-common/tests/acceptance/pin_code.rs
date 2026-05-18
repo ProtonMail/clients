@@ -1,9 +1,7 @@
 use mail_core_common::Context;
+use mail_core_common::models::{AppProtection, AppSettings, ModelExtension, PinProtection};
+use mail_core_common::pin_code::{PinCode, PinError};
 use mail_core_common::test_utils::test_context::TestContext;
-use mail_core_common::{
-    models::{AppProtection, AppSettings, ModelExtension, PinProtection},
-    pin_code::{PinCode, PinError},
-};
 use mail_stash::orm::Model;
 
 #[tokio::test]

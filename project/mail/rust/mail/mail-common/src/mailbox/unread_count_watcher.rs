@@ -1,15 +1,12 @@
-use crate::CategoryView;
-use crate::MailContextResult;
 use crate::datatypes::ViewMode;
 use crate::models::{ConversationCounter, MailSettings, MessageCounter};
-use mail_core_common::datatypes::LocalLabelId;
-use mail_core_common::datatypes::SystemLabel;
+use crate::{CategoryView, MailContextResult};
+use mail_core_common::datatypes::{LocalLabelId, SystemLabel};
 use mail_core_common::models::{Label, ModelExtension as _};
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
 use mail_stash::stash::{Stash, StashError, Tether, WatcherHandle};
-use sqlite_watcher::watcher::DropRemoveTableObserverHandle;
-use sqlite_watcher::watcher::TableObserver;
+use sqlite_watcher::watcher::{DropRemoveTableObserverHandle, TableObserver};
 use std::collections::BTreeSet;
 use tracing::error;
 

@@ -1,8 +1,6 @@
+use crate::datatypes::ReadFilter;
 use crate::datatypes::labels::{ScrollOrderDir, ScrollOrderField};
-use crate::{
-    datatypes::ReadFilter,
-    models::{CachedScrollData, ScrollData},
-};
+use crate::models::{CachedScrollData, ScrollData};
 use derive_more::Display;
 use mail_core_common::datatypes::LocalLabelId;
 use mail_stash::stash::{StashError, Tether};

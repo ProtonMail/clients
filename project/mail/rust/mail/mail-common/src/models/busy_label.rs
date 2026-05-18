@@ -1,13 +1,9 @@
-use mail_core_common::{
-    datatypes::LocalLabelId,
-    models::{Label, LabelError, ModelExtension},
-};
-use mail_stash::{
-    UserDb,
-    macros::Model,
-    orm::Model,
-    stash::{Tether, WriteTx},
-};
+use mail_core_common::datatypes::LocalLabelId;
+use mail_core_common::models::{Label, LabelError, ModelExtension};
+use mail_stash::UserDb;
+use mail_stash::macros::Model;
+use mail_stash::orm::Model;
+use mail_stash::stash::{Tether, WriteTx};
 use tracing::{info, instrument};
 
 pub trait LabelExt {

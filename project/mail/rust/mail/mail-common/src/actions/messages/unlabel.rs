@@ -4,12 +4,12 @@ use crate::models::Message;
 use mail_action_queue::action::{
     Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
 };
+use mail_api::services::proton::ProtonMail;
 use mail_core_api::services::proton::Proton;
 use mail_core_common::datatypes::LocalLabelId;
 use mail_core_common::models::ModelIdExtension;
-use mail_api::services::proton::ProtonMail;
-use serde::{Deserialize, Serialize};
 use mail_stash::stash::WriteTx;
+use serde::{Deserialize, Serialize};
 use tracing::{error, info};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

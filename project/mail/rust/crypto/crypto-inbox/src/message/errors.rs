@@ -1,4 +1,5 @@
-use std::{str::Utf8Error, string::FromUtf8Error};
+use std::str::Utf8Error;
+use std::string::FromUtf8Error;
 
 use mail_crypto_inbox_mime::ProcessMimeError;
 use proton_crypto_account::proton_crypto::CryptoError;

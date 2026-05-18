@@ -1,6 +1,4 @@
-use crate::datatypes::SwipeActionMoveToTarget;
-use crate::datatypes::SystemLabelId;
-use crate::datatypes::{AssignedSwipeAction, SwipeAction};
+use crate::datatypes::{AssignedSwipeAction, SwipeAction, SwipeActionMoveToTarget, SystemLabelId};
 use mail_common::test_utils::test_context::MailTestContext;
 use mail_core_api::services::proton::LabelId;
 use mail_core_common::datatypes::SystemLabel;

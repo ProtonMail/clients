@@ -1,22 +1,22 @@
-use crate::{
-    fburl::FbUrl,
-    gender::{Gender, GenderValue},
-    geo::Geo,
-    impp::Impp,
-    kind::{Kind, KindValue},
-    nickname::Nickname,
-    organization::Organization,
-    photo::Photo,
-    revision::Revision,
-    sound::Sound,
-    source::Source,
-    telephone::{Telephone, TelephoneValue},
-    time_zone::TimeZoneValue,
-    values::{
-        component::Component, iana_token::IanaToken, text_list::TextList, timestamp::Timestamp,
-        uri::Uri, x_name::XName,
-    },
-};
+use crate::fburl::FbUrl;
+use crate::gender::{Gender, GenderValue};
+use crate::geo::Geo;
+use crate::impp::Impp;
+use crate::kind::{Kind, KindValue};
+use crate::nickname::Nickname;
+use crate::organization::Organization;
+use crate::photo::Photo;
+use crate::revision::Revision;
+use crate::sound::Sound;
+use crate::source::Source;
+use crate::telephone::{Telephone, TelephoneValue};
+use crate::time_zone::TimeZoneValue;
+use crate::values::component::Component;
+use crate::values::iana_token::IanaToken;
+use crate::values::text_list::TextList;
+use crate::values::timestamp::Timestamp;
+use crate::values::uri::Uri;
+use crate::values::x_name::XName;
 
 #[test]
 fn fburl_struct() {

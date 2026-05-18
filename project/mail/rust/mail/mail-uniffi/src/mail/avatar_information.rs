@@ -1,7 +1,8 @@
 use crate::core::datatypes::AvatarInformation;
 use crate::mail::datatypes::{MessageRecipient, MessageSender};
-use mail_common::datatypes::MessageRecipient as RealMessageRecipient;
-use mail_common::datatypes::MessageSender as RealMessageSender;
+use mail_common::datatypes::{
+    MessageRecipient as RealMessageRecipient, MessageSender as RealMessageSender,
+};
 use mail_core_common::datatypes::AvatarInformation as RealAvatarInformation;
 use mail_core_common::utils::MapVec;
 

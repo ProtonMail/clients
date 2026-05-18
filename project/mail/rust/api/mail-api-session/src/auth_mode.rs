@@ -95,7 +95,18 @@ impl mail_stash::exports::FromSql for PasswordMode {
 }
 
 /// TODO: Document this enum.
-#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize, TryFrom)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Default,
+    Deserialize,
+    Eq,
+    Hash,
+    PartialEq,
+    Serialize,
+    TryFrom
+)]
 #[try_from(repr)]
 #[repr(u8)]
 pub enum TfaStatus {

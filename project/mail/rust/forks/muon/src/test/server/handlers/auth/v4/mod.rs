@@ -1,10 +1,10 @@
 use crate::rest::auth;
 use crate::rest::auth::v4::tfa::TFA;
 use crate::test::server::backend::{Auth, Backend};
-use crate::test::server::error::{cerr, ServerRes};
+use crate::test::server::error::{ServerRes, cerr};
 use crate::util::ByteSliceExt;
-use axum::extract::State;
 use axum::Json;
+use axum::extract::State;
 
 /// `/auth/v4/info`
 pub mod info;

@@ -9,8 +9,6 @@ use crate::mail::datatypes::AttachmentMetadata;
 use crate::mail::state::MailUserContextPtr;
 use crate::{AsyncLiveQueryCallback, uniffi_async};
 use anyhow::anyhow;
-use mail_common::MailContextError;
-use mail_common::ProtonMailError as RealProtonMailError;
 use mail_common::datatypes::attachment::ContentId;
 use mail_common::datatypes::{Disposition, LocalAttachmentId};
 use mail_common::draft::Draft as RealDraft;
@@ -23,6 +21,7 @@ use mail_common::draft::attachments::{
 };
 use mail_common::draft::observers::DraftAttachmentObserver;
 use mail_common::models::Attachment as RealAttachment;
+use mail_common::{MailContextError, ProtonMailError as RealProtonMailError};
 use mail_uniffi_common::errors::UserApiServiceError;
 use mail_uniffi_runtime::async_runtime;
 use std::path::{Path, PathBuf};

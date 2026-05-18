@@ -6,13 +6,12 @@ mod tests;
 pub mod styles;
 
 use itertools::Itertools;
-use kuchikiki::{Attribute, NodeData, NodeRef, iter::NodeEdge};
+use kuchikiki::iter::NodeEdge;
+use kuchikiki::{Attribute, NodeData, NodeRef};
 use std::fmt::Write;
 
-use crate::{
-    utils::{node_ref_from_str, parse_url},
-    utm::strip_from_url,
-};
+use crate::utils::{node_ref_from_str, parse_url};
+use crate::utm::strip_from_url;
 
 /// Determines which stylesheet hardcoded into the binary should be injected into HTML body of the message
 ///

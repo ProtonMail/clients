@@ -3,10 +3,8 @@ use super::drafts_common::*;
 mod ios_share_ext {
     use super::*;
     use mail_common::draft::Draft;
-    use mail_common::test_utils::{
-        message_body::{TEST_USER_ID, message_body_test_user_secret},
-        test_context::MailTestContext,
-    };
+    use mail_common::test_utils::message_body::{TEST_USER_ID, message_body_test_user_secret};
+    use mail_common::test_utils::test_context::MailTestContext;
     use mail_common::{IosShareExtDraft, IosShareExtension};
     use mail_core_api::services::proton::UserId;
 

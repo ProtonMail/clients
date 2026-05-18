@@ -2,9 +2,9 @@
 #[path = "../../tests/actions/available_actions/all_list_actions.rs"]
 mod tests;
 
-use crate::actions::MovableSystemFolderAction;
 use crate::actions::{
-    ActionContext, GenericAction, GenericMobileActions, MobileActionsBuilder, SystemFolders,
+    ActionContext, GenericAction, GenericMobileActions, MobileActionsBuilder,
+    MovableSystemFolderAction, SystemFolders,
 };
 use crate::datatypes::MobileAction;
 use mail_core_api::services::proton::LabelId;

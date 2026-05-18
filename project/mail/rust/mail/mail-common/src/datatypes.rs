@@ -189,7 +189,18 @@ impl ToSql for ComposerMode {
     }
 }
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize, TryFrom, Default)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Deserialize,
+    Eq,
+    Hash,
+    PartialEq,
+    Serialize,
+    TryFrom,
+    Default
+)]
 #[try_from(repr)]
 #[repr(u8)]
 pub enum Disposition {
@@ -269,7 +280,18 @@ impl ToSql for MessageButtons {
     }
 }
 
-#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize, TryFrom)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Default,
+    Deserialize,
+    Eq,
+    Hash,
+    PartialEq,
+    Serialize,
+    TryFrom
+)]
 #[try_from(repr)]
 #[repr(u8)]
 pub enum MimeType {
@@ -343,7 +365,18 @@ impl ToSql for MimeType {
     }
 }
 
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, TryFrom, Serialize, Deserialize)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Default,
+    Eq,
+    Hash,
+    PartialEq,
+    TryFrom,
+    Serialize,
+    Deserialize
+)]
 #[try_from(repr)]
 #[repr(u8)]
 pub enum NextMessageOnMove {

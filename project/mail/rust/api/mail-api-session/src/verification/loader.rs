@@ -3,9 +3,8 @@ use crate::session::{Config, Session};
 use bytes::Bytes;
 use futures::TryFutureExt;
 use mail_api_shared::ApiServiceError;
-use mail_muon::ProtonRequest;
 use mail_muon::common::{Sender, Server};
-use mail_muon::{Method, ProtonResponse};
+use mail_muon::{Method, ProtonRequest, ProtonResponse};
 use std::str::FromStr;
 
 /// The type of a challenge loader result.

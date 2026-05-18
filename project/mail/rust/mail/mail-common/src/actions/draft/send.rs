@@ -4,11 +4,9 @@ use crate::actions::draft::{
     local_draft_label_id, local_outbox_label_id,
 };
 use crate::datatypes::{LocalMessageId, MessageFlags, RollbackItemType};
+use crate::draft::draft_v1::draft_attachment_staging_path;
 use crate::draft::send::{EoData, MailType, build_packages, load_prefs};
-use crate::draft::{
-    MIN_EXPIRATION_TIME_SECONDS, ReplyMode, SendError, draft_v1,
-    draft_v1::draft_attachment_staging_path,
-};
+use crate::draft::{MIN_EXPIRATION_TIME_SECONDS, ReplyMode, SendError, draft_v1};
 use crate::models::{
     Conversation, DraftAttachmentMetadata, DraftMetadata, DraftSendFailure, DraftSendResult,
     DraftSendResultOrigin, MailSettings, Message, MessageCounter, MessageMimeType, MetadataId,

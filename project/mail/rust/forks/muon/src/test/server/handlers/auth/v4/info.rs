@@ -2,8 +2,8 @@ use crate::rest::auth;
 use crate::test::server::backend::Backend;
 use crate::test::server::error::ServerRes;
 use crate::util::ByteSliceExt;
-use axum::extract::State;
 use axum::Json;
+use axum::extract::State;
 
 /// Handle `POST /auth/v4/info`.
 pub async fn post(

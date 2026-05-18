@@ -3,8 +3,7 @@ use std::sync::Arc;
 use crate::core::datatypes::Id;
 use crate::errors::ActionError;
 use crate::uniffi_async;
-use uniffi::Enum as UniffiEnum;
-use uniffi::Record as UniffiRecord;
+use uniffi::{Enum as UniffiEnum, Record as UniffiRecord};
 
 use super::MailUserSession;
 use super::datatypes::SystemLabel;

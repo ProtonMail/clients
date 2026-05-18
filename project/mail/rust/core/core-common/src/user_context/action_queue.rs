@@ -1,8 +1,6 @@
 use crate::models::LabelError;
-use mail_action_queue::{
-    action::{self, WriterGuardError},
-    queue::ActionRequeueReason,
-};
+use mail_action_queue::action::{self, WriterGuardError};
+use mail_action_queue::queue::ActionRequeueReason;
 use mail_core_api::service::ApiServiceError;
 use mail_stash::stash::StashError;
 

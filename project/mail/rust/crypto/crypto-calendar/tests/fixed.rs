@@ -20,10 +20,8 @@ use mail_crypto_calendar::{
     SignatureRef,
 };
 use pretty_assertions as pa;
-use proton_crypto::{
-    crypto::{DataEncoding, PGPProviderSync},
-    new_pgp_provider,
-};
+use proton_crypto::crypto::{DataEncoding, PGPProviderSync};
+use proton_crypto::new_pgp_provider;
 use proton_crypto_account::keys::{DecryptedAddressKey, KeyFlag, KeyId, UnlockedAddressKeys};
 
 const ADDRESS_KEY: &str = indoc! {"

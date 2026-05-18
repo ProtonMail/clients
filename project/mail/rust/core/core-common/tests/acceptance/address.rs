@@ -1,16 +1,12 @@
 use std::sync::Arc;
 
 use core_event_loop::v6::EventSubscriber;
-use mail_core_api::{
-    consts::General,
-    service::ApiErrorInfo,
-    services::proton::{AddressEventV6, CoreEventV6},
-};
-use mail_core_common::{
-    event_loop::v6::{CoreEventCache, CoreEventSourceV6, CoreEventV6Subscriber},
-    services::event_loop_service::EventManagerContext,
-    test_utils::test_context::TestContext,
-};
+use mail_core_api::consts::General;
+use mail_core_api::service::ApiErrorInfo;
+use mail_core_api::services::proton::{AddressEventV6, CoreEventV6};
+use mail_core_common::event_loop::v6::{CoreEventCache, CoreEventSourceV6, CoreEventV6Subscriber};
+use mail_core_common::services::event_loop_service::EventManagerContext;
+use mail_core_common::test_utils::test_context::TestContext;
 use mail_core_key_manager::AddressId;
 
 #[tokio::test]

@@ -2,28 +2,25 @@
 #[path = "./tests/device_registration.rs"]
 mod tests;
 
-use std::{collections::HashSet, sync::Arc};
+use std::collections::HashSet;
+use std::sync::Arc;
 
 use futures::StreamExt;
 use itertools::Itertools;
-use mail_core_api::{
-    service::ApiServiceError,
-    services::proton::{DeviceApi as _, SessionId, prelude::RegisterDeviceRequest},
-};
+use mail_core_api::service::ApiServiceError;
+use mail_core_api::services::proton::prelude::RegisterDeviceRequest;
+use mail_core_api::services::proton::{DeviceApi as _, SessionId};
 use mail_stash::AccountDb;
-use mail_stash::{
-    exports::ToSql,
-    orm::Model,
-    stash::{StashError, Tether, WatcherHandle},
-};
-use tokio::{sync::watch, task::JoinHandle};
+use mail_stash::exports::ToSql;
+use mail_stash::orm::Model;
+use mail_stash::stash::{StashError, Tether, WatcherHandle};
+use tokio::sync::watch;
+use tokio::task::JoinHandle;
 
-use crate::{
-    Context, CoreAccountState, CoreContextError,
-    datatypes::{RegisteredDevice, StoredDevicePrivateKey, StoredDevicePublicKey},
-    db::account::{CoreAccount, CoreSession},
-    models::ModelExtension,
-};
+use crate::datatypes::{RegisteredDevice, StoredDevicePrivateKey, StoredDevicePublicKey};
+use crate::db::account::{CoreAccount, CoreSession};
+use crate::models::ModelExtension;
+use crate::{Context, CoreAccountState, CoreContextError};
 
 /// How long we should sleep just in case there was a network error other than offline issue.
 const SLEEP_IN_CASE_OF_NETWORK_ERR: u64 = 500;

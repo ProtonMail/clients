@@ -1,12 +1,12 @@
+use crate::Result;
 use crate::common::prelude::*;
 use crate::env::{DynEnv, Env};
 use crate::tls::{TlsCert, Verifier, VerifyRes};
 use crate::util::{ByteSliceErr, ByteSliceExt, IntoIterExt};
-use crate::Result;
 use derive_more::{AsRef, Deref, Display, FromStr};
 use std::borrow::Borrow;
-use std::collections::hash_set::{IntoIter as HashSetIntoIter, Iter as HashSetIter};
 use std::collections::HashSet;
+use std::collections::hash_set::{IntoIter as HashSetIntoIter, Iter as HashSetIter};
 use std::fmt::{Formatter, Result as FmtResult};
 
 /// A TLS pin.

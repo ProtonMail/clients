@@ -1,24 +1,19 @@
-use crate::Origin;
 use crate::datatypes::ApiConfig;
-use crate::db::account::{CoreAccount, CoreSession};
+use crate::db::account::{CoreAccount, CoreSession, SessionEncryptionKey};
 use crate::device::DynDeviceInfoProvider;
 use crate::event_loop::EventPollMode;
 use crate::event_loop::event_source::CoreEventSource;
 use crate::models::ModelExtension;
+use crate::os::{InMemoryKeyChain, KeyChain, KeyChainExt};
 use crate::services::global_feature_flags::FeatureFlagsBackgroundTask;
 use crate::test_utils::account::{TEST_USER_ID, TEST_USER_MAIL, testdata_user_secret};
 use crate::test_utils::utils::mock_auth_endpoints;
-use crate::{
-    Context, UserContext, UserDatabaseInitializer,
-    db::account::SessionEncryptionKey,
-    os::{InMemoryKeyChain, KeyChain, KeyChainExt},
-};
+use crate::{Context, Origin, UserContext, UserDatabaseInitializer};
 use core_event_loop::v6::{EventSource, EventSubscriberResult};
 use mail_core_api::auth::{Tokens, UserKeySecret};
 use mail_core_api::exports::RetryPolicy;
 use mail_core_api::services::proton::{SessionId, UserId};
-use mail_core_api::session::{AppVersion, Env, Server};
-use mail_core_api::session::{Endpoint, EnvId};
+use mail_core_api::session::{AppVersion, Endpoint, Env, EnvId, Server};
 use mail_issue_reporter_service::{IssueReporter, NoopIssueReporter};
 use mail_log_service::LogService;
 use mail_sqlite3::MigratorError;

@@ -1,20 +1,18 @@
 use common::TEST_VERIFICATION_KEY;
-use mail_crypto_inbox::{
-    keys::{ComposerPreference, PackageCryptoType, SendPreferences, SendPreferencesError},
-    message::packages::PackageMimeType,
-    proton_crypto::{
-        crypto::{AccessKeyInfo, DataEncoding, PGPProviderSync, UnixTimestamp},
-        new_pgp_provider,
-    },
+use mail_crypto_inbox::keys::{
+    ComposerPreference, PackageCryptoType, SendPreferences, SendPreferencesError,
 };
-use proton_crypto_account::{
-    errors::EncryptionPreferencesError,
-    keys::{
-        APIPublicAddressKeyGroup, APIPublicAddressKeys, APIPublicKey, APIPublicKeySource,
-        APIUnverifiedPublicAddressKeyGroup, CryptoMailSettings, DecryptedAddressKey, EmailMimeType,
-        KeyFlag, KeyId, PGPScheme, PinnedPublicKeys, PublicAddressKeys, SKLSignature,
-        SignedKeyList, VerificationPreferences,
-    },
+use mail_crypto_inbox::message::packages::PackageMimeType;
+use mail_crypto_inbox::proton_crypto::crypto::{
+    AccessKeyInfo, DataEncoding, PGPProviderSync, UnixTimestamp,
+};
+use mail_crypto_inbox::proton_crypto::new_pgp_provider;
+use proton_crypto_account::errors::EncryptionPreferencesError;
+use proton_crypto_account::keys::{
+    APIPublicAddressKeyGroup, APIPublicAddressKeys, APIPublicKey, APIPublicKeySource,
+    APIUnverifiedPublicAddressKeyGroup, CryptoMailSettings, DecryptedAddressKey, EmailMimeType,
+    KeyFlag, KeyId, PGPScheme, PinnedPublicKeys, PublicAddressKeys, SKLSignature, SignedKeyList,
+    VerificationPreferences,
 };
 
 mod common;

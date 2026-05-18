@@ -5,15 +5,16 @@ use crate::errors::{
 };
 use crate::mail::MailUserSession;
 use crate::{async_runtime, uniffi_async};
-use mail_common::MailContextError;
-use mail_common::MailErrorReason as RealMailErrorReason;
-use mail_common::ProtonMailError as RealProtonMailError;
 use mail_common::datatypes::LocalMessageId;
 use mail_common::draft::observers::{
     DraftSendResultWatcher as RealDraftSendResultWatcher, DraftSendResultWatcherMode,
 };
 use mail_common::models::{
     DraftSendResult as RealDraftSendResult, DraftSendResultOrigin as RealDraftSendResultOrigin,
+};
+use mail_common::{
+    MailContextError, MailErrorReason as RealMailErrorReason,
+    ProtonMailError as RealProtonMailError,
 };
 use mail_core_common::utils::MapVec;
 use std::sync::Arc;

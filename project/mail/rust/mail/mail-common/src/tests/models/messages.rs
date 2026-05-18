@@ -6,7 +6,6 @@ use crate::datatypes::{
     ContextualConversation, ExclusiveLocation, LocalAttachmentId, MessageFlags,
     MovableSystemFolder, SystemLabelId, attachment,
 };
-use crate::label;
 use crate::models::{Conversation, MailSettings, Message, MessageBodyMetadata};
 use crate::test_utils::db::new_test_connection_file;
 use crate::test_utils::db_states::{
@@ -18,27 +17,24 @@ use crate::test_utils::search::{
     test_starred_label,
 };
 use crate::test_utils::utils::{
-    conv_counts_as_map, find_conversation_label, msg_counts_as_map, prepare_and_patch_db_state,
-    prepare_db_state_core,
+    conv_counts_as_map, create_address, find_conversation_label, msg_counts_as_map,
+    prepare_and_patch_db_state, prepare_db_state_core, test_address,
 };
-use crate::test_utils::utils::{create_address, test_address};
-use crate::{conv_id, conversation, message, msg_id};
+use crate::{conv_id, conversation, label, message, msg_id};
 use futures::FutureExt;
 use futures::future::BoxFuture;
 use mail_api::services::proton::common::AttachmentId;
 use mail_api::services::proton::prelude::ContentDisposition;
-use mail_api::services::proton::response_data::MessageMetadata as ApiMessageMetadata;
 use mail_api::services::proton::response_data::{
     AttachmentMetadata as ApiAttachmentMetadata, ConversationLabel as ApiConversationLabel,
     Disposition as ApiDisposition, Message as ApiMessage,
     MessageAttachment as ApiMessageAttachment,
     MessageAttachmentHeaders as ApiMessageAttachmentHeaders, MessageFlags as ApiMessageFlags,
-    MessageReplyTo as ApiMessageReplyTo, MessageSender as ApiMessageSender,
-    MimeType as ApiMimeType,
+    MessageMetadata as ApiMessageMetadata, MessageReplyTo as ApiMessageReplyTo,
+    MessageSender as ApiMessageSender, MimeType as ApiMimeType,
 };
 use mail_core_api::services::proton::LabelId;
-use mail_core_common::datatypes::SystemLabel;
-use mail_core_common::datatypes::{LabelColor, LabelType};
+use mail_core_common::datatypes::{LabelColor, LabelType, SystemLabel};
 use mail_core_common::models::Label;
 use mail_core_common::test_utils::addresses::MY_ADDRESS_ID;
 use mail_crypto_inbox::attachment::KeyPackets;

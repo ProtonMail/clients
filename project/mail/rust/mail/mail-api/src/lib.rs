@@ -14,10 +14,7 @@ pub use mail_core_api;
 
 #[cfg(test)]
 mod integration_tests {
-    use bytes as _;
-    use reqwest as _;
-    use tokio as _;
-    use tracing as _;
-    use tracing_subscriber as _;
-    use wiremock as _;
+    use {
+        bytes as _, reqwest as _, tokio as _, tracing as _, tracing_subscriber as _, wiremock as _,
+    };
 }

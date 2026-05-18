@@ -1,19 +1,17 @@
 use chrono::{Duration, Local};
 use mail_api::services::proton::common::MessageId;
-use mail_api::services::proton::response_data::ConversationLabel as ApiConversationLabel;
-use mail_api::services::proton::response_data::MessageMetadata as ApiMessageMetadata;
+use mail_api::services::proton::response_data::{
+    ConversationLabel as ApiConversationLabel, MessageMetadata as ApiMessageMetadata,
+};
 use mail_common::Mailbox;
 use mail_common::actions::conversations::Snooze;
 use mail_common::datatypes::{ContextualConversation, ConversationViewOptions, SystemLabelId};
 use mail_common::models::Conversation;
 use mail_common::test_utils::init::Params as TestParams;
 use mail_common::test_utils::test_context::MailTestContext;
-use mail_core_api::services::proton::Label as ApiLabel;
-use mail_core_api::services::proton::{LabelId, LabelType as ApiLabelType};
+use mail_core_api::services::proton::{Label as ApiLabel, LabelId, LabelType as ApiLabelType};
 use mail_core_common::datatypes::{SystemLabel, UnixTimestamp};
-use mail_core_common::models::Label;
-use mail_core_common::models::ModelExtension;
-use mail_core_common::models::ModelIdExtension;
+use mail_core_common::models::{Label, ModelExtension, ModelIdExtension};
 use mail_stash::orm::Model;
 
 #[tokio::test]

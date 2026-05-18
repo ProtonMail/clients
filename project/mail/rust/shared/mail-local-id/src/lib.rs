@@ -3,15 +3,6 @@ use std::fmt::Debug;
 #[cfg(feature = "stash")]
 pub trait LocalIdMarkerStash: mail_stash::exports::FromSql + mail_stash::exports::ToSql {}
 
-#[cfg(feature = "stash")]
-impl<T: mail_stash::exports::FromSql + mail_stash::exports::ToSql> LocalIdMarkerStash for T {}
-
-#[cfg(not(feature = "stash"))]
-pub trait LocalIdMarkerStash {}
-
-#[cfg(not(feature = "stash"))]
-impl<T> LocalIdMarkerStash for T {}
-
 #[cfg(feature = "serde")]
 pub trait LocalIdMarkerSerde: serde::Serialize + serde::de::DeserializeOwned {}
 
@@ -26,7 +17,7 @@ impl<T> LocalIdMarkerSerde for T {}
 
 /// Marker trait to signal that this type was declared as a local id.
 pub trait LocalIdMarker: Sized {
-    type Counterpart: Clone + Send + Sync + LocalIdMarkerStash + LocalIdMarkerSerde + Debug;
+    type Counterpart: Clone + Send + Sync + LocalIdMarkerSerde + Debug;
 }
 
 #[cfg(feature = "mail-actions")]
@@ -43,7 +34,7 @@ pub trait LocalIdActionDepExt: Debug + Copy + Clone {
 
 #[cfg(feature = "stash")]
 #[macro_export]
-macro_rules! define_local_id_stash {
+macro_rules! declare_local_id_stash {
     ($name:ident) => {
         impl ::mail_stash::exports::ToSql for $name {
             fn to_sql(
@@ -60,18 +51,14 @@ macro_rules! define_local_id_stash {
                 u64::column_result(value).map($name)
             }
         }
-    };
-}
 
-#[cfg(not(feature = "stash"))]
-#[macro_export]
-macro_rules! define_local_id_stash {
-    ($name:ident) => {};
+        impl $crate::LocalIdMarkerStash for $name {}
+    };
 }
 
 #[cfg(feature = "mail-actions")]
 #[macro_export]
-macro_rules! define_local_id_actions {
+macro_rules! declare_local_id_actions {
     ($name:ident) => {
         impl $crate::LocalIdActionDepExt for $name {
             fn to_dependency_key(&self) -> ::mail_action_queue::action::ActionDependencyKey {
@@ -116,7 +103,7 @@ macro_rules! define_local_id_actions {
 
 #[cfg(not(feature = "mail-actions"))]
 #[macro_export]
-macro_rules! define_local_id_actions {
+macro_rules! declare_local_id_actions {
     ($name:ident) => {};
 }
 
@@ -201,11 +188,6 @@ macro_rules! declare_local_id {
         impl $crate::LocalIdMarker for $name {
             type Counterpart = $remote_id;
         }
-
-        $crate::define_local_id_stash!($name);
-
-
-        $crate::define_local_id_actions!($name);
     };
     (
         $(#[$($attrss:tt)*])*
@@ -239,11 +221,5 @@ macro_rules! declare_local_id {
                 Self(id)
             }
         }
-
-        $crate::define_local_id_stash!($name);
-
-
-        $crate::define_local_id_actions!($name);
-
     };
 }

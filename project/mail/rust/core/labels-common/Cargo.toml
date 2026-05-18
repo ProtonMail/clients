@@ -17,6 +17,7 @@ mail-core-api = { workspace = true }
 mail-shared-types = { workspace = true }
 mail-sqlite3 = { workspace = true }
 mail-stash = { workspace = true }
+mail-local-id = { workspace = true }
 rand = { workspace = true, optional = true }
 serde = { workspace = true }
 sqlite-watcher = { workspace = true }

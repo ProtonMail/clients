@@ -11,4 +11,28 @@ pub use map_vec::MapVec;
 pub use model_ext::{ModelExtension, ModelIdExtension};
 pub use timestamp::UnixTimestamp;
 
-pub use mail_local_id::declare_local_id;
+#[macro_export]
+macro_rules! declare_local_id {
+    (
+        $(#[$($attrss:tt)*])*
+        $visibility:vis $name:ident => $remote_id:ident
+    ) => {
+        $(#[$($attrss)*])*
+        ::mail_local_id::declare_local_id!($name => $remote_id);
+
+        ::mail_local_id::declare_local_id_stash!($name);
+
+        ::mail_local_id::declare_local_id_actions!($name);
+    };
+    (
+      $(#[$($attrss:tt)*])*
+        $visibility:vis $name:ident
+    ) => {
+        $(#[$($attrss)*])*
+        ::mail_local_id::declare_local_id!($name);
+
+        ::mail_local_id::declare_local_id_stash!($name);
+
+        ::mail_local_id::declare_local_id_actions!($name);
+    };
+}

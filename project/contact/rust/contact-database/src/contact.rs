@@ -47,9 +47,12 @@ pub trait RoContactTable {
     ) -> Result<Option<Contact>, Self::Error>;
     async fn find_contacts_by_ids(
         &self,
-        id: impl IntoIterator<Item = LocalContactId>,
+        ids: impl IntoIterator<Item = LocalContactId>,
     ) -> Result<Vec<Contact>, Self::Error>;
-    async fn find_contact_by_remote_ids(&self, id: ContactId) -> Result<Vec<Contact>, Self::Error>;
+    async fn find_contact_by_remote_ids(
+        &self,
+        ids: impl IntoIterator<Item = ContactId>,
+    ) -> Result<Vec<Contact>, Self::Error>;
 }
 
 pub trait RwContactTable: RoContactTable {

@@ -4,7 +4,7 @@ use mail_core_api::services::proton::{
     ContactEmail as ApiContactEmail, ContactEmailId, ContactId, PrivateEmail,
 };
 use mail_shared_types::{ModelIdExtension, UnixTimestamp};
-use mail_stash::macros::Model as ModelDerive;
+use mail_stash::macros::{Model as ModelDerive, ModelRaw};
 use mail_stash::orm::{Model, ModelHooks};
 use mail_stash::rusqlite::{self};
 use mail_stash::stash::{StashError, Tether};
@@ -20,7 +20,7 @@ use crate::types::{ContactSendingPreferences, ContactTypes};
 ///
 /// Contact emails are used to store email addresses associated with a contact.
 ///
-#[derive(Clone, Debug, Eq, ModelDerive, PartialEq)]
+#[derive(Clone, Debug, Eq, ModelDerive, ModelRaw, PartialEq)]
 #[TableName("contact_emails")]
 #[Database(UserDb)]
 #[ModelHooks]
@@ -193,15 +193,7 @@ impl ModelHooks for ContactEmail {
         &mut self,
         tx: &mail_stash::exports::Transaction<'_>,
     ) -> mail_stash::stash::StashResult<()> {
-        // handle contact groups
-        tx.execute(
-            "DELETE FROM contact_email_groups WHERE local_contact_email_id = ?",
-            mail_stash::rusqlite::params![self.id()],
-        )?;
-
-        if !self.label_ids.is_empty() {
-            ContactGroup::link_contact_groups_for_contact_email(tx, self.id(), &self.label_ids)?;
-        }
+        ContactGroup::relink_contact_groups_for_contact_email(tx, self.id(), &self.label_ids)?;
 
         Ok(())
     }

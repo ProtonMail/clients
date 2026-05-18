@@ -38,6 +38,11 @@ impl ContactGroupColor {
     pub fn black() -> Self {
         Self("#000000".into())
     }
+
+    #[must_use]
+    pub fn into_inner(self) -> String {
+        self.0
+    }
 }
 
 impl Display for ContactGroupColor {
@@ -186,6 +191,9 @@ impl ContactGroup {
         contat_email_id: LocalContactEmailId,
         contact_group_ids: &[ContactGroupId],
     ) -> Result<(), rusqlite::Error> {
+        if contact_group_ids.is_empty() {
+            return Ok(());
+        }
         let mut contact_email_groups_stmt = tx.prepare_cached(LINK_CONTACT_GROUPS_EMAILS_QUERY)?;
 
         for contact_group_id in contact_group_ids {
@@ -196,13 +204,107 @@ impl ContactGroup {
         Ok(())
     }
 
+    pub(crate) fn link_contact_groups_for_contact_email_with_local_id(
+        tx: &rusqlite::Transaction<'_>,
+        contact_email_id: LocalContactEmailId,
+        contact_group_ids: &[LocalContactGroupId],
+    ) -> Result<(), rusqlite::Error> {
+        if contact_group_ids.is_empty() {
+            return Ok(());
+        }
+        let mut contact_email_groups_stmt =
+            tx.prepare_cached("INSERT OR IGNORE INTO contact_email_groups (local_contact_email_id, local_contact_group_id) VALUES (?,?)")?;
+
+        for contact_group_id in contact_group_ids {
+            contact_email_groups_stmt
+                .execute(rusqlite::params![contact_email_id, contact_group_id])?;
+        }
+        Ok(())
+    }
+
+    pub(crate) fn relink_contact_groups_for_contact_email(
+        tx: &rusqlite::Transaction<'_>,
+        contact_email_id: LocalContactEmailId,
+        contact_group_ids: &[ContactGroupId],
+    ) -> Result<(), rusqlite::Error> {
+        let mut stmt =
+            tx.prepare_cached("DELETE FROM contact_email_groups WHERE local_contact_email_id = ?")?;
+        stmt.execute(rusqlite::params![contact_email_id])?;
+        Self::link_contact_groups_for_contact_email(tx, contact_email_id, contact_group_ids)
+    }
+
+    pub(crate) fn relink_contact_groups_for_contact_email_local_id(
+        tx: &rusqlite::Transaction<'_>,
+        contact_email_id: LocalContactEmailId,
+        contact_group_ids: &[LocalContactGroupId],
+    ) -> Result<(), rusqlite::Error> {
+        let mut stmt =
+            tx.prepare_cached("DELETE FROM contact_email_groups WHERE local_contact_email_id = ?")?;
+        stmt.execute(rusqlite::params![contact_email_id])?;
+
+        Self::link_contact_groups_for_contact_email_with_local_id(
+            tx,
+            contact_email_id,
+            contact_group_ids,
+        )
+    }
+
+    pub(crate) fn relink_contact_groups_for_contact(
+        tx: &rusqlite::Transaction<'_>,
+        contact_id: LocalContactId,
+        contact_group_ids: &[ContactGroupId],
+    ) -> Result<(), rusqlite::Error> {
+        let mut stmt =
+            tx.prepare_cached("DELETE FROM contact_contact_groups WHERE local_contact_id = ?")?;
+
+        stmt.execute(rusqlite::params![contact_id])?;
+
+        Self::link_contact_groups_for_contact(tx, contact_id, contact_group_ids)
+    }
+
+    pub(crate) fn relink_contact_groups_for_contact_local_id(
+        tx: &rusqlite::Transaction<'_>,
+        contact_id: LocalContactId,
+        contact_group_ids: &[LocalContactGroupId],
+    ) -> Result<(), rusqlite::Error> {
+        let mut stmt =
+            tx.prepare_cached("DELETE FROM contact_contact_groups WHERE local_contact_id = ?")?;
+
+        stmt.execute(rusqlite::params![contact_id])?;
+
+        Self::link_contact_groups_for_contact_local_id(tx, contact_id, contact_group_ids)
+    }
+
     pub(crate) fn link_contact_groups_for_contact(
         tx: &rusqlite::Transaction<'_>,
         contact_id: LocalContactId,
         contact_group_ids: &[ContactGroupId],
     ) -> Result<(), rusqlite::Error> {
+        if contact_group_ids.is_empty() {
+            return Ok(());
+        }
+
         let mut contact_email_groups_stmt =
             tx.prepare_cached(LINK_CONTACT_GROUPS_CONTATCS_QUERY)?;
+
+        for contact_group_id in contact_group_ids {
+            contact_email_groups_stmt.execute(rusqlite::params![contact_id, contact_group_id])?;
+        }
+
+        Ok(())
+    }
+
+    pub(crate) fn link_contact_groups_for_contact_local_id(
+        tx: &rusqlite::Transaction<'_>,
+        contact_id: LocalContactId,
+        contact_group_ids: &[LocalContactGroupId],
+    ) -> Result<(), rusqlite::Error> {
+        if contact_group_ids.is_empty() {
+            return Ok(());
+        }
+
+        let mut contact_email_groups_stmt =
+            tx.prepare_cached("INSERT OR IGNORE INTO contact_contact_groups (local_contact_id, local_contact_group_id) VALUES (?,?)")?;
 
         for contact_group_id in contact_group_ids {
             contact_email_groups_stmt.execute(rusqlite::params![contact_id, contact_group_id])?;

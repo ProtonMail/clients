@@ -22,7 +22,7 @@ use mail_core_api::services::proton::{
 use mail_core_api::session::Session;
 use mail_shared_types::{InitializationKey, MapVec, ModelExtension, ModelIdExtension};
 use mail_stash::exports::Transaction;
-use mail_stash::macros::Model as ModelDerive;
+use mail_stash::macros::{Model as ModelDerive, ModelRaw};
 use mail_stash::orm::{DbRecord, Model, ModelHooks};
 use mail_stash::rusqlite::{Connection, params_from_iter};
 use mail_stash::stash::{
@@ -48,7 +48,7 @@ use crate::error::ContactError;
 use crate::local_ids::{LocalContactEmailId, LocalContactGroupId, LocalContactId};
 use mail_contacts_api::{ContactApi as _, ContactGroupId};
 
-#[derive(Clone, Debug, Eq, ModelDerive, PartialEq)]
+#[derive(Clone, Debug, Eq, ModelDerive, PartialEq, ModelRaw)]
 #[TableName("contacts")]
 #[Database(UserDb)]
 #[ModelHooks]

@@ -1,4 +1,3 @@
-use contact_lattice::ContactId;
 use proton_crypto_account::contacts::ContactCardType;
 
 use crate::LocalContactId;
@@ -9,14 +8,6 @@ mail_local_id::declare_local_id!(pub LocalContactCardId);
 pub struct ContactCard {
     pub local_id: LocalContactCardId,
     pub local_contact_id: LocalContactId,
-    pub card_type: ContactCardType,
-    pub data: String,
-    pub signature: Option<String>,
-}
-
-#[derive(Debug, Clone)]
-pub struct UpsertableContactCard {
-    pub contact_id: ContactId,
     pub card_type: ContactCardType,
     pub data: String,
     pub signature: Option<String>,
@@ -48,17 +39,15 @@ pub trait RwContactCardTable: RoContactCardTable {
         contact_card: NewContactCard,
     ) -> Result<ContactCard, Self::Error>;
 
-    async fn upsert_contact_card(
+    async fn create_contact_cards(
         &self,
-        contact: UpsertableContactCard,
-    ) -> Result<ContactCard, Self::Error>;
-
-    async fn upsert_contact_cards(
-        &self,
-        contact: impl IntoIterator<Item = UpsertableContactCard>,
+        contact_card: impl IntoIterator<Item = NewContactCard>,
     ) -> Result<Vec<ContactCard>, Self::Error>;
 
     async fn update_contact_card(&self, contact_card: &ContactCard) -> Result<(), Self::Error>;
+
+    async fn delete_contact_cards_for_contact(&self, id: LocalContactId)
+    -> Result<(), Self::Error>;
 
     async fn delete_contact_cards(
         &self,

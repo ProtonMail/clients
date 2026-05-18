@@ -23,6 +23,15 @@ impl From<ApiContactSendingPreferences> for ContactSendingPreferences {
     }
 }
 
+impl From<ContactSendingPreferences> for ApiContactSendingPreferences {
+    fn from(value: ContactSendingPreferences) -> Self {
+        match value {
+            ContactSendingPreferences::Custom => Self::Custom,
+            ContactSendingPreferences::Default => Self::Default,
+        }
+    }
+}
+
 impl FromSql for ContactSendingPreferences {
     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
         let val = u8::column_result(value)?;

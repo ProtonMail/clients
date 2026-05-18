@@ -294,6 +294,14 @@ pub struct PutNextMessageOnMoveResponse {
     pub mail_settings: MailSettings,
 }
 
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[cfg_attr(feature = "mocks", derive(Serialize))]
+#[serde(rename_all = "PascalCase")]
+pub struct PutMailCategoryViewResponse {
+    pub code: i64,
+    pub mail_settings: MailSettings,
+}
+
 #[derive(Clone, Debug, Default, Eq, PartialEq, Deserialize)]
 #[cfg_attr(feature = "mocks", derive(Serialize))]
 #[serde(untagged)]

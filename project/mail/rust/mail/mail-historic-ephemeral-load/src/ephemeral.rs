@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::time::Instant;
 
-use crate::continuation::HistoricFetchContinuation;
+use crate::continuation::{HistoricFetchContinuation, resolve_effective_continuation};
 use futures::stream::{self, StreamExt};
 use mail_api::MAX_PAGE_ELEMENT_COUNT;
 use mail_api::services::proton::{ProtonMail, common::MessageId, requests::GetMessagesOptions};
@@ -33,39 +33,84 @@ pub struct EphemeralHistoricLoadResult {
     pub timing: EphemeralTimingStats,
 }
 
+/// Persists or clears the SQLite checkpoint from the oldest **indexed** message in the batch.
+///
+/// If no message was indexed (e.g. all body fetches failed), the checkpoint is cleared so a
+/// later `resume_from_checkpoint` does not reuse a stale metadata cursor.
+async fn persist_checkpoint_after_run(
+    search_service: &mail_search::MailSearchService,
+    oldest_saved: Option<(u64, MessageId)>,
+) -> Result<(), MailContextError> {
+    match oldest_saved {
+        Some((anchor_time, anchor_message_id)) => {
+            search_service
+                .save_ephemeral_historic_checkpoint(anchor_time, &anchor_message_id)
+                .await
+                .map_err(|e| {
+                    MailContextError::Other(anyhow::anyhow!(
+                        "Ephemeral historic checkpoint: failed to save: {e}"
+                    ))
+                })?;
+        }
+        None => {
+            search_service
+                .clear_ephemeral_historic_checkpoint()
+                .await
+                .map_err(|e| {
+                    MailContextError::Other(anyhow::anyhow!(
+                        "Ephemeral historic checkpoint: failed to clear: {e}"
+                    ))
+                })?;
+        }
+    }
+    Ok(())
+}
+
+/// Ephemeral historic load: All Mail metadata + bodies → Foundation Search (no message SQLite writes).
+///
+/// When `resume_from_checkpoint` is true and `continuation` is `None`, loads the saved anchor from
+/// SQLite; if no row exists, starts from the newest messages. After each run, persists the oldest
+/// **indexed** message as the next anchor (or clears the row if nothing was indexed).
 pub async fn ephemeral_index_only_messages(
     user_ctx: &Arc<MailUserContext>,
-    label_id: Option<LabelId>,
     max_messages: usize,
     page_size: usize,
     concurrent_body_fetches: usize,
     continuation: Option<HistoricFetchContinuation>,
+    resume_from_checkpoint: bool,
 ) -> Result<EphemeralHistoricLoadResult, MailContextError> {
     let mut timing = EphemeralTimingCollector::default();
-    let remote_label_id = label_id.unwrap_or_else(LabelId::all_mail);
+    let remote_label_id = LabelId::all_mail();
+    let search_service = user_ctx.search_service();
+
+    let effective_continuation =
+        resolve_effective_continuation(search_service, continuation, resume_from_checkpoint)
+            .await?;
+
     let session = user_ctx.session();
     let effective_page_size = page_size.min(MAX_PAGE_ELEMENT_COUNT);
 
     info!(
-        "Ephemeral historic load: fetch + decrypt bodies from API (no SQLite writes, concurrency={})",
+        "Ephemeral historic load: fetch + decrypt bodies from API (no SQLite message writes, concurrency={})",
         concurrent_body_fetches
     );
 
-    let mut total_pages: usize = if continuation.is_some() { 1 } else { 0 };
-    let mut last_message_id = continuation.as_ref().map(|c| c.anchor_message_id.clone());
-    let mut last_message_time = continuation.as_ref().map(|c| c.anchor_time);
+    let mut total_pages: usize = if effective_continuation.is_some() {
+        1
+    } else {
+        0
+    };
+    let mut last_message_id = effective_continuation
+        .as_ref()
+        .map(|c| c.anchor_message_id.clone());
+    let mut last_message_time = effective_continuation.as_ref().map(|c| c.anchor_time);
     let mut page_requests: u32 = 0;
     let mut total_fetched = 0usize;
     let mut total_indexed = 0usize;
     let mut total_skipped_missing_body = 0usize;
     let mut oldest_saved: Option<(u64, MessageId)> = None;
 
-    if let Some(c) = &continuation {
-        if c.anchor_message_id.as_str().is_empty() {
-            return Err(MailContextError::Other(anyhow::anyhow!(
-                "Historic fetch continuation: anchor_message_id must not be empty"
-            )));
-        }
+    if let Some(c) = &effective_continuation {
         info!(
             "Resuming ephemeral historic fetch from anchor time={} id={}",
             c.anchor_time, c.anchor_message_id
@@ -296,10 +341,12 @@ pub async fn ephemeral_index_only_messages(
         }
     }
 
-    let (oldest_message_time, oldest_message_remote_id) = match oldest_saved {
-        Some((t, id)) => (Some(t), Some(id.to_string())),
+    let (oldest_message_time, oldest_message_remote_id) = match &oldest_saved {
+        Some((t, id)) => (Some(*t), Some(id.to_string())),
         None => (None, None),
     };
+
+    persist_checkpoint_after_run(search_service, oldest_saved).await?;
 
     Ok(EphemeralHistoricLoadResult {
         messages_fetched: total_fetched,

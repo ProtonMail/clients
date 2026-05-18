@@ -39,6 +39,7 @@
 //! let results = service.search_local_with_metadata("hello").await?;
 //! ```
 
+mod checkpoint;
 mod engine;
 mod error;
 
@@ -66,6 +67,7 @@ pub use foundation::FoundationSearchEngine;
 
 pub use traits::BlobStorage;
 
+pub use checkpoint::EphemeralHistoricCheckpoint;
 pub use service::{IndexStats, LAB_MAX_TOKEN_BUCKET_SIZE, MailSearchService, SearchServiceError};
 pub use shutdown::{WorkerShutdownHandle, WorkerShutdownSignal};
 

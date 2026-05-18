@@ -45,6 +45,10 @@ echo ""
 
 section() { printf "\n--- %s ---\n" "$1"; }
 
+has_table() {
+    sqlite3 "$DB" "SELECT 1 FROM sqlite_master WHERE type='table' AND name='$1' LIMIT 1;" | grep -q 1
+}
+
 section "Table list"
 sqlite3 "$DB" ".tables"
 
@@ -60,6 +64,31 @@ sqlite3 "$DB" -header -column "
     UNION ALL
     SELECT 'search_index_content_hashes',COUNT(*) FROM search_index_content_hashes;
 "
+
+if has_table ephemeral_historic_load_checkpoint; then
+    section "Ephemeral historic load checkpoint (resume anchor)"
+    sqlite3 "$DB" -header -column "
+        SELECT label_id,
+               anchor_time,
+               datetime(anchor_time, 'unixepoch') AS anchor_time_utc,
+               substr(anchor_message_id, 1, 24) || '…' AS anchor_message_id_prefix,
+               length(anchor_message_id) AS anchor_id_len,
+               updated_at,
+               datetime(updated_at, 'unixepoch') AS updated_at_utc
+        FROM ephemeral_historic_load_checkpoint
+        ORDER BY label_id;
+    "
+    echo ""
+    echo "Full anchor_message_id(s):"
+    sqlite3 "$DB" -header -column "
+        SELECT label_id, anchor_message_id
+        FROM ephemeral_historic_load_checkpoint
+        ORDER BY label_id;
+    "
+else
+    section "Ephemeral historic load checkpoint"
+    echo "(table ephemeral_historic_load_checkpoint not present — run a load after mail-search v004 migration)"
+fi
 
 section "Intent queue breakdown"
 sqlite3 "$DB" -header -column "

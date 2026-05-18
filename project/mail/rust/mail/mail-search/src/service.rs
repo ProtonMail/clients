@@ -48,6 +48,10 @@ pub enum SearchServiceError {
     /// Error running database migrations
     #[error("Migration failed: {0}")]
     Migration(String),
+
+    /// Error reading or writing ephemeral historic-load checkpoint rows
+    #[error("Checkpoint storage failed: {0}")]
+    Checkpoint(String),
 }
 
 impl SearchServiceError {
@@ -157,7 +161,8 @@ impl MailSearchService {
                 tx.execute_batch(
                     "DELETE FROM search_index_blobs;
                      DELETE FROM search_index_content_hashes;
-                     DELETE FROM search_index_intents;",
+                     DELETE FROM search_index_intents;
+                     DELETE FROM ephemeral_historic_load_checkpoint;",
                 )
                 .map_err(SE::ExecutionError)?;
                 Ok(())

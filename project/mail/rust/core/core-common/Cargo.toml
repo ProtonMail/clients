@@ -35,6 +35,7 @@ mail-api-session = { workspace = true, features = ["sql"] }
 mail-core-api = { workspace = true, features = ["sql"] }
 mail-api-utils = { workspace = true }
 mail-action-queue = { workspace = true }
+mail-local-id = { workspace = true }
 proton-crypto = { workspace = true }
 proton-crypto-account = { workspace = true, features = ["sql"] }
 mail-crypto-notifications = { workspace = true }

@@ -5,7 +5,7 @@
 set -e
 
 # Determine the directory where the script is located
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 # Dynamically determine the cargo target directory
@@ -19,81 +19,81 @@ PROFILE="android"
 FEATURES="uniffi,sqlite,http"
 
 mkdir -p \
-  "$OUT_DIR/kotlin" \
-  "$OUT_DIR/jniLibs/arm64-v8a" \
-  "$OUT_DIR/jniLibs/armeabi-v7a" \
-  "$OUT_DIR/jniLibs/x86_64" \
+    "$OUT_DIR/kotlin" \
+    "$OUT_DIR/jniLibs/arm64-v8a" \
+    "$OUT_DIR/jniLibs/armeabi-v7a" \
+    "$OUT_DIR/jniLibs/x86_64"
 
 function build() {
-  echo "Building Rust library..."
-  cargo build --target-dir "$TARGET_DIR" --features "$FEATURES"
+    echo "Building Rust library..."
+    cargo build --target-dir "$TARGET_DIR" --features "$FEATURES"
 
-  # Install cargo ndk if needed
-  if ! command -v cargo-ndk; then
-      cargo install cargo-ndk@3.5.4
-  else
-      echo "cargo-ndk is already installed"
-  fi
+    # Install cargo ndk if needed
+    if ! command -v cargo-ndk; then
+        cargo install cargo-ndk@3.5.4
+    else
+        echo "cargo-ndk is already installed"
+    fi
 
-  echo "Building Android optimized so files for all architectures..."
-  cargo ndk -t "armeabi-v7a" -t "arm64-v8a" -t "x86_64" build --features "$FEATURES" --target-dir "$TARGET_DIR" --profile "$PROFILE"
+    echo "Building Android optimized so files for all architectures..."
+    cargo ndk -t "armeabi-v7a" -t "arm64-v8a" -t "x86_64" build --features "$FEATURES" --target-dir "$TARGET_DIR" --profile "$PROFILE"
 
-  echo "Generating Kotlin bindings from debug arm .so file..."
-  cargo ndk -t "arm64-v8a" build --features "$FEATURES" --target-dir "$TARGET_DIR" --profile "dev"
-  cargo run --package uniffi-bindgen --target-dir "$TARGET_DIR" -- \
-    generate \
-    --library "$TARGET_DIR/aarch64-linux-android/debug/${LIB_NAME}" \
-    --language kotlin \
-    --out-dir "$OUT_DIR/kotlin" \
-    --no-format \
-    --config uniffi.toml
+    echo "Generating Kotlin bindings from debug arm .so file..."
+    cargo ndk -t "arm64-v8a" build --features "$FEATURES" --target-dir "$TARGET_DIR" --profile "dev"
+    cargo run --package uniffi-bindgen --target-dir "$TARGET_DIR" -- \
+        generate \
+        --library "$TARGET_DIR/aarch64-linux-android/debug/${LIB_NAME}" \
+        --language kotlin \
+        --out-dir "$OUT_DIR/kotlin" \
+        --no-format \
+        --config uniffi.toml
 
-  echo "Copying .so files..."
-  cp "$TARGET_DIR/aarch64-linux-android/$PROFILE/$LIB_NAME" "$OUT_DIR/jniLibs/arm64-v8a/$LIB_NAME"
-  cp "$TARGET_DIR/armv7-linux-androideabi/$PROFILE/$LIB_NAME" "$OUT_DIR/jniLibs/armeabi-v7a/$LIB_NAME"
-  cp "$TARGET_DIR/x86_64-linux-android/$PROFILE/$LIB_NAME" "$OUT_DIR/jniLibs/x86_64/$LIB_NAME"
+    echo "Copying .so files..."
+    cp "$TARGET_DIR/aarch64-linux-android/$PROFILE/$LIB_NAME" "$OUT_DIR/jniLibs/arm64-v8a/$LIB_NAME"
+    cp "$TARGET_DIR/armv7-linux-androideabi/$PROFILE/$LIB_NAME" "$OUT_DIR/jniLibs/armeabi-v7a/$LIB_NAME"
+    cp "$TARGET_DIR/x86_64-linux-android/$PROFILE/$LIB_NAME" "$OUT_DIR/jniLibs/x86_64/$LIB_NAME"
 
-  echo "Copying Android output..."
-  mkdir -p "$ANDROID_MODULE_DIR/src/main/kotlin/me/proton"
-  cp -R "$OUT_DIR/kotlin/me/proton/"* "$ANDROID_MODULE_DIR/src/main/kotlin/me/proton/"
-  mkdir -p "$ANDROID_MODULE_DIR/src/main/jniLibs"
-  cp -R "$OUT_DIR/jniLibs/"* "$ANDROID_MODULE_DIR/src/main/jniLibs/"
+    echo "Copying Android output..."
+    mkdir -p "$ANDROID_MODULE_DIR/src/main/kotlin/me/proton"
+    cp -R "$OUT_DIR/kotlin/me/proton/"* "$ANDROID_MODULE_DIR/src/main/kotlin/me/proton/"
+    mkdir -p "$ANDROID_MODULE_DIR/src/main/jniLibs"
+    cp -R "$OUT_DIR/jniLibs/"* "$ANDROID_MODULE_DIR/src/main/jniLibs/"
 
-  echo "Build complete!"
+    echo "Build complete!"
 }
 
 function test() {
-  echo "Running tests..."
-  cd "$SCRIPT_DIR"
-  cd ../../android
-  ./gradlew :core-telemetry-ffi:connectedAndroidTest --rerun-tasks
-  echo "Tests complete!"
+    echo "Running tests..."
+    cd "$SCRIPT_DIR"
+    cd ../../android
+    ./gradlew :core-telemetry-ffi:connectedAndroidTest --rerun-tasks
+    echo "Tests complete!"
 }
 
 function clean() {
-  echo "Cleaning build artifacts..."
-  cd "$SCRIPT_DIR"
-  cargo clean --target-dir "$TARGET_DIR"
+    echo "Cleaning build artifacts..."
+    cd "$SCRIPT_DIR"
+    cargo clean --target-dir "$TARGET_DIR"
 
-  echo "Cleaning Android generated files..."
-  rm -rf "$OUT_DIR"
-  rm -rf "$ANDROID_MODULE_DIR/src/main"
-  echo "Clean complete!"
+    echo "Cleaning Android generated files..."
+    rm -rf "$OUT_DIR"
+    rm -rf "$ANDROID_MODULE_DIR/src/main"
+    echo "Clean complete!"
 }
 
 # Main script logic
 case "${1:-build}" in
 build)
-        build
-        ;;
+    build
+    ;;
 test)
-        test
-        ;;
+    test
+    ;;
 clean)
-        clean
-        ;;
+    clean
+    ;;
 *)
-        echo "Error: Unknown command '$1'"
-        exit 1
-        ;;
+    echo "Error: Unknown command '$1'"
+    exit 1
+    ;;
 esac

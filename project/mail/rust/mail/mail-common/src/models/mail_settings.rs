@@ -1,7 +1,9 @@
 use std::collections::BTreeSet;
 use std::sync::Arc;
 
-use crate::actions::mail_settings::{ToolbarType, UpdateMobileActions, UpdateNextMessageOnMove};
+use crate::actions::mail_settings::{
+    ToolbarType, UpdateCategoryView, UpdateMobileActions, UpdateNextMessageOnMove,
+};
 use crate::datatypes::{
     AlmostAllMail, ComposerDirection, ComposerMode, MailSettingsId, MessageButtons, MimeType,
     MobileAction, MobileSettings, NextMessageOnMove, PgpScheme, PmSignature, ShowImages, ShowMoved,
@@ -297,6 +299,18 @@ impl MailSettings {
         next_message_on_move: bool,
     ) -> Result<(), AppError> {
         let action = UpdateNextMessageOnMove::new(next_message_on_move);
+        queue
+            .queue_action(action)
+            .await
+            .map_err(|e| AppError::Other(e.into()))?;
+        Ok(())
+    }
+
+    pub async fn action_update_category_view(
+        queue: &Queue<UserDb>,
+        enabled: bool,
+    ) -> Result<(), AppError> {
+        let action = UpdateCategoryView::new(enabled);
         queue
             .queue_action(action)
             .await

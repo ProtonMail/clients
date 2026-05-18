@@ -132,7 +132,7 @@ pub struct GetConversationsOptions {
 pub struct GetConversationsCountOptions {
     #[serde_as(as = "Option<BoolFromInt>")]
     #[default(Some(true))]
-    pub only_in_inbox_for_categories_counts: Option<bool>,
+    pub only_in_inbox_for_categories: Option<bool>,
 }
 
 /// Parameters to filter/search messages with a given criteria.
@@ -246,7 +246,7 @@ pub struct GetMessagesOptions {
 pub struct GetMessagesCountOptions {
     #[serde_as(as = "Option<BoolFromInt>")]
     #[default(Some(true))]
-    pub only_in_inbox_for_categories_counts: Option<bool>,
+    pub only_in_inbox_for_categories: Option<bool>,
 }
 
 /// TODO: Document this struct.
@@ -556,5 +556,51 @@ impl From<NewAttachmentDisposition> for PutAttachmentDispositionRequest {
                 content_id: Some(id),
             },
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use itertools::Itertools;
+    use mail_muon::{http::AsQuery, serde_to_query};
+
+    use super::*;
+
+    #[test]
+    fn messages_count_options_default_true() {
+        let options = GetMessagesCountOptions::default();
+        assert_eq!(options.only_in_inbox_for_categories, Some(true));
+    }
+
+    #[test]
+    fn messages_count_options_query_serialize() {
+        let options = GetMessagesCountOptions::default();
+        let query = serde_to_query(options).unwrap();
+        let query_str = query
+            .as_query()
+            .into_iter()
+            .map(|(k, v)| format!("{k}={}", v.unwrap_or_default()))
+            .join(",");
+
+        assert_eq!(query_str, "OnlyInInboxForCategories=1");
+    }
+
+    #[test]
+    fn conversations_count_options_default_true() {
+        let options = GetConversationsCountOptions::default();
+        assert_eq!(options.only_in_inbox_for_categories, Some(true));
+    }
+
+    #[test]
+    fn conversations_count_options_query_serialize() {
+        let options = GetConversationsCountOptions::default();
+        let query = serde_to_query(options).unwrap();
+        let query_str = query
+            .as_query()
+            .into_iter()
+            .map(|(k, v)| format!("{k}={}", v.unwrap_or_default()))
+            .join(",");
+
+        assert_eq!(query_str, "OnlyInInboxForCategories=1");
     }
 }

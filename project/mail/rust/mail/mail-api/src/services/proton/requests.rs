@@ -126,6 +126,15 @@ pub struct GetConversationsOptions {
     pub unread: Option<bool>,
 }
 
+#[serde_as]
+#[derive(Clone, Debug, Serialize, SmartDefault)]
+#[serde(rename_all = "PascalCase")]
+pub struct GetConversationsCountOptions {
+    #[serde_as(as = "Option<BoolFromInt>")]
+    #[default(Some(true))]
+    pub only_in_inbox_for_categories_counts: Option<bool>,
+}
+
 /// Parameters to filter/search messages with a given criteria.
 #[serde_as]
 #[derive(Clone, Debug, Serialize, SmartDefault)]
@@ -229,6 +238,15 @@ pub struct GetMessagesOptions {
     /// only messages which are read.
     #[serde_as(as = "Option<BoolFromInt>")]
     pub unread: Option<bool>,
+}
+
+#[serde_as]
+#[derive(Clone, Debug, Serialize, SmartDefault)]
+#[serde(rename_all = "PascalCase")]
+pub struct GetMessagesCountOptions {
+    #[serde_as(as = "Option<BoolFromInt>")]
+    #[default(Some(true))]
+    pub only_in_inbox_for_categories_counts: Option<bool>,
 }
 
 /// TODO: Document this struct.

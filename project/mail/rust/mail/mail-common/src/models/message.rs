@@ -812,7 +812,9 @@ impl Message {
     pub async fn fetch_counts<PM: ProtonMail>(
         api: &PM,
     ) -> Result<Vec<MessageLabelsCount>, ApiServiceError> {
-        api.get_messages_count().await.map(|r| r.counts.map_vec())
+        api.get_messages_count(Default::default())
+            .await
+            .map(|r| r.counts.map_vec())
     }
 
     pub async fn fetch_metadata<PM: ProtonMail>(

@@ -229,8 +229,10 @@ dependencies = [
 name = "account-remix-types"
 version = "0.1.0"
 dependencies = [
+ "account-crux-types",
  "account-remix",
  "anyhow",
+ "core-crux-types",
  "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -10233,6 +10235,23 @@ name = "remix"
 version = "0.1.0"
 dependencies = [
  "account-remix",
+ "core-muon-op",
+ "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "facet",
+ "serde",
+ "serde_json",
+ "uniffi 0.30.0",
+ "wasm-bindgen",
+]
+
+[[package]]
+name = "remix-types"
+version = "0.1.0"
+dependencies = [
+ "account-remix-types",
+ "anyhow",
+ "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "remix",
 ]
 
 [[package]]

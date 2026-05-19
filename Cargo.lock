@@ -214,6 +214,16 @@ dependencies = [
 [[package]]
 name = "account-remix"
 version = "0.1.0"
+dependencies = [
+ "account-crux",
+ "core-client-info-op",
+ "core-device-info-op",
+ "core-feature-flags-op",
+ "core-muon-op",
+ "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "facet",
+ "serde",
+]
 
 [[package]]
 name = "account-validator-password"

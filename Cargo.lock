@@ -73,7 +73,7 @@ dependencies = [
  "num_enum",
  "parking_lot",
  "passkey",
- "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
+ "proton-crypto",
  "proton-crypto-account",
  "proton-crypto-subtle",
  "public-suffix",
@@ -124,7 +124,7 @@ dependencies = [
  "muon",
  "num_enum",
  "passkey",
- "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
+ "proton-crypto",
  "proton-crypto-account",
  "public-suffix",
  "qrcode",
@@ -1183,7 +1183,7 @@ dependencies = [
  "itertools 0.14.0",
  "jiff",
  "mail-canonical-email",
- "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
+ "proton-crypto",
  "proton-crypto-account",
  "regex",
  "test-case",
@@ -1323,7 +1323,7 @@ dependencies = [
  "derive_more 2.1.1",
  "indoc",
  "pretty_assertions",
- "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
+ "proton-crypto",
  "proton-crypto-account",
  "serde",
  "serde_json",
@@ -5669,7 +5669,7 @@ dependencies = [
  "muon",
  "num_enum",
  "passkey",
- "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
+ "proton-crypto",
  "proton-crypto-account",
  "rand 0.9.4",
  "regex",
@@ -6307,7 +6307,7 @@ dependencies = [
  "mail-ical",
  "mail-network-monitor-service",
  "pretty_assertions",
- "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
+ "proton-crypto",
  "proton-crypto-account",
  "serde_json",
  "test-case",
@@ -6475,7 +6475,7 @@ dependencies = [
  "mail-stash",
  "mail-vcard",
  "pretty_assertions",
- "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
+ "proton-crypto",
  "proton-crypto-account",
  "serde",
  "serde_json",
@@ -6591,7 +6591,7 @@ dependencies = [
  "mail-vcard",
  "parking_lot",
  "pretty_assertions",
- "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
+ "proton-crypto",
  "proton-crypto-account",
  "rand 0.9.4",
  "secrecy",
@@ -6643,7 +6643,7 @@ dependencies = [
  "indoc",
  "mail-calendar-api-v1",
  "pretty_assertions",
- "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
+ "proton-crypto",
  "proton-crypto-account",
  "serde",
  "serde_json",
@@ -6687,7 +6687,7 @@ dependencies = [
  "hex",
  "mail-builder",
  "mail-parser",
- "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
+ "proton-crypto",
  "rand 0.9.4",
  "serde",
  "thiserror 2.0.18",
@@ -6941,7 +6941,7 @@ dependencies = [
  "num",
  "num_cpus",
  "pin-project",
- "proton-srp 0.8.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
+ "proton-srp",
  "rand 0.8.6",
  "rcgen",
  "regex",
@@ -7221,7 +7221,7 @@ dependencies = [
  "mail-log-service",
  "mail-network-monitor-service",
  "mail-stash",
- "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
+ "proton-crypto",
  "qrcode",
  "ratatui 0.28.1",
  "ratatui-explorer",
@@ -7280,7 +7280,7 @@ dependencies = [
  "mail-vcard",
  "non-empty-string",
  "parking_lot",
- "proton-crypto 0.12.2 (sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/)",
+ "proton-crypto",
  "proton-crypto-account",
  "secrecy",
  "serde",
@@ -7654,7 +7654,7 @@ dependencies = [
 [[package]]
 name = "muon"
 version = "2.3.0"
-source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/"
+source = "sparse+https://rust-registry.proton.me/index/"
 checksum = "e5183e77cb59655c45a40c7954dd3ffe04ed8cb988d35df19bc982918253cd89"
 dependencies = [
  "async-lock",
@@ -7677,7 +7677,7 @@ dependencies = [
  "muon-rest",
  "pin-project",
  "proton-os-interface",
- "proton-srp 0.8.2 (sparse+https://rust-registry.proton.me/index/)",
+ "proton-srp",
  "rand_chacha 0.9.0",
  "reqwest 0.12.28",
  "semver",
@@ -7697,7 +7697,7 @@ dependencies = [
 [[package]]
 name = "muon-proc"
 version = "0.5.0"
-source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/"
+source = "sparse+https://rust-registry.proton.me/index/"
 checksum = "b3a4cd79ae857be25a6d8f2d5f4d897f76e1733c57e609adc4341e06955acd81"
 dependencies = [
  "cfg-if",
@@ -9273,26 +9273,7 @@ dependencies = [
  "hex",
  "parking_lot",
  "proton-rpgp",
- "proton-srp 0.8.2 (sparse+https://rust-registry.proton.me/index/)",
- "rand 0.8.6",
- "serde",
- "subtle",
- "thiserror 1.0.69",
- "web-time",
-]
-
-[[package]]
-name = "proton-crypto"
-version = "0.12.2"
-source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/"
-checksum = "e2020ef41050dd8a6b9dd554fe95a65db13b3ddb05e6a863996aa44c77e6c877"
-dependencies = [
- "facet",
- "gopenpgp-sys",
- "hex",
- "parking_lot",
- "proton-rpgp",
- "proton-srp 0.8.2 (sparse+https://rust-registry.proton.me/index/)",
+ "proton-srp",
  "rand 0.8.6",
  "serde",
  "subtle",
@@ -9303,7 +9284,7 @@ dependencies = [
 [[package]]
 name = "proton-crypto-account"
 version = "0.18.2"
-source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/"
+source = "sparse+https://rust-registry.proton.me/index/"
 checksum = "1e6f5577db56fed91c78d064391410359bc43603ee3a109b9ac6b31787190820"
 dependencies = [
  "base64",
@@ -9311,7 +9292,7 @@ dependencies = [
  "facet",
  "futures",
  "hex",
- "proton-crypto 0.12.2 (sparse+https://rust-registry.proton.me/index/)",
+ "proton-crypto",
  "rusqlite",
  "serde",
  "serde_json",
@@ -9325,7 +9306,7 @@ dependencies = [
 [[package]]
 name = "proton-crypto-subtle"
 version = "0.2.1"
-source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/"
+source = "sparse+https://rust-registry.proton.me/index/"
 checksum = "0a0d3d11e6f10b8594ef4acf8460ad705cae77873683fee4ae54489c869a7bfc"
 dependencies = [
  "aes-gcm",
@@ -9339,9 +9320,9 @@ dependencies = [
 
 [[package]]
 name = "proton-foundation-search"
-version = "2.0.0-preview3"
-source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/"
-checksum = "be466f0cc7418216cafb2a433b05ec101e095a195ef812d7a6d90bad99c2521c"
+version = "2.0.0-preview1"
+source = "sparse+https://rust-registry.proton.me/index/"
+checksum = "903168ff8b69949b88f866f7895386550029bd7a79b8ba1f3b5d89faa2a156d9"
 dependencies = [
  "ciborium",
  "derive_more 2.1.1",
@@ -9355,7 +9336,7 @@ dependencies = [
  "serde_json",
  "thiserror 2.0.18",
  "tracing",
- "unicode-properties",
+ "unic-emoji",
  "uuid",
 ]
 
@@ -9396,26 +9377,6 @@ dependencies = [
 name = "proton-srp"
 version = "0.8.2"
 source = "sparse+https://rust-registry.proton.me/index/"
-checksum = "91efa4e2584cfe6a5aa420dd46c46355c673c68166c13f3d9f230ac0309eea9b"
-dependencies = [
- "base64",
- "bcrypt",
- "crypto-bigint",
- "getrandom 0.2.17",
- "getrandom 0.3.4",
- "hex",
- "md-5",
- "pgp",
- "rand 0.8.6",
- "sha2",
- "thiserror 1.0.69",
- "zeroize",
-]
-
-[[package]]
-name = "proton-srp"
-version = "0.8.2"
-source = "sparse+https://rust.gitlab-pages.protontech.ch/shared/public-registry/index/"
 checksum = "91efa4e2584cfe6a5aa420dd46c46355c673c68166c13f3d9f230ac0309eea9b"
 dependencies = [
  "base64",
@@ -12177,6 +12138,56 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2896d95c02a80c6d6a5d6e953d479f5ddf2dfdb6a244441010e373ac0fb88971"
 
 [[package]]
+name = "unic-char-property"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a8c57a407d9b6fa02b4795eb81c5b6652060a15a7903ea981f3d723e6c0be221"
+dependencies = [
+ "unic-char-range",
+]
+
+[[package]]
+name = "unic-char-range"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0398022d5f700414f6b899e10b8348231abf9173fa93144cbc1a43b9793c1fbc"
+
+[[package]]
+name = "unic-common"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "80d7ff825a6a654ee85a63e80f92f054f904f21e7d12da4e22f9834a4aaa35bc"
+
+[[package]]
+name = "unic-emoji"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "74193f32f7966ad20b819e70e29c6f1ac8c386692a9d5e90078eef80ea008bfb"
+dependencies = [
+ "unic-emoji-char",
+]
+
+[[package]]
+name = "unic-emoji-char"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b07221e68897210270a38bde4babb655869637af0f69407f96053a34f76494d"
+dependencies = [
+ "unic-char-property",
+ "unic-char-range",
+ "unic-ucd-version",
+]
+
+[[package]]
+name = "unic-ucd-version"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "96bd2f2237fe450fcd0a1d2f5f4e91711124f7857ba2e964247776ebeeb7b0c4"
+dependencies = [
+ "unic-common",
+]
+
+[[package]]
 name = "unicase"
 version = "2.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -12193,12 +12204,6 @@ name = "unicode-linebreak"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3b09c83c3c29d37506a3e260c08c03743a6bb66a9cd432c6934ab501a190571f"
-
-[[package]]
-name = "unicode-properties"
-version = "0.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7df058c713841ad818f1dc5d3fd88063241cc61f49f5fbea4b951e8cf5a8d71d"
 
 [[package]]
 name = "unicode-segmentation"

@@ -8,6 +8,7 @@ members = [
     "project/account/rust/account-db",
     "project/account/rust/account-db-op",
     "project/account/rust/account-in-memory-db",
+    "project/account/rust/account-remix",
     "project/account/rust/account-validator-password",
     "project/calendar/rust/calendar-access",
     "project/calendar/rust/calendar-api",
@@ -72,6 +73,7 @@ members = [
     "project/core/rust/lattice-muon1",
     "project/core/rust/lattice-muon2",
     "project/core/rust/lattice-quark",
+    "project/core/rust/remix",
     "project/mail/rust/account/account-api",
     "project/mail/rust/account/account-common",
     "project/mail/rust/account/account-ids",
@@ -165,6 +167,9 @@ path = "project/account/rust/account-in-memory-db"
 
 [workspace.dependencies.account-db-op]
 path = "project/account/rust/account-db-op"
+
+[workspace.dependencies.account-remix]
+path = "project/account/rust/account-remix"
 
 [workspace.dependencies.account-validator-password]
 path = "project/account/rust/account-validator-password"

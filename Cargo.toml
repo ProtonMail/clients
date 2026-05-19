@@ -75,6 +75,7 @@ members = [
     "project/core/rust/lattice-muon2",
     "project/core/rust/lattice-quark",
     "project/core/rust/remix",
+    "project/core/rust/remix-types",
     "project/mail/rust/account/account-api",
     "project/mail/rust/account/account-common",
     "project/mail/rust/account/account-ids",
@@ -160,6 +161,12 @@ rust-version = "1.93.0"
 path = "project/account/rust/account-crux"
 features = ["facet_typegen"]
 
+[workspace.dependencies.account-crux-types]
+path = "project/account/rust/account-crux-types"
+
+[workspace.dependencies.account-crux-client-info]
+path = "project/account/rust/account-crux-client-info"
+
 [workspace.dependencies.account-db]
 path = "project/account/rust/account-db"
 
@@ -174,6 +181,12 @@ path = "project/account/rust/account-remix"
 
 [workspace.dependencies.account-remix-types]
 path = "project/account/rust/account-remix-types"
+
+[workspace.dependencies.remix]
+path = "project/core/rust/remix"
+
+[workspace.dependencies.remix-types]
+path = "project/core/rust/remix-types"
 
 [workspace.dependencies.account-validator-password]
 path = "project/account/rust/account-validator-password"

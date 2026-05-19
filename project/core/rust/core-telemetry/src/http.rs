@@ -1,9 +1,7 @@
 use crate::{Result, TelemetryError, TelemetryEvent, TelemetryHttpClientEx};
 use async_trait::async_trait;
-use reqwest::{
-    Client,
-    header::{HeaderMap, HeaderValue},
-};
+use reqwest::Client;
+use reqwest::header::{HeaderMap, HeaderValue};
 use serde_json::json;
 
 const BASE_URL: &str = "https://mail.proton.me/api";

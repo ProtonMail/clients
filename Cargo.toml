@@ -53,6 +53,7 @@ members = [
     "project/core/rust/core-message-checker",
     "project/core/rust/core-message-macro",
     "project/core/rust/core-muon-op",
+    "project/core/rust/core-notification-op",
     "project/core/rust/core-observability",
     "project/core/rust/core-observability-impl",
     "project/core/rust/core-observability-proc",
@@ -188,6 +189,9 @@ path = "project/core/rust/core-message-macro"
 
 [workspace.dependencies.core-muon-op]
 path = "project/core/rust/core-muon-op"
+
+[workspace.dependencies.core-notification-op]
+path = "project/core/rust/core-notification-op"
 
 [workspace.dependencies.core-feature-flags]
 path = "project/core/rust/core-feature-flags"

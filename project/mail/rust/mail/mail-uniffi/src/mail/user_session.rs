@@ -100,7 +100,7 @@ impl MailUserSession {
 #[cfg(feature = "foundation_search")]
 #[uniffi_export]
 impl MailUserSession {
-    /// Ephemeral historic load: skip all SQLite writes.
+    /// Ephemeral historic load: save message metadata, index bodies into Foundation Search (no body rows).
     ///
     /// Fetches metadata pages from the API, fetches + decrypts bodies from the Proton API,
     /// and indexes directly into Foundation Search.
@@ -159,6 +159,7 @@ impl MailUserSession {
             Result::<_, RealProtonMailError>::Ok(
                 crate::mail::datatypes::EphemeralHistoricLoadResult {
                     messages_fetched: result.messages_fetched as u64,
+                    messages_metadata_saved: result.messages_metadata_saved as u64,
                     messages_indexed: result.messages_indexed as u64,
                     messages_skipped_missing_body: result.messages_skipped_missing_body as u64,
                     oldest_message_time: result.oldest_message_time,

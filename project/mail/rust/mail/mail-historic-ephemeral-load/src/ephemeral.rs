@@ -1,17 +1,23 @@
+use std::collections::HashSet;
 use std::sync::Arc;
 use std::time::Instant;
 
 use crate::continuation::{HistoricFetchContinuation, resolve_effective_continuation};
 use futures::stream::{self, StreamExt};
+use mail_action_queue::action::ActionGroup;
+use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::MAX_PAGE_ELEMENT_COUNT;
 use mail_api::services::proton::ProtonMail;
 use mail_api::services::proton::common::MessageId;
+use mail_api::services::proton::prelude::MessageMetadata as ApiMessageMetadata;
 use mail_api::services::proton::requests::GetMessagesOptions;
+use mail_common::datatypes::dependencies::DependencyFetcher;
 use mail_common::datatypes::labels::{ScrollOrderDir, ScrollOrderField};
 use mail_common::datatypes::{EncryptedMessageBody, SystemLabelId};
-use mail_common::models::MessageBodyMetadata;
+use mail_common::models::{Message, MessageBodyMetadata};
 use mail_common::{MailContextError, MailUserContext};
 use mail_core_api::services::proton::LabelId;
+use mail_core_api::session::Session;
 use mail_crypto_inbox::message::{DecryptableMessage as _, DecryptedBody};
 use mail_crypto_inbox::proton_crypto;
 use mail_crypto_inbox::proton_crypto_account::keys::AddressKeySelector;
@@ -24,6 +30,7 @@ use crate::ephemeral_timing::{EphemeralTimingCollector, EphemeralTimingStats};
 #[derive(Debug, Clone)]
 pub struct EphemeralHistoricLoadResult {
     pub messages_fetched: usize,
+    pub messages_metadata_saved: usize,
     pub messages_indexed: usize,
     pub messages_skipped_missing_body: usize,
     pub oldest_message_time: Option<u64>,
@@ -64,9 +71,10 @@ async fn persist_checkpoint_after_run(
     Ok(())
 }
 
-/// Ephemeral historic load: All Mail metadata + bodies → Foundation Search (no message SQLite writes).
+/// Ephemeral historic load: API metadata + bodies → Foundation Search.
 ///
-/// When `resume_from_checkpoint` is true and `continuation` is `None`, loads the saved anchor from
+/// Persists message metadata rows (no bodies, index intents, or prefetch queue). When
+/// `resume_from_checkpoint` is true and `continuation` is `None`, loads the saved anchor from
 /// SQLite; if no row exists, starts from the newest messages. After each run, persists the oldest
 /// **indexed** message as the next anchor (or clears the row if nothing was indexed).
 pub async fn ephemeral_index_only_messages(
@@ -89,7 +97,7 @@ pub async fn ephemeral_index_only_messages(
     let effective_page_size = page_size.min(MAX_PAGE_ELEMENT_COUNT);
 
     info!(
-        "Ephemeral historic load: fetch + decrypt bodies from API (no SQLite message writes, concurrency={})",
+        "Ephemeral historic load: metadata save + fetch/decrypt bodies + Foundation Search (concurrency={})",
         concurrent_body_fetches
     );
 
@@ -104,6 +112,7 @@ pub async fn ephemeral_index_only_messages(
     let mut last_message_time = effective_continuation.as_ref().map(|c| c.anchor_time);
     let mut page_requests: u32 = 0;
     let mut total_fetched = 0usize;
+    let mut total_metadata_saved = 0usize;
     let mut total_indexed = 0usize;
     let mut total_skipped_missing_body = 0usize;
     let mut oldest_saved: Option<(u64, MessageId)> = None;
@@ -177,6 +186,12 @@ pub async fn ephemeral_index_only_messages(
 
         let page_fetched = messages.len();
         total_fetched += page_fetched;
+
+        let metadata_save_start = Instant::now();
+        let page_metadata_saved = persist_page_metadata(user_ctx, session, &messages).await?;
+        let metadata_save_elapsed = metadata_save_start.elapsed();
+        timing.record_metadata_save(metadata_save_elapsed, page_metadata_saved);
+        total_metadata_saved += page_metadata_saved;
 
         let body_start = Instant::now();
         let mut page_docs: Vec<(MessageId, String, MessageMetadata)> =
@@ -319,19 +334,25 @@ pub async fn ephemeral_index_only_messages(
         total_pages = total_pages.saturating_add(1);
 
         info!(
-            "Ephemeral page {}: fetched={} indexed={} skipped={} | metadata={:.1}ms bodies={:.1}ms index={:.1}ms total={:.1}ms",
+            "Ephemeral page {}: fetched={} metadata_saved={} indexed={} skipped={} | api_metadata={:.1}ms metadata_save={:.1}ms bodies={:.1}ms index={:.1}ms total={:.1}ms",
             page_requests,
             page_fetched,
+            page_metadata_saved,
             page_docs.len(),
             page_fetched - page_docs.len(),
             metadata_elapsed.as_secs_f64() * 1000.0,
+            metadata_save_elapsed.as_secs_f64() * 1000.0,
             body_elapsed.as_secs_f64() * 1000.0,
             index_elapsed.as_secs_f64() * 1000.0,
             page_start.elapsed().as_secs_f64() * 1000.0,
         );
         info!(
-            "Ephemeral cumulative: fetched={} indexed={} skipped_no_body={} pages={}",
-            total_fetched, total_indexed, total_skipped_missing_body, page_requests
+            "Ephemeral cumulative: fetched={} metadata_saved={} indexed={} skipped_no_body={} pages={}",
+            total_fetched,
+            total_metadata_saved,
+            total_indexed,
+            total_skipped_missing_body,
+            page_requests
         );
 
         if page_fetched < effective_page_size {
@@ -348,12 +369,82 @@ pub async fn ephemeral_index_only_messages(
 
     Ok(EphemeralHistoricLoadResult {
         messages_fetched: total_fetched,
+        messages_metadata_saved: total_metadata_saved,
         messages_indexed: total_indexed,
         messages_skipped_missing_body: total_skipped_missing_body,
         oldest_message_time,
         oldest_message_remote_id,
         timing: timing.snapshot(),
     })
+}
+
+/// Saves one page of API metadata into the mail DB (no bodies or index intents).
+async fn persist_page_metadata(
+    user_ctx: &MailUserContext,
+    session: &Session,
+    api_messages: &[ApiMessageMetadata],
+) -> Result<usize, MailContextError> {
+    if api_messages.is_empty() {
+        return Ok(0);
+    }
+
+    let stash = user_ctx.user_stash().clone();
+    let mut dependency_fetcher = DependencyFetcher::new();
+    for message in api_messages {
+        dependency_fetcher
+            .check_api_message_metadata(message, &stash.connection())
+            .await?;
+    }
+
+    let mut tether = stash.connection();
+    let unresolved_label_ids = dependency_fetcher
+        .fetch_and_store(session, &mut tether)
+        .await?;
+
+    let mut metadata = api_messages.to_vec();
+    prune_unresolved_labels_from_api_metadata(&mut metadata, &unresolved_label_ids);
+
+    let action_queue = user_ctx.action_queue();
+    let saved = tether
+        .write_tx::<_, _, MailContextError>(async |tx| {
+            let messages = Message::create_or_update_messages_from_metadata_vec(metadata, None, tx)
+                .await
+                .map_err(|e| {
+                    MailContextError::Other(anyhow::anyhow!("Failed to save message metadata: {e}"))
+                })?;
+
+            let mut rebase_change_set = RebaseChangeSet::default();
+            for message in &messages {
+                if let Some(local_id) = message.local_id {
+                    rebase_change_set.add(local_id);
+                }
+            }
+
+            action_queue
+                .rebase_in(ActionGroup::default(), &rebase_change_set, tx)
+                .await
+                .map_err(|e| MailContextError::Other(anyhow::anyhow!("Failed to rebase: {e}")))?;
+
+            Ok(messages)
+        })
+        .await?;
+
+    Ok(saved.len())
+}
+
+/// Drop label ids that could not be fetched/stored (same as [`Message::prune_unresolved_labels`]).
+fn prune_unresolved_labels_from_api_metadata(
+    messages: &mut [ApiMessageMetadata],
+    unresolved_label_ids: &HashSet<LabelId>,
+) {
+    if unresolved_label_ids.is_empty() {
+        return;
+    }
+    for message in messages {
+        message
+            .label_ids
+            .retain(|label_id| !unresolved_label_ids.contains(label_id));
+    }
 }
 
 fn push_doc(
@@ -398,4 +489,50 @@ fn push_doc(
     }
 
     page_docs.push((remote_id, body, metadata));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn metadata_with_labels(message_id: &str, label_ids: &[&str]) -> ApiMessageMetadata {
+        ApiMessageMetadata {
+            id: MessageId::from(message_id),
+            label_ids: label_ids.iter().map(|id| LabelId::from(*id)).collect(),
+            ..ApiMessageMetadata::test_default()
+        }
+    }
+
+    #[test]
+    fn prune_unresolved_labels_empty_set_is_noop() {
+        let mut messages = vec![metadata_with_labels("m1", &["5", "0"])];
+        prune_unresolved_labels_from_api_metadata(&mut messages, &HashSet::new());
+        assert_eq!(
+            messages[0].label_ids,
+            vec![LabelId::from("5"), LabelId::from("0")]
+        );
+    }
+
+    #[test]
+    fn prune_unresolved_labels_removes_only_unresolved() {
+        let unresolved = HashSet::from([LabelId::from("99")]);
+        let mut messages = vec![metadata_with_labels("m1", &["5", "99", "0"])];
+        prune_unresolved_labels_from_api_metadata(&mut messages, &unresolved);
+        assert_eq!(
+            messages[0].label_ids,
+            vec![LabelId::from("5"), LabelId::from("0")]
+        );
+    }
+
+    #[test]
+    fn prune_unresolved_labels_applies_per_message() {
+        let unresolved = HashSet::from([LabelId::from("custom")]);
+        let mut messages = vec![
+            metadata_with_labels("m1", &["5", "custom"]),
+            metadata_with_labels("m2", &["0", "custom"]),
+        ];
+        prune_unresolved_labels_from_api_metadata(&mut messages, &unresolved);
+        assert_eq!(messages[0].label_ids, vec![LabelId::from("5")]);
+        assert_eq!(messages[1].label_ids, vec![LabelId::from("0")]);
+    }
 }

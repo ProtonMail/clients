@@ -1,6 +1,7 @@
 //! Per-run timing for ephemeral historic-load indexing.
 //!
 //! Tracks stage timings for perf analysis:
+//! - metadata save stage
 //! - decrypt stage
 //! - HTML strip stage
 //! - indexing stage (Foundation Search commit only)
@@ -10,15 +11,22 @@ use std::time::Duration;
 /// Accumulates stage timings for a single [`super::ephemeral::ephemeral_index_only_messages`] run.
 #[derive(Debug, Clone, Default)]
 pub struct EphemeralTimingCollector {
+    metadata_save_time: Duration,
     decrypt_time: Duration,
     html_strip_time: Duration,
     index_only_time: Duration,
+    metadata_save_count: u64,
     decrypt_count: u64,
     html_strip_count: u64,
     index_count: u64,
 }
 
 impl EphemeralTimingCollector {
+    pub fn record_metadata_save(&mut self, duration: Duration, message_count: usize) {
+        self.metadata_save_time += duration;
+        self.metadata_save_count += message_count as u64;
+    }
+
     pub fn record_decrypt(&mut self, duration: Duration) {
         self.decrypt_time += duration;
         self.decrypt_count += 1;
@@ -36,6 +44,8 @@ impl EphemeralTimingCollector {
 
     pub fn snapshot(&self) -> EphemeralTimingStats {
         EphemeralTimingStats {
+            metadata_save_time: self.metadata_save_time,
+            metadata_save_count: self.metadata_save_count,
             decrypt_time: self.decrypt_time,
             html_strip_time: self.html_strip_time,
             index_only_time: self.index_only_time,
@@ -48,6 +58,8 @@ impl EphemeralTimingCollector {
 
 #[derive(Debug, Clone)]
 pub struct EphemeralTimingStats {
+    pub metadata_save_time: Duration,
+    pub metadata_save_count: u64,
     pub decrypt_time: Duration,
     pub html_strip_time: Duration,
     pub index_only_time: Duration,
@@ -62,6 +74,12 @@ impl std::fmt::Display for EphemeralTimingStats {
         writeln!(
             f,
             "  Totals (stage-only, excludes unrelated processor costs):"
+        )?;
+        writeln!(
+            f,
+            "    Metadata save stage:       {:>8.2}s ({} messages)",
+            self.metadata_save_time.as_secs_f64(),
+            self.metadata_save_count
         )?;
         writeln!(
             f,

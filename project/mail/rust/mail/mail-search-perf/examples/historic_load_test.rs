@@ -1,4 +1,4 @@
-//! Historic load smoke / perf example (ephemeral API-only path: no SQLite message writes).
+//! Historic load smoke / perf example (ephemeral path: metadata rows + Foundation Search, no bodies).
 //!
 //! Offline JSONL / remote fixture body substitution was removed; this mode uses the live API.
 //!
@@ -207,6 +207,10 @@ async fn main() -> Result<(), anyhow::Error> {
     info!("Historic load completed!");
     info!("Time: {:.2}s", elapsed.as_secs_f64());
     info!("Messages fetched: {}", result.messages_fetched);
+    info!(
+        "Messages metadata saved: {}",
+        result.messages_metadata_saved
+    );
     info!("Messages indexed: {}", result.messages_indexed);
     if let Some(t) = result.oldest_message_time {
         info!("Oldest message in fetched batch (unix secs): {}", t);

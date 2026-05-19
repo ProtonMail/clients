@@ -1,7 +1,7 @@
-use crate::{
-    Result, SyncedEvents, TelemetryError, TelemetryEvent, client::Tcl, http::TelemetryHttpClient,
-    storage::SqliteDatabase,
-};
+use crate::client::Tcl;
+use crate::http::TelemetryHttpClient;
+use crate::storage::SqliteDatabase;
+use crate::{Result, SyncedEvents, TelemetryError, TelemetryEvent};
 
 #[derive(uniffi::Object)]
 pub struct TclFfi {

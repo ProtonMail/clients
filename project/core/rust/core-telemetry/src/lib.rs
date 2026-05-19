@@ -27,7 +27,7 @@ pub trait TelemetryHttpClientEx: Send {
 }
 
 #[async_trait]
-impl<T: TelemetryHttpClientEx + Sync> TelemetryHttpClientEx for &T {
+impl<T: TelemetryHttpClientEx + Sync + ?Sized> TelemetryHttpClientEx for &T {
     #[inline]
     async fn send(&self, events: Vec<TelemetryEvent>) -> Result<()> {
         (*self).send(events).await
@@ -42,7 +42,7 @@ pub trait TelemetryDbEx: Send {
 }
 
 #[async_trait]
-impl<T: TelemetryDbEx + Sync> TelemetryDbEx for &T {
+impl<T: TelemetryDbEx + Sync + ?Sized> TelemetryDbEx for &T {
     #[inline]
     async fn get_events(&self, limit: u32) -> Result<Vec<TelemetryEvent>> {
         (*self).get_events(limit).await

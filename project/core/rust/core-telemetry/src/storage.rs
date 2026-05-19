@@ -3,8 +3,7 @@ use async_trait::async_trait;
 use rusqlite::{Connection, params};
 use std::path::PathBuf;
 
-use crate::queries;
-use crate::{Result, TelemetryDbEx, TelemetryError, TelemetryEvent};
+use crate::{Result, TelemetryDbEx, TelemetryError, TelemetryEvent, queries};
 
 pub struct SqliteDatabase {
     conn: Mutex<Connection>,

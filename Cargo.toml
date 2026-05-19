@@ -9,6 +9,7 @@ members = [
     "project/account/rust/account-db-op",
     "project/account/rust/account-in-memory-db",
     "project/account/rust/account-remix",
+    "project/account/rust/account-remix-types",
     "project/account/rust/account-validator-password",
     "project/calendar/rust/calendar-access",
     "project/calendar/rust/calendar-api",
@@ -170,6 +171,9 @@ path = "project/account/rust/account-db-op"
 
 [workspace.dependencies.account-remix]
 path = "project/account/rust/account-remix"
+
+[workspace.dependencies.account-remix-types]
+path = "project/account/rust/account-remix-types"
 
 [workspace.dependencies.account-validator-password]
 path = "project/account/rust/account-validator-password"

@@ -1,5 +1,5 @@
 use mail_common::actions::{
-    CustomFolderAction as RealCustomFolderAction,
+    CustomFolderAction as RealCustomFolderAction, InboxFolderAction as RealInboxFolderAction,
     MovableSystemFolderAction as RealMovableSystemFolderAction, MoveAction as RealMoveAction,
 };
 use mail_core_common::utils::MapVec as _;
@@ -12,7 +12,10 @@ use crate::{UniffiEnum, UniffiRecord};
 ///
 #[derive(Debug, Clone, PartialEq, UniffiEnum)]
 pub enum MoveAction {
-    /// Move to a system folder (e.g. Inbox, Sent, Archive, Trash).
+    /// Move to the inbox, optionally targeting one of its categories.
+    Inbox(InboxFolderAction),
+
+    /// Move to a system folder (e.g. Sent, Archive, Trash).
     SystemFolder(MovableSystemFolderAction),
 
     /// Move to a custom folder.
@@ -22,8 +25,28 @@ pub enum MoveAction {
 impl From<RealMoveAction> for MoveAction {
     fn from(value: RealMoveAction) -> Self {
         match value {
+            RealMoveAction::Inbox(value) => MoveAction::Inbox(value.into()),
             RealMoveAction::SystemFolder(value) => MoveAction::SystemFolder(value.into()),
             RealMoveAction::CustomFolder(value) => MoveAction::CustomFolder(value.into()),
+        }
+    }
+}
+
+/// This struct represents the Inbox with its movable category sub-actions.
+///
+#[derive(Debug, Clone, PartialEq, UniffiRecord)]
+pub struct InboxFolderAction {
+    pub local_id: Id,
+    pub name: MovableSystemFolder,
+    pub categories: Vec<MovableSystemFolderAction>,
+}
+
+impl From<RealInboxFolderAction> for InboxFolderAction {
+    fn from(value: RealInboxFolderAction) -> Self {
+        Self {
+            local_id: value.local_id.into(),
+            name: value.name.into(),
+            categories: value.categories.map_vec(),
         }
     }
 }

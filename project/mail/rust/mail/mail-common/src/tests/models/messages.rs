@@ -236,6 +236,7 @@ mod available_label_as_actions {
 
 mod available_move_to_actions {
     use super::*;
+    use crate::actions::{InboxFolderAction, MovableSystemFolderAction};
     use crate::test_utils::db::new_test_connection;
     use crate::{conv_id, conversation, label, lbl_id, message, msg_id};
     use futures::stream::{self, StreamExt};
@@ -245,6 +246,7 @@ mod available_move_to_actions {
 
     #[derive(Debug, Clone, PartialEq)]
     enum ExpectedMoveAction {
+        Inbox(ExpectedInboxFolder),
         SystemFolder(ExpectedSystemFolder),
         CustomFolder(ExpectedCustomFolder),
     }
@@ -252,12 +254,40 @@ mod available_move_to_actions {
     impl ExpectedMoveAction {
         async fn new(action: MoveAction, tx: &Tether) -> Self {
             match action {
-                MoveAction::SystemFolder(_) => {
+                MoveAction::Inbox(action) => {
+                    ExpectedMoveAction::Inbox(ExpectedInboxFolder::new(action, tx).await)
+                }
+                MoveAction::SystemFolder(action) => {
                     ExpectedMoveAction::SystemFolder(ExpectedSystemFolder::new(action, tx).await)
                 }
-                MoveAction::CustomFolder(_) => {
-                    ExpectedMoveAction::CustomFolder(ExpectedCustomFolder::new(action, tx).await)
-                }
+                MoveAction::CustomFolder(action) => ExpectedMoveAction::CustomFolder(
+                    ExpectedCustomFolder::new(MoveAction::CustomFolder(action), tx).await,
+                ),
+            }
+        }
+    }
+
+    #[derive(Debug, Clone, PartialEq)]
+    struct ExpectedInboxFolder {
+        label_id: LabelId,
+        name: MovableSystemFolder,
+        categories: Vec<ExpectedSystemFolder>,
+    }
+
+    impl ExpectedInboxFolder {
+        async fn new(action: InboxFolderAction, tx: &Tether) -> Self {
+            let label_id = Label::local_id_counterpart(action.local_id, tx)
+                .await
+                .unwrap()
+                .unwrap();
+            let categories = stream::iter(action.categories)
+                .then(|category| async move { ExpectedSystemFolder::new(category, tx).await })
+                .collect::<Vec<_>>()
+                .await;
+            ExpectedInboxFolder {
+                label_id,
+                name: action.name,
+                categories,
             }
         }
     }
@@ -269,16 +299,13 @@ mod available_move_to_actions {
     }
 
     impl ExpectedSystemFolder {
-        async fn new(action: MoveAction, tx: &Tether) -> Self {
-            match action {
-                MoveAction::SystemFolder(action) => ExpectedSystemFolder {
-                    label_id: Label::local_id_counterpart(action.local_id, tx)
-                        .await
-                        .unwrap()
-                        .unwrap(),
-                    name: action.name,
-                },
-                _ => panic!("ExpectedSystemFolder::new called with non-SystemFolder action"),
+        async fn new(action: MovableSystemFolderAction, tx: &Tether) -> Self {
+            ExpectedSystemFolder {
+                label_id: Label::local_id_counterpart(action.local_id, tx)
+                    .await
+                    .unwrap()
+                    .unwrap(),
+                name: action.name,
             }
         }
     }
@@ -412,9 +439,10 @@ mod available_move_to_actions {
         ],
         vec![],
         Ok(&[
-            ExpectedMoveAction::SystemFolder(ExpectedSystemFolder {
+            ExpectedMoveAction::Inbox(ExpectedInboxFolder {
                 label_id: SystemLabel::Inbox.label_id(),
                 name: MovableSystemFolder::Inbox,
+                categories: vec![],
             }),
             ExpectedMoveAction::SystemFolder(ExpectedSystemFolder {
                 label_id: SystemLabel::Archive.label_id(),
@@ -439,9 +467,10 @@ mod available_move_to_actions {
                 CUSTOM_FOLDER.clone(),
             ],
             Ok(&[
-                ExpectedMoveAction::SystemFolder(ExpectedSystemFolder {
+                ExpectedMoveAction::Inbox(ExpectedInboxFolder {
                     label_id: SystemLabel::Inbox.label_id(),
                     name: MovableSystemFolder::Inbox,
+                    categories: vec![],
                 }),
                 ExpectedMoveAction::SystemFolder(ExpectedSystemFolder {
                     label_id: SystemLabel::Archive.label_id(),

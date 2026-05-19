@@ -1613,10 +1613,12 @@ impl Conversation {
         })?;
 
         let all_move_to_actions = MoveAction::vec(
+            tether,
             all_system_excluding_view
                 .clone()
                 .chain(all_custom_folders.iter()),
-        );
+        )
+        .await?;
 
         let res = MoveAction::finalize(all_move_to_actions, tether).await?;
         debug!("available move_to actions: {res:?}");

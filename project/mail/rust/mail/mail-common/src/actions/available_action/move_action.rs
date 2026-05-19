@@ -4,6 +4,7 @@ use crate::{
     AppError,
     datatypes::labels::hierarchy::{self, Hierarchy},
 };
+use crate::{CategoryLabel, CategoryView};
 use mail_core_api::services::proton::LabelId;
 use mail_core_common::datatypes::{LabelColor, LabelType, LocalLabelId, SystemLabel};
 use mail_core_common::models::{Label, ModelIdExtension};
@@ -14,7 +15,10 @@ use mail_stash::stash::Tether;
 ///
 #[derive(Debug, Clone, PartialEq)]
 pub enum MoveAction {
-    /// Move to a system folder (e.g. Inbox, Sent, Archive, Trash).
+    /// Move to inbox
+    Inbox(InboxFolderAction),
+
+    /// Move to a system folder (e.g. Sent, Archive, Trash).
     SystemFolder(MovableSystemFolderAction),
 
     /// Move to a custom folder.
@@ -31,19 +35,52 @@ impl MoveAction {
     ///
     /// * `iter` - An iterator over the labels. Expected to be sorted by `display_order`.
     ///
-    pub fn vec<'a>(iter: impl IntoIterator<Item = &'a Label>) -> Vec<Self> {
-        iter.into_iter()
-            .filter_map(|label| match label.label_type {
-                LabelType::System => Some(MoveAction::SystemFolder(
-                    MovableSystemFolderAction::from_label(label)?,
-                )),
+    pub async fn vec<'a>(
+        tether: &Tether,
+        iter: impl IntoIterator<Item = &'a Label>,
+    ) -> Result<Vec<Self>, AppError> {
+        let labels: Vec<&Label> = iter.into_iter().collect();
+        let mut retval = vec![];
+        for label in labels {
+            let move_to = match label.label_type {
+                LabelType::System
+                    if matches!(
+                        SystemLabel::from_opt_rid(label.remote_id.as_ref()),
+                        Some(SystemLabel::Inbox),
+                    ) =>
+                {
+                    let inbox_id = label.id();
+                    Some(MoveAction::Inbox(InboxFolderAction {
+                        local_id: inbox_id,
+                        name: MovableSystemFolder::Inbox,
+                        categories: MovableSystemFolderAction::from_categories(
+                            CategoryView::load(inbox_id, tether)
+                                .await?
+                                .into_labels(tether)
+                                .await?,
+                        ),
+                    }))
+                }
 
-                LabelType::Folder => Some(MoveAction::CustomFolder(
-                    CustomFolderAction::from_label(label)?,
-                )),
+                LabelType::System
+                    if !SystemLabel::from_opt_rid(label.remote_id.as_ref())
+                        .is_some_and(|sl| sl.is_category()) =>
+                {
+                    MovableSystemFolderAction::from_label(label).map(MoveAction::SystemFolder)
+                }
+
+                LabelType::Folder => {
+                    CustomFolderAction::from_label(label).map(MoveAction::CustomFolder)
+                }
                 _ => None,
-            })
-            .collect()
+            };
+
+            if let Some(move_to) = move_to {
+                retval.push(move_to);
+            }
+        }
+
+        Ok(retval)
     }
 
     /// Method utilizes map to calculate the final state of the label.
@@ -95,18 +132,20 @@ impl MoveAction {
         let actions = actions.into_iter();
         let system_size = SystemLabel::movable_folders().len();
         let (custom_size, _) = actions.size_hint();
-        let (system_folders, custom_folders) = actions.fold(
+        let (inbox, system_folders, custom_folders) = actions.fold(
             (
+                None::<InboxFolderAction>,
                 Vec::with_capacity(system_size),
                 Vec::with_capacity(custom_size),
             ),
-            |(mut system, mut custom), action| {
+            |(mut inbox, mut system, mut custom), action| {
                 match action {
+                    MoveAction::Inbox(action) => inbox = Some(action),
                     MoveAction::SystemFolder(action) => system.push(action),
                     MoveAction::CustomFolder(action) => custom.push(action),
                 }
 
-                (system, custom)
+                (inbox, system, custom)
             },
         );
 
@@ -114,9 +153,10 @@ impl MoveAction {
             .into_iter()
             .map(MoveAction::CustomFolder);
 
-        system_folders
+        inbox
             .into_iter()
-            .map(MoveAction::SystemFolder)
+            .map(MoveAction::Inbox)
+            .chain(system_folders.into_iter().map(MoveAction::SystemFolder))
             .chain(custom_folders)
     }
 
@@ -143,6 +183,7 @@ impl MoveAction {
                         Ok::<_, AppError>(MoveAction::CustomFolder(action))
                     }
                     MoveAction::SystemFolder(action) => Ok(MoveAction::SystemFolder(action)),
+                    MoveAction::Inbox(action) => Ok(MoveAction::Inbox(action)),
                 }
             })
             .try_collect()
@@ -150,6 +191,15 @@ impl MoveAction {
 
         Ok(actions)
     }
+}
+
+/// This struct represents an Inbox with or without categories
+///
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct InboxFolderAction {
+    pub local_id: LocalLabelId,
+    pub name: MovableSystemFolder,
+    pub categories: Vec<MovableSystemFolderAction>,
 }
 
 /// This struct represents a system folder that can be used as an action.
@@ -171,10 +221,23 @@ impl MovableSystemFolderAction {
         })
     }
 
+    pub(crate) fn from_categories(labels: Vec<CategoryLabel>) -> Vec<Self> {
+        labels
+            .into_iter()
+            .filter_map(|label| {
+                Some(Self {
+                    local_id: label.local_id,
+                    name: MovableSystemFolder::try_from(label.system_label).ok()?,
+                })
+            })
+            .collect()
+    }
+
     pub(crate) async fn inbox(tether: &Tether) -> Result<Self, AppError> {
         let local_id = Label::remote_id_counterpart(LabelId::inbox(), tether)
             .await?
             .expect("Should be set");
+
         Ok(Self {
             local_id,
             name: MovableSystemFolder::Inbox,

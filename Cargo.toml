@@ -29,6 +29,7 @@ members = [
     "project/calendar/rust/calendar-net-fake",
     "project/calendar/rust/calendar-net-muon",
     "project/calendar/rust/calendar-queue",
+    "project/calendar/rust/calendar-seed",
     "project/calendar/rust/calendar-tui",
     "project/calendar/rust/notify-waker",
     "project/contact/rust/contact-database",
@@ -342,6 +343,7 @@ calendar-net = { path = "project/calendar/rust/calendar-net" }
 calendar-net-fake = { path = "project/calendar/rust/calendar-net-fake" }
 calendar-net-muon = { path = "project/calendar/rust/calendar-net-muon" }
 calendar-queue = { path = "project/calendar/rust/calendar-queue" }
+calendar-seed = { path = "project/calendar/rust/calendar-seed" }
 calendar-telemetry = { path = "project/calendar/rust/calendar-telemetry" }
 calendar-tui = { path = "project/calendar/rust/calendar-tui" }
 notify-waker = { path = "project/calendar/rust/notify-waker" }

@@ -1196,6 +1196,9 @@ name = "calendar-api"
 version = "0.1.0"
 dependencies = [
  "calendar-net",
+ "derive_more 2.1.1",
+ "diesel",
+ "diesel-derive-newtype",
  "facet",
  "jiff",
  "proton-crypto-account",
@@ -1203,6 +1206,7 @@ dependencies = [
  "serde_json",
  "serde_repr",
  "serde_with",
+ "thiserror 2.0.18",
 ]
 
 [[package]]

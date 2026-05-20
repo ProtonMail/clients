@@ -1219,6 +1219,7 @@ dependencies = [
  "calendar-db-diesel",
  "calendar-net",
  "calendar-net-fake",
+ "calendar-seed",
  "futures",
  "jiff",
  "mail-canonical-email",
@@ -1243,6 +1244,7 @@ dependencies = [
  "calendar-keychain",
  "calendar-loop",
  "calendar-net",
+ "calendar-seed",
  "calendar-telemetry",
  "crux_core 0.17.0 (git+https://github.com/Patryk27/crux?branch=0.17-patched)",
  "facet",
@@ -1439,6 +1441,7 @@ dependencies = [
  "calendar-net-fake",
  "calendar-queue",
  "futures",
+ "proton-crypto-account",
  "serde_json",
  "tokio",
  "tracing",
@@ -1500,10 +1503,24 @@ dependencies = [
  "calendar-db-diesel",
  "calendar-net",
  "calendar-net-fake",
+ "calendar-seed",
  "futures",
  "serde_json",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "calendar-seed"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "calendar-api",
+ "calendar-db",
+ "calendar-net",
+ "futures",
+ "tracing",
+ "web-time",
 ]
 
 [[package]]

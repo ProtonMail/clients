@@ -562,7 +562,8 @@ impl From<NewAttachmentDisposition> for PutAttachmentDispositionRequest {
 #[cfg(test)]
 mod tests {
     use itertools::Itertools;
-    use mail_muon::{http::AsQuery, serde_to_query};
+    use mail_muon::http::AsQuery;
+    use mail_muon::serde_to_query;
 
     use super::*;
 

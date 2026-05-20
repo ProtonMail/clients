@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [mail-uniffi-v0.164.27] - 2026-05-20
+
+### Features
+
+- Support for unleash feature flag variants in Mail only - proton/clients/monorepo!2438
+
+### Fixes
+
+- [ET-6255] Mark auth errors for event loop as retryable
+- [ET-6163] Handle failed address fetch
+
+
 ## [mail-uniffi-v0.164.26] - 2026-05-14
 
 ### Features

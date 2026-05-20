@@ -162,11 +162,13 @@ impl EventSubscriber<EventManagerContext, MailEventSourceV6> for MailEventV6Subs
         }
         .await
         .inspect_err(|e| {
-            ctx.issue_reporter_service().report(
-                IssueLevel::Error,
-                "Failed to apply mail event v6".into(),
-                issue_report_keys_from_error(e),
-            )
+            if !e.is_retryable() {
+                ctx.issue_reporter_service().report(
+                    IssueLevel::Error,
+                    "Failed to apply mail event v6".into(),
+                    issue_report_keys_from_error(e),
+                )
+            }
         })
         .map_err(|e| -> Box<dyn EventSubscriberError> { Box::new(e) })
     }
@@ -184,11 +186,13 @@ impl EventSubscriber<EventManagerContext, MailEventSourceV6> for MailEventV6Subs
         refresh_mail(&ctx)
             .await
             .inspect_err(|e| {
-                ctx.issue_reporter_service().report(
-                    IssueLevel::Error,
-                    "Failed to apply refresh event v6".into(),
-                    issue_report_keys_from_error(e),
-                )
+                if !e.is_retryable() {
+                    ctx.issue_reporter_service().report(
+                        IssueLevel::Error,
+                        "Failed to apply refresh event v6".into(),
+                        issue_report_keys_from_error(e),
+                    )
+                }
             })
             .map_err(|e| -> Box<dyn EventSubscriberError> { Box::new(e) })
     }

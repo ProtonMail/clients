@@ -255,11 +255,13 @@ impl EventSubscriber<EventManagerContext, MailEventSourceV5> for MailEventV5Subs
                 })
                 .await
                 .inspect_err(|e| {
-                    ctx.issue_reporter_service().report(
-                        IssueLevel::Error,
-                        "Failed to apply mail events".into(),
-                        issue_report_keys_from_error(e),
-                    )
+                    if !e.is_retryable() {
+                        ctx.issue_reporter_service().report(
+                            IssueLevel::Error,
+                            "Failed to apply mail events".into(),
+                            issue_report_keys_from_error(e),
+                        )
+                    }
                 })
                 .context("Failed to apply changes")?;
 

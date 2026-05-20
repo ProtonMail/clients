@@ -31,7 +31,9 @@ impl EventSubscriberError for AccountEventSubscriberError {
 
     fn is_retryable(&self) -> bool {
         match self {
-            AccountEventSubscriberError::Api(e) => e.is_network_failure() || e.is_server_failure(),
+            AccountEventSubscriberError::Api(e) => {
+                e.is_network_failure() || e.is_server_failure() || e.is_auth_failure()
+            }
             AccountEventSubscriberError::Other(_) => false,
         }
     }

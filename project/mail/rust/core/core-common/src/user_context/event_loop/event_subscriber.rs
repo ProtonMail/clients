@@ -105,7 +105,9 @@ impl EventSubscriberError for CoreEventSubscriberError {
 
     fn is_retryable(&self) -> bool {
         match self {
-            CoreEventSubscriberError::Api(e) => e.is_network_failure() || e.is_server_failure(),
+            CoreEventSubscriberError::Api(e) => {
+                e.is_network_failure() || e.is_server_failure() || e.is_auth_failure()
+            }
             CoreEventSubscriberError::Stash(StashError::ConnectionAcquireTimedOut) => true,
             CoreEventSubscriberError::Stash(_) | CoreEventSubscriberError::Other(_) => false,
         }

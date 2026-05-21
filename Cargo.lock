@@ -1179,6 +1179,7 @@ dependencies = [
  "calendar-db",
  "calendar-db-diesel",
  "calendar-ical",
+ "derive_more 2.1.1",
  "indoc",
  "itertools 0.14.0",
  "jiff",

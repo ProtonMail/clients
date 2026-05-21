@@ -28,6 +28,7 @@ pub mod post_members_unprivatize;
 pub mod post_saml_setup_fields;
 pub mod post_validate_email;
 pub mod post_validate_phone;
+pub mod put_core_address;
 pub mod put_domains;
 pub mod put_keys_private;
 pub mod put_organizations_keys_signature;

@@ -2598,6 +2598,7 @@ name = "core-user-manager"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "core-common-types",
  "core-db-op",
  "core-device-info-op",
  "core-key",

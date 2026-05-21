@@ -10,7 +10,7 @@ use rand::{
 use serde_json::{Value, json};
 
 use lattice::{
-    LatticeError, Sensitive,
+    Sensitive,
     auth::{
         LtAuthApiSession, LtAuthPasswordMode, LtAuthSrpChallenge, LtAuthTwoFactorOptions,
         post_auth::{LtAuthPostReq, LtAuthPostRes},
@@ -18,6 +18,7 @@ use lattice::{
         post_auth_info::{LtAuthPostInfoReq, LtAuthPostInfoRes},
     },
 };
+use lattice_muon2::LtTransportError;
 
 use crate::common::Session;
 
@@ -47,7 +48,7 @@ pub fn random_string(length: usize) -> String {
 pub async fn login_get_proofs(
     username: &str,
     session: &Session,
-) -> Result<LtAuthPostInfoRes, LatticeError> {
+) -> Result<LtAuthPostInfoRes, LtTransportError> {
     session
         .send_lt(LtAuthPostInfoReq {
             username: Some(username.to_string()),
@@ -85,7 +86,7 @@ pub async fn srp_handshake(
         LtAuthPasswordMode,
         Option<LtAuthTwoFactorOptions>,
     ),
-    LatticeError,
+    LtTransportError,
 > {
     // Note: Username received in the response of auth/v4/info is necessary for auth versions v0 and v1.
     // Don't use this for anything other than passing it to the library that generates the client proof.
@@ -155,7 +156,7 @@ pub async fn login_muon_session(
     session: Session,
     username: &str,
     password: &str,
-) -> Result<(Session, Option<LtAuthTwoFactorOptions>), LatticeError> {
+) -> Result<(Session, Option<LtAuthTwoFactorOptions>), LtTransportError> {
     let (api_session, _password_mode, tfa) =
         srp_handshake(&session, username, password, Some(valid_fingerprint())).await?;
     Ok((session.swap_session(api_session).await, tfa))

@@ -260,9 +260,9 @@ pub trait LtContract {
     ///
     /// This method returns the headers for the contract.
     /// The headers are the HTTP headers for the request.
-    /// The headers are a `HashMap<String, String>`.
-    /// The key is the header name and the value is the header value.
-    fn headers(&self) -> Result<HashMap<String, String>, LatticeError> {
+    /// The headers are a `HashMap<String, Sensitive<String>>`.
+    /// The key is the header name and the value is the header value (may contain secrets).
+    fn headers(&self) -> Result<HashMap<String, crate::Sensitive<String>>, LatticeError> {
         Ok(HashMap::new())
     }
 }

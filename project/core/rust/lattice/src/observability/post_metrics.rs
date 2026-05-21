@@ -2,7 +2,9 @@ use std::borrow::Cow;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method, UnauthReq};
+use crate::{
+    LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method, Sensitive, UnauthReq,
+};
 
 pub const DATA_V1_METRICS_PATH: &str = "/data/v1/metrics";
 
@@ -39,10 +41,12 @@ impl LtContract for LtDataPostMetricsReq {
         Ok(Cow::Borrowed(DATA_V1_METRICS_PATH))
     }
 
-    fn headers(&self) -> Result<std::collections::HashMap<String, String>, LatticeError> {
+    fn headers(
+        &self,
+    ) -> Result<std::collections::HashMap<String, Sensitive<String>>, LatticeError> {
         Ok(std::collections::HashMap::from([(
             "Priority".to_string(),
-            METRICS_PRIORITY_HEADER_VALUE.to_string(),
+            Sensitive::new(METRICS_PRIORITY_HEADER_VALUE.to_string()),
         )]))
     }
 }

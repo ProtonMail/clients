@@ -41,11 +41,16 @@ impl LtContract for LtCoreGetUsersAvailableExternalReq {
         })
     }
 
-    fn headers(&self) -> Result<HashMap<String, String>, LatticeError> {
+    fn headers(&self) -> Result<HashMap<String, Sensitive<String>>, LatticeError> {
         Ok(self
             .payment_info_token
             .as_ref()
-            .map(|token| HashMap::from([("X-PM-Payment-Info-Token".to_string(), token.clone())]))
+            .map(|token| {
+                HashMap::from([(
+                    "X-PM-Payment-Info-Token".to_string(),
+                    Sensitive::new(token.clone()),
+                )])
+            })
             .unwrap_or_default())
     }
 }

@@ -7,13 +7,11 @@
   core = ["auth", "dep:passkey", "dep:bitflags", "dep:proton-crypto-account", "dep:num_enum"]
   auth = ["dep:passkey", "dep:bitflags", "dep:num_enum"]
   default = []
-  quark = ["dep:regex"]
+  quark = ["dep:regex", "dep:num_enum"]
   serde = ["dep:serde", "dep:serde_json", "bitflags?/serde", "core-sensitive-data/serde"]
-  muon = ["dep:muon"]
   observability = ["serde"]
-  full = ["core", "auth", "muon", "serde", "observability", "quark"]
+  full = ["core", "auth", "serde", "observability", "quark"]
   serde_qs = ["dep:serde_qs", "dep:url", "serde"]
-  mail-muon-v1 = ["dep:mail-muon"]
 
 [dependencies]
   core-sensitive-data.workspace = true
@@ -28,12 +26,11 @@
     "rustpgp",
   ] }
   num_enum = { workspace = true, optional = true }
-  muon = { workspace = true, optional = true }
   regex = { optional = true, version = "1.10" }
   url = { workspace = true, optional = true }
-  mail-muon = { workspace = true, optional = true }
 
 [dev-dependencies]
+  lattice-muon2 = { path = "../lattice-muon2", features = ["quark"] }
   muon = { workspace = true, features = ["full-native"] }
   tokio = { version = "1.50", features = ["full"] }
   futures = { version = "0.3" }

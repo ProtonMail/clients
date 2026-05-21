@@ -6,6 +6,7 @@ use lattice::{
         post_auth_info::{LtAuthPostInfoIntent, LtAuthPostInfoReq, LtAuthPostInfoRes},
     },
 };
+use lattice_muon2::LtTransportError;
 use regex::Regex;
 
 use crate::{common::Session, common_sso::saml_form::SAMLForm};
@@ -30,7 +31,7 @@ pub fn get_token_from_html(html: &str) -> Option<String> {
 pub async fn get_challenge_url_from_challenge_token(
     session: &Session,
     challenge_token: &str,
-) -> Result<String, LatticeError> {
+) -> Result<String, LtTransportError> {
     session
         .send_lt_generic(LtAuthGetSsoReq {
             token: challenge_token.to_string(),
@@ -40,7 +41,10 @@ pub async fn get_challenge_url_from_challenge_token(
         .map(|res| res.url)
 }
 
-pub async fn get_sso_challenge(session: &Session, username: &str) -> Result<String, LatticeError> {
+pub async fn get_sso_challenge(
+    session: &Session,
+    username: &str,
+) -> Result<String, LtTransportError> {
     let res = session
         .send_lt(LtAuthPostInfoReq {
             username: Some(username.to_string()),
@@ -56,10 +60,10 @@ pub async fn get_sso_challenge(session: &Session, username: &str) -> Result<Stri
             sso_challenge_token,
         } => sso_challenge_token,
         _ => {
-            return Err(LatticeError::UnexpectedStatusCode(
+            return Err(LtTransportError::from(LatticeError::UnexpectedStatusCode(
                 400,
                 "Expected SSO challenge response".as_bytes().to_vec(),
-            ));
+            )));
         }
     };
 
@@ -69,36 +73,36 @@ pub async fn get_sso_challenge(session: &Session, username: &str) -> Result<Stri
 pub async fn login_with_sso(
     session_init: Session,
     username: &str,
-) -> Result<Session, LatticeError> {
+) -> Result<Session, LtTransportError> {
     let sso_challenge_token = get_sso_challenge(&session_init, username).await?;
 
     let url = get_challenge_url_from_challenge_token(&session_init, &sso_challenge_token)
         .await
         .map_err(|e| {
-            LatticeError::UnexpectedStatusCode(
+            LtTransportError::from(LatticeError::UnexpectedStatusCode(
                 400,
                 format!("Failed to get challenge URL: {:?}", e)
                     .as_bytes()
                     .to_vec(),
-            )
+            ))
         })?;
 
     let form = SAMLForm::from_challenge_url(&url).await.map_err(|e| {
-        LatticeError::UnexpectedStatusCode(
+        LtTransportError::from(LatticeError::UnexpectedStatusCode(
             400,
             format!("Failed to parse SAML form from HTML: {:?}", e)
                 .as_bytes()
                 .to_vec(),
-        )
+        ))
     })?;
 
     let token = form.request_sso_token().await.map_err(|e| {
-        LatticeError::UnexpectedStatusCode(
+        LtTransportError::from(LatticeError::UnexpectedStatusCode(
             400,
             format!("Failed to request SSO token: {:?}", e)
                 .as_bytes()
                 .to_vec(),
-        )
+        ))
     })?;
 
     let api_session = session_init

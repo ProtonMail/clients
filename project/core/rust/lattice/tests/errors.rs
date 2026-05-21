@@ -5,6 +5,7 @@ use lattice::{
     auth::devices::get_auth_devices::LtAuthGetDevicesReq,
     details::AccessTokenWithInsufficientScopeErrorDetails,
 };
+use lattice_muon2::LtTransportError;
 
 use crate::common::generate_muon_session;
 
@@ -14,11 +15,15 @@ async fn test_errors() {
     let res = session.send_lt(LtAuthGetDevicesReq).await;
     assert!(res.is_err(), "{res:?} is expected to be Err");
     let err = res.unwrap_err();
+    let lattice_err = match err {
+        LtTransportError::Lattice(e) => e,
+        LtTransportError::Transport(t) => panic!("unexpected transport: {t:?}"),
+    };
     assert!(
-        matches!(err, LatticeError::ApiError(403, _)),
-        "{err:?} is expected to be ApiError"
+        matches!(lattice_err, LatticeError::ApiError(403, _)),
+        "{lattice_err:?} is expected to be ApiError"
     );
-    let api_error = err.as_api_error().unwrap();
+    let api_error = lattice_err.as_api_error().unwrap();
     assert!(
         matches!(&api_error, LtApiResponseError::AccessTokenWithInsufficientScope(LtApiResponseErrorInfo { details: AccessTokenWithInsufficientScopeErrorDetails { missing_scopes }, .. }) if missing_scopes == &["full"]),
         "{:?} is expected to be AccessTokenWithInsufficientScope",

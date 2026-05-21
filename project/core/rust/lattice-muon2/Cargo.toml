@@ -1,0 +1,17 @@
+[package]
+name = "lattice-muon2"
+version = "0.1.0"
+edition.workspace = true
+
+[features]
+default = []
+quark = ["lattice/quark"]
+
+[dependencies]
+derive_more = { workspace = true }
+http = { workspace = true }
+lattice = { workspace = true, features = ["serde"] }
+muon = { workspace = true }
+
+[lints]
+workspace = true

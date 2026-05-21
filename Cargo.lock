@@ -121,6 +121,7 @@ dependencies = [
  "image",
  "itertools 0.14.0",
  "lattice",
+ "lattice-muon2",
  "muon",
  "num_enum",
  "passkey",
@@ -5693,7 +5694,7 @@ dependencies = [
  "derive_more 2.1.1",
  "futures",
  "lattice",
- "mail-muon",
+ "lattice-muon2",
  "muon",
  "num_enum",
  "passkey",
@@ -5709,6 +5710,26 @@ dependencies = [
  "totp-rs",
  "url",
  "zeroize",
+]
+
+[[package]]
+name = "lattice-muon1"
+version = "0.1.0"
+dependencies = [
+ "derive_more 2.1.1",
+ "http",
+ "lattice",
+ "mail-muon",
+]
+
+[[package]]
+name = "lattice-muon2"
+version = "0.1.0"
+dependencies = [
+ "derive_more 2.1.1",
+ "http",
+ "lattice",
+ "muon",
 ]
 
 [[package]]
@@ -6213,6 +6234,7 @@ name = "mail-api-lattice"
 version = "0.1.0"
 dependencies = [
  "lattice",
+ "lattice-muon1",
  "mail-api-shared",
  "mail-muon",
  "serde_json",
@@ -6248,6 +6270,7 @@ dependencies = [
  "futures",
  "lattice",
  "mail-account-ids",
+ "mail-api-lattice",
  "mail-api-shared",
  "mail-muon",
  "mail-network-monitor-service",

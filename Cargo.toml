@@ -63,6 +63,8 @@ members = [
     "project/core/rust/core-user-manager",
     "project/core/rust/core-validator",
     "project/core/rust/lattice",
+    "project/core/rust/lattice-muon1",
+    "project/core/rust/lattice-muon2",
     "project/mail/rust/account/account-api",
     "project/mail/rust/account/account-common",
     "project/mail/rust/account/account-ids",
@@ -252,6 +254,12 @@ path = "project/core/rust/core-validator"
 
 [workspace.dependencies.lattice]
 path = "project/core/rust/lattice"
+
+[workspace.dependencies.lattice-muon1]
+path = "project/core/rust/lattice-muon1"
+
+[workspace.dependencies.lattice-muon2]
+path = "project/core/rust/lattice-muon2"
 
 [workspace.dependencies.proton-crypto-account]
 # Use experimental version based on rprp instead of gopenpgp-sys.

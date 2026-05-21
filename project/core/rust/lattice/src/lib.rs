@@ -3,9 +3,6 @@ pub(crate) mod helpers;
 #[cfg(feature = "auth")]
 pub mod auth;
 
-#[cfg(all(feature = "muon", feature = "serde"))]
-pub mod muon;
-
 #[cfg(feature = "core")]
 pub mod core;
 
@@ -32,3 +29,11 @@ pub use method::*;
 
 pub mod contract;
 pub use contract::*;
+
+#[cfg(feature = "serde")]
+pub mod transport;
+
+#[cfg(feature = "serde")]
+pub use transport::{
+    LtTransportProvider, LtWireMethod, LtWireRequest, LtWireRequestProvider, LtWireResponse,
+};

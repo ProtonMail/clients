@@ -1,3 +1,4 @@
+use std::future::Future;
 use std::pin::Pin;
 
 use async_compat::Compat;
@@ -8,7 +9,7 @@ use muon::{
     auth::{Auth, Tokens},
     client::builder::Hyper,
     common::{GenericContext, RetryPolicy},
-    http::hyper::connector::HyperConnector,
+    http::{HttpReq, HttpRes, hyper::connector::HyperConnector},
     rt::{
         InstantFactory, Monotonic, MuonInstant, MuonSystemTime, OperatingSystem, Resolve,
         SinceUnixEpoch, Sleep, SystemTimeFactory, TcpConnect,
@@ -16,13 +17,17 @@ use muon::{
     store::WithoutPersistence,
 };
 
+use lattice::{LtTransportProvider, LtWireRequest, LtWireRequestProvider};
+
 use lattice::{
     LatticeError, LtApiResponseError, LtContract, LtResponseBody, LtSlimAPIJSON,
     auth::LtAuthApiSession,
-    muon::LtContractExt,
-    quark::{LtQuarkContract, LtQuarkContractExt, jail::unban::LtQuarkJailUnban},
+    quark::{LtQuarkContract, jail::unban::LtQuarkJailUnban},
 };
+use lattice_muon2::{LtTransportError, Muon2Transport, Muon2WireRequestProvider};
 use serde::Deserialize;
+
+use crate::common::test_transport::Muon2TestTransport;
 
 #[derive(Debug, Clone)]
 pub struct TimeCapability {
@@ -186,37 +191,13 @@ impl Session {
         Self(self.0.client().get_session(()).await.unwrap())
     }
 
-    pub async fn send_lt_raw<T: LtContract>(&self, req: T) -> Result<T::Response, LatticeError> {
-        let http_req = req.to_muon_req()?;
-        let response = self.0.send(http_req).await.map_err(LatticeError::Muon)?;
-        T::from_muon_res(&response)
-    }
-
     pub async fn send_lt_generic<E: LtResponseBody, T: LtContract<Response = E>>(
         &self,
         req: T,
-    ) -> Result<E, LatticeError> {
-        let http_req = req.to_muon_req()?;
-        let response = self
-            .0
-            .send(http_req.clone())
+    ) -> Result<E, LtTransportError> {
+        Muon2TestTransport::new(self.0.clone())
+            .send_contract_request(&req)
             .await
-            .map_err(LatticeError::Muon)?;
-        let response = if (400..=500).contains(&response.status().as_u16()) {
-            let api_error: LtApiResponseError =
-                serde_json::from_slice::<LtApiResponseError>(response.body()).map_err(|e| {
-                    LatticeError::SerdeJSON(e, String::from_utf8(response.body().to_vec()).ok())
-                })?;
-            if matches!(api_error, LtApiResponseError::HumanVerification(..)) {
-                self.send_quark(LtQuarkJailUnban).await?;
-                self.0.send(http_req).await.map_err(LatticeError::Muon)?
-            } else {
-                response
-            }
-        } else {
-            response
-        };
-        T::from_muon_res(&response)
     }
 
     pub async fn send_lt<
@@ -225,16 +206,16 @@ impl Session {
     >(
         &self,
         req: T,
-    ) -> Result<E, LatticeError> {
+    ) -> Result<E, LtTransportError> {
         self.send_lt_generic(req).await.map(|e| e.0)
     }
 
     pub async fn send_quark<T: LtQuarkContract>(
         &self,
         req: T,
-    ) -> Result<T::Response, LatticeError> {
-        let http_req = req.to_muon_req()?;
-        let response = self.0.send(http_req).await.map_err(LatticeError::Muon)?;
-        T::from_muon_res(&response)
+    ) -> Result<T::Response, LtTransportError> {
+        Muon2TestTransport::new(self.0.clone())
+            .send_contract_quark(&req)
+            .await
     }
 }

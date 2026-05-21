@@ -5,7 +5,6 @@ pub mod challenge;
 pub mod consts;
 pub mod crypto_clock;
 pub mod ids;
-pub mod lattice;
 pub mod proton_layers;
 pub mod proton_store;
 pub mod session;

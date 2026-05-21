@@ -21,6 +21,7 @@ use lattice::core::unpriv_types::{LtCoreUnprivInvitationData, LtCoreUnprivInvita
 use lattice::core::user::LtCoreUser;
 use lattice::core::user::get_users::{LtCoreGetUsersReq, LtCoreGetUsersRes};
 use lattice::{LatticeError, Sensitive};
+use lattice_muon2::LtTransportError;
 use proton_crypto::crypto::{
     AccessKeyInfo, DataEncoding, PGPProvider, PGPProviderSync, Signer, SignerSync, UnixTimestamp,
 };
@@ -40,9 +41,13 @@ const UNPRIVATIZATION_INVITE_CONTEXT: &str = "account.unprivatization-invitation
 #[derive(Debug)]
 pub enum UnprivatizeAdminError {
     Core(LatticeError),
+    /// Muon transport failure or quark-layer error (not a parsed SlimAPI [`LatticeError`]).
+    Transport(muon::Error),
     KeyPassphrase(SaltError),
     NoPrimaryUserKey,
-    UserKeysNotUnlocked { failed: String },
+    UserKeysNotUnlocked {
+        failed: String,
+    },
     NoOrgPrivateKey,
     PgpImportOrDerive(String),
     NoOrgSha256Fingerprint,
@@ -51,13 +56,17 @@ pub enum UnprivatizeAdminError {
     NoAddresses,
     NoPrimaryAddressKey,
     PgpArmoredNotUtf8(FromUtf8Error),
-    MemberNotFound { email: String, num_members: usize },
+    MemberNotFound {
+        email: String,
+        num_members: usize,
+    },
 }
 
 impl fmt::Display for UnprivatizeAdminError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             UnprivatizeAdminError::Core(e) => write!(f, "{e}"),
+            UnprivatizeAdminError::Transport(e) => write!(f, "{e}"),
             UnprivatizeAdminError::KeyPassphrase(e) => write!(f, "key passphrase: {e}"),
             UnprivatizeAdminError::NoPrimaryUserKey => f.write_str("user has no primary PGP key"),
             UnprivatizeAdminError::UserKeysNotUnlocked { failed } => {
@@ -91,6 +100,15 @@ impl std::error::Error for UnprivatizeAdminError {
             UnprivatizeAdminError::KeyPassphrase(e) => Some(e),
             UnprivatizeAdminError::PgpArmoredNotUtf8(e) => Some(e),
             _ => None,
+        }
+    }
+}
+
+impl From<LtTransportError> for UnprivatizeAdminError {
+    fn from(e: LtTransportError) -> Self {
+        match e {
+            LtTransportError::Lattice(le) => Self::Core(le),
+            LtTransportError::Transport(te) => Self::Transport(te),
         }
     }
 }

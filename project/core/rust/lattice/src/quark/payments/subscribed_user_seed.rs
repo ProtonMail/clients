@@ -55,9 +55,10 @@ pub struct LtQuarkNewPaymentsSeedSubscribedUserRes {
 }
 
 impl LtQuarkRes for LtQuarkNewPaymentsSeedSubscribedUserRes {
-    fn from_muon_res(response: &::muon::http::HttpRes) -> Result<Self, LatticeError> {
-        let body = response.body();
-        let body_str = String::from_utf8_lossy(body);
+    fn from_quark_body(body: &[u8]) -> Result<Self, LatticeError> {
+        let body_str: String = String::from_utf8(body.to_vec())
+            .map_err(|e| LatticeError::UnexpectedResponse(e.to_string()))?;
+
         //  [INFO] User `ssoa_ylqeCkjm` (ID 101351) seeded correctly.
         let captures = SEED_SUBSCRIBED_USER_RE
             .captures(&body_str)

@@ -29,7 +29,8 @@ tracing = { workspace = true }
 url = { workspace = true }
 mail-stash = { workspace = true, optional = true }
 wiremock = { workspace = true, optional = true }
-lattice = { workspace = true, features = ["serde", "mail-muon-v1"] }
+lattice = { workspace = true, features = ["serde"] }
+mail-api-lattice = { workspace = true }
 
 [features]
 default = []

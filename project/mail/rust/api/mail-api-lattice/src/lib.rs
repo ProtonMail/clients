@@ -1,90 +1,25 @@
+use lattice::LtTransportProvider;
+use lattice_muon1::Muon1Transport;
 use mail_api_shared::{ApiErrorInfo, ApiServiceError};
 use mail_muon::common::Sender;
-use mail_muon::{ContentType, Method as MuonMethod, ProtonRequest, ProtonResponse, Status, http};
+use mail_muon::{ProtonRequest, ProtonResponse, Status, http};
 
-use ::mail_muon::http::{HttpReq, HttpRes};
-use lattice::{
-    LatticeError, LtApiResponseError, LtContract, LtRequestBody, LtRequestQueryParams,
-    LtResponseBody, Method,
-};
+use lattice::{LatticeError, LtContract};
+pub use lattice_muon1::LtTransportError;
 
-fn lattice_method_to_muon_method<T: LtRequestBody>(method: &Method<T>) -> MuonMethod {
-    match method {
-        Method::Get => MuonMethod::GET,
-        Method::Delete => MuonMethod::DELETE,
-        Method::Post(_) => MuonMethod::POST,
-        Method::Put(_) => MuonMethod::PUT,
-    }
-}
-
-fn lattice_request_to_muon_request<T: LtContract>(contract: T) -> Result<HttpReq, LatticeError> {
-    let method = contract.method()?;
-    let path = contract.path()?;
-    let mut http_req = HttpReq::new(lattice_method_to_muon_method(&method), path);
-
-    if let Some(query) = contract.query() {
-        http_req = query
-            .to_query_params()?
-            .into_iter()
-            .fold(http_req, |http_req, (k, v)| {
-                http_req.query((k.into_owned(), v.into_inner()))
-            })
-    }
-
-    http_req = contract
-        .headers()?
-        .into_iter()
-        .fold(http_req, |http_req, header| http_req.header(header));
-
-    if let Some(body) = method.into_body() {
-        let body = body.to_body()?;
-
-        http_req = http_req.body(body).header(ContentType::JSON);
-    }
-
-    Ok(http_req)
-}
-
-fn from_muon_res_to_lattice_error<T: LtContract>(
-    response: HttpRes,
-) -> Result<T::Response, LatticeError> {
-    let s = response.status().as_u16();
-
-    // 200-300 are success codes
-    // 300-304 are redirect codes
-    if (200..=304).contains(&s) {
-        let body = response.body();
-        return T::Response::from_body(body);
-    }
-
-    if (400..500).contains(&s) {
-        let body = response.body();
-
-        let value: LtApiResponseError = serde_json::from_slice::<LtApiResponseError>(body)
-            .map_err(|e| LatticeError::SerdeJSON(e, String::from_utf8(body.to_vec()).ok()))?;
-
-        return Err(LatticeError::ApiError(s, Box::new(value)));
-    }
-
-    Err(LatticeError::UnexpectedStatusCode(
-        s,
-        response.body().to_vec(),
-    ))
-}
-
-fn lattice_error_to_api_error(value: LatticeError) -> ApiServiceError {
+pub fn lattice_error_to_api_error(value: LatticeError) -> ApiServiceError {
     match value {
         LatticeError::SerdeJSON(error, _) => ApiServiceError::UnknownError(error.to_string()),
         LatticeError::UnexpectedResponse(e) => ApiServiceError::ResponseError(e),
         LatticeError::UnexpectedStatusCode(code, _) => {
             ApiServiceError::UnknownError(format!("UnexpectedStatusCode {code}"))
         }
+        LatticeError::SerdeQs(e) => ApiServiceError::UnknownError(e.to_string()),
         LatticeError::ApiError(status_code, lt_api_response_error) => {
             let Ok(status) = http::Status::from_u16(status_code) else {
                 return ApiServiceError::UnknownError("Invalid status code {status_code}".into());
             };
 
-            // Easier to regenerate the json string, than to handle the conversion ourselves.
             let json =
                 serde_json::to_string(lt_api_response_error.as_ref()).expect("Should not fail");
             let api_error =
@@ -108,8 +43,14 @@ fn lattice_error_to_api_error(value: LatticeError) -> ApiServiceError {
                 code => ApiServiceError::OtherHttpError(code, json, api_error),
             }
         }
-        LatticeError::SerdeQs(error) => ApiServiceError::QueryStringError(error),
-        e => ApiServiceError::UnknownError(e.to_string()),
+        LatticeError::Other(s) => ApiServiceError::UnknownError(s),
+    }
+}
+
+fn lattice_muon1_error_to_api_error(value: LtTransportError) -> ApiServiceError {
+    match value {
+        LtTransportError::Lattice(e) => lattice_error_to_api_error(e),
+        LtTransportError::Transport(e) => ApiServiceError::from(e),
     }
 }
 
@@ -118,7 +59,7 @@ pub trait RunLatticeContractExt {
     async fn run_lattice_contract<T: LtContract>(
         &self,
         contract: T,
-    ) -> Result<T::Response, LatticeError>;
+    ) -> Result<T::Response, LtTransportError>;
 
     async fn run_lattice_contract_compat<T: LtContract>(
         &self,
@@ -126,23 +67,22 @@ pub trait RunLatticeContractExt {
     ) -> Result<T::Response, ApiServiceError>;
 }
 
-impl<S: ?Sized + Sender<ProtonRequest, ProtonResponse>> RunLatticeContractExt for S {
+impl<S: ?Sized + Sender<ProtonRequest, ProtonResponse> + Send + Sync> RunLatticeContractExt for S {
     async fn run_lattice_contract<T: LtContract>(
         &self,
         contract: T,
-    ) -> Result<T::Response, LatticeError> {
-        let http_req = lattice_request_to_muon_request(contract)?;
-        let resp = self.send(http_req).await.map_err(LatticeError::MailMuon)?;
-        from_muon_res_to_lattice_error::<T>(resp)
+    ) -> Result<T::Response, LtTransportError> {
+        Muon1Transport::new(self)
+            .send_contract_request(&contract)
+            .await
     }
 
     async fn run_lattice_contract_compat<T: LtContract>(
         &self,
         contract: T,
     ) -> Result<T::Response, ApiServiceError> {
-        let http_req =
-            lattice_request_to_muon_request(contract).map_err(lattice_error_to_api_error)?;
-        let resp = self.send(http_req).await?;
-        from_muon_res_to_lattice_error::<T>(resp).map_err(lattice_error_to_api_error)
+        self.run_lattice_contract(contract)
+            .await
+            .map_err(lattice_muon1_error_to_api_error)
     }
 }

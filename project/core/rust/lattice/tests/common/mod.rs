@@ -4,6 +4,7 @@
 mod auth;
 mod muon;
 pub mod sso_setup;
+mod test_transport;
 pub mod unprivatize_admin;
 
 pub use auth::*;
@@ -13,7 +14,7 @@ pub use muon::*;
 macro_rules! assert_api_err {
     ($lhs:expr, $pat:pat $(if $guard:expr)?) => {
         match &$lhs {
-            Err(::lattice::LatticeError::ApiError(_, e)) if matches!(e.as_ref(), $pat $( if $guard )?) => {}
+            Err(::lattice_muon2::LtTransportError::Lattice(::lattice::LatticeError::ApiError(_, e))) if matches!(e.as_ref(), $pat $( if $guard )?) => {}
             other => panic!("Expected {:?}, found {other:?}", stringify!($pat $(if $guard)?)),
         }
     };

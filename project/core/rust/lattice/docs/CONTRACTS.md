@@ -1,6 +1,28 @@
 # Lattice HTTP Contracts — Contributor Guide
 
-This guide outlines the rules for adding or changing **SlimAPI HTTP contracts** in the `lattice` crate. 
+This guide outlines the rules for adding or changing **SlimAPI HTTP contracts** in the `lattice` crate.
+
+## Transport (Muon) integration
+
+The core **`lattice`** crate defines contracts and, with the **`serde`** feature, the transport-neutral wire layer (`lattice::transport`). It has **no** `muon` / `mail-muon` dependencies. HTTP is wired through two adapter crates:
+
+| Layer | Role |
+|-------|------|
+| **`lattice::transport`** (feature `serde`) | Wire types (`LtWireRequest`, `LtWireResponse`) and [`LtTransportProvider`](../src/transport/provider.rs) (contract → wire → send → parse). See `cargo doc -p lattice --features serde --open`. |
+| **`lattice-muon1`** | Mail-muon v1 adapter: [`Muon1Transport`](../../lattice-muon1/src/transport.rs), [`Muon1WireRequestProvider`](../../lattice-muon1/src/wire.rs), [`LatticeExt`](../../lattice-muon1/src/ext.rs), [`RunLatticeContractExt`](../../lattice-muon1/src/ext.rs). |
+| **`lattice-muon2`** | Muon v2 adapter: [`Muon2Transport`](../../lattice-muon2/src/transport.rs), [`Muon2WireRequestProvider`](../../lattice-muon2/src/wire.rs), [`LatticeExt`](../../lattice-muon2/src/ext.rs). |
+
+**SlimAPI contracts** — call [`LtTransportProvider::send_contract_request`](../src/transport/provider.rs) (or `LatticeExt::send_with` on the muon crate). Response parsing uses [`LtWireResponse::into_contract_response`](../src/transport/wire_response.rs) (`T::Response::from_body` for success, `LtApiResponseError` for 4xx).
+
+**Errors** — muon crates expose [`LtTransportError`](../../lattice-muon2/src/error.rs) (`Transport` \| `Lattice`). Keep HTTP/network failures on `LtTransportError::Transport`; do not map them to `LatticeError::Other`.
+
+**Muon v1 (mail stack)** — prefer [`mail-api-lattice`](../../../mail/rust/api/mail-api-lattice/src/lib.rs) for `ApiServiceError` mapping; it uses `Muon1Transport` and defines its own `RunLatticeContractExt` with `run_lattice_contract` → `LtTransportError` and `run_lattice_contract_compat` → `ApiServiceError`. Alternatively use `lattice-muon1` directly.
+
+**Muon v2** — `LatticeExt::send_with(session)` builds a [`Muon2Transport`](../../lattice-muon2/src/transport.rs) and calls `send_contract_request`.
+
+**Quark (optional)** — Quark command types live under `lattice::quark` (enable `lattice`’s `quark` feature). Sending them uses [`LtTransportProvider::send_contract_quark`](../src/transport/provider.rs), available when **`quark`** is enabled on `lattice` (and on `lattice-muon1` / `lattice-muon2`, which forward `lattice/quark`). Enable e.g. `lattice-muon2 = { features = ["quark"] }` in test/dev dependencies. Integration tests use helpers in `tests/common/` that call `send_contract_quark` on a `LtTransportProvider` implementation.
+
+**Wire sensitivity** — On the transport wire layer, header values, query values, and HTTP bodies use [`Sensitive`](../../lattice/src/sensitive.rs). Muon adapters ([`Muon1WireRequestProvider`](../../lattice-muon1/src/wire.rs), [`Muon2WireRequestProvider`](../../lattice-muon2/src/wire.rs)) unwrap with `into_inner()` only when building native `HttpReq` / reading native `HttpRes`. Contract `headers()` should return `HashMap<String, Sensitive<String>>` (same as query params).
 
 ---
 
@@ -174,7 +196,8 @@ Integration tests under `tests/` must **not** rely on **hardcoded usernames or p
 
 **Do**
 
-* Create users with **`LtQuarkContract`** types (e.g. `LtQuarkUserCreate`, `LtQuarkUserCreateOrganization`, …) via `send_quark` / the shared session helpers in `tests/common/`.
+* Enable **`quark`** on `lattice` and `lattice-muon2` in dev-dependencies when tests send Quark commands.
+* Create users with **`LtQuarkContract`** types (e.g. `LtQuarkUserCreate`, `LtQuarkUserCreateOrganization`, …) via `send_contract_quark` / `send_quark` helpers in `tests/common/`.
 * Derive **unique** credentials per run using helpers such as **`random_username()`**, **`random_password()`**, and related utilities in `tests/common` when the test needs a name or secret string.
 * Thread the **returned** username/password from Quark responses into login and follow-up API calls.
 

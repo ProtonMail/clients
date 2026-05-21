@@ -4,6 +4,7 @@ use lattice::{
     LatticeError, LtApiResponseError,
     core::user::get_users_available_external::LtCoreGetUsersAvailableExternalReq,
 };
+use lattice_muon2::LtTransportError;
 
 use crate::common::{generate_muon_session, random_username};
 
@@ -44,8 +45,12 @@ async fn test_available_external_invalid_name_is_rejected() {
         })
         .await;
     let err = res.expect_err("empty name should be rejected");
+    let lattice_err = match err {
+        LtTransportError::Lattice(e) => e,
+        LtTransportError::Transport(t) => panic!("unexpected transport: {t:?}"),
+    };
     assert!(
-        matches!(err, LatticeError::ApiError(400, _)),
-        "{err:?} expected to be ApiError(400, _)",
+        matches!(lattice_err, LatticeError::ApiError(400, _)),
+        "{lattice_err:?} expected to be ApiError(400, _)",
     );
 }

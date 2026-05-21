@@ -18,46 +18,15 @@ pub trait LtQuarkContract {
     fn params(&self) -> Result<QuarkCommand, LatticeError>;
 }
 
-#[cfg(feature = "muon")]
-pub trait LtQuarkContractExt: LtQuarkContract {
-    fn to_muon_req(&self) -> Result<::muon::http::HttpReq, LatticeError>;
-    fn from_muon_res(response: &::muon::http::HttpRes) -> Result<Self::Response, LatticeError>;
-}
-
-#[cfg(feature = "muon")]
-impl<T: LtQuarkContract> LtQuarkContractExt for T {
-    fn to_muon_req(&self) -> Result<::muon::http::HttpReq, LatticeError> {
-        let url = format!("/internal/quark/raw::{}", Self::COMMAND_PATH);
-        let params = self.params()?.as_command();
-        let http_req =
-            ::muon::http::HttpReq::new(::muon::http::Method::GET, url).query(("strInput", params));
-        Ok(http_req)
-    }
-
-    fn from_muon_res(response: &::muon::http::HttpRes) -> Result<Self::Response, LatticeError> {
-        let s = response.status().as_u16();
-
-        if s != 200 {
-            return Err(LatticeError::UnexpectedStatusCode(
-                s,
-                response.body().to_vec(),
-            ));
-        }
-
-        let api_response = Self::Response::from_muon_res(response)?;
-        Ok(api_response)
-    }
-}
-
 #[derive(Deref)]
 pub struct LtQuarkResTryFrom<T: FromStr<Err = LatticeError>>(pub T);
 
 impl<T: FromStr<Err = LatticeError>> LtQuarkRes for LtQuarkResTryFrom<T> {
-    fn from_muon_res(response: &::muon::http::HttpRes) -> Result<Self, LatticeError> {
-        let body = response.body();
-        let body_str = String::from_utf8_lossy(body);
+    fn from_quark_body(body: &[u8]) -> Result<Self, LatticeError> {
+        let body_string: String = String::from_utf8(body.to_vec())
+            .map_err(|e| LatticeError::UnexpectedResponse(e.to_string()))?;
         // Remove the trailing newline
-        let body_str = body_str.trim_end_matches('\n');
+        let body_str = body_string.trim_end_matches('\n');
         let api_response: T = T::from_str(body_str)?;
         Ok(LtQuarkResTryFrom(api_response))
     }
@@ -66,8 +35,7 @@ impl<T: FromStr<Err = LatticeError>> LtQuarkRes for LtQuarkResTryFrom<T> {
 pub struct LtQuarkResString(pub String);
 
 impl LtQuarkRes for LtQuarkResString {
-    fn from_muon_res(response: &::muon::http::HttpRes) -> Result<Self, LatticeError> {
-        let body = response.body();
+    fn from_quark_body(body: &[u8]) -> Result<Self, LatticeError> {
         let api_response: String = String::from_utf8(body.to_vec())
             .map_err(|e| LatticeError::UnexpectedResponse(e.to_string()))?;
         Ok(LtQuarkResString(api_response))
@@ -75,17 +43,18 @@ impl LtQuarkRes for LtQuarkResString {
 }
 
 pub trait LtQuarkRes: Sized {
-    fn from_muon_res(response: &::muon::http::HttpRes) -> Result<Self, LatticeError>;
+    fn from_quark_body(body: &[u8]) -> Result<Self, LatticeError>;
 }
 
+#[cfg(feature = "serde")]
 impl<T: serde::de::DeserializeOwned> LtQuarkRes for LtQuarkJSONRes<T> {
-    fn from_muon_res(response: &::muon::http::HttpRes) -> Result<Self, LatticeError> {
-        let body = response.body();
+    fn from_quark_body(body: &[u8]) -> Result<Self, LatticeError> {
         let api_response: T = serde_json::from_slice::<T>(body)
             .map_err(|e| LatticeError::SerdeJSON(e, String::from_utf8(body.to_vec()).ok()))?;
         Ok(LtQuarkJSONRes(api_response))
     }
 }
+#[cfg(feature = "serde")]
 #[derive(Debug, Clone, Copy, Deref)]
 pub struct LtQuarkJSONRes<T: serde::de::DeserializeOwned>(pub T);
 

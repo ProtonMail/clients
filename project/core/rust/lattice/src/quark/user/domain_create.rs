@@ -41,9 +41,9 @@ pub struct LtQuarkOrganizationCreateDomainRes {
 }
 
 impl LtQuarkRes for LtQuarkOrganizationCreateDomainRes {
-    fn from_muon_res(response: &muon::http::HttpRes) -> Result<Self, LatticeError> {
-        let body = response.body();
-        let body_str = String::from_utf8_lossy(body);
+    fn from_quark_body(body: &[u8]) -> Result<Self, LatticeError> {
+        let body_str: String = String::from_utf8(body.to_vec())
+            .map_err(|e| LatticeError::UnexpectedResponse(e.to_string()))?;
 
         let captures1 = DOMAIN_CREATED_ID_RE
             .captures(&body_str)

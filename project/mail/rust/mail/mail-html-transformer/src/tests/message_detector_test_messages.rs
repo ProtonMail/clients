@@ -1,5 +1,5 @@
 //! Test Emails
-pub const DEFAULT: [(&str, &str); 16] = [
+pub const DEFAULT: [(&str, &str); 17] = [
     ("proton_1", PROTON_1),
     ("proton_2", PROTON_2),
     ("gmail_1", GMAIL_1),
@@ -16,10 +16,11 @@ pub const DEFAULT: [(&str, &str); 16] = [
     ("thunderbird", THUNDERBIRD),
     ("yahoo", YAHOO),
     ("zoho", ZOHO),
+    ("windows_mail", WINDOWS_MAIL),
 ];
 
 #[allow(dead_code)]
-pub const UNSUPPORTED: [&str; 15] = [
+pub const UNSUPPORTED: [&str; 14] = [
     COMCAST,      // HR
     HOTMAIL_1,    // ALMOST NOTHING
     HOTMAIL_2,    // HR
@@ -31,7 +32,6 @@ pub const UNSUPPORTED: [&str; 15] = [
     OUTLOOK_2010, // ALMOST NOTHING
     SPARROW,      // REALLY EXISTS?
     TENCENT,      // TEXT SEPARATOR + NOT INCLUDING
-    WINDOWS_MAIL, // ALMOST NOTHING
     YANDEX_1,     // ONLY BLOCKQUOTE
     YANDEX_2,     // ONLY BLOCKQUOTE
     MAIL_RU,
@@ -56,7 +56,7 @@ pub const OUTLOOK_2010: &str = include_str!("./html/unsupported/outlook_2010.htm
 pub const SPARROW: &str = include_str!("./html/unsupported/sparrow.html");
 pub const MAIL_RU: &str = include_str!("./html/unsupported/mail_ru.html");
 pub const THUNDERBIRD: &str = include_str!("./html/supported/thunderbird.html");
-pub const WINDOWS_MAIL: &str = include_str!("./html/unsupported/windows_mail.html");
+pub const WINDOWS_MAIL: &str = include_str!("./html/supported/windows_mail.html");
 pub const YANDEX_1: &str = include_str!("./html/unsupported/yandex_1.html");
 
 //Mails from https://github.com/felixfw1990/email-origin/tree/master/test/Providers

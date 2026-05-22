@@ -167,6 +167,7 @@ version = "0.1.0"
 dependencies = [
  "bitflags 2.11.1",
  "core-common-types",
+ "core-db-diesel",
  "core-keystore-op",
  "core-proton-map",
  "deadpool-diesel",
@@ -181,7 +182,6 @@ dependencies = [
  "num_enum",
  "proton-crypto-account",
  "serde",
- "serde_json",
  "thiserror 2.0.18",
 ]
 
@@ -191,6 +191,7 @@ version = "0.1.0"
 dependencies = [
  "account-db",
  "async-trait",
+ "core-common-types",
  "core-db-op",
  "core-keystore-op",
  "core-proc",
@@ -2235,6 +2236,7 @@ dependencies = [
 name = "core-common-types"
 version = "0.1.0"
 dependencies = [
+ "core-db-diesel",
  "facet",
  "serde",
  "zeroize",
@@ -2274,6 +2276,16 @@ dependencies = [
  "core-timer-op",
  "core-validator",
  "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "core-db-diesel"
+version = "0.1.0"
+dependencies = [
+ "derive_more 2.1.1",
+ "diesel",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

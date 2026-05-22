@@ -2399,6 +2399,7 @@ name = "core-muon-op"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "core-common-types",
  "core-hv-op",
  "core-proc",
  "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",

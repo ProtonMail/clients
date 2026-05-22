@@ -1,6 +1,6 @@
 mod common;
 
-use lattice::quark::{
+use lattice_quark::{
     LtQuarkJSONRes,
     payments::subscribed_user_seed::LtQuarkNewPaymentsSeedSubscribedUser,
     user::organization_create::{LtQuarkUserCreateOrganization, LtQuarkUserCreateOrganizationRes},

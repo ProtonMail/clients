@@ -122,6 +122,7 @@ dependencies = [
  "itertools 0.14.0",
  "lattice",
  "lattice-muon2",
+ "lattice-quark",
  "muon",
  "num_enum",
  "passkey",
@@ -5695,6 +5696,7 @@ dependencies = [
  "futures",
  "lattice",
  "lattice-muon2",
+ "lattice-quark",
  "muon",
  "num_enum",
  "passkey",
@@ -5730,6 +5732,18 @@ dependencies = [
  "http",
  "lattice",
  "muon",
+]
+
+[[package]]
+name = "lattice-quark"
+version = "0.1.0"
+dependencies = [
+ "derive_more 2.1.1",
+ "lattice",
+ "num_enum",
+ "regex",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

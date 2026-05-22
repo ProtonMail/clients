@@ -65,6 +65,7 @@ members = [
     "project/core/rust/lattice",
     "project/core/rust/lattice-muon1",
     "project/core/rust/lattice-muon2",
+    "project/core/rust/lattice-quark",
     "project/mail/rust/account/account-api",
     "project/mail/rust/account/account-common",
     "project/mail/rust/account/account-ids",
@@ -254,6 +255,9 @@ path = "project/core/rust/core-validator"
 
 [workspace.dependencies.lattice]
 path = "project/core/rust/lattice"
+
+[workspace.dependencies.lattice-quark]
+path = "project/core/rust/lattice-quark"
 
 [workspace.dependencies.lattice-muon1]
 path = "project/core/rust/lattice-muon1"

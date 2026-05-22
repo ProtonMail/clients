@@ -1,7 +1,5 @@
 use std::future::Future;
 
-#[cfg(feature = "quark")]
-use crate::quark::LtQuarkContract;
 use crate::{LatticeError, LtContract};
 
 use super::wire_request::LtWireRequest;
@@ -47,18 +45,6 @@ where
             let wire = LtWireRequest::from_contract(contract)?;
             let wire_res = self.send_wire_request(wire).await?;
             wire_res.into_contract_response::<T>().map_err(Into::into)
-        }
-    }
-
-    #[cfg(feature = "quark")]
-    fn send_contract_quark<T: LtQuarkContract>(
-        &self,
-        contract: &T,
-    ) -> impl Future<Output = Result<T::Response, Self::Error>> {
-        async move {
-            let wire = LtWireRequest::from_contract_quark(contract)?;
-            let wire_res = self.send_wire_request(wire).await?;
-            wire_res.into_quark_response::<T>().map_err(Into::into)
         }
     }
 }

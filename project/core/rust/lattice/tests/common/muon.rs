@@ -22,9 +22,9 @@ use lattice::{LtTransportProvider, LtWireRequest, LtWireRequestProvider};
 use lattice::{
     LatticeError, LtApiResponseError, LtContract, LtResponseBody, LtSlimAPIJSON,
     auth::LtAuthApiSession,
-    quark::{LtQuarkContract, jail::unban::LtQuarkJailUnban},
 };
 use lattice_muon2::{LtTransportError, Muon2Transport, Muon2WireRequestProvider};
+use lattice_quark::{LtQuarkContract, LtQuarkTransportProvider, jail::unban::LtQuarkJailUnban};
 use serde::Deserialize;
 
 use crate::common::test_transport::Muon2TestTransport;

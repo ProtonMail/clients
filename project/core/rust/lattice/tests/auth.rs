@@ -10,12 +10,12 @@ use lattice::{
     details::{
         AccessTokenWithInsufficientScopeErrorDetails, LoginFailedErrorDetails, LoginFailedReason,
     },
-    quark::{
-        LtQuarkJSONRes,
-        user::{
-            LtQuarkUserStatus,
-            user_create::{LtQuarkUserCreate, LtQuarkUserCreateRes},
-        },
+};
+use lattice_quark::{
+    LtQuarkJSONRes,
+    user::{
+        LtQuarkUserStatus,
+        user_create::{LtQuarkUserCreate, LtQuarkUserCreateRes},
     },
 };
 use muon::auth::scope;

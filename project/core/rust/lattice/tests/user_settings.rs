@@ -7,12 +7,12 @@ use lattice::{
         LtCorePutDeviceRecoveryPreferenceRes,
     },
     details::AccessTokenWithInsufficientScopeErrorDetails,
-    quark::{
-        LtQuarkJSONRes,
-        user::{
-            LtQuarkUserStatus,
-            user_create::{LtQuarkUserCreate, LtQuarkUserCreateRes},
-        },
+};
+use lattice_quark::{
+    LtQuarkJSONRes,
+    user::{
+        LtQuarkUserStatus,
+        user_create::{LtQuarkUserCreate, LtQuarkUserCreateRes},
     },
 };
 

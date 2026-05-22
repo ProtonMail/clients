@@ -11,13 +11,13 @@ use lattice::core::post_saml_setup_fields::{
 };
 use lattice::core::user_settings::{LtCoreGetSettingsReq, LtCoreGetSettingsRes};
 use lattice::core::{LtCoreDomainId, LtCoreDomainVerifyState, LtCoreSsoType};
-use lattice::quark::payments::subscribed_user_seed::{
+use lattice_quark::payments::subscribed_user_seed::{
     LtQuarkNewPaymentsSeedSubscribedUser, LtQuarkNewPaymentsSeedSubscribedUserRes,
 };
-use lattice::quark::user::domain_create::{
+use lattice_quark::user::domain_create::{
     LtQuarkOrganizationCreateDomain, LtQuarkOrganizationCreateDomainRes,
 };
-use lattice::quark::user::organization_create::{
+use lattice_quark::user::organization_create::{
     LtQuarkUserCreateOrganization, LtQuarkUserCreateOrganizationRes,
 };
 

@@ -375,7 +375,7 @@ crossterm = { version = "0.28.1", features = ["event-stream"] }
 deadpool = "0.12.3"
 deadpool-diesel = { version = '0.6.1', features = ["sqlite", "rt_tokio_1"] }
 derivative = "=2.2.0"
-diesel = { version = '2.3.7', features = ["serde_json", "sqlite"] }
+diesel = { version = '2.3.8', features = ["serde_json", "sqlite"] }
 diesel-derive-newtype = "2.1.2"
 diesel_migrations = "2.3.1"
 ext-php-rs = "0.15.3"

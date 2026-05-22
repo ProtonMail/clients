@@ -878,6 +878,10 @@ impl MailUserSession {
         .await
         .map_err(ActionError::from)
     }
+
+    pub async fn is_business(&self) -> Result<bool, ActionError> {
+        Ok(false)
+    }
 }
 
 impl TryFrom<mail_common::DecryptedAttachment> for DecryptedAttachment {

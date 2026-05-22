@@ -9,8 +9,10 @@ use crate::{
 #[derive(Debug)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
 pub struct LtCorePutAddressBody {
-    pub display_name: String,
-    pub signature: String,
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    pub display_name: Option<String>,
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    pub signature: Option<String>,
 }
 
 #[derive(Debug)]

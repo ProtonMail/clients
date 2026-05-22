@@ -43,6 +43,7 @@ members = [
     "project/core/rust/core-common-types",
     "project/core/rust/core-crux-shell",
     "project/core/rust/core-crux-types",
+    "project/core/rust/core-db-diesel",
     "project/core/rust/core-db-op",
     "project/core/rust/core-device-info-op",
     "project/core/rust/core-event-loop",
@@ -156,9 +157,6 @@ rust-version = "1.93.0"
 path = "project/account/rust/account-crux"
 features = ["facet_typegen"]
 
-[workspace.dependencies.account-crux-client-info]
-path = "project/account/rust/account-crux-client-info"
-
 [workspace.dependencies.account-db]
 path = "project/account/rust/account-db"
 
@@ -173,6 +171,9 @@ path = "project/account/rust/account-validator-password"
 
 [workspace.dependencies.core-crux-types]
 path = "project/core/rust/core-crux-types"
+
+[workspace.dependencies.core-db-diesel]
+path = "project/core/rust/core-db-diesel"
 
 [workspace.dependencies.core-db-op]
 path = "project/core/rust/core-db-op"

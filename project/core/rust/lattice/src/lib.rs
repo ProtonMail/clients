@@ -6,9 +6,6 @@ pub mod auth;
 #[cfg(feature = "core")]
 pub mod core;
 
-#[cfg(feature = "quark")]
-pub mod quark;
-
 #[cfg(feature = "observability")]
 pub mod observability;
 

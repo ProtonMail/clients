@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 
-#[cfg(feature = "quark")]
-use crate::quark::{LtQuarkContract, LtQuarkRes};
 use crate::{LatticeError, LtApiResponseError, LtContract, LtResponseBody, Sensitive};
 
 #[derive(Debug, Clone)]
@@ -33,16 +31,5 @@ impl LtWireResponse {
             self.status,
             self.body.into_inner(),
         ))
-    }
-
-    #[cfg(feature = "quark")]
-    pub fn into_quark_response<T: LtQuarkContract>(self) -> Result<T::Response, LatticeError> {
-        if self.status != 200 {
-            return Err(LatticeError::UnexpectedStatusCode(
-                self.status,
-                self.body.into_inner(),
-            ));
-        }
-        <T::Response as LtQuarkRes>::from_quark_body(&self.body)
     }
 }

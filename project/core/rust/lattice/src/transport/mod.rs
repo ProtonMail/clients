@@ -29,8 +29,8 @@
 //!
 //! - **`serde`** (crate feature) — required for SlimAPI JSON error parsing in
 //!   [`LtWireResponse::into_contract_response`].
-//! - **`quark`** (crate feature) — enables `LtWireRequest::from_contract_quark`, `LtWireResponse::into_quark_response`,
-//!   and `LtTransportProvider::send_contract_quark`. Default: disabled.
+//!
+//! Quark commands are provided by the separate [`lattice-quark`] crate.
 //!
 //! # Muon adapters
 //!
@@ -39,8 +39,6 @@
 //! | `lattice-muon1` | `mail-muon` (`Muon1Transport`, `Muon1WireRequestProvider`) |
 //! | `lattice-muon2` | `muon` v2 (`Muon2Transport`, `Muon2WireRequestProvider`) |
 //!
-//! Enable `quark` on those crates when test or admin tooling needs Quark commands.
-
 mod provider;
 mod wire_method;
 mod wire_request;

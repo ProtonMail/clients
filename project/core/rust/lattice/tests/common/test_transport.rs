@@ -1,7 +1,7 @@
-use lattice::quark::jail::unban::LtQuarkJailUnban;
 use lattice::{LatticeError, LtApiResponseError, LtContract};
 use lattice::{LtTransportProvider, LtWireRequestProvider};
 use lattice_muon2::{LtTransportError, Muon2Transport, Muon2WireRequestProvider};
+use lattice_quark::{LtQuarkTransportProvider, jail::unban::LtQuarkJailUnban};
 
 use crate::common::MuonCtx;
 

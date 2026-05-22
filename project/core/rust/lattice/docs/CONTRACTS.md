@@ -20,7 +20,7 @@ The core **`lattice`** crate defines contracts and, with the **`serde`** feature
 
 **Muon v2** — `LatticeExt::send_with(session)` builds a [`Muon2Transport`](../../lattice-muon2/src/transport.rs) and calls `send_contract_request`.
 
-**Quark (optional)** — Quark command types live under `lattice::quark` (enable `lattice`’s `quark` feature). Sending them uses [`LtTransportProvider::send_contract_quark`](../src/transport/provider.rs), available when **`quark`** is enabled on `lattice` (and on `lattice-muon1` / `lattice-muon2`, which forward `lattice/quark`). Enable e.g. `lattice-muon2 = { features = ["quark"] }` in test/dev dependencies. Integration tests use helpers in `tests/common/` that call `send_contract_quark` on a `LtTransportProvider` implementation.
+**Quark (optional)** — Quark command types live in the separate [`lattice-quark`](../../lattice-quark/) crate (`lattice_quark::user`, `lattice_quark::payments`, …). Extension traits encode contracts to [`LtWireRequest`](../../lattice/src/transport/wire_request.rs) ([`LtQuarkWireExt::to_wire_request`](../../lattice-quark/src/transport/lt_quark_wire_ext.rs)) and parse [`LtWireResponse`](../../lattice/src/transport/wire_response.rs) ([`LtQuarkResponseExt::into_quark_response`](../../lattice-quark/src/transport/lt_quark_response_ext.rs)). Send via [`LtQuarkTransportProvider::send_contract_quark`](../../lattice-quark/src/transport/lt_quark_transport_provider.rs) on any [`LtTransportProvider`](../src/transport/provider.rs) (e.g. `Muon2Transport` from `lattice-muon2`). Add `lattice-quark` and a muon adapter in dev-dependencies; muon crates have no `quark` feature.
 
 **Wire sensitivity** — On the transport wire layer, header values, query values, and HTTP bodies use [`Sensitive`](../../lattice/src/sensitive.rs). Muon adapters ([`Muon1WireRequestProvider`](../../lattice-muon1/src/wire.rs), [`Muon2WireRequestProvider`](../../lattice-muon2/src/wire.rs)) unwrap with `into_inner()` only when building native `HttpReq` / reading native `HttpRes`. Contract `headers()` should return `HashMap<String, Sensitive<String>>` (same as query params).
 
@@ -196,8 +196,8 @@ Integration tests under `tests/` must **not** rely on **hardcoded usernames or p
 
 **Do**
 
-* Enable **`quark`** on `lattice` and `lattice-muon2` in dev-dependencies when tests send Quark commands.
-* Create users with **`LtQuarkContract`** types (e.g. `LtQuarkUserCreate`, `LtQuarkUserCreateOrganization`, …) via `send_contract_quark` / `send_quark` helpers in `tests/common/`.
+* Add **`lattice-quark`** and **`lattice-muon2`** (or `lattice-muon1`) in dev-dependencies when tests send Quark commands.
+* Create users with **`LtQuarkContract`** types from `lattice_quark` (e.g. `LtQuarkUserCreate`, `LtQuarkUserCreateOrganization`, …) via `LtQuarkTransportProvider::send_contract_quark` / `send_quark` helpers in `tests/common/`.
 * Derive **unique** credentials per run using helpers such as **`random_username()`**, **`random_password()`**, and related utilities in `tests/common` when the test needs a name or secret string.
 * Thread the **returned** username/password from Quark responses into login and follow-up API calls.
 

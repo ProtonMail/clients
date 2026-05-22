@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 
-#[cfg(feature = "quark")]
-use crate::quark::LtQuarkContract;
 use crate::{LatticeError, LtContract, LtRequestQueryParams, Sensitive};
 
 use super::wire_method::LtWireMethod;
@@ -36,18 +34,6 @@ impl LtWireRequest {
             method: wire_method,
             path,
             query,
-        })
-    }
-
-    #[cfg(feature = "quark")]
-    pub fn from_contract_quark<T: LtQuarkContract>(contract: &T) -> Result<Self, LatticeError> {
-        let url = format!("/internal/quark/raw::{}", T::COMMAND_PATH);
-        let params = contract.params()?.as_command();
-        Ok(Self {
-            headers: HashMap::new(),
-            method: LtWireMethod::Get,
-            path: url,
-            query: vec![("strInput".to_string(), Sensitive::new(params))],
         })
     }
 }

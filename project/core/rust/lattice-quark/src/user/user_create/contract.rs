@@ -20,6 +20,7 @@ pub struct LtQuarkUserCreate {
     pub external: Option<bool>,
     pub external_email: Option<String>,
     pub totp_secret: Option<String>,
+    pub temp_password: Option<bool>,
 }
 
 impl Default for LtQuarkUserCreate {
@@ -36,6 +37,7 @@ impl Default for LtQuarkUserCreate {
             external: None,
             external_email: None,
             totp_secret: None,
+            temp_password: None,
         }
     }
 }
@@ -55,6 +57,7 @@ impl LtQuarkContract for LtQuarkUserCreate {
             .query_if_some("-e", self.external.as_ref())
             .query_if_some("--external-email", self.external_email.as_ref())
             .query_if_some("--totp-secret", self.totp_secret.as_ref())
+            .query_flag_if(self.temp_password == Some(true), "--temp-password")
             .query("-f", LtQuarkFormat::Json))
     }
 }

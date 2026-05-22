@@ -207,7 +207,7 @@ path = "project/core/rust/core-feature-flags-op"
 path = "project/core/rust/core-crux-shell"
 
 [workspace.dependencies.muon]
-version = "2.3.0"
+version = "2.4.1"
 registry = "proton"
 features = ["full-base", "transport-reqwest-rustls"]
 

@@ -145,6 +145,7 @@ pub fn new_client() -> Client {
     builder
         .retry_policy(RetryPolicy::default())
         .without_persistence()
+        .without_cookie_store()
         .build()
         .unwrap()
 }

@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [mail-uniffi-v0.165.9] - 2026-05-25
+
+### Features
+
+- [ET-6099] Add basic move-to support for categories
+- [ET-6106] Add new method MailUserSession::is_business
+
+### Fixes
+
+- [ET-6276] Fix outlook and gmail issues - proton/clients/monorepo!2565
+- [ET-6255] Mark auth errors for event loop as retryable
+
+
 ## [mail-uniffi-v0.165.8] - 2026-05-18
 
 ### Features

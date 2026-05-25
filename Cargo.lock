@@ -8718,7 +8718,6 @@ dependencies = [
  "payment-observability",
  "serde",
  "serde_json",
- "serde_urlencoded",
  "tempfile",
  "thiserror 2.0.18",
  "tokio",
@@ -8749,9 +8748,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "serde",
- "serde_urlencoded",
  "thiserror 2.0.18",
- "url",
 ]
 
 [[package]]

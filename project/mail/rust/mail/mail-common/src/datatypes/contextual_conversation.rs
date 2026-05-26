@@ -1,7 +1,7 @@
 use super::SystemLabelId;
 use super::folder_banner::{AutoDeleteBanner, AutoDeleteState, SpamOrTrash};
 use crate::actions::{
-    AllConversationActions, AllListActions, ConversationActionSheet, MovableSystemFolderAction,
+    AllConversationActions, AllListActions, ConversationActionSheet, SystemFolderDestination,
 };
 use crate::datatypes::{
     AttachmentMetadata, CustomLabel, ExclusiveLocation, LocalConversationId, LocalMessageId,
@@ -419,10 +419,10 @@ impl ContextualConversation {
         };
 
         let (inbox, archive, trash, spam, bottom_bar_actions, current_label, conversations) = try_join!(
-            MovableSystemFolderAction::inbox(tether),
-            MovableSystemFolderAction::archive(tether),
-            MovableSystemFolderAction::trash(tether),
-            MovableSystemFolderAction::spam(tether),
+            SystemFolderDestination::inbox(tether),
+            SystemFolderDestination::archive(tether),
+            SystemFolderDestination::trash(tether),
+            SystemFolderDestination::spam(tether),
             MobileAction::list_toolbar_actions(tether),
             current_label_fut,
             conversations_fut
@@ -473,10 +473,10 @@ impl ContextualConversation {
         let conversation = conversation.unwrap();
 
         let (inbox, archive, trash, spam, conversation_toolbar_actions) = try_join!(
-            MovableSystemFolderAction::inbox(tether),
-            MovableSystemFolderAction::archive(tether),
-            MovableSystemFolderAction::trash(tether),
-            MovableSystemFolderAction::spam(tether),
+            SystemFolderDestination::inbox(tether),
+            SystemFolderDestination::archive(tether),
+            SystemFolderDestination::trash(tether),
+            SystemFolderDestination::spam(tether),
             MobileAction::conversation_toolbar_actions(tether)
         )?;
         let current_label = Label::resolve_remote_label_id(current_label_id, tether).await?;

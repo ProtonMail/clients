@@ -2,9 +2,7 @@
 #[path = "../../tests/actions/available_actions/all_message_actions.rs"]
 mod tests;
 
-use crate::actions::{
-    ActionContext, GenericAction, GenericMobileActions, MovableSystemFolderAction,
-};
+use crate::actions::{ActionContext, GenericAction, GenericMobileActions, SystemFolderDestination};
 use crate::datatypes::MobileAction;
 use crate::datatypes::theme::MailTheme;
 use crate::decrypted_message::ThemeOpts;
@@ -63,10 +61,10 @@ impl AllMessageActions {
         can_reply_all: bool,
         theme: Option<ThemeOpts>,
         mobile_actions: &[MobileAction],
-        inbox: MovableSystemFolderAction,
-        archive: MovableSystemFolderAction,
-        trash: MovableSystemFolderAction,
-        spam: MovableSystemFolderAction,
+        inbox: SystemFolderDestination,
+        archive: SystemFolderDestination,
+        trash: SystemFolderDestination,
+        spam: SystemFolderDestination,
     ) -> Self {
         // For single messages, any_* and all_* flags are the same
         let any_read = !is_unread;
@@ -121,8 +119,8 @@ pub enum MessageAction {
     // Organization
     LabelAs,
     MoveTo,
-    MoveToSystemFolder(MovableSystemFolderAction),
-    NotSpam(MovableSystemFolderAction),
+    MoveToSystemFolder(SystemFolderDestination),
+    NotSpam(SystemFolderDestination),
     PermanentDelete,
 
     // Communication

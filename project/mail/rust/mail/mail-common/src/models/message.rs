@@ -12,7 +12,7 @@ use crate::actions::messages::{
 };
 use crate::actions::{
     ActionMoveData, AllListActions, AllMessageActions, LabelAsData, LabelAsOutput, LabelPair,
-    MovableSystemFolderAction, Undo,
+    SystemFolderDestination, Undo,
 };
 use crate::datatypes::dependencies::DependencyFetcher;
 use crate::datatypes::{ConversationViewOptions, MimeType};
@@ -38,7 +38,8 @@ use proton_crypto_account::keys::AddressKeySelector;
 use sqlite_watcher::watcher::TableObserver;
 
 use crate::actions::{
-    ConversationOrMessage, LabelAsAction, MessageActionSheet, MoveAction, filter_responses,
+    ConversationOrMessage, LabelAsAction, MessageActionSheet, MoveDestination, MoveTo,
+    filter_responses,
 };
 use crate::datatypes::{
     AttachmentMetadata, CustomLabel, DeletedItemType, Disposition, EncryptedMessageBody,
@@ -487,10 +488,10 @@ impl Message {
     ) -> Result<AllListActions, AppError> {
         debug!("{message_ids:?}");
 
-        let inbox = MovableSystemFolderAction::inbox(tether).await?;
-        let archive = MovableSystemFolderAction::archive(tether).await?;
-        let trash = MovableSystemFolderAction::trash(tether).await?;
-        let spam = MovableSystemFolderAction::spam(tether).await?;
+        let inbox = SystemFolderDestination::inbox(tether).await?;
+        let archive = SystemFolderDestination::archive(tether).await?;
+        let trash = SystemFolderDestination::trash(tether).await?;
+        let spam = SystemFolderDestination::spam(tether).await?;
         let list_actions = MobileAction::list_toolbar_actions(tether).await?;
         let current_label = Label::resolve_remote_label_id(current_label_id, tether).await?;
         let messages = Self::find_by_ids(message_ids.to_vec(), tether).await?;
@@ -541,10 +542,10 @@ impl Message {
         let message = message.unwrap();
 
         let (inbox, archive, trash, spam, message_toolbar_actions) = try_join!(
-            MovableSystemFolderAction::inbox(tether),
-            MovableSystemFolderAction::archive(tether),
-            MovableSystemFolderAction::trash(tether),
-            MovableSystemFolderAction::spam(tether),
+            SystemFolderDestination::inbox(tether),
+            SystemFolderDestination::archive(tether),
+            SystemFolderDestination::trash(tether),
+            SystemFolderDestination::spam(tether),
             MobileAction::message_toolbar_actions(tether)
         )?;
         let current_label = Label::resolve_remote_label_id(current_label_id, tether).await?;
@@ -961,38 +962,14 @@ impl Message {
         view: Label,
         message_ids: Vec<LocalMessageId>,
         tether: &Tether,
-    ) -> Result<Vec<MoveAction>, AppError> {
+    ) -> Result<Vec<MoveDestination>, AppError> {
         if message_ids.is_empty() {
             return Err(AppError::EmptyListOfMessages);
         }
 
         debug!("{message_ids:?}");
 
-        let moving_from_sent = matches!(
-            SystemLabel::from_opt_rid(view.remote_id.as_ref()),
-            Some(SystemLabel::AllSent | SystemLabel::Sent)
-        );
-        let all_system = Label::find_by_kind(LabelType::System, tether).await?;
-        let all_system_excluding_view = all_system.iter().filter(|label| {
-            let sent_move = moving_from_sent
-                && matches!(
-                    SystemLabel::from_opt_rid(label.remote_id.as_ref()),
-                    Some(SystemLabel::Inbox | SystemLabel::Spam)
-                );
-
-            label.local_id != view.local_id && !sent_move
-        });
-
-        let all_custom_folders = Label::find_by_kind(LabelType::Folder, tether).await?;
-        let all_move_to_actions = MoveAction::vec(
-            tether,
-            all_system_excluding_view
-                .clone()
-                .chain(all_custom_folders.iter()),
-        )
-        .await?;
-
-        let res = MoveAction::finalize(all_move_to_actions, tether).await?;
+        let res = MoveTo::for_message(&view).build(tether).await?;
         debug!("available label_as actions for messages: {res:?}");
         Ok(res)
     }

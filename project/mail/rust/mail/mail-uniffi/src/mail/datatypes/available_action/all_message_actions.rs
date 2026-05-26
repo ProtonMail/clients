@@ -1,4 +1,4 @@
-use crate::mail::datatypes::MovableSystemFolderAction;
+use crate::mail::datatypes::SystemFolderDestination;
 use crate::{UniffiEnum, UniffiRecord};
 use mail_common::actions::{
     AllMessageActions as RealAllMessageActions, MessageAction as RealMessageAction,
@@ -66,8 +66,8 @@ pub enum MessageAction {
     // Organization
     LabelAs,
     MoveTo,
-    MoveToSystemFolder(MovableSystemFolderAction),
-    NotSpam(MovableSystemFolderAction),
+    MoveToSystemFolder(SystemFolderDestination),
+    NotSpam(SystemFolderDestination),
     PermanentDelete,
 
     // Communication

@@ -10,7 +10,7 @@ use crate::actions::conversations::{
 };
 use crate::actions::{
     ActionMoveData, ConversationOrMessage, LabelAsAction, LabelAsData, LabelAsOutput, LabelPair,
-    MoveAction, Undo, filter_responses,
+    MoveDestination, MoveTo, Undo, filter_responses,
 };
 use crate::datatypes::dependencies::DependencyFetcher;
 use crate::datatypes::{
@@ -1570,18 +1570,13 @@ impl Conversation {
         view: Label,
         local_ids: Vec<LocalConversationId>,
         tether: &Tether,
-    ) -> Result<Vec<MoveAction>, AppError> {
+    ) -> Result<Vec<MoveDestination>, AppError> {
         if local_ids.is_empty() {
             return Err(AppError::EmptyListOfConversations);
         }
 
         debug!("{local_ids:?}");
 
-        let all_system = Label::find_by_kind(LabelType::System, tether).await?;
-        let all_system_excluding_view = all_system
-            .iter()
-            .filter(|label| label.local_id != view.local_id);
-        let all_custom_folders = Label::find_by_kind(LabelType::Folder, tether).await?;
         let conversations = Conversation::find(
             format!(
                 "WHERE local_id IN ({})",
@@ -1609,15 +1604,7 @@ impl Conversation {
             }
         })?;
 
-        let all_move_to_actions = MoveAction::vec(
-            tether,
-            all_system_excluding_view
-                .clone()
-                .chain(all_custom_folders.iter()),
-        )
-        .await?;
-
-        let res = MoveAction::finalize(all_move_to_actions, tether).await?;
+        let res = MoveTo::for_conversation(&view).build(tether).await?;
         debug!("available move_to actions: {res:?}");
         Ok(res)
     }

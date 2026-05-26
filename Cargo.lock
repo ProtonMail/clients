@@ -107,6 +107,8 @@ dependencies = [
  "async-compat",
  "async-trait",
  "bincode",
+ "cookie",
+ "cookie_store",
  "core-common-types",
  "core-crux-shell",
  "core-feature-flags-op",

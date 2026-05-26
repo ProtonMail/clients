@@ -4,7 +4,7 @@ mod tests;
 
 use crate::actions::{
     ActionContext, GenericAction, GenericMobileActions, MobileActionsBuilder,
-    MovableSystemFolderAction, SystemFolders,
+    SystemFolderDestination, SystemFolders,
 };
 use crate::datatypes::MobileAction;
 use mail_core_api::services::proton::LabelId;
@@ -28,10 +28,10 @@ impl AllListActions {
         any_starred: bool,
         all_starred: bool,
         mobile_actions: &[MobileAction],
-        inbox: MovableSystemFolderAction,
-        archive: MovableSystemFolderAction,
-        trash: MovableSystemFolderAction,
-        spam: MovableSystemFolderAction,
+        inbox: SystemFolderDestination,
+        archive: SystemFolderDestination,
+        trash: SystemFolderDestination,
+        spam: SystemFolderDestination,
     ) -> Self {
         let all_read = any_read && !any_unread;
 
@@ -73,8 +73,8 @@ pub enum ListAction {
     MarkUnread,
     More,
     MoveTo,
-    MoveToSystemFolder(MovableSystemFolderAction),
-    NotSpam(MovableSystemFolderAction),
+    MoveToSystemFolder(SystemFolderDestination),
+    NotSpam(SystemFolderDestination),
     PermanentDelete,
     Star,
     Unstar,

@@ -4,7 +4,7 @@
 //! across different contexts (list, message, conversation) while sharing common logic
 //! and maintaining type safety through generic implementations.
 
-use crate::actions::MovableSystemFolderAction;
+use crate::actions::SystemFolderDestination;
 use crate::datatypes::SystemLabelId;
 use crate::decrypted_message::ThemeOpts;
 use mail_core_api::services::proton::LabelId;
@@ -23,8 +23,8 @@ pub enum GenericAction {
     // Organization
     LabelAs,
     MoveTo,
-    MoveToSystemFolder(MovableSystemFolderAction),
-    NotSpam(MovableSystemFolderAction),
+    MoveToSystemFolder(SystemFolderDestination),
+    NotSpam(SystemFolderDestination),
     PermanentDelete,
 
     // Utility
@@ -73,8 +73,8 @@ impl GenericAction {
     /// Get archive action based on current label context
     pub fn toggle_archive(
         current_label: &LabelId,
-        inbox: &MovableSystemFolderAction,
-        archive: &MovableSystemFolderAction,
+        inbox: &SystemFolderDestination,
+        archive: &SystemFolderDestination,
     ) -> Self {
         if current_label == &LabelId::archive() {
             Self::MoveToSystemFolder(*inbox)
@@ -84,7 +84,7 @@ impl GenericAction {
     }
 
     /// Get trash action based on current label context
-    pub fn toggle_trash(current_label: &LabelId, trash: &MovableSystemFolderAction) -> Self {
+    pub fn toggle_trash(current_label: &LabelId, trash: &SystemFolderDestination) -> Self {
         if [LabelId::trash(), LabelId::spam()].contains(current_label) {
             Self::PermanentDelete
         } else {
@@ -95,8 +95,8 @@ impl GenericAction {
     /// Get spam action based on current label context
     pub fn toggle_spam(
         current_label: &LabelId,
-        inbox: &MovableSystemFolderAction,
-        spam: &MovableSystemFolderAction,
+        inbox: &SystemFolderDestination,
+        spam: &SystemFolderDestination,
     ) -> Self {
         if current_label == &LabelId::spam() {
             Self::NotSpam(*inbox)
@@ -129,10 +129,10 @@ pub struct ActionContext {
 /// System folders used in actions
 #[derive(Debug, Clone)]
 pub struct SystemFolders {
-    pub inbox: MovableSystemFolderAction,
-    pub archive: MovableSystemFolderAction,
-    pub trash: MovableSystemFolderAction,
-    pub spam: MovableSystemFolderAction,
+    pub inbox: SystemFolderDestination,
+    pub archive: SystemFolderDestination,
+    pub trash: SystemFolderDestination,
+    pub spam: SystemFolderDestination,
 }
 
 /// Common behavior shared between ListAction and MessageAction
@@ -160,20 +160,20 @@ pub trait GenericMobileActions: Clone + PartialEq + Sized + From<GenericAction> 
 
     fn toggle_archive(
         current_label: &LabelId,
-        inbox: &MovableSystemFolderAction,
-        archive: &MovableSystemFolderAction,
+        inbox: &SystemFolderDestination,
+        archive: &SystemFolderDestination,
     ) -> Self {
         GenericAction::toggle_archive(current_label, inbox, archive).into()
     }
 
-    fn toggle_trash(current_label: &LabelId, trash: &MovableSystemFolderAction) -> Self {
+    fn toggle_trash(current_label: &LabelId, trash: &SystemFolderDestination) -> Self {
         GenericAction::toggle_trash(current_label, trash).into()
     }
 
     fn toggle_spam(
         current_label: &LabelId,
-        inbox: &MovableSystemFolderAction,
-        spam: &MovableSystemFolderAction,
+        inbox: &SystemFolderDestination,
+        spam: &SystemFolderDestination,
     ) -> Self {
         GenericAction::toggle_spam(current_label, inbox, spam).into()
     }
@@ -202,11 +202,11 @@ pub trait GenericMobileActions: Clone + PartialEq + Sized + From<GenericAction> 
         GenericAction::MoveTo.into()
     }
 
-    fn move_to_system_folder(folder: MovableSystemFolderAction) -> Self {
+    fn move_to_system_folder(folder: SystemFolderDestination) -> Self {
         GenericAction::MoveToSystemFolder(folder).into()
     }
 
-    fn not_spam(folder: MovableSystemFolderAction) -> Self {
+    fn not_spam(folder: SystemFolderDestination) -> Self {
         GenericAction::NotSpam(folder).into()
     }
 

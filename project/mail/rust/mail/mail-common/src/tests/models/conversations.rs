@@ -322,7 +322,7 @@ mod first_unread_message {
 
 mod available_move_to_actions {
     use super::*;
-    use crate::actions::{InboxFolderAction, MovableSystemFolderAction};
+    use crate::actions::{InboxDestination, SystemFolderDestination};
     use crate::test_utils::db::new_test_connection;
     use crate::{conv_id, conversation, label, lbl_id};
     use futures::stream::{self, StreamExt};
@@ -333,23 +333,23 @@ mod available_move_to_actions {
     use test_case::test_case;
 
     #[derive(Debug, Clone, PartialEq)]
-    enum ExpectedMoveAction {
+    enum ExpectedMoveDestination {
         Inbox(ExpectedInboxFolder),
         SystemFolder(ExpectedSystemFolder),
         CustomFolder(ExpectedCustomFolder),
     }
 
-    impl ExpectedMoveAction {
-        async fn new(action: MoveAction, tx: &Tether) -> Self {
+    impl ExpectedMoveDestination {
+        async fn new(action: MoveDestination, tx: &Tether) -> Self {
             match action {
-                MoveAction::Inbox(action) => {
-                    ExpectedMoveAction::Inbox(ExpectedInboxFolder::new(action, tx).await)
+                MoveDestination::Inbox(action) => {
+                    ExpectedMoveDestination::Inbox(ExpectedInboxFolder::new(action, tx).await)
                 }
-                MoveAction::SystemFolder(action) => {
-                    ExpectedMoveAction::SystemFolder(ExpectedSystemFolder::new(action, tx).await)
-                }
-                MoveAction::CustomFolder(action) => ExpectedMoveAction::CustomFolder(
-                    ExpectedCustomFolder::new(MoveAction::CustomFolder(action), tx).await,
+                MoveDestination::SystemFolder(action) => ExpectedMoveDestination::SystemFolder(
+                    ExpectedSystemFolder::new(action, tx).await,
+                ),
+                MoveDestination::CustomFolder(action) => ExpectedMoveDestination::CustomFolder(
+                    ExpectedCustomFolder::new(MoveDestination::CustomFolder(action), tx).await,
                 ),
             }
         }
@@ -363,7 +363,7 @@ mod available_move_to_actions {
     }
 
     impl ExpectedInboxFolder {
-        async fn new(action: InboxFolderAction, tx: &Tether) -> Self {
+        async fn new(action: InboxDestination, tx: &Tether) -> Self {
             let label_id = Label::local_id_counterpart(action.local_id, tx)
                 .await
                 .unwrap()
@@ -387,7 +387,7 @@ mod available_move_to_actions {
     }
 
     impl ExpectedSystemFolder {
-        async fn new(action: MovableSystemFolderAction, tx: &Tether) -> Self {
+        async fn new(action: SystemFolderDestination, tx: &Tether) -> Self {
             ExpectedSystemFolder {
                 label_id: Label::local_id_counterpart(action.local_id, tx)
                     .await
@@ -402,22 +402,24 @@ mod available_move_to_actions {
     struct ExpectedCustomFolder {
         label_id: LabelId,
         name: String,
+        color: Option<LabelColor>,
         children: Vec<ExpectedCustomFolder>,
     }
 
     impl ExpectedCustomFolder {
-        async fn new(action: MoveAction, tx: &Tether) -> Self {
+        async fn new(action: MoveDestination, tx: &Tether) -> Self {
             match action {
-                MoveAction::CustomFolder(action) => ExpectedCustomFolder {
+                MoveDestination::CustomFolder(action) => ExpectedCustomFolder {
                     label_id: Label::local_id_counterpart(action.local_id, tx)
                         .await
                         .unwrap()
                         .unwrap(),
                     name: action.name,
+                    color: action.color,
                     children: stream::iter(action.children)
                         .then(|child| async move {
                             Box::pin(ExpectedCustomFolder::new(
-                                MoveAction::CustomFolder(child),
+                                MoveDestination::CustomFolder(child),
                                 tx,
                             ))
                             .await
@@ -463,26 +465,28 @@ mod available_move_to_actions {
             label!(remote_id: lbl_id!("label2"), label_type: LabelType::Folder, name: "label2".to_string()),
         ],
         Ok(&[
-            ExpectedMoveAction::SystemFolder(ExpectedSystemFolder {
+            ExpectedMoveDestination::SystemFolder(ExpectedSystemFolder {
                 label_id: SystemLabel::Archive.label_id(),
                 name: MovableSystemFolder::Archive,
             }),
-            ExpectedMoveAction::SystemFolder(ExpectedSystemFolder {
+            ExpectedMoveDestination::SystemFolder(ExpectedSystemFolder {
                 label_id: SystemLabel::Spam.label_id(),
                 name: MovableSystemFolder::Spam,
             }),
-            ExpectedMoveAction::SystemFolder(ExpectedSystemFolder {
+            ExpectedMoveDestination::SystemFolder(ExpectedSystemFolder {
                 label_id: SystemLabel::Trash.label_id(),
                 name: MovableSystemFolder::Trash,
             }),
-            ExpectedMoveAction::CustomFolder(ExpectedCustomFolder {
+            ExpectedMoveDestination::CustomFolder(ExpectedCustomFolder {
                 label_id: "label1".into(),
                 name: "label1".into(),
+                color: None,
                 children: vec![],
             }),
-            ExpectedMoveAction::CustomFolder(ExpectedCustomFolder {
+            ExpectedMoveDestination::CustomFolder(ExpectedCustomFolder {
                 label_id: "label2".into(),
                 name: "label2".into(),
+                color: None,
                 children: vec![]
             }),
         ]); "TEST2: conversations without labels")]
@@ -505,20 +509,20 @@ mod available_move_to_actions {
         ],
         vec![],
         Ok(&[
-            ExpectedMoveAction::Inbox(ExpectedInboxFolder {
+            ExpectedMoveDestination::Inbox(ExpectedInboxFolder {
                 label_id: SystemLabel::Inbox.label_id(),
                 name: MovableSystemFolder::Inbox,
                 categories: vec![],
             }),
-            ExpectedMoveAction::SystemFolder(ExpectedSystemFolder {
+            ExpectedMoveDestination::SystemFolder(ExpectedSystemFolder {
                 label_id: SystemLabel::Archive.label_id(),
                 name: MovableSystemFolder::Archive,
             }),
-            ExpectedMoveAction::SystemFolder(ExpectedSystemFolder {
+            ExpectedMoveDestination::SystemFolder(ExpectedSystemFolder {
                 label_id: SystemLabel::Spam.label_id(),
                 name: MovableSystemFolder::Spam,
             }),
-            ExpectedMoveAction::SystemFolder(ExpectedSystemFolder {
+            ExpectedMoveDestination::SystemFolder(ExpectedSystemFolder {
                 label_id: SystemLabel::Trash.label_id(),
                 name: MovableSystemFolder::Trash,
             }),
@@ -533,31 +537,33 @@ mod available_move_to_actions {
             CUSTOM_FOLDER.clone(),
         ],
         Ok(&[
-            ExpectedMoveAction::Inbox(ExpectedInboxFolder {
+            ExpectedMoveDestination::Inbox(ExpectedInboxFolder {
                 label_id: SystemLabel::Inbox.label_id(),
                 name: MovableSystemFolder::Inbox,
                 categories: vec![],
             }),
-            ExpectedMoveAction::SystemFolder(ExpectedSystemFolder {
+            ExpectedMoveDestination::SystemFolder(ExpectedSystemFolder {
                 label_id: SystemLabel::Archive.label_id(),
                 name: MovableSystemFolder::Archive,
             }),
-            ExpectedMoveAction::SystemFolder(ExpectedSystemFolder {
+            ExpectedMoveDestination::SystemFolder(ExpectedSystemFolder {
                 label_id: SystemLabel::Spam.label_id(),
                 name: MovableSystemFolder::Spam,
             }),
-            ExpectedMoveAction::SystemFolder(ExpectedSystemFolder {
+            ExpectedMoveDestination::SystemFolder(ExpectedSystemFolder {
                 label_id: SystemLabel::Trash.label_id(),
                 name: MovableSystemFolder::Trash,
             }),
-            ExpectedMoveAction::CustomFolder(ExpectedCustomFolder {
+            ExpectedMoveDestination::CustomFolder(ExpectedCustomFolder {
                 label_id: "label1".into(),
                 name: "label1".into(),
+                color: None,
                 children: vec![]
             }),
-            ExpectedMoveAction::CustomFolder(ExpectedCustomFolder {
+            ExpectedMoveDestination::CustomFolder(ExpectedCustomFolder {
                 label_id: "1234".into(),
                 name: "My custom folder".into(),
+                color: None,
                 children: vec![],
             }),
         ]); "TEST5: Conversation in custom folder, when viewed from custom folder")]
@@ -604,38 +610,42 @@ mod available_move_to_actions {
             )
         ],
         Ok(&[
-            ExpectedMoveAction::Inbox(ExpectedInboxFolder {
+            ExpectedMoveDestination::Inbox(ExpectedInboxFolder {
                 label_id: SystemLabel::Inbox.label_id(),
                 name: MovableSystemFolder::Inbox,
                 categories: vec![],
             }),
-            ExpectedMoveAction::SystemFolder(ExpectedSystemFolder {
+            ExpectedMoveDestination::SystemFolder(ExpectedSystemFolder {
                 label_id: SystemLabel::Archive.label_id(),
                 name: MovableSystemFolder::Archive,
             }),
-            ExpectedMoveAction::SystemFolder(ExpectedSystemFolder {
+            ExpectedMoveDestination::SystemFolder(ExpectedSystemFolder {
                 label_id: SystemLabel::Spam.label_id(),
                 name: MovableSystemFolder::Spam,
             }),
-            ExpectedMoveAction::SystemFolder(ExpectedSystemFolder {
+            ExpectedMoveDestination::SystemFolder(ExpectedSystemFolder {
                 label_id: SystemLabel::Trash.label_id(),
                 name: MovableSystemFolder::Trash,
             }),
-            ExpectedMoveAction::CustomFolder(ExpectedCustomFolder {
+            ExpectedMoveDestination::CustomFolder(ExpectedCustomFolder {
                 label_id: "folder1".into(),
                 name: "folder1".into(),
+                color: None,
                 children: vec![
                     ExpectedCustomFolder {
                         label_id: "folder2".into(),
                         name: "folder2".into(),
+                        color: None,
                         children: vec![
                             ExpectedCustomFolder {
                                 label_id: "folder3".into(),
                                 name: "folder3".into(),
+                                color: None,
                                 children: vec![
                                     ExpectedCustomFolder {
                                         label_id: "folder4".into(),
                                         name: "folder4".into(),
+                                        color: None,
                                         children: vec![]
                                     }
                                 ]
@@ -650,7 +660,7 @@ mod available_move_to_actions {
         view: &Label,
         conversations: Vec<ConversationWithLabels>,
         labels: Vec<Label>,
-        expected: Result<&[ExpectedMoveAction], AppError>,
+        expected: Result<&[ExpectedMoveDestination], AppError>,
     ) {
         let mail_stash = new_test_connection().await;
         let mut conn = mail_stash.connection();
@@ -710,7 +720,7 @@ mod available_move_to_actions {
                 let actual = stream::iter(actual.into_iter())
                     .then(|action| async move {
                         let tether = new_conn().await;
-                        ExpectedMoveAction::new(action, &tether).await
+                        ExpectedMoveDestination::new(action, &tether).await
                     })
                     .collect::<Vec<_>>()
                     .await;
@@ -736,26 +746,28 @@ mod available_move_to_actions {
                 label!(remote_id: lbl_id!("label2"), label_type: LabelType::Folder, name: "label2".to_string()),
             ],
             Ok(&[
-            ExpectedMoveAction::SystemFolder(ExpectedSystemFolder {
+            ExpectedMoveDestination::SystemFolder(ExpectedSystemFolder {
                 label_id: SystemLabel::Archive.label_id(),
                 name: MovableSystemFolder::Archive,
             }),
-            ExpectedMoveAction::SystemFolder(ExpectedSystemFolder {
+            ExpectedMoveDestination::SystemFolder(ExpectedSystemFolder {
                 label_id: SystemLabel::Spam.label_id(),
                 name: MovableSystemFolder::Spam,
             }),
-            ExpectedMoveAction::SystemFolder(ExpectedSystemFolder {
+            ExpectedMoveDestination::SystemFolder(ExpectedSystemFolder {
                 label_id: SystemLabel::Trash.label_id(),
                 name: MovableSystemFolder::Trash,
             }),
-            ExpectedMoveAction::CustomFolder(ExpectedCustomFolder {
+            ExpectedMoveDestination::CustomFolder(ExpectedCustomFolder {
                 label_id: "label1".into(),
                 name: "label1".into(),
+                color: None,
                 children: vec![],
             }),
-            ExpectedMoveAction::CustomFolder(ExpectedCustomFolder {
+            ExpectedMoveDestination::CustomFolder(ExpectedCustomFolder {
                 label_id: "label2".into(),
                 name: "label2".into(),
+                color: None,
                 children: vec![]
             }),
         ])).await

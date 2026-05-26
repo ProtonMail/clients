@@ -2,7 +2,7 @@ use crate::core::datatypes::{Id, NonDefaultWeekStart, UnixTimestamp};
 use crate::errors::{ActionError, MobileActionsResult, SnoozeError, VoidActionResult};
 use crate::mail::datatypes::{
     AllConversationActions, AllListActions, AutoDeleteBanner, Conversation,
-    ConversationActionSheet, LabelAsAction, LabelAsOutput, Message, MobileAction, MoveAction,
+    ConversationActionSheet, LabelAsAction, LabelAsOutput, Message, MobileAction, MoveDestination,
     SnoozeActions, Undo,
 };
 use crate::mail::mail_scroller::{
@@ -77,7 +77,7 @@ pub async fn available_label_as_actions_for_conversations(
 pub async fn available_move_to_actions_for_conversations(
     mailbox: Arc<Mailbox>,
     ids: Vec<Id>,
-) -> Result<Vec<MoveAction>, ActionError> {
+) -> Result<Vec<MoveDestination>, ActionError> {
     let mail_stash = mailbox.mail_stash()?;
     uniffi_async(async move {
         let view = mailbox.mbox().label_id();

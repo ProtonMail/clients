@@ -1,6 +1,6 @@
 use super::datatypes::{
     AllListActions, AllMessageActions, AttachmentMetadata, LabelAsAction, Message,
-    MessageActionSheet, MimeType, MobileAction, MoveAction,
+    MessageActionSheet, MimeType, MobileAction, MoveDestination,
 };
 use super::state::MailUserContextPtr;
 use super::{ImagePolicy, MailUserSession, Mailbox, RsvpEventServiceProvider};
@@ -641,7 +641,7 @@ pub async fn available_label_as_actions_for_messages(
 pub async fn available_move_to_actions_for_messages(
     mailbox: Arc<Mailbox>,
     ids: Vec<Id>,
-) -> Result<Vec<MoveAction>, ActionError> {
+) -> Result<Vec<MoveDestination>, ActionError> {
     let mail_stash = mailbox.mail_stash()?;
     uniffi_async(async move {
         let view = mailbox.mbox().label_id();

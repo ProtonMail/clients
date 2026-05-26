@@ -1,4 +1,4 @@
-use crate::mail::datatypes::MovableSystemFolderAction;
+use crate::mail::datatypes::SystemFolderDestination;
 use crate::{UniffiEnum, UniffiRecord};
 use mail_common::actions::{AllListActions as RealAllListActions, ListAction as RealListActions};
 use mail_core_common::utils::MapVec as _;
@@ -30,8 +30,8 @@ pub enum ListActions {
     MarkUnread,
     More,
     MoveTo,
-    MoveToSystemFolder(MovableSystemFolderAction),
-    NotSpam(MovableSystemFolderAction),
+    MoveToSystemFolder(SystemFolderDestination),
+    NotSpam(SystemFolderDestination),
     PermanentDelete,
     Star,
     Unstar,

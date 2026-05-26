@@ -14,6 +14,7 @@ use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::ProtonMail;
 use mail_api::services::proton::common::MessageId;
 use mail_core_api::consts::Mail;
+use mail_core_api::service::ApiErrorInfo;
 use mail_core_api::session::Session;
 use mail_core_common::datatypes::UnixTimestamp;
 use mail_core_common::models::ModelExtension;
@@ -185,6 +186,14 @@ impl Handler<UserDb> for UndoSendHandler {
                     } else if proton_error.code == Mail::MessageDoesNotExist as u32 {
                         return Err(UndoError::DraftDoesNotExistOnServer.into());
                     }
+                } else if let mail_core_api::service::ApiServiceError::UnprocessableEntity(
+                    _,
+                    Some(ApiErrorInfo {
+                        error: Some(error), ..
+                    }),
+                ) = e
+                {
+                    return Err(UndoError::BadRequest(error).into());
                 }
                 return Err(e.into());
             }

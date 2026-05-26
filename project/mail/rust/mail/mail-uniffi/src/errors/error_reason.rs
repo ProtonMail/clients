@@ -121,6 +121,8 @@ pub enum DraftSaveErrorReason {
     AttachmentTooLarge,
     /// The combined attachment size exceeds the upper limit
     TotalAttachmentSizeTooLarge,
+    /// Bad Server Request
+    BadRequest(String),
 }
 
 /// Specific Reason when saving a draft
@@ -178,6 +180,7 @@ impl From<RealDraftSaveErrorReason> for DraftSaveErrorReason {
             RealDraftSaveErrorReason::MessageAlreadySent => Self::MessageAlreadySent,
             RealDraftSaveErrorReason::MessageDoesNotExist => Self::MessageDoesNotExist,
             RealDraftSaveErrorReason::MessageIsNotADraft => Self::MessageIsNotADraft,
+            RealDraftSaveErrorReason::BadRequest(error) => Self::BadRequest(error),
         }
     }
 }
@@ -221,6 +224,8 @@ pub enum DraftUndoSendErrorReason {
     SendCanNoLongerBeUndone,
     /// This message no longer exists.
     MessageDoesNotExist,
+    /// Bad Server Request
+    BadRequest(String),
 }
 
 impl From<RealDraftUndoSendErrorReason> for DraftUndoSendErrorReason {
@@ -229,6 +234,7 @@ impl From<RealDraftUndoSendErrorReason> for DraftUndoSendErrorReason {
             RealDraftUndoSendErrorReason::MessageCanNotBeUndoSent => Self::MessageCanNotBeUndoSent,
             RealDraftUndoSendErrorReason::SendCanNoLongerBeUndone => Self::SendCanNoLongerBeUndone,
             RealDraftUndoSendErrorReason::MessageDoesNotExist => Self::MessageDoesNotExist,
+            RealDraftUndoSendErrorReason::BadRequest(error) => Self::BadRequest(error),
         }
     }
 }
@@ -276,6 +282,8 @@ pub enum DraftAttachmentUploadErrorReason {
     /// Attachment upload timed out
     Timeout,
     StorageQuotaExceeded,
+    /// Bad server request
+    BadRequest(String),
 }
 
 impl From<RealDraftAttachmentErrorReason> for DraftAttachmentUploadErrorReason {
@@ -295,6 +303,7 @@ impl From<RealDraftAttachmentErrorReason> for DraftAttachmentUploadErrorReason {
             RealDraftAttachmentErrorReason::RetryInvalidState => Self::RetryInvalidState,
             RealDraftAttachmentErrorReason::Timeout => Self::Timeout,
             RealDraftAttachmentErrorReason::StorageQuotaExceeded => Self::StorageQuotaExceeded,
+            RealDraftAttachmentErrorReason::BadRequest(error) => Self::BadRequest(error),
         }
     }
 }
@@ -359,6 +368,7 @@ pub enum DraftExpirationErrorReason {
     ExpirationTimeInThePast,
     ExpirationTimeLessThan15Min,
     ExpirationTimeExceeds30Days,
+    BadRequest(String),
 }
 
 impl From<RealDraftExpirationErrorReason> for DraftExpirationErrorReason {
@@ -373,6 +383,7 @@ impl From<RealDraftExpirationErrorReason> for DraftExpirationErrorReason {
             RealDraftExpirationErrorReason::ExpirationTimeLessThan15Min => {
                 Self::ExpirationTimeLessThan15Min
             }
+            RealDraftExpirationErrorReason::BadRequest(error) => Self::BadRequest(error),
         }
     }
 }
@@ -384,6 +395,7 @@ pub enum DraftAttachmentDispositionSwapErrorReason {
     AttachmentDoesNotExist,
     AttachmentMessageDoesNotExist,
     AttachmentMessageIsNotADraft,
+    BadRequest(String),
 }
 
 impl From<RealDraftAttachmentDispositionSwapErrorReason>
@@ -401,6 +413,9 @@ impl From<RealDraftAttachmentDispositionSwapErrorReason>
             }
             RealDraftAttachmentDispositionSwapErrorReason::AttachmentMessageIsNotADraft => {
                 Self::AttachmentMessageIsNotADraft
+            }
+            RealDraftAttachmentDispositionSwapErrorReason::BadRequest(error) => {
+                Self::BadRequest(error)
             }
         }
     }

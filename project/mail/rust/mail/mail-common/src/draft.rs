@@ -185,6 +185,8 @@ pub enum SaveError {
     DraftDoesNotExistOnServer,
     #[error("Metadata missing local conversation id")]
     MetadataMissingLocalConversationId(MetadataId),
+    #[error("{0}")]
+    BadRequest(String),
 }
 
 impl From<SaveError> for MailContextError {
@@ -229,6 +231,8 @@ pub enum AttachmentUploadError {
     Timeout,
     #[error("Storage quota exceeded")]
     StorageQuotaExceeded,
+    #[error("{0}")]
+    BadRequest(String),
 }
 
 impl From<AttachmentUploadError> for MailContextError {
@@ -243,6 +247,8 @@ pub enum AttachmentRemoveError {
     MetadataNotFound(MetadataId),
     #[error("Attachment Metadata for Attachment {0} does not exist")]
     AttachmentMetadataNotFound(LocalAttachmentId),
+    #[error("{0}")]
+    BadRequest(String),
 }
 
 impl From<AttachmentRemoveError> for MailContextError {
@@ -259,6 +265,8 @@ pub enum UndoError {
     SendCanNoLongerBeUndone,
     #[error("Draft does not exist on server")]
     DraftDoesNotExistOnServer,
+    #[error("{0}")]
+    BadRequest(String),
 }
 
 impl From<UndoError> for MailContextError {
@@ -399,6 +407,8 @@ pub enum ExpirationError {
     ExpirationTimeLessThan15Min,
     #[error("Expiration time exceeded 28 days")]
     ExpirationTimeExceeds28Days,
+    #[error("{0}")]
+    BadRequest(String),
 }
 
 impl From<ExpirationError> for MailContextError {
@@ -441,6 +451,8 @@ pub enum AttachmentDispositionSwapError {
     AttachmentMessageIsNotADraft(AttachmentId),
     #[error("Attachment {0} does not have a valid cid")]
     AttachmentDoesNotHaveValidCid(AttachmentId),
+    #[error("{0}")]
+    BadRequest(String),
 }
 
 impl From<AttachmentDispositionSwapError> for MailContextError {

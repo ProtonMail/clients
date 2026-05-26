@@ -47,6 +47,7 @@ pub enum DraftAttachmentUploadError {
     StorageQuotaExceeded,
     Timeout,
     Unexpected,
+    BadRequest(String),
 }
 
 #[derive(Debug)]
@@ -55,6 +56,7 @@ pub enum DraftAttachmentDispositionSwapError {
     AttachmentNotFound,
     AttachmentMessageNotFound,
     AttachmentMessageIsNotADraft,
+    BadRequest(String),
     Unexpected,
 }
 
@@ -81,6 +83,7 @@ impl From<DraftAttachmentInternalUploadError> for DraftAttachmentUploadError {
             DraftAttachmentInternalUploadError::Unexpected => Self::Unexpected,
             DraftAttachmentInternalUploadError::StorageQuotaExceeded => Self::StorageQuotaExceeded,
             DraftAttachmentInternalUploadError::Timeout => Self::Timeout,
+            DraftAttachmentInternalUploadError::BadRequest(error) => Self::BadRequest(error),
         }
     }
 }
@@ -97,6 +100,7 @@ impl From<DraftAttachmentInternalDispositionError> for DraftAttachmentDispositio
                 Self::AttachmentMessageNotFound
             }
             DraftAttachmentInternalDispositionError::Unexpected => Self::Unexpected,
+            DraftAttachmentInternalDispositionError::BadRequest(error) => Self::BadRequest(error),
         }
     }
 }

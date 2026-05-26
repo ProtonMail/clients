@@ -11,6 +11,7 @@ use mail_action_queue::action::{
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::ProtonMail;
+use mail_core_api::service::{ApiErrorInfo, ApiServiceError};
 use mail_core_api::session::Session;
 use mail_core_common::models::ModelExtension;
 use mail_stash::orm::Model as _;
@@ -195,7 +196,18 @@ impl Handler<UserDb> for AttachmentRemoveHandler {
             self.api
                 .delete_attachment(remote_id)
                 .await
-                .inspect_err(|e| error!("Failed to delete attachment on the server{e}"))?;
+                .map_err(|e| -> MailContextError {
+                    error!("Failed to delete attachment on the server{e}");
+                    match e {
+                        ApiServiceError::UnprocessableEntity(
+                            _,
+                            Some(ApiErrorInfo {
+                                error: Some(error), ..
+                            }),
+                        ) => AttachmentRemoveError::BadRequest(error).into(),
+                        e => e.into(),
+                    }
+                })?;
         }
 
         // Delete metadata & attachment record

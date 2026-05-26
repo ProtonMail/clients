@@ -37,6 +37,7 @@ use mail_api::services::proton::prelude::DraftReplyOrForwardParams;
 use mail_api::services::proton::response_data::Message as ApiMessage;
 use mail_canonical_email::canonicalize_auto;
 use mail_core_api::consts::Mail;
+use mail_core_api::service::{ApiErrorInfo, ApiServiceError};
 use mail_core_api::services::proton::AddressId;
 use mail_core_api::session::Session;
 use mail_core_common::datatypes::UnixTimestamp;
@@ -752,7 +753,20 @@ impl Draft {
                 attachment_key_packets,
                 draft_reply_or_forward_params,
             )
-            .await?;
+            .await
+            .map_err(|e| {
+                if let ApiServiceError::UnprocessableEntity(
+                    _,
+                    Some(ApiErrorInfo {
+                        error: Some(error), ..
+                    }),
+                ) = e
+                {
+                    MailContextError::from(SaveError::BadRequest(error))
+                } else {
+                    e.into()
+                }
+            })?;
 
         Ok((response.message, signatures))
     }
@@ -789,6 +803,16 @@ impl Draft {
                     } else if proton_error.code == Mail::MessageUpdateDraftNotExist as u32 {
                         return Err(SaveError::DraftDoesNotExistOnServer.into());
                     }
+                }
+
+                if let ApiServiceError::UnprocessableEntity(
+                    _,
+                    Some(ApiErrorInfo {
+                        error: Some(error), ..
+                    }),
+                ) = e
+                {
+                    return Err(SaveError::BadRequest(error).into());
                 }
 
                 Err(e.into())

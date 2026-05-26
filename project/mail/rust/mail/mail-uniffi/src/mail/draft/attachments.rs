@@ -105,6 +105,9 @@ impl From<RealDraftAttachmentUploadError> for DraftAttachmentUploadError {
             RealDraftAttachmentUploadError::Timeout => {
                 Self::Reason(DraftAttachmentUploadErrorReason::Timeout)
             }
+            RealDraftAttachmentUploadError::BadRequest(error) => {
+                Self::Reason(DraftAttachmentUploadErrorReason::BadRequest(error))
+            }
         }
     }
 }
@@ -130,6 +133,9 @@ impl From<RealDraftAttachmentDispositionSwapError> for DraftAttachmentDispositio
             ),
             RealDraftAttachmentDispositionSwapError::Unexpected => {
                 Self::Other(ProtonError::Unexpected(UnexpectedError::Draft))
+            }
+            RealDraftAttachmentDispositionSwapError::BadRequest(error) => {
+                Self::Reason(DraftAttachmentDispositionSwapErrorReason::BadRequest(error))
             }
         }
     }

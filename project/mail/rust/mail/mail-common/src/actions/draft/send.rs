@@ -24,7 +24,7 @@ use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::ProtonMail;
 use mail_api::services::proton::common::MessageId;
 use mail_core_api::consts::Mail;
-use mail_core_api::service::ApiServiceError;
+use mail_core_api::service::{ApiErrorInfo, ApiServiceError};
 use mail_core_api::services::proton::PrivateEmail;
 use mail_core_api::services::proton::prelude::AddressId;
 use mail_core_common::datatypes::UnixTimestamp;
@@ -634,6 +634,14 @@ impl Send {
                             // size exceed this limit. In the former, the error is never reported
                             // from backend on draft save, so we only see this during send.
                             return Err(SendError::MessageTooLarge.into());
+                        } else if let ApiServiceError::UnprocessableEntity(
+                            _,
+                            Some(ApiErrorInfo {
+                                error: Some(error), ..
+                            }),
+                        ) = err
+                        {
+                            return Err(SendError::BadRequest(error).into());
                         } else {
                             error!("Failed to send send email request: {err:?}");
                             return Err(err.into());

@@ -148,6 +148,8 @@ pub enum DraftSaveErrorReason {
     MessageDoesNotExist,
     /// Message is not a draft
     MessageIsNotADraft,
+    /// Bad server request
+    BadRequest(String),
 }
 
 /// Specific Reason when saving a draft
@@ -194,6 +196,8 @@ pub enum DraftUndoSendErrorReason {
     SendCanNoLongerBeUndone,
     /// This message no longer exists.
     MessageDoesNotExist,
+    /// Bad server request
+    BadRequest(String),
 }
 
 /// Failure cases for draft attachment errors.
@@ -218,6 +222,8 @@ pub enum DraftAttachmentUploadErrorReason {
     /// Attachment upload timed out
     Timeout,
     StorageQuotaExceeded,
+    /// Bad server request
+    BadRequest(String),
 }
 
 /// Specific Reason when attempting to discard a draft.
@@ -257,6 +263,7 @@ pub enum DraftExpirationErrorReason {
     ExpirationTimeInThePast,
     ExpirationTimeLessThan15Min,
     ExpirationTimeExceeds28Days,
+    BadRequest(String),
 }
 
 #[derive(Debug)]
@@ -266,6 +273,7 @@ pub enum DraftAttachmentDispositionSwapErrorReason {
     AttachmentDoesNotExist,
     AttachmentMessageDoesNotExist,
     AttachmentMessageIsNotADraft,
+    BadRequest(String),
 }
 
 /// Specific Reason for error occurrence within Event Loop.

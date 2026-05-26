@@ -301,6 +301,7 @@ impl From<DraftError> for ProtonMailError {
             DraftError::AttachmentUpload(v) => v.into(),
             DraftError::AttachmentRemove(v) => match v {
                 AttachmentRemoveError::MetadataNotFound(_)
+                | AttachmentRemoveError::BadRequest(_)
                 | AttachmentRemoveError::AttachmentMetadataNotFound(_) => {
                     Self::Unexpected(Unexpected::Draft)
                 }
@@ -409,6 +410,9 @@ impl From<DraftSaveError> for ProtonMailError {
             DraftSaveError::AlreadySent => Self::Reason(MailErrorReason::DraftSaveReason(
                 DraftSaveErrorReason::MessageAlreadySent,
             )),
+            DraftSaveError::BadRequest(error) => Self::Reason(MailErrorReason::DraftSaveReason(
+                DraftSaveErrorReason::BadRequest(error),
+            )),
             DraftSaveError::MetadataNotFound(_)
             | DraftSaveError::MetadataMissingLocalConversationId(_)
             | DraftSaveError::DraftDoesNotExistOnServer => Self::Reason(
@@ -434,6 +438,9 @@ impl From<DraftUndoError> for ProtonMailError {
             }
             DraftUndoError::DraftDoesNotExistOnServer => Self::Reason(
                 MailErrorReason::DraftUndoSendReason(DraftUndoSendErrorReason::MessageDoesNotExist),
+            ),
+            DraftUndoError::BadRequest(error) => Self::Reason(
+                MailErrorReason::DraftUndoSendReason(DraftUndoSendErrorReason::BadRequest(error)),
             ),
         }
     }
@@ -521,6 +528,11 @@ impl From<AttachmentUploadError> for ProtonMailError {
             AttachmentUploadError::StorageQuotaExceeded => {
                 Self::Reason(MailErrorReason::DraftAttachmentUploadReason(
                     DraftAttachmentUploadErrorReason::StorageQuotaExceeded,
+                ))
+            }
+            AttachmentUploadError::BadRequest(error) => {
+                Self::Reason(MailErrorReason::DraftAttachmentUploadReason(
+                    DraftAttachmentUploadErrorReason::BadRequest(error),
                 ))
             }
         }
@@ -649,6 +661,11 @@ impl From<AttachmentDispositionSwapError> for ProtonMailError {
             }
             AttachmentDispositionSwapError::AttachmentDoesNotHaveValidCid(_) => {
                 Self::Unexpected(Unexpected::Draft)
+            }
+            AttachmentDispositionSwapError::BadRequest(error) => {
+                Self::Reason(MailErrorReason::DraftAttachmentDispositionSwapError(
+                    DraftAttachmentDispositionSwapErrorReason::BadRequest(error),
+                ))
             }
         }
     }
@@ -820,6 +837,11 @@ impl From<DraftExpirationError> for ProtonMailError {
             ExpirationError::ExpirationTimeLessThan15Min => {
                 ProtonMailError::Reason(MailErrorReason::DraftExpirationReason(
                     DraftExpirationErrorReason::ExpirationTimeLessThan15Min,
+                ))
+            }
+            ExpirationError::BadRequest(error) => {
+                ProtonMailError::Reason(MailErrorReason::DraftExpirationReason(
+                    DraftExpirationErrorReason::BadRequest(error),
                 ))
             }
         }

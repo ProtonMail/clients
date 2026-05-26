@@ -463,6 +463,8 @@ async fn encrypt_and_upload_attachment(
                         // Default fallback
                         AttachmentUploadError::TooManyAttachments.into()
                     }
+                } else if let Some(error) = proton_error.error {
+                    AttachmentUploadError::BadRequest(error).into()
                 } else {
                     e.into()
                 },

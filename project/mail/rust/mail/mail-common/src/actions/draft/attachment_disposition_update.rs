@@ -269,6 +269,8 @@ impl Handler<UserDb> for AttachmentDispositionUpdateHandler {
                     AttachmentDispositionSwapError::AttachmentMessageDoesNotExist(remote_id).into()
                 } else if error.code == General::InvalidRequirements as u32 {
                     AttachmentDispositionSwapError::AttachmentDoesNotHaveValidCid(remote_id).into()
+                } else if let Some(details) = error.error {
+                    AttachmentDispositionSwapError::BadRequest(details).into()
                 } else {
                     ApiServiceError::UnprocessableEntity(v, Some(error)).into()
                 })

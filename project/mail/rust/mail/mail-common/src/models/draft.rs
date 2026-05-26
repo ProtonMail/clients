@@ -607,6 +607,7 @@ pub enum DraftSendFailureSave {
     AlreadySent,
     MessageUpdateIsNotDraft,
     MessageDoesNotExist,
+    BadRequest(String),
 }
 
 #[derive(
@@ -652,6 +653,7 @@ pub enum DraftSendFailureAttachment {
     Timeout,
     StorageQuotaExceeded,
     Other(String),
+    BadRequest(String),
 }
 
 #[derive(
@@ -667,6 +669,7 @@ pub enum DraftSendFailureDispositionSwap {
     AttachmentDoesNotExist,
     AttachmentMessagedDoesNotExist,
     AttachmentMessageIsNotADraft,
+    BadRequest(String),
 }
 
 sql_using_serde!(DraftSendFailure);
@@ -736,6 +739,9 @@ impl DraftSendFailure {
                 | SaveError::MetadataNotFound(_)
                 | SaveError::MetadataMissingLocalConversationId(_)
                 | SaveError::DraftDoesNotExistOnServer => Self::Internal,
+                SaveError::BadRequest(error) => {
+                    Self::Save(DraftSendFailureSave::BadRequest(error.clone()))
+                }
             },
             Error::Send(err) => match err {
                 SendError::SendMessage(package_error) => {
@@ -798,6 +804,9 @@ impl DraftSendFailure {
                 AttachmentUploadError::StorageQuotaExceeded => {
                     Self::Attachment(DraftSendFailureAttachment::StorageQuotaExceeded)
                 }
+                AttachmentUploadError::BadRequest(error) => {
+                    Self::Attachment(DraftSendFailureAttachment::BadRequest(error.clone()))
+                }
             },
             Error::AttachmentDispositionSwap(e) => match e {
                 AttachmentDispositionSwapError::MetadataNotFound(_)
@@ -825,6 +834,11 @@ impl DraftSendFailure {
                     )
                 }
                 AttachmentDispositionSwapError::AttachmentDoesNotHaveValidCid(_) => Self::Internal,
+                AttachmentDispositionSwapError::BadRequest(error) => {
+                    Self::AttachmentDispositionSwap(DraftSendFailureDispositionSwap::BadRequest(
+                        error.clone(),
+                    ))
+                }
             },
 
             _ => Self::Internal,
@@ -892,6 +906,9 @@ impl From<DraftSendFailure> for ProtonMailError {
                     }
                     DraftSendFailureSave::MessageDoesNotExist => {
                         DraftSaveErrorReason::MessageDoesNotExist
+                    }
+                    DraftSendFailureSave::BadRequest(error) => {
+                        DraftSaveErrorReason::BadRequest(error)
                     }
                 }))
             }
@@ -967,6 +984,11 @@ impl From<DraftSendFailure> for ProtonMailError {
                         DraftAttachmentUploadErrorReason::StorageQuotaExceeded,
                     ))
                 }
+                DraftSendFailureAttachment::BadRequest(error) => {
+                    Self::Reason(MailErrorReason::DraftAttachmentUploadReason(
+                        DraftAttachmentUploadErrorReason::BadRequest(error),
+                    ))
+                }
             },
             DraftSendFailure::AttachmentDispositionSwap(e) => match e {
                 DraftSendFailureDispositionSwap::AttachmentDoesNotExist => {
@@ -982,6 +1004,11 @@ impl From<DraftSendFailure> for ProtonMailError {
                 DraftSendFailureDispositionSwap::AttachmentMessageIsNotADraft => {
                     Self::Reason(MailErrorReason::DraftAttachmentDispositionSwapError(
                         DraftAttachmentDispositionSwapErrorReason::AttachmentMessageIsNotADraft,
+                    ))
+                }
+                DraftSendFailureDispositionSwap::BadRequest(error) => {
+                    Self::Reason(MailErrorReason::DraftAttachmentDispositionSwapError(
+                        DraftAttachmentDispositionSwapErrorReason::BadRequest(error),
                     ))
                 }
             },
@@ -1477,6 +1504,7 @@ pub enum DraftAttachmentInternalUploadError {
     StorageQuotaExceeded,
     /// Unexpected internal error
     Unexpected,
+    BadRequest(String),
 }
 
 sql_using_serde!(DraftAttachmentInternalUploadError);
@@ -1488,6 +1516,7 @@ pub enum DraftAttachmentInternalDispositionError {
     MessageIsNotDraft,
     MessageDoesNotExist,
     Unexpected,
+    BadRequest(String),
 }
 
 impl DraftAttachmentInternalError {
@@ -1535,6 +1564,7 @@ impl DraftAttachmentInternalUploadError {
                 }
                 AttachmentUploadError::Timeout => Self::Timeout,
                 AttachmentUploadError::StorageQuotaExceeded => Self::StorageQuotaExceeded,
+                AttachmentUploadError::BadRequest(error) => Self::BadRequest(error.clone()),
             },
             MailContextError::AttachmentEncryption(e) => Self::Crypto(e.to_string()),
             _ => Self::Unexpected,
@@ -1567,6 +1597,9 @@ impl DraftAttachmentInternalDispositionError {
                 | AttachmentDispositionSwapError::AttachmentHasNoContentId(_)
                 | AttachmentDispositionSwapError::AttachmentDoesNotHaveValidCid(_) => {
                     Self::Unexpected
+                }
+                AttachmentDispositionSwapError::BadRequest(error) => {
+                    Self::BadRequest(error.clone())
                 }
             },
             _ => Self::Unexpected,

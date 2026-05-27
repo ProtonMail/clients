@@ -62,6 +62,7 @@ members = [
     "project/core/rust/core-observability-proc",
     "project/core/rust/core-proc",
     "project/core/rust/core-telemetry",
+    "project/core/rust/core-timer-op",
     "project/core/rust/core-user-manager",
     "project/core/rust/core-validator",
     "project/core/rust/lattice",
@@ -227,6 +228,9 @@ path = "project/core/rust/core-fido-op"
 
 [workspace.dependencies.core-hv-op]
 path = "project/core/rust/core-hv-op"
+
+[workspace.dependencies.core-timer-op]
+path = "project/core/rust/core-timer-op"
 
 [workspace.dependencies.core-key]
 path = "project/core/rust/core-key"

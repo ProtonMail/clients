@@ -59,6 +59,7 @@ dependencies = [
  "core-proc",
  "core-proton-map",
  "core-sensitive-data",
+ "core-timer-op",
  "core-user-manager",
  "core-validator",
  "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2247,6 +2248,7 @@ dependencies = [
  "core-message",
  "core-muon-op",
  "core-notification-op",
+ "core-timer-op",
  "core-validator",
  "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -2557,6 +2559,15 @@ dependencies = [
  "thiserror 2.0.18",
  "tokio",
  "uniffi 0.30.0",
+]
+
+[[package]]
+name = "core-timer-op"
+version = "0.1.0"
+dependencies = [
+ "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "facet",
+ "serde",
 ]
 
 [[package]]

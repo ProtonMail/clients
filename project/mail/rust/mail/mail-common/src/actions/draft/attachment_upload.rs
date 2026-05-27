@@ -16,7 +16,6 @@ use mail_api::services::proton::ProtonMail;
 use mail_api::services::proton::common::MessageId;
 use mail_api::services::proton::prelude::NewAttachmentParams;
 use mail_core_api::consts::Mail;
-use mail_core_api::service::ApiServiceError;
 use mail_core_api::services::proton::AddressId;
 use mail_core_common::models::{ModelExtension, ModelIdExtension};
 use mail_stash::orm::Model;
@@ -86,11 +85,14 @@ impl AttachmentUpload {
     }
 }
 
+const MAX_ATTACHMENT_UPLOAD_RETRIES: u32 = 4;
+
 impl Action<UserDb> for AttachmentUpload {
     const TYPE: Type = Type("attachment_upload");
     const GROUP: ActionGroup = SEND_ACTION_GROUP;
     const VERSION: u32 = 2;
     const PRIORITY: Priority = Priority::High;
+    const MAX_RETRIES: Option<u32> = Some(MAX_ATTACHMENT_UPLOAD_RETRIES);
 
     type VersionConverter = AttachmentUploadVersionConverter;
     type Handler = AttachmentUploadHandler;
@@ -266,28 +268,31 @@ impl Handler<UserDb> for AttachmentUploadHandler {
     > {
         let ctx = self.ctx.upgrade().ok_or(MailContextError::LostContext)?;
 
-        let r = action
-            .apply_remote_impl(&ctx, &mut writer_guard)
-            .await
-            .map_err(|e| match e {
-                MailContextError::Api(ApiServiceError::Timeout(s)) => {
-                    warn!("Attachment upload timed out: {s}");
-                    AttachmentUploadError::Timeout.into()
-                }
-                e => e,
-            });
+        let r = action.apply_remote_impl(&ctx, &mut writer_guard).await;
 
-        if let Err(e) = &r
-            && let Err(e) = save_attachment_error(
+        if let Err(error) = &r {
+            // Replace error only for internal reporting, the action queue needs the original error
+            // to retry.
+            let error =
+                if let MailContextError::Api(mail_core_api::service::ApiServiceError::Timeout(s)) =
+                    error
+                {
+                    tracing::warn!("Attachment upload timed out: {s}");
+                    &(AttachmentUploadError::Timeout.into())
+                } else {
+                    error
+                };
+            if let Err(e) = save_attachment_error(
                 action.local_message_id.expect("Should be set"),
                 action.attachment_id,
                 DraftSendResultOrigin::AttachmentUpload,
                 &mut writer_guard,
-                e,
+                error,
             )
             .await
-        {
-            error!("Failed to save attachment upload result: {e:?}");
+            {
+                error!("Failed to save attachment upload result: {e:?}");
+            }
         }
 
         r

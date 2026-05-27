@@ -54,6 +54,7 @@ dependencies = [
  "core-message",
  "core-message-macro",
  "core-muon-op",
+ "core-notification-op",
  "core-observability",
  "core-proc",
  "core-proton-map",

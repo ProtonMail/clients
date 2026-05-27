@@ -42,17 +42,24 @@ impl CategoryView {
 
         // If the mail_category_view setting is enabled, populate available categories
         // and auto-enable CategoryDefault (server-authoritative, bypasses enable() guard).
+        //
+        // `available` is built by iterating `SystemLabel::category_labels()` so its order
+        // matches the canonical enum declaration (Default first). Downstream callers like
+        // `into_labels()` reuse that order without resorting.
         let remote_ids = SystemLabel::category_labels().map(|sl| sl.remote_id());
         let labels = LabelWithCounters::from_remote_ids(tether, remote_ids).await?;
-        let available = labels
-            .iter()
-            .filter(|lwc| {
+        let available = SystemLabel::category_labels()
+            .into_iter()
+            .filter_map(|sl| {
+                let lwc = labels.iter().find(|lwc| {
+                    SystemLabel::from_opt_rid(lwc.label.remote_id.as_ref()) == Some(sl)
+                })?;
                 // CategoryDefault is the bin for display=0 labels — always include it.
                 // For all other categories, only include if display=1.
-                let system_label = SystemLabel::from_opt_rid(lwc.label.remote_id.as_ref());
-                system_label == Some(SystemLabel::CategoryDefault) || lwc.label.display
+                (sl == SystemLabel::CategoryDefault || lwc.label.display)
+                    .then_some(lwc.label.local_id)
+                    .flatten()
             })
-            .filter_map(|lwc| lwc.label.local_id)
             .collect();
 
         let enabled = SystemLabel::CategoryDefault.local_id(tether).await?;
@@ -136,19 +143,20 @@ impl CategoryView {
             })
             .sum();
 
-        Ok(all_lwcs
-            .into_iter()
-            .filter(|lwc| {
-                lwc.label
-                    .local_id
-                    .is_some_and(|id| self.available.contains(&id))
-            })
-            .filter_map(|lwc| {
+        // Iterate `self.available` (not `all_lwcs`) so the output order matches the
+        // canonical order established when `available` was populated in `load()`.
+        Ok(self
+            .available
+            .iter()
+            .filter_map(|local_id| {
+                let lwc = all_lwcs
+                    .iter()
+                    .find(|lwc| lwc.label.local_id == Some(*local_id))?;
                 let system_label = SystemLabel::from_rid(lwc.label.remote_id.as_ref()?)?;
                 let is_default = system_label == SystemLabel::CategoryDefault;
                 Some(CategoryLabel::new(
                     system_label,
-                    &lwc,
+                    lwc,
                     view_mode,
                     if is_default { unavailable_unread } else { 0 },
                     enabled == Some(lwc.id()),

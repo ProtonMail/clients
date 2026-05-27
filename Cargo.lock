@@ -113,6 +113,7 @@ dependencies = [
  "core-common-types",
  "core-crux-shell",
  "core-feature-flags-op",
+ "core-keystore-op",
  "core-logging",
  "core-logging-op",
  "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",

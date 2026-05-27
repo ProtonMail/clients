@@ -43,11 +43,12 @@ impl<'a> MoveTo<'a> {
             );
         let all_system = Label::find_by_kind(LabelType::System, tether).await?;
         let all_custom_folders = Label::find_by_kind(LabelType::Folder, tether).await?;
+        let inbox_id = SystemLabel::Inbox.local_id(tether).await?;
 
         let mut destinations = Vec::new();
 
         for label in all_system.iter() {
-            if label.local_id == from_id {
+            if label.local_id == from_id && from_id != inbox_id {
                 continue;
             }
             if moving_from_sent
@@ -58,7 +59,17 @@ impl<'a> MoveTo<'a> {
             {
                 continue;
             }
-            if let Some(destination) = label_to_destination(label, tether).await? {
+            let destination =
+                label_to_destination(label, tether)
+                    .await?
+                    .filter(|dest| match dest {
+                        MoveDestination::Inbox(inbox) => {
+                            !(from_id == inbox_id && inbox.categories.is_empty())
+                        }
+                        _ => true,
+                    });
+
+            if let Some(destination) = destination {
                 destinations.push(destination);
             }
         }

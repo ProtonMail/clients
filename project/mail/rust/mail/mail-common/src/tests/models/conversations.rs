@@ -772,6 +772,174 @@ mod available_move_to_actions {
             }),
         ])).await
     }
+
+    mod category_view {
+        use super::*;
+        use crate::datatypes::MailSettingsId;
+        use pretty_assertions::assert_eq;
+
+        async fn run_scenario(
+            from: SystemLabel,
+            mail_category_view: bool,
+            displayed_categories: &[SystemLabel],
+            expected: &[ExpectedMoveDestination],
+        ) {
+            let mail_stash = new_test_connection().await;
+            let mut conn = mail_stash.connection();
+
+            let from_id = from.local_id(&conn).await.unwrap().unwrap();
+            let mut categories_to_save = vec![];
+            for category in displayed_categories {
+                let mut label = category.load(&conn).await.unwrap().unwrap();
+                label.display = true;
+                categories_to_save.push(label);
+            }
+
+            let mut conversation = conversation!(remote_id: conv_id!("conv_under_test"));
+            conn.write_tx::<_, _, StashError>(async |tx| {
+                MailSettings {
+                    local_id: MailSettingsId,
+                    mail_category_view,
+                    ..Default::default()
+                }
+                .save(tx)
+                .await
+                .unwrap();
+
+                for mut label in categories_to_save {
+                    label.save(tx).await.unwrap();
+                }
+
+                conversation.save(tx).await.unwrap();
+                Conversation::apply_label_async(from_id, vec![conversation.id()], tx)
+                    .await
+                    .unwrap();
+                Ok(())
+            })
+            .await
+            .unwrap();
+
+            let view = from.load(&conn).await.unwrap().unwrap();
+            let result =
+                Conversation::available_move_to_actions(view, vec![conversation.id()], &conn)
+                    .await
+                    .unwrap();
+
+            let actual = stream::iter(result.into_iter())
+                .then(|action| async {
+                    let tether = mail_stash.connection();
+                    ExpectedMoveDestination::new(action, &tether).await
+                })
+                .collect::<Vec<_>>()
+                .await;
+
+            assert_eq!(actual, expected);
+        }
+
+        #[tokio::test]
+        async fn from_inbox_excludes_inbox_when_category_view_disabled() {
+            run_scenario(
+                SystemLabel::Inbox,
+                false,
+                &[],
+                &[
+                    ExpectedMoveDestination::SystemFolder(ExpectedSystemFolder {
+                        label_id: SystemLabel::Archive.label_id(),
+                        name: MovableSystemFolder::Archive,
+                    }),
+                    ExpectedMoveDestination::SystemFolder(ExpectedSystemFolder {
+                        label_id: SystemLabel::Spam.label_id(),
+                        name: MovableSystemFolder::Spam,
+                    }),
+                    ExpectedMoveDestination::SystemFolder(ExpectedSystemFolder {
+                        label_id: SystemLabel::Trash.label_id(),
+                        name: MovableSystemFolder::Trash,
+                    }),
+                ],
+            )
+            .await;
+        }
+
+        #[tokio::test]
+        async fn from_inbox_includes_inbox_with_displayed_categories() {
+            run_scenario(
+                SystemLabel::Inbox,
+                true,
+                &[SystemLabel::CategorySocial, SystemLabel::CategoryPromotions],
+                &[
+                    ExpectedMoveDestination::Inbox(ExpectedInboxFolder {
+                        label_id: SystemLabel::Inbox.label_id(),
+                        name: MovableSystemFolder::Inbox,
+                        categories: vec![
+                            ExpectedSystemFolder {
+                                label_id: SystemLabel::CategoryDefault.label_id(),
+                                name: MovableSystemFolder::CategoryDefault,
+                            },
+                            ExpectedSystemFolder {
+                                label_id: SystemLabel::CategorySocial.label_id(),
+                                name: MovableSystemFolder::CategorySocial,
+                            },
+                            ExpectedSystemFolder {
+                                label_id: SystemLabel::CategoryPromotions.label_id(),
+                                name: MovableSystemFolder::CategoryPromotions,
+                            },
+                        ],
+                    }),
+                    ExpectedMoveDestination::SystemFolder(ExpectedSystemFolder {
+                        label_id: SystemLabel::Archive.label_id(),
+                        name: MovableSystemFolder::Archive,
+                    }),
+                    ExpectedMoveDestination::SystemFolder(ExpectedSystemFolder {
+                        label_id: SystemLabel::Spam.label_id(),
+                        name: MovableSystemFolder::Spam,
+                    }),
+                    ExpectedMoveDestination::SystemFolder(ExpectedSystemFolder {
+                        label_id: SystemLabel::Trash.label_id(),
+                        name: MovableSystemFolder::Trash,
+                    }),
+                ],
+            )
+            .await;
+        }
+
+        #[tokio::test]
+        async fn from_archive_includes_inbox_with_displayed_categories() {
+            run_scenario(
+                SystemLabel::Archive,
+                true,
+                &[SystemLabel::CategorySocial, SystemLabel::CategoryPromotions],
+                &[
+                    ExpectedMoveDestination::Inbox(ExpectedInboxFolder {
+                        label_id: SystemLabel::Inbox.label_id(),
+                        name: MovableSystemFolder::Inbox,
+                        categories: vec![
+                            ExpectedSystemFolder {
+                                label_id: SystemLabel::CategoryDefault.label_id(),
+                                name: MovableSystemFolder::CategoryDefault,
+                            },
+                            ExpectedSystemFolder {
+                                label_id: SystemLabel::CategorySocial.label_id(),
+                                name: MovableSystemFolder::CategorySocial,
+                            },
+                            ExpectedSystemFolder {
+                                label_id: SystemLabel::CategoryPromotions.label_id(),
+                                name: MovableSystemFolder::CategoryPromotions,
+                            },
+                        ],
+                    }),
+                    ExpectedMoveDestination::SystemFolder(ExpectedSystemFolder {
+                        label_id: SystemLabel::Spam.label_id(),
+                        name: MovableSystemFolder::Spam,
+                    }),
+                    ExpectedMoveDestination::SystemFolder(ExpectedSystemFolder {
+                        label_id: SystemLabel::Trash.label_id(),
+                        name: MovableSystemFolder::Trash,
+                    }),
+                ],
+            )
+            .await;
+        }
+    }
 }
 
 #[tokio::test]

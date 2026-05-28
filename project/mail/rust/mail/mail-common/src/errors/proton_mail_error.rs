@@ -387,6 +387,9 @@ impl From<DraftSendError> for ProtonMailError {
                 DraftSendErrorReason::BadRequest(err),
             )),
             DraftSendError::AddressKeyLoadingError(e) => Self::from(e),
+            DraftSendError::FailedAttachmentUploads => Self::Reason(
+                MailErrorReason::DraftSendReason(DraftSendErrorReason::FailedAttachmentUploads),
+            ),
         }
     }
 }

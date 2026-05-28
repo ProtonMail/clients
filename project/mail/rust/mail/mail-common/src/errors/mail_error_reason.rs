@@ -181,6 +181,8 @@ pub enum DraftSendErrorReason {
     MessageTooLarge,
     /// Invalid Server Request
     BadRequest(String),
+    /// Some attachments failed to upload
+    FailedAttachmentUploads,
 }
 
 /// Specific Reason when attempting to cancel sending of an already sent draft.

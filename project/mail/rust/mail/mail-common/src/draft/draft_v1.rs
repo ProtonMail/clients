@@ -1750,6 +1750,15 @@ impl DraftSendActionQueuer {
         origin: Origin,
         last_draft_save_action_id: &mut Option<ActionId>,
     ) -> Result<QueuedActionOutput<draft::Send, UserDb>, MailContextError> {
+        // find possible attachments that are in a failure state.
+        let failed_attachment_ids =
+            DraftAttachmentMetadata::attachments_in_error_state(self.id, tether).await?;
+
+        if !failed_attachment_ids.is_empty() {
+            tracing::error!("Draft has {failed_attachment_ids:?} in error state, can not send");
+            return Err(SendError::FailedAttachmentUploads.into());
+        }
+
         let save_output = self.save_action.queue(queue, tether, origin).await?;
 
         *last_draft_save_action_id = Some(save_output.id);

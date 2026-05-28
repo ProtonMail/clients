@@ -158,6 +158,8 @@ pub enum SendError {
     BadRequest(String),
     #[error("Failed to load address key for sending: {0}")]
     AddressKeyLoadingError(#[from] KeyHandlingError),
+    #[error("Draft has attachments which failed upload")]
+    FailedAttachmentUploads,
 }
 
 impl From<SendError> for MailContextError {

@@ -921,7 +921,9 @@ mod available_move_to_actions {
         }
 
         #[tokio::test]
-        async fn from_archive_includes_inbox_with_displayed_categories() {
+        async fn from_archive_inbox_destination_has_no_categories() {
+            // Categorising is only available from Inbox — picker omits category children when
+            // viewing from any non-Inbox source.
             run_scenario(
                 SystemLabel::Archive,
                 true,
@@ -930,20 +932,7 @@ mod available_move_to_actions {
                     ExpectedMoveDestination::Inbox(ExpectedInboxFolder {
                         label_id: SystemLabel::Inbox.label_id(),
                         name: MovableSystemFolder::Inbox,
-                        categories: vec![
-                            ExpectedCategoryFolder {
-                                label_id: SystemLabel::CategoryDefault.label_id(),
-                                name: MovableCategoryFolder::CategoryDefault,
-                            },
-                            ExpectedCategoryFolder {
-                                label_id: SystemLabel::CategorySocial.label_id(),
-                                name: MovableCategoryFolder::CategorySocial,
-                            },
-                            ExpectedCategoryFolder {
-                                label_id: SystemLabel::CategoryPromotions.label_id(),
-                                name: MovableCategoryFolder::CategoryPromotions,
-                            },
-                        ],
+                        categories: vec![],
                     }),
                     ExpectedMoveDestination::SystemFolder(ExpectedSystemFolder {
                         label_id: SystemLabel::Spam.label_id(),

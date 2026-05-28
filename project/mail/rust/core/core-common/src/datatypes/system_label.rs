@@ -85,6 +85,15 @@ impl SystemLabel {
         Self::from_opt_rid(Some(label_id))
     }
 
+    pub async fn from_local_id(
+        local_id: LocalLabelId,
+        tether: &Tether,
+    ) -> Result<Option<Self>, StashError> {
+        let remote_id = Label::local_id_counterpart(local_id, tether).await?;
+
+        Ok(Self::from_opt_rid(remote_id.as_ref()))
+    }
+
     #[must_use]
     pub fn is_exclusive_location(&self) -> bool {
         Self::exclusive_locations().contains(self)

@@ -365,6 +365,26 @@ pub trait ModelIdExtension: ModelExtension + Model<IdType: LocalIdMarker> {
         }
     }
 
+    fn local_id_counterpart_sync(
+        local_id: Self::IdType,
+        conn: &Connection,
+    ) -> Result<Option<Self::RemoteId>, StashError> {
+        conn.query_row_col(
+            formatdoc! {
+                "
+                SELECT {} FROM {} WHERE {} = ?
+                LIMIT 1
+                ",
+                Self::remote_id_field_name(),
+                Self::table_name(),
+                Self::id_field_name(),
+            },
+            (local_id,),
+        )
+        .optional()
+        .map_err(StashError::from)
+    }
+
     #[must_use]
     async fn local_ids_counterpart(
         local_ids: Vec<Self::IdType>,

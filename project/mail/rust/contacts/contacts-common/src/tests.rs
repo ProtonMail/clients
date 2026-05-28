@@ -11,11 +11,11 @@ use crate::events::{
 };
 use crate::local_ids::LocalContactGroupId;
 use crate::test_utils::new_contact_test_connection;
+use contact_avatar::AvatarInformation;
 use core_event_loop::v6::{EventSource, EventSubscriber};
 use mail_action_queue::queue::Queue;
 use mail_api_session::mocks::test_session;
 use mail_api_session::session::Session;
-use mail_avatar::AvatarInformation;
 use mail_contacts_api::mocks::ContactsMockServerExt;
 use mail_contacts_api::{ContactEventV6, ContactGroupId, ContactRootEventV6};
 use mail_core_api::services::proton::{
@@ -915,7 +915,7 @@ async fn contact_list() {
                     local_contact_id: 1.into(),
                     email: "banksy@proton.me".into(),
                     is_proton: true,
-                    last_used_time: 0.into()
+                    last_used_time: 0
                 }]
             })]
         }]

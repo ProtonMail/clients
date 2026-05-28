@@ -1,7 +1,7 @@
 use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
+pub use contact_avatar::{first_grapheme_uppercase, proton_color};
 pub use mail_api_utils::{Paginatable, PaginateOptions, PaginateResponse};
-pub use mail_avatar::{first_grapheme_uppercase, proton_color};
 pub use mail_shared_types::MapVec;
 use proton_crypto::generate_secure_random_bytes;
 

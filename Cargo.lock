@@ -1256,12 +1256,12 @@ dependencies = [
  "calendar-net",
  "calendar-seed",
  "calendar-telemetry",
+ "contact-avatar",
  "crux_core 0.17.0 (git+https://github.com/Patryk27/crux?branch=0.17-patched)",
  "facet",
  "futures",
  "itertools 0.14.0",
  "jiff",
- "mail-avatar",
  "pretty_assertions",
  "serde",
  "tracing",
@@ -1405,11 +1405,11 @@ dependencies = [
  "calendar-db-diesel",
  "calendar-net",
  "calendar-net-fake",
+ "contact-avatar",
  "facet",
  "insta",
  "itertools 0.14.0",
  "jiff",
- "mail-avatar",
  "parking_lot",
  "serde",
  "tokio",
@@ -2092,6 +2092,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7c74b8349d32d297c9134b8c88677813a227df8f779daa29bfc29c183fe3dca6"
 
 [[package]]
+name = "contact-avatar"
+version = "0.1.0"
+dependencies = [
+ "test-case",
+ "unicode-segmentation",
+]
+
+[[package]]
 name = "contact-database"
 version = "0.1.0"
 dependencies = [
@@ -2121,6 +2129,21 @@ dependencies = [
  "serde_with",
  "smart-default",
  "wiremock",
+]
+
+[[package]]
+name = "contact-list"
+version = "0.1.0"
+dependencies = [
+ "contact-avatar",
+ "contact-database",
+ "contact-lattice",
+ "insta",
+ "mail-local-id",
+ "mail-proton-ids",
+ "pretty_assertions",
+ "test-case",
+ "unicode-segmentation",
 ]
 
 [[package]]
@@ -6473,14 +6496,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mail-avatar"
-version = "0.1.0"
-dependencies = [
- "test-case",
- "unicode-segmentation",
-]
-
-[[package]]
 name = "mail-builder"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6663,7 +6678,10 @@ dependencies = [
  "async-trait",
  "base64",
  "bytes",
+ "contact-avatar",
  "contact-database",
+ "contact-lattice",
+ "contact-list",
  "contact-service",
  "core-event-loop",
  "derive_more 2.1.1",
@@ -6678,7 +6696,6 @@ dependencies = [
  "mail-action-queue",
  "mail-api-session",
  "mail-api-utils",
- "mail-avatar",
  "mail-contacts-api",
  "mail-contacts-common",
  "mail-core-api",
@@ -6765,6 +6782,7 @@ dependencies = [
  "bitflags 2.11.1",
  "bytes",
  "chrono",
+ "contact-avatar",
  "core-event-loop",
  "derive_more 2.1.1",
  "email_address",
@@ -6785,7 +6803,6 @@ dependencies = [
  "mail-api-labels",
  "mail-api-session",
  "mail-api-utils",
- "mail-avatar",
  "mail-contacts-api",
  "mail-contacts-common",
  "mail-core-api",
@@ -7472,6 +7489,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "chrono",
+ "contact-database",
  "core-event-loop",
  "derive_more 2.1.1",
  "flume",

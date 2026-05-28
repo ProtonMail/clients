@@ -1,0 +1,20 @@
+---
+source: project/contact/rust/contact-list/src/tests.rs
+assertion_line: 250
+expression: display_group(result)
+---
+3 keys:
+
+A (1 item)
+Contact A (#2E8378): Amy Santiago (1 address)
+A (#4E7ABB): amy@99.com <aXX@XXXXXX>,  local_contact_id: 124
+
+J (1 item)
+Contact J (#9C89FF): Jake Peralta (2 addresses)
+J (#52CD96): jake@99.com <jXXX@XXXXXX>,  local_contact_id: 123
+J (#51BE50): jake.peralta@work.com <jXXXXXXXXXXX@XXXXXXXX>,  local_contact_id: 123
+
+S (1 item)
+Group S (#34A48A): Squad (2 addresses)
+J (#52CD96): jake@99.com <jXXX@XXXXXX>,  local_contact_id: 123
+A (#4E7ABB): amy@99.com <aXX@XXXXXX>,  local_contact_id: 124

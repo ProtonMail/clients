@@ -1,211 +1,145 @@
 use std::cmp::Ordering;
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 use std::mem;
 
 use crate::contact_group::ContactGroup as ContactGroupModel;
+use contact_avatar::AvatarInformation;
+use contact_database::{
+    Contact as DbContact, ContactEmail as DbContactEmail, ContactGroup as DbContactGroup,
+    LocalContactGroupId as DbLocalContactGroupId,
+};
+use contact_lattice::ContactSendingPreferences as DbContactSendingPreferences;
 use itertools::Itertools;
-use mail_avatar::AvatarInformation;
 use mail_contacts_api::ContactGroupId;
 use mail_core_api::services::proton::PrivateEmail;
-use mail_shared_types::{MapVec as _, UnixTimestamp};
 use mail_stash::orm::Model;
+use tracing::warn;
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::contact::Contact;
 use crate::contact_email::ContactEmail;
-use crate::local_ids::{LocalContactGroupId, LocalContactId};
 
-const DEFAULT_GROUP: &str = "#";
+pub use contact_list::{
+    ContactEmailItem, ContactGroupItem, ContactItem, ContactItemType, GroupedContacts,
+};
 
-/// This is the main data structure that is used to represent the group of contacts.
-#[derive(Clone, Debug, Default, PartialEq)]
-pub struct GroupedContacts {
-    /// The field represent first grapheme of the name of the contact
-    pub grouped_by: String,
+pub(crate) fn email_item_from_mail(email: ContactEmail) -> ContactEmailItem {
+    let name = if email.name.is_empty() {
+        email.email.clone().into_clear_text_string()
+    } else {
+        email.name
+    };
 
-    // The field represent the list of contacts or groups for the given grapheme
-    pub items: Vec<ContactItemType>,
+    ContactEmailItem {
+        local_contact_id: email
+            .local_contact_id
+            .expect("ContactEmail must have a local_contact_id")
+            .into(),
+        email: email.email,
+        is_proton: email.is_proton,
+        last_used_time: email.last_used_time.as_u64(),
+        avatar_information: AvatarInformation::from(&name),
+        name,
+    }
 }
 
-impl GroupedContacts {
-    /// Builds grouped contacts based on flat contact list and contact groups
-    ///
-    /// # Contact groups
-    ///
-    /// Note, that the contact group is represented by [`Label`]. Currently, this function WON'T
-    /// assert if the label has type `ContactGroup`.
-    ///
-    #[must_use]
-    pub fn from_contacts_and_groups(
-        mut contacts: Vec<Contact>,
-        contact_groups: Vec<ContactGroupModel>,
-    ) -> Vec<Self> {
-        let mut btmap: BTreeMap<String, Vec<ContactItemType>> = BTreeMap::new();
+/// Mail still owns the stash-backed entity types; this adapter shields the
+/// shared [`contact_list`] crate from the `mail-*` dependency graph by
+/// translating Mail's input into `contact_database` shapes.
+#[must_use]
+pub fn build_grouped_contacts(
+    contacts: Vec<Contact>,
+    contact_groups: Vec<ContactGroupModel>,
+) -> Vec<GroupedContacts> {
+    let remote_to_local: HashMap<ContactGroupId, DbLocalContactGroupId> = contact_groups
+        .iter()
+        .filter_map(|group| {
+            let remote = group.remote_id.as_ref()?.clone();
+            let local = group.local_id?;
+            Some((remote, local.into()))
+        })
+        .collect();
 
-        let mut contact_group_items: HashMap<
-            ContactGroupId,
-            (ContactGroupItem, Vec<ContactEmail>),
-        > = contact_groups
+    let resolve_labels = |label_ids: Vec<ContactGroupId>| -> Vec<DbLocalContactGroupId> {
+        label_ids
             .into_iter()
-            .filter(|group| group.remote_id.is_some())
-            .map(|group| {
-                let local_id = group.id();
-                (
-                    group.remote_id.unwrap().clone(),
-                    (
-                        ContactGroupItem {
-                            local_id,
-                            name: group.name.clone(),
-                            avatar_information: AvatarInformation::from(&group.name),
-                            contacts: vec![],
-                        },
-                        vec![],
-                    ),
-                )
-            })
-            .collect();
-
-        contacts.sort_by_key(|c| c.name.unicode_words().collect::<String>());
-        for contact in &contacts {
-            for email in &contact.contact_emails {
-                for id in email.label_ids.iter() {
-                    if let Some((_, emails)) = contact_group_items.get_mut(id) {
-                        emails.push(email.clone());
-                    }
+            .filter_map(|id| match remote_to_local.get(&id) {
+                Some(local) => Some(*local),
+                None => {
+                    warn!(
+                        contact_group_id = %id,
+                        "dropping reference to unknown contact group while building grouped contacts",
+                    );
+                    None
                 }
-            }
-        }
-
-        let groups = contact_group_items
-            .into_values()
-            .map(|(mut group, mut emails)| {
-                emails.sort_unstable_by_key(|x| (x.display_order, x.id()));
-                group.contacts = emails.map_vec();
-                ContactItemType::from(group)
-            });
-
-        contacts
-            .into_iter()
-            .map_into::<ContactItem>()
-            .map_into::<ContactItemType>()
-            .chain(groups)
-            .for_each(|contact| {
-                let key = contact.key();
-                let key = if key.is_empty() || key == "?" {
-                    DEFAULT_GROUP
-                } else {
-                    key
-                };
-
-                btmap.entry(key.to_owned()).or_default().push(contact);
-            });
-
-        btmap
-            .into_iter()
-            .map(|(grouped_by, items)| GroupedContacts { grouped_by, items })
+            })
             .collect()
-    }
-}
+    };
 
-/// List of contacts is composed of contacts and groups.
-/// This enum is used to represent the either one.
-#[derive(Clone, Debug, PartialEq)]
-pub enum ContactItemType {
-    Contact(ContactItem),
-    Group(ContactGroupItem),
-}
+    let db_groups: Vec<DbContactGroup> = contact_groups
+        .into_iter()
+        .map(|group| DbContactGroup {
+            local_id: group
+                .local_id
+                .expect("persisted contact group must have a local id")
+                .into(),
+            remote_id: group.remote_id,
+            color: group.color.into_inner(),
+            display: group.display,
+            name: group.name,
+            order: group.display_order,
+            sticky: group.sticky,
+        })
+        .collect();
 
-impl ContactItemType {
-    /// Represents the first grapheme in the contact list, used to sort the contacts alphabetically
-    fn key(&self) -> &str {
-        let avatar_information = match self {
-            ContactItemType::Contact(contact_item) => &contact_item.avatar_information,
-            ContactItemType::Group(contact_group_item) => &contact_group_item.avatar_information,
-        };
+    let pairs: Vec<(DbContact, Vec<DbContactEmail>)> = contacts
+        .into_iter()
+        .map(|contact| {
+            let mail_emails = contact.contact_emails;
+            let db_emails: Vec<DbContactEmail> = mail_emails
+                .into_iter()
+                .map(|email| DbContactEmail {
+                    local_id: email
+                        .local_id
+                        .expect("persisted contact email must have a local id")
+                        .into(),
+                    remote_id: email.remote_id,
+                    local_contact_id: email
+                        .local_contact_id
+                        .expect("persisted contact email must have a local_contact_id")
+                        .into(),
+                    canonical_email: email.canonical_email,
+                    contact_type: vec![],
+                    defaults: DbContactSendingPreferences::Default,
+                    display_order: email.display_order,
+                    email: email.email,
+                    is_proton: email.is_proton,
+                    label_ids: resolve_labels(email.label_ids),
+                    last_used_time: email.last_used_time.as_u64(),
+                    name: email.name,
+                })
+                .collect();
 
-        avatar_information.text.as_str()
-    }
-}
+            let db_contact = DbContact {
+                local_id: contact
+                    .local_id
+                    .expect("persisted contact must have a local id")
+                    .into(),
+                remote_id: contact.remote_id,
+                create_time: contact.create_time,
+                label_ids: resolve_labels(contact.label_ids),
+                modify_time: contact.modify_time,
+                name: contact.name,
+                size: contact.size,
+                uid: contact.uid,
+                deleted: contact.deleted,
+            };
 
-impl From<ContactItem> for ContactItemType {
-    fn from(value: ContactItem) -> Self {
-        Self::Contact(value)
-    }
-}
+            (db_contact, db_emails)
+        })
+        .collect();
 
-impl From<ContactGroupItem> for ContactItemType {
-    fn from(value: ContactGroupItem) -> Self {
-        Self::Group(value)
-    }
-}
-
-/// This is the main data structure that is used to represent the contact.
-#[derive(Clone, Debug, PartialEq)]
-pub struct ContactItem {
-    pub local_id: LocalContactId,
-    pub name: String,
-    pub avatar_information: AvatarInformation,
-    pub emails: Vec<ContactEmailItem>,
-}
-
-impl From<Contact> for ContactItem {
-    fn from(value: Contact) -> Self {
-        Self {
-            local_id: value.id(),
-            avatar_information: AvatarInformation::from(&value.name)
-                .or_else(
-                    value
-                        .contact_emails
-                        .first()
-                        .map(|email| email.email.as_clear_text_str())
-                        .unwrap_or_default(),
-                )
-                .or_else_unchecked("?"),
-            emails: value.contact_emails.map_vec(),
-            name: value.name,
-        }
-    }
-}
-
-/// This is the main data structure that is used to represent the contact group.
-#[derive(Clone, Debug, PartialEq)]
-pub struct ContactGroupItem {
-    pub local_id: LocalContactGroupId,
-    pub name: String,
-    pub avatar_information: AvatarInformation,
-    pub contacts: Vec<ContactEmailItem>,
-}
-
-/// This is the main data structure that is used to represent the contact email.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct ContactEmailItem {
-    pub local_contact_id: LocalContactId,
-    pub email: PrivateEmail,
-    /// The field represents if the email is a proton email like foo@pm.me
-    pub is_proton: bool,
-    pub last_used_time: UnixTimestamp,
-    pub name: String,
-    pub avatar_information: AvatarInformation,
-}
-
-impl From<ContactEmail> for ContactEmailItem {
-    fn from(value: ContactEmail) -> Self {
-        let name = if value.name.is_empty() {
-            value.email.clone().into_clear_text_string()
-        } else {
-            value.name
-        };
-
-        Self {
-            // UNWRAP SAFETY: see ContactEmail::local_contact_id comment.
-            local_contact_id: value.local_contact_id.expect("This should always be set"),
-            email: value.email,
-            is_proton: value.is_proton,
-            last_used_time: value.last_used_time,
-            avatar_information: AvatarInformation::from(&name),
-            name,
-        }
-    }
+    GroupedContacts::from_contacts_and_groups(pairs, db_groups)
 }
 
 /// Device contact feeded by the mobile/web application.
@@ -376,7 +310,7 @@ impl ContactSuggestions {
         mut email: ContactEmail,
     ) -> (Contact, ContactEmailItem) {
         let label_ids = mem::take(&mut email.label_ids);
-        let email = ContactEmailItem::from(email);
+        let email = email_item_from_mail(email);
         for label_id in label_ids.iter() {
             if let Some(group) = contact_groups.get_mut(label_id) {
                 group.emails.push(email.clone());
@@ -562,7 +496,7 @@ mod tests {
         if is_proton {
             write!(out, ", Proton address").unwrap();
         }
-        if last_used_time.as_u64() != 0 {
+        if last_used_time != 0 {
             write!(out, ", last used: {last_used_time}").unwrap();
         }
         writeln!(out).unwrap();
@@ -728,7 +662,7 @@ mod tests {
             groups: Vec<ContactGroupModel>,
             test_number: u32,
         ) {
-            let groups = GroupedContacts::from_contacts_and_groups(contacts, groups);
+            let groups = build_grouped_contacts(contacts, groups);
             insta::assert_snapshot!(
                 format!("test_grouped_contacts_{}", test_number),
                 display_group(groups)
@@ -1099,7 +1033,7 @@ mod tests {
                             local_contact_id: 234.into(),
                             email: "m.scott@pm.me".into(),
                             is_proton: true,
-                            last_used_time: 2.into()
+                            last_used_time: 2,
                         })
                     },
                     ContactSuggestion {
@@ -1118,7 +1052,7 @@ mod tests {
                             local_contact_id: 123.into(),
                             email: "barbara@pm.me".into(),
                             is_proton: true,
-                            last_used_time: 1.into()
+                            last_used_time: 1,
                         })
                     },
                 ]
@@ -1141,7 +1075,7 @@ mod tests {
                            local_contact_id: 234.into(),
                            email: "m.scott@pm.me".into(),
                            is_proton: true,
-                           last_used_time: 2.into()
+                           last_used_time: 2,
                        })
                    },
                    ContactSuggestion {
@@ -1160,7 +1094,7 @@ mod tests {
                            local_contact_id: 123.into(),
                            email: "barbara@pm.me".into(),
                            is_proton: true,
-                           last_used_time: 1.into()
+                           last_used_time: 1,
                        })
                    },
                ]
@@ -1185,7 +1119,7 @@ mod tests {
                             local_contact_id: 234.into(),
                             email: "m.brogile@pm.me".into(),
                             is_proton: true,
-                            last_used_time: 2.into()
+                            last_used_time: 2,
                         })
                     },
                     ContactSuggestion {
@@ -1204,7 +1138,7 @@ mod tests {
                             local_contact_id: 123.into(),
                             email: "barbara@pm.me".into(),
                             is_proton: true,
-                            last_used_time: 1.into()
+                            last_used_time: 1,
                         })
                     },
                 ]
@@ -1227,7 +1161,7 @@ mod tests {
                             local_contact_id: 234.into(),
                             email: "m.scott@pm.me".into(),
                             is_proton: true,
-                            last_used_time: 2.into()
+                            last_used_time: 2,
                         })
                     },
                     ContactSuggestion {
@@ -1246,7 +1180,7 @@ mod tests {
                             local_contact_id: 123.into(),
                             email: "barbara@pm.me".into(),
                             is_proton: true,
-                            last_used_time: 1.into()
+                            last_used_time: 1,
                         })
                     },
                 ]

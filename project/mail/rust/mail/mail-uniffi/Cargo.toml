@@ -27,6 +27,7 @@ mail-calendar-common = { workspace = true }
 mail-core-api = { workspace = true }
 mail-core-common = { workspace = true }
 mail-contacts-common = { workspace = true }
+contact-database = { workspace = true }
 proton-crypto = { workspace = true }
 proton-crypto-account = { workspace = true, features = ["sql"] }
 mail-crypto-inbox = { workspace = true }

@@ -34,8 +34,10 @@ members = [
     "project/calendar/rust/calendar-seed",
     "project/calendar/rust/calendar-tui",
     "project/calendar/rust/notify-waker",
+    "project/contact/rust/contact-avatar",
     "project/contact/rust/contact-database",
     "project/contact/rust/contact-lattice",
+    "project/contact/rust/contact-list",
     "project/contact/rust/contact-service",
     "project/core/rust/core-client-info-op",
     "project/core/rust/core-common-types",
@@ -116,7 +118,6 @@ members = [
     "project/mail/rust/shared/issue-reporter-service",
     "project/mail/rust/shared/issue-reporter-service-uniffi",
     "project/mail/rust/shared/log-service",
-    "project/mail/rust/shared/mail-avatar",
     "project/mail/rust/shared/mail-db",
     "project/mail/rust/shared/mail-db-stash",
     "project/mail/rust/shared/mail-local-id",
@@ -567,10 +568,6 @@ version = "0.2"
 path = "project/mail/rust/shared/vcard"
 registry = "proton"
 
-[workspace.dependencies.mail-avatar]
-version = "0.1.0"
-path = "project/mail/rust/shared/mail-avatar"
-
 [workspace.dependencies.mail-labels-common]
 version = "0.1.0"
 path = "project/mail/rust/core/labels-common"
@@ -861,11 +858,17 @@ path = "project/payment/rust/payment-http"
 [workspace.dependencies.payment-observability]
 path = "project/payment/rust/payment-observability"
 
+[workspace.dependencies.contact-avatar]
+path = "project/contact/rust/contact-avatar"
+
 [workspace.dependencies.contact-lattice]
 path = "project/contact/rust/contact-lattice"
 
 [workspace.dependencies.contact-database]
 path = "project/contact/rust/contact-database"
+
+[workspace.dependencies.contact-list]
+path = "project/contact/rust/contact-list"
 
 [workspace.dependencies.contact-service]
 path = "project/contact/rust/contact-service"

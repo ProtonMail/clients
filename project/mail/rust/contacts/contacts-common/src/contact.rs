@@ -43,7 +43,10 @@ use crate::contact_email::ContactEmail;
 use crate::contact_group::{
     ContactGroup, LINK_CONTACT_GROUPS_CONTATCS_QUERY, LINK_CONTACT_GROUPS_EMAILS_QUERY,
 };
-use crate::contact_list::{ContactGroupItem, ContactSuggestions, DeviceContact, GroupedContacts};
+use crate::contact_list::{
+    ContactGroupItem, ContactSuggestions, DeviceContact, GroupedContacts, build_grouped_contacts,
+    email_item_from_mail,
+};
 use crate::error::ContactError;
 use crate::local_ids::{LocalContactEmailId, LocalContactGroupId, LocalContactId};
 use mail_contacts_api::{ContactApi as _, ContactGroupId};
@@ -416,10 +419,7 @@ impl Contact {
             ContactGroup::all(tether),
         )?;
 
-        Ok(GroupedContacts::from_contacts_and_groups(
-            contacts,
-            contact_groups,
-        ))
+        Ok(build_grouped_contacts(contacts, contact_groups))
     }
 
     #[tracing::instrument(skip(tether))]
@@ -445,10 +445,10 @@ impl Contact {
         res.sort_unstable_by_key(|x| (x.display_order, x.id()));
 
         Ok(ContactGroupItem {
-            local_id: l.id(),
+            local_id: l.id().into(),
             avatar_information: l.name.as_str().into(),
             name: l.name,
-            contacts: res.map_vec(),
+            contacts: res.into_iter().map(email_item_from_mail).collect(),
         })
     }
 

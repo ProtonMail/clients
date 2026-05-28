@@ -1247,6 +1247,7 @@ dependencies = [
  "calendar-bootstrap",
  "calendar-crypto",
  "calendar-db",
+ "calendar-events",
  "calendar-ical",
  "calendar-keychain",
  "calendar-loop",
@@ -1373,6 +1374,29 @@ dependencies = [
  "serde_json",
  "sqlite-wasm-rs",
  "sqlite-wasm-vfs",
+ "tracing",
+]
+
+[[package]]
+name = "calendar-events"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "calendar-access",
+ "calendar-api",
+ "calendar-bootstrap",
+ "calendar-db",
+ "calendar-db-diesel",
+ "calendar-net",
+ "calendar-net-fake",
+ "facet",
+ "insta",
+ "itertools 0.14.0",
+ "jiff",
+ "mail-avatar",
+ "parking_lot",
+ "serde",
+ "tokio",
  "tracing",
 ]
 
@@ -1549,6 +1573,7 @@ dependencies = [
  "anyhow",
  "calendar-crux",
  "calendar-db-diesel",
+ "calendar-events",
  "calendar-keychain",
  "calendar-net",
  "calendar-net-muon",

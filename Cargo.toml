@@ -19,6 +19,7 @@ members = [
     "project/calendar/rust/calendar-crypto",
     "project/calendar/rust/calendar-db",
     "project/calendar/rust/calendar-db-diesel",
+    "project/calendar/rust/calendar-events",
     "project/calendar/rust/calendar-ical",
     "project/calendar/rust/calendar-ical-cli",
     "project/calendar/rust/calendar-ical-fuzz",
@@ -347,6 +348,7 @@ calendar-crux = { path = "project/calendar/rust/calendar-crux" }
 calendar-crypto = { path = "project/calendar/rust/calendar-crypto" }
 calendar-db = { path = "project/calendar/rust/calendar-db" }
 calendar-db-diesel = { path = "project/calendar/rust/calendar-db-diesel" }
+calendar-events = { path = "project/calendar/rust/calendar-events" }
 calendar-ical = { path = "project/calendar/rust/calendar-ical" }
 calendar-ical-tz = { path = "project/calendar/rust/calendar-ical-tz" }
 calendar-keychain = { path = "project/calendar/rust/calendar-keychain" }

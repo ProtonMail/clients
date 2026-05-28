@@ -59,7 +59,7 @@ pub use self::push_notifications::*;
 pub use self::system_label::*;
 pub use self::timestamp_ms::*;
 pub use self::user_feature_flags::*;
-pub use mail_avatar::AvatarInformation;
+pub use contact_avatar::AvatarInformation;
 pub use mail_contacts_common::local_ids::{LocalContactEmailId, LocalContactId};
 pub use mail_contacts_common::types::{ContactSendingPreferences, ContactTypes};
 

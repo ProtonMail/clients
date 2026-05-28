@@ -1,0 +1,22 @@
+[package]
+name = "contact-list"
+version = "0.1.0"
+edition.workspace = true
+license = "AGPL-3.0-only"
+rust-version.workspace = true
+
+[dependencies]
+contact-avatar = { workspace = true }
+contact-database = { workspace = true }
+mail-proton-ids = { workspace = true }
+unicode-segmentation = { workspace = true }
+
+[dev-dependencies]
+contact-lattice = { workspace = true }
+insta = { workspace = true }
+mail-local-id = { workspace = true }
+pretty_assertions = { workspace = true }
+test-case = { workspace = true }
+
+[lints]
+workspace = true

@@ -1,0 +1,13 @@
+---
+source: project/contact/rust/contact-list/src/tests.rs
+assertion_line: 250
+expression: display_group(result)
+---
+2 keys:
+
+❤️‍🔥 (1 item)
+Contact ❤️‍🔥 (#4E7ABB): ❤️‍🔥 Barbara Fox (0 addresses)
+
+🙀 (2 items)
+Contact 🙀 (#7B3185): 🙀 (0 addresses)
+Contact 🙀 (#4989FF): 🙀 Barbara Lox (0 addresses)

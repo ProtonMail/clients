@@ -547,7 +547,7 @@ impl AppStateHandler for ContactsModel {
                 match self.selected_contact_item().cloned() {
                     // For contacts we load the details
                     Some(ContactItemType::Contact(contact)) => {
-                        let id = contact.local_id;
+                        let id = contact.local_id.into();
                         self.open_contact = OpenedContactState::Loading(contact);
                         self.load_contact_details(id)
                     }
@@ -561,10 +561,12 @@ impl AppStateHandler for ContactsModel {
                             let ctx = self.ctx.clone();
                             Command::task(async move {
                                 let tether = ctx.user_stash().connection();
-                                let group_from_db =
-                                    Contact::contact_group_by_id(&tether, group_clone.local_id)
-                                        .await
-                                        .unwrap();
+                                let group_from_db = Contact::contact_group_by_id(
+                                    &tether,
+                                    group_clone.local_id.into(),
+                                )
+                                .await
+                                .unwrap();
                                 assert_eq!(group_from_db, group_clone);
                                 Command::None
                             })

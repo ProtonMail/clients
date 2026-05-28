@@ -1249,6 +1249,18 @@ impl_into_id!(LocalConversationId);
 impl_into_id!(LocalContactGroupId);
 impl_into_id!(LocalContactCardId);
 
+impl From<contact_database::LocalContactId> for Id {
+    fn from(id: contact_database::LocalContactId) -> Self {
+        Self { value: id.as_u64() }
+    }
+}
+
+impl From<contact_database::LocalContactGroupId> for Id {
+    fn from(id: contact_database::LocalContactGroupId) -> Self {
+        Self { value: id.as_u64() }
+    }
+}
+
 /// Remote ID
 ///
 /// This data type should be used as a last resort.

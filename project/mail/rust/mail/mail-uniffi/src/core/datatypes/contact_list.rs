@@ -118,7 +118,7 @@ impl From<RealContactEmailItem> for ContactEmailItem {
             contact_id: value.local_contact_id.into(),
             email: value.email.into_clear_text_string(),
             is_proton: value.is_proton,
-            last_used_time: value.last_used_time.into(),
+            last_used_time: UnixTimestamp(value.last_used_time),
             avatar_information: value.avatar_information.into(),
             name: value.name,
         }

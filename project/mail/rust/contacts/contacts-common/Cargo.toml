@@ -22,7 +22,7 @@ itertools = { workspace = true }
 mail-action-queue = { workspace = true }
 mail-api-utils = { workspace = true }
 mail-local-id = { workspace = true }
-mail-avatar = { workspace = true }
+contact-avatar = { workspace = true }
 mail-core-api = { workspace = true }
 mail-shared-types = { workspace = true }
 mail-sqlite3 = { workspace = true }
@@ -43,6 +43,8 @@ mail-api-session = { workspace = true }
 mail-labels-common = { workspace = true, optional = true }
 mail-db-stash = { workspace = true }
 contact-database = { workspace = true }
+contact-lattice = { workspace = true }
+contact-list = { workspace = true }
 contact-service = { workspace = true }
 mail-db = { workspace = true }
 

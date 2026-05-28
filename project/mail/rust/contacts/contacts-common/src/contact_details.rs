@@ -1,8 +1,8 @@
 use anyhow::Context as _;
+use contact_avatar::{AvatarInformation, proton_color};
 use core::fmt;
 use indexmap::IndexSet;
 use itertools::Itertools as _;
-use mail_avatar::{AvatarInformation, proton_color};
 use mail_contacts_api::ContactGroupId;
 use mail_core_api::services::proton::{ContactId, PrivateEmail};
 use mail_core_api::session::Session;

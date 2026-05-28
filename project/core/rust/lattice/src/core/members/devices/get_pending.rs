@@ -1,7 +1,7 @@
 //! `GET /core/v4/members/devices/pending` — auth devices in the org with a non-null activation token.
 //!
 //! Source: `Proton\Apps\Account\Controller\Auth\GetPendingAuthDevicesAction`. Scope: `ORGANIZATION` only.
-//! Wire: top-level array key is `MemberAuthDevices` (not `AuthDevices`); elements are [`crate::auth::devices::LtAuthDevice`].
+//! Wire: top-level key `MemberAuthDevices` with flat [`crate::auth::devices::LtAuthDevice`] elements.
 
 use std::borrow::Cow;
 

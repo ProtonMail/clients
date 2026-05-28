@@ -1,41 +1,46 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Sensitive};
+use crate::{
+    AuthReq, LatticeError, LtContract, LtSerdeQueryParams, LtSlimAPIJSON, LtSlimApiPageQuery,
+    Sensitive,
+};
 
 use super::account_enums::{LtCoreMemberOrgKeyStatus, LtCoreMemberState};
 use super::ids::LtCoreMemberEncId;
+use super::keys::LtCoreSensitiveUserKeys;
 use super::unpriv_types::{
     LtCoreUnprivActivationToken, LtCoreUnprivArmoredPrivateKey, LtCoreUnprivInvitationData,
     LtCoreUnprivInvitationSignature, LtCoreUnprivState,
 };
 use super::user::LtCoreMemberRole;
 
-/// Request to list all members of the authenticated user's organization
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
-pub struct LtCoreGetMembersReq;
+pub const MAX_PAGE_SIZE: u32 = 150;
 
-/// Response containing organization members
+/// Request to list all members of the authenticated user's organization.
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Default)]
+pub struct LtCoreGetMembersReq {
+    pub pagination: LtSlimApiPageQuery<MAX_PAGE_SIZE>,
+}
+/// Response containing organization members.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(
-    feature = "serde",
-    serde(rename_all = "PascalCase", deny_unknown_fields)
-)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
 pub struct LtCoreGetMembersRes {
     pub members: Vec<LtCoreMemberInfo>,
+    /// This will only be present if the request includes pagination.
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    pub total: Option<u32>,
 }
 
 /// Member row as returned by core members APIs (`MemberInfo` in OpenAPI).
 ///
 /// Definition: `apps/Account/app/Dto/MemberInfo.php`. JSON keys mostly PascalCase; `2faStatus` is lower camel.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(
-    feature = "serde",
-    serde(rename_all = "PascalCase", deny_unknown_fields)
-)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
 pub struct LtCoreMemberInfo {
     #[cfg_attr(feature = "serde", serde(rename = "ID"))]
     pub id: LtCoreMemberEncId,
@@ -78,7 +83,8 @@ pub struct LtCoreMemberInfo {
     #[cfg_attr(feature = "serde", serde(rename = "2faStatus"))]
     pub tfa_status: i32,
 
-    pub keys: Vec<String>,
+    /// User keys from `UserKey::getCompleteInfo()` (armored material when present).
+    pub keys: LtCoreSensitiveUserKeys,
 
     #[cfg_attr(feature = "serde", serde(default))]
     pub public_key: Option<String>,
@@ -101,7 +107,7 @@ pub struct LtCoreMemberInfo {
     #[cfg_attr(feature = "serde", serde(rename = "NumLumo"))]
     pub num_lumo: Option<i32>,
 
-    /// Address rows included on member list responses (not always present in older OpenAPI snapshots).
+    /// Address rows included on member list responses (`withAddress: true` on list members).
     #[cfg_attr(feature = "serde", serde(default))]
     pub addresses: Vec<LtCoreMemberListAddress>,
 }
@@ -109,10 +115,7 @@ pub struct LtCoreMemberInfo {
 /// One address entry under `Addresses` on [`LtCoreMemberInfo`].
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(
-    feature = "serde",
-    serde(rename_all = "PascalCase", deny_unknown_fields)
-)]
+#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
 pub struct LtCoreMemberListAddress {
     #[cfg_attr(feature = "serde", serde(rename = "ID"))]
     pub id: String,
@@ -132,10 +135,7 @@ pub struct LtCoreMemberListAddress {
 /// Keys match the associative array from `MagicLinkService::getUnprivatizationInfoForMember` (PascalCase in JSON).
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(
-    feature = "serde",
-    serde(rename_all = "PascalCase", deny_unknown_fields)
-)]
+#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
 pub struct LtCoreMemberListUnprivatization {
     #[cfg_attr(feature = "serde", serde(default))]
     pub state: Option<LtCoreUnprivState>,
@@ -159,10 +159,14 @@ pub struct LtCoreMemberListUnprivatization {
 impl LtContract for LtCoreGetMembersReq {
     type Response = LtSlimAPIJSON<LtCoreGetMembersRes>;
     type Body<'a> = LtSlimAPIJSON<()>;
-    type Query<'q> = LtNoQueryParams;
+    type Query<'q> = LtSerdeQueryParams<&'q LtSlimApiPageQuery<MAX_PAGE_SIZE>>;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
         Ok(Cow::Borrowed("/core/v4/members"))
+    }
+
+    fn query<'a>(&'a self) -> Option<Self::Query<'a>> {
+        Some(LtSerdeQueryParams(&self.pagination))
     }
 }
 

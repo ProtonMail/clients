@@ -4,6 +4,7 @@ use crate::{
     AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, core::user::LtCoreUser,
 };
 
+/// Request current user info (`GET /core/v4/users`).
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LtCoreGetUsersReq;

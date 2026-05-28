@@ -2,6 +2,8 @@ use std::borrow::Cow;
 
 use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method};
 
+use super::LtAuthDevice;
+
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
@@ -18,17 +20,7 @@ pub struct LtAuthPostDevicesCreateReq {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
 pub struct LtAuthPostDevicesCreateRes {
-    pub auth_device: LtAuthPostDevicesCreateAuthDevice,
-}
-
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
-pub struct LtAuthPostDevicesCreateAuthDevice {
-    #[cfg_attr(feature = "serde", serde(rename = "ID"))]
-    pub id: String,
-
-    pub device_token: String,
+    pub auth_device: LtAuthDevice,
 }
 
 impl LtContract for LtAuthPostDevicesCreateReq {

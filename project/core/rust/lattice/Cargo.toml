@@ -4,13 +4,26 @@
   edition.workspace = true
 
 [features]
-  core = ["auth", "dep:passkey", "dep:bitflags", "dep:proton-crypto-account", "dep:num_enum"]
-  auth = ["dep:passkey", "dep:bitflags", "dep:num_enum"]
+  core = [
+    "auth",
+    "dep:passkey",
+    "dep:bitflags",
+    "dep:proton-crypto-account",
+    "dep:num_enum",
+    "serde",
+  ]
+  auth = ["serde", "dep:passkey", "dep:bitflags", "dep:num_enum"]
   default = []
-  serde = ["dep:serde", "dep:serde_json", "bitflags?/serde", "core-sensitive-data/serde"]
+  serde = [
+    "dep:serde",
+    "dep:serde_json",
+    "dep:serde_qs",
+    "dep:url",
+    "bitflags?/serde",
+    "core-sensitive-data/serde",
+  ]
   observability = ["serde"]
-  full = ["core", "auth", "serde", "observability"]
-  serde_qs = ["dep:serde_qs", "dep:url", "serde"]
+  full = ["core", "auth", "observability"]
 
 [dependencies]
   core-sensitive-data.workspace = true

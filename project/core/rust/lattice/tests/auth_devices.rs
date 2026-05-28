@@ -14,6 +14,7 @@ use lattice::{
         post_auth_devices_create::LtAuthPostDevicesCreateReq,
         post_auth_devices_device_id::LtAuthPostDevicesDeviceIDReq,
         put_auth_devices_device_id_admin::LtAuthPutDevicesDeviceIDAdminReq,
+        put_auth_devices_device_id_reject::LtAuthPutDevicesDeviceIDRejectReq,
     },
     details::AccessTokenWithInsufficientScopeErrorDetails,
 };
@@ -61,7 +62,7 @@ async fn test_post_auth_devices_associate() {
             device_token: "1234567890".to_string(),
         })
         .await;
-    assert_api_err!(&res, LtApiResponseError::InvalidDeviceID(_));
+    assert_api_err!(&res, LtApiResponseError::InvalidID(_));
 }
 
 #[tokio::test]
@@ -109,7 +110,7 @@ async fn test_delete_auth_devices() {
     let res = session
         .send_lt(LtAuthDeleteDevicesReq::DeviceID("1234567890".to_string()))
         .await;
-    assert_api_err!(&res, LtApiResponseError::InvalidDeviceID(_));
+    assert_api_err!(&res, LtApiResponseError::InvalidID(_));
     let res = session.send_lt(LtAuthDeleteDevicesReq::All).await;
     assert_api_ok!(res, _);
 }
@@ -138,7 +139,7 @@ async fn test_post_auth_devices_device_id() {
             encrypted_secret: Sensitive::new("secret".to_string()),
         })
         .await;
-    assert_api_err!(&res, LtApiResponseError::InvalidDeviceID(_));
+    assert_api_err!(&res, LtApiResponseError::InvalidID(_));
 }
 
 #[tokio::test]
@@ -163,5 +164,30 @@ async fn test_put_auth_devices_device_id_admin() {
             device_id: "1234567890".to_string(),
         })
         .await;
-    assert_api_err!(&res, LtApiResponseError::InvalidDeviceID(_));
+    assert_api_err!(&res, LtApiResponseError::InvalidID(_));
+}
+
+#[tokio::test]
+async fn test_put_auth_devices_device_id_reject() {
+    let session = generate_muon_session().await;
+    let res = session
+        .send_lt(LtAuthPutDevicesDeviceIDRejectReq {
+            device_id: "1234567890".to_string(),
+        })
+        .await;
+    assert_api_err!(&res,
+        LtApiResponseError::AccessTokenWithInsufficientScope(LtApiResponseErrorInfo {
+            details: AccessTokenWithInsufficientScopeErrorDetails { missing_scopes },
+            ..
+        })
+        if missing_scopes == &["full"]
+    );
+    let (session, tfa) = login_muon_session(session, "plus", "plus").await.unwrap();
+    assert!(tfa.is_none(), "{tfa:?} is expected to be None");
+    let res = session
+        .send_lt(LtAuthPutDevicesDeviceIDRejectReq {
+            device_id: "1234567890".to_string(),
+        })
+        .await;
+    assert_api_err!(&res, LtApiResponseError::InvalidID(_));
 }

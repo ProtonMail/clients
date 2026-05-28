@@ -45,9 +45,7 @@ impl LtContract for GetContactGroupsRequest {
     }
 
     fn query<'a>(&'a self) -> Option<Self::Query<'a>> {
-        Some(LtSerdeQueryParams::new(
-            GetContactGroupsQueryParams::default(),
-        ))
+        Some(LtSerdeQueryParams(GetContactGroupsQueryParams::default()))
     }
 }
 

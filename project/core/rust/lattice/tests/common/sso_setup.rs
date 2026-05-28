@@ -2,8 +2,9 @@
 
 use std::num::NonZeroU32;
 
+use lattice::LtSlimApiPageQuery;
 use lattice::core::get_domain::{LtCoreGetDomainReq, LtCoreGetDomainRes};
-use lattice::core::get_domains::{LtCoreGetDomainsReq, LtCoreGetDomainsRes};
+use lattice::core::get_domains::{LtCoreGetDomainsReq, LtCoreGetDomainsRes, MAX_PAGE_SIZE};
 use lattice::core::get_members::{LtCoreGetMembersReq, LtCoreGetMembersRes};
 use lattice::core::post_domains::LtCoreDomainOutput;
 use lattice::core::post_saml_setup_fields::{
@@ -59,10 +60,12 @@ pub async fn create_organization(
 }
 
 async fn get_domains_lt(session: &Session) -> LtCoreGetDomainsRes {
+    let page_size = NonZeroU32::new(MAX_PAGE_SIZE).expect("valid page size");
     session
         .send_lt(LtCoreGetDomainsReq {
-            page_size: Some(NonZeroU32::new(150).expect("150 is valid page size")),
-            page: Some(0),
+            pagination: LtSlimApiPageQuery::new()
+                .with_pagination(Some(0), Some(page_size))
+                .expect("MAX_PAGE_SIZE is valid page size"),
         })
         .await
         .unwrap()
@@ -127,7 +130,10 @@ pub async fn refresh_domain_good(
 }
 
 pub async fn get_members(session: &Session) -> LtCoreGetMembersRes {
-    session.send_lt(LtCoreGetMembersReq).await.unwrap()
+    session
+        .send_lt(LtCoreGetMembersReq::default())
+        .await
+        .unwrap()
 }
 
 pub async fn get_user_settings(session: &Session) -> LtCoreGetSettingsRes {

@@ -26,26 +26,3 @@ impl LtRequestQueryParams for LtNoQueryParams {
         Ok(HashMap::new())
     }
 }
-
-#[cfg(feature = "serde_qs")]
-pub struct LtSerdeQueryParams<T: serde::Serialize>(T);
-
-#[cfg(feature = "serde_qs")]
-impl<T: serde::Serialize> LtSerdeQueryParams<T> {
-    pub fn new(value: T) -> Self {
-        Self(value)
-    }
-}
-
-#[cfg(feature = "serde_qs")]
-impl<T: serde::Serialize> LtRequestQueryParams for LtSerdeQueryParams<T> {
-    fn to_query_params<'a>(
-        &'a self,
-    ) -> Result<HashMap<Cow<'a, str>, Sensitive<String>>, LatticeError> {
-        let headers = url::form_urlencoded::parse(serde_qs::to_string(&self.0)?.as_bytes())
-            .into_owned()
-            .map(|(k, v)| (Cow::Owned(k), Sensitive::new(v)))
-            .collect::<HashMap<_, _>>();
-        Ok(headers)
-    }
-}

@@ -13,11 +13,21 @@
 
 mod lt_contract;
 mod lt_query_params;
+#[cfg(feature = "serde")]
+mod pagination;
+#[cfg(feature = "serde")]
+mod presence;
+#[cfg(feature = "serde")]
+mod serde_query;
 
 pub use lt_contract::LtContract;
-#[cfg(feature = "serde_qs")]
-pub use lt_query_params::LtSerdeQueryParams;
 pub use lt_query_params::{LtNoQueryParams, LtRequestQueryParams};
+#[cfg(feature = "serde")]
+pub use pagination::{LtSlimApiPageQuery, LtSlimApiPageSizeError};
+#[cfg(feature = "serde")]
+pub use presence::LtSlimApiPresenceQuery;
+#[cfg(feature = "serde")]
+pub use serde_query::LtSerdeQueryParams;
 
 use crate::LatticeError;
 

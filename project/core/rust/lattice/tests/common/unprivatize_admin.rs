@@ -5,7 +5,8 @@ use std::fmt;
 use std::string::FromUtf8Error;
 
 use lattice::auth::LtAuthAddressId;
-use lattice::core::get_core_addresses::{LtCoreGetAddressesReq, LtCoreGetAddressesRes};
+use lattice::core::LtCoreAddressesListRes;
+use lattice::core::get_core_addresses::LtCoreGetAddressesReq;
 use lattice::core::get_members::{LtCoreGetMembersReq, LtCoreGetMembersRes, LtCoreMemberInfo};
 use lattice::core::get_organizations_keys::{
     LtCoreGetOrganizationsKeysReq, LtCoreGetOrganizationsKeysRes,
@@ -153,16 +154,16 @@ async fn core_get_org_keys(
 
 async fn core_get_addresses(
     session: &Session,
-) -> Result<LtCoreGetAddressesRes, UnprivatizeAdminError> {
+) -> Result<LtCoreAddressesListRes, UnprivatizeAdminError> {
     session
-        .send_lt(LtCoreGetAddressesReq)
+        .send_lt(LtCoreGetAddressesReq::default())
         .await
         .map_err(Into::into)
 }
 
 async fn core_get_members(session: &Session) -> Result<LtCoreGetMembersRes, UnprivatizeAdminError> {
     session
-        .send_lt(LtCoreGetMembersReq)
+        .send_lt(LtCoreGetMembersReq::default())
         .await
         .map_err(Into::into)
 }
@@ -237,7 +238,7 @@ fn pgp_hex_org_fingerprint<P: PGPProviderSync>(
 
 fn pick_primary_address_unlocked_key<P: PGPProviderSync>(
     pgp: &P,
-    addrs: &LtCoreGetAddressesRes,
+    addrs: &LtCoreAddressesListRes,
     user_keys: &[UnlockedUserKey<P>],
     key_passphrase: &KeySecret,
 ) -> Result<(LtAuthAddressId, UnlockedAddressKey<P>), UnprivatizeAdminError> {

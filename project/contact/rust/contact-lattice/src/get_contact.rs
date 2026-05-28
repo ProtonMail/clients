@@ -111,7 +111,7 @@ impl LtContract for GetContactsRequest {
     }
 
     fn query<'a>(&'a self) -> Option<Self::Query<'a>> {
-        Some(LtSerdeQueryParams::new(&self.options))
+        Some(LtSerdeQueryParams(&self.options))
     }
 }
 

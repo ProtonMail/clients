@@ -1,28 +1,27 @@
 use std::borrow::Cow;
 
 use crate::{
-    AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, core::LtCoreAddress,
+    AuthReq, LatticeError, LtContract, LtSerdeQueryParams, LtSlimAPIJSON,
+    core::addresses::{LtCoreAddressesListQuery, LtCoreAddressesListRes},
 };
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
-pub struct LtCoreGetAddressesRes {
-    pub addresses: Vec<LtCoreAddress>,
+/// Request to list the authenticated user's addresses (`FULL` scope).
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
+pub struct LtCoreGetAddressesReq {
+    pub query: LtCoreAddressesListQuery,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
-pub struct LtCoreGetAddressesReq;
-
 impl LtContract for LtCoreGetAddressesReq {
-    type Response = LtSlimAPIJSON<LtCoreGetAddressesRes>;
+    type Response = LtSlimAPIJSON<LtCoreAddressesListRes>;
     type Body<'a> = LtSlimAPIJSON<()>;
-    type Query<'q> = LtNoQueryParams;
+    type Query<'q> = LtSerdeQueryParams<&'q LtCoreAddressesListQuery>;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
         Ok(Cow::Borrowed("/core/v4/addresses"))
+    }
+
+    fn query<'a>(&'a self) -> Option<Self::Query<'a>> {
+        Some(LtSerdeQueryParams(&self.query))
     }
 }
 

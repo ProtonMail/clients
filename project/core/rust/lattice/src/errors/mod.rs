@@ -78,8 +78,8 @@ pub enum LtApiResponseError {
         LtApiResponseErrorInfo<EnforcedCode<9106>, AccessTokenWithInsufficientScopeErrorDetails>,
     ),
 
-    #[display("InvalidDeviceID")]
-    InvalidDeviceID(LtApiResponseErrorInfo<EnforcedCode<2061>, NullErrorDetails>),
+    #[display("InvalidID")]
+    InvalidID(LtApiResponseErrorInfo<EnforcedCode<2061>, NullErrorDetails>),
 
     #[display("InvalidRequestJsonBody")]
     InvalidRequestJsonBody(LtApiResponseErrorInfo<EnforcedCode<6001>, NullErrorDetails>),

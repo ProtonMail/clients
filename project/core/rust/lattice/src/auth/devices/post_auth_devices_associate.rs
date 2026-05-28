@@ -17,8 +17,7 @@ pub struct LtAuthPostDevicesAssociateReq {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
 pub struct LtAuthPostDevicesAssociateRes {
-    #[cfg_attr(feature = "serde", serde(rename = "AuthDevice"))]
-    pub device: LtAuthAssociatedDevice,
+    pub auth_device: LtAuthAssociatedDevice,
 }
 
 impl LtContract for LtAuthPostDevicesAssociateReq {

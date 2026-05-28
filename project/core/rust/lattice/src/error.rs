@@ -23,7 +23,7 @@ pub enum LatticeError {
     #[display("ApiError Status({_0}), {_1:?}")]
     ApiError(u16, Box<LtApiResponseError>),
 
-    #[cfg(feature = "serde_qs")]
+    #[cfg(feature = "serde")]
     #[display("SerdeQs: {_0}")]
     SerdeQs(serde_qs::Error),
 
@@ -48,7 +48,7 @@ impl LatticeError {
     }
 }
 
-#[cfg(feature = "serde_qs")]
+#[cfg(feature = "serde")]
 impl From<serde_qs::Error> for LatticeError {
     fn from(value: serde_qs::Error) -> Self {
         Self::SerdeQs(value)

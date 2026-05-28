@@ -6,7 +6,8 @@
 //! Integration tests for org unprivatization:
 //! * admin `GET /organizations/keys` (after identity publish), `PUT /organizations/keys/signature`,
 //!   `POST /members/{id}/unprivatize`, `GET /members` (list row embed), member-device admin routes
-//!   `GET /members/{id}/devices`, `GET /members/devices/pending`, member `GET /auth/v4/devices`
+//!   `GET /members/{id}/devices`, `GET /members/devices/pending`, `GET /members/{id}/addresses`,
+//!   member `GET /auth/v4/devices`
 //! * member `GET /members/me/unprivatize` (**Pending** after a valid invite)
 //!
 //! Requires a live atlas stack; set `ENV_NAME` to target a specific env (default in test harness: `freud`).
@@ -15,9 +16,12 @@ mod common;
 mod common_sso;
 
 use lattice::auth::devices::get_auth_devices::LtAuthGetDevicesReq;
+use lattice::core::addresses::LtCoreAddressesListQuery;
 use lattice::core::get_members::LtCoreGetMembersReq;
 use lattice::core::get_members_me_unprivatize::LtCoreGetMembersMeUnprivatizeReq;
 use lattice::core::get_organizations_keys::LtCoreGetOrganizationsKeysReq;
+use lattice::core::ids::LtCoreMemberEncId;
+use lattice::core::members::addresses::LtCoreGetMembersMemberIDAddressesReq;
 use lattice::core::members::devices::{
     LtCoreGetMembersDevicesPendingReq, LtCoreGetMembersDevicesReq,
 };
@@ -110,7 +114,7 @@ async fn test_unprivatize_admin_sets_member_me_endpoint_to_pending() {
         .expect("POST /members/…/unprivatize");
 
     let members = admin_session
-        .send_lt(LtCoreGetMembersReq)
+        .send_lt(LtCoreGetMembersReq::default())
         .await
         .expect("GET /members");
     let sso_member = members
@@ -125,6 +129,24 @@ async fn test_unprivatize_admin_sets_member_me_endpoint_to_pending() {
     assert_eq!(list_unpriv.state, Some(LtCoreUnprivState::Pending));
 
     let sso_member_id = sso_member.id.clone();
+
+    let member_addresses = admin_session
+        .send_lt(LtCoreGetMembersMemberIDAddressesReq {
+            member_id: sso_member_id.clone(),
+            query: LtCoreAddressesListQuery::default(),
+        })
+        .await
+        .expect("GET /members/{id}/addresses");
+    assert_eq!(member_addresses.addresses.len(), 1);
+
+    let unknown_member_addresses = admin_session
+        .send_lt(LtCoreGetMembersMemberIDAddressesReq {
+            member_id: LtCoreMemberEncId("not-a-valid-member-id".to_string()),
+            query: LtCoreAddressesListQuery::default(),
+        })
+        .await;
+    assert_api_err!(unknown_member_addresses, LtApiResponseError::InvalidID(..));
+
     let admin_member_devices = admin_session
         .send_lt(LtCoreGetMembersDevicesReq {
             member_id: sso_member_id,

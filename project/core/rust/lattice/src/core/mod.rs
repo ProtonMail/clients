@@ -3,6 +3,7 @@
 //! other Core DTOs; the canonical import path is `lattice::auth::devices` when you only need those types.
 
 pub mod account_enums;
+pub mod addresses;
 pub mod get_core_address;
 pub mod get_core_addresses;
 pub mod get_core_domains_available;
@@ -23,6 +24,7 @@ pub mod keys;
 pub use keys::post_keys_setup;
 pub mod members;
 pub mod post_domains;
+pub mod post_members_keys_unprivatize;
 pub mod post_members_saml;
 pub mod post_members_unprivatize;
 pub mod post_saml_setup_fields;
@@ -41,13 +43,22 @@ pub use crate::auth::devices::{LtAuthDevice, LtAuthDeviceState};
 pub use account_enums::{
     LtCoreDomainVerifyState, LtCoreMemberOrgKeyStatus, LtCoreMemberState, LtCoreSsoType,
 };
+pub use addresses::{
+    ADDRESSES_LIST_MAX_PAGE_SIZE, LtCoreAddressesListQuery, LtCoreAddressesListRes,
+};
 pub use get_members::{LtCoreMemberListAddress, LtCoreMemberListUnprivatization};
 pub use ids::{LtCoreAuthDeviceId, LtCoreDomainId, LtCoreMemberEncId};
+pub use members::addresses::LtCoreGetMembersMemberIDAddressesReq;
 pub use members::devices::{
     LtCoreDeleteMembersDeviceReq, LtCoreDeleteMembersDevicesReq, LtCoreGetMembersDevicesPendingReq,
     LtCoreGetMembersDevicesPendingRes, LtCoreGetMembersDevicesReq, LtCoreGetMembersDevicesRes,
     LtCorePostMembersDevicesResetBody, LtCorePostMembersDevicesResetReq,
     LtCorePutMembersDevicesRejectReq, LtCoreResetAuthDevicesUserKey,
+};
+pub use post_members_keys_unprivatize::{
+    LtCorePostMembersKeysUnprivatizeBody, LtCorePostMembersKeysUnprivatizeReq,
+    LtCoreUnprivatizeAddressKey, LtCoreUnprivatizeOrganizationKeyActivation,
+    LtCoreUnprivatizeUserKey,
 };
 pub use unpriv_types::{
     LtCoreUnprivActivationToken, LtCoreUnprivArmoredPrivateKey, LtCoreUnprivInvitationData,
@@ -280,6 +291,40 @@ pub struct LtCoreU2FKey {
     pub compromised: Option<i32>,
 }
 
+/// One `AuthDevices` event row (nested shape).
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+pub struct LtAuthDeviceEvent {
+    #[cfg_attr(feature = "serde", serde(rename = "ID"))]
+    pub id: String,
+
+    pub action: LtCoreEventAction,
+
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    pub auth_device: Option<LtAuthDevice>,
+}
+
+/// One `MemberAuthDevices` event row (nested shape).
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+pub struct LtCoreMemberAuthDeviceEvent {
+    #[cfg_attr(feature = "serde", serde(rename = "ID"))]
+    pub id: String,
+
+    pub action: LtCoreEventAction,
+
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    pub member_auth_device: Option<LtAuthDevice>,
+}
+
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
@@ -292,6 +337,12 @@ pub struct LtCoreEvents {
 
     #[cfg_attr(feature = "serde", serde(default))]
     pub addresses: Vec<LtCoreEventItem<LtAuthAddressId>>,
+
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub auth_devices: Vec<LtAuthDeviceEvent>,
+
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub member_auth_devices: Vec<LtCoreMemberAuthDeviceEvent>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

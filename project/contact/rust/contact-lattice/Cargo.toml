@@ -5,7 +5,7 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-lattice = { workspace = true, features = ["serde", "serde_qs"] }
+lattice = { workspace = true, features = ["serde"] }
 mail-api-event-types = { workspace = true }
 mail-api-labels = { workspace = true, optional = true }
 mail-api-utils = { workspace = true, optional = true }

@@ -92,7 +92,7 @@ Lattice categorizes API endpoints using a strict hierarchy based on the API docu
 * **File Names:** Mirror the verb and route shape (e.g., `get_domain.rs`, `post_domains.rs`) inside the appropriate `src/[section]/[domain]/` folder.
 * **Strict File Isolation:** A request file must **only** contain types directly associated with that specific request (the `Req`, its specific `Body`, and its specific `Res`). **Do not put non-request-associated types in a request file.**
 * **Common Types:**
-  * If a type is shared across a **Domain**, put it in `src/[section]/[domain]/mod.rs`.
+  * If a type is shared across a **Domain**, put it in `src/[section]/[domain]/` (one type per file; re-export from `mod.rs`).
   * If a type is shared across an entire **API Section**, put it in `src/[section]/mod.rs`.
 
 **File Layout Example:**
@@ -128,8 +128,10 @@ Always implement `LtContract` directly on the **request struct** (the value the 
 ### 3.3 Paths, Queries & Headers
 * **Fixed Paths:** Return `Cow::Borrowed("/core/v4/domains")`. 
 * **Dynamic Paths:** Return `Cow::Owned(format!("/core/v4/domains/{}", self.domain_id))`. 
-* **Queries:** Return `Some(HashMap<String, String>)` using the casing the API expects (often **PascalCase**). Do not hardcode queries into the path string.
+* **Queries:** Use [`LtSlimApiPageQuery`](../../src/contract/pagination/lt_slim_api_page_query.rs) and [`LtSerdeQueryParams`](../../src/contract/serde_query.rs). Shared query/response shapes live in the domain folder (see [`LtCoreAddressesListQuery`](../../src/core/addresses/lt_core_addresses_list_query.rs)). Do not hardcode queries into the path string.
 * **Headers:** Default is empty. Only implement `headers()` if the spec explicitly requires custom headers (e.g., `X-PM-*`).
+
+Define `MAX_PAGE_SIZE` on the endpoint or domain module; validate with [`LtSlimApiPageQuery::with_pagination`]. Pagination-only routes use `pub pagination: LtSlimApiPageQuery<MAX_PAGE_SIZE>` on the `Req`; routes with extra flags (e.g. `Handles`) use a composite query struct.
 
 **Section Checklist:**
 - [ ] `LtContract` is implemented on the request struct.

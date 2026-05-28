@@ -166,55 +166,8 @@ use crate::{LatticeError, LtRequestBody, LtRequestQueryParams, LtResponseBody, M
 /// This type needs to implement `Deserialize` from `serde`.
 ///
 /// ## Query parameters
-/// ```rust
-/// use lattice::{LtContract, LtRequestQueryParams, LatticeError, Method, LtSlimAPIJSON, Sensitive};
-/// use std::collections::HashMap;
-/// use std::borrow::Cow;
 ///
-/// #[derive(serde::Serialize)]
-/// struct GetRequest {
-///   #[serde(skip)]
-///   query_params: GetRequestQueryParams,
-/// }
-///
-/// #[derive(serde::Deserialize)]
-/// struct GetRequestRes {
-///     some_json_field: String,
-/// }
-///
-/// struct GetRequestQueryParams {
-///     some_query_param: String,
-/// }
-///
-/// impl LtRequestQueryParams for GetRequestQueryParams {
-///     fn to_query_params<'a>(
-///         &'a self,
-///     ) -> Result<HashMap<Cow<'a, str>, Sensitive<String>>, LatticeError> {
-///         Ok(HashMap::from([("SomeQueryPrama".into(), Sensitive::new(self.some_query_param.clone()))]))
-///     }
-/// }
-///
-/// impl LtContract for GetRequest {
-///     type Response = LtSlimAPIJSON<GetRequestRes>;
-///     type Body<'a> = LtSlimAPIJSON<()>;
-///     type Query<'a> = &'a GetRequestQueryParams;
-///
-///     fn query<'a>(&'a self) -> Option<Self::Query<'a>> {
-///        Some(&self.query_params)
-///     }
-///
-///     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
-///         Ok(Cow::Borrowed("/some/path"))
-///     }
-/// }
-/// ```
-/// Where `GetRequestRes` is the response type for the request.
-/// This type needs to implement `Deserialize` from `serde`.
-///
-/// The query parameters can be `None` if there are no query parameters.
-///
-/// The query parameters are a `HashMap<String, String>`.
-/// The key is the query parameter name and the value is the query parameter value.
+/// Use [`LtSlimApiPageQuery`] with [`LtSerdeQueryParams`]; see `docs/CONTRACTS.md`.
 pub trait LtContract {
     /// The response type for the contract.
     type Response: LtResponseBody;

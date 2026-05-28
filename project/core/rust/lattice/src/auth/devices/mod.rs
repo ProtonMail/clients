@@ -4,17 +4,17 @@ pub mod post_auth_devices_associate;
 pub mod post_auth_devices_create;
 pub mod post_auth_devices_device_id;
 pub mod put_auth_devices_device_id_admin;
+pub mod put_auth_devices_device_id_reject;
 
 pub use delete_auth_devices::{LtAuthDeleteDevicesReq, LtAuthDeleteDevicesRes};
 pub use get_auth_devices::{LtAuthGetDevicesReq, LtAuthGetDevicesRes};
 pub use post_auth_devices_associate::{
     LtAuthPostDevicesAssociateReq, LtAuthPostDevicesAssociateRes,
 };
-pub use post_auth_devices_create::{
-    LtAuthPostDevicesCreateAuthDevice, LtAuthPostDevicesCreateReq, LtAuthPostDevicesCreateRes,
-};
+pub use post_auth_devices_create::{LtAuthPostDevicesCreateReq, LtAuthPostDevicesCreateRes};
 pub use post_auth_devices_device_id::LtAuthPostDevicesDeviceIDReq;
 pub use put_auth_devices_device_id_admin::LtAuthPutDevicesDeviceIDAdminReq;
+pub use put_auth_devices_device_id_reject::LtAuthPutDevicesDeviceIDRejectReq;
 
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
@@ -52,12 +52,12 @@ pub struct LtAuthDevice {
     pub localized_client_name: String,
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub platform: Option<String>,
-    pub create_time: String,
+    pub create_time: i64,
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
-    pub activate_time: Option<String>,
+    pub activate_time: Option<i64>,
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
-    pub reject_time: Option<String>,
-    pub last_activity_time: String,
+    pub reject_time: Option<i64>,
+    pub last_activity_time: i64,
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub activation_token: Option<String>,
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]

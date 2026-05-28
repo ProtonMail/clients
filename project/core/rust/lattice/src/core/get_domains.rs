@@ -1,20 +1,17 @@
-use std::num::NonZeroU32;
-use std::{borrow::Cow, collections::HashMap};
+use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeError, LtContract, LtRequestQueryParams, LtSlimAPIJSON, Sensitive};
+use crate::{
+    AuthReq, LatticeError, LtContract, LtSerdeQueryParams, LtSlimAPIJSON, LtSlimApiPageQuery,
+};
 
 use super::post_domains::LtCoreDomainOutput;
 
-/// Request to get all domains for the user's organization
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
-pub struct LtCoreGetDomainsReq {
-    /// Page size between **1 and 150** (inclusive). Omit to use the API default (typically 150).
-    pub page_size: Option<NonZeroU32>,
+pub const MAX_PAGE_SIZE: u32 = 150;
 
-    /// Zero-based page index. Omit to use the default first page.
-    pub page: Option<u32>,
+/// Request to get all domains for the user's organization
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Default)]
+pub struct LtCoreGetDomainsReq {
+    pub pagination: LtSlimApiPageQuery<MAX_PAGE_SIZE>,
 }
 
 /// Response from the get domains endpoint
@@ -32,50 +29,17 @@ pub struct LtCoreGetDomainsRes {
     pub total: u32,
 }
 
-pub struct LtCoreGetDomainsQueryParams {
-    pub page_size: Option<NonZeroU32>,
-    pub page: Option<u32>,
-}
-
-impl LtRequestQueryParams for LtCoreGetDomainsQueryParams {
-    fn to_query_params<'a>(
-        &'a self,
-    ) -> Result<HashMap<Cow<'a, str>, Sensitive<String>>, LatticeError> {
-        let mut params = HashMap::new();
-
-        if let Some(page_size) = self.page_size {
-            params.insert(
-                "PageSize".into(),
-                Sensitive::new(page_size.get().to_string()),
-            );
-        }
-
-        if let Some(page) = self.page {
-            params.insert("Page".into(), Sensitive::new(page.to_string()));
-        }
-
-        Ok(params)
-    }
-}
-
 impl LtContract for LtCoreGetDomainsReq {
     type Response = LtSlimAPIJSON<LtCoreGetDomainsRes>;
     type Body<'a> = LtSlimAPIJSON<()>;
-    type Query<'q> = LtCoreGetDomainsQueryParams;
+    type Query<'q> = LtSerdeQueryParams<&'q LtSlimApiPageQuery<MAX_PAGE_SIZE>>;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
         Ok(Cow::Borrowed("/core/v4/domains"))
     }
 
     fn query<'a>(&'a self) -> Option<Self::Query<'a>> {
-        if self.page_size.is_some() || self.page.is_some() {
-            Some(LtCoreGetDomainsQueryParams {
-                page_size: self.page_size,
-                page: self.page,
-            })
-        } else {
-            None
-        }
+        Some(LtSerdeQueryParams(&self.pagination))
     }
 }
 

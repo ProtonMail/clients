@@ -632,6 +632,7 @@ pub enum DraftSendFailureSend {
     MissingAttachmentUploads,
     MessageTooLarge,
     BadRequest(String),
+    FailedAttachmentUploads,
 }
 
 #[derive(
@@ -769,6 +770,9 @@ impl DraftSendFailure {
                 }
                 SendError::MessageTooLarge => Self::Send(DraftSendFailureSend::MessageTooLarge),
                 SendError::BadRequest(e) => Self::Send(DraftSendFailureSend::BadRequest(e.clone())),
+                SendError::FailedAttachmentUploads => {
+                    Self::Send(DraftSendFailureSend::FailedAttachmentUploads)
+                }
             },
             Error::AttachmentUpload(e) => match e {
                 AttachmentUploadError::MessageDoesNotExist
@@ -942,6 +946,9 @@ impl From<DraftSendFailure> for ProtonMailError {
                         DraftSendErrorReason::ScheduleSendMessageLimitExceeded
                     }
                     DraftSendFailureSend::BadRequest(e) => DraftSendErrorReason::BadRequest(e),
+                    DraftSendFailureSend::FailedAttachmentUploads => {
+                        DraftSendErrorReason::FailedAttachmentUploads
+                    }
                 }))
             }
             DraftSendFailure::Attachment(err) => match err {
@@ -1361,6 +1368,13 @@ impl DraftAttachmentMetadata {
         tether: &Tether,
     ) -> Result<Vec<LocalAttachmentId>, StashError> {
         tether.query_values(formatdoc! {"SELECT local_attachment_id FROM {} WHERE metadata_id = ? AND state =? AND deleted = 0", Self::table_name()}, params![metadata_id, DraftAttachmentUploadState::Pending]).await
+    }
+
+    pub async fn attachments_in_error_state(
+        metadata_id: MetadataId,
+        tether: &Tether,
+    ) -> Result<Vec<LocalAttachmentId>, StashError> {
+        tether.query_values(formatdoc! {"SELECT local_attachment_id FROM {} WHERE metadata_id = ? AND state =? AND deleted = 0", Self::table_name()}, params![metadata_id, DraftAttachmentUploadState::Error]).await
     }
 
     pub async fn total_attachments_size_and_count(

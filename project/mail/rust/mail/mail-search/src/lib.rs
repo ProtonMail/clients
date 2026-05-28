@@ -42,6 +42,10 @@
 mod checkpoint;
 mod engine;
 mod error;
+mod indexing_last_error;
+mod indexing_state;
+mod indexing_state_watcher;
+mod prepared_commit;
 
 // Migrations (internal only, used by MailSearchService::new)
 mod foundation;
@@ -67,9 +71,24 @@ pub use foundation::FoundationSearchEngine;
 
 pub use traits::BlobStorage;
 
-pub use checkpoint::EphemeralHistoricCheckpoint;
-pub use service::{IndexStats, LAB_MAX_TOKEN_BUCKET_SIZE, MailSearchService, SearchServiceError};
+pub use checkpoint::{
+    EphemeralHistoricCheckpoint, clear_checkpoint_in_write_tx, save_checkpoint_in_write_tx,
+};
+pub use indexing_last_error::ContentSearchIndexingLastErrorCode;
+pub use indexing_state::{
+    ContentSearchIndexingState, ContentSearchIndexingStatus, ContentSearchStartOutcome,
+    apply_indexing_batch_progress_in_write_tx, clear_content_search_local_data_in_write_tx,
+    reset_indexing_state_in_write_tx,
+};
+pub use indexing_state_watcher::{
+    ContentSearchIndexingProgress, ContentSearchIndexingStateWatcher,
+    DEFAULT_INDEXING_STATE_WATCH_RATE_LIMIT, RateLimitedWatcherHandle,
+    watch_indexing_state_rate_limited,
+};
+pub use prepared_commit::PreparedIndexCommit;
+pub use service::{IndexStats, MAX_TOKEN_BUCKET_SIZE, MailSearchService, SearchServiceError};
 pub use shutdown::{WorkerShutdownHandle, WorkerShutdownSignal};
+pub use storage::save_blobs_in_write_tx;
 
 pub use storage::StashBlobStorage;
 

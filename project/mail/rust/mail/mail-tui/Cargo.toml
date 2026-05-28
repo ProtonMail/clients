@@ -24,6 +24,7 @@ mail-core-common = { workspace = true }
 mail-crypto-inbox = { workspace = true }
 mail-api = { workspace = true }
 mail-common = { workspace = true }
+mail-historic-ephemeral-load = { workspace = true, optional = true }
 mail-html-transformer = { workspace = true }
 mail-issue-reporter-service = { workspace = true }
 mail-log-service = { workspace = true, features = ["non_blocking"] }
@@ -45,6 +46,13 @@ qrcode = "0.14.1"
 mail-network-monitor-service = { workspace = true }
 proton-crypto = { workspace = true }
 zeroizing-alloc = { workspace = true }
+
+[features]
+default = ["foundation_search"]
+foundation_search = [
+  "mail-common/foundation_search",
+  "dep:mail-historic-ephemeral-load",
+]
 
 [target.'cfg(target_os="linux")'.dependencies]
 keyring = { version = "3.6.1", features = ["linux-native"] }

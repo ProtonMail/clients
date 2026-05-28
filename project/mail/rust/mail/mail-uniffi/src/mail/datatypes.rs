@@ -1320,24 +1320,3 @@ impl From<mail_core_api::session::Fork> for Fork {
         }
     }
 }
-
-/// Anchor for the next historic load: continue with messages **older** than this (server sort).
-#[cfg(feature = "foundation_search")]
-#[derive(Debug, Clone, Eq, PartialEq, UniffiRecord)]
-pub struct HistoricLoadContinuation {
-    pub anchor_time: u64,
-    /// Same as `oldest_message_remote_id` from the previous [`EphemeralHistoricLoadResult`].
-    pub anchor_message_id: String,
-}
-
-/// Result of an ephemeral historic load (metadata rows + Foundation Search index, no bodies).
-#[cfg(feature = "foundation_search")]
-#[derive(Debug, Clone, Eq, PartialEq, UniffiRecord)]
-pub struct EphemeralHistoricLoadResult {
-    pub messages_fetched: u64,
-    pub messages_metadata_saved: u64,
-    pub messages_indexed: u64,
-    pub messages_skipped_missing_body: u64,
-    pub oldest_message_time: Option<u64>,
-    pub oldest_message_remote_id: Option<String>,
-}

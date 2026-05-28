@@ -9,16 +9,24 @@
 
 pub mod data_provider;
 
+pub mod content_search_historic_indexing;
 pub mod search_results;
 
 pub use data_provider::StashMessageDataProvider;
+
+pub use content_search_historic_indexing::{
+    ContentSearchHistoricIndexing, ContentSearchHistoricIndexingProvider,
+    ContentSearchHistoricIndexingService, ContentSearchStartOutcome,
+    NoopContentSearchHistoricIndexing,
+};
 
 pub use search_results::{LocalSearchResult, SearchMatchPosition, search_local_with_keywords};
 
 // Re-export from proton-mail-search crate for convenience
 pub use mail_search::{
-    BlobStorage, CleanupResult, FoundEntry, FoundationSearchEngine, IndexResult, IndexStats,
-    LAB_MAX_TOKEN_BUCKET_SIZE, LocalMessageId, MailSearchService, MessageDataProvider, SearchError,
-    SearchIndexIntent, SearchIndexWorker, SearchOperation, SearchServiceError, SearchStats,
-    StashBlobStorage, WorkerShutdownHandle, WorkerShutdownSignal,
+    BlobStorage, CleanupResult, ContentSearchIndexingLastErrorCode, ContentSearchIndexingProgress,
+    ContentSearchIndexingState, ContentSearchIndexingStatus, FoundEntry, FoundationSearchEngine,
+    IndexResult, IndexStats, LocalMessageId, MailSearchService, MessageDataProvider,
+    RateLimitedWatcherHandle, SearchError, SearchIndexIntent, SearchIndexWorker, SearchOperation,
+    SearchServiceError, SearchStats, StashBlobStorage, WorkerShutdownHandle, WorkerShutdownSignal,
 };

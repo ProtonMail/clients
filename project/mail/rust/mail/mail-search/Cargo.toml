@@ -50,4 +50,4 @@ workspace = true
 
 [dev-dependencies]
 test-case = { workspace = true }
-tokio = { workspace = true, features = ["rt-multi-thread"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "test-util"] }

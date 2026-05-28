@@ -10,7 +10,7 @@ use flate2::Compression;
 use flate2::read::GzDecoder;
 use flate2::write::GzEncoder;
 use mail_stash::UserDb;
-use mail_stash::stash::Stash;
+use mail_stash::stash::{Stash, StashError, WriteTx};
 use tracing::debug;
 
 use crate::error::SearchError;
@@ -70,37 +70,47 @@ impl StashBlobStorage {
         &self,
         blobs: Vec<(String, Vec<u8>)>,
     ) -> Result<(), SearchError> {
-        use mail_stash::params;
         use mail_stash::stash::StashError as SE;
 
         if blobs.is_empty() {
             return Ok(());
         }
 
-        let mut tether = self.mail_stash.connection();
-
-        let timestamp = chrono::Utc::now().timestamp();
         let count = blobs.len();
+        let mut tether = self.mail_stash.connection();
         tether
-            .write_tx::<_, (), SE>(async |bond| {
-                for (name, data) in blobs {
-                    let stored = compress_gzip(&data)
-                        .map_err(|e| mail_stash::stash::StashError::Custom(anyhow::anyhow!("{e}")))?;
-                    bond.execute(
-                        "INSERT OR REPLACE INTO search_index_blobs (blob_name, blob_data, updated_at)
-                         VALUES (?1, ?2, ?3)",
-                        params![name, stored, timestamp],
-                    )
-                    .await?;
-                }
-                Ok(())
-            })
+            .write_tx::<_, (), SE>(async |bond| save_blobs_in_write_tx(bond, blobs).await)
             .await
             .map_err(|e| SearchError::BlobStorage(format!("Transaction failed: {e}")))?;
 
         debug!("Saved {} blobs atomically", count);
         Ok(())
     }
+}
+
+/// Write search index blobs inside an existing Stash transaction (historic-load ACID page).
+pub async fn save_blobs_in_write_tx(
+    bond: &WriteTx<'_>,
+    blobs: Vec<(String, Vec<u8>)>,
+) -> Result<(), StashError> {
+    use mail_stash::params;
+
+    if blobs.is_empty() {
+        return Ok(());
+    }
+
+    let timestamp = chrono::Utc::now().timestamp();
+    for (name, data) in blobs {
+        let stored =
+            compress_gzip(&data).map_err(|e| StashError::Custom(anyhow::anyhow!("{e}")))?;
+        bond.execute(
+            "INSERT OR REPLACE INTO search_index_blobs (blob_name, blob_data, updated_at)
+             VALUES (?1, ?2, ?3)",
+            params![name, stored, timestamp],
+        )
+        .await?;
+    }
+    Ok(())
 }
 
 #[async_trait]

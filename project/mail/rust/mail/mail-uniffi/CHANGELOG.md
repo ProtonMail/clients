@@ -5,19 +5,60 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [mail-uniffi-v0.166.2] - 2026-05-13
+## [mail-uniffi-v0.166.3] - 2026-05-26
 
 ### Changed
 
-- Change order of the catergory labels to match the web order
+- drop redundant per-message address sync retry
+- simplify indexing watcher with Notify-based observer
+- store historic orchestrator on MailUserContext services
+- clearer indexing errors and more reliable progress updates
+- async UniFFI, indexing watch stream, and JoinHandle cancel wait
+- persist batch progress in ACID page transaction
+- move set_enabled, cancel, and clear into orchestrator
+- move EphemeralPageCheckpointWrite into historic-load crate
+- namespace start/continuation helpers and resolve orchestrator via MailUserContext
+- typed IndexingState errors and anchor InvalidContinuation
+- remove transitional ephemeral_* UniFFI exports
+- drive production orchestrator
+- drop many variants of historic-search-load; retain a focused... - proton/clients/monorepo!2448
 
 ### Features
 
-- Implement UnreadLiveQueryCallback returning unread count in `on_update` method - proton/clients/monorepo!2390
-- Implement category view for the mail TUI app
-- [ET-6193] [Breaking] Scroller now accepts additional optional field of the enabled category
-- [Breaking] Mailbox::watch_unread_count now accepts optional `category: Id` parameter
-- [ET-6153] [Breaking] Add unread counters for category labels
+- sub-chunk historic body pipeline for mobile resilience
+- Populate content search estimated_fraction from the first All Mail metadata total, using indexed count over a +1% inflated denominator.
+- graceful mid-batch cancel + harness signal handler
+- content_search_* UniFFI on MailUserSession
+- live-query watch on indexing state
+- treat partial batch as Interrupted
+- orchestrator with multi-batch loop and cool-down
+- stale-ongoing repair + clear helpers
+- content_search_indexing_state schema + CRUD
+- network-resilient batch spawn and UniFFI scaffolding
+- historic load on ACID
+- Split muon implementations from lattice. - proton/clients/monorepo!2451
+- store metadata when in ephemeral load mode - proton/clients/monorepo!2484
+- internalise and serialise continuation anchor checkpoint - proton/clients/monorepo!2464
+
+### Fixes
+
+- return EphemeralHistoricLoadError when scripted test runner is exhausted
+- use single deadline in cancel_and_wait
+- return SearchError instead of panicking on engine lock failure, avoid expect in persist_run_outcome last_error path
+- cancel in-flight run before clear_local_data wipe
+- prevent rate-limited watcher from starving under sustained load
+- use typed persist errors, cancel-aware metadata prep, and native u64 counters
+- SQL format issue
+- treat retryable body-fetch errors as batch-level retry
+- patch Grype high findings in Rust, JS, and Python - proton/clients/monorepo!2581
+
+
+## [mail-uniffi-v0.166.2] - 2026-05-14
+
+### Features
+
+- Add continuity option to ephemeral (avoid sqlite plumbing) mode - proton/clients/monorepo!2383
+- Stash read workers are truly read only - proton/clients/monorepo!2405
 
 
 ## [mail-uniffi-v0.166.1] - 2026-05-12

@@ -51,6 +51,7 @@ pub async fn new_mail_context(tmp_dir: &TempDir) -> anyhow::Result<Arc<MailConte
         EventPollMode::Manual,
         Default::default(),
         Arc::new(NoopIssueReporter),
+        None,
     )
     .await
     .map_err(|e| anyhow::anyhow!("MailContext::new: {}", e))

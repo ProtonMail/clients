@@ -66,24 +66,22 @@ sqlite3 "$DB" -header -column "
 "
 
 if has_table ephemeral_historic_load_checkpoint; then
-    section "Ephemeral historic load checkpoint (resume anchor)"
+    section "Ephemeral historic load checkpoint (All Mail resume anchor)"
     sqlite3 "$DB" -header -column "
-        SELECT label_id,
+        SELECT id,
                anchor_time,
                datetime(anchor_time, 'unixepoch') AS anchor_time_utc,
                substr(anchor_message_id, 1, 24) || '…' AS anchor_message_id_prefix,
                length(anchor_message_id) AS anchor_id_len,
                updated_at,
                datetime(updated_at, 'unixepoch') AS updated_at_utc
-        FROM ephemeral_historic_load_checkpoint
-        ORDER BY label_id;
+        FROM ephemeral_historic_load_checkpoint;
     "
     echo ""
-    echo "Full anchor_message_id(s):"
+    echo "Full anchor_message_id:"
     sqlite3 "$DB" -header -column "
-        SELECT label_id, anchor_message_id
-        FROM ephemeral_historic_load_checkpoint
-        ORDER BY label_id;
+        SELECT anchor_message_id
+        FROM ephemeral_historic_load_checkpoint;
     "
 else
     section "Ephemeral historic load checkpoint"

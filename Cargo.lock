@@ -6932,15 +6932,22 @@ name = "mail-historic-ephemeral-load"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "futures",
  "mail-action-queue",
  "mail-api",
  "mail-common",
  "mail-core-api",
+ "mail-core-common",
  "mail-crypto-inbox",
  "mail-html-transformer",
  "mail-search",
+ "mail-stash",
+ "mail-task-service",
+ "parking_lot",
+ "thiserror 2.0.18",
  "tokio",
+ "tokio-util",
  "tracing",
 ]
 
@@ -7408,6 +7415,7 @@ dependencies = [
  "mail-common",
  "mail-core-common",
  "mail-crypto-inbox",
+ "mail-historic-ephemeral-load",
  "mail-html-transformer",
  "mail-issue-reporter-service",
  "mail-log-service",
@@ -7433,7 +7441,7 @@ dependencies = [
 
 [[package]]
 name = "mail-uniffi"
-version = "0.166.2"
+version = "0.166.3"
 dependencies = [
  "anyhow",
  "async-trait",

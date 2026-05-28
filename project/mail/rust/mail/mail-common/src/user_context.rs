@@ -17,7 +17,9 @@ use crate::models::Message;
 use crate::prefetch::{Prefetch, PrefetchJob, PrefetchService};
 use crate::rsvp::RsvpService;
 #[cfg(feature = "foundation_search")]
-use crate::search::MailSearchService;
+use crate::search::{
+    ContentSearchHistoricIndexingService, ContentSearchStartOutcome, MailSearchService,
+};
 use crate::upsell_eligibility::UpsellEligibilityService;
 use crate::user_context::events::event_source::MailEventSourceV5;
 use crate::{ImageLoader, MailContext, MailContextError, MailContextResult, TrackerService};
@@ -393,6 +395,21 @@ impl MailUserContext {
                     ))
                 })?;
                 builder = builder.with_service(search_service);
+
+                // Build the per-session historic indexing service from the
+                // provider supplied at `MailContext::new` by the composition
+                // root (`mail-uniffi`, perf harness, etc.). Tests and
+                // harnesses that pass `None` transparently fall back to the
+                // no-op driver.
+                let historic_service = match mail_context.historic_indexing_provider() {
+                    Some(provider) => {
+                        crate::search::ContentSearchHistoricIndexingService::with_driver(
+                            provider(),
+                        )
+                    }
+                    None => crate::search::ContentSearchHistoricIndexingService::noop(),
+                };
+                builder = builder.with_service(historic_service);
             }
 
             builder = match origin {
@@ -707,6 +724,52 @@ impl MailUserContext {
     #[cfg(feature = "foundation_search")]
     pub fn search_service(&self) -> &MailSearchService {
         self.get_service::<MailSearchService>()
+    }
+
+    /// Per-session historic content-search indexing orchestrator.
+    #[cfg(feature = "foundation_search")]
+    pub fn content_search_historic_indexing(&self) -> &ContentSearchHistoricIndexingService {
+        self.get_service::<ContentSearchHistoricIndexingService>()
+    }
+
+    /// Start the historic content-search indexing loop (idempotent).
+    #[cfg(feature = "foundation_search")]
+    pub async fn content_search_start_historic_indexing(
+        &self,
+    ) -> MailContextResult<ContentSearchStartOutcome> {
+        let ctx = self.as_arc();
+        let driver = self.content_search_historic_indexing().driver();
+        driver.start(ctx).await
+    }
+
+    /// Persist the content-search enable preference.
+    #[cfg(feature = "foundation_search")]
+    pub async fn content_search_set_historic_indexing_enabled(
+        &self,
+        enabled: bool,
+    ) -> MailContextResult<()> {
+        let ctx = self.as_arc();
+        let driver = self.content_search_historic_indexing().driver();
+        driver.set_enabled(ctx, enabled).await
+    }
+
+    /// Cancel historic indexing; optionally wipe local index data.
+    #[cfg(feature = "foundation_search")]
+    pub async fn content_search_cancel_historic_indexing(
+        &self,
+        clear_data: bool,
+    ) -> MailContextResult<()> {
+        let ctx = self.as_arc();
+        let driver = self.content_search_historic_indexing().driver();
+        driver.cancel_indexing(ctx, clear_data).await
+    }
+
+    /// Wipe locally-persisted content-search data; cancels an in-flight run first.
+    #[cfg(feature = "foundation_search")]
+    pub async fn content_search_clear_historic_indexing_data(&self) -> MailContextResult<()> {
+        let ctx = self.as_arc();
+        let driver = self.content_search_historic_indexing().driver();
+        driver.clear_local_data(ctx).await
     }
 
     /// Get `MailUserContext` for each logged in account.

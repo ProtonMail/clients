@@ -19,16 +19,17 @@ use tracing::{debug, info, warn};
 use crate::error::SearchError;
 use crate::foundation::FoundationSearchEngine;
 use crate::intent::{LocalMessageId, SearchIndexIntent, SearchOperation};
+use crate::prepared_commit::PreparedIndexCommit;
 use crate::storage::StashBlobStorage;
 use crate::traits::MessageDataProvider;
 use crate::worker::SearchIndexWorker;
 use mail_task_service::TaskService;
 
-/// Upper bound for lab-configured `TextIndex::maximum_token_bucket_size` (historic load / debug UI).
+/// Upper bound for `TextIndex::maximum_token_bucket_size` when rebuilding the engine.
 ///
 /// The engine field limits how much token-entry “weight” is accumulated in one bucket before starting
 /// a new one; values in the thousands are already large relative to typical commits (~tens of entries).
-pub const LAB_MAX_TOKEN_BUCKET_SIZE: usize = 5000;
+pub const MAX_TOKEN_BUCKET_SIZE: usize = 5000;
 
 /// Error type for search service operations
 #[derive(Debug, thiserror::Error)]
@@ -52,6 +53,10 @@ pub enum SearchServiceError {
     /// Error reading or writing ephemeral historic-load checkpoint rows
     #[error("Checkpoint storage failed: {0}")]
     Checkpoint(String),
+
+    /// Error reading or writing the content_search_indexing_state singleton row
+    #[error("Indexing state storage failed: {0}")]
+    IndexingState(String),
 }
 
 impl SearchServiceError {
@@ -102,6 +107,10 @@ impl MailSearchService {
             .await
             .map_err(|e| SearchServiceError::Migration(e.to_string()))?;
 
+        // Recover any persisted `ongoing` indexing-state row left behind by a
+        // crashed/killed previous process before any caller observes it.
+        crate::indexing_state::repair_stale_ongoing_at_startup(&mail_stash).await?;
+
         let storage = StashBlobStorage::new(mail_stash.clone());
         let engine = FoundationSearchEngine::new(storage, task_service);
 
@@ -131,9 +140,9 @@ impl MailSearchService {
         task_service: Arc<TaskService>,
         maximum_token_bucket_size: usize,
     ) -> Result<(), SearchServiceError> {
-        if maximum_token_bucket_size > LAB_MAX_TOKEN_BUCKET_SIZE {
+        if maximum_token_bucket_size > MAX_TOKEN_BUCKET_SIZE {
             return Err(SearchServiceError::Engine(SearchError::Internal(format!(
-                "maximum_token_bucket_size must be <= {LAB_MAX_TOKEN_BUCKET_SIZE}"
+                "maximum_token_bucket_size must be <= {MAX_TOKEN_BUCKET_SIZE}"
             ))));
         }
 
@@ -153,18 +162,12 @@ impl MailSearchService {
     }
 
     async fn delete_index_table_rows(mail_stash: &Stash<UserDb>) -> Result<(), SearchServiceError> {
-        use mail_stash::stash::StashError as SE;
-
         let mut tether = mail_stash.connection();
         tether
-            .sync_write_tx(move |tx| {
-                tx.execute_batch(
-                    "DELETE FROM search_index_blobs;
-                     DELETE FROM search_index_content_hashes;
-                     DELETE FROM search_index_intents;
-                     DELETE FROM ephemeral_historic_load_checkpoint;",
-                )
-                .map_err(SE::ExecutionError)?;
+            .write_tx::<_, (), StashError>(async |bond| {
+                crate::indexing_state::clear_content_search_local_data_in_write_tx(bond)
+                    .await
+                    .map_err(|e| StashError::Custom(anyhow::anyhow!("{e}")))?;
                 Ok(())
             })
             .await
@@ -221,8 +224,29 @@ impl MailSearchService {
         &self,
         messages: &[(&MessageId, &str, &crate::traits::MessageMetadata)],
     ) -> Result<(), SearchServiceError> {
+        let prepared = self.prepare_index_message_bodies_batch(messages).await?;
+        let result = prepared.index_result();
+        StashBlobStorage::new(self.mail_stash.clone())
+            .save_batch_atomic(prepared.save_operations)
+            .await
+            .map_err(SearchServiceError::Engine)?;
+
+        if result.cleanup_needed
+            && let Err(e) = self.cleanup().await
+        {
+            warn!("Automatic cleanup after batch indexing failed: {}", e);
+        }
+
+        Ok(())
+    }
+
+    /// Foundation Search commit for a message batch without SQLite writes.
+    pub async fn prepare_index_message_bodies_batch(
+        &self,
+        messages: &[(&MessageId, &str, &crate::traits::MessageMetadata)],
+    ) -> Result<PreparedIndexCommit, SearchServiceError> {
         if messages.is_empty() {
-            return Ok(());
+            return Ok(PreparedIndexCommit::empty());
         }
 
         let message_refs: Vec<(&str, &str, &crate::traits::MessageMetadata)> = messages
@@ -230,18 +254,33 @@ impl MailSearchService {
             .map(|(remote_id, body, metadata)| (remote_id.as_str(), *body, *metadata))
             .collect();
 
-        let result = self
-            .engine
+        self.engine
             .write()
             .await
-            .index_bodies_batch(&message_refs)
-            .await?;
+            .prepare_bodies_batch(&message_refs)
+            .await
+            .map_err(SearchServiceError::Engine)
+    }
 
-        if result.cleanup_needed
-            && let Err(e) = self.cleanup().await
-        {
-            warn!("Automatic cleanup after batch indexing failed: {}", e);
-            // Don't fail the operation if cleanup fails - it can be retried later
+    /// Persist a prepared index commit and optional checkpoint in one SQLite transaction.
+    ///
+    /// `checkpoint`: `Some((anchor_time, message_id))` upserts the historic-load anchor;
+    /// `None` leaves the existing checkpoint row unchanged.
+    pub async fn persist_prepared_index_with_checkpoint(
+        &self,
+        prepared: PreparedIndexCommit,
+        checkpoint: Option<(u64, MessageId)>,
+    ) -> Result<(), SearchServiceError> {
+        let cleanup_needed = prepared.cleanup_needed;
+        crate::checkpoint::persist_prepared_index_with_checkpoint(
+            self.mail_stash(),
+            prepared,
+            checkpoint,
+        )
+        .await?;
+
+        if cleanup_needed && let Err(e) = self.cleanup().await {
+            warn!("Automatic cleanup after prepared persist failed: {}", e);
         }
 
         Ok(())

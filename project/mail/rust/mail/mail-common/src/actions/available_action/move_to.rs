@@ -37,19 +37,20 @@ impl<'a> MoveTo<'a> {
 
     pub(crate) async fn build(self, tether: &Tether) -> Result<Vec<MoveDestination>, AppError> {
         let from_id = self.from.local_id;
+        let from_system_label = SystemLabel::from_opt_rid(self.from.remote_id.as_ref());
         let moving_from_sent = matches!(self.grouping, Grouping::Message)
             && matches!(
-                SystemLabel::from_opt_rid(self.from.remote_id.as_ref()),
+                from_system_label,
                 Some(SystemLabel::AllSent | SystemLabel::Sent)
             );
+        let from_is_inbox = matches!(from_system_label, Some(SystemLabel::Inbox));
         let all_system = Label::find_by_kind(LabelType::System, tether).await?;
         let all_custom_folders = Label::find_by_kind(LabelType::Folder, tether).await?;
-        let inbox_id = SystemLabel::Inbox.local_id(tether).await?;
 
         let mut destinations = Vec::new();
 
         for label in all_system.iter() {
-            if label.local_id == from_id && from_id != inbox_id {
+            if label.local_id == from_id && !from_is_inbox {
                 continue;
             }
             if moving_from_sent
@@ -65,12 +66,15 @@ impl<'a> MoveTo<'a> {
                     .await?
                     .filter(|dest| match dest {
                         MoveDestination::Inbox(inbox) => {
-                            !(from_id == inbox_id && inbox.categories.is_empty())
+                            !(from_is_inbox && inbox.categories.is_empty())
                         }
                         _ => true,
                     });
 
-            if let Some(destination) = destination {
+            if let Some(mut destination) = destination {
+                if !from_is_inbox && let MoveDestination::Inbox(ref mut inbox) = destination {
+                    inbox.categories.clear();
+                }
                 destinations.push(destination);
             }
         }

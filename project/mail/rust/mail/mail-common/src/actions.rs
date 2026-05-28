@@ -622,19 +622,59 @@ struct ActionMoveDataV2Ctx {
     trash_id: LocalLabelId,
     almost_all_mail_id: LocalLabelId,
     spam_id: LocalLabelId,
+    category_destination: Option<CategoryDestinationCtx>,
 }
 
 impl ActionMoveDataV2Ctx {
-    fn new(tether: &Connection) -> Result<Self, StashError> {
+    fn new(tether: &Connection, destination: Option<LocalLabelId>) -> Result<Self, StashError> {
         let spam_id = LabelId::spam().local_id(tether)?;
         let trash_id = LabelId::trash().local_id(tether)?;
         let almost_all_mail_id = LabelId::almost_all_mail().local_id(tether)?;
+        let category_destination = destination
+            .map(|dest| CategoryDestinationCtx::for_destination(dest, tether))
+            .transpose()?
+            .flatten();
 
         Ok(Self {
             trash_id,
             spam_id,
             almost_all_mail_id,
+            category_destination,
         })
+    }
+}
+
+/// Additional context loaded when the move destination is a category label.
+/// Categories are mutually exclusive: applying one strips the others.
+struct CategoryDestinationCtx {
+    other_category_ids: HashSet<LocalLabelId>,
+}
+
+impl CategoryDestinationCtx {
+    fn for_destination(
+        destination: LocalLabelId,
+        tether: &Connection,
+    ) -> Result<Option<Self>, StashError> {
+        let remote_id = Label::local_id_counterpart_sync(destination, tether)?;
+        let is_category =
+            SystemLabel::from_opt_rid(remote_id.as_ref()).is_some_and(|sl| sl.is_category());
+
+        if !is_category {
+            return Ok(None);
+        }
+
+        let mut other_category_ids = HashSet::with_capacity(SystemLabel::category_labels().len());
+        for sl in SystemLabel::category_labels() {
+            let Some(local_id) = Label::remote_id_counterpart_sync(&sl.remote_id(), tether)? else {
+                continue;
+            };
+            if local_id == destination {
+                continue;
+            }
+            other_category_ids.insert(local_id);
+        }
+
+        Ok(Some(Self { other_category_ids }))
     }
 }
 
@@ -698,14 +738,10 @@ impl ActionMoveDataV2Entry {
             && [ctx.trash_id, ctx.spam_id].contains(&destination)
         {
             self.removed_labels = T::remove_all_removable_labels(&[id], tx)?;
-        } else {
-            // If there are  no source labels, it means that this msg/conv is
-            // being moved from AllMail into somewhere else (e.g. because
-            // its parent folder got deleted and this object has no
-            // exclusive location anymore).
-            //
-            // In cases like these we don't want to remove the AllMail label
-            // since the object is not actually /moved/ out of AllMail.
+        } else if ctx.category_destination.is_none() {
+            // If there are no source labels & its not recategorization, it means that
+            // this msg/conv is being moved from AllMail into somewhere else
+            // (e.g. because its parent folder got deleted and this object has no exclusive location anymore).
             for source_id in &self.original_locations {
                 if let Some(source_label) = Label::load_by_id_sync(*source_id, tx)? {
                     let is_snoozed =
@@ -750,6 +786,19 @@ impl ActionMoveDataV2Entry {
             // for example; this is simply a no-op then.
             //
             // [1] after all, by definition all mails are in AllMail anyway
+        }
+
+        // Categorising preserves the source folder but strips the other categories
+        if let Some(category_dest) = ctx.category_destination.as_ref() {
+            for cat_id in &category_dest.other_category_ids {
+                let removed = T::remove_label(*cat_id, [id], tx)
+                    .context("Failed to remove other category label")?;
+                self.removed_labels
+                    .extend(removed.into_iter().map(|local_id| LabelPair {
+                        label: *cat_id,
+                        id: local_id,
+                    }));
+            }
         }
 
         self.is_noop = if self.marked_read.is_empty() {
@@ -947,7 +996,7 @@ where
     }
 
     fn move_to(&mut self, tx: &Transaction<'_>) -> anyhow::Result<()> {
-        let ctx = ActionMoveDataV2Ctx::new(tx)?;
+        let ctx = ActionMoveDataV2Ctx::new(tx, self.destination)?;
 
         for (id, data) in &mut self.entries {
             data.move_to::<T>(&ctx, self.destination, *id, tx)?;
@@ -962,18 +1011,18 @@ where
         mut guard: WriterGuard<'_, UserDb>,
     ) -> Result<(), MailActionError> {
         //TODO: handle revert
-        let Some(dest_label) = self.destination else {
+        let Some(dest_label_id) = self.destination else {
             return Ok(());
         };
 
         let tether = guard.tether();
 
-        let dest_label = Label::resolve_remote_label_id(dest_label, tether).await?;
+        let dest_label = Label::resolve_remote_label_id(dest_label_id, tether).await?;
         let all_remote_ids =
             T::local_ids_counterpart(self.entries.keys().cloned().collect::<Vec<_>>(), tether)
                 .await?;
 
-        let failed = T::api_apply_label(api, all_remote_ids, dest_label.clone()).await?;
+        let failed = T::api_apply_label(api, all_remote_ids, dest_label).await?;
         if !failed.is_empty() {
             guard
                 .tx::<_, _, anyhow::Error>(async move |tx| {
@@ -1028,7 +1077,7 @@ where
         changeset: &RebaseChangeSet,
         tx: &Transaction<'_>,
     ) -> Result<(), MailActionError> {
-        let ctx = ActionMoveDataV2Ctx::new(tx)?;
+        let ctx = ActionMoveDataV2Ctx::new(tx, self.destination)?;
         for (id, data) in &mut self.entries {
             let rebase_key: RebaseKey = (*id).into();
             if changeset.contains(&rebase_key) {

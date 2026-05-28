@@ -2261,6 +2261,675 @@ mod rebase_conversations {
 
         assert_eq!(user_ctx.execute_all_actions().await.unwrap(), 1);
     }
+
+    // Recategorising via Message::action_move reroutes to Conversation::action_move, so the
+    // queued action is conversation-level. After a state reset (simulating a server sync wiping
+    // the local apply), rebase must replay the cascade
+    #[tokio::test]
+    async fn rebase_after_recategorise_via_message_api() {
+        let ctx = MailTestContext::new().await;
+        ctx.setup_user(test_init_params()).await;
+        let user_ctx = ctx.mail_user_context().await;
+        let tether = &mut user_ctx.user_stash().connection();
+
+        let mut conv_data = velcro::hash_map! {
+            Vec::<LabelId>::new(): vec![
+                conversation!(
+                    remote_id: conv_id!("rebase_cat_conv"),
+                    labels: vec![ConversationLabel {
+                        remote_label_id: Some(LabelId::inbox()),
+                        context_num_messages: 2,
+                        ..ConversationLabel::test_default()
+                    }],
+                    num_messages: 2
+                ),
+            ]
+        };
+        conv_data.save_to_database(tether).await;
+        let conv = &conv_data.get(&Vec::<LabelId>::new()).unwrap()[0];
+
+        let mut msg_data = velcro::hash_map! {
+            vec![LabelId::inbox(), LabelId::all_mail(), LabelId::category_social()]: vec![
+                message!(
+                    remote_id: msg_id!("rebase_cat_msg1"),
+                    local_conversation_id: conv.local_id,
+                    remote_conversation_id: conv.remote_id.clone(),
+                    label_ids: vec![],
+                    unread: false
+                ),
+            ],
+            vec![LabelId::inbox(), LabelId::all_mail(), LabelId::category_promotions()]: vec![
+                message!(
+                    remote_id: msg_id!("rebase_cat_msg2"),
+                    local_conversation_id: conv.local_id,
+                    remote_conversation_id: conv.remote_id.clone(),
+                    label_ids: vec![],
+                    unread: false
+                ),
+            ],
+        };
+        msg_data.save_to_database(tether).await;
+
+        let mut original_conversation =
+            Conversation::find_by_remote_id(ConversationId::from("rebase_cat_conv"), tether)
+                .await
+                .unwrap()
+                .unwrap();
+        original_conversation.sort_labels();
+        let original_conv_messages = Message::in_conversation(
+            original_conversation.local_id.unwrap(),
+            ConversationViewOptions::All,
+            tether,
+        )
+        .await
+        .unwrap();
+
+        let category = SystemLabel::CategoryUpdates
+            .load(tether)
+            .await
+            .unwrap()
+            .unwrap();
+        let msg1 = Message::find_by_remote_id(MessageId::from("rebase_cat_msg1"), tether)
+            .await
+            .unwrap()
+            .unwrap();
+
+        // Single-message categorise — reroutes to Conversation::action_move and cascades.
+        Message::action_move(
+            tether,
+            user_ctx.action_queue(),
+            category.local_id.unwrap(),
+            vec![msg1.local_id.unwrap()],
+        )
+        .await
+        .unwrap()
+        .unwrap();
+
+        let mut moved_conversation = Conversation::find_by_id(original_conversation.id(), tether)
+            .await
+            .unwrap()
+            .unwrap();
+        moved_conversation.sort_labels();
+        let moved_conv_messages = Message::in_conversation(
+            original_conversation.local_id.unwrap(),
+            ConversationViewOptions::All,
+            tether,
+        )
+        .await
+        .unwrap();
+
+        // Sanity check the local apply already cascaded before the rebase even runs.
+        assert_ne!(moved_conversation, original_conversation);
+        assert_ne!(moved_conv_messages, original_conv_messages);
+
+        // Simulate a server-side state reset that wipes the local apply.
+        let mut conv_to_reset = original_conversation.clone();
+        let mut msgs_to_reset = original_conv_messages.clone();
+        tether
+            .write_tx::<_, _, StashError>(async |tx| {
+                conv_to_reset.save(tx).await?;
+                for msg in &mut msgs_to_reset {
+                    msg.save(tx).await?;
+                }
+                Ok(())
+            })
+            .await
+            .unwrap();
+
+        let rebase_change_set = RebaseChangeSet::from(original_conversation.id());
+        user_ctx
+            .action_queue()
+            .rebase(ActionGroup::default(), &rebase_change_set)
+            .await
+            .unwrap();
+
+        let mut rebased_conversation = Conversation::find_by_id(original_conversation.id(), tether)
+            .await
+            .unwrap()
+            .unwrap();
+        rebased_conversation.sort_labels();
+        let rebased_conv_messages = Message::in_conversation(
+            original_conversation.local_id.unwrap(),
+            ConversationViewOptions::All,
+            tether,
+        )
+        .await
+        .unwrap();
+
+        assert_eq!(rebased_conversation, moved_conversation);
+        assert_ne!(rebased_conversation, original_conversation);
+        assert_eq!(rebased_conv_messages, moved_conv_messages);
+        assert_ne!(rebased_conv_messages, original_conv_messages);
+    }
+}
+
+async fn setup_message_with_labels(
+    ctx: &MailTestContext,
+    user_ctx: &std::sync::Arc<mail_common::MailUserContext>,
+    initial_label_ids: Vec<LabelId>,
+    unread: bool,
+    source_remote_id: LabelId,
+) -> Message {
+    let message = test_message(initial_label_ids, unread);
+    let params = test_init_params();
+    let mut tether = user_ctx.user_stash().connection();
+    ctx.setup_user(params.clone()).await;
+
+    ctx.mock_get_messages()
+        .respond_with(vec![message.metadata.clone()])
+        .await;
+    ctx.initialize_uninitialized_ctx(user_ctx).await;
+
+    let mailbox = Mailbox::with_remote_id(&tether, source_remote_id)
+        .await
+        .unwrap();
+    mailbox
+        .sync(&mut tether, user_ctx.session(), 10)
+        .await
+        .unwrap();
+
+    Message::load(1.into(), &tether).await.unwrap().unwrap()
+}
+
+#[track_caller]
+fn assert_message_labels(message: &Message, expected: impl Into<Vec<LabelId>>) {
+    let mut expected = expected.into();
+    expected.sort();
+    let mut actual = message.label_ids.clone();
+    actual.sort();
+    assert_eq!(actual, expected);
+}
+
+#[tokio::test]
+async fn move_to_category_from_inbox_applies_category() {
+    let ctx = MailTestContext::new().await;
+    let user_ctx = ctx.uninitialized_mail_user_context().await;
+    let tether = user_ctx.user_stash().connection();
+
+    let category = SystemLabel::CategoryPromotions
+        .load(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+
+    let mut message = setup_message_with_labels(
+        &ctx,
+        &user_ctx,
+        vec![LabelId::inbox(), LabelId::all_mail()],
+        false,
+        LabelId::inbox(),
+    )
+    .await;
+
+    Message::action_move(
+        &tether,
+        user_ctx.action_queue(),
+        category.local_id.unwrap(),
+        vec![message.local_id.unwrap()],
+    )
+    .await
+    .unwrap()
+    .unwrap();
+
+    message.reload(&tether).await.unwrap();
+    assert_message_labels(
+        &message,
+        vec![
+            LabelId::inbox(),
+            LabelId::all_mail(),
+            LabelId::category_promotions(),
+        ],
+    );
+}
+
+#[tokio::test]
+async fn move_to_category_strips_prior_category() {
+    let ctx = MailTestContext::new().await;
+    let user_ctx = ctx.uninitialized_mail_user_context().await;
+    let tether = user_ctx.user_stash().connection();
+
+    let promotions = SystemLabel::CategoryPromotions
+        .load(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+
+    let mut message = setup_message_with_labels(
+        &ctx,
+        &user_ctx,
+        vec![
+            LabelId::inbox(),
+            LabelId::all_mail(),
+            LabelId::category_social(),
+        ],
+        false,
+        LabelId::inbox(),
+    )
+    .await;
+
+    Message::action_move(
+        &tether,
+        user_ctx.action_queue(),
+        promotions.local_id.unwrap(),
+        vec![message.local_id.unwrap()],
+    )
+    .await
+    .unwrap()
+    .unwrap();
+
+    message.reload(&tether).await.unwrap();
+    assert_message_labels(
+        &message,
+        vec![
+            LabelId::inbox(),
+            LabelId::all_mail(),
+            LabelId::category_promotions(),
+        ],
+    );
+}
+
+#[tokio::test]
+async fn move_to_archive_preserves_category() {
+    let ctx = MailTestContext::new().await;
+    let user_ctx = ctx.uninitialized_mail_user_context().await;
+    let tether = user_ctx.user_stash().connection();
+
+    let archive = Label::find_first("WHERE remote_id = ?", params![LabelId::archive()], &tether)
+        .await
+        .unwrap()
+        .unwrap();
+
+    let mut message = setup_message_with_labels(
+        &ctx,
+        &user_ctx,
+        vec![
+            LabelId::inbox(),
+            LabelId::all_mail(),
+            LabelId::category_social(),
+        ],
+        false,
+        LabelId::inbox(),
+    )
+    .await;
+
+    Message::action_move(
+        &tether,
+        user_ctx.action_queue(),
+        archive.local_id.unwrap(),
+        vec![message.local_id.unwrap()],
+    )
+    .await
+    .unwrap()
+    .unwrap();
+
+    message.reload(&tether).await.unwrap();
+    assert_message_labels(
+        &message,
+        vec![
+            LabelId::archive(),
+            LabelId::all_mail(),
+            LabelId::category_social(),
+        ],
+    );
+}
+
+#[tokio::test]
+async fn move_to_trash_preserves_category() {
+    let ctx = MailTestContext::new().await;
+    let user_ctx = ctx.uninitialized_mail_user_context().await;
+    let tether = user_ctx.user_stash().connection();
+
+    let trash = Label::find_first("WHERE remote_id = ?", params![LabelId::trash()], &tether)
+        .await
+        .unwrap()
+        .unwrap();
+
+    let mut message = setup_message_with_labels(
+        &ctx,
+        &user_ctx,
+        vec![
+            LabelId::inbox(),
+            LabelId::all_mail(),
+            LabelId::category_social(),
+        ],
+        false,
+        LabelId::inbox(),
+    )
+    .await;
+
+    Message::action_move(
+        &tether,
+        user_ctx.action_queue(),
+        trash.local_id.unwrap(),
+        vec![message.local_id.unwrap()],
+    )
+    .await
+    .unwrap()
+    .unwrap();
+
+    message.reload(&tether).await.unwrap();
+    assert_message_labels(
+        &message,
+        vec![
+            LabelId::trash(),
+            LabelId::all_mail(),
+            LabelId::category_social(),
+        ],
+    );
+}
+
+#[tokio::test]
+async fn move_to_category_cascades_to_moving_conversation() {
+    use mail_common::models::ConversationLabel;
+    use velcro::hash_map;
+
+    let ctx = MailTestContext::new().await;
+    ctx.setup_user(test_init_params()).await;
+    let user_ctx = ctx.mail_user_context().await;
+    let tether = &mut user_ctx.user_stash().connection();
+
+    let mut conv_data = hash_map! {
+        Vec::<LabelId>::new(): vec![
+            conversation!(
+                remote_id: conv_id!("cascade_conv"),
+                labels: vec![ConversationLabel {
+                    remote_label_id: Some(LabelId::inbox()),
+                    context_num_messages: 2,
+                    ..ConversationLabel::test_default()
+                }],
+                num_messages: 2
+            ),
+        ]
+    };
+    conv_data.save_to_database(tether).await;
+    let conv = &conv_data.get(&Vec::<LabelId>::new()).unwrap()[0];
+
+    let mut msg_data = hash_map! {
+        vec![LabelId::inbox(), LabelId::all_mail(), LabelId::category_social()]: vec![
+            message!(
+                remote_id: msg_id!("cascade_msg1"),
+                local_conversation_id: conv.local_id,
+                remote_conversation_id: conv.remote_id.clone(),
+                label_ids: vec![],
+                unread: false
+            ),
+        ],
+        vec![LabelId::inbox(), LabelId::all_mail(), LabelId::category_promotions()]: vec![
+            message!(
+                remote_id: msg_id!("cascade_msg2"),
+                local_conversation_id: conv.local_id,
+                remote_conversation_id: conv.remote_id.clone(),
+                label_ids: vec![],
+                unread: false
+            ),
+        ],
+    };
+    msg_data.save_to_database(tether).await;
+
+    let updates = SystemLabel::CategoryUpdates
+        .load(tether)
+        .await
+        .unwrap()
+        .unwrap();
+    let mut msg1 = Message::find_by_remote_id(MessageId::from("cascade_msg1"), tether)
+        .await
+        .unwrap()
+        .unwrap();
+    let mut msg2 = Message::find_by_remote_id(MessageId::from("cascade_msg2"), tether)
+        .await
+        .unwrap()
+        .unwrap();
+
+    // Single-message action — should cascade to sibling.
+    Message::action_move(
+        tether,
+        user_ctx.action_queue(),
+        updates.local_id.unwrap(),
+        vec![msg1.local_id.unwrap()],
+    )
+    .await
+    .unwrap()
+    .unwrap();
+
+    msg1.reload(tether).await.unwrap();
+    msg2.reload(tether).await.unwrap();
+
+    assert!(
+        msg1.label_ids.contains(&LabelId::category_updates()),
+        "msg1 must have CategoryUpdates"
+    );
+    assert!(
+        !msg1.label_ids.contains(&LabelId::category_social()),
+        "msg1 must lose CategorySocial"
+    );
+    assert!(
+        msg2.label_ids.contains(&LabelId::category_updates()),
+        "sibling msg2 must also have CategoryUpdates (cascade)"
+    );
+    assert!(
+        !msg2.label_ids.contains(&LabelId::category_promotions()),
+        "sibling msg2 must lose CategoryPromotions"
+    );
+
+    let conv = Conversation::find_by_remote_id(ConversationId::from("cascade_conv"), tether)
+        .await
+        .unwrap()
+        .unwrap();
+    let conv_label_ids: Vec<LabelId> = conv
+        .labels
+        .iter()
+        .filter_map(|l| l.remote_label_id.clone())
+        .collect();
+    assert!(
+        conv_label_ids.contains(&LabelId::category_updates()),
+        "conversation must have CategoryUpdates"
+    );
+    assert!(
+        !conv_label_ids.contains(&LabelId::category_social()),
+        "conversation must lose CategorySocial"
+    );
+    assert!(
+        !conv_label_ids.contains(&LabelId::category_promotions()),
+        "conversation must lose CategoryPromotions"
+    );
+}
+
+// Rainy path: the picker should never offer category destinations from non-Inbox sources
+// (see `from_archive_inbox_destination_has_no_categories` in the picker unit tests). If the
+// combination is reached anyway — racy state, programmatic caller bypassing the picker — the
+// generalised rule kicks in: categorising never moves a message between folders. The source
+// folder is preserved and only the category labels change.
+#[tokio::test]
+async fn move_to_category_from_archive_preserves_archive() {
+    use mail_common::models::ConversationLabel;
+    use velcro::hash_map;
+
+    let ctx = MailTestContext::new().await;
+    ctx.setup_user(test_init_params()).await;
+    let user_ctx = ctx.mail_user_context().await;
+    let tether = &mut user_ctx.user_stash().connection();
+
+    let mut conv_data = hash_map! {
+        Vec::<LabelId>::new(): vec![
+            conversation!(
+                remote_id: conv_id!("rainy_conv"),
+                labels: vec![ConversationLabel {
+                    remote_label_id: Some(LabelId::archive()),
+                    context_num_messages: 1,
+                    ..ConversationLabel::test_default()
+                }],
+                num_messages: 1
+            ),
+        ]
+    };
+    conv_data.save_to_database(tether).await;
+    let conv = &conv_data.get(&Vec::<LabelId>::new()).unwrap()[0];
+
+    let mut msg_data = hash_map! {
+        vec![LabelId::archive(), LabelId::all_mail()]: vec![
+            message!(
+                remote_id: msg_id!("rainy_msg"),
+                local_conversation_id: conv.local_id,
+                remote_conversation_id: conv.remote_id.clone(),
+                label_ids: vec![],
+                unread: false
+            ),
+        ],
+    };
+    msg_data.save_to_database(tether).await;
+
+    let category = SystemLabel::CategoryUpdates
+        .load(tether)
+        .await
+        .unwrap()
+        .unwrap();
+    let mut msg = Message::find_by_remote_id(MessageId::from("rainy_msg"), tether)
+        .await
+        .unwrap()
+        .unwrap();
+
+    Message::action_move(
+        tether,
+        user_ctx.action_queue(),
+        category.local_id.unwrap(),
+        vec![msg.local_id.unwrap()],
+    )
+    .await
+    .unwrap()
+    .unwrap();
+
+    msg.reload(tether).await.unwrap();
+    assert!(
+        msg.label_ids.contains(&LabelId::category_updates()),
+        "CategoryUpdates must be applied"
+    );
+    assert!(
+        msg.label_ids.contains(&LabelId::archive()),
+        "Archive must be preserved — categorising never moves between folders"
+    );
+    assert!(
+        !msg.label_ids.contains(&LabelId::inbox()),
+        "Inbox must NOT be auto-applied — only Inbox sources retain Inbox (because that was already their state)"
+    );
+}
+
+#[tokio::test]
+async fn move_to_archive_does_not_cascade_to_siblings() {
+    use mail_common::models::ConversationLabel;
+    use velcro::hash_map;
+
+    let ctx = MailTestContext::new().await;
+    ctx.setup_user(test_init_params()).await;
+    let user_ctx = ctx.mail_user_context().await;
+    let tether = &mut user_ctx.user_stash().connection();
+
+    let mut conv_data = hash_map! {
+        Vec::<LabelId>::new(): vec![
+            conversation!(
+                remote_id: conv_id!("nocascade_conv"),
+                labels: vec![ConversationLabel {
+                    remote_label_id: Some(LabelId::inbox()),
+                    context_num_messages: 2,
+                    ..ConversationLabel::test_default()
+                }],
+                num_messages: 2
+            ),
+        ]
+    };
+    conv_data.save_to_database(tether).await;
+    let conv = &conv_data.get(&Vec::<LabelId>::new()).unwrap()[0];
+
+    let mut msg_data = hash_map! {
+        vec![LabelId::inbox(), LabelId::all_mail()]: vec![
+            message!(
+                remote_id: msg_id!("nocascade_msg1"),
+                local_conversation_id: conv.local_id,
+                remote_conversation_id: conv.remote_id.clone(),
+                label_ids: vec![],
+                unread: false
+            ),
+            message!(
+                remote_id: msg_id!("nocascade_msg2"),
+                local_conversation_id: conv.local_id,
+                remote_conversation_id: conv.remote_id.clone(),
+                label_ids: vec![],
+                unread: false
+            ),
+        ],
+    };
+    msg_data.save_to_database(tether).await;
+
+    let archive = Label::find_first("WHERE remote_id = ?", params![LabelId::archive()], tether)
+        .await
+        .unwrap()
+        .unwrap();
+    let mut msg1 = Message::find_by_remote_id(MessageId::from("nocascade_msg1"), tether)
+        .await
+        .unwrap()
+        .unwrap();
+    let mut msg2 = Message::find_by_remote_id(MessageId::from("nocascade_msg2"), tether)
+        .await
+        .unwrap()
+        .unwrap();
+
+    Message::action_move(
+        tether,
+        user_ctx.action_queue(),
+        archive.local_id.unwrap(),
+        vec![msg1.local_id.unwrap()],
+    )
+    .await
+    .unwrap()
+    .unwrap();
+
+    msg1.reload(tether).await.unwrap();
+    msg2.reload(tether).await.unwrap();
+
+    assert!(
+        msg1.label_ids.contains(&LabelId::archive()),
+        "msg1 must be in Archive"
+    );
+    assert!(
+        !msg2.label_ids.contains(&LabelId::archive()),
+        "sibling msg2 must stay in Inbox (folder moves do not cascade)"
+    );
+    assert!(
+        msg2.label_ids.contains(&LabelId::inbox()),
+        "sibling msg2 must still have Inbox"
+    );
+}
+
+#[tokio::test]
+async fn move_to_same_category_is_noop() {
+    let ctx = MailTestContext::new().await;
+    let user_ctx = ctx.uninitialized_mail_user_context().await;
+    let tether = user_ctx.user_stash().connection();
+
+    let social = SystemLabel::CategorySocial
+        .load(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+
+    let initial = vec![
+        LabelId::inbox(),
+        LabelId::all_mail(),
+        LabelId::category_social(),
+    ];
+    let mut message =
+        setup_message_with_labels(&ctx, &user_ctx, initial.clone(), false, LabelId::inbox()).await;
+
+    Message::action_move(
+        &tether,
+        user_ctx.action_queue(),
+        social.local_id.unwrap(),
+        vec![message.local_id.unwrap()],
+    )
+    .await
+    .unwrap();
+
+    message.reload(&tether).await.unwrap();
+    assert_message_labels(&message, initial);
 }
 
 fn test_label(label_id: &LabelId, label_type: ApiLabelType, name: &str) -> ApiLabel {

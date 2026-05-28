@@ -188,6 +188,38 @@ impl ModelIdExtension for Message {
 
 type LabelAsResult = Result<QueuedActionOutput<LabelAs, UserDb>, QueueActionError<LabelAs, UserDb>>;
 
+async fn is_category_destination(
+    destination_id: LocalLabelId,
+    tether: &Tether,
+) -> Result<bool, StashError> {
+    Ok(SystemLabel::from_local_id(destination_id, tether)
+        .await?
+        .is_some_and(|sl| sl.is_category()))
+}
+
+async fn resolve_conversation_ids(
+    message_ids: Vec<LocalMessageId>,
+    tether: &Tether,
+) -> Result<Vec<LocalConversationId>, StashError> {
+    if message_ids.is_empty() {
+        return Ok(vec![]);
+    }
+    tether
+        .sync_query(move |conn| {
+            let placeholders_str = placeholders(&message_ids);
+            let conv_ids: Vec<LocalConversationId> = conn.query_rows_col(
+                format!(
+                    "SELECT DISTINCT local_conversation_id FROM messages \
+                     WHERE local_id IN ({placeholders_str}) \
+                       AND local_conversation_id IS NOT NULL"
+                ),
+                params_from_iter(&message_ids),
+            )?;
+            Ok(conv_ids)
+        })
+        .await
+}
+
 impl Message {
     /// Open a message in the either context of a label or a conversation.
     ///
@@ -287,6 +319,14 @@ impl Message {
         destination_id: LocalLabelId,
         target_ids: Vec<LocalMessageId>,
     ) -> Result<Option<Undo>, MailContextError> {
+        // Recategorising is a conversation-wide change — every conversation has
+        // exactly one category. Reroute through Conversation::action_move so the
+        // cascade is driven by the conversation-level apply/remove SQL.
+        if is_category_destination(destination_id, tether).await? {
+            let conversation_ids = resolve_conversation_ids(target_ids, tether).await?;
+            return Conversation::action_move(tether, queue, destination_id, conversation_ids)
+                .await;
+        }
         if let Some(action) = ActionMoveData::new(tether, destination_id, target_ids).await? {
             let action = Move(action);
             let QueuedActionOutput { local, id } = queue.queue_action(action).await?;

@@ -49,7 +49,7 @@ mail-crypto-inbox = { workspace = true }
 mail-action-queue = { workspace = true }
 chrono = { workspace = true }
 tempfile = { workspace = true }
-tokio = { workspace = true }
+tokio = { workspace = true, features = ["signal"] }
 tracing-subscriber = { workspace = true, features = ["env-filter"] }
 
 [lints]

@@ -213,6 +213,12 @@ async fn create_mail_session_inner(
         Origin::IosShareExt => EventPollMode::Manual,
     };
 
+    #[cfg(feature = "foundation_search")]
+    let historic_indexing_provider =
+        Some(mail_historic_ephemeral_load::historic_indexing_provider());
+    #[cfg(not(feature = "foundation_search"))]
+    let historic_indexing_provider = None;
+
     let mail_ctx = MailContext::new(
         params.origin.into(),
         async_runtime().handle().clone(),
@@ -229,6 +235,7 @@ async fn create_mail_session_inner(
         poll,
         mail_network_monitor_service::Config::default(),
         IssueReporterWrapper::new(issue_reporter),
+        historic_indexing_provider,
     )
     .await?;
 

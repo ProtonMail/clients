@@ -300,6 +300,12 @@ pub struct MailContext {
     pub attachment_cache_size: u64,
     active_user_contexts: Mutex<HashMap<UserId, Weak<MailUserContext>>>,
     http_client: OnceLock<reqwest::Client>,
+    /// Optional per-context provider for the historic content-search
+    /// indexing driver. Supplied by the composition root (e.g. `mail-uniffi`)
+    /// at [`MailContext::new`] and consumed by [`MailUserContext::new`] each
+    /// time a new user context is built. When absent the user context falls
+    /// back to [`crate::search::NoopContentSearchHistoricIndexing`].
+    historic_indexing_provider: Option<crate::search::ContentSearchHistoricIndexingProvider>,
 }
 
 impl Drop for MailContext {
@@ -327,6 +333,7 @@ impl MailContext {
         event_poll_mode: EventPollMode,
         network_monitor_config: mail_network_monitor_service::Config,
         issue_reporter: Arc<dyn IssueReporter>,
+        historic_indexing_provider: Option<crate::search::ContentSearchHistoricIndexingProvider>,
     ) -> Result<Arc<Self>, MailContextError> {
         tracing::info!("Creating MailContext");
 
@@ -359,6 +366,7 @@ impl MailContext {
             attachment_cache_size: cache_size,
             active_user_contexts: Mutex::new(HashMap::new()),
             http_client: OnceLock::new(),
+            historic_indexing_provider,
         });
 
         // Register mail-specific session deletion hook
@@ -371,6 +379,7 @@ impl MailContext {
         core_context: Arc<Context>,
         mail_cache_path: PathBuf,
         mail_cache_size: u64,
+        historic_indexing_provider: Option<crate::search::ContentSearchHistoricIndexingProvider>,
     ) -> Result<Arc<Self>, MailContextError> {
         let ctx = Arc::new(Self {
             core_context,
@@ -378,6 +387,7 @@ impl MailContext {
             attachment_cache_size: mail_cache_size,
             active_user_contexts: Mutex::new(HashMap::new()),
             http_client: OnceLock::new(),
+            historic_indexing_provider,
         });
 
         // Register mail-specific session deletion hook
@@ -903,6 +913,15 @@ impl MailContext {
     /// Get the core context.
     pub fn core_context(&self) -> &Arc<Context> {
         &self.core_context
+    }
+
+    /// Returns the historic content-search indexing provider, if any.
+    /// Consumed by [`MailUserContext::new`] when constructing the
+    /// per-session driver.
+    pub(crate) fn historic_indexing_provider(
+        &self,
+    ) -> Option<&crate::search::ContentSearchHistoricIndexingProvider> {
+        self.historic_indexing_provider.as_ref()
     }
 
     /// Get the connection to the session database.

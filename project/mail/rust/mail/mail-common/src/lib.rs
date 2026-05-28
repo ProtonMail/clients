@@ -7,6 +7,9 @@ pub mod datatypes;
 pub mod db;
 pub mod draft;
 mod errors;
+mod historic_mailbox_observer_error_code;
+pub mod historic_mailbox_walker;
+mod historic_mailbox_walker_incomplete_reason;
 mod image_loader;
 mod ios_share_ext;
 #[allow(clippy::result_large_err)]

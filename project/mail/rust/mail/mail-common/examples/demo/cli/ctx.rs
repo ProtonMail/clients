@@ -49,6 +49,7 @@ where
         EventPollMode::Automatic(30.s()),
         Default::default(),
         Arc::new(NoopIssueReporter),
+        None,
     )
     .await?)
 }

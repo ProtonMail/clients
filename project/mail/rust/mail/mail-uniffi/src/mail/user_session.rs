@@ -96,118 +96,143 @@ impl MailUserSession {
     }
 }
 
-/// Ephemeral historic load (`mail-historic-ephemeral-load`).
+/// Content search historic indexing API (orchestrator on [`MailUserContext`]).
+///
+/// All methods are prefixed with `content_search_` and live behind the
+/// `foundation_search` feature gate. The orchestrator is resolved from
+/// [`MailUserContext::content_search_historic_indexing`].
+#[cfg(feature = "foundation_search")]
+pub use super::content_search_indexing::{
+    ContentSearchIndexingLastErrorCode, ContentSearchIndexingProgress, ContentSearchIndexingStatus,
+    ContentSearchStartOutcome, WatchContentSearchIndexingStream,
+};
+
 #[cfg(feature = "foundation_search")]
 #[uniffi_export]
 impl MailUserSession {
-    /// Ephemeral historic load: save message metadata, index bodies into Foundation Search (no body rows).
-    ///
-    /// Fetches metadata pages from the API, fetches + decrypts bodies from the Proton API,
-    /// and indexes directly into Foundation Search.
-    ///
-    /// # Arguments
-    /// * `max_messages` - Maximum number of messages to process
-    /// * `page_size` - Page size for metadata fetching (capped to API max of 200)
-    /// * `concurrent_body_fetches` - Max concurrent API body fetches
-    /// * `continuation` - Optional explicit anchor (overrides checkpoint DB when set)
-    /// * `resume_from_checkpoint` - When `continuation` is None, load anchor from SQLite and continue older mail
-    pub async fn historic_load_ephemeral(
-        &self,
-        max_messages: u64,
-        page_size: u64,
-        concurrent_body_fetches: u64,
-        continuation: Option<crate::mail::datatypes::HistoricLoadContinuation>,
-        resume_from_checkpoint: bool,
-    ) -> Result<crate::mail::datatypes::EphemeralHistoricLoadResult, UserSessionError> {
-        use mail_api::services::proton::common::MessageId;
-        use mail_historic_ephemeral_load::{
-            HistoricFetchContinuation, ephemeral_index_only_messages,
-        };
-
+    /// Whether the user has opted into content search indexing.
+    pub async fn content_search_is_enabled(&self) -> Result<bool, UserSessionError> {
         let ctx = self.ctx()?;
-        let max_messages = usize::try_from(max_messages).unwrap_or(usize::MAX);
-        let page_size = usize::try_from(page_size).unwrap_or(200);
-        let concurrent = usize::try_from(concurrent_body_fetches).unwrap_or(10);
-        let continuation_inner = match continuation {
-            None => None,
-            Some(c) => {
-                let cont = HistoricFetchContinuation {
-                    anchor_time: c.anchor_time,
-                    anchor_message_id: MessageId::from(c.anchor_message_id.trim().to_owned()),
-                };
-                cont.validate().map_err(|_| {
-                    UserSessionError::Other(ProtonError::Unexpected(
-                        UnexpectedError::InvalidArgument,
-                    ))
-                })?;
-                Some(cont)
-            }
-        };
-
         uniffi_async(async move {
-            let result = ephemeral_index_only_messages(
-                &ctx,
-                max_messages,
-                page_size,
-                concurrent,
-                continuation_inner,
-                resume_from_checkpoint,
-            )
-            .await
-            .map_err(RealProtonMailError::from)?;
-
-            Result::<_, RealProtonMailError>::Ok(
-                crate::mail::datatypes::EphemeralHistoricLoadResult {
-                    messages_fetched: result.messages_fetched as u64,
-                    messages_metadata_saved: result.messages_metadata_saved as u64,
-                    messages_indexed: result.messages_indexed as u64,
-                    messages_skipped_missing_body: result.messages_skipped_missing_body as u64,
-                    oldest_message_time: result.oldest_message_time,
-                    oldest_message_remote_id: result.oldest_message_remote_id,
-                },
-            )
+            ctx.search_service()
+                .load_indexing_state()
+                .await
+                .map(|s| s.enabled)
+                .map_err(super::content_search_indexing::map_proton_internal(
+                    "content_search_is_enabled",
+                ))
         })
         .await
         .map_err(UserSessionError::from)
     }
 
-    /// Returns the saved All Mail ephemeral historic-load checkpoint (if any).
-    pub fn get_ephemeral_historic_load_checkpoint(
-        &self,
-    ) -> Result<Option<crate::mail::datatypes::HistoricLoadContinuation>, UserSessionError> {
+    /// Persist the user's content search enable preference.
+    pub async fn content_search_set_enabled(&self, enabled: bool) -> Result<(), UserSessionError> {
         let ctx = self.ctx()?;
-
-        async_runtime().block_on(async {
-            ctx.search_service()
-                .load_ephemeral_historic_checkpoint()
+        uniffi_async(async move {
+            ctx.content_search_set_historic_indexing_enabled(enabled)
                 .await
-                .map(|opt| {
-                    opt.map(|cp| crate::mail::datatypes::HistoricLoadContinuation {
-                        anchor_time: cp.anchor_time,
-                        anchor_message_id: cp.anchor_message_id.into_inner(),
-                    })
-                })
-                .map_err(|e| {
-                    tracing::error!("get_ephemeral_historic_load_checkpoint: {e}");
-                    UserSessionError::Other(ProtonError::Unexpected(UnexpectedError::Internal))
-                })
+                .map_err(super::content_search_indexing::map_proton_internal(
+                    "content_search_set_enabled",
+                ))
         })
+        .await
+        .map_err(UserSessionError::from)
     }
 
-    /// Clears Foundation Search index tables and resets the in-memory engine (historic load lab).
-    pub fn clear_foundation_search_index_tables(&self) -> Result<(), UserSessionError> {
+    /// Current orchestrator lifecycle status.
+    pub async fn content_search_get_indexing_status(
+        &self,
+    ) -> Result<ContentSearchIndexingStatus, UserSessionError> {
         let ctx = self.ctx()?;
-        let task_service = ctx.core_context().task_service().task_service_arc();
-
-        async_runtime().block_on(async {
+        uniffi_async(async move {
             ctx.search_service()
-                .clear_index_tables(task_service)
+                .load_indexing_state()
                 .await
-                .map_err(|e| {
-                    tracing::error!("clear_foundation_search_index_tables: {e}");
-                    UserSessionError::Other(ProtonError::Unexpected(UnexpectedError::Internal))
-                })
+                .map(|s| ContentSearchIndexingStatus::from(s.status))
+                .map_err(super::content_search_indexing::map_proton_internal(
+                    "content_search_get_indexing_status",
+                ))
         })
+        .await
+        .map_err(UserSessionError::from)
+    }
+
+    /// One-shot snapshot of the indexing progress.
+    pub async fn content_search_get_indexing_progress(
+        &self,
+    ) -> Result<ContentSearchIndexingProgress, UserSessionError> {
+        let ctx = self.ctx()?;
+        uniffi_async(async move {
+            ctx.search_service()
+                .load_indexing_progress()
+                .await
+                .map(ContentSearchIndexingProgress::from)
+                .map_err(super::content_search_indexing::map_proton_internal(
+                    "content_search_get_indexing_progress",
+                ))
+        })
+        .await
+        .map_err(UserSessionError::from)
+    }
+
+    /// Idempotent start.
+    pub async fn content_search_start_indexing(
+        &self,
+    ) -> Result<ContentSearchStartOutcome, UserSessionError> {
+        let ctx = self.ctx()?;
+        uniffi_async(async move {
+            ctx.content_search_start_historic_indexing()
+                .await
+                .map(ContentSearchStartOutcome::from)
+                .map_err(super::content_search_indexing::map_proton_internal(
+                    "content_search_start_indexing",
+                ))
+        })
+        .await
+        .map_err(UserSessionError::from)
+    }
+
+    /// Cancel any in-flight orchestrator run.
+    pub async fn content_search_cancel_indexing(
+        &self,
+        clear_data: bool,
+    ) -> Result<(), UserSessionError> {
+        let ctx = self.ctx()?;
+        uniffi_async(async move {
+            ctx.content_search_cancel_historic_indexing(clear_data)
+                .await
+                .map_err(super::content_search_indexing::map_proton_internal(
+                    "content_search_cancel_indexing",
+                ))
+        })
+        .await
+        .map_err(UserSessionError::from)
+    }
+
+    /// Wipe every locally-persisted content-search artifact; cancels an in-flight run first.
+    pub async fn content_search_clear_local_data(&self) -> Result<(), UserSessionError> {
+        let ctx = self.ctx()?;
+        uniffi_async(async move {
+            ctx.content_search_clear_historic_indexing_data()
+                .await
+                .map_err(super::content_search_indexing::map_proton_internal(
+                    "content_search_clear_local_data",
+                ))
+        })
+        .await
+        .map_err(UserSessionError::from)
+    }
+
+    /// Subscribe to rate-limited indexing-state updates.
+    #[tracing::instrument(skip_all)]
+    pub async fn content_search_watch_indexing_stream(
+        &self,
+    ) -> Result<Arc<WatchContentSearchIndexingStream>, UserSessionError> {
+        let ctx = self.ctx()?;
+        uniffi_async(async move { WatchContentSearchIndexingStream::new(ctx).await })
+            .await
+            .map_err(UserSessionError::from)
     }
 }
 

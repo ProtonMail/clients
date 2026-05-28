@@ -91,6 +91,7 @@ impl MailTestContext {
             core_test_context.context.clone(),
             mail_cache_path,
             mail_cache_size,
+            None,
         )
         .await
         .expect("failed to create mail context");

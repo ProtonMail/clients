@@ -175,6 +175,12 @@ impl AppModel {
         let mut keychain = AppKeyChain::new()?;
         keychain.init()?;
 
+        #[cfg(feature = "foundation_search")]
+        let historic_indexing_provider =
+            Some(mail_historic_ephemeral_load::historic_indexing_provider());
+        #[cfg(not(feature = "foundation_search"))]
+        let historic_indexing_provider = None;
+
         let context = MailContext::new(
             Origin::App,
             runtime::Handle::current(),
@@ -191,6 +197,7 @@ impl AppModel {
             EventPollMode::Automatic(Duration::from_secs(CLI_ARGS.event_loop_time.unwrap_or(15))),
             mail_network_monitor_service::Config::default(),
             Arc::new(NoopIssueReporter),
+            historic_indexing_provider,
         )
         .await?;
 

@@ -9,6 +9,7 @@ publish = false
 
 [dependencies]
 anyhow = { workspace = true }
+async-trait = { workspace = true }
 futures = { workspace = true }
 mail-action-queue = { workspace = true }
 mail-api = { workspace = true }
@@ -19,11 +20,18 @@ mail-core-api = { workspace = true, features = ["sql"] }
 mail-crypto-inbox = { workspace = true }
 mail-html-transformer = { workspace = true }
 mail-search = { workspace = true }
+mail-stash = { workspace = true }
+parking_lot = { workspace = true }
+thiserror = { workspace = true }
 tokio = { workspace = true }
+tokio-util = { workspace = true }
 tracing = { workspace = true }
 
 [dev-dependencies]
+mail-action-queue = { workspace = true }
 mail-api = { workspace = true, features = ["mocks"] }
+mail-core-common = { workspace = true }
+mail-task-service = { workspace = true }
 
 [lints]
 workspace = true

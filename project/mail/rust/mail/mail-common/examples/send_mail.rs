@@ -98,6 +98,7 @@ async fn main() {
         EventPollMode::Manual,
         Default::default(),
         Arc::new(NoopIssueReporter),
+        None,
     )
     .await
     .unwrap();

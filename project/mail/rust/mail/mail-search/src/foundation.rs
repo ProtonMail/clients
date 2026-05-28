@@ -38,7 +38,9 @@
 //! consistency.
 
 use proton_foundation_search::document::{Document, Value};
-use proton_foundation_search::engine::{CleanupEvent, Engine, QueryEvent, WriteEvent};
+use proton_foundation_search::engine::{
+    Cleanup, CleanupEvent, Engine, QueryEvent, Write, WriteEvent,
+};
 use proton_foundation_search::index::text::TextIndex;
 use proton_foundation_search::processor::ProcessorConfig;
 use proton_foundation_search::query::option::QueryOptions;
@@ -49,6 +51,7 @@ use tracing::{debug, error, info, warn};
 
 use crate::engine::{CleanupResult, IndexResult, SearchStats};
 use crate::error::SearchError;
+use crate::prepared_commit::PreparedIndexCommit;
 use crate::traits::BlobStorage;
 use mail_task_service::{IntoNonPausableFuture, TaskService};
 use std::sync::Arc;
@@ -62,6 +65,29 @@ fn panic_payload_to_string(payload: &Box<dyn std::any::Any + Send>) -> String {
     } else {
         "Unknown panic".to_string()
     }
+}
+
+/// Map failure to acquire the engine write lock into [`SearchError::Internal`].
+///
+/// Writes are serialized by the service-level `RwLock`; `None` here means a
+/// concurrent write/cleanup is already in progress.
+fn engine_write(engine: &Engine) -> Result<Write, SearchError> {
+    engine.write().ok_or_else(|| {
+        SearchError::Internal(
+            "Engine write lock unavailable (writes are serialized by service-level RwLock)"
+                .to_string(),
+        )
+    })
+}
+
+/// Map failure to acquire the engine cleanup lock into [`SearchError::Internal`].
+fn engine_cleanup(engine: &Engine) -> Result<Cleanup, SearchError> {
+    engine.cleanup().ok_or_else(|| {
+        SearchError::Internal(
+            "Engine cleanup lock unavailable (operations are serialized by service-level RwLock)"
+                .to_string(),
+        )
+    })
 }
 
 /// Guard that ensures a blocking task completes before being dropped
@@ -185,7 +211,7 @@ impl<S: BlobStorage + Clone + 'static> FoundationSearchEngine<S> {
     ///
     /// * `0` — new bucket on every commit (many blobs).
     /// * Larger values — allow more token-entry weight in a bucket before splitting (fewer blobs).
-    ///   Lab / app entry points cap this at [`LAB_MAX_TOKEN_BUCKET_SIZE`](crate::LAB_MAX_TOKEN_BUCKET_SIZE). See
+    ///   Rebuild entry points cap this at [`MAX_TOKEN_BUCKET_SIZE`](crate::MAX_TOKEN_BUCKET_SIZE). See
     ///   `proton-foundation-search` `TextIndex::maximum_token_bucket_size`.
     pub fn new_with_maximum_token_bucket_size(
         storage: S,
@@ -393,19 +419,13 @@ impl<S: BlobStorage + Clone + 'static> FoundationSearchEngine<S> {
 
         // Use async I/O processing instead of blocking on I/O inside spawn_blocking
         let save_operations_guard = self
-            .process_commit_iterator_with_async_io(
-                storage,
-                serdes,
-                move || {
-                    // Writes are serialized by RwLock in service.rs, so this should never fail.
-                    // If it does, it indicates a bug in our serialization logic.
-                    let mut writer = engine.write().expect("Engine write lock should always succeed - writes are serialized by service-level RwLock");
+            .process_commit_iterator_with_async_io(storage, serdes, move || {
+                let mut writer = engine_write(&engine)?;
 
-                    writer.insert(doc);
+                writer.insert(doc);
 
-                    Ok(writer.commit())
-                },
-            )
+                Ok(writer.commit())
+            })
             .await?;
 
         // Await the blocking thread to complete and get the save operations
@@ -430,46 +450,52 @@ impl<S: BlobStorage + Clone + 'static> FoundationSearchEngine<S> {
     /// The commit iterator runs in `spawn_blocking` (CPU-bound work), but I/O operations
     /// (Load events) are processed asynchronously via channels, preventing thread pool
     /// threads from blocking on I/O.
-    async fn index_documents_batch(
+    /// Run a batch engine commit and return blob writes without persisting to SQLite.
+    pub async fn prepare_documents_batch(
         &mut self,
         docs: Vec<Document>,
-    ) -> Result<IndexResult, SearchError> {
+    ) -> Result<PreparedIndexCommit, SearchError> {
         if docs.is_empty() {
-            return Ok(IndexResult::no_cleanup());
+            return Ok(PreparedIndexCommit::empty());
         }
 
+        let save_operations = self.prepare_documents_batch_save_ops(docs).await?;
+        Ok(PreparedIndexCommit::from_save_operations(save_operations))
+    }
+
+    async fn prepare_documents_batch_save_ops(
+        &self,
+        docs: Vec<Document>,
+    ) -> Result<Vec<(String, Vec<u8>)>, SearchError> {
         let engine = self.engine.clone();
         let storage = self.storage.clone();
         let serdes = self.serdes;
 
-        // Use async I/O processing instead of blocking on I/O inside spawn_blocking
         let save_operations_guard = self
-            .process_commit_iterator_with_async_io(
-                storage,
-                serdes,
-                move || {
-                    // Writes are serialized by RwLock in service.rs, so this should never fail.
-                    // If it does, it indicates a bug in our serialization logic.
-                    let mut writer = engine.write().expect("Engine write lock should always succeed - writes are serialized by service-level RwLock");
+            .process_commit_iterator_with_async_io(storage, serdes, move || {
+                let mut writer = engine_write(&engine)?;
 
-                    // Insert all documents before committing
-                    for doc in docs {
-                        writer.insert(doc);
-                    }
+                for doc in docs {
+                    writer.insert(doc);
+                }
 
-                    Ok(writer.commit())
-                },
-            )
+                Ok(writer.commit())
+            })
             .await?;
 
-        // Await the blocking thread to complete and get the save operations
-        // This ensures the engine's internal lock is released before we proceed
-        let save_operations = save_operations_guard.wait().await?;
+        save_operations_guard.wait().await
+    }
 
-        // Execute all Save operations atomically in a transaction
-        // This prevents orphaned blobs if the operation fails mid-way
-        self.storage.save_batch_atomic(save_operations).await?;
-        Ok(IndexResult::needs_cleanup())
+    async fn index_documents_batch(
+        &mut self,
+        docs: Vec<Document>,
+    ) -> Result<IndexResult, SearchError> {
+        let prepared = self.prepare_documents_batch(docs).await?;
+        let result = prepared.index_result();
+        self.storage
+            .save_batch_atomic(prepared.save_operations)
+            .await?;
+        Ok(result)
     }
 
     /// Remove documents and commit
@@ -498,21 +524,15 @@ impl<S: BlobStorage + Clone + 'static> FoundationSearchEngine<S> {
 
         // Use async I/O processing instead of blocking on I/O inside spawn_blocking
         let save_operations_guard = self
-            .process_commit_iterator_with_async_io(
-                storage,
-                serdes,
-                move || {
-                    // Writes are serialized by RwLock in service.rs, so this should never fail.
-                    // If it does, it indicates a bug in our serialization logic.
-                    let mut writer = engine.write().expect("Engine write lock should always succeed - writes are serialized by service-level RwLock");
+            .process_commit_iterator_with_async_io(storage, serdes, move || {
+                let mut writer = engine_write(&engine)?;
 
-                    for doc_id in &doc_ids_owned {
-                        writer.remove(doc_id);
-                    }
+                for doc_id in &doc_ids_owned {
+                    writer.remove(doc_id);
+                }
 
-                    Ok(writer.commit())
-                },
-            )
+                Ok(writer.commit())
+            })
             .await?;
 
         // Await the blocking thread to complete and get the save operations
@@ -580,6 +600,23 @@ impl<S: BlobStorage + Clone + 'static> FoundationSearchEngine<S> {
         })
     }
 
+    /// Prepare a batch index commit without writing blobs to SQLite (historic-load ACID page).
+    pub async fn prepare_bodies_batch(
+        &mut self,
+        messages: &[(&str, &str, &crate::traits::MessageMetadata)],
+    ) -> Result<PreparedIndexCommit, SearchError> {
+        if messages.is_empty() {
+            return Ok(PreparedIndexCommit::empty());
+        }
+
+        let docs: Vec<Document> = messages
+            .iter()
+            .map(|(message_id, body, metadata)| Self::build_document(message_id, body, metadata))
+            .collect();
+
+        self.prepare_documents_batch(docs).await
+    }
+
     /// Remove a message from the index
     ///
     /// Safe to call even if the message was never indexed.
@@ -622,9 +659,7 @@ impl<S: BlobStorage + Clone + 'static> FoundationSearchEngine<S> {
         // IMPORTANT: The cleanup iterator is interactive - we must respond to
         // Load events DURING iteration before it yields Release events.
         let result = tokio::task::spawn_blocking(move || {
-            // Cleanup is serialized by RwLock in service.rs, so this should never fail.
-            // If it does, it indicates a bug in our serialization logic.
-            let cleanup = engine.cleanup().expect("Engine cleanup should always succeed - operations are serialized by service-level RwLock");
+            let cleanup = engine_cleanup(&engine)?;
 
             let handle = tokio::runtime::Handle::current();
             let mut deleted_count = 0;

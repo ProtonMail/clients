@@ -1184,6 +1184,7 @@ dependencies = [
  "calendar-crypto",
  "calendar-db",
  "calendar-db-diesel",
+ "calendar-db-test-utils",
  "calendar-ical",
  "derive_more 2.1.1",
  "indoc",
@@ -1375,6 +1376,20 @@ dependencies = [
  "sqlite-wasm-rs",
  "sqlite-wasm-vfs",
  "tracing",
+]
+
+[[package]]
+name = "calendar-db-test-utils"
+version = "0.1.0"
+dependencies = [
+ "calendar-api",
+ "calendar-crypto",
+ "calendar-db",
+ "calendar-ical",
+ "indoc",
+ "jiff",
+ "proton-crypto",
+ "proton-crypto-account",
 ]
 
 [[package]]

@@ -1,7 +1,7 @@
 use crate::actions::ConversationOrMessage;
 use crate::actions::draft::{
     SEND_ACTION_GROUP, local_all_draft_label_id, local_all_mail_label_id, local_draft_label_id,
-    local_sent_label_id,
+    local_sent_label_id, sanitize_draft_subject,
 };
 use crate::datatypes::{
     AttachmentMetadata, Disposition, LocalAttachmentId, LocalMessageId, MessageSender,
@@ -73,6 +73,7 @@ pub struct Save {
 impl Save {
     pub fn new(draft: &draft_v1::Draft, save_origin: DraftSendResultOrigin) -> Self {
         let transformed = maybe_sanitize(draft.mime_type(), draft.body());
+        let sanitized_subject = sanitize_draft_subject(&draft.subject);
 
         Self {
             metadata_id: draft.metadata_id,
@@ -81,10 +82,10 @@ impl Save {
             bcc_list: draft.bcc_list.clone(),
             message_id: None,
             address_id: draft.address_id.clone(),
-            subject: if draft.subject.is_empty() {
+            subject: if sanitized_subject.is_empty() {
                 compose::DEFAULT_SUBJECT.to_owned()
             } else {
-                draft.subject.clone()
+                sanitized_subject
             },
             body: transformed,
             mime_type: draft.mime_type(),

@@ -6,6 +6,8 @@ mod save;
 mod send;
 mod undo_send;
 
+use std::sync::OnceLock;
+
 pub use self::attachment_disposition_update::*;
 pub use self::attachment_remove::*;
 pub use self::attachment_upload::*;
@@ -26,6 +28,7 @@ use mail_core_common::models::{Label, ModelExtension, ModelIdExtension};
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
 use mail_stash::stash::Tether;
+use regex::Regex;
 use tracing::error;
 
 pub const SEND_ACTION_GROUP: ActionGroup = ActionGroup::new("MAIL_SEND");
@@ -139,4 +142,49 @@ async fn save_attachment_error(
             Ok(())
         })
         .await
+}
+
+fn sanitize_draft_subject(subject: &str) -> String {
+    // Remove ascii control characters from the string and new lines
+    static INVALID_CHARS_RE: OnceLock<(Regex, Regex)> = OnceLock::new();
+    let (ascii_chars_re, new_lines_re) = INVALID_CHARS_RE.get_or_init(|| {
+        (
+            Regex::new("[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]").expect("This should not fail"),
+            Regex::new("\r\n|\r|\n").expect("This should not fail"),
+        )
+    });
+
+    let cleaned = ascii_chars_re.replace_all(subject, "");
+    new_lines_re.replace_all(&cleaned, " ").into_owned()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sanitize_subject_ascii_control_chars() {
+        let invalid_chars = ('\x00'..='\x08')
+            .chain(['\x0B', '\x0C', '\x7F'])
+            .chain('\x0E'..='\x1F')
+            .collect::<Vec<_>>();
+        let subject = invalid_chars
+            .iter()
+            .map(ToString::to_string)
+            .collect::<Vec<_>>()
+            .join("A");
+
+        let subject_sanitized = sanitize_draft_subject(&subject);
+
+        for char in &invalid_chars {
+            assert!(!subject_sanitized.contains(*char));
+        }
+    }
+
+    #[test]
+    fn sanitize_subject_line_endings() {
+        let subject = "Hello\rWorld\nHow\r\nis life?";
+        let subject_sanitized = sanitize_draft_subject(subject);
+        assert_eq!(subject_sanitized, "Hello World How is life?");
+    }
 }

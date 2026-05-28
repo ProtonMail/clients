@@ -1,5 +1,6 @@
 use crate::actions::draft::SEND_ACTION_GROUP;
 use crate::context::MailUserDatabaseInitializer;
+use crate::models::IncomingDefault;
 use crate::{MailContext, MailContextResult, MailUserContext, NewMailUserContextOptions};
 use core_event_loop::v6::EventSubscriberResult;
 use mail_action_queue::action::ActionGroup;
@@ -11,6 +12,8 @@ use mail_core_api::connection_status::ConnectionStatus;
 use mail_core_api::services::proton::UserId;
 use mail_core_common::UserDatabaseInitializer;
 use mail_core_common::event_loop::v6::CoreEventCache;
+use mail_core_common::models::InitializedComponent;
+use mail_core_common::services::InitializationService;
 use mail_core_common::test_utils::test_context::{BaseTestContext, TestContext};
 use mail_network_monitor_service::OsNetworkStatus;
 use std::ops::Deref;
@@ -133,6 +136,7 @@ impl MailTestContext {
         MailUserContext::initialize_async(ctx.clone(), NewMailUserContextOptions::default())
             .await
             .expect("Failed to initialize");
+        wait_for_post_initialize(ctx).await;
     }
 
     /// Get the test user context.
@@ -147,6 +151,8 @@ impl MailTestContext {
             )
             .await
             .expect("failed to create user context");
+
+        wait_for_post_initialize(&ctx).await;
 
         // Disable auto queue executor as we don't want these to interfere with our test execution.
         ctx.queues().terminate();
@@ -163,6 +169,8 @@ impl MailTestContext {
                 NewMailUserContextOptions::default(),
             )
             .await?;
+
+        wait_for_post_initialize(&ctx).await;
 
         // Disable auto queue executor as we don't want these to interfere with our test execution.
         ctx.queues().terminate();
@@ -298,4 +306,30 @@ async fn wait_for_impl(user_ctx: &MailUserContext, fun: impl Fn(ConnectionStatus
     while !fun(user_ctx.network_monitor_service().combined_status()) {
         tokio::time::sleep(Duration::from_millis(100)).await;
     }
+}
+
+/// Wait for `MailUserContext::post_initialize` background tasks to finish, so
+/// tests can assert against mocks of endpoints that fire in the post-init phase
+/// (e.g. `mock_get_incoming_defaults`). Uses a bounded timeout so tests that
+/// intentionally do not mock the endpoint don't hang.
+async fn wait_for_post_initialize(ctx: &Arc<MailUserContext>) {
+    let watcher = ctx
+        .user_context()
+        .get_service::<InitializationService>()
+        .initialization_watcher()
+        .clone();
+    let watcher_clone = watcher.clone();
+    let watcher_task = ctx.spawn(async move { watcher_clone.task().await });
+
+    let tether = ctx.user_stash().connection();
+    let _ = tokio::time::timeout(
+        Duration::from_secs(5),
+        InitializedComponent::wait_for_dependencies(
+            &[IncomingDefault::INIT_KEY],
+            &watcher,
+            &tether,
+        ),
+    )
+    .await;
+    watcher_task.abort();
 }

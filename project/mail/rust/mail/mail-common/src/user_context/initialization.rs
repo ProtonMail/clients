@@ -11,13 +11,13 @@ use mail_core_common::models::{
 
 use core_event_loop::EventLoopError;
 use mail_core_common::services::{EventLoopService, InitializationService};
-use mail_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
+use mail_issue_reporter_service::{IssueLevel, IssueReportKeys, issue_report_keys_from_error};
 use mail_stash::params;
 use mail_task_service::TaskService;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::task::JoinHandle;
-use tracing::{debug, error, warn};
+use tracing::{debug, error, info, warn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum MailUserContextLoadingStage {
@@ -29,7 +29,6 @@ enum MailUserContextLoadingStage {
     Labels,
     Counters,
     Contacts,
-    IncomingDefaults,
 }
 
 impl MailUserContext {
@@ -48,10 +47,14 @@ impl MailUserContext {
     ) -> Result<(), MailContextError> {
         let ctx_cloned = Arc::clone(&ctx);
 
-        ctx.get_service::<InitializationMediator>()
+        let result = ctx
+            .get_service::<InitializationMediator>()
             .initialize(ctx_cloned, options)
-            .await
-            .inspect_err(|err| {
+            .await;
+
+        match &result {
+            Ok(()) => ctx.post_initialize(),
+            Err(err) => {
                 if !err.is_network_failure() {
                     ctx.issue_reporter_service().report(
                         IssueLevel::Error,
@@ -59,7 +62,10 @@ impl MailUserContext {
                         issue_report_keys_from_error(err),
                     );
                 }
-            })
+            }
+        }
+
+        result
     }
 
     /// Checks whether initialization process finished suscesfully.
@@ -141,6 +147,78 @@ impl MailUserContext {
         let ctx_clone = self.clone();
         let watcher_clone = watcher.clone();
         self.spawn(f(ctx_clone, watcher_clone))
+    }
+
+    /// Bootstraps that are too slow for the critical path and whose absence
+    /// degrades UX gracefully (e.g. banner not shown, default encoding used).
+    ///
+    /// Triggered from [`Self::initialize_async`] so it fires on both first launch
+    /// AND relaunch — the mediator early-returns when `CONTEXT_INIT_KEY` is
+    /// already `Succeeded`, but a prior session may have been killed before its
+    /// own post-init finished. Each helper is idempotent via its `INIT_KEY` state.
+    pub(crate) fn post_initialize(self: &Arc<Self>) {
+        self.start_incoming_default_background_load();
+    }
+
+    /// Some accounts have 70k+ rows; synchronous load blocks login for minutes.
+    /// Read-side consumers degrade gracefully when the table is empty.
+    fn start_incoming_default_background_load(self: &Arc<Self>) {
+        let ctx = Arc::clone(self);
+        self.spawn(async move {
+            if let Err(e) = try_load_incoming_defaults(&ctx).await {
+                error!("post_init: IncomingDefault load failed: {e:?}");
+                if !e.is_network_failure() {
+                    ctx.issue_reporter_service().report(
+                        IssueLevel::Error,
+                        "post_init: IncomingDefault load failed".into(),
+                        issue_report_keys_from_error(&e),
+                    );
+                }
+            }
+        });
+    }
+}
+
+async fn try_load_incoming_defaults(ctx: &Arc<MailUserContext>) -> Result<(), MailContextError> {
+    let tether = ctx.user_stash().connection();
+    if matches!(
+        InitializedComponent::state(IncomingDefault::INIT_KEY, &tether).await?,
+        InitializedComponentState::Succeeded
+    ) {
+        debug!("post_init: IncomingDefault already initialized, skipping");
+        return Ok(());
+    }
+
+    let watcher = ctx
+        .user_context
+        .get_service::<InitializationService>()
+        .initialization_watcher()
+        .clone();
+    let watcher_clone = watcher.clone();
+    let watcher_task = ctx.spawn(async move { watcher_clone.task().await });
+
+    let t0 = Instant::now();
+    info!("post_init: IncomingDefault background load starting");
+    let result = IncomingDefault::initialize(watcher, ctx.session(), ctx.user_stash()).await;
+    watcher_task.abort();
+
+    let elapsed = t0.elapsed();
+    match result {
+        Ok(()) => {
+            if elapsed > Duration::from_secs(60) {
+                warn!("post_init: slow IncomingDefault load: {elapsed:?}");
+                ctx.issue_reporter_service().report(
+                    IssueLevel::Warning,
+                    "post_init: slow IncomingDefault load".into(),
+                    IssueReportKeys::from([("elapsed".into(), format!("{elapsed:?}"))]),
+                );
+            } else {
+                info!("post_init: IncomingDefault load done in {elapsed:?}");
+            }
+            Ok(())
+        }
+        Err(InitializationError::InitializationFailed(e)) => Err(e),
+        Err(InitializationError::Stash(e)) => Err(e.into()),
     }
 }
 
@@ -243,8 +321,12 @@ impl InitializationMediator {
             tether
                 .write_tx(async |tx| {
                     tx.execute(
-                        "DELETE FROM initialized_components WHERE key = ? OR key = ?",
-                        params![User::INIT_KEY.0, MailUserContext::CONTEXT_INIT_KEY.0],
+                        "DELETE FROM initialized_components WHERE key = ? OR key = ? OR key = ?",
+                        params![
+                            User::INIT_KEY.0,
+                            MailUserContext::CONTEXT_INIT_KEY.0,
+                            IncomingDefault::INIT_KEY.0
+                        ],
                     )
                     .await
                 })
@@ -295,9 +377,6 @@ impl InitializationMediator {
         let addresses = ctx.spawn_init(&watcher, |ctx, watcher| async move {
             Address::initialize(watcher, ctx.session(), ctx.user_stash()).await
         });
-        let inc_defs = ctx.spawn_init(&watcher, |ctx, watcher| async move {
-            IncomingDefault::initialize(watcher, ctx.session(), ctx.user_stash()).await
-        });
 
         let abort_handles = vec![
             watcher_task_handle.abort_handle(),
@@ -309,7 +388,6 @@ impl InitializationMediator {
             mail_settings.abort_handle(),
             custom_settings.abort_handle(),
             addresses.abort_handle(),
-            inc_defs.abort_handle(),
         ];
 
         let res = try_join!(
@@ -330,10 +408,6 @@ impl InitializationMediator {
                 custom_settings
             ),
             MailUserContext::initial_sync_for(MailUserContextLoadingStage::Addresses, addresses),
-            MailUserContext::initial_sync_for(
-                MailUserContextLoadingStage::IncomingDefaults,
-                inc_defs
-            ),
         );
 
         abort_handles.into_iter().for_each(|a| a.abort());

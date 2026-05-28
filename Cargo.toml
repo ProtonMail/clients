@@ -917,6 +917,11 @@ split-debuginfo = "packed"
 lto = true
 incremental = false
 
+[profile.mail-macos]
+inherits = "release"
+panic = "abort"
+codegen-units = 1
+
 [profile.mail-darwin-test]
 inherits = "dev"
 debug = false

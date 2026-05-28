@@ -116,7 +116,7 @@ pub fn create_mail_session(
         Origin::IosShareExt => async_runtime_slim,
     };
 
-    #[cfg(not(forcego))]
+    #[cfg(all(forcego, any(target_os = "android", target_os = "ios")))]
     forcego_cfg_missing();
 
     runtime()
@@ -1415,8 +1415,9 @@ impl WatchedFeatureFlags {
     }
 }
 
-#[cfg(not(forcego))]
+#[cfg(all(forcego, any(target_os = "android", target_os = "ios")))]
 fn forcego_cfg_missing() {
+    // Must use forcego for shipping as the rust crypto is not approved for production yet
     panic!("Forcego feature is not defined and the application can not be used");
 }
 

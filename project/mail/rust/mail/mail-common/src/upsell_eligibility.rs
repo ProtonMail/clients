@@ -1,25 +1,51 @@
 use crate::{MailContextResult, MailUserContext};
 use anyhow::Context;
-use mail_core_common::datatypes::{UpsellEligibility, UpsellType};
+use mail_core_common::datatypes::{FeatureFlagPayloadType, UpsellEligibility, UpsellType, Variant};
 use mail_core_common::models::{PaidSubscription, Role, User, UserSettings};
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
 use mail_stash::stash::{Stash, StashError, WatcherHandle};
+use serde::Deserialize;
 use sqlite_watcher::watcher::TableObserver;
 use std::collections::BTreeSet;
 use std::sync::Weak;
 
-// Two flags are needed because the API cannot distinguish "FF disabled" from "FF does not exist".
-// Parent is conditioned by Unleash rules (e.g. user in Nordics). Child splits eligible users
-// into control vs test group for telemetry:
-//
-//  Parent | Child | Result
-//  -------+-------+-------------------------------
-//  false  |   -   | Normal Plus upsell (baseline)
-//  true   | false | Normal Plus upsell (control)
-//  true   | true  | Unlimited upsell   (test)
-pub const FF_UPSELL_UNLIMITED_PARENT: &str = "MailiosUnlimitedPlanPlacementEligibile";
-pub const FF_UPSELL_UNLIMITED_CHILD: &str = "MailiosUnlimitedPlanPlacementTestGroup";
+// Single Unleash flag whose variants steer upsell experiments. Each variant's JSON payload
+// carries `{"upsell": "MailPlus" | "Unlimited"}` to pick the modal. Telemetry separately
+// records the variant name (e.g. "Unlimited_Nordics", "MailPlus_USA") so analysts can split
+// cohorts without further Rust changes.
+pub const FF_UPSELL_EXPERIMENT: &str = "MailiosUpsellExperiment";
+
+#[derive(Deserialize)]
+struct UpsellPayload {
+    upsell: UpsellType,
+}
+
+fn parse_upsell_payload(variant: &Variant) -> Option<UpsellType> {
+    if !variant.enabled {
+        return None;
+    }
+    let payload = variant.payload.as_ref()?;
+    if payload.ty != FeatureFlagPayloadType::Json {
+        tracing::error!(
+            variant = %variant.name,
+            payload_type = ?payload.ty,
+            "upsell variant payload is not JSON, falling back to MailPlus"
+        );
+        return None;
+    }
+    match serde_json::from_str::<UpsellPayload>(&payload.value) {
+        Ok(p) => Some(p.upsell),
+        Err(err) => {
+            tracing::error!(
+                variant = %variant.name,
+                error = %err,
+                "malformed upsell variant payload, falling back to MailPlus"
+            );
+            None
+        }
+    }
+}
 
 /// Note: This service is currently used only on iOS.
 pub struct UpsellEligibilityService {
@@ -50,21 +76,15 @@ impl UpsellEligibilityService {
 
     async fn upsell_type(&self) -> MailContextResult<UpsellType> {
         let ctx = self.ctx.upgrade().context("Could not find the context")?;
-        let feature_flags = ctx.user_context().feature_flags();
-
-        if feature_flags
-            .get(FF_UPSELL_UNLIMITED_PARENT)
-            .await?
-            .unwrap_or_default()
-            && feature_flags
-                .get(FF_UPSELL_UNLIMITED_CHILD)
-                .await?
-                .unwrap_or_default()
-        {
-            Ok(UpsellType::Unlimited)
-        } else {
-            Ok(UpsellType::MailPlus)
-        }
+        let variant = ctx
+            .user_context()
+            .feature_flags()
+            .get_feature_flag_variant(FF_UPSELL_EXPERIMENT)
+            .await?;
+        Ok(variant
+            .as_ref()
+            .and_then(parse_upsell_payload)
+            .unwrap_or(UpsellType::MailPlus))
     }
 }
 

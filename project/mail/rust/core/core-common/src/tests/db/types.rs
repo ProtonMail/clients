@@ -1,6 +1,11 @@
-use crate::datatypes::{AccountDetails, AvatarInformation};
-use crate::db::account::CoreAccount;
+use crate::datatypes::{AccountDetails, AuthScopes, AvatarInformation};
+use crate::db::account::{CoreAccount, CoreSession};
+use crate::db::migrations::migrate_account_db;
+use mail_api_session::ids::SessionId;
 use mail_core_api::services::proton::UserId;
+use mail_shared_types::ModelExtension;
+use mail_stash::orm::Model;
+use mail_stash::stash::{Stash, StashConfiguration};
 use std::default::Default;
 
 impl Default for CoreAccount {
@@ -111,4 +116,69 @@ mod core_account_details_tests {
             AvatarInformation::from(expected_name)
         );
     }
+}
+
+#[tokio::test]
+#[allow(
+    invalid_value,
+    reason = "We are only testing db data writes, zeroed out vec is just empty"
+)]
+async fn core_session_save_deletes_previous_session_for_same_account_id() {
+    let stash = Stash::new(StashConfiguration::test()).unwrap();
+    migrate_account_db(&stash).await.unwrap();
+
+    let user_id = UserId::from("USER");
+    let mut account = CoreAccount {
+        remote_id: user_id.clone(),
+        name_or_addr: "dricus@proton.me".to_string(),
+        display_name: Some(String::new()),
+        username: Some(String::new()),
+        primary_addr: None,
+        ..Default::default()
+    };
+
+    let session_id1 = SessionId::from("SESSION1");
+    let session_id2 = SessionId::from("SESSION2");
+
+    let mut session1 = CoreSession {
+        remote_id: session_id1.clone(),
+        account_id: user_id.clone(),
+        access_token: unsafe { std::mem::MaybeUninit::zeroed().assume_init() },
+        refresh_token: unsafe { std::mem::MaybeUninit::zeroed().assume_init() },
+        auth_scopes: AuthScopes::new(["full"]),
+        key_secret: unsafe { std::mem::MaybeUninit::zeroed().assume_init() },
+    };
+
+    let mut session2 = CoreSession {
+        remote_id: session_id2.clone(),
+        account_id: user_id.clone(),
+        access_token: unsafe { std::mem::MaybeUninit::zeroed().assume_init() },
+        refresh_token: unsafe { std::mem::MaybeUninit::zeroed().assume_init() },
+        auth_scopes: AuthScopes::new(["full"]),
+        key_secret: unsafe { std::mem::MaybeUninit::zeroed().assume_init() },
+    };
+
+    let mut tether = stash.connection();
+
+    tether
+        .write_tx(async |tx| {
+            account.save(tx).await?;
+            session1.save(tx).await?;
+            session2.save(tx).await
+        })
+        .await
+        .unwrap();
+
+    assert!(
+        CoreSession::find_by_id(session_id1, &tether)
+            .await
+            .unwrap()
+            .is_none()
+    );
+    assert!(
+        CoreSession::find_by_id(session_id2, &tether)
+            .await
+            .unwrap()
+            .is_some()
+    );
 }

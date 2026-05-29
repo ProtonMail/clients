@@ -4,6 +4,7 @@ use mail_core_common::datatypes::SystemLabel;
 use mail_core_common::models::Label;
 use serde::{Deserialize, Serialize};
 
+/// System folders that are valid move-to destinations (non-category).
 #[derive(
     Copy,
     Clone,
@@ -22,12 +23,6 @@ pub enum MovableSystemFolder {
     Trash = 3,
     Spam = 4,
     Archive = 6,
-    CategorySocial = 20,
-    CategoryPromotions = 21,
-    CategoryUpdates = 22,
-    CategoryDefault = 24,
-    CategoryNewsletter = 25,
-    CategoryTransactions = 26,
 }
 
 impl MovableSystemFolder {
@@ -47,12 +42,6 @@ impl MovableSystemFolder {
             x if x == Self::Trash as u8 => Some(Self::Trash),
             x if x == Self::Spam as u8 => Some(Self::Spam),
             x if x == Self::Archive as u8 => Some(Self::Archive),
-            x if x == Self::CategorySocial as u8 => Some(Self::CategorySocial),
-            x if x == Self::CategoryPromotions as u8 => Some(Self::CategoryPromotions),
-            x if x == Self::CategoryUpdates as u8 => Some(Self::CategoryUpdates),
-            x if x == Self::CategoryDefault as u8 => Some(Self::CategoryDefault),
-            x if x == Self::CategoryNewsletter as u8 => Some(Self::CategoryNewsletter),
-            x if x == Self::CategoryTransactions as u8 => Some(Self::CategoryTransactions),
             _ => None,
         }
     }
@@ -65,12 +54,6 @@ impl From<MovableSystemFolder> for SystemLabel {
             MovableSystemFolder::Trash => SystemLabel::Trash,
             MovableSystemFolder::Spam => SystemLabel::Spam,
             MovableSystemFolder::Archive => SystemLabel::Archive,
-            MovableSystemFolder::CategorySocial => SystemLabel::CategorySocial,
-            MovableSystemFolder::CategoryPromotions => SystemLabel::CategoryPromotions,
-            MovableSystemFolder::CategoryUpdates => SystemLabel::CategoryUpdates,
-            MovableSystemFolder::CategoryDefault => SystemLabel::CategoryDefault,
-            MovableSystemFolder::CategoryNewsletter => SystemLabel::CategoryNewsletter,
-            MovableSystemFolder::CategoryTransactions => SystemLabel::CategoryTransactions,
         }
     }
 }
@@ -88,13 +71,169 @@ impl TryFrom<SystemLabel> for MovableSystemFolder {
             SystemLabel::Trash => Ok(MovableSystemFolder::Trash),
             SystemLabel::Spam => Ok(MovableSystemFolder::Spam),
             SystemLabel::Archive => Ok(MovableSystemFolder::Archive),
-            SystemLabel::CategorySocial => Ok(MovableSystemFolder::CategorySocial),
-            SystemLabel::CategoryPromotions => Ok(MovableSystemFolder::CategoryPromotions),
-            SystemLabel::CategoryUpdates => Ok(MovableSystemFolder::CategoryUpdates),
-            SystemLabel::CategoryDefault => Ok(MovableSystemFolder::CategoryDefault),
-            SystemLabel::CategoryNewsletter => Ok(MovableSystemFolder::CategoryNewsletter),
-            SystemLabel::CategoryTransactions => Ok(MovableSystemFolder::CategoryTransactions),
             other => Err(NotMovableSystemFolder(other)),
+        }
+    }
+}
+
+/// Category system folders that are valid move-to destinations.
+///
+/// Variant names intentionally keep the `Category*` prefix even though the enum name
+/// already disambiguates, to prevent telemetry / Sentry string drift from existing data.
+#[derive(
+    Copy,
+    Clone,
+    Debug,
+    Deserialize,
+    Eq,
+    Hash,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize
+)]
+#[repr(u8)]
+#[allow(clippy::enum_variant_names)]
+pub enum MovableCategoryFolder {
+    CategorySocial = 20,
+    CategoryPromotions = 21,
+    CategoryUpdates = 22,
+    CategoryDefault = 24,
+    CategoryNewsletter = 25,
+    CategoryTransactions = 26,
+}
+
+impl From<MovableCategoryFolder> for SystemLabel {
+    fn from(value: MovableCategoryFolder) -> Self {
+        match value {
+            MovableCategoryFolder::CategorySocial => SystemLabel::CategorySocial,
+            MovableCategoryFolder::CategoryPromotions => SystemLabel::CategoryPromotions,
+            MovableCategoryFolder::CategoryUpdates => SystemLabel::CategoryUpdates,
+            MovableCategoryFolder::CategoryDefault => SystemLabel::CategoryDefault,
+            MovableCategoryFolder::CategoryNewsletter => SystemLabel::CategoryNewsletter,
+            MovableCategoryFolder::CategoryTransactions => SystemLabel::CategoryTransactions,
+        }
+    }
+}
+
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
+#[error("SystemLabel {0:?} is not a MovableCategoryFolder")]
+pub struct NotMovableCategoryFolder(pub SystemLabel);
+
+impl TryFrom<SystemLabel> for MovableCategoryFolder {
+    type Error = NotMovableCategoryFolder;
+
+    fn try_from(value: SystemLabel) -> Result<Self, Self::Error> {
+        match value {
+            SystemLabel::CategorySocial => Ok(MovableCategoryFolder::CategorySocial),
+            SystemLabel::CategoryPromotions => Ok(MovableCategoryFolder::CategoryPromotions),
+            SystemLabel::CategoryUpdates => Ok(MovableCategoryFolder::CategoryUpdates),
+            SystemLabel::CategoryDefault => Ok(MovableCategoryFolder::CategoryDefault),
+            SystemLabel::CategoryNewsletter => Ok(MovableCategoryFolder::CategoryNewsletter),
+            SystemLabel::CategoryTransactions => Ok(MovableCategoryFolder::CategoryTransactions),
+            other => Err(NotMovableCategoryFolder(other)),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn movable_system_folder_round_trip() {
+        let pairs: &[(MovableSystemFolder, SystemLabel)] = &[
+            (MovableSystemFolder::Inbox, SystemLabel::Inbox),
+            (MovableSystemFolder::Trash, SystemLabel::Trash),
+            (MovableSystemFolder::Spam, SystemLabel::Spam),
+            (MovableSystemFolder::Archive, SystemLabel::Archive),
+        ];
+
+        for (folder, label) in pairs {
+            let round_tripped = SystemLabel::from(*folder);
+            assert_eq!(round_tripped, *label);
+            let back = MovableSystemFolder::try_from(round_tripped).unwrap();
+            assert_eq!(back, *folder);
+        }
+    }
+
+    #[test]
+    fn movable_category_folder_round_trip() {
+        let pairs: &[(MovableCategoryFolder, SystemLabel)] = &[
+            (
+                MovableCategoryFolder::CategorySocial,
+                SystemLabel::CategorySocial,
+            ),
+            (
+                MovableCategoryFolder::CategoryPromotions,
+                SystemLabel::CategoryPromotions,
+            ),
+            (
+                MovableCategoryFolder::CategoryUpdates,
+                SystemLabel::CategoryUpdates,
+            ),
+            (
+                MovableCategoryFolder::CategoryDefault,
+                SystemLabel::CategoryDefault,
+            ),
+            (
+                MovableCategoryFolder::CategoryNewsletter,
+                SystemLabel::CategoryNewsletter,
+            ),
+            (
+                MovableCategoryFolder::CategoryTransactions,
+                SystemLabel::CategoryTransactions,
+            ),
+        ];
+
+        for (folder, label) in pairs {
+            let round_tripped = SystemLabel::from(*folder);
+            assert_eq!(round_tripped, *label);
+            let back = MovableCategoryFolder::try_from(round_tripped).unwrap();
+            assert_eq!(back, *folder);
+        }
+    }
+
+    #[test]
+    fn non_movable_system_labels_are_rejected() {
+        let non_movable = [
+            SystemLabel::Sent,
+            SystemLabel::Drafts,
+            SystemLabel::AllMail,
+            SystemLabel::AllSent,
+            SystemLabel::Starred,
+        ];
+        for label in non_movable {
+            assert!(MovableSystemFolder::try_from(label).is_err());
+            assert!(MovableCategoryFolder::try_from(label).is_err());
+        }
+    }
+
+    #[test]
+    fn category_labels_rejected_by_movable_system_folder() {
+        let categories = [
+            SystemLabel::CategorySocial,
+            SystemLabel::CategoryPromotions,
+            SystemLabel::CategoryUpdates,
+            SystemLabel::CategoryDefault,
+            SystemLabel::CategoryNewsletter,
+            SystemLabel::CategoryTransactions,
+        ];
+        for label in categories {
+            assert!(MovableSystemFolder::try_from(label).is_err());
+        }
+    }
+
+    #[test]
+    fn system_folders_rejected_by_movable_category_folder() {
+        let folders = [
+            SystemLabel::Inbox,
+            SystemLabel::Trash,
+            SystemLabel::Spam,
+            SystemLabel::Archive,
+        ];
+        for label in folders {
+            assert!(MovableCategoryFolder::try_from(label).is_err());
         }
     }
 }

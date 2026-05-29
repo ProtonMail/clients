@@ -4,7 +4,7 @@ use super::*;
 use crate::actions::{LabelAsAction, MoveDestination};
 use crate::datatypes::{
     ContextualConversation, ExclusiveLocation, LocalAttachmentId, MessageFlags,
-    MovableSystemFolder, SystemLabelId, attachment,
+    MovableCategoryFolder, MovableSystemFolder, SystemLabelId, attachment,
 };
 use crate::models::{Conversation, MailSettings, Message, MessageBodyMetadata};
 use crate::test_utils::db::new_test_connection_file;
@@ -236,7 +236,7 @@ mod available_label_as_actions {
 
 mod available_move_to_actions {
     use super::*;
-    use crate::actions::{InboxDestination, SystemFolderDestination};
+    use crate::actions::{CategoryDestination, InboxDestination, SystemFolderDestination};
     use crate::test_utils::db::new_test_connection;
     use crate::{conv_id, conversation, label, lbl_id, message, msg_id};
     use futures::stream::{self, StreamExt};
@@ -271,7 +271,7 @@ mod available_move_to_actions {
     struct ExpectedInboxFolder {
         label_id: LabelId,
         name: MovableSystemFolder,
-        categories: Vec<ExpectedSystemFolder>,
+        categories: Vec<ExpectedCategoryFolder>,
     }
 
     impl ExpectedInboxFolder {
@@ -281,13 +281,31 @@ mod available_move_to_actions {
                 .unwrap()
                 .unwrap();
             let categories = stream::iter(action.categories)
-                .then(|category| async move { ExpectedSystemFolder::new(category, tx).await })
+                .then(|category| async move { ExpectedCategoryFolder::new(category, tx).await })
                 .collect::<Vec<_>>()
                 .await;
             ExpectedInboxFolder {
                 label_id,
                 name: action.name,
                 categories,
+            }
+        }
+    }
+
+    #[derive(Debug, Clone, PartialEq)]
+    struct ExpectedCategoryFolder {
+        label_id: LabelId,
+        name: MovableCategoryFolder,
+    }
+
+    impl ExpectedCategoryFolder {
+        async fn new(action: CategoryDestination, tx: &Tether) -> Self {
+            ExpectedCategoryFolder {
+                label_id: Label::local_id_counterpart(action.local_id, tx)
+                    .await
+                    .unwrap()
+                    .unwrap(),
+                name: action.name,
             }
         }
     }
@@ -831,17 +849,17 @@ mod available_move_to_actions {
                         label_id: SystemLabel::Inbox.label_id(),
                         name: MovableSystemFolder::Inbox,
                         categories: vec![
-                            ExpectedSystemFolder {
+                            ExpectedCategoryFolder {
                                 label_id: SystemLabel::CategoryDefault.label_id(),
-                                name: MovableSystemFolder::CategoryDefault,
+                                name: MovableCategoryFolder::CategoryDefault,
                             },
-                            ExpectedSystemFolder {
+                            ExpectedCategoryFolder {
                                 label_id: SystemLabel::CategorySocial.label_id(),
-                                name: MovableSystemFolder::CategorySocial,
+                                name: MovableCategoryFolder::CategorySocial,
                             },
-                            ExpectedSystemFolder {
+                            ExpectedCategoryFolder {
                                 label_id: SystemLabel::CategoryPromotions.label_id(),
-                                name: MovableSystemFolder::CategoryPromotions,
+                                name: MovableCategoryFolder::CategoryPromotions,
                             },
                         ],
                     }),
@@ -873,17 +891,17 @@ mod available_move_to_actions {
                         label_id: SystemLabel::Inbox.label_id(),
                         name: MovableSystemFolder::Inbox,
                         categories: vec![
-                            ExpectedSystemFolder {
+                            ExpectedCategoryFolder {
                                 label_id: SystemLabel::CategoryDefault.label_id(),
-                                name: MovableSystemFolder::CategoryDefault,
+                                name: MovableCategoryFolder::CategoryDefault,
                             },
-                            ExpectedSystemFolder {
+                            ExpectedCategoryFolder {
                                 label_id: SystemLabel::CategorySocial.label_id(),
-                                name: MovableSystemFolder::CategorySocial,
+                                name: MovableCategoryFolder::CategorySocial,
                             },
-                            ExpectedSystemFolder {
+                            ExpectedCategoryFolder {
                                 label_id: SystemLabel::CategoryPromotions.label_id(),
-                                name: MovableSystemFolder::CategoryPromotions,
+                                name: MovableCategoryFolder::CategoryPromotions,
                             },
                         ],
                     }),

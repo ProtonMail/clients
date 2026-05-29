@@ -1,5 +1,6 @@
 use crate::actions::{
-    CustomFolderDestination, InboxDestination, MoveDestination, SystemFolderDestination,
+    CategoryDestination, CustomFolderDestination, InboxDestination, MoveDestination,
+    SystemFolderDestination,
 };
 use crate::datatypes::MovableSystemFolder;
 use crate::datatypes::labels::{color_to_display, hierarchy};
@@ -100,7 +101,7 @@ async fn label_to_destination(
             Some(MoveDestination::Inbox(InboxDestination {
                 local_id: inbox_id,
                 name: MovableSystemFolder::Inbox,
-                categories: SystemFolderDestination::from_categories(
+                categories: CategoryDestination::from_categories(
                     CategoryView::load(inbox_id, tether)
                         .await?
                         .into_labels(tether)

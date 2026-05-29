@@ -9,5 +9,8 @@ pub use all_conversation_actions::*;
 pub use all_list_actions::*;
 pub use all_message_actions::*;
 pub use label_as_action::*;
-pub use move_destination::*;
+pub use move_destination::{
+    CategoryDestination, CustomFolderDestination, InboxDestination, MoveDestination,
+    SystemFolderDestination,
+};
 pub(crate) use move_to::MoveTo;

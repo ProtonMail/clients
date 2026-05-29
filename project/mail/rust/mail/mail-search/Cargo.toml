@@ -1,6 +1,6 @@
 [package]
 name = "mail-search"
-version = "2.0.0-preview.1"
+version = "2.0.0-preview4"
 edition.workspace = true
 rust-version.workspace = true
 description = "Self-contained search engine for Proton Mail local search"

@@ -1409,6 +1409,7 @@ dependencies = [
  "calendar-bootstrap",
  "calendar-db",
  "calendar-db-diesel",
+ "calendar-db-test-utils",
  "calendar-net",
  "calendar-net-fake",
  "contact-avatar",

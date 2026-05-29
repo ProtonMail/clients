@@ -49,6 +49,7 @@ mod avatar;
 mod connection_status;
 pub mod contact_details;
 mod contact_list;
+mod feature_flag_variant;
 mod issue_report;
 mod timestamp;
 
@@ -59,6 +60,7 @@ pub use self::app_settings::*;
 pub use self::avatar::*;
 pub use self::connection_status::*;
 pub use self::contact_list::*;
+pub use self::feature_flag_variant::*;
 pub use self::issue_report::*;
 pub use self::timestamp::*;
 use itertools::Itertools;

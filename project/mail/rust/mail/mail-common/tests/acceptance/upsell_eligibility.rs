@@ -1,12 +1,9 @@
 use mail_common::test_utils::init::Params as TestParams;
 use mail_common::test_utils::test_context::MailTestContext;
-use mail_common::{
-    FF_UPSELL_UNLIMITED_CHILD, FF_UPSELL_UNLIMITED_PARENT, MailUserContext,
-    UpsellEligibilityService,
-};
+use mail_common::{FF_UPSELL_EXPERIMENT, MailUserContext, UpsellEligibilityService};
 use mail_core_api::services::proton::{
-    GetLegacyFeaturesResponse, GetUnleashFeaturesResponse, UnleashToggle, UnleashToggleVariant,
-    User as ApiUser,
+    GetLegacyFeaturesResponse, GetUnleashFeaturesResponse, UnleashToggle, UnleashTogglePayload,
+    UnleashTogglePayloadType, UnleashToggleVariant, User as ApiUser,
 };
 use mail_core_common::datatypes::{UpsellEligibility, UpsellType};
 use mail_core_common::models::{ModelExtension, PaidSubscription, Role, User};
@@ -22,20 +19,13 @@ const USER: fn() -> ApiUser = || ApiUser {
 };
 
 #[tokio::test]
-async fn mail_plus_upsell_when_unlimited_flag_disabled() {
+async fn mail_plus_upsell_when_flag_absent() {
     let ctx = MailTestContext::new().await;
     let params = TestParams::default_basic().with_user(USER());
     ctx.setup_user(params).await;
-    mount_feature_flag_mocks(&ctx, TestedFeatureFlags::default()).await;
+    setup_feature_flags(&ctx, None).await;
 
     let user_ctx = ctx.mail_user_context().await;
-    user_ctx
-        .user_context()
-        .feature_flags()
-        .refresh()
-        .await
-        .expect("Fresh feature flags");
-
     let service = user_ctx.get_service::<UpsellEligibilityService>();
     let eligibility = service.upsell_eligibility().await.unwrap();
 
@@ -46,16 +36,37 @@ async fn mail_plus_upsell_when_unlimited_flag_disabled() {
 }
 
 #[tokio::test]
-async fn unlimited_upsell_when_unlimited_flag_enabled() {
+async fn mail_plus_upsell_when_payload_says_mailplus() {
     let ctx = MailTestContext::new().await;
     let params = TestParams::default_basic().with_user(USER());
     ctx.setup_user(params).await;
-    mount_feature_flag_mocks(
+    setup_feature_flags(
         &ctx,
-        TestedFeatureFlags {
-            upsell_unlimited_parent: true,
-            upsell_unlimited_child: true,
-        },
+        Some(json_variant("MailPlus_USA", r#"{"upsell":"MailPlus"}"#)),
+    )
+    .await;
+
+    let user_ctx = ctx.mail_user_context().await;
+    let service = user_ctx.get_service::<UpsellEligibilityService>();
+    let eligibility = service.upsell_eligibility().await.unwrap();
+
+    assert_eq!(
+        eligibility,
+        UpsellEligibility::Eligible(UpsellType::MailPlus)
+    );
+}
+
+#[tokio::test]
+async fn unlimited_upsell_when_payload_says_unlimited() {
+    let ctx = MailTestContext::new().await;
+    let params = TestParams::default_basic().with_user(USER());
+    ctx.setup_user(params).await;
+    setup_feature_flags(
+        &ctx,
+        Some(json_variant(
+            "Unlimited_Nordics",
+            r#"{"upsell":"Unlimited"}"#,
+        )),
     )
     .await;
 
@@ -77,11 +88,61 @@ async fn unlimited_upsell_when_unlimited_flag_enabled() {
 }
 
 #[tokio::test]
+async fn mail_plus_upsell_when_payload_is_malformed_json() {
+    let ctx = MailTestContext::new().await;
+    let params = TestParams::default_basic().with_user(USER());
+    ctx.setup_user(params).await;
+    setup_feature_flags(
+        &ctx,
+        Some(json_variant("Bogus", r#"{"upsell":"NotAPlan"}"#)),
+    )
+    .await;
+
+    let user_ctx = ctx.mail_user_context().await;
+    let service = user_ctx.get_service::<UpsellEligibilityService>();
+    let eligibility = service.upsell_eligibility().await.unwrap();
+
+    assert_eq!(
+        eligibility,
+        UpsellEligibility::Eligible(UpsellType::MailPlus)
+    );
+}
+
+#[tokio::test]
+async fn mail_plus_upsell_when_variant_disabled() {
+    let ctx = MailTestContext::new().await;
+    let params = TestParams::default_basic().with_user(USER());
+    ctx.setup_user(params).await;
+    setup_feature_flags(
+        &ctx,
+        Some(UnleashToggleVariant {
+            name: "Unlimited_Nordics".to_string(),
+            enabled: false,
+            feature_enabled: true,
+            payload: Some(UnleashTogglePayload {
+                ty: UnleashTogglePayloadType::Json,
+                value: r#"{"upsell":"Unlimited"}"#.to_string(),
+            }),
+        }),
+    )
+    .await;
+
+    let user_ctx = ctx.mail_user_context().await;
+    let service = user_ctx.get_service::<UpsellEligibilityService>();
+    let eligibility = service.upsell_eligibility().await.unwrap();
+
+    assert_eq!(
+        eligibility,
+        UpsellEligibility::Eligible(UpsellType::MailPlus)
+    );
+}
+
+#[tokio::test]
 async fn paid_user_not_eligible() {
     let ctx = MailTestContext::new().await;
     let params = TestParams::default_basic().with_user(USER());
     ctx.setup_user(params).await;
-    mount_feature_flag_mocks(&ctx, TestedFeatureFlags::default()).await;
+    setup_feature_flags(&ctx, None).await;
 
     let user_ctx = ctx.mail_user_context().await;
     user_ctx
@@ -110,7 +171,7 @@ async fn paid_user_other_services_not_eligible() {
     let ctx = MailTestContext::new().await;
     let params = TestParams::default_basic().with_user(USER());
     ctx.setup_user(params).await;
-    mount_feature_flag_mocks(&ctx, TestedFeatureFlags::default()).await;
+    setup_feature_flags(&ctx, None).await;
 
     let user_ctx = ctx.mail_user_context().await;
     user_ctx
@@ -137,7 +198,7 @@ async fn member_role_not_eligible() {
     let ctx = MailTestContext::new().await;
     let params = TestParams::default_basic().with_user(USER());
     ctx.setup_user(params).await;
-    mount_feature_flag_mocks(&ctx, TestedFeatureFlags::default()).await;
+    setup_feature_flags(&ctx, None).await;
 
     let user_ctx = ctx.mail_user_context().await;
     user_ctx
@@ -175,41 +236,29 @@ async fn save_role(ctx: &MailUserContext, role: Role, tx: &WriteTx<'_>) -> Resul
     user.save(tx).await
 }
 
-fn test_unleash_variant() -> UnleashToggleVariant {
+fn json_variant(name: &str, payload: &str) -> UnleashToggleVariant {
     UnleashToggleVariant {
-        name: "enabled".to_string(),
+        name: name.to_string(),
         enabled: true,
         feature_enabled: true,
-        payload: None,
+        payload: Some(UnleashTogglePayload {
+            ty: UnleashTogglePayloadType::Json,
+            value: payload.to_string(),
+        }),
     }
 }
 
-#[derive(Default)]
-struct TestedFeatureFlags {
-    upsell_unlimited_parent: bool,
-    upsell_unlimited_child: bool,
-}
-
-async fn mount_feature_flag_mocks(ctx: &MailTestContext, flags: TestedFeatureFlags) {
-    let mut toggles = vec![];
-
-    if flags.upsell_unlimited_parent {
-        toggles.push(UnleashToggle {
-            name: FF_UPSELL_UNLIMITED_PARENT.to_string(),
-            enabled: true,
-            impression_data: false,
-            variant: test_unleash_variant(),
-        });
-    }
-
-    if flags.upsell_unlimited_child {
-        toggles.push(UnleashToggle {
-            name: FF_UPSELL_UNLIMITED_CHILD.to_string(),
-            enabled: true,
-            impression_data: false,
-            variant: test_unleash_variant(),
-        });
-    }
+async fn setup_feature_flags(ctx: &MailTestContext, variant: Option<UnleashToggleVariant>) {
+    let toggles = variant
+        .map(|variant| {
+            vec![UnleashToggle {
+                name: FF_UPSELL_EXPERIMENT.to_string(),
+                enabled: true,
+                impression_data: false,
+                variant,
+            }]
+        })
+        .unwrap_or_default();
 
     let mock_response = GetUnleashFeaturesResponse { toggles };
 

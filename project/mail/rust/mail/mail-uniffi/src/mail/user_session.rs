@@ -3,9 +3,10 @@ mod images;
 mod labels;
 
 use crate::core::datatypes::{
-    AccountDetails, ConnectionStatus, GetPaymentsPlansOptions, Id, NewSubscription,
-    NewSubscriptionValues, PaymentMethod, PaymentReceipt, PaymentToken, PaymentsHttpResponse,
-    PaymentsPlans, PaymentsStatus, Subscriptions, UpsellEligibility, User, UserSettings,
+    AccountDetails, ConnectionStatus, FeatureFlagVariant, GetPaymentsPlansOptions, Id,
+    NewSubscription, NewSubscriptionValues, PaymentMethod, PaymentReceipt, PaymentToken,
+    PaymentsHttpResponse, PaymentsPlans, PaymentsStatus, Subscriptions, UpsellEligibility, User,
+    UserSettings,
 };
 use crate::core::measurement::{MeasurementEventType, MeasurementValue};
 use crate::errors::unexpected::UnexpectedError;
@@ -848,6 +849,33 @@ impl MailUserSession {
                 .map_err(MailContextError::from)?;
 
             Ok::<_, RealProtonMailError>(flag)
+        })
+        .await
+        .map_err(ProtonError::from)
+        .into()
+    }
+
+    /// Returns the active Unleash variant for the feature flag, if any.
+    ///
+    /// Same scope as [`MailUserSession::is_feature_enabled`]: includes both
+    /// user-specific and global Unleash flags. Legacy flags never have
+    /// variants and will return `None`.
+    #[tracing::instrument(skip_all)]
+    pub async fn get_feature_flag_variant(
+        &self,
+        feature_id: String,
+    ) -> Result<Option<FeatureFlagVariant>, ProtonError> {
+        let ctx = self.ctx()?;
+
+        uniffi_async(async move {
+            let variant = ctx
+                .user_context()
+                .feature_flags()
+                .get_feature_flag_variant(&feature_id)
+                .await
+                .map_err(MailContextError::from)?;
+
+            Ok::<_, RealProtonMailError>(variant.map(FeatureFlagVariant::from))
         })
         .await
         .map_err(ProtonError::from)

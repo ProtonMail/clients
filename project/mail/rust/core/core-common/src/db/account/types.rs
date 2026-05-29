@@ -17,9 +17,9 @@ use mail_core_api::auth::{Tokens, UserKeySecret};
 use mail_core_api::services::proton::{SessionId, UserId};
 use mail_stash::exports::{FromSql, FromSqlResult, SqliteError, ToSql, ToSqlOutput, ValueRef};
 use mail_stash::macros::Model;
-use mail_stash::orm::Model;
+use mail_stash::orm::{Model, ModelHooks};
 use mail_stash::stash::{Stash, StashError, Tether, WatcherHandle};
-use mail_stash::{AccountDb, params, sql_using_serde};
+use mail_stash::{AccountDb, params, rusqlite, sql_using_serde};
 use secrecy::{ExposeSecret, SecretString};
 use serde::{Deserialize, Serialize};
 use sqlite_watcher::watcher::TableObserver;
@@ -242,6 +242,7 @@ impl TableObserver for CoreAccountWatcher {
 #[derive(Debug, Clone, PartialEq, Eq, Model)]
 #[TableName("core_sessions")]
 #[Database(AccountDb)]
+#[ModelHooks]
 pub struct CoreSession {
     #[IdField]
     pub remote_id: SessionId,
@@ -345,6 +346,21 @@ impl CoreSession {
         mail_stash
             .subscribe_to(|sender| Box::new(CoreSessionWatcher { sender }))
             .await
+    }
+}
+
+impl ModelHooks for CoreSession {
+    fn before_save(
+        &mut self,
+        tx: &mail_stash::exports::Transaction<'_>,
+    ) -> mail_stash::stash::StashResult<()> {
+        // Delete previous session entry if we try to create a new one.
+        // Save does not detect the unique constraint on account_id.
+        tx.execute(
+            "DELETE FROM core_sessions WHERE account_id = ?",
+            rusqlite::params![&self.account_id],
+        )?;
+        Ok(())
     }
 }
 

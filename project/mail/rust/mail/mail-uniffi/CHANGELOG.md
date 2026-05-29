@@ -5,51 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [mail-uniffi-v0.166.3] - 2026-05-26
+## [mail-uniffi-v0.166.4] - 2026-05-29
 
 ### Changed
 
-- drop redundant per-message address sync retry
-- simplify indexing watcher with Notify-based observer
-- store historic orchestrator on MailUserContext services
-- clearer indexing errors and more reliable progress updates
-- async UniFFI, indexing watch stream, and JoinHandle cancel wait
-- persist batch progress in ACID page transaction
-- move set_enabled, cancel, and clear into orchestrator
-- move EphemeralPageCheckpointWrite into historic-load crate
-- namespace start/continuation helpers and resolve orchestrator via MailUserContext
-- typed IndexingState errors and anchor InvalidContinuation
-- remove transitional ephemeral_* UniFFI exports
-- drive production orchestrator
+- [ET-6099] [Breaking] Changed `Action` to a `Destination` postfix for all `MoveTo` structures
+- ScrollerUpdate::CategoryViewChanged will now be invoked faster
 - drop many variants of historic-search-load; retain a focused... - proton/clients/monorepo!2448
 
 ### Features
 
-- sub-chunk historic body pipeline for mobile resilience
-- Populate content search estimated_fraction from the first All Mail metadata total, using indexed count over a +1% inflated denominator.
-- graceful mid-batch cancel + harness signal handler
-- content_search_* UniFFI on MailUserSession
-- live-query watch on indexing state
-- treat partial batch as Interrupted
-- orchestrator with multi-batch loop and cool-down
-- stale-ongoing repair + clear helpers
-- content_search_indexing_state schema + CRUD
-- network-resilient batch spawn and UniFFI scaffolding
-- historic load on ACID
+- [ET-6099] MoveTo screen now is build correctly for the category labels and included when moving from Inbox
+- add macOS universal framework build script - proton/clients/monorepo!2531
+- network-resilient batch spawn and UniFFI scaffolding - proton/clients/monorepo!2545
+- SSO auth/core endpoint contracts. - proton/clients/monorepo!2633
+- [ET-6099] Add basic move-to support for categories
+- [ET-6106] Add new method MailUserSession::is_business
+- [ET-6249] Allow to disable category view from onboarding screen
+- Support for unleash feature flag variants in Mail only - proton/clients/monorepo!2441
 - Split muon implementations from lattice. - proton/clients/monorepo!2451
 - store metadata when in ephemeral load mode - proton/clients/monorepo!2484
 - internalise and serialise continuation anchor checkpoint - proton/clients/monorepo!2464
 
 ### Fixes
 
-- return EphemeralHistoricLoadError when scripted test runner is exhausted
-- use single deadline in cancel_and_wait
-- return SearchError instead of panicking on engine lock failure, avoid expect in persist_run_outcome last_error path
-- cancel in-flight run before clear_local_data wipe
-- prevent rate-limited watcher from starving under sustained load
-- use typed persist errors, cancel-aware metadata prep, and native u64 counters
-- SQL format issue
-- treat retryable body-fetch errors as batch-level retry
+- Load incoming defaults without blocking the client - proton/clients/monorepo!2629
+- [ET-6272] Sanitize draft subject. - proton/clients/monorepo!2669
+- [ET-6271] Auto retry attachment uploads up to 4 times
+- [ET-6253] [Breaking] Pass through 422 error strings from server
+- [ET-6276] Fix outlook and gmail issues - proton/clients/monorepo!2565
+- [ET-6255] Mark auth errors for event loop as retryable
+- Get correct counts for the categories
 - patch Grype high findings in Rust, JS, and Python - proton/clients/monorepo!2581
 
 

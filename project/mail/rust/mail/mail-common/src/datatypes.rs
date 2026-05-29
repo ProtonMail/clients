@@ -37,7 +37,9 @@ pub use privacy_info::{PrivacyInfo, PrivacyInfoStatus};
 pub use read_filter::ReadFilter;
 pub use rollback_item_type::RollbackItemType;
 pub use search_options::SearchOptions;
-pub use system_folder::MovableSystemFolder;
+pub use system_folder::{
+    MovableCategoryFolder, MovableSystemFolder, NotMovableCategoryFolder, NotMovableSystemFolder,
+};
 pub use tracker_info::{TrackerDomain, TrackerInfo};
 pub use utm_info::{StrippedUTMInfo, UTMLink};
 

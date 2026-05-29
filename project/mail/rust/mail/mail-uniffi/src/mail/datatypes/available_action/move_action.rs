@@ -1,11 +1,12 @@
 use mail_common::actions::{
+    CategoryDestination as RealCategoryDestination,
     CustomFolderDestination as RealCustomFolderDestination,
     InboxDestination as RealInboxDestination, MoveDestination as RealMoveDestination,
     SystemFolderDestination as RealSystemFolderDestination,
 };
 use mail_core_common::utils::MapVec as _;
 
-use crate::mail::datatypes::system_folder::MovableSystemFolder;
+use crate::mail::datatypes::system_folder::{MovableCategoryFolder, MovableSystemFolder};
 use crate::mail::datatypes::{Id, LabelColor};
 use crate::{UniffiEnum, UniffiRecord};
 
@@ -39,7 +40,7 @@ impl From<RealMoveDestination> for MoveDestination {
 pub struct InboxDestination {
     pub local_id: Id,
     pub name: MovableSystemFolder,
-    pub categories: Vec<SystemFolderDestination>,
+    pub categories: Vec<CategoryDestination>,
 }
 
 impl From<RealInboxDestination> for InboxDestination {
@@ -62,6 +63,23 @@ pub struct SystemFolderDestination {
 
 impl From<RealSystemFolderDestination> for SystemFolderDestination {
     fn from(value: RealSystemFolderDestination) -> Self {
+        Self {
+            local_id: value.local_id.into(),
+            name: value.name.into(),
+        }
+    }
+}
+
+/// This struct represents a category folder that can be used as a move-to action.
+///
+#[derive(Debug, Clone, PartialEq, UniffiRecord)]
+pub struct CategoryDestination {
+    pub local_id: Id,
+    pub name: MovableCategoryFolder,
+}
+
+impl From<RealCategoryDestination> for CategoryDestination {
+    fn from(value: RealCategoryDestination) -> Self {
         Self {
             local_id: value.local_id.into(),
             name: value.name.into(),

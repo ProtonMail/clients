@@ -1,7 +1,10 @@
-use mail_common::datatypes::MovableSystemFolder as RealMovableSystemFolder;
+use mail_common::datatypes::{
+    MovableCategoryFolder as RealMovableCategoryFolder,
+    MovableSystemFolder as RealMovableSystemFolder,
+};
 use uniffi::Enum as UniffiEnum;
 
-/// This enum represents the system labels that are valid target for Move actions.
+/// System folders (non-category) that are valid move-to destinations.
 /// Their values correspond to the remote ids of the labels in the core API database.
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, UniffiEnum)]
 #[repr(u8)]
@@ -10,12 +13,6 @@ pub enum MovableSystemFolder {
     Trash = 3,
     Spam = 4,
     Archive = 6,
-    CategorySocial = 20,
-    CategoryPromotions = 21,
-    CategoryUpdates = 22,
-    CategoryDefault = 24,
-    CategoryNewsletter = 25,
-    CategoryTransactions = 26,
 }
 
 impl From<RealMovableSystemFolder> for MovableSystemFolder {
@@ -25,12 +22,6 @@ impl From<RealMovableSystemFolder> for MovableSystemFolder {
             RealMovableSystemFolder::Trash => Self::Trash,
             RealMovableSystemFolder::Spam => Self::Spam,
             RealMovableSystemFolder::Archive => Self::Archive,
-            RealMovableSystemFolder::CategorySocial => Self::CategorySocial,
-            RealMovableSystemFolder::CategoryPromotions => Self::CategoryPromotions,
-            RealMovableSystemFolder::CategoryUpdates => Self::CategoryUpdates,
-            RealMovableSystemFolder::CategoryDefault => Self::CategoryDefault,
-            RealMovableSystemFolder::CategoryNewsletter => Self::CategoryNewsletter,
-            RealMovableSystemFolder::CategoryTransactions => Self::CategoryTransactions,
         }
     }
 }
@@ -42,12 +33,48 @@ impl From<MovableSystemFolder> for RealMovableSystemFolder {
             MovableSystemFolder::Trash => Self::Trash,
             MovableSystemFolder::Spam => Self::Spam,
             MovableSystemFolder::Archive => Self::Archive,
-            MovableSystemFolder::CategorySocial => Self::CategorySocial,
-            MovableSystemFolder::CategoryPromotions => Self::CategoryPromotions,
-            MovableSystemFolder::CategoryUpdates => Self::CategoryUpdates,
-            MovableSystemFolder::CategoryDefault => Self::CategoryDefault,
-            MovableSystemFolder::CategoryNewsletter => Self::CategoryNewsletter,
-            MovableSystemFolder::CategoryTransactions => Self::CategoryTransactions,
+        }
+    }
+}
+
+/// Category system folders that are valid move-to destinations.
+///
+/// Variant names keep the `Category*` prefix even though the enum name already
+/// disambiguates, to prevent telemetry / Sentry string drift from existing data.
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, UniffiEnum)]
+#[repr(u8)]
+#[allow(clippy::enum_variant_names)]
+pub enum MovableCategoryFolder {
+    CategorySocial = 20,
+    CategoryPromotions = 21,
+    CategoryUpdates = 22,
+    CategoryDefault = 24,
+    CategoryNewsletter = 25,
+    CategoryTransactions = 26,
+}
+
+impl From<RealMovableCategoryFolder> for MovableCategoryFolder {
+    fn from(label: RealMovableCategoryFolder) -> Self {
+        match label {
+            RealMovableCategoryFolder::CategorySocial => Self::CategorySocial,
+            RealMovableCategoryFolder::CategoryPromotions => Self::CategoryPromotions,
+            RealMovableCategoryFolder::CategoryUpdates => Self::CategoryUpdates,
+            RealMovableCategoryFolder::CategoryDefault => Self::CategoryDefault,
+            RealMovableCategoryFolder::CategoryNewsletter => Self::CategoryNewsletter,
+            RealMovableCategoryFolder::CategoryTransactions => Self::CategoryTransactions,
+        }
+    }
+}
+
+impl From<MovableCategoryFolder> for RealMovableCategoryFolder {
+    fn from(label: MovableCategoryFolder) -> Self {
+        match label {
+            MovableCategoryFolder::CategorySocial => Self::CategorySocial,
+            MovableCategoryFolder::CategoryPromotions => Self::CategoryPromotions,
+            MovableCategoryFolder::CategoryUpdates => Self::CategoryUpdates,
+            MovableCategoryFolder::CategoryDefault => Self::CategoryDefault,
+            MovableCategoryFolder::CategoryNewsletter => Self::CategoryNewsletter,
+            MovableCategoryFolder::CategoryTransactions => Self::CategoryTransactions,
         }
     }
 }

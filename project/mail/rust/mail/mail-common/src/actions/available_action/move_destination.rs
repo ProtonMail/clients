@@ -1,5 +1,5 @@
 use crate::datatypes::labels::hierarchy::Hierarchy;
-use crate::datatypes::{MovableSystemFolder, SystemLabelId};
+use crate::datatypes::{MovableCategoryFolder, MovableSystemFolder, SystemLabelId};
 use crate::{AppError, CategoryLabel};
 use mail_core_api::services::proton::LabelId;
 use mail_core_common::datatypes::{LabelColor, LocalLabelId};
@@ -24,7 +24,7 @@ pub enum MoveDestination {
 pub struct InboxDestination {
     pub local_id: LocalLabelId,
     pub name: MovableSystemFolder,
-    pub categories: Vec<SystemFolderDestination>,
+    pub categories: Vec<CategoryDestination>,
 }
 
 /// This struct represents a system folder that can be used as an action.
@@ -44,18 +44,6 @@ impl SystemFolderDestination {
             local_id: label.local_id?,
             name: MovableSystemFolder::new(label)?,
         })
-    }
-
-    pub(crate) fn from_categories(labels: Vec<CategoryLabel>) -> Vec<Self> {
-        labels
-            .into_iter()
-            .filter_map(|label| {
-                Some(Self {
-                    local_id: label.local_id,
-                    name: MovableSystemFolder::try_from(label.system_label).ok()?,
-                })
-            })
-            .collect()
     }
 
     pub(crate) async fn inbox(tether: &Tether) -> Result<Self, AppError> {
@@ -97,6 +85,31 @@ impl SystemFolderDestination {
             local_id,
             name: MovableSystemFolder::Spam,
         })
+    }
+}
+
+/// This struct represents a category folder that can be used as an action.
+///
+#[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
+pub struct CategoryDestination {
+    /// The database id of the label.
+    pub local_id: LocalLabelId,
+
+    /// The category folder embedded as a finite enum.
+    pub name: MovableCategoryFolder,
+}
+
+impl CategoryDestination {
+    pub(crate) fn from_categories(labels: Vec<CategoryLabel>) -> Vec<Self> {
+        labels
+            .into_iter()
+            .filter_map(|label| {
+                Some(Self {
+                    local_id: label.local_id,
+                    name: MovableCategoryFolder::try_from(label.system_label).ok()?,
+                })
+            })
+            .collect()
     }
 }
 

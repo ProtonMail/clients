@@ -1206,6 +1206,7 @@ name = "calendar-api"
 version = "0.1.0"
 dependencies = [
  "calendar-net",
+ "core-db-diesel",
  "derive_more 2.1.1",
  "diesel",
  "diesel-derive-newtype",
@@ -1356,7 +1357,9 @@ dependencies = [
  "anyhow",
  "async-trait",
  "calendar-api",
+ "core-db-diesel",
  "core-telemetry",
+ "derive_more 2.1.1",
  "thiserror 2.0.18",
 ]
 
@@ -1368,8 +1371,10 @@ dependencies = [
  "async-trait",
  "calendar-api",
  "calendar-db",
+ "core-db-diesel",
  "core-telemetry",
  "deadpool-diesel",
+ "derive_more 2.1.1",
  "diesel",
  "diesel_migrations",
  "libsqlite3-sys",

@@ -8749,7 +8749,6 @@ name = "payment-api"
 version = "0.1.0"
 dependencies = [
  "serde",
- "serde_json",
  "serde_repr",
  "serde_with",
 ]

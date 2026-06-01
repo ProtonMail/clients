@@ -234,7 +234,7 @@ mod available_label_as_actions {
     }
 }
 
-mod available_move_to_actions {
+mod available_move_to_destinations {
     use super::*;
     use crate::actions::{CategoryDestination, InboxDestination, SystemFolderDestination};
     use crate::test_utils::db::new_test_connection;
@@ -724,7 +724,7 @@ mod available_move_to_actions {
             .unwrap()
             .unwrap();
 
-        let result = Message::available_move_to_actions(view, message_ids, &conn).await;
+        let result = Message::available_move_to_destinations(view, message_ids, &conn).await;
 
         match result {
             Ok(actual) => {
@@ -799,7 +799,7 @@ mod available_move_to_actions {
             .unwrap();
 
             let view = from.load(&conn).await.unwrap().unwrap();
-            let result = Message::available_move_to_actions(view, vec![message.id()], &conn)
+            let result = Message::available_move_to_destinations(view, vec![message.id()], &conn)
                 .await
                 .unwrap();
 

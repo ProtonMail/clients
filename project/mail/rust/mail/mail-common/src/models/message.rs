@@ -998,7 +998,7 @@ impl Message {
     }
 
     #[tracing::instrument(skip_all, fields(label_id=view.id().as_u64()))]
-    pub async fn available_move_to_actions(
+    pub async fn available_move_to_destinations(
         view: Label,
         message_ids: Vec<LocalMessageId>,
         tether: &Tether,

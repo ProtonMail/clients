@@ -74,7 +74,7 @@ pub async fn available_label_as_actions_for_conversations(
 
 #[uniffi_export]
 #[tracing::instrument(skip_all)]
-pub async fn available_move_to_actions_for_conversations(
+pub async fn available_move_to_destinations_for_conversations(
     mailbox: Arc<Mailbox>,
     ids: Vec<Id>,
 ) -> Result<Vec<MoveDestination>, ActionError> {
@@ -85,9 +85,10 @@ pub async fn available_move_to_actions_for_conversations(
         let view = RealLabel::load(view, &tether)
             .await?
             .ok_or_else(|| RealProtonMailError::reason(RealActionErrorReason::UnknownLabel))?;
-        let actions = RealConversation::available_move_to_actions(view, ids.map_vec(), &tether)
-            .await?
-            .map_vec();
+        let actions =
+            RealConversation::available_move_to_destinations(view, ids.map_vec(), &tether)
+                .await?
+                .map_vec();
 
         Ok::<_, RealProtonMailError>(actions)
     })

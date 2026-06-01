@@ -50,7 +50,6 @@ dependencies = [
  "core-hv-op",
  "core-key",
  "core-keystore-op",
- "core-logging-op",
  "core-message",
  "core-message-macro",
  "core-muon-op",
@@ -108,7 +107,6 @@ dependencies = [
  "anyhow",
  "async-compat",
  "async-trait",
- "bincode",
  "cookie",
  "cookie_store",
  "core-common-types",
@@ -2317,7 +2315,6 @@ dependencies = [
  "core-fido-op",
  "core-hv-op",
  "core-keystore-op",
- "core-logging-op",
  "core-message",
  "core-muon-op",
  "core-notification-op",
@@ -2489,16 +2486,15 @@ dependencies = [
  "tracing-android",
  "tracing-oslog",
  "tracing-subscriber",
+ "uniffi 0.30.0",
 ]
 
 [[package]]
 name = "core-logging-op"
 version = "0.1.0"
 dependencies = [
- "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "facet",
- "serde",
  "tracing",
+ "uniffi 0.30.0",
 ]
 
 [[package]]

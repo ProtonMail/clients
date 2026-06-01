@@ -1184,9 +1184,9 @@ dependencies = [
  "anyhow",
  "calendar-api",
  "calendar-crypto",
- "calendar-db",
- "calendar-db-diesel",
- "calendar-db-test-utils",
+ "calendar-database",
+ "calendar-database-diesel",
+ "calendar-database-test-utils",
  "calendar-ical",
  "derive_more 2.1.1",
  "indoc",
@@ -1206,7 +1206,7 @@ name = "calendar-api"
 version = "0.1.0"
 dependencies = [
  "bitflags 2.11.1",
- "calendar-net",
+ "calendar-network",
  "core-db-diesel",
  "derive_more 2.1.1",
  "diesel",
@@ -1227,10 +1227,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "calendar-api",
- "calendar-db",
- "calendar-db-diesel",
- "calendar-net",
- "calendar-net-fake",
+ "calendar-database",
+ "calendar-database-diesel",
+ "calendar-network",
+ "calendar-network-fake",
  "calendar-seed",
  "futures",
  "jiff",
@@ -1251,12 +1251,12 @@ dependencies = [
  "calendar-api",
  "calendar-bootstrap",
  "calendar-crypto",
- "calendar-db",
+ "calendar-database",
  "calendar-events",
  "calendar-ical",
  "calendar-keychain",
  "calendar-loop",
- "calendar-net",
+ "calendar-network",
  "calendar-seed",
  "calendar-telemetry",
  "contact-avatar",
@@ -1277,7 +1277,7 @@ dependencies = [
  "anyhow",
  "calendar-api",
  "calendar-components-crux",
- "calendar-db",
+ "calendar-database",
  "clap",
  "crux_core 0.17.0 (git+https://github.com/Patryk27/crux?branch=0.17-patched)",
  "glob",
@@ -1291,12 +1291,12 @@ dependencies = [
  "anyhow",
  "calendar-api",
  "calendar-components-crux",
- "calendar-db",
- "calendar-db-diesel",
+ "calendar-database",
+ "calendar-database-diesel",
  "calendar-keychain",
- "calendar-net",
- "calendar-net-fake",
- "calendar-net-muon",
+ "calendar-network",
+ "calendar-network-fake",
+ "calendar-network-muon",
  "calendar-telemetry",
  "console_error_panic_hook",
  "crux_core 0.17.0 (git+https://github.com/Patryk27/crux?branch=0.17-patched)",
@@ -1352,7 +1352,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "calendar-db"
+name = "calendar-database"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -1365,13 +1365,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "calendar-db-diesel"
+name = "calendar-database-diesel"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
  "calendar-api",
- "calendar-db",
+ "calendar-database",
  "core-db-diesel",
  "core-telemetry",
  "deadpool-diesel",
@@ -1387,12 +1387,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "calendar-db-test-utils"
+name = "calendar-database-test-utils"
 version = "0.1.0"
 dependencies = [
  "calendar-api",
  "calendar-crypto",
- "calendar-db",
+ "calendar-database",
  "calendar-ical",
  "indoc",
  "jiff",
@@ -1408,11 +1408,11 @@ dependencies = [
  "calendar-access",
  "calendar-api",
  "calendar-bootstrap",
- "calendar-db",
- "calendar-db-diesel",
- "calendar-db-test-utils",
- "calendar-net",
- "calendar-net-fake",
+ "calendar-database",
+ "calendar-database-diesel",
+ "calendar-database-test-utils",
+ "calendar-network",
+ "calendar-network-fake",
  "contact-avatar",
  "facet",
  "insta",
@@ -1489,10 +1489,10 @@ dependencies = [
  "anyhow",
  "calendar-access",
  "calendar-api",
- "calendar-db",
- "calendar-db-diesel",
- "calendar-net",
- "calendar-net-fake",
+ "calendar-database",
+ "calendar-database-diesel",
+ "calendar-network",
+ "calendar-network-fake",
  "calendar-queue",
  "futures",
  "proton-crypto-account",
@@ -1502,7 +1502,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "calendar-net"
+name = "calendar-network"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -1518,11 +1518,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "calendar-net-fake"
+name = "calendar-network-fake"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "calendar-net",
+ "calendar-network",
  "clap",
  "serde",
  "serde_json",
@@ -1530,13 +1530,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "calendar-net-muon"
+name = "calendar-network-muon"
 version = "0.1.0"
 dependencies = [
  "aes-gcm",
  "anyhow",
  "base64",
- "calendar-net",
+ "calendar-network",
  "muon",
  "rand 0.9.4",
  "serde",
@@ -1553,10 +1553,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "calendar-api",
- "calendar-db",
- "calendar-db-diesel",
- "calendar-net",
- "calendar-net-fake",
+ "calendar-database",
+ "calendar-database-diesel",
+ "calendar-network",
+ "calendar-network-fake",
  "calendar-seed",
  "futures",
  "serde_json",
@@ -1570,8 +1570,8 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "calendar-api",
- "calendar-db",
- "calendar-net",
+ "calendar-database",
+ "calendar-network",
  "futures",
  "tracing",
  "web-time",
@@ -1582,8 +1582,8 @@ name = "calendar-telemetry"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "calendar-db",
- "calendar-net",
+ "calendar-database",
+ "calendar-network",
  "core-telemetry",
  "serde_json",
  "tracing",
@@ -1596,11 +1596,11 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "calendar-crux",
- "calendar-db-diesel",
+ "calendar-database-diesel",
  "calendar-events",
  "calendar-keychain",
- "calendar-net",
- "calendar-net-muon",
+ "calendar-network",
+ "calendar-network-muon",
  "calendar-telemetry",
  "clap",
  "crossterm",

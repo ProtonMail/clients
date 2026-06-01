@@ -17,9 +17,9 @@ members = [
     "project/calendar/rust/calendar-crux",
     "project/calendar/rust/calendar-crux-codegen",
     "project/calendar/rust/calendar-crypto",
-    "project/calendar/rust/calendar-db",
-    "project/calendar/rust/calendar-db-diesel",
-    "project/calendar/rust/calendar-db-test-utils",
+    "project/calendar/rust/calendar-database",
+    "project/calendar/rust/calendar-database-diesel",
+    "project/calendar/rust/calendar-database-test-utils",
     "project/calendar/rust/calendar-events",
     "project/calendar/rust/calendar-ical",
     "project/calendar/rust/calendar-ical-cli",
@@ -27,9 +27,9 @@ members = [
     "project/calendar/rust/calendar-ical-tz",
     "project/calendar/rust/calendar-keychain",
     "project/calendar/rust/calendar-loop",
-    "project/calendar/rust/calendar-net",
-    "project/calendar/rust/calendar-net-fake",
-    "project/calendar/rust/calendar-net-muon",
+    "project/calendar/rust/calendar-network",
+    "project/calendar/rust/calendar-network-fake",
+    "project/calendar/rust/calendar-network-muon",
     "project/calendar/rust/calendar-queue",
     "project/calendar/rust/calendar-seed",
     "project/calendar/rust/calendar-tui",
@@ -353,17 +353,17 @@ calendar-bootstrap = { path = "project/calendar/rust/calendar-bootstrap" }
 calendar-components-crux = { path = "project/calendar/rust/calendar-components-crux" }
 calendar-crux = { path = "project/calendar/rust/calendar-crux" }
 calendar-crypto = { path = "project/calendar/rust/calendar-crypto" }
-calendar-db = { path = "project/calendar/rust/calendar-db" }
-calendar-db-diesel = { path = "project/calendar/rust/calendar-db-diesel" }
-calendar-db-test-utils = { path = "project/calendar/rust/calendar-db-test-utils" }
+calendar-database = { path = "project/calendar/rust/calendar-database" }
+calendar-database-diesel = { path = "project/calendar/rust/calendar-database-diesel" }
+calendar-database-test-utils = { path = "project/calendar/rust/calendar-database-test-utils" }
 calendar-events = { path = "project/calendar/rust/calendar-events" }
 calendar-ical = { path = "project/calendar/rust/calendar-ical" }
 calendar-ical-tz = { path = "project/calendar/rust/calendar-ical-tz" }
 calendar-keychain = { path = "project/calendar/rust/calendar-keychain" }
 calendar-loop = { path = "project/calendar/rust/calendar-loop" }
-calendar-net = { path = "project/calendar/rust/calendar-net" }
-calendar-net-fake = { path = "project/calendar/rust/calendar-net-fake" }
-calendar-net-muon = { path = "project/calendar/rust/calendar-net-muon" }
+calendar-network = { path = "project/calendar/rust/calendar-network" }
+calendar-network-fake = { path = "project/calendar/rust/calendar-network-fake" }
+calendar-network-muon = { path = "project/calendar/rust/calendar-network-muon" }
 calendar-queue = { path = "project/calendar/rust/calendar-queue" }
 calendar-seed = { path = "project/calendar/rust/calendar-seed" }
 calendar-telemetry = { path = "project/calendar/rust/calendar-telemetry" }

@@ -1,0 +1,16 @@
+load("@crate_index//:defs.bzl", "all_crate_deps")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
+
+rust_library(
+    name = "core-event-loop",
+    srcs = glob(["src/**/*.rs"]),
+    proc_macro_deps = all_crate_deps(proc_macro = True),
+    visibility = ["//visibility:public"],
+    deps = all_crate_deps(normal = True),
+)
+
+rust_test(
+    name = "core-event-loop-test",
+    crate = ":core-event-loop",
+    deps = all_crate_deps(normal_dev = True),
+)

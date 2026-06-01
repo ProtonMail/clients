@@ -1,0 +1,31 @@
+load("@crate_index//:defs.bzl", "all_crate_deps")
+load("@rules_rust//rust:defs.bzl", "rust_doc_test", "rust_library", "rust_test")
+
+rust_library(
+    name = "lattice",
+    srcs = glob(["src/**/*.rs"]),
+    compile_data = ["Cargo.toml"],
+    crate_features = [
+        "auth",
+        "core",
+        "observability",
+        "serde",
+    ],
+    proc_macro_deps = all_crate_deps(proc_macro = True),
+    visibility = ["//visibility:public"],
+    deps = all_crate_deps(normal = True) + [
+        "//project/core/rust/core-sensitive-data",
+    ],
+)
+
+rust_test(
+    name = "lattice-test",
+    crate = ":lattice",
+    proc_macro_deps = all_crate_deps(proc_macro_dev = True),
+    deps = all_crate_deps(normal_dev = True),
+)
+
+rust_doc_test(
+    name = "lattice-doc-test",
+    crate = ":lattice",
+)

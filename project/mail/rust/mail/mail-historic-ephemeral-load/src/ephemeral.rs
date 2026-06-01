@@ -694,18 +694,22 @@ mod tests {
         assert_eq!(id, MessageId::from("msg-a"));
     }
 
+    #[allow(clippy::result_large_err, reason = "test helper")]
     fn ok_body() -> Result<(), ApiServiceError> {
         Ok(())
     }
 
+    #[allow(clippy::result_large_err, reason = "test helper")]
     fn err_network() -> Result<(), ApiServiceError> {
         Err(ApiServiceError::NetworkError("offline".into()))
     }
 
+    #[allow(clippy::result_large_err, reason = "test helper")]
     fn err_timeout() -> Result<(), ApiServiceError> {
         Err(ApiServiceError::Timeout("slow".into()))
     }
 
+    #[allow(clippy::result_large_err, reason = "test helper")]
     fn err_unauthorized() -> Result<(), ApiServiceError> {
         Err(ApiServiceError::Unauthorized("expired".into(), None))
     }

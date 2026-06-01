@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [mail-uniffi-v0.166.5] - 2026-06-01
+
+### Features
+
+- [ET-6099] [Breaking] Extract `MovableCategoryFolder` from `MovableSystemFolder
+- Use variants for upsell - proton/clients/monorepo!2472
+
+### Fixes
+
+- [ET-6305] Allow sessions to be overwritten for the same account - proton/clients/monorepo!2704
+- Fix forcego condition check - proton/clients/monorepo!2699
+- [ET-6270] [Breaking] Fail send if we detect attachment errors
+
 ## [mail-uniffi-v0.166.4] - 2026-05-29
 
 ### Changed

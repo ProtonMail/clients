@@ -1445,16 +1445,22 @@ where
         let ctx = self.ctx.upgrade().ok_or(MailContextError::MissingContext)?;
         let tether = ctx.user_stash().connection();
         let label = self.alternative_labels.label;
-        let candidate = CategoryView::load(label, &tether)
+        let mut candidate = CategoryView::load(label, &tether)
             .await
             .map_err(|e| anyhow!("Failed to reload category view after settings change: {e:?}"))?;
         let current = self.source.read().await.category_view().clone();
 
-        if candidate == current {
+        if candidate.available == current.available {
             return Ok(ScrollerUpdate::List(ScrollerListUpdate::None {
                 src,
                 scroller_id: self.scroller_id,
             }));
+        }
+
+        if candidate.enable(current.enabled, &tether).await.is_err() {
+            tracing::error!(
+                "Could not enable currently selected category after `CategoryChanged` command, defaulting to Primary"
+            )
         }
 
         self.change_state(&ctx, None, None, None, Some(candidate))

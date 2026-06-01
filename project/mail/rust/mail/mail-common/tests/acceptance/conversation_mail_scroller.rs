@@ -3708,6 +3708,144 @@ async fn test_disabling_active_non_primary_category_falls_back_to_primary() {
         .await;
 }
 
+#[tokio::test]
+async fn test_category_changed_preserves_user_selection_when_available_grows() {
+    let ctx = MailTestContext::new().await;
+    let user_ctx = ctx.uninitialized_mail_user_context().await;
+    let mut tether = user_ctx.user_stash().connection();
+
+    // 2 conversations in Inbox + CategorySocial, 1 in Inbox + CategoryDefault.
+    // CategoryUpdates is intentionally empty — only its `display` flag drives the watcher.
+    let mut data = hash_map! {
+        vec!["0", "20"]: test_conversations(2, 0),
+        vec!["0", "24"]: test_conversations(1, 100),
+    };
+    data.save_to_database(&mut tether).await;
+
+    let inbox_local_id = SystemLabel::Inbox.local_id(&tether).await.unwrap().unwrap();
+    let social_local_id = SystemLabel::CategorySocial
+        .local_id(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+    let default_local_id = SystemLabel::CategoryDefault
+        .local_id(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+    let updates_local_id = SystemLabel::CategoryUpdates
+        .local_id(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+
+    // Enable category view; Social.display=true (Updates stays display=false for now).
+    let mut social = SystemLabel::CategorySocial
+        .load(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+    tether
+        .write_tx::<_, _, StashError>(async |bond| {
+            MailSettings {
+                mail_category_view: true,
+                ..Default::default()
+            }
+            .save(bond)
+            .await
+            .unwrap();
+            social.display = true;
+            social.save(bond).await.unwrap();
+            for label_id in [
+                inbox_local_id,
+                social_local_id,
+                default_local_id,
+                updates_local_id,
+            ] {
+                let mut counter = ConversationCounter::find_by_id(label_id, bond)
+                    .await
+                    .unwrap()
+                    .unwrap();
+                counter.total = 0;
+                counter.save(bond).await.unwrap();
+            }
+            Ok(())
+        })
+        .await
+        .unwrap();
+
+    mock_api_forbidden(&ctx).await;
+
+    let page_size = 5;
+    let mut scroller = TestScroller::conversations(&user_ctx, inbox_local_id, page_size)
+        .await
+        .unwrap();
+
+    // Initial load — CategoryDefault auto-enabled, 1 visible conversation.
+    scroller.fetch_more().unwrap();
+    scroller
+        .match_next_update(TestUpdate::Append { items: 1 })
+        .await;
+
+    // User selects CategorySocial — list switches to the 2 social conversations.
+    scroller
+        .change_category_view(Some(social_local_id))
+        .unwrap();
+    scroller
+        .match_next_update(TestUpdate::CategoryViewChanged { labels: 2 })
+        .await;
+    scroller
+        .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 2 })
+        .await;
+    let view = scroller.category_view().await.unwrap();
+    assert_eq!(view.enabled, Some(social_local_id));
+
+    // Trigger `CategoryViewChanged` via the labels-table watcher: CategoryUpdates becomes
+    // visible. `available` grows from [Default, Social] to [Default, Social, Updates].
+    let mut updates = SystemLabel::CategoryUpdates
+        .load(&tether)
+        .await
+        .unwrap()
+        .unwrap();
+    tether
+        .write_tx::<_, _, StashError>(async |bond| {
+            updates.display = true;
+            updates.save(bond).await.unwrap();
+            Ok(())
+        })
+        .await
+        .unwrap();
+
+    scroller
+        .match_next_update(TestUpdate::CategoryViewChanged { labels: 3 })
+        .await;
+
+    let view = scroller.category_view().await.unwrap();
+    assert_eq!(
+        view.enabled,
+        Some(social_local_id),
+        "User-selected CategorySocial must be preserved across CategoryViewChanged"
+    );
+    assert!(
+        view.available.contains(&updates_local_id),
+        "CategoryUpdates must enter `available` after display=true (proves candidate was committed)"
+    );
+    assert!(
+        view.available.contains(&social_local_id),
+        "CategorySocial must remain in `available`"
+    );
+    assert_eq!(
+        view.filter_ids,
+        vec![social_local_id],
+        "filter_ids must resolve to [Social] — proves enable() re-ran on the freshly loaded candidate"
+    );
+
+    scroller
+        .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 2 })
+        .await;
+    assert_eq!(scroller.items().len(), 2);
+}
+
 #[function_name::named]
 pub async fn mock_api_forbidden(ctx: &MailTestContext) {
     Mock::given(method("GET"))

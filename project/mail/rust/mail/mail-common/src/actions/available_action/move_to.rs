@@ -61,26 +61,22 @@ impl<'a> MoveTo<'a> {
             {
                 continue;
             }
-            let destination =
-                label_to_destination(label, tether)
-                    .await?
-                    .filter(|dest| match dest {
-                        MoveDestination::Inbox(inbox) => {
-                            !(from_is_inbox && inbox.categories.is_empty())
-                        }
-                        _ => true,
-                    });
+            let destination = label_to_destination(self.from, label, tether)
+                .await?
+                .filter(|dest| match dest {
+                    MoveDestination::Inbox(inbox) => {
+                        !(from_is_inbox && inbox.categories.is_empty())
+                    }
+                    _ => true,
+                });
 
-            if let Some(mut destination) = destination {
-                if !from_is_inbox && let MoveDestination::Inbox(ref mut inbox) = destination {
-                    inbox.categories.clear();
-                }
+            if let Some(destination) = destination {
                 destinations.push(destination);
             }
         }
 
         for label in all_custom_folders.iter() {
-            if let Some(destination) = label_to_destination(label, tether).await? {
+            if let Some(destination) = label_to_destination(self.from, label, tether).await? {
                 destinations.push(destination);
             }
         }
@@ -91,6 +87,7 @@ impl<'a> MoveTo<'a> {
 }
 
 async fn label_to_destination(
+    from: &Label,
     label: &Label,
     tether: &Tether,
 ) -> Result<Option<MoveDestination>, AppError> {
@@ -102,15 +99,19 @@ async fn label_to_destination(
             ) =>
         {
             let inbox_id = label.id();
+            let from_system_label = SystemLabel::from_opt_rid(from.remote_id.as_ref());
+            let from_is_inbox = matches!(from_system_label, Some(SystemLabel::Inbox));
             Some(MoveDestination::Inbox(InboxDestination {
                 local_id: inbox_id,
                 name: MovableSystemFolder::Inbox,
-                categories: CategoryDestination::from_categories(
+                categories: CategoryDestination::from_categories(if from_is_inbox {
                     CategoryView::load(inbox_id, tether)
                         .await?
                         .into_labels(tether)
-                        .await?,
-                ),
+                        .await?
+                } else {
+                    vec![]
+                }),
             }))
         }
 

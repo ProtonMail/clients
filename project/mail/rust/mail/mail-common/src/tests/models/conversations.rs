@@ -320,7 +320,7 @@ mod first_unread_message {
     }
 }
 
-mod available_move_to_actions {
+mod available_move_to_destinations {
     use super::*;
     use crate::actions::{CategoryDestination, InboxDestination, SystemFolderDestination};
     use crate::test_utils::db::new_test_connection;
@@ -730,7 +730,8 @@ mod available_move_to_actions {
             .unwrap()
             .unwrap();
 
-        let result = Conversation::available_move_to_actions(view, conversation_ids, &conn).await;
+        let result =
+            Conversation::available_move_to_destinations(view, conversation_ids, &conn).await;
         let new_conn = async || mail_stash.connection();
 
         match result {
@@ -839,7 +840,7 @@ mod available_move_to_actions {
 
             let view = from.load(&conn).await.unwrap().unwrap();
             let result =
-                Conversation::available_move_to_actions(view, vec![conversation.id()], &conn)
+                Conversation::available_move_to_destinations(view, vec![conversation.id()], &conn)
                     .await
                     .unwrap();
 

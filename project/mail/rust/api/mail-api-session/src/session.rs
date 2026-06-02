@@ -16,6 +16,7 @@ use tokio::sync::RwLock;
 use crate::auth::UserKeySecret;
 use crate::build::{BuildError, build};
 use crate::crypto_clock::init_server_crypto_clock;
+use crate::proton_layers::DynLocaleProvider;
 use crate::store::{BoxStore, DynStore, Store, TempStore};
 use crate::verification::{DynChallengeNotifier, FailNotifier};
 
@@ -134,6 +135,7 @@ pub struct Builder {
     connection_monitor: Option<ConnectionMonitor>,
     notifier: Option<DynChallengeNotifier>,
     info_provider: Option<Arc<dyn InfoProvider>>,
+    locale_provider: Option<DynLocaleProvider>,
     allow_doh: bool,
 }
 
@@ -145,6 +147,7 @@ impl Default for Builder {
             connection_monitor: None,
             notifier: None,
             info_provider: None,
+            locale_provider: None,
             allow_doh: true,
         }
     }
@@ -211,6 +214,11 @@ impl Builder {
         self
     }
 
+    pub fn with_locale_provider(mut self, locale_provider: DynLocaleProvider) -> Self {
+        self.locale_provider = Some(locale_provider);
+        self
+    }
+
     pub fn with_allow_doh(mut self, value: bool) -> Self {
         self.allow_doh = value;
         self
@@ -233,6 +241,7 @@ impl Builder {
             &store,
             notifier,
             self.info_provider,
+            self.locale_provider,
             self.allow_doh,
         )
         .await?;

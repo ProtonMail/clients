@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use std::time::Duration;
 
+use async_trait::async_trait;
 use chrono::DateTime;
 use cookie::{Cookie, CookieJar};
 use mail_muon::common::{BoxFut, Sender, SenderLayer, ServiceType};
@@ -154,14 +155,183 @@ impl SenderLayer<ProtonRequest, ProtonResponse> for CookieJarLayer {
     }
 }
 
+/// Kept as two independent values because they answer different questions for
+/// the backend — which device is talking (`Accept-Language`, for localizing
+/// unauthenticated flows like signup/login/reset) versus which account is
+/// talking (`X-Pm-Locale`, the locale the user chose). Each is optional because its
+/// source can genuinely be absent, and the backend must then see no header at
+/// all rather than a guessed value.
+#[derive(Debug, Default, Clone)]
+pub struct LocaleHeaders {
+    /// `Accept-Language` header
+    /// Absent when the session has no device-info source (e.g. the share
+    /// extension), so we send nothing rather than inventing a device locale.
+    pub accept_language: Option<String>,
+    /// `X-Pm-Locale` header
+    /// Absent until the user is authenticated and their settings have synced,
+    /// since there is no account locale to speak of before then.
+    pub pm_locale: Option<String>,
+}
+
+#[async_trait]
+pub trait LocaleProvider: Send + Sync {
+    async fn locale_headers(&self) -> LocaleHeaders;
+}
+
+/// A dynamic [`LocaleProvider`].
+pub type DynLocaleProvider = Arc<dyn LocaleProvider>;
+
+/// Re-reads the locale on every send rather than capturing it once, so the
+/// backend always sees the locale the user is currently using even though the
+/// session outlives any single locale choice.
+pub struct SetLocaleHeadersLayer {
+    provider: Option<DynLocaleProvider>,
+}
+
+impl SetLocaleHeadersLayer {
+    #[must_use]
+    pub fn new(provider: Option<DynLocaleProvider>) -> Self {
+        Self { provider }
+    }
+}
+
+impl SetLocaleHeadersLayer {
+    async fn on_send<S>(&self, inner: &S, mut req: ProtonRequest) -> MuonResult<ProtonResponse>
+    where
+        S: Sender<ProtonRequest, ProtonResponse> + ?Sized,
+    {
+        if let Some(provider) = &self.provider {
+            let headers = provider.locale_headers().await;
+
+            if let Some(accept_language) = headers.accept_language {
+                req = req.header(("accept-language", accept_language));
+            }
+
+            if let Some(pm_locale) = headers.pm_locale {
+                req = req.header(("x-pm-locale", pm_locale));
+            }
+        }
+
+        inner.send(req).await
+    }
+}
+
+impl SenderLayer<ProtonRequest, ProtonResponse> for SetLocaleHeadersLayer {
+    fn on_send<'a>(
+        &'a self,
+        inner: &'a dyn Sender<ProtonRequest, ProtonResponse>,
+        req: ProtonRequest,
+    ) -> BoxFut<'a, MuonResult<ProtonResponse>> {
+        Box::pin(self.on_send(inner, req))
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use super::{DynLocaleProvider, LocaleHeaders, LocaleProvider, SetLocaleHeadersLayer};
     use crate::proton_layers::CookieJarLayer;
     use anyhow::Result;
+    use async_trait::async_trait;
     use cookie::CookieJar;
     use mail_muon::GET;
     use mail_muon::test::server::{HTTP, Response, Server};
+    use std::sync::Arc;
     use tokio::runtime::Handle;
+
+    struct StubLocaleProvider(LocaleHeaders);
+
+    #[async_trait]
+    impl LocaleProvider for StubLocaleProvider {
+        async fn locale_headers(&self) -> LocaleHeaders {
+            self.0.clone()
+        }
+    }
+
+    fn stub(accept_language: Option<&str>, pm_locale: Option<&str>) -> DynLocaleProvider {
+        Arc::new(StubLocaleProvider(LocaleHeaders {
+            accept_language: accept_language.map(str::to_owned),
+            pm_locale: pm_locale.map(str::to_owned),
+        }))
+    }
+
+    /// Sends one request through the layer and returns the recorded
+    /// `(accept-language, x-pm-locale)` header values.
+    async fn record_ping_headers(
+        provider: Option<DynLocaleProvider>,
+    ) -> Result<(Option<String>, Option<String>)> {
+        let server = Server::new(&Handle::current(), &HTTP)?;
+        let client = server
+            .builder()
+            .layer_back(SetLocaleHeadersLayer::new(provider))
+            .build()?;
+
+        let recorder = server.new_recorder();
+        client.send(GET!("/tests/ping")).await?.ok()?;
+
+        let request = recorder
+            .take()
+            .into_iter()
+            .find(|req| req.uri().path() == "/tests/ping")
+            .unwrap();
+
+        let header = |name: &str| {
+            request
+                .headers()
+                .get(name)
+                .map(|value| value.to_str().unwrap().to_owned())
+        };
+
+        let accept_language = header("accept-language");
+        let pm_locale = header("x-pm-locale");
+
+        server.stop().await?;
+
+        Ok((accept_language, pm_locale))
+    }
+
+    #[tokio::test]
+    async fn test_locale_headers_both_present() -> Result<()> {
+        let (accept_language, pm_locale) =
+            record_ping_headers(Some(stub(Some("fr-FR"), Some("fr_FR")))).await?;
+
+        // Set verbatim, without a `;q=` quality suffix.
+        assert_eq!(accept_language.as_deref(), Some("fr-FR"));
+        assert_eq!(pm_locale.as_deref(), Some("fr_FR"));
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_locale_headers_none_present() -> Result<()> {
+        let (accept_language, pm_locale) = record_ping_headers(Some(stub(None, None))).await?;
+
+        assert_eq!(accept_language, None);
+        assert_eq!(pm_locale, None);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_locale_headers_unauthenticated_sends_only_accept_language() -> Result<()> {
+        // The unauthenticated case: a device language but no account locale.
+        let (accept_language, pm_locale) =
+            record_ping_headers(Some(stub(Some("en-US"), None))).await?;
+
+        assert_eq!(accept_language.as_deref(), Some("en-US"));
+        assert_eq!(pm_locale, None);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_locale_headers_no_provider_is_noop() -> Result<()> {
+        let (accept_language, pm_locale) = record_ping_headers(None).await?;
+
+        assert_eq!(accept_language, None);
+        assert_eq!(pm_locale, None);
+
+        Ok(())
+    }
 
     #[tokio::test]
     async fn test_cookie_jar_roundtrip() -> Result<()> {

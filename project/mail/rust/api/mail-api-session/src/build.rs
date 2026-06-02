@@ -1,5 +1,6 @@
 use crate::proton_layers::{
-    CookieJarLayer, SetCryptoClockLayer, SetDefaultServiceTypeLayer, SetDefaultTimeoutLayer,
+    CookieJarLayer, DynLocaleProvider, SetCryptoClockLayer, SetDefaultServiceTypeLayer,
+    SetDefaultTimeoutLayer, SetLocaleHeadersLayer,
 };
 use crate::proton_store::MuonStoreImpl;
 use crate::session::Config;
@@ -39,6 +40,7 @@ pub async fn build<S: Store>(
     store: &Arc<RwLock<S>>,
     notifier: DynChallengeNotifier,
     info_provider: Option<Arc<dyn InfoProvider>>,
+    locale_provider: Option<DynLocaleProvider>,
     allow_doh: bool,
 ) -> Result<mail_muon::Client, BuildError> {
     use mail_muon::rt::{AsyncResolver, ResolverExt, with_fallback};
@@ -57,6 +59,7 @@ pub async fn build<S: Store>(
         .layer_back(SetDefaultServiceTypeLayer)
         .layer_back(SetDefaultTimeoutLayer)
         .layer_back(ChallengeNotifierLayer::new(notifier))
+        .layer_back(SetLocaleHeadersLayer::new(locale_provider))
         .layer_back(CookieJarLayer::new(CookieJar::new()))
         .layer_back(DisplayLogger::debug())
         .spawner(Tokio::spawner());

@@ -11,6 +11,8 @@ use crate::{self as mail_common, CategoryView};
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::common::ConversationId;
 use mail_common::test_utils::db::new_test_connection;
+use mail_common::test_utils::feature_flags::enable_category_view_ff;
+use mail_common::test_utils::test_context::MailTestContext;
 use mail_common::{conv_id, conv_label, conversation, label, lbl_id};
 use mail_core_api::services::proton::LabelId;
 use mail_core_common::datatypes::SystemLabel;
@@ -1133,8 +1135,9 @@ async fn test_category_filter_social_shows_only_matching_conversations() {
 
 #[tokio::test]
 async fn test_category_filter_default_shows_all_conversations_from_disabled_categories() {
-    let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection();
+    let test_ctx = MailTestContext::new().await;
+    let ctx = test_ctx.uninitialized_mail_user_context().await;
+    let mut tether = ctx.user_stash().connection();
     let inbox = SystemLabel::Inbox.load(&tether).await.unwrap().unwrap();
     let primary = SystemLabel::CategoryDefault
         .load(&tether)
@@ -1178,6 +1181,7 @@ async fn test_category_filter_default_shows_all_conversations_from_disabled_cate
             }
             .save(bond)
             .await?;
+            enable_category_view_ff(bond).await?;
             // Only social is enabled.
             save_conversation_with_labels(&mut conversations[0], &[&inbox, &primary], bond).await;
             save_conversation_with_labels(&mut conversations[1], &[&inbox, &social], bond).await;
@@ -1190,7 +1194,7 @@ async fn test_category_filter_default_shows_all_conversations_from_disabled_cate
         .await
         .unwrap();
 
-    let mut view = CategoryView::load(inbox.id(), &tether).await.unwrap();
+    let mut view = CategoryView::load(inbox.id(), &ctx).await.unwrap();
     view.enable(Some(primary.id()), &tether).await.unwrap();
     let categories = view.filter_ids;
 

@@ -78,6 +78,7 @@ pub async fn available_move_to_destinations_for_conversations(
     mailbox: Arc<Mailbox>,
     ids: Vec<Id>,
 ) -> Result<Vec<MoveDestination>, ActionError> {
+    let ctx = mailbox.ctx()?;
     let mail_stash = mailbox.mail_stash()?;
     uniffi_async(async move {
         let view = mailbox.mbox().label_id();
@@ -85,10 +86,9 @@ pub async fn available_move_to_destinations_for_conversations(
         let view = RealLabel::load(view, &tether)
             .await?
             .ok_or_else(|| RealProtonMailError::reason(RealActionErrorReason::UnknownLabel))?;
-        let actions =
-            RealConversation::available_move_to_destinations(view, ids.map_vec(), &tether)
-                .await?
-                .map_vec();
+        let actions = RealConversation::available_move_to_destinations(view, ids.map_vec(), &ctx)
+            .await?
+            .map_vec();
 
         Ok::<_, RealProtonMailError>(actions)
     })

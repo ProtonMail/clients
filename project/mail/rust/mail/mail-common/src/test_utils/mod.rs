@@ -3,6 +3,7 @@ pub mod conversations;
 pub mod db;
 pub mod db_states;
 pub mod events;
+pub mod feature_flags;
 pub mod images;
 pub mod init;
 pub mod labels;

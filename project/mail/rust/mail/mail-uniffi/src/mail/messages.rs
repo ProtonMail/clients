@@ -642,6 +642,7 @@ pub async fn available_move_to_destinations_for_messages(
     mailbox: Arc<Mailbox>,
     ids: Vec<Id>,
 ) -> Result<Vec<MoveDestination>, ActionError> {
+    let ctx = mailbox.ctx()?;
     let mail_stash = mailbox.mail_stash()?;
     uniffi_async(async move {
         let view = mailbox.mbox().label_id();
@@ -652,7 +653,7 @@ pub async fn available_move_to_destinations_for_messages(
         let actions = RealMessage::available_move_to_destinations(
             view,
             ids.into_iter().map_into().collect(),
-            &tether,
+            &ctx,
         )
         .await?
         .into_iter()

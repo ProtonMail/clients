@@ -237,7 +237,7 @@ mod available_label_as_actions {
 mod available_move_to_destinations {
     use super::*;
     use crate::actions::{CategoryDestination, InboxDestination, SystemFolderDestination};
-    use crate::test_utils::db::new_test_connection;
+    use crate::test_utils::test_context::MailTestContext;
     use crate::{conv_id, conversation, label, lbl_id, message, msg_id};
     use futures::stream::{self, StreamExt};
     use pretty_assertions::assert_eq;
@@ -663,8 +663,9 @@ mod available_move_to_destinations {
         labels: Vec<Label>,
         expected: Result<&[ExpectedMoveDestination], AppError>,
     ) {
-        let mail_stash = new_test_connection().await;
-        let mut conn = mail_stash.connection();
+        let test_ctx = MailTestContext::new().await;
+        let ctx = test_ctx.uninitialized_mail_user_context().await;
+        let mut conn = ctx.user_stash().connection();
         let address = create_address(&mut conn).await;
         let mut conversation = conversation!(remote_id: conv_id!("conversation"));
         let mut message_ids = vec![];
@@ -718,19 +719,19 @@ mod available_move_to_destinations {
         .await
         .unwrap();
 
-        let new_conn = async || mail_stash.connection();
         let view = Label::find_by_remote_id(view.remote_id.clone().unwrap(), &conn)
             .await
             .unwrap()
             .unwrap();
 
-        let result = Message::available_move_to_destinations(view, message_ids, &conn).await;
+        let result = Message::available_move_to_destinations(view, message_ids, &ctx).await;
 
         match result {
             Ok(actual) => {
                 let actual = stream::iter(actual.into_iter())
-                    .then(|action| async move {
-                        ExpectedMoveDestination::new(action, &new_conn().await).await
+                    .then(|action| async {
+                        let tether = ctx.user_stash().connection();
+                        ExpectedMoveDestination::new(action, &tether).await
                     })
                     .collect::<Vec<_>>()
                     .await;
@@ -746,6 +747,7 @@ mod available_move_to_destinations {
     mod category_view {
         use super::*;
         use crate::datatypes::MailSettingsId;
+        use crate::test_utils::feature_flags::enable_category_view_ff;
         use pretty_assertions::assert_eq;
 
         async fn run_scenario(
@@ -754,8 +756,9 @@ mod available_move_to_destinations {
             displayed_categories: &[SystemLabel],
             expected: &[ExpectedMoveDestination],
         ) {
-            let mail_stash = new_test_connection().await;
-            let mut conn = mail_stash.connection();
+            let test_ctx = MailTestContext::new().await;
+            let ctx = test_ctx.uninitialized_mail_user_context().await;
+            let mut conn = ctx.user_stash().connection();
             let address = create_address(&mut conn).await;
 
             let from_id = from.local_id(&conn).await.unwrap().unwrap();
@@ -778,6 +781,10 @@ mod available_move_to_destinations {
                 .await
                 .unwrap();
 
+                if mail_category_view {
+                    enable_category_view_ff(tx).await.unwrap();
+                }
+
                 for mut label in categories_to_save {
                     label.save(tx).await.unwrap();
                 }
@@ -799,13 +806,13 @@ mod available_move_to_destinations {
             .unwrap();
 
             let view = from.load(&conn).await.unwrap().unwrap();
-            let result = Message::available_move_to_destinations(view, vec![message.id()], &conn)
+            let result = Message::available_move_to_destinations(view, vec![message.id()], &ctx)
                 .await
                 .unwrap();
 
             let actual = stream::iter(result.into_iter())
                 .then(|action| async {
-                    let tether = mail_stash.connection();
+                    let tether = ctx.user_stash().connection();
                     ExpectedMoveDestination::new(action, &tether).await
                 })
                 .collect::<Vec<_>>()

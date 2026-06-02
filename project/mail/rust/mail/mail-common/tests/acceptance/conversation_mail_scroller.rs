@@ -19,6 +19,7 @@ use mail_common::models::{
     ScrollData,
 };
 use mail_common::test_utils::db::new_test_connection;
+use mail_common::test_utils::feature_flags::enable_category_view_ff;
 use mail_common::test_utils::init::Params as TestParams;
 use mail_common::test_utils::scroller::{
     StoreLabeledModelMap, TestScroller, TestUpdate, save_single_conversation, test_conversations,
@@ -162,7 +163,7 @@ async fn test_conversation_mail_scroller_reads_one_item_from_online_scroll_data(
 
     ctx.mock_get_messages()
         .given_conversation_ids(conversations.iter().map(|c| c.id.clone()))
-        .alter(|mock| mock.expect(3..=5))
+        .alter(|mock| mock.expect(2..=5))
         .respond_with(vec![])
         .await;
     ctx.mock_get_conversations(conversations, 2..5).await;
@@ -2620,6 +2621,7 @@ async fn test_category_view_filters_conversations_and_emits_updates() {
             .save(bond)
             .await
             .unwrap();
+            enable_category_view_ff(bond).await.unwrap();
             social.display = true;
             social.save(bond).await.unwrap();
             for label_id in [inbox_local_id, social_local_id, default_local_id] {
@@ -2751,6 +2753,7 @@ async fn test_category_view_clears_on_change_label_to_all_mail() {
             .save(bond)
             .await
             .unwrap();
+            enable_category_view_ff(bond).await.unwrap();
             social.display = true;
             social.save(bond).await.unwrap();
             let mut inbox_counter = ConversationCounter::find_by_id(inbox_local_id, bond)
@@ -2891,6 +2894,7 @@ async fn test_category_view_first_page_sends_multi_label_ids_to_api() {
             .save(bond)
             .await
             .unwrap();
+            enable_category_view_ff(bond).await.unwrap();
             social.display = true;
             social.save(bond).await.unwrap();
             // Zero the counter so the initial CategoryDefault fetch_more() never hits the API
@@ -3056,6 +3060,7 @@ async fn test_category_view_next_page_sends_multi_label_ids_to_api() {
             .save(bond)
             .await
             .unwrap();
+            enable_category_view_ff(bond).await.unwrap();
             social.display = true;
             social.save(bond).await.unwrap();
             let mut counter = ConversationCounter::find_by_id(inbox_local_id, bond)
@@ -3251,6 +3256,7 @@ async fn test_total_reflects_active_category_after_change_category_view() {
             .save(bond)
             .await
             .unwrap();
+            enable_category_view_ff(bond).await.unwrap();
             social.display = true;
             social.save(bond).await.unwrap();
             // Zero Inbox counter to prevent background API fetches.
@@ -3339,6 +3345,7 @@ async fn test_settings_changed_toggles_category_view() {
             .save(bond)
             .await
             .unwrap();
+            enable_category_view_ff(bond).await.unwrap();
             Ok(())
         })
         .await
@@ -3479,6 +3486,7 @@ async fn test_label_display_change_toggles_category_view() {
             .save(bond)
             .await
             .unwrap();
+            enable_category_view_ff(bond).await.unwrap();
             social.display = true;
             social.save(bond).await.unwrap();
             Ok(())
@@ -3623,6 +3631,7 @@ async fn test_disabling_active_non_primary_category_falls_back_to_primary() {
             .save(bond)
             .await
             .unwrap();
+            enable_category_view_ff(bond).await.unwrap();
             social.display = true;
             social.save(bond).await.unwrap();
             for label_id in [inbox_local_id, social_local_id, default_local_id] {
@@ -3754,6 +3763,7 @@ async fn test_category_changed_preserves_user_selection_when_available_grows() {
             .save(bond)
             .await
             .unwrap();
+            enable_category_view_ff(bond).await.unwrap();
             social.display = true;
             social.save(bond).await.unwrap();
             for label_id in [

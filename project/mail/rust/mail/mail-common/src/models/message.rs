@@ -1001,7 +1001,7 @@ impl Message {
     pub async fn available_move_to_destinations(
         view: Label,
         message_ids: Vec<LocalMessageId>,
-        tether: &Tether,
+        ctx: &MailUserContext,
     ) -> Result<Vec<MoveDestination>, AppError> {
         if message_ids.is_empty() {
             return Err(AppError::EmptyListOfMessages);
@@ -1009,7 +1009,7 @@ impl Message {
 
         debug!("{message_ids:?}");
 
-        let res = MoveTo::for_message(&view).build(tether).await?;
+        let res = MoveTo::for_message(&view).build(ctx).await?;
         debug!("available label_as actions for messages: {res:?}");
         Ok(res)
     }

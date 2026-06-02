@@ -21,7 +21,7 @@ use crate::datatypes::{
 };
 use crate::models::*;
 use crate::snooze::SnoozeOptions;
-use crate::{AppError, MailContextError, find_in_query};
+use crate::{AppError, MailContextError, MailUserContext, find_in_query};
 use anyhow::Context;
 use chrono::Local;
 use futures::future;
@@ -1569,7 +1569,7 @@ impl Conversation {
     pub async fn available_move_to_destinations(
         view: Label,
         local_ids: Vec<LocalConversationId>,
-        tether: &Tether,
+        ctx: &MailUserContext,
     ) -> Result<Vec<MoveDestination>, AppError> {
         if local_ids.is_empty() {
             return Err(AppError::EmptyListOfConversations);
@@ -1577,13 +1577,14 @@ impl Conversation {
 
         debug!("{local_ids:?}");
 
+        let tether = ctx.user_stash().connection();
         let conversations = Conversation::find(
             format!(
                 "WHERE local_id IN ({})",
                 local_ids.iter().map(ToString::to_string).join(",")
             ),
             vec![],
-            tether,
+            &tether,
         )
         .await?;
 
@@ -1604,7 +1605,7 @@ impl Conversation {
             }
         })?;
 
-        let res = MoveTo::for_conversation(&view).build(tether).await?;
+        let res = MoveTo::for_conversation(&view).build(ctx).await?;
         debug!("available move_to actions: {res:?}");
         Ok(res)
     }

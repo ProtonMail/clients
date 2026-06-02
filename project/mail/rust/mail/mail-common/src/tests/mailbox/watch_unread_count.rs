@@ -1,16 +1,18 @@
 use super::unread_count_watcher::resolve_unread;
 use crate::datatypes::{MailSettingsId, ViewMode};
 use crate::models::{ConversationCounter, MailSettings, MessageCounter};
+use crate::test_utils::feature_flags::enable_category_view_ff;
+use crate::test_utils::test_context::MailTestContext;
 use crate::test_utils::utils::test_address;
 use crate::{conv_id, conversation, message, msg_id};
-use mail_common::test_utils::db::new_test_connection;
 use mail_core_common::datatypes::SystemLabel;
 use mail_stash::orm::Model;
 
 #[tokio::test]
 async fn resolve_unread_conversations_returns_counter_value() {
-    let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection();
+    let test_ctx = MailTestContext::new().await;
+    let ctx = test_ctx.uninitialized_mail_user_context().await;
+    let mut tether = ctx.user_stash().connection();
     let inbox = SystemLabel::Inbox.load(&tether).await.unwrap().unwrap();
 
     tether
@@ -23,7 +25,7 @@ async fn resolve_unread_conversations_returns_counter_value() {
         .await
         .unwrap();
 
-    let count = resolve_unread(inbox.id(), ViewMode::Conversations, None, &tether)
+    let count = resolve_unread(inbox.id(), ViewMode::Conversations, None, &ctx)
         .await
         .unwrap();
 
@@ -32,8 +34,9 @@ async fn resolve_unread_conversations_returns_counter_value() {
 
 #[tokio::test]
 async fn resolve_unread_messages_returns_counter_value() {
-    let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection();
+    let test_ctx = MailTestContext::new().await;
+    let ctx = test_ctx.uninitialized_mail_user_context().await;
+    let mut tether = ctx.user_stash().connection();
     let inbox = SystemLabel::Inbox.load(&tether).await.unwrap().unwrap();
 
     tether
@@ -46,7 +49,7 @@ async fn resolve_unread_messages_returns_counter_value() {
         .await
         .unwrap();
 
-    let count = resolve_unread(inbox.id(), ViewMode::Messages, None, &tether)
+    let count = resolve_unread(inbox.id(), ViewMode::Messages, None, &ctx)
         .await
         .unwrap();
 
@@ -55,8 +58,9 @@ async fn resolve_unread_messages_returns_counter_value() {
 
 #[tokio::test]
 async fn resolve_unread_category_returns_one_when_has_unseen() {
-    let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection();
+    let test_ctx = MailTestContext::new().await;
+    let ctx = test_ctx.uninitialized_mail_user_context().await;
+    let mut tether = ctx.user_stash().connection();
 
     let inbox = SystemLabel::Inbox.load(&tether).await.unwrap().unwrap();
     let mut social = SystemLabel::CategorySocial
@@ -79,6 +83,7 @@ async fn resolve_unread_category_returns_one_when_has_unseen() {
             }
             .save(tx)
             .await?;
+            enable_category_view_ff(tx).await?;
 
             social.display = true;
             social.save(tx).await?;
@@ -119,7 +124,7 @@ async fn resolve_unread_category_returns_one_when_has_unseen() {
         .await
         .unwrap();
 
-    let count = resolve_unread(inbox.id(), ViewMode::Messages, Some(social.id()), &tether)
+    let count = resolve_unread(inbox.id(), ViewMode::Messages, Some(social.id()), &ctx)
         .await
         .unwrap();
 
@@ -128,8 +133,9 @@ async fn resolve_unread_category_returns_one_when_has_unseen() {
 
 #[tokio::test]
 async fn resolve_unread_category_returns_zero_when_no_unseen() {
-    let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection();
+    let test_ctx = MailTestContext::new().await;
+    let ctx = test_ctx.uninitialized_mail_user_context().await;
+    let mut tether = ctx.user_stash().connection();
     let inbox = SystemLabel::Inbox.load(&tether).await.unwrap().unwrap();
     let social = SystemLabel::CategorySocial
         .load(&tether)
@@ -151,6 +157,7 @@ async fn resolve_unread_category_returns_zero_when_no_unseen() {
             }
             .save(tx)
             .await?;
+            enable_category_view_ff(tx).await?;
             MessageCounter::new(inbox.id()).save(tx).await?;
             ConversationCounter::new(inbox.id()).save(tx).await?;
             MessageCounter::new(default.id()).save(tx).await?;
@@ -162,7 +169,7 @@ async fn resolve_unread_category_returns_zero_when_no_unseen() {
         .await
         .unwrap();
 
-    let count = resolve_unread(inbox.id(), ViewMode::Messages, Some(social.id()), &tether)
+    let count = resolve_unread(inbox.id(), ViewMode::Messages, Some(social.id()), &ctx)
         .await
         .unwrap();
 
@@ -171,8 +178,9 @@ async fn resolve_unread_category_returns_zero_when_no_unseen() {
 
 #[tokio::test]
 async fn resolve_unread_default_includes_deactivated_category_unread() {
-    let mail_stash = new_test_connection().await;
-    let mut tether = mail_stash.connection();
+    let test_ctx = MailTestContext::new().await;
+    let ctx = test_ctx.uninitialized_mail_user_context().await;
+    let mut tether = ctx.user_stash().connection();
     let inbox = SystemLabel::Inbox.load(&tether).await.unwrap().unwrap();
     let mut social = SystemLabel::CategorySocial
         .load(&tether)
@@ -194,6 +202,7 @@ async fn resolve_unread_default_includes_deactivated_category_unread() {
             }
             .save(tx)
             .await?;
+            enable_category_view_ff(tx).await?;
 
             social.display = true;
             social.save(tx).await?;
@@ -222,20 +231,15 @@ async fn resolve_unread_default_includes_deactivated_category_unread() {
         inbox.id(),
         ViewMode::Conversations,
         Some(default.id()),
-        &tether,
+        &ctx,
     )
     .await
     .unwrap();
     assert_eq!(before_def, 1);
 
-    let before_soc = resolve_unread(
-        inbox.id(),
-        ViewMode::Conversations,
-        Some(social.id()),
-        &tether,
-    )
-    .await
-    .unwrap();
+    let before_soc = resolve_unread(inbox.id(), ViewMode::Conversations, Some(social.id()), &ctx)
+        .await
+        .unwrap();
     assert_eq!(before_soc, 3);
 
     // Deactivate social
@@ -253,20 +257,15 @@ async fn resolve_unread_default_includes_deactivated_category_unread() {
         inbox.id(),
         ViewMode::Conversations,
         Some(default.id()),
-        &tether,
+        &ctx,
     )
     .await
     .unwrap();
     assert_eq!(after_def, 4);
     // So if disabled it should return the unread of default
-    let after_soc = resolve_unread(
-        inbox.id(),
-        ViewMode::Conversations,
-        Some(social.id()),
-        &tether,
-    )
-    .await
-    .unwrap();
+    let after_soc = resolve_unread(inbox.id(), ViewMode::Conversations, Some(social.id()), &ctx)
+        .await
+        .unwrap();
     assert_eq!(after_soc, 4);
 
     // Deactivate category_view
@@ -289,18 +288,13 @@ async fn resolve_unread_default_includes_deactivated_category_unread() {
         inbox.id(),
         ViewMode::Conversations,
         Some(default.id()),
-        &tether,
+        &ctx,
     )
     .await
     .unwrap();
     assert_eq!(after_def, 5);
-    let after_soc = resolve_unread(
-        inbox.id(),
-        ViewMode::Conversations,
-        Some(social.id()),
-        &tether,
-    )
-    .await
-    .unwrap();
+    let after_soc = resolve_unread(inbox.id(), ViewMode::Conversations, Some(social.id()), &ctx)
+        .await
+        .unwrap();
     assert_eq!(after_soc, 5);
 }

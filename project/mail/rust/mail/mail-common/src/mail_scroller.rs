@@ -808,7 +808,7 @@ where
         let arc_ctx = ctx.upgrade().ok_or(MailContextError::MissingContext)?;
         let tether = arc_ctx.user_stash().connection();
         let alternative_labels = AlternativeLabels::new(label, &tether).await?;
-        let mut category_view = CategoryView::load(label, &tether).await?;
+        let mut category_view = CategoryView::load(label, &arc_ctx).await?;
         category_view.enable(enabled_category, &tether).await?;
         let scroll_task = source
             .initialize(&arc_ctx, invalidation_tx, category_view)
@@ -1445,7 +1445,7 @@ where
         let ctx = self.ctx.upgrade().ok_or(MailContextError::MissingContext)?;
         let tether = ctx.user_stash().connection();
         let label = self.alternative_labels.label;
-        let mut candidate = CategoryView::load(label, &tether)
+        let mut candidate = CategoryView::load(label, &ctx)
             .await
             .map_err(|e| anyhow!("Failed to reload category view after settings change: {e:?}"))?;
         let current = self.source.read().await.category_view().clone();
@@ -1480,10 +1480,7 @@ where
         debug!("Changing label to `{label}`");
 
         let ctx = self.ctx.upgrade().ok_or(MailContextError::MissingContext)?;
-        let category_view = {
-            let tether = ctx.user_stash().connection();
-            CategoryView::load(label, &tether).await?
-        };
+        let category_view = CategoryView::load(label, &ctx).await?;
 
         self.change_state(&ctx, with_filter, Some(label), None, Some(category_view))
             .await?;

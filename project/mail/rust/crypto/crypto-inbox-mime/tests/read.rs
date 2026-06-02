@@ -184,6 +184,8 @@ RIzX2CG47PuGl/uvImFW/Iw=
 
 const TEST_GO_MIME_EXPECTED: &str = r#"<div><div><br></div><div><br></div><div class="protonmail_signature_block"><div class="protonmail_signature_block-user"><div><img src="cid:46098e9b@protonmail.com" class="proton-embedded" alt="Screenshot from 2018-02-06 17-13-21.png"><br></div><div>--&nbsp;<br></div><div>Julien Palard<br></div><div><code style="font-family:'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;font-size:11.899999618530273px;padding:0px;margin:0px;background-color:transparent;white-space:pre;border:0px;display:inline;overflow:visible;line-height:inherit;"><a href="https://mdk.fr">https://mdk.fr</a></code><br></div></div><div class="protonmail_signature_block-proton protonmail_signature_block-empty"><br></div></div></div>"#;
 
+const TEST_THUNDERBIRD_EXPECTED: &str = "This is a signed message from thunderbrid\n\n";
+
 const TEST_PRIV_KEY: &str = "-----BEGIN PGP PRIVATE KEY BLOCK-----
 Version: GopenPGP.js v3.1.2
 Comment: https://openpgpjs.org
@@ -419,4 +421,41 @@ fn test_mime_process_message() {
     assert_eq!(inline_attachment.disposition, Disposition::Inline);
     let normal_attachment = processed_message.attachments.get(1).unwrap();
     assert_eq!(normal_attachment.disposition, Disposition::Attachment);
+}
+
+#[test]
+fn test_mime_process_message_multi_attachment() {
+    let test_data = include_bytes!("test-data/thunderbird.eml");
+    let provider = new_pgp_provider();
+    const MESSAGE_ID: &str = "message_id";
+    let expected_attachment_names = [
+        "attachment1.txt",
+        "attachment2.txt",
+        "OpenPGP_0x97F31CC264AC409A.asc",
+    ];
+    let processed_message = MimeProcessor::process_mime(MESSAGE_ID, test_data).unwrap();
+    assert_eq!(&processed_message.body, TEST_THUNDERBIRD_EXPECTED);
+    assert_eq!(processed_message.attachments.len(), 3);
+    for (attachment, expected_name) in processed_message
+        .attachments
+        .iter()
+        .zip(expected_attachment_names)
+    {
+        assert_eq!(attachment.name, expected_name);
+    }
+
+    let key = processed_message.attachments.get(2).unwrap();
+    let pk = provider
+        .public_key_import(key.data.as_slice(), DataEncoding::Armor)
+        .unwrap();
+    let sig = processed_message.signatures.first().unwrap();
+    provider
+        .new_verifier()
+        .with_verification_key(&pk)
+        .verify_detached(
+            sig.data_to_verify(test_data),
+            sig.pgp_signature.as_bytes(),
+            DataEncoding::Armor,
+        )
+        .unwrap();
 }

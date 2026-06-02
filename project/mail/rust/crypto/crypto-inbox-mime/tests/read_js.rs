@@ -84,7 +84,7 @@ trailing whitespace that occurs on lines in order to ensure
 that the message signature is not invalidated when passing  
 a gateway that modifies such whitespace (like BITNET).  
 
-me";
+me   ";
 
 pub const MULTIPART_MESSAGE_WITH_ATTACHMENT: &str = r#"From: Some One <someone@example.com>
 To: "Someone Else" <someone-else@example.com>

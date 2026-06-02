@@ -130,15 +130,23 @@ pub struct MimeProcessor {}
 impl ProcessMime for MimeProcessor {
     fn process_mime(message_id: &str, raw_data: &[u8]) -> ProcessedMimeResult {
         // Call the mime parsing library.
-        let parsed_message = MessageParser::default()
+        let mut parsed_message = MessageParser::default()
             .parse(raw_data)
             .ok_or(ProcessMimeError::Parse)?;
+        let mut signatures = Vec::new();
+
+        if let Some(root_signed_part) = extract_root_signed_part(&parsed_message) {
+            // We have a `multipart/signed` message at the root,
+            // so we consider only the signed part and ignore the rest.
+            parsed_message = MessageParser::default()
+                .parse(&raw_data[root_signed_part.verify_data_range.clone()])
+                .ok_or(ProcessMimeError::Parse)?;
+            signatures.push(root_signed_part);
+        };
 
         let (body, mime_body_type) = select_body(&parsed_message)?;
         // Process an normalize attachments for Proton.
         let processed_attachments = process_attachments(message_id, &parsed_message);
-        // Extract signatures.
-        let processed_signatures = process_signatures(&parsed_message);
 
         let encrypted_subject = parsed_message.subject().map(ToString::to_string);
         let processed_message = ProcessedMessage {
@@ -146,7 +154,7 @@ impl ProcessMime for MimeProcessor {
             attachments: processed_attachments,
             encrypted_subject,
             mime_body_type,
-            signatures: processed_signatures,
+            signatures,
         };
 
         Ok(processed_message)
@@ -217,51 +225,44 @@ fn process_attachments(message_id: &str, parsed_message: &Message<'_>) -> Vec<Pr
     processed_attachments
 }
 
-fn process_signatures(parsed_message: &Message<'_>) -> Vec<MimeSignatureVerifier> {
-    parsed_message
-        .parts
-        .iter()
-        .filter(|part| {
-            // Filter the parts with the content type multipart/signed.
-            let Some(sub_type) = extract_matched_content_subtype(part.headers(), "multipart")
-            else {
-                return false;
-            };
-            sub_type == "signed"
-        })
-        .filter_map(|signature_part| {
-            // Parse the signature and determine the data to verify against.
-            let sub_parts = signature_part.sub_parts()?;
-            // There should be exactly two sub-parts: the body and the signature.
-            if sub_parts.len() != 2 {
-                return None;
-            }
-            // Determine the offsets in the raw body data to verify.
-            let (offset_raw_start, offset_raw_end) = sub_parts
-                .first()
-                .and_then(|first| parsed_message.part(*first))
-                .map(|body_part| (body_part.offset_header, body_part.offset_end))?;
-            let signature_part = sub_parts
-                .last()
-                .and_then(|last| parsed_message.part(*last))?;
-            // Check that the signature content type is application/pgp-signature.
-            if extract_matched_content_subtype(signature_part.headers(), "application").is_none_or(
-                |signature_content_type| signature_content_type.to_lowercase() != "pgp-signature",
-            ) {
-                return None;
-            }
-            // Extract the signature.
-            let signature = signature_part.text_contents()?;
+fn extract_root_signed_part(parsed_message: &Message<'_>) -> Option<MimeSignatureVerifier> {
+    let root_signed_part = parsed_message.root_part();
 
-            Some(MimeSignatureVerifier {
-                pgp_signature: signature.to_owned(),
-                verify_data_range: Range {
-                    start: offset_raw_start,
-                    end: offset_raw_end,
-                },
-            })
-        })
-        .collect()
+    // Check if the root part is signed.
+    if extract_matched_content_subtype(root_signed_part.headers(), "multipart") != Some("signed") {
+        return None;
+    }
+
+    // Parse the signature and determine the data to verify against.
+    let sub_parts = root_signed_part.sub_parts()?;
+    // There should be exactly two sub-parts: the body and the signature.
+    if sub_parts.len() != 2 {
+        return None;
+    }
+    // Determine the offsets in the raw body data to verify.
+    let (offset_raw_start, offset_raw_end) = sub_parts
+        .first()
+        .and_then(|first| parsed_message.part(*first))
+        .map(|body_part| (body_part.offset_header, body_part.offset_end))?;
+    let signature_part = sub_parts
+        .last()
+        .and_then(|last| parsed_message.part(*last))?;
+    // Check that the signature content type is application/pgp-signature.
+    if extract_matched_content_subtype(signature_part.headers(), "application").is_none_or(
+        |signature_content_type| signature_content_type.to_lowercase() != "pgp-signature",
+    ) {
+        return None;
+    }
+    // Extract the signature.
+    let signature = signature_part.text_contents()?;
+
+    Some(MimeSignatureVerifier {
+        pgp_signature: signature.to_owned(),
+        verify_data_range: Range {
+            start: offset_raw_start,
+            end: offset_raw_end,
+        },
+    })
 }
 
 fn html_body_filter<'a>(parsed_message: &'a Message<'_>, idx: usize) -> Option<Cow<'a, str>> {

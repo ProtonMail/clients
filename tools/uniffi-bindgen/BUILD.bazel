@@ -10,5 +10,3 @@ rust_binary(
         normal = True,
     ),
 )
-
-exports_files(["Cargo.toml"])

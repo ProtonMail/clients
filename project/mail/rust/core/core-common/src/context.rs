@@ -21,7 +21,7 @@ use crate::db::account::{CoreAccount, CoreSession, SessionEncryptionKey};
 use crate::db::migrations::{migrate_account_db, verify_account_db};
 use crate::device::DynDeviceInfoProvider;
 use crate::event_loop::EventPollMode;
-use crate::models::{AppSettings, ModelExtension};
+use crate::models::{AppSettings, ModelExtension, UserSettings};
 use crate::os::{KeyChain, KeyChainError, KeyChainExt, StoreInKeyChain};
 use crate::pin_code::PinCode;
 use crate::services::issue_reporter_service::IssueReporterService;
@@ -34,6 +34,7 @@ use futures::TryFutureExt;
 use itertools::Itertools;
 use mail_action_queue::action::{self, Action, WriterGuardError};
 use mail_action_queue::queue::{ActionError as QueueActionError, ActionRequeueReason, QueuedError};
+use mail_api_session::proton_layers::{LocaleHeaders, LocaleProvider};
 use mail_core_api::auth::{Auth, Tokens};
 use mail_core_api::service::ApiServiceError;
 use mail_core_api::services::proton::mail_muon::client::{Fingerprint, InfoProvider};
@@ -921,7 +922,7 @@ impl Context {
         let session_id = session.map(|s| &s.remote_id).cloned();
         let account_stash = self.account_stash().to_owned();
         let keychain = Arc::clone(&self.key_chain);
-        let store = AuthStore::new(account_stash, keychain, user_id, session_id);
+        let store = AuthStore::new(account_stash, keychain, user_id.clone(), session_id);
         let api_config = RealApiConfig::from(self.api_config.clone());
         let app_settings = AppSettings::get_or_default(&self.account_stash().connection()).await;
 
@@ -939,14 +940,21 @@ impl Context {
             builder = builder.with_notifier(notifier);
         }
 
-        if let Some(device_service) = self.get_service_opt::<DeviceInfoService>()
-            && let Some(provider) = device_service.provider()
-        {
+        let device_info_provider = self
+            .get_service_opt::<DeviceInfoService>()
+            .and_then(|service| service.provider().map(Arc::clone));
+
+        if let Some(provider) = &device_info_provider {
             builder = builder.with_info_provider(Arc::new(MuonInfoProvider {
                 app_version: RealApiConfig::from(self.api_config.clone()).app_version,
                 device_info_provider: Arc::clone(provider),
             }));
         }
+
+        builder = builder.with_locale_provider(Arc::new(ContextLocaleProvider {
+            device_info_provider,
+            user: user_id.map(|user_id| (self.this.clone(), user_id)),
+        }));
 
         Ok(builder.build().await?)
     }
@@ -969,14 +977,23 @@ impl Context {
             builder = builder.with_notifier(notifier);
         }
 
-        if let Some(device_service) = self.get_service_opt::<DeviceInfoService>()
-            && let Some(provider) = device_service.provider()
-        {
+        let device_info_provider = self
+            .get_service_opt::<DeviceInfoService>()
+            .and_then(|service| service.provider().map(Arc::clone));
+
+        if let Some(provider) = &device_info_provider {
             builder = builder.with_info_provider(Arc::new(MuonInfoProvider {
                 app_version: RealApiConfig::from(self.api_config.clone()).app_version,
                 device_info_provider: Arc::clone(provider),
             }));
         }
+
+        // The network-monitor session has no user, so there is no account
+        // locale to send; only the device language (if available) is attached.
+        builder = builder.with_locale_provider(Arc::new(ContextLocaleProvider {
+            device_info_provider,
+            user: None,
+        }));
 
         Ok(builder.build().await?)
     }
@@ -988,6 +1005,7 @@ impl Context {
         let session = session.context("Missing core session")?;
         let user_id = session.account_id.clone();
         let session_id = session.remote_id.clone();
+        let locale_user_id = user_id.clone();
 
         let key = self
             .key_chain
@@ -1055,10 +1073,20 @@ impl Context {
 
         let app_settings = AppSettings::get_or_default(&self.account_stash().connection()).await;
 
+        // The share extension runs in its own process without a
+        // `DeviceInfoService`, so `Accept-Language` is absent here; the user's
+        // account locale still flows into `X-Pm-Locale` when the user context
+        // is available.
+        let locale_provider = Arc::new(ContextLocaleProvider {
+            device_info_provider: None,
+            user: Some((self.this.clone(), locale_user_id)),
+        });
+
         let builder = ApiSession::builder()
             .with_config(RealApiConfig::from(self.api_config.clone()))
             .with_store(store)
             .with_connection_monitor(network_monitor_service.new_connection_monitor())
+            .with_locale_provider(locale_provider)
             .with_allow_doh(app_settings.use_alternative_routing);
 
         let primary_session = builder.build().await?;
@@ -1400,6 +1428,53 @@ impl InfoProvider for MuonInfoProvider {
         let fingerprint = result.into();
 
         Some(fingerprint)
+    }
+}
+
+struct ContextLocaleProvider {
+    device_info_provider: Option<DynDeviceInfoProvider>,
+    user: Option<(Weak<Context>, UserId)>,
+}
+
+impl ContextLocaleProvider {
+    async fn pm_locale(&self) -> Option<String> {
+        let (context, user_id) = self.user.as_ref()?;
+        let context = context.upgrade()?;
+
+        let stash = context
+            .active_user_contexts
+            .lock()
+            .await
+            .get(user_id)
+            .and_then(Weak::upgrade)?
+            .mail_stash()
+            .clone();
+
+        match UserSettings::load(user_id.clone(), &stash.connection()).await {
+            Ok(settings) => settings.map(|settings| settings.locale),
+            Err(error) => {
+                warn!(
+                    ?error,
+                    "failed to read user settings for X-Pm-Locale header"
+                );
+                None
+            }
+        }
+    }
+}
+
+#[async_trait]
+impl LocaleProvider for ContextLocaleProvider {
+    async fn locale_headers(&self) -> LocaleHeaders {
+        let accept_language = match &self.device_info_provider {
+            Some(provider) => Some(provider.get_device_info().await.language),
+            None => None,
+        };
+
+        LocaleHeaders {
+            accept_language,
+            pm_locale: self.pm_locale().await,
+        }
     }
 }
 

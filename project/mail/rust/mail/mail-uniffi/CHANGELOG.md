@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [mail-uniffi-v0.166.6] - 2026-06-03
+
+### Features
+
+- [ET-6099] [Breaking] Rename `available_move_to_actions(...)` to `available_move_to_destinations`
+- [ET-6099] Add move logic considering recategorization.
+- [ET-6304] Provide `Accept-Language` and `X-Pm-Locale` headers.
+
+### Fixes
+
+- Category Changed should preserve enabled category
+- Fix feature flags service flaky test - proton/clients/monorepo!2787
+- Limit pgp mime message processing to signed part - proton/clients/monorepo!2743
+
+### Reverts
+
+- Revert "Use variants for upsell - proton/clients/monorepo!2472"
+
 ## [mail-uniffi-v0.166.5] - 2026-06-01
 
 ### Features

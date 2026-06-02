@@ -13,7 +13,16 @@ use crate::datatypes::{
 #[TableName("user_feature_flags")]
 #[Database(UserDb)]
 pub struct UserFeatureFlag {
-    #[IdField]
+    /// Normally we would have a primary key directly on the name,
+    /// but Stash does not really support composite PK.
+    /// We want to have a case where if one feature flag is both present in
+    /// Unleash and in Legacy service so our constraint is actually `UNIQUE (name, source)`.
+    /// Its easier to just make that constraint outside of stash and have this
+    /// basically unused `id` field instead.
+    #[IdField(autoincrement)]
+    pub id: Option<u64>,
+
+    #[DbField]
     pub name: String,
 
     #[DbField]
@@ -51,6 +60,7 @@ impl UserFeatureFlag {
     #[must_use]
     pub fn unleash(name: impl Into<String>, modify_time: UnixTimestamp) -> Self {
         Self {
+            id: None,
             name: name.into(),
             enabled: true,
             source: UserFeatureFlagSource::Unleash,
@@ -73,6 +83,7 @@ impl UserFeatureFlag {
         modify_time: UnixTimestamp,
     ) -> Self {
         Self {
+            id: None,
             name: name.into(),
             enabled,
             source: UserFeatureFlagSource::Legacy,

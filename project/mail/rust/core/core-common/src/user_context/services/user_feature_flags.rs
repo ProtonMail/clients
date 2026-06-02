@@ -66,6 +66,7 @@ impl UserFeatureFlagsService {
             let flag = flags
                 .entry(toggle.name.clone())
                 .or_insert_with(|| UserFeatureFlag {
+                    id: None,
                     name: toggle.name,
                     enabled: false,
                     source: UserFeatureFlagSource::Unleash,
@@ -128,6 +129,7 @@ impl UserFeatureFlagsService {
             let (flag, persistence) = flags.entry(metadata.code.clone()).or_insert_with(|| {
                 (
                     UserFeatureFlag {
+                        id: None,
                         name: metadata.code,
                         enabled,
                         source: UserFeatureFlagSource::Legacy,

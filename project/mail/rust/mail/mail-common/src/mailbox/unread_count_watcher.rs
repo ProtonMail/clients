@@ -1,6 +1,6 @@
 use crate::datatypes::ViewMode;
 use crate::models::{ConversationCounter, MailSettings, MessageCounter};
-use crate::{CategoryView, MailContextResult};
+use crate::{CategoryView, MailContextResult, MailUserContext};
 use mail_core_common::datatypes::{LocalLabelId, SystemLabel};
 use mail_core_common::models::{Label, ModelExtension as _};
 use mail_stash::UserDb;
@@ -93,14 +93,16 @@ pub async fn resolve_unread(
     label_id: LocalLabelId,
     view_mode: ViewMode,
     category: Option<LocalLabelId>,
-    tether: &Tether,
+    ctx: &MailUserContext,
 ) -> MailContextResult<u64> {
+    let tether = ctx.user_stash().connection();
+
     let Some(category_id) = category else {
-        return resolve_unread_from_view_mode(label_id, view_mode, tether).await;
+        return resolve_unread_from_view_mode(label_id, view_mode, &tether).await;
     };
 
-    let category_view = CategoryView::load(label_id, tether).await?;
-    let labels = category_view.into_labels(tether).await?;
+    let category_view = CategoryView::load(label_id, ctx).await?;
+    let labels = category_view.into_labels(&tether).await?;
     let get_count = |id| labels.iter().find(|l| l.local_id == id).map(|l| l.unread);
 
     // Try for category, fallback to primary and if that is not enough fallback to the label.
@@ -108,11 +110,11 @@ pub async fn resolve_unread(
         Some(count) => count,
         None => {
             let primary_local_id = SystemLabel::CategoryDefault
-                .local_id(tether)
+                .local_id(&tether)
                 .await?
                 .expect("Must exist");
             let Some(count) = get_count(primary_local_id) else {
-                return resolve_unread_from_view_mode(label_id, view_mode, tether).await;
+                return resolve_unread_from_view_mode(label_id, view_mode, &tether).await;
             };
 
             count

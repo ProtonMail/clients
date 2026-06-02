@@ -1,8 +1,8 @@
 use std::collections::BTreeSet;
 
-use crate::MailContextError;
 use crate::datatypes::ViewMode;
 use crate::models::{LabelWithCounters, MailSettings};
+use crate::{MailContextError, MailUserContext};
 use mail_api_labels::LabelId;
 use mail_core_common::datatypes::{LocalLabelId, SystemLabel};
 use mail_core_common::models::Label;
@@ -13,6 +13,8 @@ use sqlite_watcher::watcher::TableObserver;
 use tracing::error;
 
 pub use crate::datatypes::CategoryLabel;
+
+pub const CATEGORY_VIEW_FEATURE_FLAG: &str = "MobileCategoryView";
 
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct CategoryView {
@@ -25,18 +27,15 @@ impl CategoryView {
     /// Returns `CategoryView::default()` (empty) when:
     /// - `label` is not the Inbox (only Inbox supports category filtering), or
     /// - `mail_category_view = false` in `MailSettings`.
-    pub async fn load(label: LocalLabelId, tether: &Tether) -> anyhow::Result<Self> {
-        // Category filtering is only supported for the Inbox label.
-        let inbox_local_id = SystemLabel::Inbox.local_id(tether).await?;
-        if inbox_local_id != Some(label) {
+    pub async fn load(label: LocalLabelId, ctx: &MailUserContext) -> anyhow::Result<Self> {
+        if !Self::is_feature_enabled(ctx).await? {
             return Ok(Self::default());
         }
+        let tether = ctx.user_stash().connection();
 
-        let mail_category_view = MailSettings::get(tether)
-            .await?
-            .is_some_and(|s| s.mail_category_view);
-
-        if !mail_category_view {
+        // Category filtering is only supported for the Inbox label.
+        let inbox_local_id = SystemLabel::Inbox.local_id(&tether).await?;
+        if inbox_local_id != Some(label) {
             return Ok(Self::default());
         }
 
@@ -47,7 +46,7 @@ impl CategoryView {
         // matches the canonical enum declaration (Default first). Downstream callers like
         // `into_labels()` reuse that order without resorting.
         let remote_ids = SystemLabel::category_labels().map(|sl| sl.remote_id());
-        let labels = LabelWithCounters::from_remote_ids(tether, remote_ids).await?;
+        let labels = LabelWithCounters::from_remote_ids(&tether, remote_ids).await?;
         let available = SystemLabel::category_labels()
             .into_iter()
             .filter_map(|sl| {
@@ -62,7 +61,7 @@ impl CategoryView {
             })
             .collect();
 
-        let enabled = SystemLabel::CategoryDefault.local_id(tether).await?;
+        let enabled = SystemLabel::CategoryDefault.local_id(&tether).await?;
         let filter_ids = Self::resolve_filter_ids(enabled, &labels);
 
         Ok(Self {
@@ -171,6 +170,22 @@ impl CategoryView {
         mail_stash
             .subscribe_to(move |sender| Box::new(CategoryViewWatcher { sender, tables }))
             .await
+    }
+
+    pub async fn is_feature_enabled(ctx: &MailUserContext) -> Result<bool, MailContextError> {
+        Ok(ctx
+            .user_context()
+            .feature_flags()
+            .get(CATEGORY_VIEW_FEATURE_FLAG)
+            .await?
+            .unwrap_or(false)
+            && {
+                let tether = ctx.user_stash().connection();
+
+                MailSettings::get(&tether)
+                    .await?
+                    .is_some_and(|s| s.mail_category_view)
+            })
     }
 
     fn watched_tables() -> Vec<String> {

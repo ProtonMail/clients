@@ -4,7 +4,7 @@ use crate::actions::{
 };
 use crate::datatypes::MovableSystemFolder;
 use crate::datatypes::labels::{color_to_display, hierarchy};
-use crate::{AppError, CategoryView};
+use crate::{AppError, CategoryView, MailUserContext};
 use mail_core_common::datatypes::{LabelType, SystemLabel};
 use mail_core_common::models::Label;
 use mail_stash::orm::Model;
@@ -35,7 +35,11 @@ impl<'a> MoveTo<'a> {
         }
     }
 
-    pub(crate) async fn build(self, tether: &Tether) -> Result<Vec<MoveDestination>, AppError> {
+    pub(crate) async fn build(
+        self,
+        ctx: &MailUserContext,
+    ) -> Result<Vec<MoveDestination>, AppError> {
+        let tether = ctx.user_stash().connection();
         let from_id = self.from.local_id;
         let from_system_label = SystemLabel::from_opt_rid(self.from.remote_id.as_ref());
         let moving_from_sent = matches!(self.grouping, Grouping::Message)
@@ -44,8 +48,8 @@ impl<'a> MoveTo<'a> {
                 Some(SystemLabel::AllSent | SystemLabel::Sent)
             );
         let from_is_inbox = matches!(from_system_label, Some(SystemLabel::Inbox));
-        let all_system = Label::find_by_kind(LabelType::System, tether).await?;
-        let all_custom_folders = Label::find_by_kind(LabelType::Folder, tether).await?;
+        let all_system = Label::find_by_kind(LabelType::System, &tether).await?;
+        let all_custom_folders = Label::find_by_kind(LabelType::Folder, &tether).await?;
 
         let mut destinations = Vec::new();
 
@@ -61,7 +65,7 @@ impl<'a> MoveTo<'a> {
             {
                 continue;
             }
-            let destination = label_to_destination(self.from, label, tether)
+            let destination = label_to_destination(self.from, label, ctx, &tether)
                 .await?
                 .filter(|dest| match dest {
                     MoveDestination::Inbox(inbox) => {
@@ -76,12 +80,12 @@ impl<'a> MoveTo<'a> {
         }
 
         for label in all_custom_folders.iter() {
-            if let Some(destination) = label_to_destination(self.from, label, tether).await? {
+            if let Some(destination) = label_to_destination(self.from, label, ctx, &tether).await? {
                 destinations.push(destination);
             }
         }
 
-        let destinations = resolve_custom_folder_colors(destinations, tether).await?;
+        let destinations = resolve_custom_folder_colors(destinations, &tether).await?;
         Ok(build_folder_structure(destinations).collect())
     }
 }
@@ -89,6 +93,7 @@ impl<'a> MoveTo<'a> {
 async fn label_to_destination(
     from: &Label,
     label: &Label,
+    ctx: &MailUserContext,
     tether: &Tether,
 ) -> Result<Option<MoveDestination>, AppError> {
     let action = match label.label_type {
@@ -105,7 +110,7 @@ async fn label_to_destination(
                 local_id: inbox_id,
                 name: MovableSystemFolder::Inbox,
                 categories: CategoryDestination::from_categories(if from_is_inbox {
-                    CategoryView::load(inbox_id, tether)
+                    CategoryView::load(inbox_id, ctx)
                         .await?
                         .into_labels(tether)
                         .await?

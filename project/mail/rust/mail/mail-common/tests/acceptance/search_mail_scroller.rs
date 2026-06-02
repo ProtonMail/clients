@@ -738,8 +738,8 @@ async fn search_scroller_accepts_non_empty_category_view_without_panic() {
     let tether = user_ctx.user_stash().connection();
 
     let inbox_local_id = SystemLabel::Inbox.local_id(&tether).await.unwrap().unwrap();
-    let category_view = CategoryView::load(inbox_local_id, &tether).await.unwrap();
     drop(tether);
+    let category_view = CategoryView::load(inbox_local_id, &user_ctx).await.unwrap();
 
     let options = SearchOptions::from("test");
     let page_size = 5;

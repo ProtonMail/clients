@@ -144,8 +144,7 @@ impl Mailbox {
         let label_id = self.label_id();
         let view_mode = self.view_mode();
 
-        let tether = stash.connection();
-        match resolve_unread(label_id, view_mode, category, &tether).await {
+        match resolve_unread(label_id, view_mode, category, ctx).await {
             Ok(initial) => {
                 let _ = tx.send(initial);
             }
@@ -154,10 +153,10 @@ impl Mailbox {
             }
         }
 
+        let arc_ctx = ctx.as_arc();
         ctx.spawn(async move {
             while notify_rx.recv_async().await.is_ok() {
-                let tether = stash.connection();
-                let count = match resolve_unread(label_id, view_mode, category, &tether).await {
+                let count = match resolve_unread(label_id, view_mode, category, &arc_ctx).await {
                     Ok(count) => count,
                     Err(e) => {
                         tracing::error!("Couldnt resolve the unread count due to an error: `{e}`");

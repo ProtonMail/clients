@@ -323,7 +323,7 @@ mod first_unread_message {
 mod available_move_to_destinations {
     use super::*;
     use crate::actions::{CategoryDestination, InboxDestination, SystemFolderDestination};
-    use crate::test_utils::db::new_test_connection;
+    use crate::test_utils::test_context::MailTestContext;
     use crate::{conv_id, conversation, label, lbl_id};
     use futures::stream::{self, StreamExt};
     use mail_core_common::datatypes::{LabelColor, LabelType, SystemLabel};
@@ -680,8 +680,9 @@ mod available_move_to_destinations {
         labels: Vec<Label>,
         expected: Result<&[ExpectedMoveDestination], AppError>,
     ) {
-        let mail_stash = new_test_connection().await;
-        let mut conn = mail_stash.connection();
+        let test_ctx = MailTestContext::new().await;
+        let ctx = test_ctx.uninitialized_mail_user_context().await;
+        let mut conn = ctx.user_stash().connection();
 
         let mut settings = MailSettings::default();
         let mut conversation_ids = vec![];
@@ -731,8 +732,8 @@ mod available_move_to_destinations {
             .unwrap();
 
         let result =
-            Conversation::available_move_to_destinations(view, conversation_ids, &conn).await;
-        let new_conn = async || mail_stash.connection();
+            Conversation::available_move_to_destinations(view, conversation_ids, &ctx).await;
+        let new_conn = async || ctx.user_stash().connection();
 
         match result {
             Ok(actual) => {
@@ -795,6 +796,7 @@ mod available_move_to_destinations {
     mod category_view {
         use super::*;
         use crate::datatypes::MailSettingsId;
+        use crate::test_utils::feature_flags::enable_category_view_ff;
         use pretty_assertions::assert_eq;
 
         async fn run_scenario(
@@ -803,8 +805,9 @@ mod available_move_to_destinations {
             displayed_categories: &[SystemLabel],
             expected: &[ExpectedMoveDestination],
         ) {
-            let mail_stash = new_test_connection().await;
-            let mut conn = mail_stash.connection();
+            let test_ctx = MailTestContext::new().await;
+            let ctx = test_ctx.uninitialized_mail_user_context().await;
+            let mut conn = ctx.user_stash().connection();
 
             let from_id = from.local_id(&conn).await.unwrap().unwrap();
             let mut categories_to_save = vec![];
@@ -825,6 +828,10 @@ mod available_move_to_destinations {
                 .await
                 .unwrap();
 
+                if mail_category_view {
+                    enable_category_view_ff(tx).await.unwrap();
+                }
+
                 for mut label in categories_to_save {
                     label.save(tx).await.unwrap();
                 }
@@ -840,13 +847,13 @@ mod available_move_to_destinations {
 
             let view = from.load(&conn).await.unwrap().unwrap();
             let result =
-                Conversation::available_move_to_destinations(view, vec![conversation.id()], &conn)
+                Conversation::available_move_to_destinations(view, vec![conversation.id()], &ctx)
                     .await
                     .unwrap();
 
             let actual = stream::iter(result.into_iter())
                 .then(|action| async {
-                    let tether = mail_stash.connection();
+                    let tether = ctx.user_stash().connection();
                     ExpectedMoveDestination::new(action, &tether).await
                 })
                 .collect::<Vec<_>>()

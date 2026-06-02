@@ -17,7 +17,9 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 
-use crate::{MailContextError, MailContextResult, MailUserContext};
+#[cfg(feature = "foundation_search")]
+use crate::MailContextError;
+use crate::{MailContextResult, MailUserContext};
 
 pub use mail_search::ContentSearchStartOutcome;
 
@@ -65,6 +67,7 @@ impl ContentSearchHistoricIndexingService {
     /// Build a service backed by the [`NoopContentSearchHistoricIndexing`]
     /// driver. Used for test harnesses and any [`MailContext`] constructed
     /// without a provider at [`crate::MailContext::new`].
+    #[cfg(feature = "foundation_search")]
     #[must_use]
     pub fn noop() -> Self {
         Self::with_driver(Arc::new(NoopContentSearchHistoricIndexing))
@@ -120,8 +123,10 @@ impl Drop for ContentSearchHistoricIndexingService {
 
 /// Default used when no provider was registered on [`crate::MailContext`]
 /// (tests and harnesses that do not drive historic indexing).
+#[cfg(feature = "foundation_search")]
 pub struct NoopContentSearchHistoricIndexing;
 
+#[cfg(feature = "foundation_search")]
 #[async_trait]
 impl ContentSearchHistoricIndexing for NoopContentSearchHistoricIndexing {
     async fn start(
@@ -166,6 +171,7 @@ impl ContentSearchHistoricIndexing for NoopContentSearchHistoricIndexing {
 mod tests {
     use super::*;
 
+    #[cfg(feature = "foundation_search")]
     #[test]
     fn noop_service_constructs_without_panicking() {
         let _service = ContentSearchHistoricIndexingService::noop();

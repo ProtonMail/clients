@@ -48,7 +48,7 @@ proton-crypto = { workspace = true }
 zeroizing-alloc = { workspace = true }
 
 [features]
-default = ["foundation_search"]
+default = []
 foundation_search = [
   "mail-common/foundation_search",
   "dep:mail-historic-ephemeral-load",

@@ -21,7 +21,6 @@ mod migration_snooper;
 pub mod models;
 mod prefetch;
 mod rsvp;
-#[cfg(feature = "foundation_search")]
 pub mod search;
 mod send_queries;
 mod sidebar;

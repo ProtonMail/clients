@@ -65,7 +65,7 @@ url = { workspace = true }
 zeroizing-alloc = { workspace = true }
 
 [features]
-default = ["foundation_search"]
+default = []
 # Foundation Search: local indexing, lab/debug FFI, and ephemeral historic load (API → index).
 foundation_search = [
   "mail-common/foundation_search",

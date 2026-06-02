@@ -1,6 +1,4 @@
-use crate::core::datatypes::{
-    ApiConfig, AppDetails, AppProtection, AppSettings, AppSettingsDiff, FeatureFlagVariant,
-};
+use crate::core::datatypes::{ApiConfig, AppDetails, AppProtection, AppSettings, AppSettingsDiff};
 use crate::core::device::{DeviceInfoProviderWrap, DynDeviceInfoProvider};
 use crate::core::measurement::{MeasurementEventType, MeasurementValue};
 use crate::core::verification::{ChallengeNotifierWrap, DynChallengeNotifier};
@@ -1204,33 +1202,6 @@ impl MailSession {
                 .map_err(MailContextError::from)?;
 
             Ok::<_, RealProtonMailError>(flag)
-        })
-        .await
-        .map_err(ProtonError::from)
-        .into()
-    }
-
-    /// Returns the active Unleash variant for a **global** feature flag, if any.
-    ///
-    /// Same scope as [`MailSession::is_feature_enabled`]: only global flags,
-    /// not refreshed while a user session is active. Prefer the per-user
-    /// equivalent on [`MailUserSession`] when a session exists.
-    #[tracing::instrument(skip_all)]
-    pub async fn get_feature_flag_variant(
-        &self,
-        feature_id: String,
-    ) -> Result<Option<FeatureFlagVariant>, ProtonError> {
-        let mail_ctx = self.mail_ctx.clone();
-
-        uniffi_async(async move {
-            let variant = mail_ctx
-                .core_context()
-                .feature_flags()
-                .get_feature_flag_variant(&feature_id)
-                .await
-                .map_err(MailContextError::from)?;
-
-            Ok::<_, RealProtonMailError>(variant.map(FeatureFlagVariant::from))
         })
         .await
         .map_err(ProtonError::from)

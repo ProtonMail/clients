@@ -1408,7 +1408,7 @@ pub enum UpsellEligibility {
     NotEligible,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum UpsellType {
     MailPlus,
     Unlimited,

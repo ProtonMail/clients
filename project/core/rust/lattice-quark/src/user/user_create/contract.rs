@@ -5,8 +5,13 @@ use crate::{LtQuarkContract, LtQuarkFormat, LtQuarkJSONRes, QuarkCommand};
 use super::super::{LtQuarkKeyType, LtQuarkUserStatus};
 use super::LtQuarkUserCreateRes;
 
-/// Create a new user in the quark system
-/// Equivalent of ./quark user:create [options]
+/// Create a new user in the quark system.
+///
+/// Quark CLI equivalent:
+///
+/// ```text
+/// ./quark user:create [options]
+/// ```
 pub struct LtQuarkUserCreate {
     pub name: String,
     pub password: String,

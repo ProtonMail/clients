@@ -4,8 +4,13 @@ use crate::{LtQuarkContract, LtQuarkResTryFrom, QuarkCommand};
 
 use super::{LtQuarkEventAction, LtQuarkEventAddResponse, LtQuarkEventType};
 
-/// Add an event to the quark system state
-/// Equivalent of ./quark event:add --uid <session_id> -- <username> <event_type> <item_id> <event_action>
+/// Add an event to the quark system state.
+///
+/// Quark CLI equivalent:
+///
+/// ```text
+/// ./quark event:add --uid <session_id> -- <username> <event_type> <item_id> <event_action>
+/// ```
 pub struct LtQuarkEventAdd {
     pub username: String,
     pub session_id: String,

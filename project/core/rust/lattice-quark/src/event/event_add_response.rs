@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use lattice::LatticeError;
 
-/// Exact line `Event added successfully` (via [`LtQuarkResTryFrom`]).
+/// Exact line `Event added successfully` (via [`crate::LtQuarkResTryFrom`]).
 #[derive(Debug, PartialEq, Eq)]
 pub enum LtQuarkEventAddResponse {
     Success,

@@ -167,7 +167,8 @@ use crate::{LatticeError, LtRequestBody, LtRequestQueryParams, LtResponseBody, M
 ///
 /// ## Query parameters
 ///
-/// Use [`LtSlimApiPageQuery`] with [`LtSerdeQueryParams`]; see `docs/CONTRACTS.md`.
+/// Use [`LtSlimApiPageQuery`](crate::contract::LtSlimApiPageQuery) with
+/// [`LtSerdeQueryParams`](crate::contract::LtSerdeQueryParams); see `docs/CONTRACTS.md`.
 pub trait LtContract {
     /// The response type for the contract.
     type Response: LtResponseBody;

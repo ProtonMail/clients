@@ -6,7 +6,12 @@ use super::super::LtQuarkKeyType;
 use super::LtQuarkUserResetRes;
 
 /// Reset an existing user, deactivating their keys and setting a new password.
-/// Equivalent of ./quark user:reset [options] -- <userID> <newPassword>
+///
+/// Quark CLI equivalent:
+///
+/// ```text
+/// ./quark user:reset [options] -- <userID> <newPassword>
+/// ```
 pub struct LtQuarkUserReset {
     pub user_id: u64,
     pub password: String,

@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use lattice::LatticeError;
 
-/// Any plain-text body is accepted (via [`LtQuarkResTryFrom`]).
+/// Any plain-text body is accepted (via [`crate::LtQuarkResTryFrom`]).
 #[derive(Debug, PartialEq, Eq)]
 pub struct LtQuarkJailUnbanRes;
 

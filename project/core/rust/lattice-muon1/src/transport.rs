@@ -3,7 +3,7 @@ use mail_muon::{ProtonRequest, ProtonResponse, common::Sender};
 
 use crate::{LtTransportError, Muon1WireRequestProvider};
 
-/// [`LtTransportProvider`] adapter for a [`Sender`](mail_muon::common::Sender).
+/// [`lattice::LtTransportProvider`] adapter for a [`mail_muon::common::Sender`].
 ///
 /// Holds a borrowed sender (mail stack sessions are typically used by reference).
 pub struct Muon1Transport<'a, S: ?Sized>

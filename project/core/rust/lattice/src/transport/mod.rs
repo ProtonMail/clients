@@ -1,7 +1,7 @@
 //! Transport-neutral HTTP wire layer for [`crate::LtContract`] contracts.
 //!
 //! This module sits between **contract definitions** ([`crate::LtContract`]) and **concrete HTTP
-//! clients** ([`lattice-muon1`], [`lattice-muon2`]). It does not depend on `muon` or `mail-muon`.
+//! clients** (`lattice-muon1`, `lattice-muon2`). It does not depend on `muon` or `mail-muon`.
 //!
 //! # Flow
 //!
@@ -30,7 +30,7 @@
 //! - **`serde`** (crate feature) — required for SlimAPI JSON error parsing in
 //!   [`LtWireResponse::into_contract_response`].
 //!
-//! Quark commands are provided by the separate [`lattice-quark`] crate.
+//! Quark commands are provided by the separate `lattice-quark` crate.
 //!
 //! # Muon adapters
 //!

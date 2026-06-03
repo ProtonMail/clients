@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use lattice::LatticeError;
 
-/// Decimal `u64` on a single line of plain text (via [`LtQuarkResTryFrom`]).
+/// Decimal `u64` on a single line of plain text (via [`crate::LtQuarkResTryFrom`]).
 #[derive(Debug, Clone, Copy)]
 pub struct LtQuarkEncryptionIdDecRes(pub u64);
 

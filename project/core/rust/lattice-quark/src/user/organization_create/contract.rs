@@ -4,8 +4,13 @@ use crate::{LtQuarkContract, LtQuarkFormat, LtQuarkJSONRes, QuarkCommand};
 
 use super::LtQuarkUserCreateOrganizationRes;
 
-/// Create a new organization and assign an administrator
-/// Equivalent of ./quark user:create:organization [options] [--] <userID> <password>
+/// Create a new organization and assign an administrator.
+///
+/// Quark CLI equivalent:
+///
+/// ```text
+/// ./quark user:create:organization [options] [--] <userID> <password>
+/// ```
 #[derive(Default)]
 pub struct LtQuarkUserCreateOrganization {
     /// Admin's UserID

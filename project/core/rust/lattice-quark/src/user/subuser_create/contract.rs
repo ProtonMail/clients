@@ -5,8 +5,13 @@ use crate::{LtQuarkContract, LtQuarkFormat, LtQuarkJSONRes, QuarkCommand};
 use super::super::LtQuarkKeyType;
 use super::LtQuarkUserCreateSubuserRes;
 
-/// Create a new subuser attached to an existing organization
-/// Equivalent of ./quark user:create:subuser [options] [--] <ownerUserID> <ownerPassword>
+/// Create a new subuser attached to an existing organization.
+///
+/// Quark CLI equivalent:
+///
+/// ```text
+/// ./quark user:create:subuser [options] [--] <ownerUserID> <ownerPassword>
+/// ```
 #[derive(Default)]
 pub struct LtQuarkUserCreateSubuser {
     /// UserID of admin user

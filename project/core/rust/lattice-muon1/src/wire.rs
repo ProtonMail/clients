@@ -3,7 +3,7 @@ use lattice::Sensitive;
 use lattice::{LtWireMethod, LtWireRequest, LtWireRequestProvider, LtWireResponse};
 use mail_muon::{ContentType, Method as MuonMethod, http::HttpReq, http::HttpRes};
 
-/// [`LtWireRequestProvider`] implementation for the mail-muon transport.
+/// [`lattice::LtWireRequestProvider`] implementation for the mail-muon transport.
 pub struct Muon1WireRequestProvider;
 
 impl LtWireRequestProvider for Muon1WireRequestProvider {

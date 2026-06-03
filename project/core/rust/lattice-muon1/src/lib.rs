@@ -1,11 +1,11 @@
 //! Muon v1 (`mail-muon` crate) integration for [`lattice`] contracts.
 //!
 //! Provides:
-//! - [`LtTransportProvider`] implementation for a [`Sender`](mail_muon::common::Sender) (see [`Muon1Transport`]).
-//! - [`LtWireRequestProvider`] implementation for the mail-muon transport (see [`Muon1WireRequestProvider`]).
-//! - [`LatticeExt`] trait for sending [`LtContract`]s using a [`Sender`](mail_muon::common::Sender) (see [`LatticeExt`]).
+//! - [`lattice::LtTransportProvider`] implementation for a [`mail_muon::common::Sender`] (see [`Muon1Transport`]).
+//! - [`lattice::LtWireRequestProvider`] implementation for the mail-muon transport (see [`Muon1WireRequestProvider`]).
+//! - [`LatticeExt`] trait for sending [`lattice::LtContract`]s using a [`mail_muon::common::Sender`] (see [`LatticeExt`]).
 //!   This trait provides: [`LatticeExt::send_with`] method that sends the contract using the [`Muon1Transport`].
-//! - [`RunLatticeContractExt`] trait for running [`LtContract`]s using a [`Sender`](mail_muon::common::Sender) (see [`RunLatticeContractExt`]).
+//! - [`RunLatticeContractExt`] trait for running [`lattice::LtContract`]s using a [`mail_muon::common::Sender`] (see [`RunLatticeContractExt`]).
 //!   This trait provides: [`RunLatticeContractExt::run_lattice_contract`] method that runs the contract using the [`Muon1Transport`].
 //! - [`LtTransportError`] type for errors that can occur when sending or running a contract.
 //!   This error type is a combination of:

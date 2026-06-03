@@ -7,7 +7,7 @@ use mail_muon::{ProtonRequest, ProtonResponse};
 
 use crate::{LtTransportError, Muon1Transport};
 
-/// Adds a `send_with` method to [`LtContract`] that sends the contract using a mail-muon [`Sender`].
+/// Adds a `send_with` method to [`lattice::LtContract`] that sends the contract using a mail-muon [`Sender`].
 pub trait LatticeExt: LtContract + Sized {
     fn send_with<S: Sender<ProtonRequest, ProtonResponse> + Sync>(
         &self,
@@ -23,7 +23,7 @@ pub trait LatticeExt: LtContract + Sized {
 
 impl<T: LtContract + Sized> LatticeExt for T {}
 
-/// Run a [`LtContract`] using a mail-muon [`Sender`].
+/// Run a [`lattice::LtContract`] using a mail-muon [`Sender`].
 pub trait RunLatticeContractExt: Sender<ProtonRequest, ProtonResponse> + Sync {
     fn run_lattice_contract<T: LtContract>(
         &self,

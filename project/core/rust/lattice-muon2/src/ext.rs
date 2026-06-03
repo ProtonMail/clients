@@ -6,7 +6,7 @@ use muon::Session;
 
 use crate::{LtTransportError, Muon2Transport};
 
-/// Send a [`LtContract`] using a Muon [`Session`].
+/// Send a [`lattice::LtContract`] using a Muon [`Session`].
 pub trait LatticeExt: LtContract + Sized {
     fn send_with<C: muon::Context + Send>(
         &self,

@@ -4,8 +4,13 @@ use crate::{LtQuarkContract, QuarkCommand};
 
 use super::LtQuarkNewPaymentsSeedSubscribedUserRes;
 
-/// Seed a user with a subscription in the new-payments system
-/// Equivalent of ./quark new-payments:seed:subscribed-user [options] [--] [<username> [<password> [<plan> [<cycle> [<currency>]]]]]
+/// Seed a user with a subscription in the new-payments system.
+///
+/// Quark CLI equivalent:
+///
+/// ```text
+/// ./quark new-payments:seed:subscribed-user [options] [--] [<username> [<password> [<plan> [<cycle> [<currency>]]]]]
+/// ```
 pub struct LtQuarkNewPaymentsSeedSubscribedUser {
     pub username: String,
     pub password: String,

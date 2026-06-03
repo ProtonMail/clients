@@ -128,6 +128,21 @@ pub type MuonCtx = GenericContext<
 >;
 pub type Client = muon::Client<MuonCtx>;
 
+/// Fail fast in CI when `ENV_NAME` was not exported before `cargo test`.
+#[cfg(ci)]
+fn require_env_name_in_ci() {
+    match std::env::var("ENV_NAME") {
+        Ok(name) => eprintln!("lattice integration tests: ENV_NAME={name}"),
+        Err(std::env::VarError::NotPresent) => panic!(
+            "ENV_NAME must be set in CI for lattice integration tests \
+             (source project/core/ci/scripts/export-env-name-from-ephemera.sh)"
+        ),
+        Err(std::env::VarError::NotUnicode(e)) => {
+            panic!("ENV_NAME is not valid Unicode: {}", e.display())
+        }
+    }
+}
+
 pub fn environment() -> muon::Environment {
     match std::env::var("ENV_NAME") {
         Ok(name) => Environment::new_atlas_name(name),
@@ -137,11 +152,17 @@ pub fn environment() -> muon::Environment {
 }
 
 pub fn new_client() -> Client {
+    #[cfg(ci)]
+    require_env_name_in_ci();
     let env = environment();
     let app = muon::App::new("ios-pass@1.17.0").unwrap();
     let builder = muon::Client::builder_with_transport::<Hyper>(app, env)
         .with_operating_system(MyOperatingSystem::default(), rand::rng())
         .with_multi_thread_executor(TokioExecutor);
+
+    #[cfg(ci)]
+    let builder = builder.proxy(muon::common::EnvProxy::all("http_proxy").into());
+
     builder
         .retry_policy(RetryPolicy::default())
         .without_persistence()

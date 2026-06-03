@@ -4,8 +4,13 @@ use crate::{LtQuarkContract, QuarkCommand};
 
 use super::LtQuarkOrganizationCreateDomainRes;
 
-/// Create a new domain for a given organization
-/// Equivalent of ./quark organization:create:domain [options] [--] <organization-id>
+/// Create a new domain for a given organization.
+///
+/// Quark CLI equivalent:
+///
+/// ```text
+/// ./quark organization:create:domain [options] [--] <organization-id>
+/// ```
 #[derive(Default)]
 pub struct LtQuarkOrganizationCreateDomain {
     /// Organization ID

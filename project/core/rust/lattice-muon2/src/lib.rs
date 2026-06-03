@@ -1,9 +1,9 @@
 //! Muon v2 (`muon` crate) integration for [`lattice`] contracts.
 //!
 //! Provides:
-//! - [`LtTransportProvider`] for any `SendRequest<HttpReq, HttpRes, …>` sender ([`Muon2Transport`]).
-//! - [`LtWireRequestProvider`] for muon HTTP ([`Muon2WireRequestProvider`]).
-//! - [`LatticeExt`] trait for sending [`LtContract`]s using a [`muon::Session`] (see [`LatticeExt`]).
+//! - [`lattice::LtTransportProvider`] for any `SendRequest<HttpReq, HttpRes, …>` sender ([`Muon2Transport`]).
+//! - [`lattice::LtWireRequestProvider`] for muon HTTP ([`Muon2WireRequestProvider`]).
+//! - [`LatticeExt`] trait for sending [`lattice::LtContract`]s using a [`muon::Session`] (see [`LatticeExt`]).
 //!   This trait provides: [`LatticeExt::send_with`] method that sends the contract using the [`Muon2Transport`].
 //! - [`LtTransportError`] type for errors that can occur when sending or running a contract.
 //!   This error type is a combination of:

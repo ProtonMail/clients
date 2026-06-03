@@ -4,7 +4,7 @@ use serde::de::DeserializeOwned;
 
 use super::LtQuarkRes;
 
-/// JSON object body (`serde` deserialize). Request the command with `-f json` ([`LtQuarkFormat::Json`]).
+/// JSON object body (`serde` deserialize). Request the command with `-f json` ([`super::LtQuarkFormat::Json`]).
 #[derive(Debug, Clone, Copy, Deref)]
 pub struct LtQuarkJSONRes<T: DeserializeOwned>(pub T);
 

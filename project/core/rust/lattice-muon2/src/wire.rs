@@ -4,7 +4,7 @@ use lattice::{LtWireMethod, LtWireRequest, LtWireRequestProvider, LtWireResponse
 use muon::common::ContentType;
 use muon::http::{HttpReq, HttpRes, Method as MuonMethod};
 
-/// [`LtWireRequestProvider`] implementation for the muon transport.
+/// [`lattice::LtWireRequestProvider`] implementation for the muon transport.
 pub struct Muon2WireRequestProvider;
 
 impl LtWireRequestProvider for Muon2WireRequestProvider {

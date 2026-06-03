@@ -2278,15 +2278,17 @@ dependencies = [
 name = "core-crux-shell"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "async-stream",
  "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "derive_more 2.1.1",
  "futures",
+ "itertools 0.14.0",
  "serde",
+ "thiserror 2.0.18",
  "tokio",
  "tokio-util",
  "tracing",
- "tracing-subscriber",
  "uniffi 0.30.0",
 ]
 

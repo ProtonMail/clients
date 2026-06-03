@@ -29,3 +29,6 @@ rust_doc_test(
     name = "lattice-doc-test",
     crate = ":lattice",
 )
+
+# Consumed via include_bytes! by account-crux-ffi's SSO integration tests.
+exports_files(["tests/sso_cert.pem"])

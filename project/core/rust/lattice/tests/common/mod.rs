@@ -1,8 +1,12 @@
 #![allow(dead_code)]
-#![allow(unused_imports)]
 
 mod auth;
+pub mod device_approval;
 mod muon;
+mod org_member_error;
+mod org_members;
+pub mod sso_login;
+pub mod sso_member_setup;
 pub mod sso_setup;
 mod test_transport;
 pub mod unprivatize_admin;

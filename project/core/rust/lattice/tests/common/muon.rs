@@ -9,7 +9,7 @@ use muon::{
     auth::{Auth, Tokens},
     client::builder::Hyper,
     common::{GenericContext, RetryPolicy},
-    http::{HttpReq, HttpRes, hyper::connector::HyperConnector},
+    http::hyper::connector::HyperConnector,
     rt::{
         InstantFactory, Monotonic, MuonInstant, MuonSystemTime, OperatingSystem, Resolve,
         SinceUnixEpoch, Sleep, SystemTimeFactory, TcpConnect,
@@ -17,14 +17,15 @@ use muon::{
     store::WithoutPersistence,
 };
 
-use lattice::{LtTransportProvider, LtWireRequest, LtWireRequestProvider};
-
+use lattice::LtTransportProvider;
+use lattice::core::members::devices::LtCoreGetMembersDevicesPendingReq;
 use lattice::{
-    LatticeError, LtApiResponseError, LtContract, LtResponseBody, LtSlimAPIJSON,
+    LtContract, LtResponseBody, LtSlimAPIJSON,
     auth::LtAuthApiSession,
+    auth::devices::{LtAuthDevice, LtAuthDeviceState, LtAuthGetDevicesReq},
 };
-use lattice_muon2::{LtTransportError, Muon2Transport, Muon2WireRequestProvider};
-use lattice_quark::{LtQuarkContract, LtQuarkTransportProvider, jail::unban::LtQuarkJailUnban};
+use lattice_muon2::LtTransportError;
+use lattice_quark::{LtQuarkContract, LtQuarkTransportProvider};
 use serde::Deserialize;
 
 use crate::common::test_transport::Muon2TestTransport;
@@ -239,5 +240,18 @@ impl Session {
         Muon2TestTransport::new(self.0.clone())
             .send_contract_quark(&req)
             .await
+    }
+
+    pub async fn auth_devices(&self) -> Result<Vec<LtAuthDevice>, LtTransportError> {
+        Ok(self.send_lt(LtAuthGetDevicesReq).await?.auth_devices)
+    }
+
+    pub async fn admin_pending_devices(&self) -> Result<Vec<LtAuthDevice>, LtTransportError> {
+        let res = self.send_lt(LtCoreGetMembersDevicesPendingReq).await?;
+        Ok(res
+            .member_auth_devices
+            .into_iter()
+            .filter(|d| d.state == LtAuthDeviceState::PendingAdminActivation)
+            .collect())
     }
 }

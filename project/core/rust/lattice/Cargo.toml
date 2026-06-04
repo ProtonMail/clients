@@ -41,6 +41,7 @@
   url = { workspace = true, optional = true }
 
 [dev-dependencies]
+  derive_more = { workspace = true }
   regex = "1.10"
   lattice-quark = { path = "../lattice-quark" }
   lattice-muon2 = { path = "../lattice-muon2" }
@@ -53,6 +54,10 @@
   totp-rs = { version = "5.7" }
   proton-crypto = { workspace = true }
   proton-crypto-account = { workspace = true, default-features = false, features = ["rustpgp"] }
+  proton-crypto-subtle = { workspace = true, features = ["legacy"] }
+  sha2 = { workspace = true }
+  data-encoding = "2"
+  core-key = { path = "../core-key" }
 
   # SSO test dependencies (TLS via rustls; no default-tls/charset/http2/system-proxy)
   reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }

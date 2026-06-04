@@ -10,10 +10,9 @@
 //!   member `GET /auth/v4/devices`
 //! * member `GET /members/me/unprivatize` (**Pending** after a valid invite)
 //!
-//! Requires a live atlas stack; set `ENV_NAME` to target a specific env (default in test harness: `freud`).
+//! Requires a live atlas stack; run with `ENV_NAME=davy` (see `tests/common/muon.rs`).
 
 mod common;
-mod common_sso;
 
 use lattice::auth::devices::get_auth_devices::LtAuthGetDevicesReq;
 use lattice::core::addresses::LtCoreAddressesListQuery;
@@ -28,10 +27,9 @@ use lattice::core::members::devices::{
 use lattice::core::unpriv_types::LtCoreUnprivState;
 use lattice::core::user_settings::LtCoreGetSettingsReq;
 use lattice::{LtApiResponseError, LtApiResponseErrorInfo};
-use proton_crypto::new_pgp_provider;
 
 use crate::common::{
-    generate_muon_session, login_muon_session, random_string, sso_setup, unprivatize_admin,
+    device_approval::sso_org::SsoOrg, generate_muon_session, random_string, sso_login,
 };
 
 /// Same unauthenticated preflight as `tests/sso.rs`.
@@ -45,32 +43,12 @@ async fn test_unprivatize_admin_sets_member_me_endpoint_to_pending() {
         LtApiResponseError::AccessTokenWithInsufficientScope(LtApiResponseErrorInfo { .. })
     );
 
-    let username = format!("ssoa_{}", random_string(8));
-    let password = random_string(34);
-
-    let admin_user =
-        sso_setup::purchase_pass_business_plan(&session_init, &username, &password).await;
-    let org_res =
-        sso_setup::create_organization(&session_init, admin_user.user_id, &password).await;
-
-    let random_suffix = random_string(6).to_lowercase();
-    let domain_name = format!("d{random_suffix}.protonhub.org");
-
-    let (admin_session, _) = login_muon_session(session_init, &username, &password)
-        .await
-        .unwrap();
-
-    sso_setup::create_domain_quark(&admin_session, &domain_name, org_res.organization_id).await;
-    let domain_lt = sso_setup::get_domain_lt(&admin_session, &domain_name).await;
-    sso_setup::set_sso_domain(&admin_session, &domain_lt.id).await;
-    let refreshed = sso_setup::refresh_domain_good(&admin_session, &domain_lt.id).await;
-    sso_setup::assert_domain_verify_good(&refreshed);
-
-    let subuser_with_domain = format!("ssou_{}@{domain_name}", random_string(8));
+    let org = SsoOrg::bootstrap().await.expect("bootstrap sso org");
+    let subuser_with_domain = format!("ssou_{}@{}", random_string(8), org.domain_name);
 
     // `POST /auth` (SSO) must run first so the org member row exists.
     let subuser_after_sso =
-        common_sso::login_with_sso(generate_muon_session().await, &subuser_with_domain)
+        sso_login::login_with_sso(generate_muon_session().await, &subuser_with_domain)
             .await
             .expect("SSO subuser seed");
 
@@ -79,16 +57,17 @@ async fn test_unprivatize_admin_sets_member_me_endpoint_to_pending() {
         .await;
     assert_api_err!(me_before, LtApiResponseError::UnprivatizationNotExists(..));
 
-    // Split API: one PGP `load` then publish + unprivatize (reuses `AdminPgpState`).
-    let pgp = new_pgp_provider();
-    let pgp_state = unprivatize_admin::load_admin_pgp_state(pgp, &admin_session, &password)
+    // One PGP load, then publish before unprivatize (reuses `AdminPgpState`).
+    let admin_state = org
+        .load_admin_pgp_state()
         .await
         .expect("load admin PGP state");
-    unprivatize_admin::publish_org_identity(&admin_session, &pgp_state)
+    org.publish_org_identity(&admin_state)
         .await
         .expect("PUT /organizations/keys/signature");
 
-    let org_keys_after_publish = admin_session
+    let org_keys_after_publish = org
+        .admin_session
         .send_lt(LtCoreGetOrganizationsKeysReq)
         .await
         .expect("GET /organizations/keys after identity publish");
@@ -109,11 +88,12 @@ async fn test_unprivatize_admin_sets_member_me_endpoint_to_pending() {
         "fingerprint signature should be armored PGP"
     );
 
-    unprivatize_admin::unprivatize_member(&admin_session, &pgp_state, &subuser_with_domain)
+    org.unprivatize_member(&admin_state, &subuser_with_domain)
         .await
         .expect("POST /members/…/unprivatize");
 
-    let members = admin_session
+    let members = org
+        .admin_session
         .send_lt(LtCoreGetMembersReq::default())
         .await
         .expect("GET /members");
@@ -130,7 +110,8 @@ async fn test_unprivatize_admin_sets_member_me_endpoint_to_pending() {
 
     let sso_member_id = sso_member.id.clone();
 
-    let member_addresses = admin_session
+    let member_addresses = org
+        .admin_session
         .send_lt(LtCoreGetMembersMemberIDAddressesReq {
             member_id: sso_member_id.clone(),
             query: LtCoreAddressesListQuery::default(),
@@ -139,7 +120,8 @@ async fn test_unprivatize_admin_sets_member_me_endpoint_to_pending() {
         .expect("GET /members/{id}/addresses");
     assert_eq!(member_addresses.addresses.len(), 1);
 
-    let unknown_member_addresses = admin_session
+    let unknown_member_addresses = org
+        .admin_session
         .send_lt(LtCoreGetMembersMemberIDAddressesReq {
             member_id: LtCoreMemberEncId("not-a-valid-member-id".to_string()),
             query: LtCoreAddressesListQuery::default(),
@@ -147,14 +129,16 @@ async fn test_unprivatize_admin_sets_member_me_endpoint_to_pending() {
         .await;
     assert_api_err!(unknown_member_addresses, LtApiResponseError::InvalidID(..));
 
-    let admin_member_devices = admin_session
+    let admin_member_devices = org
+        .admin_session
         .send_lt(LtCoreGetMembersDevicesReq {
             member_id: sso_member_id,
         })
         .await
         .expect("GET /members/{id}/devices (admin)");
 
-    let org_pending_devices = admin_session
+    let org_pending_devices = org
+        .admin_session
         .send_lt(LtCoreGetMembersDevicesPendingReq)
         .await
         .expect("GET /members/devices/pending");
@@ -162,7 +146,7 @@ async fn test_unprivatize_admin_sets_member_me_endpoint_to_pending() {
     // Re-authenticate: access token from the pre-invite SSO can expire while admin crypto runs; muon may
     // then return `Auth(Session)` on the next `core` call.
     let subuser_session =
-        common_sso::login_with_sso(generate_muon_session().await, &subuser_with_domain)
+        sso_login::login_with_sso(generate_muon_session().await, &subuser_with_domain)
             .await
             .expect("SSO re-login for GET /members/me/unprivatize");
 

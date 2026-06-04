@@ -1,5 +1,8 @@
 // Core key library
 
+pub mod keys_setup;
+pub use keys_setup::{build_setup_keys_body, generate_user_and_address_keys};
+
 use lattice::core::LtCoreAddressFlags;
 use proton_crypto_account::errors::{AccountCryptoError, SKLError};
 use proton_crypto_account::keys::{

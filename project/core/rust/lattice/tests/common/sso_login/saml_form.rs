@@ -1,6 +1,20 @@
 use std::fmt::Display;
+use std::sync::LazyLock;
 
-use crate::common_sso::{extract_field, get_token_from_html};
+use super::{
+    SAML_FORM_ACTION_RE, SAML_RELAY_STATE_RE, SAML_RESPONSE_RE, extract_field, get_token_from_html,
+};
+
+static TEST_HTTP_CLIENT: LazyLock<reqwest::Client> = LazyLock::new(|| {
+    reqwest::Client::builder()
+        .redirect(reqwest::redirect::Policy::none())
+        .build()
+        .expect("Failed to build test HTTP client")
+});
+
+fn test_http_client() -> &'static reqwest::Client {
+    &TEST_HTTP_CLIENT
+}
 
 #[derive(Debug)]
 pub struct SAMLForm {
@@ -34,12 +48,7 @@ impl std::error::Error for SAMLParsingError {}
 
 impl SAMLForm {
     pub async fn from_challenge_url(url: &str) -> Result<SAMLForm, SAMLParsingError> {
-        let client = reqwest::Client::builder()
-            .redirect(reqwest::redirect::Policy::none())
-            .build()
-            .expect("Failed to build client");
-
-        let res = client
+        let res = test_http_client()
             .get(url)
             .send()
             .await
@@ -50,23 +59,14 @@ impl SAMLForm {
     }
 
     pub fn from_html(html: &str) -> Result<SAMLForm, SAMLParsingError> {
-        let action = extract_field(
-            html,
-            r#"<form id="samlForm" action="([^"]+)" method="post""#,
-        )
-        .ok_or(SAMLParsingError::MissingAction)?;
+        let action =
+            extract_field(html, &SAML_FORM_ACTION_RE).ok_or(SAMLParsingError::MissingAction)?;
 
-        let saml_response = extract_field(
-            html,
-            r#"<input type="hidden" name="SAMLResponse" value="([^"]+)">"#,
-        )
-        .ok_or(SAMLParsingError::MissingSAMLResponse)?;
+        let saml_response =
+            extract_field(html, &SAML_RESPONSE_RE).ok_or(SAMLParsingError::MissingSAMLResponse)?;
 
-        let relay_state = extract_field(
-            html,
-            r#"<input type="hidden" name="RelayState" value="([^"]+)">"#,
-        )
-        .ok_or(SAMLParsingError::MissingRelayState)?;
+        let relay_state =
+            extract_field(html, &SAML_RELAY_STATE_RE).ok_or(SAMLParsingError::MissingRelayState)?;
 
         Ok(SAMLForm {
             action,
@@ -76,11 +76,7 @@ impl SAMLForm {
     }
 
     pub async fn request_sso_token(&self) -> Result<String, SAMLPostError> {
-        let client = reqwest::Client::builder()
-            .redirect(reqwest::redirect::Policy::none())
-            .build()
-            .unwrap();
-        let res = client
+        let res = test_http_client()
             .post(&self.action)
             .form(&[
                 ("SAMLResponse", &self.saml_response),

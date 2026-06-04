@@ -1,11 +1,10 @@
-use muon::auth::{Auth, Tokens};
 use proton_crypto_account::proton_crypto::{
     CryptoError, new_srp_provider,
     srp::{ClientProof, SRPProvider},
 };
 use rand::{
     Rng,
-    distr::{Alphabetic, Alphanumeric, SampleString, Uniform},
+    distr::{Alphabetic, SampleString, Uniform},
 };
 use serde_json::{Value, json};
 

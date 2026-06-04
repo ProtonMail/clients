@@ -49,7 +49,7 @@ pub struct LtCoreUnprivatizeAddressKey {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
 pub struct LtCoreUnprivatizeOrganizationKeyActivation {
-    pub token: Sensitive<String>,
+    pub token_key_packet: Sensitive<String>,
     pub signature: Sensitive<String>,
 }
 

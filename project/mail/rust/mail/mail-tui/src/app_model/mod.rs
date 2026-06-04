@@ -189,6 +189,7 @@ impl AppModel {
             core_cache_dir,
             mail_cache_dir,
             1 << 25, // 32MiB
+            None,
             Arc::new(keychain),
             app_config.api_config(),
             None, // TODO(jhoulahan): Support HV challenge (at least sms/email)

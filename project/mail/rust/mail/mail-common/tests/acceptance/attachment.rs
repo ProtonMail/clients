@@ -134,6 +134,7 @@ async fn load_attachment_from_cache() {
         testdata_expected_attachment_decrypted(),
         "attachments should be equal"
     );
+    quarantine_is_set(&decryption_result);
 }
 
 #[tokio::test]
@@ -214,3 +215,24 @@ fn filename_is_correct(at: &DecryptedAttachment) {
     let path_name = path.file_name().unwrap().to_string_lossy();
     assert_eq!(path_name, at.attachment_metadata.filename);
 }
+
+#[cfg(target_os = "macos")]
+fn quarantine_is_set(at: &DecryptedAttachment) {
+    use mail_common::file_quarantine::FileQuarantineXattr;
+
+    let data_str = FileQuarantineXattr::get_quarantine_xattr(&at.data_path).unwrap();
+    let mut split = data_str.split(';');
+    assert_eq!(split.next().unwrap(), "0083", "should set 0083 flags");
+    // Skip timestamp
+    let _ = split.next().unwrap();
+    assert_eq!(
+        split.next().unwrap(),
+        "Proton Mail",
+        "should use default app name"
+    );
+    assert_eq!(split.next().unwrap(), "", "should not set uuid");
+    assert!(split.next().is_none());
+}
+
+#[cfg(not(target_os = "macos"))]
+fn quarantine_is_set(_at: &DecryptedAttachment) {}

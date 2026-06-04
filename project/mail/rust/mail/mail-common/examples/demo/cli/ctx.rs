@@ -41,6 +41,7 @@ where
         dir.join("cache").join("core"),
         dir.join("cache").join("mail"),
         CACHE_SIZE,
+        None,
         kch,
         cfg,
         Some(hvn),

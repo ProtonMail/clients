@@ -93,6 +93,7 @@ uuid = { workspace = true }
 sqlite-watcher = { workspace = true }
 reqwest = { workspace = true }
 mail-issue-reporter-service = { workspace = true }
+rustix = { version = "1.1.4", features = ["fs"] }
 
 # test-util option deps
 function_name = { workspace = true, optional = true }

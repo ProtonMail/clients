@@ -7,6 +7,7 @@ pub mod datatypes;
 pub mod db;
 pub mod draft;
 mod errors;
+pub mod file_quarantine;
 mod historic_mailbox_observer_error_code;
 pub mod historic_mailbox_walker;
 mod historic_mailbox_walker_incomplete_reason;

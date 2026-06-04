@@ -1,4 +1,5 @@
 use crate::actions::MailActionError;
+use crate::file_quarantine::{FileQuarantineXattr, FileQuarantineXattrSetter};
 use crate::migration_snooper::MailMigrationSnooper;
 use crate::{AppError, ImageLoaderError, MailUserContext, draft};
 use anyhow::anyhow;
@@ -298,6 +299,7 @@ pub struct MailContext {
     core_context: Arc<Context>,
     mail_cache_path: PathBuf,
     pub attachment_cache_size: u64,
+    quarantine: FileQuarantineXattr,
     active_user_contexts: Mutex<HashMap<UserId, Weak<MailUserContext>>>,
     http_client: OnceLock<reqwest::Client>,
     /// Optional per-context provider for the historic content-search
@@ -325,6 +327,7 @@ impl MailContext {
         core_cache_path: impl Into<PathBuf>,
         mail_cache_path: impl Into<PathBuf>,
         cache_size: u64,
+        quarantine_xattr_name: Option<String>,
         key_chain: Arc<dyn KeyChain>,
         api_config: ApiConfig,
         hv_notifier: Option<DynChallengeNotifier>,
@@ -364,6 +367,7 @@ impl MailContext {
             core_context,
             mail_cache_path: mail_cache_path.into(),
             attachment_cache_size: cache_size,
+            quarantine: FileQuarantineXattr::new_or_fallback(quarantine_xattr_name),
             active_user_contexts: Mutex::new(HashMap::new()),
             http_client: OnceLock::new(),
             historic_indexing_provider,
@@ -379,12 +383,14 @@ impl MailContext {
         core_context: Arc<Context>,
         mail_cache_path: PathBuf,
         mail_cache_size: u64,
+        quarantine_xattr_name: Option<String>,
         historic_indexing_provider: Option<crate::search::ContentSearchHistoricIndexingProvider>,
     ) -> Result<Arc<Self>, MailContextError> {
         let ctx = Arc::new(Self {
             core_context,
             mail_cache_path,
             attachment_cache_size: mail_cache_size,
+            quarantine: FileQuarantineXattr::new_or_fallback(quarantine_xattr_name),
             active_user_contexts: Mutex::new(HashMap::new()),
             http_client: OnceLock::new(),
             historic_indexing_provider,
@@ -1044,6 +1050,10 @@ impl MailContext {
 
     pub fn issue_reporter_service(&self) -> &IssueReporterService {
         self.core_context.issue_reporter_service()
+    }
+
+    pub fn quarantine_xattr_setter(&self) -> &dyn FileQuarantineXattrSetter {
+        &self.quarantine
     }
 }
 

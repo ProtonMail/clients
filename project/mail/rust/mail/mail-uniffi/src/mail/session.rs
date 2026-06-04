@@ -96,6 +96,7 @@ pub struct MailSessionParams {
     pub log_debug: bool,
     pub api_env_config: Option<ApiConfig>,
     pub app_details: AppDetails,
+    pub quarantine_xattr_app_name: Option<String>,
     pub event_poll_duration_seconds: Option<u64>,
 }
 
@@ -227,6 +228,7 @@ async fn create_mail_session_inner(
         core_cache_path,
         mail_cache_path,
         params.mail_cache_size,
+        params.quarantine_xattr_app_name.clone(),
         Arc::new(key_chain),
         api_env_config,
         hv_notifier,

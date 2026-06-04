@@ -2,8 +2,8 @@ use crate::datatypes::{AttachmentMetadata, LocalAttachmentId};
 use crate::draft::SaveError;
 use crate::models::{
     Attachment, DraftAttachmentInternalDispositionError, DraftAttachmentInternalError,
-    DraftAttachmentInternalUploadError, DraftAttachmentMetadata, DraftAttachmentUploadState,
-    DraftMetadata, MetadataId,
+    DraftAttachmentInternalRemoveRerror, DraftAttachmentInternalUploadError,
+    DraftAttachmentMetadata, DraftAttachmentUploadState, DraftMetadata, MetadataId,
 };
 use crate::{MailContextError, MailContextResult, MailUserContext};
 use mail_api::services::proton::prelude::DraftAttachmentKeyPackets;
@@ -34,6 +34,7 @@ pub struct DraftAttachment {
 pub enum DraftAttachmentError {
     Upload(DraftAttachmentUploadError),
     DispositionSwap(DraftAttachmentDispositionSwapError),
+    Remove(DraftAttachmentRemoveError),
 }
 
 #[derive(Debug)]
@@ -60,11 +61,20 @@ pub enum DraftAttachmentDispositionSwapError {
     Unexpected,
 }
 
+#[derive(Debug)]
+pub enum DraftAttachmentRemoveError {
+    AttachmentNotFound,
+    Server(String),
+    Unexpected,
+    BadRequest(String),
+}
+
 impl From<DraftAttachmentInternalError> for DraftAttachmentError {
     fn from(value: DraftAttachmentInternalError) -> Self {
         match value {
             DraftAttachmentInternalError::Upload(e) => Self::Upload(e.into()),
             DraftAttachmentInternalError::DispositionSwap(e) => Self::DispositionSwap(e.into()),
+            DraftAttachmentInternalError::Remove(e) => Self::Remove(e.into()),
         }
     }
 }
@@ -101,6 +111,17 @@ impl From<DraftAttachmentInternalDispositionError> for DraftAttachmentDispositio
             }
             DraftAttachmentInternalDispositionError::Unexpected => Self::Unexpected,
             DraftAttachmentInternalDispositionError::BadRequest(error) => Self::BadRequest(error),
+        }
+    }
+}
+
+impl From<DraftAttachmentInternalRemoveRerror> for DraftAttachmentRemoveError {
+    fn from(value: DraftAttachmentInternalRemoveRerror) -> Self {
+        match value {
+            DraftAttachmentInternalRemoveRerror::AttachmentNotFound => Self::AttachmentNotFound,
+            DraftAttachmentInternalRemoveRerror::Server(e) => Self::Server(e),
+            DraftAttachmentInternalRemoveRerror::Unexpected => Self::Unexpected,
+            DraftAttachmentInternalRemoveRerror::BadRequest(e) => Self::BadRequest(e),
         }
     }
 }

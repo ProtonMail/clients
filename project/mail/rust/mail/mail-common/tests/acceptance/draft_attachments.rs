@@ -11,16 +11,19 @@ use mail_api::services::proton::prelude::{
 };
 use mail_api::services::proton::request_data::NewAttachmentParams;
 use mail_api::services::proton::response_data::{MessageAttachment, MessageRecipient};
-use mail_common::actions::draft::AttachmentDispositionUpdate;
+use mail_common::actions::draft::{AttachmentDispositionUpdate, AttachmentRemove};
 use mail_common::datatypes::attachment::ContentId;
 use mail_common::datatypes::{Disposition, MimeType};
 use mail_common::draft::attachments::DraftAttachmentState;
+use mail_common::draft::observers::DraftSendResultWatcher;
 use mail_common::draft::recipients::RecipientEntry;
 use mail_common::draft::{
-    AttachmentDispositionSwapError, Draft, DraftSyncStatus, RecipientGroupId, ReplyMode,
+    AttachmentDispositionSwapError, AttachmentRemoveError, Draft, DraftSyncStatus,
+    RecipientGroupId, ReplyMode,
 };
 use mail_common::models::{
-    Attachment, DraftAttachmentMetadata, DraftAttachmentUploadState, Message,
+    Attachment, DraftAttachmentMetadata, DraftAttachmentUploadState, DraftSendFailure,
+    DraftSendFailureAttachmentRemove, DraftSendResultOrigin, Message,
 };
 use mail_common::test_utils::message_body::{
     TEST_USER_ID, message_body_test_message_mime, message_body_test_user_secret,
@@ -38,6 +41,7 @@ use mail_stash::UserDb;
 use mail_stash::orm::Model;
 use mail_stash::stash::{StashError, Tether};
 use std::path::Path;
+use std::time::Duration;
 
 #[tokio::test]
 async fn attachment_not_removed_on_error() {
@@ -1812,6 +1816,148 @@ async fn attachment_remove_runs_after_upload() {
             .unwrap()
             .is_none()
     );
+}
+
+#[tokio::test]
+async fn attachment_remove_failure_cancels_send() {
+    // Set up a user and initialise the inbox
+    let ctx = MailTestContext::with_user_secret_and_user_id(
+        message_body_test_user_secret(),
+        UserId::from(TEST_USER_ID),
+    )
+    .await;
+
+    let params = draft_test_params();
+    let attachment_file = tempfile::NamedTempFile::new().unwrap();
+    let mut message = draft_message();
+    message.metadata.to_list.push(MessageRecipient {
+        address: "foo@bar.com".into(),
+        is_proton: false,
+        name: Default::default(),
+        group: None,
+    });
+    let mut expected_draft_params = expected_create_draft_params();
+    expected_draft_params.to_list.push(DraftRecipient {
+        address: "foo@bar.com".into(),
+        name: Default::default(),
+        group: None,
+    });
+
+    ctx.setup_user(params.clone()).await;
+
+    ctx.mock_create_draft(
+        expected_draft_params.clone(),
+        None,
+        message.clone(),
+        None,
+        Some(DraftAttachmentKeyPackets::new()),
+    )
+    .await;
+
+    let user_ctx = ctx.mail_user_context().await;
+
+    // Create draft.
+    let mut draft = Draft::empty(&user_ctx).await.unwrap();
+
+    draft
+        .add_single_recipient(
+            RecipientGroupId::To,
+            RecipientEntry {
+                email: "foo@bar.com".into(),
+                name: None,
+            },
+        )
+        .await
+        .unwrap();
+    draft.save().await.unwrap();
+
+    // Execute action.
+    user_ctx.execute_all_send_actions().await.unwrap();
+
+    // Create attachment
+    let mut tether = user_ctx.user_stash().connection();
+
+    let local_attachment = create_and_add_attachment(
+        &user_ctx,
+        attachment_file.path(),
+        Disposition::Attachment,
+        &mut draft,
+        None,
+        &mut tether,
+    )
+    .await;
+
+    let remote_attachment_id = AttachmentId::from("ATTACHMENT");
+
+    ctx.mock_create_attachment(
+        new_attachment_params(attachment_file.path(), message.metadata.id.clone()),
+        Ok(PostAttachmentResponse {
+            attachment: NewAttachmentResponse {
+                id: remote_attachment_id.clone(),
+                disposition: ApiDisposition::Attachment,
+                enc_signature: None,
+                key_packets: KeyPackets(String::new()),
+                file_name: local_attachment.filename.clone(),
+                signature: None,
+                file_size: local_attachment.size,
+                headers: MessageAttachmentHeaders {
+                    content_disposition: ContentDisposition::One("attachment".into()),
+                    content_id: None,
+                    content_transfer_encoding: None,
+                    image_height: None,
+                    image_width: None,
+                },
+            },
+        }),
+    )
+    .await;
+
+    ctx.mock_delete_attachment_failure(remote_attachment_id)
+        .await;
+
+    draft
+        .remove_attachment(local_attachment.id())
+        .await
+        .unwrap();
+
+    draft.send().await.unwrap();
+
+    let mut observer = DraftSendResultWatcher::new(
+        user_ctx.user_stash().clone(),
+        draft::observers::DraftSendResultWatcherMode::SentOnly,
+    )
+    .await
+    .unwrap();
+
+    let QueuedError::Action(e, _) = user_ctx.execute_all_send_actions().await.unwrap_err() else {
+        unreachable!();
+    };
+
+    let e = e.as_action_error::<AttachmentRemove, UserDb>().unwrap();
+    assert!(matches!(
+        e,
+        ActionError::Action(MailContextError::Draft(draft::Error::AttachmentRemove(
+            AttachmentRemoveError::BadRequest(_)
+        )))
+    ));
+
+    let mut result = tokio::time::timeout(Duration::from_secs(5), observer.next())
+        .await
+        .unwrap()
+        .unwrap();
+
+    let result = result.pop().unwrap();
+
+    assert!(matches!(
+        result.error,
+        Some(DraftSendFailure::AttachmentRemove(
+            DraftSendFailureAttachmentRemove::BadRequest(_)
+        ))
+    ));
+    assert!(matches!(
+        result.origin,
+        DraftSendResultOrigin::AttachmentRemove
+    ));
 }
 
 async fn create_and_add_attachment(

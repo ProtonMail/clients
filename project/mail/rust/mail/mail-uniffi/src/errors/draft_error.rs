@@ -5,6 +5,7 @@ use super::{
     DraftSenderAddressChangeErrorReason, DraftUndoSendErrorReason, ProtonError,
 };
 use crate::UniffiEnum;
+use crate::errors::DraftAttachmentRemoveErrorReason;
 use derive_more::From;
 use mail_common::{
     DraftAttachmentUploadErrorReason as RealDraftAttachmentErrorReason,
@@ -291,6 +292,30 @@ impl From<RealMailErrorReason> for DraftAttachmentDispositionSwapError {
             RealMailErrorReason::DraftAttachmentDispositionSwapError(reason) => {
                 Self::Reason(reason.into())
             }
+            other_reason => Self::Other(ProtonError::from(other_reason)),
+        }
+    }
+}
+
+#[derive(Debug, From, UniffiEnum)]
+pub enum DraftAttachmentRemoveError {
+    Reason(DraftAttachmentRemoveErrorReason),
+    Other(ProtonError),
+}
+
+impl From<RealProtonMailError> for DraftAttachmentRemoveError {
+    fn from(error: RealProtonMailError) -> Self {
+        match error {
+            RealProtonMailError::Reason(reason) => reason.into(),
+            mail_error => Self::Other(ProtonError::from(mail_error)),
+        }
+    }
+}
+
+impl From<RealMailErrorReason> for DraftAttachmentRemoveError {
+    fn from(reason: RealMailErrorReason) -> Self {
+        match reason {
+            RealMailErrorReason::DraftAttachmentRemoveReason(reason) => Self::Reason(reason.into()),
             other_reason => Self::Other(ProtonError::from(other_reason)),
         }
     }

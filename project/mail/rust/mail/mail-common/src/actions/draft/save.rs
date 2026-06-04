@@ -140,7 +140,7 @@ impl Action<UserDb> for Save {
 
     fn dependency_keys(&self) -> ActionDependencyKeys {
         ActionDependencyKeysBuilder::new()
-            .with_any_draft_attachment_uploads_required(self.metadata_id)
+            .with_any_draft_attachments_required(self.metadata_id)
             .build()
     }
 }

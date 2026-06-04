@@ -72,7 +72,8 @@ impl Action<UserDb> for AttachmentDispositionUpdate {
 
     fn dependency_keys(&self) -> ActionDependencyKeys {
         ActionDependencyKeysBuilder::new()
-            .record_draft_attachment_use(self.metadata_id, self.attachment_id)
+            .with_draft_attachment_required(self.metadata_id, self.attachment_id)
+            .record_draft_attachment(self.metadata_id, self.attachment_id)
             .build()
     }
 }

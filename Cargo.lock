@@ -1436,6 +1436,7 @@ dependencies = [
  "calendar-database",
  "calendar-database-diesel",
  "calendar-database-test-utils",
+ "calendar-ical",
  "calendar-network",
  "calendar-network-fake",
  "contact-avatar",
@@ -1620,9 +1621,11 @@ name = "calendar-tui"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "calendar-access",
  "calendar-crux",
  "calendar-database-diesel",
  "calendar-events",
+ "calendar-ical",
  "calendar-keychain",
  "calendar-network",
  "calendar-network-muon",
@@ -1631,6 +1634,7 @@ dependencies = [
  "crossterm",
  "crux_core 0.17.0 (git+https://github.com/Patryk27/crux?branch=0.17-patched)",
  "futures",
+ "itertools 0.14.0",
  "jiff",
  "keyring",
  "notify-waker",

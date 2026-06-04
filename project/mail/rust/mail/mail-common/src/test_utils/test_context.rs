@@ -95,6 +95,7 @@ impl MailTestContext {
             mail_cache_path,
             mail_cache_size,
             None,
+            None,
         )
         .await
         .expect("failed to create mail context");

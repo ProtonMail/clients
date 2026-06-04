@@ -43,6 +43,7 @@ pub async fn new_mail_context(tmp_dir: &TempDir) -> anyhow::Result<Arc<MailConte
         tmp_dir.path().join("core_cache"),
         tmp_dir.path().join("mail_cache"),
         50 * 1024 * 1024,
+        None,
         Arc::new(keychain),
         api_config,
         None,

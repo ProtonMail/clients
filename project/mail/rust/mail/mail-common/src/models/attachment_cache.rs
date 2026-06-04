@@ -274,6 +274,9 @@ impl Attachment {
 
         let data_len = data.len();
         safe_write_async(&path, data).await?;
+        ctx.mail_context()
+            .quarantine_xattr_setter()
+            .set_quarantine_xattr(&path)?;
         bond.execute(
             indoc! {
             "INSERT INTO attachment_cache (attachment_id, path, size)

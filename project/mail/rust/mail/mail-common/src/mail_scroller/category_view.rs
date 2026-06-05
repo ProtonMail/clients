@@ -14,7 +14,7 @@ use tracing::error;
 
 pub use crate::datatypes::CategoryLabel;
 
-pub const CATEGORY_VIEW_FEATURE_FLAG: &str = "MobileCategoryView";
+pub const CATEGORY_VIEW_FEATURE_FLAG: &str = "CategoryView";
 
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct CategoryView {

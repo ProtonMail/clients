@@ -194,6 +194,19 @@ impl Transformer {
         transforms::styles::inject_common_css(&self.document);
     }
 
+    /// Highlights occurrences of the search query terms in the visible text by wrapping them in
+    /// `<mark>` elements, and injects the matching stylesheet when anything was highlighted.
+    ///
+    /// No-op for an empty/whitespace-only query or when no term matches, in which case no
+    /// stylesheet is injected either.
+    #[tracing::instrument(skip_all)]
+    pub fn highlight_search_terms(&mut self, query: &str) {
+        let highlighted = transforms::highlight::highlight_search_terms(&self.document, query);
+        if highlighted {
+            transforms::styles::inject_search_highlight_css(&self.document);
+        }
+    }
+
     /// This function adds dark mode support. This fails if the html doesn't have a head tag.
     #[tracing::instrument(skip_all)]
     pub fn inject_dark_mode(

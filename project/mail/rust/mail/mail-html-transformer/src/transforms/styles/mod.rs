@@ -78,6 +78,12 @@ pub fn inject_common_css(document: &NodeRef) {
     inject_style(document, include_str!("./common.css"));
 }
 
+/// Injects the stylesheet that styles search-keyword highlights (the `<mark>` elements wrapped
+/// around matched terms by [`crate::transforms::highlight::highlight_search_terms`]).
+pub fn inject_search_highlight_css(document: &NodeRef) {
+    inject_style(document, include_str!("./search_highlight.css"));
+}
+
 /// This function provides stylesheets for dark mode in plaintext messages.
 /// In plaintext we do not need to parse HTML/CSS and just need to return static
 /// stylesheets builtin in the SDK.

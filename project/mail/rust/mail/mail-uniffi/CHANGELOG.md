@@ -5,11 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [mail-uniffi-v0.167.0] - 2026-06-04
+## [mail-uniffi-v0.167.1] - 2026-06-08
 
 ### Features
 
+- [ET-6333] introduce highlight_query as part of transform_message parameters - proton/clients/monorepo!2811
+- [ET-6316] Use `CategoryView` FF instead of `MobileCategoryView`
+- XATTR Quarantine Attachments - proton/clients/monorepo!2761
 - [ET-6316] Category view obeys `MobileCategoryView` feature flag
+
+### Fixes
+
+- [ET-6262] [Breaking] Block send if attachment can't be removed
+- [ET-6345] Fix contact group migration
+- [ET-6242] Ensure remove attachment runs in order - proton/clients/monorepo!2826
 
 
 ## [mail-uniffi-v0.166.6] - 2026-06-03

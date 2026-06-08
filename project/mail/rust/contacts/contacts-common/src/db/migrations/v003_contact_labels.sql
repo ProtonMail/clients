@@ -59,11 +59,11 @@ INSERT INTO
   contact_email_groups (local_contact_email_id, local_contact_group_id)
 SELECT
   contact_emails.local_id,
-  labels.local_id
+  contact_group.local_id
 FROM
   contact_emails,
   json_each(contact_emails.label_ids) j
-  JOIN labels ON labels.remote_id = j.value;
+  JOIN contact_group ON contact_group.remote_id = j.value;
 
 -- No longer required
 ALTER TABLE
@@ -86,11 +86,11 @@ INSERT INTO
   contact_contact_groups (local_contact_id, local_contact_group_id)
 SELECT
   contacts.local_id,
-  labels.local_id
+  contact_group.local_id
 FROM
   contacts,
   json_each(contacts.label_ids) j
-  JOIN labels ON labels.remote_id = j.value;
+  JOIN contact_group ON contact_group.remote_id = j.value;
 
 -- No longer required
 ALTER TABLE

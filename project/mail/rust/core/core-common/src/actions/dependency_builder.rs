@@ -32,7 +32,7 @@ impl ActionDependencyKeysBuilder {
     }
     #[must_use]
     pub fn with_optional(mut self, key: ActionDependencyKey) -> Self {
-        self.0.required.push(key);
+        self.0.optional.push(key);
         self
     }
 
@@ -41,7 +41,7 @@ impl ActionDependencyKeysBuilder {
         mut self,
         keys: impl IntoIterator<Item = ActionDependencyKey>,
     ) -> Self {
-        self.0.required.extend(keys);
+        self.0.optional.extend(keys);
         self
     }
 
@@ -74,7 +74,7 @@ impl ActionDependencyKeysBuilder {
     }
     #[must_use]
     pub fn with_optional_ext<T: LocalIdActionDepExt>(mut self, id: T) -> Self {
-        self.0.required.push(id.to_dependency_key());
+        self.0.optional.push(id.to_dependency_key());
         self
     }
 
@@ -84,7 +84,7 @@ impl ActionDependencyKeysBuilder {
         ids: impl IntoIterator<Item = T>,
     ) -> Self {
         self.0
-            .required
+            .optional
             .extend(ids.into_iter().map(|id| id.to_dependency_key()));
         self
     }

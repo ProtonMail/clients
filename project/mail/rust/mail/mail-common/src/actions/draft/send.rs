@@ -1,7 +1,7 @@
 use crate::actions::ConversationOrMessage;
 use crate::actions::draft::{
-    SEND_ACTION_GROUP, local_all_draft_label_id, local_all_scheduled_label_id,
-    local_draft_label_id, local_outbox_label_id,
+    DraftAttachmentActionDependencyKeyBuilderExt, SEND_ACTION_GROUP, local_all_draft_label_id,
+    local_all_scheduled_label_id, local_draft_label_id, local_outbox_label_id,
 };
 use crate::datatypes::{LocalMessageId, MessageFlags, RollbackItemType};
 use crate::draft::draft_v1::draft_attachment_staging_path;
@@ -17,8 +17,9 @@ use crate::search::MailSearchService;
 use crate::{AppError, MailContextError, MailUserContext, draft};
 use chrono::{DateTime, Local};
 use mail_action_queue::action::{
-    Action, ActionGroup, ActionId, FactoryError, FactoryResult, Handler, Priority, Type,
-    VersionConverter, VersionConverterError, WriterGuard, WriterGuardError, deserialize,
+    Action, ActionDependencyKeys, ActionGroup, ActionId, FactoryError, FactoryResult, Handler,
+    Priority, Type, VersionConverter, VersionConverterError, WriterGuard, WriterGuardError,
+    deserialize,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::ProtonMail;
@@ -27,6 +28,7 @@ use mail_core_api::consts::Mail;
 use mail_core_api::service::{ApiErrorInfo, ApiServiceError};
 use mail_core_api::services::proton::PrivateEmail;
 use mail_core_api::services::proton::prelude::AddressId;
+use mail_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;
 use mail_core_common::datatypes::UnixTimestamp;
 use mail_core_common::models::ModelExtension;
 use mail_crypto_inbox::keys::ComposerPreference;
@@ -117,6 +119,12 @@ impl Action<UserDb> for Send {
     type RemoteOutput = (MessageId, UndoTimestamp);
     type LocalOutput = ();
     type Error = MailContextError;
+
+    fn dependency_keys(&self) -> ActionDependencyKeys {
+        ActionDependencyKeysBuilder::new()
+            .with_any_draft_attachments_required(self.metadata_id)
+            .build()
+    }
 }
 
 pub struct SendVersionConverter;

@@ -30,7 +30,7 @@ use anyhow::{Context, anyhow};
 use chrono::{DateTime, Local};
 use futures::future::join3;
 use mail_action_queue::action::{ActionId, MetadataBuilder};
-use mail_action_queue::queue::{ActionError, Queue, QueuedActionOutput, QueuedError};
+use mail_action_queue::queue::{ActionError, Queue, QueuedActionOutput};
 use mail_api::services::proton::ProtonMail;
 use mail_api::services::proton::common::MessageId;
 use mail_api::services::proton::prelude::DraftReplyOrForwardParams;
@@ -1607,10 +1607,6 @@ impl Draft {
             .with_resource(&self.metadata_id)
             .expect("Should not fail");
 
-        if let Some(action_id) = attachment_metadata.action_id {
-            metadata = metadata.with_dependency(action_id);
-        }
-
         if let Origin::ShareExt = origin {
             metadata = metadata.with_group_override(SHARE_EXT_ACTION_GROUP);
         }
@@ -1666,19 +1662,12 @@ impl DraftSaveActionQueuer {
         // On failure, we only execute after the previous one has finished,
         let last_draft_save_action_id = self.last_save_action_id;
 
-        // If we have attachments that are still uploading we need to schedule a save after that
-        // again to update the draft status.
-        let mut uploading_attachment_ids =
-            DraftAttachmentMetadata::find_attachment_upload_action_ids(self.id, tether).await?;
-
         let output = queue_or_replace_draft_save(
             queue,
             origin,
             self.action.clone(),
             self.id,
             last_draft_save_action_id,
-            [],
-            uploading_attachment_ids.clone(),
         )
         .await?;
 
@@ -1695,7 +1684,7 @@ impl DraftSaveActionQueuer {
                     metadata = metadata.with_group_override(SHARE_EXT_ACTION_GROUP);
                 }
 
-                let output = queue
+                queue
                     .queue_action_with_metadata(
                         AttachmentUpload::new(
                             self.id,
@@ -1706,21 +1695,13 @@ impl DraftSaveActionQueuer {
                         metadata.build(),
                     )
                     .await?;
-
-                uploading_attachment_ids.push(output.id);
             }
 
             // Schedule another save to include the newly scheduled attachments.
-            Ok(queue_or_replace_draft_save(
-                queue,
-                origin,
-                self.action,
-                self.id,
-                Some(output.id),
-                [],
-                uploading_attachment_ids,
+            Ok(
+                queue_or_replace_draft_save(queue, origin, self.action, self.id, Some(output.id))
+                    .await?,
             )
-            .await?)
         } else {
             Ok(output)
         }
@@ -1763,15 +1744,10 @@ impl DraftSendActionQueuer {
 
         *last_draft_save_action_id = Some(save_output.id);
 
-        // We can't send if until all attachments have finished uploading.
-        let pending_attachment_ids =
-            DraftAttachmentMetadata::find_attachment_upload_action_ids(self.id, tether).await?;
-
         let mut metadata = MetadataBuilder::new()
             .with_resource(&self.id)
             .expect("This should never fail")
-            .with_dependency(save_output.id)
-            .with_dependencies(pending_attachment_ids);
+            .with_dependency(save_output.id);
 
         if let Origin::ShareExt = origin {
             metadata = metadata.with_group_override(SHARE_EXT_ACTION_GROUP);
@@ -1914,13 +1890,6 @@ impl DraftAttachmentUploadQueuer {
                 );
                 return Err(AttachmentUploadError::RetryInvalidState(self.attachment_id).into());
             }
-
-            // In case there is still an action, we only want to run after that. Action id is
-            // cleaned up on cancel and failure, but due to scheduling it's possible this value
-            // is still around.
-            if let Some(action_id) = attachment_metadata.action_id {
-                metadata = metadata.with_dependency(action_id);
-            }
         }
 
         Ok(queue
@@ -1985,19 +1954,6 @@ impl DraftAttachmentRemovalQueuer {
             metadata = metadata.with_group_override(SHARE_EXT_ACTION_GROUP);
         }
 
-        // The removal action can only run when the current action completes.
-        if let Some(action_id) = attachment_metadata.action_id {
-            // Try to cancel the existing action if it hasn't run yet.
-            if let Err(e) = queue.cancel(action_id).await {
-                // Only fail if there is a real error
-                match e {
-                    QueuedError::ActionNotFound(_) | QueuedError::ActionInExecution(_) => {}
-                    e => return Err(e.into()),
-                }
-            }
-            metadata = metadata.with_optional_dependency(action_id);
-        };
-
         Ok(queue
             .queue_action_with_metadata(
                 AttachmentRemove::new(self.id, attachment_metadata.local_attachment_id),
@@ -2022,8 +1978,6 @@ async fn queue_or_replace_draft_save(
     save_action: Save,
     metadata_id: MetadataId,
     last_draft_save_action_id: Option<ActionId>,
-    other_direct_dependencies: impl IntoIterator<Item = ActionId>,
-    other_sequential_dependencies: impl IntoIterator<Item = ActionId>,
 ) -> Result<QueuedActionOutput<Save, UserDb>, ActionError<Save, UserDb>> {
     let mut metadata = MetadataBuilder::new()
         .with_resource(&metadata_id)
@@ -2037,10 +1991,7 @@ async fn queue_or_replace_draft_save(
         metadata = metadata.with_dependency(action_id);
     }
 
-    let metadata = metadata
-        .with_dependencies(other_direct_dependencies)
-        .with_optional_dependencies(other_sequential_dependencies)
-        .build();
+    let metadata = metadata.build();
 
     if let Some(previous_action_id) = last_draft_save_action_id {
         match queue

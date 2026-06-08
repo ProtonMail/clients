@@ -130,6 +130,7 @@ members = [
     "project/mail/rust/shared/mail-local-id",
     "project/mail/rust/shared/mail-network-error",
     "project/mail/rust/shared/mail-proton-ids",
+    "project/mail/rust/shared/mail-sync-mediator",
     "project/mail/rust/shared/mailto",
     "project/mail/rust/shared/network-monitor-service",
     "project/mail/rust/shared/observability",
@@ -747,6 +748,11 @@ path = "project/mail/rust/shared/observability"
 [workspace.dependencies.mail-telemetry]
 version = "0.1.0"
 path = "project/mail/rust/shared/telemetry-service"
+registry = "proton"
+
+[workspace.dependencies.mail-sync-mediator]
+version = "0.1.0"
+path = "project/mail/rust/shared/mail-sync-mediator"
 registry = "proton"
 
 [workspace.dependencies.core-telemetry]

@@ -7482,6 +7482,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "mail-sync-mediator"
+version = "0.1.0"
+dependencies = [
+ "futures",
+ "mockall 0.13.1",
+ "parking_lot",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "mail-task-service"
 version = "0.1.0"
 dependencies = [

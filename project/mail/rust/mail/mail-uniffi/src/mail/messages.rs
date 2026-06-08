@@ -70,7 +70,16 @@ pub fn snapshot_tests_transform_message(
     mime_type: MessageMimeType,
     opts: SnapshotTestsTransformOpts,
 ) -> String {
-    transform_message("", &[], content, mime_type.into(), opts.into()).content
+    let highlight_query = opts.highlight_query.clone();
+    transform_message(
+        "",
+        &[],
+        content,
+        mime_type.into(),
+        opts.into(),
+        highlight_query.as_deref(),
+    )
+    .content
 }
 
 #[uniffi_export]
@@ -282,7 +291,7 @@ impl From<RealBodyOutput> for BodyOutput {
     }
 }
 
-#[derive(Debug, Clone, Copy, uniffi::Record)]
+#[derive(Debug, Clone, uniffi::Record)]
 pub struct TransformOpts {
     /// Whether should show block quotes or not. Default: true
     #[uniffi(default = true)]
@@ -305,6 +314,13 @@ pub struct TransformOpts {
     ///
     #[uniffi(default = None)]
     pub theme: Option<ThemeOpts>,
+
+    /// When set, occurrences of these search query terms are highlighted (wrapped in `<mark>`)
+    /// in the transformed body. Used when opening a message from search results.
+    ///
+    /// Default: None (no highlighting).
+    #[uniffi(default = None)]
+    pub highlight_query: Option<String>,
 }
 
 impl From<RealTransformOpts> for TransformOpts {
@@ -314,6 +330,7 @@ impl From<RealTransformOpts> for TransformOpts {
             hide_remote_images: opts.hide_remote_images,
             hide_embedded_images: opts.hide_embedded_images,
             theme: opts.theme.map(Into::into),
+            highlight_query: opts.highlight_query,
         }
     }
 }
@@ -325,12 +342,13 @@ impl From<TransformOpts> for RealTransformOpts {
             hide_remote_images: opts.hide_remote_images,
             hide_embedded_images: opts.hide_embedded_images,
             theme: opts.theme.map(Into::into),
+            highlight_query: opts.highlight_query,
         }
     }
 }
 
 /// Those are matching TransformOpts but all fields are required.
-#[derive(Debug, Clone, Copy, uniffi::Record)]
+#[derive(Debug, Clone, uniffi::Record)]
 pub struct SnapshotTestsTransformOpts {
     /// Whether should show block quotes or not. Default: true
     #[uniffi(default = true)]
@@ -351,6 +369,12 @@ pub struct SnapshotTestsTransformOpts {
     ///
     #[uniffi(default = None)]
     pub theme: Option<ThemeOpts>,
+
+    /// When set, occurrences of these search query terms are highlighted in the transformed body.
+    ///
+    /// Default: None (no highlighting).
+    #[uniffi(default = None)]
+    pub highlight_query: Option<String>,
 }
 impl From<SnapshotTestsTransformOpts> for RealTransformOptsResolved {
     fn from(value: SnapshotTestsTransformOpts) -> Self {

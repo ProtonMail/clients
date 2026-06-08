@@ -48,7 +48,7 @@ use tracing::{Instrument as _, debug, trace, warn};
 
 /// What to do with the body. If in any of the fields `None` is specified it will read the relevant
 /// value from the user setttings. If all are set, the db query will be elided.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct TransformOpts {
     /// Whether should show block quotes or not. Default: true
     pub show_block_quote: bool,
@@ -64,6 +64,11 @@ pub struct TransformOpts {
     /// passing theme would be irrelevant.
     ///
     pub theme: Option<ThemeOpts>,
+    /// When set, occurrences of these search query terms are highlighted (wrapped in `<mark>`) in
+    /// the transformed body. Used when opening a message from search results.
+    ///
+    /// Default: None (no highlighting).
+    pub highlight_query: Option<String>,
 }
 
 /// Current settings related to the color scheme.
@@ -118,6 +123,7 @@ impl Default for TransformOpts {
             hide_remote_images: None,
             hide_embedded_images: None,
             theme: None,
+            highlight_query: None,
         }
     }
 }
@@ -135,8 +141,11 @@ pub struct TransformOptsResolved {
 impl TransformOpts {
     /// Loads the relevant opts from the setttings.
     /// If all are set, the db query will be elided.
+    ///
+    /// Note: this does not carry `highlight_query` — highlighting is applied separately so the
+    /// resolved opts can remain `Copy`.
     #[must_use]
-    pub async fn resolve(self, tether: &Tether) -> TransformOptsResolved {
+    pub async fn resolve(&self, tether: &Tether) -> TransformOptsResolved {
         let show_block_quote = self.show_block_quote;
         if let (Some(hide_embedded_images), Some(hide_remote_images)) =
             (self.hide_embedded_images, self.hide_remote_images)
@@ -172,6 +181,9 @@ impl From<TransformOptsResolved> for TransformOpts {
             hide_remote_images: Some(val.hide_remote_images),
             hide_embedded_images: Some(val.hide_embedded_images),
             theme: Some(val.theme),
+            // The resolved opts intentionally don't carry the search query; it is only an input to
+            // the highlight pass, not part of the echoed-back transform options.
+            highlight_query: None,
         }
     }
 }
@@ -500,6 +512,7 @@ impl DecryptedMessageBody {
             resolved,
             self.mime_type,
             banners,
+            opts.highlight_query.as_deref(),
         );
 
         if let Some(message_id) = self.metadata.local_message_id {
@@ -886,6 +899,7 @@ pub fn transform_message(
     content: &str,
     mime_type: MessageMimeType,
     opts: TransformOptsResolved,
+    highlight_query: Option<&str>,
 ) -> TransformationOutput {
     // The order at which we run the transforms is not random, it's been chosen for maximum
     // efficiency.
@@ -938,6 +952,12 @@ pub fn transform_message(
 
     transformer.inject_common_css();
 
+    // Highlighting runs last so it only marks the final, visible text — in particular it never
+    // touches a blockquote that was already stripped above when `show_block_quote` is false.
+    if let Some(query) = highlight_query {
+        transformer.highlight_search_terms(query);
+    }
+
     TransformationOutput {
         content: transformer.to_string(),
         had_blockquote,
@@ -959,6 +979,7 @@ pub fn transform_message_with_banners(
     opts: TransformOptsResolved,
     mime_type: MessageMimeType,
     mut banners: Vec<MessageBanner>,
+    highlight_query: Option<&str>,
 ) -> BodyOutput {
     trace!(
         "\
@@ -967,7 +988,14 @@ opts: {opts:#?}
 mime_type: {mime_type:?}"
     );
 
-    let output = transform_message(sender, trusted_senders, html, mime_type, opts);
+    let output = transform_message(
+        sender,
+        trusted_senders,
+        html,
+        mime_type,
+        opts,
+        highlight_query,
+    );
 
     if opts.hide_remote_images && !output.remote_content.remote_urls.is_empty() {
         banners.push(MessageBanner::RemoteContent);

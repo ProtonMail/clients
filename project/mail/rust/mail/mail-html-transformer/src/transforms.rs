@@ -3,6 +3,7 @@
 #[path = "tests/transforms.rs"]
 mod tests;
 
+pub mod highlight;
 pub mod styles;
 
 use itertools::Itertools;

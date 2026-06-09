@@ -34,7 +34,7 @@ impl TestContext {
     pub async fn mock_last_event_id_contacts_v6(&self, id: EventId) {
         GetContactEventLatestRequest::mock()
             .respond_with(ResponseTemplate::new(200).set_body_json(LtApiResponse {
-                code: LtApiCode(1000),
+                code: LtApiCode::OK,
                 body: GetEventsLatestResponse { event_id: id },
             }))
             .expect(1) // this should only ever be initialized once at the moment

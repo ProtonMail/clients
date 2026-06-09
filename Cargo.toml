@@ -29,7 +29,9 @@ members = [
     "project/calendar/rust/calendar-ical-fuzz",
     "project/calendar/rust/calendar-ical-tz",
     "project/calendar/rust/calendar-keychain",
+    "project/calendar/rust/calendar-lattice",
     "project/calendar/rust/calendar-loop",
+    "project/calendar/rust/calendar-mail-lattice",
     "project/calendar/rust/calendar-network",
     "project/calendar/rust/calendar-network-fake",
     "project/calendar/rust/calendar-network-muon",
@@ -385,7 +387,9 @@ calendar-events = { path = "project/calendar/rust/calendar-events" }
 calendar-ical = { path = "project/calendar/rust/calendar-ical" }
 calendar-ical-tz = { path = "project/calendar/rust/calendar-ical-tz" }
 calendar-keychain = { path = "project/calendar/rust/calendar-keychain" }
+calendar-lattice = { path = "project/calendar/rust/calendar-lattice" }
 calendar-loop = { path = "project/calendar/rust/calendar-loop" }
+calendar-mail-lattice = { path = "project/calendar/rust/calendar-mail-lattice" }
 calendar-network = { path = "project/calendar/rust/calendar-network" }
 calendar-network-fake = { path = "project/calendar/rust/calendar-network-fake" }
 calendar-network-muon = { path = "project/calendar/rust/calendar-network-muon" }

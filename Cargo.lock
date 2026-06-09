@@ -1209,18 +1209,20 @@ name = "calendar-access"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "calendar-api",
  "calendar-crypto",
  "calendar-database",
  "calendar-database-diesel",
  "calendar-database-test-utils",
  "calendar-ical",
+ "calendar-lattice",
+ "calendar-mail-lattice",
  "derive_more 2.1.1",
  "indoc",
  "itertools 0.14.0",
  "jiff",
  "lattice",
  "mail-canonical-email",
+ "parking_lot",
  "proton-crypto",
  "proton-crypto-account",
  "regex",
@@ -1233,21 +1235,12 @@ dependencies = [
 name = "calendar-api"
 version = "0.1.0"
 dependencies = [
- "bitflags 2.11.1",
+ "calendar-lattice",
+ "calendar-mail-lattice",
  "calendar-network",
- "core-db-diesel",
+ "contact-lattice",
  "core-muon-op",
- "derive_more 2.1.1",
- "diesel",
- "diesel-derive-newtype",
- "facet",
- "jiff",
  "lattice",
- "proton-crypto-account",
- "serde",
- "serde_json",
- "serde_repr",
- "serde_with",
  "thiserror 2.0.18",
 ]
 
@@ -1259,12 +1252,16 @@ dependencies = [
  "calendar-api",
  "calendar-database",
  "calendar-database-diesel",
+ "calendar-lattice",
  "calendar-network",
  "calendar-network-fake",
  "calendar-seed",
+ "contact-lattice",
  "futures",
  "jiff",
+ "lattice",
  "mail-canonical-email",
+ "proton-crypto-account",
  "serde_json",
  "tokio",
  "tracing",
@@ -1285,15 +1282,15 @@ dependencies = [
  "calendar-events",
  "calendar-ical",
  "calendar-keychain",
+ "calendar-lattice",
  "calendar-loop",
+ "calendar-mail-lattice",
  "calendar-network",
  "calendar-seed",
  "calendar-telemetry",
  "contact-avatar",
  "crux_core 0.17.0 (git+https://github.com/Patryk27/crux?branch=0.17-patched)",
  "facet",
- "futures",
- "itertools 0.14.0",
  "jiff",
  "lattice",
  "pretty_assertions",
@@ -1306,13 +1303,11 @@ name = "calendar-components-crux-codegen"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "calendar-api",
  "calendar-components-crux",
- "calendar-database",
+ "calendar-lattice",
  "clap",
  "crux_core 0.17.0 (git+https://github.com/Patryk27/crux?branch=0.17-patched)",
  "glob",
- "regex",
 ]
 
 [[package]]
@@ -1320,7 +1315,6 @@ name = "calendar-crux"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "calendar-api",
  "calendar-components-crux",
  "calendar-database",
  "calendar-database-diesel",
@@ -1328,12 +1322,10 @@ dependencies = [
  "calendar-network",
  "calendar-network-fake",
  "calendar-network-muon",
- "calendar-telemetry",
  "console_error_panic_hook",
  "crux_core 0.17.0 (git+https://github.com/Patryk27/crux?branch=0.17-patched)",
  "facet",
  "futures",
- "itertools 0.14.0",
  "js-sys",
  "notify-waker",
  "serde",
@@ -1357,7 +1349,6 @@ dependencies = [
  "clap",
  "crux_core 0.17.0 (git+https://github.com/Patryk27/crux?branch=0.17-patched)",
  "glob",
- "regex",
 ]
 
 [[package]]
@@ -1367,10 +1358,11 @@ dependencies = [
  "aes-gcm",
  "anyhow",
  "base64",
- "calendar-api",
  "calendar-ical",
+ "calendar-lattice",
  "derive_more 2.1.1",
  "indoc",
+ "lattice",
  "pretty_assertions",
  "proton-crypto",
  "proton-crypto-account",
@@ -1388,7 +1380,9 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
- "calendar-api",
+ "calendar-lattice",
+ "calendar-mail-lattice",
+ "contact-lattice",
  "core-db-diesel",
  "core-telemetry",
  "derive_more 2.1.1",
@@ -1402,12 +1396,13 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
- "calendar-api",
  "calendar-database",
+ "calendar-lattice",
+ "calendar-mail-lattice",
+ "contact-lattice",
  "core-db-diesel",
  "core-telemetry",
  "deadpool-diesel",
- "derive_more 2.1.1",
  "diesel",
  "diesel_migrations",
  "lattice",
@@ -1423,10 +1418,11 @@ dependencies = [
 name = "calendar-database-test-utils"
 version = "0.1.0"
 dependencies = [
- "calendar-api",
  "calendar-crypto",
  "calendar-database",
  "calendar-ical",
+ "calendar-lattice",
+ "calendar-mail-lattice",
  "indoc",
  "jiff",
  "lattice",
@@ -1440,12 +1436,12 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "calendar-access",
- "calendar-api",
  "calendar-bootstrap",
  "calendar-database",
  "calendar-database-diesel",
  "calendar-database-test-utils",
  "calendar-ical",
+ "calendar-lattice",
  "calendar-network",
  "calendar-network-fake",
  "contact-avatar",
@@ -1518,6 +1514,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "calendar-lattice"
+version = "0.1.0"
+dependencies = [
+ "bitflags 2.11.1",
+ "core-db-diesel",
+ "derive_more 2.1.1",
+ "diesel",
+ "diesel-derive-newtype",
+ "facet",
+ "jiff",
+ "lattice",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "serde_with",
+]
+
+[[package]]
 name = "calendar-loop"
 version = "0.1.0"
 dependencies = [
@@ -1527,14 +1541,25 @@ dependencies = [
  "calendar-database",
  "calendar-database-diesel",
  "calendar-database-test-utils",
+ "calendar-lattice",
  "calendar-network",
  "calendar-network-fake",
  "calendar-queue",
  "futures",
+ "lattice",
  "proton-crypto-account",
  "serde_json",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "calendar-mail-lattice"
+version = "0.1.0"
+dependencies = [
+ "lattice",
+ "serde",
+ "serde_with",
 ]
 
 [[package]]
@@ -1552,7 +1577,9 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_with",
+ "test-case",
  "thiserror 2.0.18",
+ "url",
 ]
 
 [[package]]
@@ -1562,9 +1589,11 @@ dependencies = [
  "anyhow",
  "calendar-network",
  "clap",
+ "itertools 0.14.0",
  "serde",
  "serde_json",
  "tracing",
+ "url",
 ]
 
 [[package]]
@@ -1593,10 +1622,12 @@ dependencies = [
  "calendar-api",
  "calendar-database",
  "calendar-database-diesel",
+ "calendar-lattice",
  "calendar-network",
  "calendar-network-fake",
  "calendar-seed",
  "futures",
+ "lattice",
  "serde_json",
  "tokio",
  "tracing",
@@ -1609,8 +1640,10 @@ dependencies = [
  "anyhow",
  "calendar-api",
  "calendar-database",
+ "calendar-lattice",
  "calendar-network",
  "futures",
+ "lattice",
  "tracing",
  "web-time",
 ]

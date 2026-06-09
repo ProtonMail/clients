@@ -19,7 +19,7 @@ pub use put_delete_contacts::*;
 
 use mail_api_event_types::Action;
 use mail_proton_ids::PrivateEmail;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use serde_with::{BoolFromInt, DefaultOnNull, serde_as};
 
@@ -71,8 +71,7 @@ pub enum ContactSendingPreferences {
 ///
 /// The partial contact information does not contain the contact emails and the
 /// v-cards.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(serde::Serialize))]
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(rename_all = "PascalCase")]
 pub struct ContactBasic {
     #[serde(rename = "ID")]
@@ -91,8 +90,7 @@ pub struct ContactBasic {
 ///
 /// Contact cards contain information encoded as a v-card. Cards can be
 /// encrypted or signed with the user keys.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(serde::Serialize))]
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(rename_all = "PascalCase")]
 pub struct ContactCard {
     #[serde(rename = "Type")]
@@ -103,8 +101,7 @@ pub struct ContactCard {
 
 /// Models the contact email addresses for a contact returned by the API.
 #[serde_as]
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(serde::Serialize))]
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(rename_all = "PascalCase")]
 pub struct ContactEmail {
     #[serde(rename = "ID")]
@@ -153,8 +150,7 @@ pub struct ContactEvent {
 ///
 /// Compared to the [`ContactBasic`], it additionally includes all associated
 /// contact emails ([`ContactEmail`]) and cards ([`ContactCard`]).
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(serde::Serialize))]
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(rename_all = "PascalCase")]
 pub struct ContactFull {
     #[serde(rename = "ID")]

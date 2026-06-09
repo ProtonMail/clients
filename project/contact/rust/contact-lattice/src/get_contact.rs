@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{CONTACTS_V4, ContactBasic, ContactFull, ContactGroupId, ContactId};
-use lattice::{LtContract, LtNoQueryParams, LtSerdeQueryParams, LtSlimAPIJSON};
+use lattice::{AuthReq, LtContract, LtNoQueryParams, LtSerdeQueryParams, LtSlimAPIJSON};
 use serde::{Deserialize, Serialize};
 use smart_default::SmartDefault;
 
@@ -9,8 +9,7 @@ pub struct GetContactRequest {
     pub id: ContactId,
 }
 
-#[derive(Clone, Debug, serde::Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(serde::Serialize))]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize, Eq, PartialEq)]
 #[serde(rename_all = "PascalCase")]
 pub struct GetContactResponse {
     pub contact: ContactFull,
@@ -37,6 +36,8 @@ impl LtContract for GetContactRequest {
     }
 }
 
+impl AuthReq for GetContactRequest {}
+
 #[cfg(feature = "mocks")]
 impl GetContactRequest {
     pub fn mock(id: ContactId) -> wiremock::MockBuilder {
@@ -45,12 +46,10 @@ impl GetContactRequest {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[cfg_attr(feature = "mocks", derive(Serialize))]
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(rename_all = "PascalCase")]
 pub struct GetContactsResponse {
     pub contacts: Vec<ContactBasic>,
-
     pub total: u64,
 }
 
@@ -114,5 +113,7 @@ impl LtContract for GetContactsRequest {
         Some(LtSerdeQueryParams(&self.options))
     }
 }
+
+impl AuthReq for GetContactsRequest {}
 
 const MAX_PAGE_ELEMENT_COUNT: u64 = 200;

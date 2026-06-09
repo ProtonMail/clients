@@ -22,7 +22,8 @@ wiremock = { workspace = true, optional = true }
 [features]
 default = []
 sql = ["mail-proton-ids/sql", "dep:mail-stash", "proton-crypto-account/sql"]
-mocks = ["dep:wiremock"]
+mocks = ["dep:wiremock", "mail-api-event-types/mocks"]
 mail-utils = ["dep:mail-api-utils", "dep:mail-api-labels"]
+
 [lints]
 workspace = true

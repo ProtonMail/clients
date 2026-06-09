@@ -12,3 +12,7 @@ pub struct LtApiResponse<T> {
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Display)]
 pub struct LtApiCode(pub u32);
+
+impl LtApiCode {
+    pub const OK: Self = Self(1000);
+}

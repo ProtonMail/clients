@@ -60,7 +60,7 @@ impl ContactsMockServerExt for MockServer {
         let num_contacts = contacts.len() as u64;
         GetContactsRequest::mock()
             .respond_with(ResponseTemplate::new(200).set_body_json(LtApiResponse {
-                code: LtApiCode(1000),
+                code: LtApiCode::OK,
                 body: GetContactsResponse {
                     contacts,
                     total: num_contacts,
@@ -80,7 +80,7 @@ impl ContactsMockServerExt for MockServer {
         let contacts = contacts.unwrap_or_default();
         GetContactsRequest::mock()
             .respond_with(ResponseTemplate::new(200).set_body_json(LtApiResponse {
-                code: LtApiCode(1000),
+                code: LtApiCode::OK,
                 body: GetContactsResponse {
                     total: contacts.len() as u64,
                     contacts,
@@ -108,7 +108,7 @@ impl ContactsMockServerExt for MockServer {
         let contact_emails = contact_emails.unwrap_or_default();
         GetContactsEmailsRequest::mock()
             .respond_with(ResponseTemplate::new(200).set_body_json(LtApiResponse {
-                code: LtApiCode(1000),
+                code: LtApiCode::OK,
                 body: GetContactsEmailsResponse {
                     total: contact_emails.len() as u64,
                     contact_emails,
@@ -124,7 +124,7 @@ impl ContactsMockServerExt for MockServer {
         let num_contacts = contact_emails.len() as u64;
         GetContactsEmailsRequest::mock()
             .respond_with(ResponseTemplate::new(200).set_body_json(LtApiResponse {
-                code: LtApiCode(1000),
+                code: LtApiCode::OK,
                 body: GetContactsEmailsResponse {
                     contact_emails,
                     total: num_contacts,
@@ -139,7 +139,7 @@ impl ContactsMockServerExt for MockServer {
     async fn mock_get_full_contact(&self, contact: ContactFull) {
         GetContactRequest::mock(contact.id.clone())
             .respond_with(ResponseTemplate::new(200).set_body_json(LtApiResponse {
-                code: LtApiCode(1000),
+                code: LtApiCode::OK,
                 body: GetContactResponse { contact },
             }))
             .named("mock_get_full_contact")
@@ -166,7 +166,7 @@ impl ContactsMockServerExt for MockServer {
             }))
             .respond_with(
                 ResponseTemplate::new(200).set_body_json(LtApiResponse {
-                    code: LtApiCode(1000),
+                    code: LtApiCode::OK,
                     body: PutDeleteContactsResponse {
                         responses: contact_ids
                             .into_iter()

@@ -160,6 +160,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "account-crux-types-codegen"
+version = "0.1.0"
+dependencies = [
+ "account-crux",
+ "anyhow",
+ "clap",
+ "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "account-db"
 version = "0.1.0"
 dependencies = [
@@ -2303,6 +2313,26 @@ name = "core-crux-types"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "core-client-info-op",
+ "core-db-op",
+ "core-device-info-op",
+ "core-fido-op",
+ "core-hv-op",
+ "core-keystore-op",
+ "core-message",
+ "core-muon-op",
+ "core-notification-op",
+ "core-timer-op",
+ "core-validator",
+ "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "core-crux-types-codegen"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
  "core-client-info-op",
  "core-db-op",
  "core-device-info-op",

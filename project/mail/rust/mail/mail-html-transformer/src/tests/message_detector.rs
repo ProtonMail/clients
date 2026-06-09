@@ -191,6 +191,33 @@ fn detect_windows_mail_logical_property_divider() {
     assert!(after.contains("Previous message body"));
 }
 
+// An Outlook-style divider quote (border + localized "From:") can already be
+// wrapped in `.protonmail_quote` — e.g. when our own composer round-trips a
+// reply that originated in Outlook. The structureless-quote pass must reuse
+// that wrapper rather than inject a second synthetic <blockquote> on top of it.
+#[test]
+fn outlook_divider_inside_protonmail_quote_is_not_double_wrapped() {
+    let input = r#"<div>
+        <p>My reply</p>
+        <div class="protonmail_quote">
+            <div style="border:none;border-top:solid #E1E1E1 1.0pt;padding:3.0pt 0cm 0cm 0cm">
+                <p><b>From:</b> sender@example.com</p>
+            </div>
+            <p>Quoted body</p>
+        </div>
+    </div>"#;
+
+    let (before, after) = strip_blockquote_strings(input);
+
+    assert!(before.contains("My reply"));
+    assert!(!before.contains("From:"));
+    assert!(after.contains("From:"));
+    assert!(after.contains("Quoted body"));
+    // No synthetic <blockquote> should have been injected — the existing
+    // .protonmail_quote wrapper is the only quote container.
+    assert!(!after.contains("<blockquote"));
+}
+
 // Regression guard for the NBSP-normalization rule in `normalize_from_label`.
 // French orthography forces a NBSP before the colon — drop that rewrite and
 // every French Outlook reply silently stops being detected.
@@ -334,6 +361,40 @@ fn detect_outlook_locales() {
         failed.is_empty(),
         "structureless-quote detection failed for locales: {failed:#?}"
     );
+}
+
+// Outlook reply chains are FLAT: each quoted message is a peer-sibling group
+// introduced by its own 1pt-border "From:" divider, not nested inside the
+// previous one. The FIRST divider is the boundary of the whole history.
+// The first divider here is also wrapped in an extra <div>, so the
+// cut must happen at the wrapper, not the divider itself.
+#[test]
+fn outlook_flat_chain_cuts_at_first_divider() {
+    let input = r#"<html><body><div class="WordSection1">
+        <p>My reply text</p>
+        <div>
+            <div style="border:none;border-top:solid #E1E1E1 1.0pt;padding:3.0pt 0cm 0cm 0cm">
+                <p><b>From:</b> sender1@example.com — newest quote</p>
+            </div>
+        </div>
+        <p>Quoted message one body</p>
+        <div style="border:none;border-top:solid #E1E1E1 1.0pt;padding:3.0pt 0cm 0cm 0cm">
+            <p><b>From:</b> sender2@example.com — older quote</p>
+        </div>
+        <p>Quoted message two body</p>
+    </div></body></html>"#;
+
+    let (before, after) = strip_blockquote_strings(input);
+
+    assert!(before.contains("My reply text"));
+    assert!(!before.contains("Quoted message one body"));
+    assert!(!before.contains("Quoted message two body"));
+    assert!(!before.contains("sender1@example.com"));
+
+    assert!(after.contains("sender1@example.com"));
+    assert!(after.contains("Quoted message one body"));
+    assert!(after.contains("sender2@example.com"));
+    assert!(after.contains("Quoted message two body"));
 }
 
 // Real-world Windows Mail fixture that this detector exists to handle:

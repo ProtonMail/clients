@@ -296,26 +296,70 @@ fn is_outlook_quote_divider(node: &NodeRef) -> bool {
     is_outlook_quote_divider_style(&style) && contains_from_header(node)
 }
 
+fn has_real_content(node: &NodeRef) -> bool {
+    if !node.text_contents().trim().is_empty() {
+        return true;
+    }
+    // Images were already rewritten to anchors earlier in the pipeline; an empty
+    // text node carrying one still counts as real content we must not discard.
+    node.select_first(".proton-image-anchor").is_ok()
+}
+
+// Walk up from the divider to the topmost ancestor whose subtree contains no
+// real content *before* the divider, stopping below <body>/<html>. This is the
+// node at which the quoted history can be cut as a sibling group: when the
+// divider is wrapped (`<div><div divider>…</div></div>`) the wrapper becomes the
+// anchor; when it is bare, the divider itself is the anchor because the user's
+// reply sits as a real preceding sibling and halts the ascent immediately.
+fn ascend_to_boundary_anchor(divider: NodeRef) -> NodeRef {
+    let mut anchor = divider;
+    loop {
+        if anchor.preceding_siblings().any(|s| has_real_content(&s)) {
+            break;
+        }
+        let Some(parent) = anchor.parent() else {
+            break;
+        };
+        let stop_at_root = parent
+            .clone()
+            .into_element_ref()
+            .is_none_or(|el| matches!(&*el.name.local, "body" | "html"));
+        if stop_at_root {
+            break;
+        }
+        anchor = parent;
+    }
+    anchor
+}
+
 fn strip_outlook_structureless_quote(message: &NodeRef) -> Option<NodeRef> {
-    // Take the LAST candidate because nothing rules out quote-of-quote chains:
-    // every divider but the bottom-most one will fail the "no real content
-    // follows" guard below, so only the last one can ever bound the message
-    // tail correctly. Same invariant as the selector-based pass above.
+    // Take the FIRST candidate. Unlike the selector-based pass (which matches
+    // *container* quotes that nest, so the outermost/last one bounds everything),
+    // Outlook structureless dividers are FLAT sibling markers: in a multi-reply
+    // chain divider #1 separates the user's reply from ALL quoted history, and
+    // every later divider is just the header of a progressively older quote
+    // living as a peer sibling. Cutting at the last divider would leak the newest
+    // quoted message back into the user's reply.
     let divider = message
         .traverse_inclusive()
         .filter_map(|edge| match edge {
             NodeEdge::Start(n) => Some(n),
             NodeEdge::End(_) => None,
         })
-        .filter(is_outlook_quote_divider)
-        .last()?;
+        .find(is_outlook_quote_divider)?;
 
-    // Outlook does not wrap the quoted body in the divider div; the body lives
-    // as peer paragraphs after it in the same parent. We have to gather the
-    // divider AND every following sibling, otherwise the quote leaks back into
-    // the user's reply.
-    let mut captured = vec![divider.clone()];
-    let mut sibling = divider.next_sibling();
+    // Outlook sometimes wraps the divider in an extra <div> (so the quoted body
+    // are siblings of the wrapper, not of the divider). Ascend to the highest
+    // ancestor that still has no real content before it — that ancestor, plus its
+    // following siblings, is the boundary group. Without this the wrapped divider
+    // would have no following siblings and the tail guard below would bail.
+    let anchor = ascend_to_boundary_anchor(divider);
+
+    // The quoted body lives as peer nodes after the anchor in the same parent. We
+    // gather the anchor AND every following sibling, otherwise the quote leaks
+    // back into the user's reply.
+    let mut captured = vec![anchor.clone()];
+    let mut sibling = anchor.next_sibling();
     while let Some(s) = sibling {
         let next = s.next_sibling();
         captured.push(s);
@@ -327,12 +371,7 @@ fn strip_outlook_structureless_quote(message: &NodeRef) -> Option<NodeRef> {
     // a mid-document artifact, and stripping would truncate the user's reply.
     // Bail rather than guess. Same logic as the selector branch.
     let last = captured.last().cloned()?;
-    let any_real_following_content = last.following_nodes().any(|following| {
-        if !following.text_contents().trim().is_empty() {
-            return true;
-        }
-        following.select_first(".proton-image-anchor").is_ok()
-    });
+    let any_real_following_content = last.following_nodes().any(|n| has_real_content(&n));
     if any_real_following_content {
         return None;
     }

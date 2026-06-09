@@ -85,6 +85,7 @@ impl RemoteSource for MessageScrollData {
         page_size: usize,
         order_dir: ScrollOrderDir,
         order_field: ScrollOrderField,
+        invalidate: Option<flume::Sender<()>>,
     ) -> Result<MailPaginatorJoinHandle, MailContextError> {
         RemoteMessageScrollerSource::spawn_background_sync(
             ctx,
@@ -96,6 +97,7 @@ impl RemoteSource for MessageScrollData {
             page_size,
             order_dir,
             order_field,
+            invalidate,
         )
     }
 
@@ -158,12 +160,13 @@ impl RemoteMessageScrollerSource {
         page_size: usize,
         order_dir: ScrollOrderDir,
         order_field: ScrollOrderField,
+        invalidate: Option<flume::Sender<()>>,
     ) -> Result<MailPaginatorJoinHandle, MailContextError> {
         let remote_id = scroller.remote_message_id.clone();
         let context_time = scroller.context_time(order_field);
 
         let task = ctx.spawn_ex(async move |ctx| {
-            Self::sync_next_page(
+            let items = Self::sync_next_page(
                 &ctx,
                 local_label_id,
                 remote_label_ids,
@@ -176,6 +179,16 @@ impl RemoteMessageScrollerSource {
                 order_field,
             )
             .await?;
+
+            if let Some(invalidate) = invalidate
+                && !items.is_empty()
+            {
+                invalidate.send_async(()).await.map_err(|e| {
+                    MailContextError::Other(anyhow!(
+                        "Could not notify about fetching next page: {e}"
+                    ))
+                })?;
+            }
 
             Ok(())
         });

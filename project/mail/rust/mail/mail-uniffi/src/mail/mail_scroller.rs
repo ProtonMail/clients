@@ -528,24 +528,37 @@ impl ConversationScroller {
             .map_err(Into::into)
     }
 
-    pub fn change_filter(self: Arc<Self>, unread: ReadFilter) -> Result<(), MailScrollerError> {
-        self.scroller
-            .change_filter(unread.into())
-            .map_err(RealProtonMailError::from)
-            .map_err(Into::into)
+    pub async fn change_filter(
+        self: Arc<Self>,
+        unread: ReadFilter,
+    ) -> Result<(), MailScrollerError> {
+        let scroller = Arc::clone(&self.scroller);
+        uniffi_async(async move {
+            scroller
+                .change_filter(unread.into())
+                .await
+                .map_err(RealProtonMailError::from)
+        })
+        .await
+        .map_err(Into::into)
     }
 
     /// Enables a category filter. Pass `None` to clear the active category.
     ///
     /// The scroller will reset and emit a list update reflecting the filtered results.
-    pub fn change_category_view(
+    pub async fn change_category_view(
         self: Arc<Self>,
         enable: Option<Id>,
     ) -> Result<(), MailScrollerError> {
-        self.scroller
-            .change_category_view(enable.map(LocalLabelId::from))
-            .map_err(RealProtonMailError::from)
-            .map_err(Into::into)
+        let scroller = Arc::clone(&self.scroller);
+        uniffi_async(async move {
+            scroller
+                .change_category_view(enable.map(LocalLabelId::from))
+                .await
+                .map_err(RealProtonMailError::from)
+        })
+        .await
+        .map_err(Into::into)
     }
 
     /// Returns the current category filter state.
@@ -557,14 +570,19 @@ impl ConversationScroller {
             .map_err(Into::into)
     }
 
-    pub fn change_include(
+    pub async fn change_include(
         self: Arc<Self>,
         include: IncludeSwitch,
     ) -> Result<(), MailScrollerError> {
-        self.scroller
-            .change_include(include.into())
-            .map_err(RealProtonMailError::from)
-            .map_err(Into::into)
+        let scroller = Arc::clone(&self.scroller);
+        uniffi_async(async move {
+            scroller
+                .change_include(include.into())
+                .await
+                .map_err(RealProtonMailError::from)
+        })
+        .await
+        .map_err(Into::into)
     }
 
     #[tracing::instrument(skip_all)]
@@ -694,24 +712,37 @@ impl MessageScroller {
     }
 
     /// Changes the filter of the scroller.
-    pub fn change_filter(self: Arc<Self>, unread: ReadFilter) -> Result<(), MailScrollerError> {
-        self.scroller
-            .change_filter(unread.into())
-            .map_err(RealProtonMailError::from)
-            .map_err(Into::into)
+    pub async fn change_filter(
+        self: Arc<Self>,
+        unread: ReadFilter,
+    ) -> Result<(), MailScrollerError> {
+        let scroller = Arc::clone(&self.scroller);
+        uniffi_async(async move {
+            scroller
+                .change_filter(unread.into())
+                .await
+                .map_err(RealProtonMailError::from)
+        })
+        .await
+        .map_err(Into::into)
     }
 
     /// Enables a category filter. Pass `None` to clear the active category.
     ///
     /// The scroller will reset and emit a list update reflecting the filtered results.
-    pub fn change_category_view(
+    pub async fn change_category_view(
         self: Arc<Self>,
         enable: Option<Id>,
     ) -> Result<(), MailScrollerError> {
-        self.scroller
-            .change_category_view(enable.map(LocalLabelId::from))
-            .map_err(RealProtonMailError::from)
-            .map_err(Into::into)
+        let scroller = Arc::clone(&self.scroller);
+        uniffi_async(async move {
+            scroller
+                .change_category_view(enable.map(LocalLabelId::from))
+                .await
+                .map_err(RealProtonMailError::from)
+        })
+        .await
+        .map_err(Into::into)
     }
 
     /// Returns the current category filter state.
@@ -723,14 +754,19 @@ impl MessageScroller {
             .map_err(Into::into)
     }
 
-    pub fn change_include(
+    pub async fn change_include(
         self: Arc<Self>,
         include: IncludeSwitch,
     ) -> Result<(), MailScrollerError> {
-        self.scroller
-            .change_include(include.into())
-            .map_err(RealProtonMailError::from)
-            .map_err(Into::into)
+        let scroller = Arc::clone(&self.scroller);
+        uniffi_async(async move {
+            scroller
+                .change_include(include.into())
+                .await
+                .map_err(RealProtonMailError::from)
+        })
+        .await
+        .map_err(Into::into)
     }
 
     /// Retrieves the current items in the scroller, the items will be returned
@@ -864,24 +900,34 @@ impl SearchScroller {
             .map_err(Into::into)
     }
 
-    pub fn change_include(
+    pub async fn change_include(
         self: Arc<Self>,
         include: IncludeSwitch,
     ) -> Result<(), MailScrollerError> {
-        self.scroller
-            .change_include(include.into())
-            .map_err(RealProtonMailError::from)
-            .map_err(Into::into)
+        let scroller = Arc::clone(&self.scroller);
+        uniffi_async(async move {
+            scroller
+                .change_include(include.into())
+                .await
+                .map_err(RealProtonMailError::from)
+        })
+        .await
+        .map_err(Into::into)
     }
 
-    pub fn change_keywords(
+    pub async fn change_keywords(
         self: Arc<Self>,
         keywords: PaginatorSearchOptions,
     ) -> Result<(), MailScrollerError> {
-        self.scroller
-            .change_keywords(keywords.into())
-            .map_err(RealProtonMailError::from)
-            .map_err(Into::into)
+        let scroller = Arc::clone(&self.scroller);
+        uniffi_async(async move {
+            scroller
+                .change_keywords(keywords.into())
+                .await
+                .map_err(RealProtonMailError::from)
+        })
+        .await
+        .map_err(Into::into)
     }
 
     /// Retrieves the current items in the scroller, the items will be returned

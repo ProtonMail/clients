@@ -16,6 +16,7 @@ use crate::{MailContextError, MailUserContext};
 use anyhow::anyhow;
 use derivative::Derivative;
 use derive_more::Display;
+use futures::future::join_all;
 use futures::select;
 use itertools::Itertools;
 use mail_core_common::app_events::{OnEnterForegroundEvent, OnForceEventPollEvent};
@@ -26,10 +27,11 @@ use parking_lot::RwLock as SyncRwLock;
 use sqlite_watcher::watcher::DropRemoveTableObserverHandle;
 use std::iter;
 use std::ops::{Deref, DerefMut};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Weak};
 use std::time::Duration;
 use tokio::sync::{RwLock, oneshot};
-use tokio::task::AbortHandle;
+use tokio::task::{AbortHandle, JoinHandle};
 use tokio::time;
 use tracing::{debug, error, info, instrument, trace, warn};
 use uuid::Uuid;
@@ -221,9 +223,10 @@ where
     T: MailScrollerItem,
 {
     id: Uuid,
+    generation: Arc<AtomicU64>,
     queries: flume::Sender<ScrollerQuery<T>>,
     commands: flume::Sender<ScrollerCommand>,
-    tasks: Vec<AbortHandle>,
+    signals: flume::Sender<WorkerSignal>,
 }
 
 impl MailScroller<ContextualConversation> {
@@ -338,6 +341,8 @@ where
             commands,
             updates,
             source_db_handle,
+            scroll_ctx,
+            generation,
             tasks,
         } = ScrollerWorker::run(
             id,
@@ -349,10 +354,12 @@ where
         )
         .await?;
 
+        let worker_signals = scroll_ctx.worker_respawn_channel(tasks)?;
         let events = ctx.core_context().event_service();
 
         if let Some(mut events) = events.subscribe::<OnEnterForegroundEvent>() {
             let commands = commands.clone();
+            let generation = generation.clone();
 
             ctx.spawn(async move {
                 loop {
@@ -362,7 +369,9 @@ where
 
                     debug!("Scroller {id} fetch new after enter foreground");
 
-                    if Self::do_fetch_new(&commands, true).is_err() {
+                    if Self::do_fetch_new(&commands, generation.load(Ordering::Relaxed), true)
+                        .is_err()
+                    {
                         return;
                     }
                 }
@@ -371,6 +380,7 @@ where
 
         if let Some(mut events) = events.subscribe::<OnForceEventPollEvent>() {
             let commands = commands.clone();
+            let generation = generation.clone();
 
             ctx.spawn(async move {
                 loop {
@@ -380,7 +390,9 @@ where
 
                     debug!("Scroller {id} fetch new after force refresh event");
 
-                    if Self::do_fetch_new(&commands, false).is_err() {
+                    if Self::do_fetch_new(&commands, generation.load(Ordering::Relaxed), false)
+                        .is_err()
+                    {
                         return;
                     }
                 }
@@ -390,9 +402,10 @@ where
         Ok((
             Self {
                 id,
+                generation,
                 queries,
                 commands,
-                tasks,
+                signals: worker_signals,
             },
             MailScrollerHandle {
                 updates,
@@ -418,7 +431,7 @@ where
 
         receiver
             .await
-            .map_err(|_| MailContextError::Other(anyhow!("Failed to receive has more response")))?
+            .map_err(|_| MailContextError::TaskCancelled)?
     }
 
     pub async fn cursor(
@@ -433,9 +446,7 @@ where
             .send(ScrollerQuery::Cursor(self.clone(), looking_at, sender))
             .map_err(|_| MailContextError::Other(anyhow!("Failed to send `cursor` command")))?;
 
-        receiver
-            .await
-            .map_err(|_| MailContextError::Other(anyhow!("Failed to receive `cursor` response")))
+        receiver.await.map_err(|_| MailContextError::TaskCancelled)
     }
 
     #[instrument(skip_all, fields(id = ?self.id))]
@@ -447,6 +458,7 @@ where
         self.commands
             .send(ScrollerCommand::FetchMore {
                 src: ScrollerSource::ScrollEvent(uuid),
+                generation: self.generation.load(Ordering::Relaxed),
                 tx,
             })
             .map_err(|_| MailContextError::Other(anyhow!("Failed to send fetch more command")))?;
@@ -456,13 +468,18 @@ where
 
     #[instrument(skip_all, fields(id = ?self.id))]
     pub fn fetch_new(&self) -> Result<(), MailContextError> {
-        Self::do_fetch_new(&self.commands, true)?;
+        Self::do_fetch_new(
+            &self.commands,
+            self.generation.load(Ordering::Relaxed),
+            true,
+        )?;
 
         Ok(())
     }
 
     fn do_fetch_new(
         sender: &flume::Sender<ScrollerCommand>,
+        generation: u64,
         notify: bool,
     ) -> Result<(), MailContextError> {
         let uuid = Uuid::new_v4();
@@ -472,6 +489,7 @@ where
         sender
             .send(ScrollerCommand::FetchNew {
                 src: ScrollerSource::ScrollEvent(uuid),
+                generation,
                 notify,
             })
             .map_err(|_| MailContextError::Other(anyhow!("Failed to send fetch new command")))
@@ -484,7 +502,10 @@ where
         debug!(?uuid, "Sending `Refresh` command");
 
         self.commands
-            .send(ScrollerCommand::Refresh(ScrollerSource::ScrollEvent(uuid)))
+            .send(ScrollerCommand::Refresh {
+                src: ScrollerSource::ScrollEvent(uuid),
+                generation: self.generation.load(Ordering::Relaxed),
+            })
             .map_err(|_| MailContextError::Other(anyhow!("Failed to send refresh command")))?;
 
         Ok(())
@@ -497,9 +518,10 @@ where
         debug!(?uuid, "Sending `ForceRefresh` command");
 
         self.commands
-            .send(ScrollerCommand::ForceRefresh(ScrollerSource::ScrollEvent(
-                uuid,
-            )))
+            .send(ScrollerCommand::ForceRefresh {
+                src: ScrollerSource::ScrollEvent(uuid),
+                generation: self.generation.load(Ordering::Relaxed),
+            })
             .map_err(|_| {
                 MailContextError::Other(anyhow!("Failed to send force refresh command"))
             })?;
@@ -514,21 +536,26 @@ where
         debug!(?uuid, "Sending `GetItems` query");
 
         self.commands
-            .send(ScrollerCommand::GetItems(ScrollerSource::ScrollEvent(uuid)))
+            .send(ScrollerCommand::GetItems {
+                src: ScrollerSource::ScrollEvent(uuid),
+                generation: self.generation.load(Ordering::Relaxed),
+            })
             .map_err(|_| MailContextError::Other(anyhow!("Failed to send get items command")))?;
 
         Ok(())
     }
 
     #[instrument(skip_all, fields(id = ?self.id))]
-    pub fn change_filter(&self, unread: ReadFilter) -> Result<(), MailContextError> {
+    pub async fn change_filter(&self, unread: ReadFilter) -> Result<(), MailContextError> {
         let uuid = Uuid::new_v4();
 
         debug!(?uuid, "Sending `ChangeFilter` command");
 
+        let generation = self.change_location().await?;
         self.commands
             .send(ScrollerCommand::ChangeUnreadFilter {
                 src: ScrollerSource::ScrollEvent(uuid),
+                generation,
                 unread,
             })
             .map_err(|_| {
@@ -538,14 +565,16 @@ where
         Ok(())
     }
 
-    pub fn change_label(&self, label: LocalLabelId) -> Result<(), MailContextError> {
+    pub async fn change_label(&self, label: LocalLabelId) -> Result<(), MailContextError> {
         let uuid = Uuid::new_v4();
 
         debug!(?uuid, "Sending `ChangeLabel` command");
 
+        let generation = self.change_location().await?;
         self.commands
             .send(ScrollerCommand::ChangeLabel {
                 src: ScrollerSource::ScrollEvent(uuid),
+                generation,
                 label,
             })
             .map_err(|_| MailContextError::Other(anyhow!("Failed to send change label command")))?;
@@ -554,13 +583,15 @@ where
     }
 
     #[instrument(skip_all, fields(id = ?self.id))]
-    pub fn change_include(&self, include: IncludeSwitch) -> Result<(), MailContextError> {
+    pub async fn change_include(&self, include: IncludeSwitch) -> Result<(), MailContextError> {
         let uuid = Uuid::new_v4();
         debug!(?uuid, "Sending `ChangeInclude` command");
 
+        let generation = self.change_location().await?;
         self.commands
             .send(ScrollerCommand::ChangeInclude {
                 src: ScrollerSource::ScrollEvent(uuid),
+                generation,
                 include,
             })
             .map_err(|_| {
@@ -570,14 +601,36 @@ where
         Ok(())
     }
 
-    pub fn change_keywords(&self, keywords: SearchOptions) -> Result<(), MailContextError> {
+    pub async fn change_category_view(
+        &self,
+        category: Option<LocalLabelId>,
+    ) -> Result<(), MailContextError> {
+        let uuid = Uuid::new_v4();
+
+        let generation = self.change_location().await?;
+        self.commands
+            .send(ScrollerCommand::ChangeCategoryView {
+                src: ScrollerSource::ScrollEvent(uuid),
+                generation,
+                category,
+            })
+            .map_err(|_| {
+                MailContextError::Other(anyhow!("Failed to send change category view command"))
+            })?;
+
+        Ok(())
+    }
+
+    pub async fn change_keywords(&self, keywords: SearchOptions) -> Result<(), MailContextError> {
         let uuid = Uuid::new_v4();
 
         debug!(?uuid, "Sending `ChangeKeywords` command");
 
+        let generation = self.change_location().await?;
         self.commands
             .send(ScrollerCommand::ChangeKeywords {
                 src: ScrollerSource::ScrollEvent(uuid),
+                generation,
                 keywords,
             })
             .map_err(|_| {
@@ -587,13 +640,38 @@ where
         Ok(())
     }
 
+    async fn change_location(&self) -> Result<u64, MailContextError> {
+        let next = 1;
+        let generation = self
+            .generation
+            .fetch_add(next, Ordering::Relaxed)
+            .wrapping_add(next);
+
+        let (aborted_tx, aborted_rx) = oneshot::channel();
+
+        self.signals
+            .send(WorkerSignal::Respawn(generation, aborted_tx))
+            .map_err(|_| {
+                MailContextError::Other(anyhow!("Could not spawn another generation of the Worker"))
+            })?;
+
+        // Wait for the previous generation to be fully torn down before returning, so the
+        // command sent right after this can only be consumed by the respawned worker.
+        let _ = aborted_rx.await;
+
+        Ok(generation)
+    }
+
     pub fn clear(&self) -> Result<(), MailContextError> {
         let uuid = Uuid::new_v4();
 
         debug!(?uuid, "Sending `Clear` command");
 
         self.commands
-            .send(ScrollerCommand::Clear(ScrollerSource::ScrollEvent(uuid)))
+            .send(ScrollerCommand::Clear {
+                src: ScrollerSource::ScrollEvent(uuid),
+                generation: self.generation.load(Ordering::Relaxed),
+            })
             .map_err(|_| MailContextError::Other(anyhow!("Failed to send clear command")))?;
 
         Ok(())
@@ -611,7 +689,7 @@ where
 
         receiver
             .await
-            .map_err(|_| MailContextError::Other(anyhow!("Failed to receive total response")))?
+            .map_err(|_| MailContextError::TaskCancelled)?
     }
 
     #[instrument(skip_all, fields(id = ?self.id))]
@@ -626,7 +704,7 @@ where
 
         receiver
             .await
-            .map_err(|_| MailContextError::Other(anyhow!("Failed to receive seen response")))?
+            .map_err(|_| MailContextError::TaskCancelled)?
     }
 
     #[instrument(skip_all, fields(id = ?self.id))]
@@ -641,39 +719,22 @@ where
 
         receiver
             .await
-            .map_err(|_| MailContextError::Other(anyhow!("Failed to receive synced response")))?
-    }
-
-    pub fn change_category_view(
-        &self,
-        category: Option<LocalLabelId>,
-    ) -> Result<(), MailContextError> {
-        let uuid = Uuid::new_v4();
-
-        self.commands
-            .send(ScrollerCommand::ChangeCategoryView {
-                src: ScrollerSource::ScrollEvent(uuid),
-                category,
-            })
-            .map_err(|_| {
-                MailContextError::Other(anyhow!("Failed to send change category view command"))
-            })?;
-
-        Ok(())
+            .map_err(|_| MailContextError::TaskCancelled)?
     }
 
     pub async fn category_view(&self) -> Result<CategoryView, MailContextError> {
         let (tx, rx) = oneshot::channel();
 
         self.commands
-            .send(ScrollerCommand::CategoryView(tx))
+            .send(ScrollerCommand::CategoryView {
+                generation: self.generation.load(Ordering::Relaxed),
+                tx,
+            })
             .map_err(|_| {
                 MailContextError::Other(anyhow!("Failed to send category view command"))
             })?;
 
-        rx.await.map_err(|_| {
-            MailContextError::Other(anyhow!("Failed to receive category view response"))
-        })
+        rx.await.map_err(|_| MailContextError::TaskCancelled)
     }
 
     /// Returns the current category filter state with labels fully resolved.
@@ -694,23 +755,22 @@ where
         let (tx, rx) = oneshot::channel();
 
         self.commands
-            .send(ScrollerCommand::AlternativeLabels(tx))
+            .send(ScrollerCommand::AlternativeLabels {
+                generation: self.generation.load(Ordering::Relaxed),
+                tx,
+            })
             .map_err(|_| {
                 MailContextError::Other(anyhow!("Failed to send supports include filter command"))
             })?;
 
-        let alternative_labels = rx.await.map_err(|_| {
-            MailContextError::Other(anyhow!(
-                "Failed to receive supports include filter response"
-            ))
-        })?;
+        let alternative_labels = rx.await.map_err(|_| MailContextError::TaskCancelled)?;
 
         Ok(alternative_labels.supports_include_filter())
     }
 
     pub fn terminate(&self) {
-        for task in &self.tasks {
-            task.abort();
+        if let Err(e) = self.signals.send(WorkerSignal::Abort) {
+            error!("Could not signal Scroller Worker to Abort, details: `{e}`.")
         }
     }
 }
@@ -740,6 +800,7 @@ where
 
     task: MailPaginatorJoinHandle,
     execute_on_online: Option<AbortHandle>,
+    generation: u64,
 }
 
 struct ScrollerContext<S>
@@ -761,7 +822,7 @@ where
     invalidation_rx: flume::Receiver<()>,
     source_db_rx: flume::Receiver<()>,
     category_db_rx: flume::Receiver<()>,
-    _category_db_handle: DropRemoveTableObserverHandle,
+    _category_db_handle: Arc<DropRemoveTableObserverHandle>,
 }
 
 impl<S: MailScrollerSource> Deref for ScrollerWorker<S> {
@@ -778,14 +839,94 @@ impl<S: MailScrollerSource> DerefMut for ScrollerWorker<S> {
     }
 }
 
+// The #[derive(Clone)] can't see through Arc<RwLock<S>> to know that
+// S itself never needs cloning. It just sees "there's an S, slap a bound on it."
+impl<S> Clone for ScrollerContext<S>
+where
+    S: MailScrollerSource,
+{
+    fn clone(&self) -> Self {
+        Self {
+            scroller_id: self.scroller_id,
+            ctx: self.ctx.clone(),
+            source: self.source.clone(),
+            page_size: self.page_size,
+            items: self.items.clone(),
+            alternative_labels: self.alternative_labels,
+            update_tx: self.update_tx.clone(),
+            command_tx: self.command_tx.clone(),
+            command_rx: self.command_rx.clone(),
+            queries_rx: self.queries_rx.clone(),
+            invalidation_rx: self.invalidation_rx.clone(),
+            source_db_rx: self.source_db_rx.clone(),
+            category_db_rx: self.category_db_rx.clone(),
+            _category_db_handle: self._category_db_handle.clone(),
+        }
+    }
+}
+
 impl<S> Drop for ScrollerWorker<S>
 where
     S: MailScrollerSource,
 {
     fn drop(&mut self) {
+        Self::abort_task(&mut self.task);
         if let Some(handle) = self.execute_on_online.take() {
             handle.abort();
         }
+    }
+}
+
+enum WorkerSignal {
+    Abort,
+    Respawn(u64, oneshot::Sender<()>),
+}
+
+impl<S: MailScrollerSource> ScrollerContext<S> {
+    fn worker_respawn_channel(
+        self,
+        mut tasks: Vec<JoinHandle<()>>,
+    ) -> Result<flume::Sender<WorkerSignal>, MailContextError> {
+        let ctx = self.ctx.upgrade().ok_or(MailContextError::MissingContext)?;
+        let (worker_tx, worker_rx) = flume::unbounded();
+
+        ctx.spawn(async move {
+            while let Ok(signal) = worker_rx.recv_async().await {
+                match signal {
+                    WorkerSignal::Abort => {
+                        Self::abort_and_join(&mut tasks).await;
+                        break;
+                    }
+                    WorkerSignal::Respawn(generation, aborted) => {
+                        // Wait for the previous generation's tasks to fully stop before
+                        // spawning the next one. This guarantees a single worker ever owns
+                        // the shared command channel, so the command that triggered the
+                        // respawn is consumed by the new worker, not a dying old one.
+                        Self::abort_and_join(&mut tasks).await;
+
+                        // Unblock `change_location`: the old generation is gone, so the
+                        // command it is about to enqueue can only reach the new worker.
+                        let _ = aborted.send(());
+
+                        let worker = ScrollerWorker::from_context(self.clone(), None, generation);
+                        let Ok(new_tasks) = worker.spawn() else {
+                            error!("Could not respawn worker tasks");
+                            continue;
+                        };
+                        tasks = new_tasks;
+                    }
+                }
+            }
+        });
+
+        Ok(worker_tx)
+    }
+
+    async fn abort_and_join(tasks: &mut Vec<JoinHandle<()>>) {
+        for task in tasks.iter() {
+            task.abort();
+        }
+        let _ = join_all(tasks).await;
     }
 }
 
@@ -849,9 +990,11 @@ where
             invalidation_rx,
             source_db_rx,
             category_db_rx,
-            _category_db_handle: category_db_handle,
+            _category_db_handle: Arc::new(category_db_handle),
         };
-        let this = Self::from_context(scroll_ctx, scroll_task);
+        let starting_generation = 0;
+        let generation = Arc::new(AtomicU64::new(starting_generation));
+        let this = Self::from_context(scroll_ctx.clone(), scroll_task, starting_generation);
 
         let tasks = this.spawn()?;
 
@@ -860,19 +1003,26 @@ where
             commands: command_tx,
             updates: update_rx,
             source_db_handle,
+            scroll_ctx,
+            generation,
             tasks,
         })
     }
 
-    fn from_context(scroll_ctx: ScrollerContext<S>, task: MailPaginatorJoinHandle) -> Self {
+    fn from_context(
+        scroll_ctx: ScrollerContext<S>,
+        task: MailPaginatorJoinHandle,
+        generation: u64,
+    ) -> Self {
         Self {
             scroll_ctx,
             task,
             execute_on_online: None,
+            generation,
         }
     }
 
-    fn spawn(mut self) -> Result<Vec<AbortHandle>, MailContextError> {
+    fn spawn(mut self) -> Result<Vec<JoinHandle<()>>, MailContextError> {
         let ctx = self.ctx.upgrade().ok_or(MailContextError::MissingContext)?;
         let source = self.source.clone();
         let items = Arc::clone(&self.items);
@@ -881,6 +1031,9 @@ where
         let invalidation_rx = self.invalidation_rx.clone();
         let source_db_rx = self.source_db_rx.clone();
         let category_db_rx = self.category_db_rx.clone();
+        let generation = self.generation;
+
+        debug!("Scroller {} generation: {generation}", self.scroller_id);
 
         let cmd_handler = ctx.spawn(async move {
             while let Ok(command) = self.command_rx.recv_async().await {
@@ -888,7 +1041,12 @@ where
                 // in a row. We do not want and need to handle all of them one by one.
                 let commands = self.command_rx.drain().collect_vec();
 
-                for command in iter::once(command).chain(commands).dedup() {
+                let commands = iter::once(command)
+                    .chain(commands)
+                    .filter(|cmd| cmd.generation() >= generation)
+                    .dedup();
+
+                for command in commands {
                     trace!("Processing command: {:?}", command);
 
                     if let Err(e) = self.handle_command(command).await {
@@ -910,7 +1068,7 @@ where
                         }
 
                         let _ = command_tx
-                            .send_async(ScrollerCommand::Refresh(ScrollerSource::Invalidation)).await
+                            .send_async(ScrollerCommand::Refresh { src: ScrollerSource::Invalidation, generation }).await
                             .inspect_err(|e| error!("Failed to send refresh command: {e:?}"));
                     }
 
@@ -921,7 +1079,7 @@ where
                         }
 
                         let _ = command_tx
-                            .send_async(ScrollerCommand::Refresh(ScrollerSource::Database)).await
+                            .send_async(ScrollerCommand::Refresh { src: ScrollerSource::Database, generation }).await
                             .inspect_err(|e| error!("Failed to send refresh command: {e:?}"));
                     }
 
@@ -943,22 +1101,19 @@ where
                         }
 
                         let _ = command_tx
-                            .send_async(ScrollerCommand::CategoryViewChanged(ScrollerSource::Database)).await
+                            .send_async(ScrollerCommand::CategoryViewChanged { src: ScrollerSource::Database, generation }).await
                             .inspect_err(|e| error!("Failed to send settings changed command: {e:?}"));
                     }
                 }
             }
         });
 
-        Ok(vec![
-            cmd_handler.abort_handle(),
-            query_handler.abort_handle(),
-        ])
+        Ok(vec![cmd_handler, query_handler])
     }
 
     async fn handle_command(&mut self, command: ScrollerCommand) -> Result<(), MailContextError> {
         match command {
-            ScrollerCommand::FetchMore { src, tx } => {
+            ScrollerCommand::FetchMore { src, tx, .. } => {
                 let result = self
                     .fetch_more(src)
                     .await
@@ -975,7 +1130,7 @@ where
                 }
             }
 
-            ScrollerCommand::Refresh(source) => {
+            ScrollerCommand::Refresh { src: source, .. } => {
                 let result =
                     self.refresh(false, source)
                         .await
@@ -992,7 +1147,7 @@ where
                 }
             }
 
-            ScrollerCommand::ForceRefresh(source) => {
+            ScrollerCommand::ForceRefresh { src: source, .. } => {
                 let result =
                     self.refresh(true, source)
                         .await
@@ -1009,7 +1164,7 @@ where
                 }
             }
 
-            ScrollerCommand::GetItems(src) => {
+            ScrollerCommand::GetItems { src, .. } => {
                 let items_update = self.get_items(src);
 
                 self.update_tx
@@ -1018,7 +1173,7 @@ where
                     .map_err(|e| anyhow!("Failed to send get items update: {e:?}"))?;
             }
 
-            ScrollerCommand::FetchNew { src, notify } => {
+            ScrollerCommand::FetchNew { src, notify, .. } => {
                 if notify {
                     self.update_tx
                         .send_async(ScrollerStatusUpdate::FetchNewStart(src).into())
@@ -1058,7 +1213,7 @@ where
                 }
             }
 
-            ScrollerCommand::ChangeUnreadFilter { src, unread } => {
+            ScrollerCommand::ChangeUnreadFilter { src, unread, .. } => {
                 let result = self
                     .change_unread_filter(src, unread)
                     .await
@@ -1072,7 +1227,7 @@ where
                 }
             }
 
-            ScrollerCommand::ChangeCategoryView { src, category } => {
+            ScrollerCommand::ChangeCategoryView { src, category, .. } => {
                 let result = self
                     .change_category_view(src, category)
                     .await
@@ -1086,7 +1241,7 @@ where
                 }
             }
 
-            ScrollerCommand::CategoryViewChanged(src) => {
+            ScrollerCommand::CategoryViewChanged { src, .. } => {
                 let result = self
                     .handle_category_changed(src)
                     .await
@@ -1100,7 +1255,7 @@ where
                 }
             }
 
-            ScrollerCommand::ChangeLabel { src, label } => {
+            ScrollerCommand::ChangeLabel { src, label, .. } => {
                 // Compute the category view and filter for the new label BEFORE the state
                 // change so the source filter is applied atomically with the label switch.
                 let result = self
@@ -1126,7 +1281,7 @@ where
                 }
             }
 
-            ScrollerCommand::ChangeInclude { src, include } => {
+            ScrollerCommand::ChangeInclude { src, include, .. } => {
                 let result = self
                     .change_include(src, include)
                     .await
@@ -1140,7 +1295,7 @@ where
                 }
             }
 
-            ScrollerCommand::ChangeKeywords { src, keywords } => {
+            ScrollerCommand::ChangeKeywords { src, keywords, .. } => {
                 let result = self
                     .change_keywords(src, keywords)
                     .await
@@ -1154,7 +1309,7 @@ where
                 }
             }
 
-            ScrollerCommand::Clear(src) => {
+            ScrollerCommand::Clear { src, .. } => {
                 let result = self
                     .clear(src)
                     .await
@@ -1166,12 +1321,12 @@ where
                     .map_err(|e| anyhow!("Failed to send clear cursor update: {e:?}"))?;
             }
 
-            ScrollerCommand::AlternativeLabels(tx) => {
+            ScrollerCommand::AlternativeLabels { tx, .. } => {
                 tx.send(self.alternative_labels)
                     .map_err(|e| anyhow!("Failed to send alternative label update: {e:?}"))?;
             }
 
-            ScrollerCommand::CategoryView(tx) => {
+            ScrollerCommand::CategoryView { tx, .. } => {
                 let view = self.source.read().await.category_view().clone();
                 tx.send(view)
                     .map_err(|e| anyhow!("Failed to send category view: {e:?}"))?;
@@ -1266,6 +1421,7 @@ where
                 debug!("No items to return, requesting additional fetch more");
 
                 let channel = self.command_tx.clone();
+                let generation = self.generation;
 
                 let handle = ctx.spawn_ex(async move |ctx| {
                     ctx.network_monitor_service()
@@ -1273,7 +1429,7 @@ where
                         .wait_until_online()
                         .await;
 
-                    Self::schedule_fetch_more(&channel, call_src).await;
+                    Self::schedule_fetch_more(&channel, call_src, generation).await;
                 });
 
                 self.execute_on_online = Some(handle.abort_handle());
@@ -1615,7 +1771,7 @@ where
 
         if cant_see_first_page {
             info!("We do not see the first page, requesting fetch more");
-            Self::schedule_fetch_more(&self.command_tx, src).await;
+            Self::schedule_fetch_more(&self.command_tx, src, self.generation).await;
         }
 
         Ok(())
@@ -1692,9 +1848,17 @@ where
         }
     }
 
-    async fn schedule_fetch_more(channel: &flume::Sender<ScrollerCommand>, src: ScrollerSource) {
+    async fn schedule_fetch_more(
+        channel: &flume::Sender<ScrollerCommand>,
+        src: ScrollerSource,
+        generation: u64,
+    ) {
         let _ = channel
-            .send_async(ScrollerCommand::FetchMore { src, tx: None })
+            .send_async(ScrollerCommand::FetchMore {
+                src,
+                generation,
+                tx: None,
+            })
             .await
             .inspect_err(|e| error!("Failed to schedule fetch more command: {e:?}"));
     }
@@ -1739,7 +1903,9 @@ where
     commands: flume::Sender<ScrollerCommand>,
     updates: flume::Receiver<ScrollerUpdate<S::Item>>,
     source_db_handle: DropRemoveTableObserverHandle,
-    tasks: Vec<AbortHandle>,
+    scroll_ctx: ScrollerContext<S>,
+    generation: Arc<AtomicU64>,
+    tasks: Vec<JoinHandle<()>>,
 }
 
 enum ScrollerQuery<T>
@@ -1758,41 +1924,92 @@ where
 enum ScrollerCommand {
     FetchMore {
         src: ScrollerSource,
+        generation: u64,
         #[derivative(PartialEq = "ignore")]
         tx: Option<oneshot::Sender<()>>,
     },
     FetchNew {
         src: ScrollerSource,
+        generation: u64,
         notify: bool,
     },
-    Refresh(ScrollerSource),
-    ForceRefresh(ScrollerSource),
-    GetItems(ScrollerSource),
+    Refresh {
+        src: ScrollerSource,
+        generation: u64,
+    },
+    ForceRefresh {
+        src: ScrollerSource,
+        generation: u64,
+    },
+    GetItems {
+        src: ScrollerSource,
+        generation: u64,
+    },
     ChangeUnreadFilter {
         src: ScrollerSource,
+        generation: u64,
         unread: ReadFilter,
     },
     ChangeCategoryView {
         src: ScrollerSource,
+        generation: u64,
         category: Option<LocalLabelId>,
     },
     ChangeLabel {
         src: ScrollerSource,
+        generation: u64,
         label: LocalLabelId,
     },
     ChangeInclude {
         src: ScrollerSource,
+        generation: u64,
         include: IncludeSwitch,
     },
     ChangeKeywords {
         src: ScrollerSource,
+        generation: u64,
         #[derivative(PartialEq = "ignore")]
         keywords: SearchOptions,
     },
-    Clear(ScrollerSource),
-    AlternativeLabels(#[derivative(PartialEq = "ignore")] oneshot::Sender<AlternativeLabels>),
-    CategoryView(#[derivative(PartialEq = "ignore")] oneshot::Sender<CategoryView>),
-    CategoryViewChanged(ScrollerSource),
+    Clear {
+        src: ScrollerSource,
+        generation: u64,
+    },
+    AlternativeLabels {
+        generation: u64,
+        #[derivative(PartialEq = "ignore")]
+        tx: oneshot::Sender<AlternativeLabels>,
+    },
+    CategoryView {
+        generation: u64,
+        #[derivative(PartialEq = "ignore")]
+        tx: oneshot::Sender<CategoryView>,
+    },
+    CategoryViewChanged {
+        src: ScrollerSource,
+        generation: u64,
+    },
+}
+
+impl ScrollerCommand {
+    fn generation(&self) -> u64 {
+        match self {
+            Self::FetchMore { generation, .. }
+            | Self::FetchNew { generation, .. }
+            | Self::Refresh { generation, .. }
+            | Self::ForceRefresh { generation, .. }
+            | Self::GetItems { generation, .. }
+            | Self::ChangeUnreadFilter { generation, .. }
+            | Self::ChangeCategoryView { generation, .. }
+            | Self::ChangeLabel { generation, .. }
+            | Self::ChangeInclude { generation, .. }
+            | Self::ChangeKeywords { generation, .. }
+            | Self::Clear { generation, .. }
+            | Self::AlternativeLabels { generation, .. }
+            | Self::CategoryView { generation, .. }
+            | Self::CategoryViewChanged { generation, .. } => *generation,
+        }
+    }
 }
 
 fn calculate_scroller_update<T>(

@@ -458,6 +458,7 @@ async fn almost_all_mail_with_spam_and_trash() {
     }
     test_scroller
         .change_include(IncludeSwitch::WithSpamAndTrash)
+        .await
         .unwrap();
 
     test_scroller
@@ -473,6 +474,7 @@ async fn almost_all_mail_with_spam_and_trash() {
 
     test_scroller
         .change_keywords(SearchOptions::from("keyword"))
+        .await
         .unwrap();
     test_scroller
         .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 1 })
@@ -574,36 +576,42 @@ async fn change_include_multiple_times_in_a_row() {
 
     test_scroller
         .change_include(IncludeSwitch::WithSpamAndTrash)
+        .await
         .unwrap();
     test_scroller
         .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 2 })
         .await;
     test_scroller
         .change_include(IncludeSwitch::Default)
+        .await
         .unwrap();
     test_scroller
         .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 1 })
         .await;
     test_scroller
         .change_include(IncludeSwitch::WithSpamAndTrash)
+        .await
         .unwrap();
     test_scroller
         .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 2 })
         .await;
     test_scroller
         .change_include(IncludeSwitch::Default)
+        .await
         .unwrap();
     test_scroller
         .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 1 })
         .await;
     test_scroller
         .change_include(IncludeSwitch::WithSpamAndTrash)
+        .await
         .unwrap();
     test_scroller
         .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 2 })
         .await;
     test_scroller
         .change_include(IncludeSwitch::Default)
+        .await
         .unwrap();
     test_scroller
         .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 1 })
@@ -636,14 +644,14 @@ async fn change_keywords_multiple_times_in_a_row() {
     ctx.mock_get_messages()
         .given_label_id(&LabelId::almost_all_mail())
         .given_keyword("keyword")
-        .alter(|mock| mock.expect(6..=8))
+        .alter(|mock| mock.expect(5..=8))
         .respond_with(vec![message1.clone()])
         .await;
 
     ctx.mock_get_messages()
         .given_label_id(&LabelId::almost_all_mail())
         .given_keyword("other keyword")
-        .alter(|mock| mock.expect(6..=8))
+        .alter(|mock| mock.expect(5..=8))
         .respond_with(vec![message1, message2])
         .await;
 
@@ -690,31 +698,43 @@ async fn change_keywords_multiple_times_in_a_row() {
 
     test_scroller
         .change_keywords(other_keywords.clone())
+        .await
         .unwrap();
     test_scroller
         .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 2 })
         .await;
-    test_scroller.change_keywords(keywords.clone()).unwrap();
+    test_scroller
+        .change_keywords(keywords.clone())
+        .await
+        .unwrap();
     test_scroller
         .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 1 })
         .await;
     test_scroller
         .change_keywords(other_keywords.clone())
+        .await
         .unwrap();
     test_scroller
         .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 2 })
         .await;
-    test_scroller.change_keywords(keywords.clone()).unwrap();
+    test_scroller
+        .change_keywords(keywords.clone())
+        .await
+        .unwrap();
     test_scroller
         .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 1 })
         .await;
     test_scroller
         .change_keywords(other_keywords.clone())
+        .await
         .unwrap();
     test_scroller
         .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 2 })
         .await;
-    test_scroller.change_keywords(keywords.clone()).unwrap();
+    test_scroller
+        .change_keywords(keywords.clone())
+        .await
+        .unwrap();
     test_scroller
         .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 1 })
         .await;

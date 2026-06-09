@@ -338,15 +338,25 @@ impl MailboxModel {
         })
     }
 
-    #[allow(clippy::result_large_err)]
-    fn change_filter(&mut self, unread: ReadFilter) {
+    fn change_filter(&mut self, unread: ReadFilter) -> Command<Messages> {
         self.unread = unread;
         if let State::Conversations(state) = &mut self.state {
-            let _ = state.scroller().clone_inner().change_filter(unread);
+            let scroller = state.scroller().clone_inner();
+            Command::task(async move {
+                let _ = scroller.change_filter(unread).await;
+                Command::None
+            })
         } else if let State::Messages(state) = &mut self.state {
-            state
-                .label_scroller()
-                .map(|scroller| scroller.clone_inner().change_filter(unread));
+            let Some(scroller) = state.label_scroller() else {
+                return Command::None;
+            };
+            let scroller = scroller.clone_inner();
+            Command::task(async move {
+                let _ = scroller.change_filter(unread).await;
+                Command::None
+            })
+        } else {
+            Command::None
         }
     }
 
@@ -373,27 +383,30 @@ impl MailboxModel {
         }
     }
 
-    fn advance_category(&mut self) {
-        self.switch_category(1);
+    fn advance_category(&mut self) -> Command<Messages> {
+        self.switch_category(1)
     }
 
-    fn prev_category(&mut self) {
-        self.switch_category(-1);
+    fn prev_category(&mut self) -> Command<Messages> {
+        self.switch_category(-1)
     }
 
-    fn switch_category(&mut self, delta: i64) {
+    fn switch_category(&mut self, delta: i64) -> Command<Messages> {
         if self.categories.is_empty() {
-            return;
+            return Command::None;
         }
         let active_idx = self.categories.iter().position(|c| c.enabled).unwrap_or(0);
         let len = self.categories.len() as i64;
         let next_idx = ((active_idx as i64 + delta).rem_euclid(len)) as usize;
         let next_id = self.categories[next_idx].local_id;
         if let State::Conversations(state) = &self.state {
-            let _ = state
-                .scroller()
-                .clone_inner()
-                .change_category_view(Some(next_id));
+            let scroller = state.scroller().clone_inner();
+            Command::task(async move {
+                let _ = scroller.change_category_view(Some(next_id)).await;
+                Command::None
+            })
+        } else {
+            Command::None
         }
     }
 }
@@ -443,16 +456,13 @@ impl AppStateHandler for MailboxModel {
                     return Command::message(Message::OpenUserFeatureFlags);
                 }
                 KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                    self.change_filter(ReadFilter::Unread);
-                    return Command::None;
+                    return self.change_filter(ReadFilter::Unread);
                 }
                 KeyCode::Char('r') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                    self.change_filter(ReadFilter::Read);
-                    return Command::None;
+                    return self.change_filter(ReadFilter::Read);
                 }
                 KeyCode::Char('a') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                    self.change_filter(ReadFilter::All);
-                    return Command::None;
+                    return self.change_filter(ReadFilter::All);
                 }
                 KeyCode::F(8) => {
                     return Command::Message(Messages::SwitchAppState(AppState::Background(
@@ -507,7 +517,7 @@ impl AppStateHandler for MailboxModel {
             && key.code == KeyCode::Tab
         {
             if let State::Conversations(_) = &self.state {
-                self.advance_category();
+                return self.advance_category();
             }
             return Command::None;
         }
@@ -516,7 +526,7 @@ impl AppStateHandler for MailboxModel {
             && key.code == KeyCode::BackTab
         {
             if let State::Conversations(_) = &self.state {
-                self.prev_category();
+                return self.prev_category();
             }
             return Command::None;
         }

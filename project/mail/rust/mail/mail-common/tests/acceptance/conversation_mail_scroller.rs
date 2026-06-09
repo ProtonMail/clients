@@ -841,11 +841,9 @@ async fn test_conversation_mail_scroller_has_insufficient_cached_data_to_fill_fi
         .await
         .unwrap();
 
-    // Fetch more will load 8 items, 3 + 5 as in total it is less than
-    // 2 separate pages so it will merge them together.
-    let fetched_page = test_scroller.fetch_more_and_wait().await.unwrap();
-    assert_eq!(fetched_page.len(), 8);
-
+    // The next-page-on-init task loads the merged first page during initialization:
+    // 3 cached + 5 from the first API page = 8 items (less than two full pages, so
+    // they are merged into a single first page).
     assert_scroller_content!(
         &mut test_scroller,
         8,
@@ -862,10 +860,9 @@ async fn test_conversation_mail_scroller_has_insufficient_cached_data_to_fill_fi
     );
     assert!(test_scroller.has_more().await.unwrap());
 
-    // Get next page - it will progress cursor to the next page
-    // Since we started moving by whole pages it will fetch 5 items now
-    test_scroller.fetch_more().unwrap();
-    let actual_page = test_scroller.wait_for_update().await.unwrap().unwrap();
+    // `fetch_more` progresses the cursor and the remaining second page (5) is fetched
+    // in the background, arriving as a separate update.
+    let actual_page = test_scroller.fetch_more_and_wait().await.unwrap();
     assert_eq!(actual_page.len(), 5);
     assert_scroller_content!(
         &mut test_scroller,
@@ -893,8 +890,7 @@ async fn test_conversation_mail_scroller_has_insufficient_cached_data_to_fill_fi
         .await
         .unwrap();
 
-    test_scroller.fetch_more().unwrap();
-    let actual_page = test_scroller.wait_for_update().await.unwrap().unwrap();
+    let actual_page = test_scroller.fetch_more_and_wait().await.unwrap();
     assert_eq!(actual_page.len(), 5);
     assert_scroller_content!(
         &mut test_scroller,
@@ -910,10 +906,8 @@ async fn test_conversation_mail_scroller_has_insufficient_cached_data_to_fill_fi
     assert!(test_scroller.has_more().await.unwrap());
 
     // This `fetch_more` will join two last pages together as the last page is incomplete
-    test_scroller.fetch_more().unwrap();
-    let actual_page = test_scroller.wait_for_update().await.unwrap().unwrap();
+    let actual_page = test_scroller.fetch_more_and_wait().await.unwrap();
     assert_eq!(actual_page.len(), 8);
-
     assert_scroller_content!(
         &mut test_scroller,
         13,
@@ -1733,7 +1727,7 @@ async fn test_conversation_mail_scroller_change_label() {
     assert!(test_scroller.has_more().await.unwrap());
 
     // Switch to custom label "rid2"
-    test_scroller.change_label(rid2_local_id).unwrap();
+    test_scroller.change_label(rid2_local_id).await.unwrap();
     test_scroller
         .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 10 })
         .await;
@@ -1743,7 +1737,7 @@ async fn test_conversation_mail_scroller_change_label() {
         .await;
 
     // Switch back to inbox
-    test_scroller.change_label(inbox_local_id).unwrap();
+    test_scroller.change_label(inbox_local_id).await.unwrap();
     test_scroller
         .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 9 })
         .await;
@@ -1829,6 +1823,7 @@ async fn test_conversation_mail_scroller_change_include() {
     // Switch to all mail
     test_scroller
         .change_include(IncludeSwitch::WithSpamAndTrash)
+        .await
         .unwrap();
     test_scroller
         .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 10 })
@@ -1841,6 +1836,7 @@ async fn test_conversation_mail_scroller_change_include() {
     // Switch back to almost all mail
     test_scroller
         .change_include(IncludeSwitch::Default)
+        .await
         .unwrap();
     test_scroller
         .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 9 })
@@ -2676,6 +2672,7 @@ async fn test_category_view_filters_conversations_and_emits_updates() {
     // Switch to CategorySocial — only the 2 Social-tagged conversations are shown.
     test_scroller
         .change_category_view(Some(social_local_id))
+        .await
         .unwrap();
     test_scroller
         .match_next_update(TestUpdate::CategoryViewChanged { labels: 2 })
@@ -2687,7 +2684,7 @@ async fn test_category_view_filters_conversations_and_emits_updates() {
 
     // Clear category filter (None) — Should not change active category
     // Only way to disable the category view is to update MailSettings
-    test_scroller.change_category_view(None).unwrap();
+    test_scroller.change_category_view(None).await.unwrap();
     let category_view = test_scroller.category_view().await.unwrap();
 
     assert_eq!(
@@ -2804,7 +2801,7 @@ async fn test_category_view_clears_on_change_label_to_all_mail() {
     );
 
     // Switch to AllMail — category filtering does not apply, all 3 conversations are shown.
-    test_scroller.change_label(allmail_local_id).unwrap();
+    test_scroller.change_label(allmail_local_id).await.unwrap();
     test_scroller
         .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 3 })
         .await;
@@ -2822,7 +2819,7 @@ async fn test_category_view_clears_on_change_label_to_all_mail() {
     );
 
     // Switch to back to the Inbox — category filtering does apply, only Primary Category is shown.
-    test_scroller.change_label(inbox_local_id).unwrap();
+    test_scroller.change_label(inbox_local_id).await.unwrap();
     test_scroller
         .match_next_update(TestUpdate::ReplaceFrom { idx: 0, items: 1 })
         .await;
@@ -2980,6 +2977,7 @@ async fn test_category_view_first_page_sends_multi_label_ids_to_api() {
     // reads 2 visible items → ReplaceFrom{2}.
     test_scroller
         .change_category_view(Some(social_local_id))
+        .await
         .unwrap();
     test_scroller
         .match_next_update(TestUpdate::CategoryViewChanged { labels: 2 })
@@ -3196,6 +3194,7 @@ async fn test_category_view_next_page_sends_multi_label_ids_to_api() {
     // reset() also leaves a next-page background task stored in self.task.
     test_scroller
         .change_category_view(Some(social_local_id))
+        .await
         .unwrap();
     test_scroller
         .match_next_update(TestUpdate::CategoryViewChanged { labels: 2 })
@@ -3305,6 +3304,7 @@ async fn test_total_reflects_active_category_after_change_category_view() {
 
     test_scroller
         .change_category_view(Some(social_local_id))
+        .await
         .unwrap();
     test_scroller
         .match_next_update(TestUpdate::CategoryViewChanged { labels: 2 })
@@ -3665,6 +3665,7 @@ async fn test_disabling_active_non_primary_category_falls_back_to_primary() {
     // Activate CategorySocial — the 2 social conversations replace the list.
     scroller
         .change_category_view(Some(social_local_id))
+        .await
         .unwrap();
     scroller
         .match_next_update(TestUpdate::CategoryViewChanged { labels: 2 })
@@ -3800,6 +3801,7 @@ async fn test_category_changed_preserves_user_selection_when_available_grows() {
     // User selects CategorySocial — list switches to the 2 social conversations.
     scroller
         .change_category_view(Some(social_local_id))
+        .await
         .unwrap();
     scroller
         .match_next_update(TestUpdate::CategoryViewChanged { labels: 2 })

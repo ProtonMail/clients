@@ -97,18 +97,21 @@ impl<T: RemoteSource> DataScrollerSource<T> {
                     self.invalidate.clone(),
                 )?;
 
-                let task = if is_online
+                if is_online
                     && !scroller.has_next_page(&tether).await?
                     && total > self.page_size as u64
                 {
-                    debug!("Syncing next page in a task");
+                    debug!("Syncing next page in background");
 
-                    self.sync_next_page(ctx, &ending_element, remote_label_ids)?
-                } else {
-                    None
-                };
+                    self.sync_next_page(
+                        ctx,
+                        &ending_element,
+                        remote_label_ids,
+                        self.invalidate.clone(),
+                    )?;
+                }
 
-                return Ok(task);
+                return Ok(None);
             } else {
                 debug!("Cursor points to empty scroll data, will sync first page instead");
 
@@ -275,6 +278,7 @@ impl<T: RemoteSource> DataScrollerSource<T> {
         ctx: &MailUserContext,
         scroller: &T,
         remote_label_ids: Vec<LabelId>,
+        invalidate: Option<flume::Sender<()>>,
     ) -> Result<MailPaginatorJoinHandle, MailContextError> {
         debug!("Syncing next page (async)");
 
@@ -293,6 +297,7 @@ impl<T: RemoteSource> DataScrollerSource<T> {
             page_size,
             self.order_dir,
             self.order_field,
+            invalidate,
         )
     }
 
@@ -486,7 +491,7 @@ impl<T: RemoteSource> MailScrollerSource for DataScrollerSource<T> {
                         .build_remote_label_ids(label.remote_id.clone().unwrap(), &tether)
                         .await?;
 
-                    self.sync_next_page(ctx, &cp, remote_label_ids)?
+                    self.sync_next_page(ctx, &cp, remote_label_ids, None)?
                 } else {
                     None
                 };

@@ -604,10 +604,13 @@ impl MessagesState {
                     }
                 };
 
-                _ = scroller.change_include(include);
+                let scroller = scroller.clone_inner();
                 *curr_include = include;
 
-                Command::None
+                Command::task(async move {
+                    let _ = scroller.change_include(include).await;
+                    Command::None
+                })
             }
 
             KeyCode::Enter => {

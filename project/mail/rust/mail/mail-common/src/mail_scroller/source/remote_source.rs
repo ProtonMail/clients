@@ -37,6 +37,7 @@ pub trait RemoteSource: ScrollData + Send + Sync {
         page_size: usize,
         order_dir: ScrollOrderDir,
         order_field: ScrollOrderField,
+        invalidate: Option<flume::Sender<()>>,
     ) -> Result<MailPaginatorJoinHandle, MailContextError>;
 
     #[allow(clippy::too_many_arguments)]

@@ -299,9 +299,13 @@ impl ConversationsState {
                     _ => unreachable!(),
                 };
 
-                _ = self.scroller.change_include(self.include);
+                let scroller = self.scroller.clone_inner();
+                let include = self.include;
 
-                Command::None
+                Command::task(async move {
+                    let _ = scroller.change_include(include).await;
+                    Command::None
+                })
             }
 
             KeyCode::Char('z') => {

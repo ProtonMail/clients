@@ -344,31 +344,31 @@ where
         self.scroller.refresh()
     }
 
-    pub fn change_filter(&self, filter: ReadFilter) -> Result<(), MailContextError> {
-        self.scroller.change_filter(filter)
+    pub async fn change_filter(&self, filter: ReadFilter) -> Result<(), MailContextError> {
+        self.scroller.change_filter(filter).await
     }
 
-    pub fn change_label(&self, label: LocalLabelId) -> Result<(), MailContextError> {
-        self.scroller.change_label(label)
+    pub async fn change_label(&self, label: LocalLabelId) -> Result<(), MailContextError> {
+        self.scroller.change_label(label).await
     }
 
-    pub fn change_category_view(
+    pub async fn change_category_view(
         &self,
         category: Option<LocalLabelId>,
     ) -> Result<(), MailContextError> {
-        self.scroller.change_category_view(category)
+        self.scroller.change_category_view(category).await
     }
 
     pub async fn category_view(&self) -> Result<CategoryView, MailContextError> {
         self.scroller.category_view().await
     }
 
-    pub fn change_include(&self, include: IncludeSwitch) -> Result<(), MailContextError> {
-        self.scroller.change_include(include)
+    pub async fn change_include(&self, include: IncludeSwitch) -> Result<(), MailContextError> {
+        self.scroller.change_include(include).await
     }
 
-    pub fn change_keywords(&self, keywords: SearchOptions) -> Result<(), MailContextError> {
-        self.scroller.change_keywords(keywords)
+    pub async fn change_keywords(&self, keywords: SearchOptions) -> Result<(), MailContextError> {
+        self.scroller.change_keywords(keywords).await
     }
 
     pub fn force_refresh(&self) -> Result<(), MailContextError> {

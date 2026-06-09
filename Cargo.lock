@@ -1296,6 +1296,7 @@ dependencies = [
  "pretty_assertions",
  "serde",
  "tracing",
+ "web-time",
 ]
 
 [[package]]

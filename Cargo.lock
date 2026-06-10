@@ -251,6 +251,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "account-remix-types-codegen"
+version = "0.1.0"
+dependencies = [
+ "account-remix",
+ "anyhow",
+ "clap",
+ "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "account-validator-password"
 version = "0.1.0"
 dependencies = [
@@ -10381,6 +10391,16 @@ version = "0.1.0"
 dependencies = [
  "account-remix-types",
  "anyhow",
+ "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "remix",
+]
+
+[[package]]
+name = "remix-types-codegen"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
  "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "remix",
 ]

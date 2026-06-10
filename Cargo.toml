@@ -302,7 +302,7 @@ path = "project/core/rust/lattice-muon2"
 
 [workspace.dependencies.proton-crypto-account]
 # Use experimental version based on rprp instead of gopenpgp-sys.
-version = "0.18.2"
+version = "0.19.0"
 default-features = false
 features = ["facet", "rustpgp"]
 registry = "proton"
@@ -313,7 +313,7 @@ registry = "proton"
 
 [workspace.dependencies.proton-crypto]
 # Use experimental version based on rprp instead of gpenpgp-sys.
-version = "0.12.2"
+version = "0.13.0"
 default-features = false
 features = ["facet", "rustpgp"]
 registry = "proton"

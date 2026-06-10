@@ -64,6 +64,7 @@ impl GetContactGroupsRequest {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct GetContactGroupsByIdsRequest {
+    #[serde(rename = "LabelIDs")]
     pub ids: Vec<ContactGroupId>,
 }
 

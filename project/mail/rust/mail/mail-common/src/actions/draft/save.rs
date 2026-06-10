@@ -1,7 +1,7 @@
 use crate::actions::ConversationOrMessage;
 use crate::actions::draft::{
-    DraftAttachmentActionDependencyKeyBuilderExt, SEND_ACTION_GROUP, local_all_draft_label_id,
-    local_all_mail_label_id, local_draft_label_id, local_sent_label_id, sanitize_draft_subject,
+    SEND_ACTION_GROUP, local_all_draft_label_id, local_all_mail_label_id, local_draft_label_id,
+    local_sent_label_id, sanitize_draft_subject,
 };
 use crate::datatypes::{
     AttachmentMetadata, Disposition, LocalAttachmentId, LocalMessageId, MessageSender,
@@ -18,14 +18,13 @@ use crate::models::{
 use crate::{AppError, MailContextError, MailUserContext, draft};
 use indoc::indoc;
 use mail_action_queue::action::{
-    Action, ActionDependencyKeys, ActionGroup, ActionId, FactoryResult, Handler, Priority, Type,
-    VersionConverter, VersionConverterError, WriterGuard, WriterGuardError, deserialize,
+    Action, ActionGroup, ActionId, FactoryResult, Handler, Priority, Type, VersionConverter,
+    VersionConverterError, WriterGuard, WriterGuardError, deserialize,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::prelude::{DraftParams, DraftReplyOrForwardParams, ExternalId};
 use mail_api::services::proton::request_data::DraftSender;
 use mail_core_api::services::proton::{AddressId, LabelId};
-use mail_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;
 use mail_core_common::datatypes::UnixTimestamp;
 use mail_core_common::models::{Address, ModelExtension, ModelIdExtension};
 use mail_crypto_inbox::message::EncryptedDraft;
@@ -137,12 +136,6 @@ impl Action<UserDb> for Save {
     type RemoteOutput = ();
     type LocalOutput = ();
     type Error = MailContextError;
-
-    fn dependency_keys(&self) -> ActionDependencyKeys {
-        ActionDependencyKeysBuilder::new()
-            .with_any_draft_attachment_uploads_required(self.metadata_id)
-            .build()
-    }
 }
 
 pub struct SaveVersionConverter {}

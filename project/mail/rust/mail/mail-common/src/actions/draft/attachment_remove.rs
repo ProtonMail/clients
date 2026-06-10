@@ -1,5 +1,5 @@
 use crate::MailContextError;
-use crate::actions::draft::{DraftAttachmentActionDependencyKeyBuilderExt, SEND_ACTION_GROUP};
+use crate::actions::draft::SEND_ACTION_GROUP;
 use crate::datatypes::{LocalAttachmentId, LocalMessageId};
 use crate::draft::{AttachmentRemoveError, AttachmentUploadError};
 use crate::models::{
@@ -7,14 +7,12 @@ use crate::models::{
     MetadataId,
 };
 use mail_action_queue::action::{
-    Action, ActionDependencyKeys, ActionGroup, ActionId, DefaultVersionConverter, Handler,
-    Priority, Type, WriterGuard,
+    Action, ActionGroup, ActionId, DefaultVersionConverter, Handler, Priority, Type, WriterGuard,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::ProtonMail;
 use mail_core_api::service::{ApiErrorInfo, ApiServiceError};
 use mail_core_api::session::Session;
-use mail_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;
 use mail_core_common::models::ModelExtension;
 use mail_stash::orm::Model as _;
 use mail_stash::stash::{Tether, WriteTx};
@@ -66,12 +64,6 @@ impl Action<UserDb> for AttachmentRemove {
     type RemoteOutput = ();
     type LocalOutput = ();
     type Error = MailContextError;
-
-    fn dependency_keys(&self) -> ActionDependencyKeys {
-        ActionDependencyKeysBuilder::new()
-            .with_draft_attachment_optional(self.metadata_id, self.attachment_id)
-            .build()
-    }
 }
 
 pub struct AttachmentRemoveHandler {
@@ -83,7 +75,7 @@ impl Handler<UserDb> for AttachmentRemoveHandler {
 
     async fn apply_local(
         &self,
-        action_id: ActionId,
+        this_id: ActionId,
         action: &mut Self::Action,
         tx: &WriteTx<'_>,
     ) -> Result<
@@ -127,17 +119,12 @@ impl Handler<UserDb> for AttachmentRemoveHandler {
         }
 
         // update attachment action id
+        attachment_metadata.action_id = Some(this_id);
         attachment_metadata.deleted = true;
         attachment_metadata
             .save(tx)
             .await
             .inspect_err(|e| error!("Failed to save draft attachment metadata: {e:?}"))?;
-        DraftAttachmentMetadata::track_action::<_, Self::Action>(
-            action.attachment_id,
-            action_id,
-            tx,
-        )
-        .await?;
 
         action.local_message_id = message_id;
         Ok(())

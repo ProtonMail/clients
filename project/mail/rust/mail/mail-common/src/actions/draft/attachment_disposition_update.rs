@@ -1,7 +1,5 @@
 use crate::MailContextError;
-use crate::actions::draft::{
-    DraftAttachmentActionDependencyKeyBuilderExt, SEND_ACTION_GROUP, save_attachment_error,
-};
+use crate::actions::draft::{SEND_ACTION_GROUP, save_attachment_error};
 use crate::datatypes::attachment::CombinedAttachmentDisposition;
 use crate::datatypes::{Disposition, LocalAttachmentId};
 use crate::draft::AttachmentDispositionSwapError;
@@ -10,8 +8,7 @@ use crate::models::{
     DraftSendResultOrigin, MetadataId,
 };
 use mail_action_queue::action::{
-    Action, ActionDependencyKeys, ActionGroup, ActionId, DefaultVersionConverter, Handler,
-    Priority, Type, WriterGuard,
+    Action, ActionGroup, ActionId, DefaultVersionConverter, Handler, Priority, Type, WriterGuard,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::ProtonMail;
@@ -19,7 +16,6 @@ use mail_api::services::proton::request_data::NewAttachmentDisposition;
 use mail_core_api::consts::{General, Mail};
 use mail_core_api::service::ApiServiceError;
 use mail_core_api::session::Session;
-use mail_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;
 use mail_core_common::models::ModelExtension;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
@@ -69,12 +65,6 @@ impl Action<UserDb> for AttachmentDispositionUpdate {
     type RemoteOutput = ();
     type LocalOutput = ();
     type Error = MailContextError;
-
-    fn dependency_keys(&self) -> ActionDependencyKeys {
-        ActionDependencyKeysBuilder::new()
-            .record_draft_attachment_use(self.metadata_id, self.attachment_id)
-            .build()
-    }
 }
 
 pub struct AttachmentDispositionUpdateHandler {
@@ -86,7 +76,7 @@ impl Handler<UserDb> for AttachmentDispositionUpdateHandler {
 
     async fn apply_local(
         &self,
-        action_id: ActionId,
+        this_id: ActionId,
         action: &mut Self::Action,
         tx: &WriteTx<'_>,
     ) -> Result<
@@ -150,13 +140,8 @@ impl Handler<UserDb> for AttachmentDispositionUpdateHandler {
 
         // reset to uploaded state
         metadata.set_disposition_swap_state();
+        metadata.action_id = Some(this_id);
         metadata.save(tx).await?;
-        DraftAttachmentMetadata::track_action::<_, Self::Action>(
-            action.attachment_id,
-            action_id,
-            tx,
-        )
-        .await?;
         Ok(())
     }
 

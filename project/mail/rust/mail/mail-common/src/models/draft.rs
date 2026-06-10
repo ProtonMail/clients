@@ -19,7 +19,7 @@ use anyhow::anyhow;
 use chrono::Utc;
 use derive_more::derive::TryFrom;
 use indoc::formatdoc;
-use mail_action_queue::action::{Action, ActionId};
+use mail_action_queue::action::ActionId;
 use mail_api::services::proton::common::MessageId;
 use mail_core_api::service::ApiServiceError;
 use mail_core_api::services::proton::{AddressId, PrivateEmail};
@@ -28,7 +28,6 @@ use mail_core_common::db::account::{EncryptedPassword, SessionEncryptionKey};
 use mail_core_common::models::ModelIdExtension;
 use mail_stash::exports::{SqliteError, *};
 use mail_stash::macros::{DbRecord, Model};
-use mail_stash::marker::DatabaseMarker;
 use mail_stash::orm::{Model, ModelHooks};
 use mail_stash::stash::{Stash, StashError, Tether, WatcherHandle, WriteTx};
 use mail_stash::{UserDb, params, sql_using_serde};
@@ -268,7 +267,7 @@ impl DraftMetadata {
         //TODO: check attachment metadata.
         Ok(self.save_action_id.is_some()
             || self.send_action_id.is_some()
-            || !DraftAttachmentMetadata::find_attachment_ids_with_pending_actions(
+            || !DraftAttachmentMetadata::find_attachment_upload_action_ids(
                 self.id.unwrap(),
                 tether,
             )
@@ -1074,6 +1073,9 @@ pub struct DraftAttachmentMetadata {
     pub display_order: usize,
 
     #[DbField]
+    pub action_id: Option<ActionId>,
+
+    #[DbField]
     pub deleted: bool,
 
     #[DbField]
@@ -1093,6 +1095,7 @@ impl DraftAttachmentMetadata {
             metadata_id,
             timestamp: Utc::now().timestamp(),
             state: DraftAttachmentUploadState::Uploading,
+            action_id: None,
             error: None,
             ownership: DraftAttachmentOwnership::Owned,
             display_order,
@@ -1116,6 +1119,7 @@ impl DraftAttachmentMetadata {
             metadata_id,
             timestamp: Utc::now().timestamp(),
             state: DraftAttachmentUploadState::Pending,
+            action_id: None,
             error: None,
             ownership: DraftAttachmentOwnership::Owned,
             display_order,
@@ -1137,6 +1141,7 @@ impl DraftAttachmentMetadata {
             local_attachment_id: attachment.id(),
             metadata_id,
             timestamp: Utc::now().timestamp(),
+            action_id: None,
             error: None,
             state: DraftAttachmentUploadState::Uploaded,
             ownership: DraftAttachmentOwnership::Inherited,
@@ -1157,6 +1162,7 @@ impl DraftAttachmentMetadata {
             local_attachment_id: attachment_id,
             metadata_id,
             timestamp: Utc::now().timestamp(),
+            action_id: None,
             error: None,
             state: DraftAttachmentUploadState::Uploaded,
             ownership: DraftAttachmentOwnership::Owned,
@@ -1206,6 +1212,22 @@ impl DraftAttachmentMetadata {
     /// Timestamp of the latest state update.
     pub fn state_timestamp(&self) -> i64 {
         self.timestamp
+    }
+
+    /// Return all [`ActionId`]s for attachments that are still uploading.
+    pub async fn find_attachment_upload_action_ids(
+        metadata_id: MetadataId,
+        tether: &Tether,
+    ) -> Result<Vec<ActionId>, StashError> {
+        tether
+            .query_values(
+                format!(
+                    "SELECT action_id FROM {} WHERE metadata_id = ? AND action_id IS NOT NULL AND deleted = 0",
+                    Self::table_name()
+                ),
+                params![metadata_id],
+            )
+            .await
     }
 
     /// Check whether this draft has attachments that have not been uploaded yet.
@@ -1307,6 +1329,7 @@ impl DraftAttachmentMetadata {
                 state: DraftAttachmentUploadState::Uploaded,
                 ownership: DraftAttachmentOwnership::Owned,
                 error: None,
+                action_id: None,
                 display_order: order,
                 deleted: false,
                 is_public_key: a.is_public_key_attachment(),
@@ -1381,44 +1404,6 @@ impl DraftAttachmentMetadata {
         self.error
             .as_ref()
             .is_some_and(|e| e.is_disposition_swap_error())
-    }
-
-    pub async fn track_action<D: DatabaseMarker, T: Action<D>>(
-        attachment_id: LocalAttachmentId,
-        action_id: ActionId,
-        tx: &WriteTx<'_>,
-    ) -> Result<(), StashError> {
-        tx.execute("INSERT OR IGNORE INTO draft_attachment_actions (local_attachment_id, action_id, action_type) VALUES (?,?,?)",
-            params![attachment_id, action_id, T::TYPE.as_ref()]).await?;
-        Ok(())
-    }
-
-    pub async fn find_action_id_for_attachment<D: DatabaseMarker, T: Action<D>>(
-        attachment_id: LocalAttachmentId,
-        tx: &WriteTx<'_>,
-    ) -> Result<Option<ActionId>, StashError> {
-        tx.query_value_opt("SELECT action_id FROM draft_attachment_actions WHERE local_attachment_id=? AND action_type=?",
-            params![attachment_id, T::TYPE.as_ref()]).await
-    }
-
-    pub async fn find_attachment_ids_with_pending_actions(
-        metadata_id: MetadataId,
-        tether: &Tether,
-    ) -> Result<Vec<LocalAttachmentId>, StashError> {
-        tether
-            .query_values(
-                format!(
-                    indoc::indoc!{
-                        "SELECT DISTINCT DA.local_attachment_id FROM {} AS DA
-                        JOIN draft_attachment_actions AS DAA ON DAA.local_attachment_id = DA.local_attachment_id
-                        WHERE DA.metadata_id = ?
-                    ",
-                    },
-                    Self::table_name()
-                ),
-                params![metadata_id],
-            )
-            .await
     }
 }
 #[derive(DbRecord, Debug, Eq, PartialEq, Copy, Clone)]

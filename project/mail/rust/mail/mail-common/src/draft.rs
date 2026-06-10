@@ -215,7 +215,7 @@ pub enum AttachmentUploadError {
     MissingContentId(LocalAttachmentId),
     #[error("Failed to encrypt attachment: {0}")]
     Crypto(AttachmentEncryptionError),
-    #[error("An existing upload action ({0}) exists for this attachment")]
+    #[error("An existing upload action exists for this attachment")]
     ExistingUploadActionExist(ActionId),
     #[error("Attachment has already been uploaded")]
     AttachmentAlreadyUploaded(LocalAttachmentId),

@@ -1,6 +1,4 @@
-use crate::actions::draft::{
-    DraftAttachmentActionDependencyKeyBuilderExt, SEND_ACTION_GROUP, save_attachment_error,
-};
+use crate::actions::draft::{SEND_ACTION_GROUP, save_attachment_error};
 use crate::datatypes::attachment::CombinedAttachmentDisposition;
 use crate::datatypes::{Disposition, LocalAttachmentId, LocalMessageId};
 use crate::draft::AttachmentUploadError;
@@ -10,8 +8,8 @@ use crate::models::{
 };
 use crate::{MailContextError, MailUserContext};
 use mail_action_queue::action::{
-    Action, ActionDependencyKeys, ActionGroup, ActionId, FactoryResult, Handler, Priority, Type,
-    VersionConverter, VersionConverterError, WriterGuard, WriterGuardError, deserialize,
+    Action, ActionGroup, ActionId, FactoryResult, Handler, Priority, Type, VersionConverter,
+    VersionConverterError, WriterGuard, WriterGuardError, deserialize,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::ProtonMail;
@@ -19,7 +17,6 @@ use mail_api::services::proton::common::MessageId;
 use mail_api::services::proton::prelude::NewAttachmentParams;
 use mail_core_api::consts::Mail;
 use mail_core_api::services::proton::AddressId;
-use mail_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;
 use mail_core_common::models::{ModelExtension, ModelIdExtension};
 use mail_stash::orm::Model;
 use mail_stash::stash::{Tether, WriteTx};
@@ -102,12 +99,6 @@ impl Action<UserDb> for AttachmentUpload {
     type RemoteOutput = ();
     type LocalOutput = ();
     type Error = MailContextError;
-
-    fn dependency_keys(&self) -> ActionDependencyKeys {
-        ActionDependencyKeysBuilder::new()
-            .record_draft_attachment_upload(self.metadata_id, self.attachment_id)
-            .build()
-    }
 }
 
 pub struct AttachmentUploadVersionConverter {}
@@ -133,7 +124,7 @@ impl Handler<UserDb> for AttachmentUploadHandler {
 
     async fn apply_local(
         &self,
-        action_id: ActionId,
+        this_id: ActionId,
         action: &mut Self::Action,
         tx: &WriteTx<'_>,
     ) -> Result<
@@ -179,18 +170,11 @@ impl Handler<UserDb> for AttachmentUploadHandler {
             attachment_upload_metadata.metadata_id
         );
 
-        if let Some(existing_action_id) = DraftAttachmentMetadata::find_action_id_for_attachment::<
-            _,
-            Self::Action,
-        >(action.attachment_id, tx)
-        .await?
-        {
+        if let Some(id) = attachment_upload_metadata.action_id {
             error!(
-                "Attempting to create new attachment upload action when attachment upload in progress ({existing_action_id:?})"
+                "Attempting to create new attachment upload action when existing action ({id}) exists"
             );
-            return Err(
-                AttachmentUploadError::ExistingUploadActionExist(existing_action_id).into(),
-            );
+            return Err(AttachmentUploadError::ExistingUploadActionExist(id).into());
         }
 
         if matches!(
@@ -203,6 +187,7 @@ impl Handler<UserDb> for AttachmentUploadHandler {
             );
         }
 
+        attachment_upload_metadata.action_id = Some(this_id);
         attachment_upload_metadata.set_uploading_state();
 
         attachment_upload_metadata
@@ -243,12 +228,6 @@ impl Handler<UserDb> for AttachmentUploadHandler {
         )
             .await.inspect_err(|e| error!("Failed to assign attachment to message: {e}"))?;
 
-        DraftAttachmentMetadata::track_action::<_, Self::Action>(
-            action.attachment_id,
-            action_id,
-            tx,
-        )
-        .await?;
         action.local_message_id = Some(message_id);
         action.new_disposition = Some(new_attachment_disposition);
         Ok(())

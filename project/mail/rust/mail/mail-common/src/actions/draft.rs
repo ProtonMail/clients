@@ -18,12 +18,11 @@ pub use self::undo_send::*;
 use crate::datatypes::{LocalAttachmentId, LocalMessageId, SystemLabelId};
 use crate::models::{
     DraftAttachmentInternalError, DraftAttachmentMetadata, DraftSendFailure, DraftSendResult,
-    DraftSendResultOrigin, MetadataId,
+    DraftSendResultOrigin,
 };
 use crate::{AppError, MailContextError};
-use mail_action_queue::action::{ActionDependencyKey, ActionGroup, WriterGuard, WriterGuardError};
+use mail_action_queue::action::{ActionGroup, WriterGuard, WriterGuardError};
 use mail_core_api::services::proton::LabelId;
-use mail_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;
 use mail_core_common::datatypes::LocalLabelId;
 use mail_core_common::models::{Label, ModelExtension, ModelIdExtension};
 use mail_stash::UserDb;
@@ -157,95 +156,6 @@ fn sanitize_draft_subject(subject: &str) -> String {
 
     let cleaned = ascii_chars_re.replace_all(subject, "");
     new_lines_re.replace_all(&cleaned, " ").into_owned()
-}
-
-trait DraftAttachmentActionDependencyKeyBuilderExt {
-    fn record_draft_attachment_upload(
-        self,
-        draft_id: MetadataId,
-        attachment_id: LocalAttachmentId,
-    ) -> Self;
-    fn record_draft_attachment_use(
-        self,
-        draft_id: MetadataId,
-        attachment_id: LocalAttachmentId,
-    ) -> Self;
-    fn with_any_draft_attachments_required(self, draft_id: MetadataId) -> Self;
-    fn with_any_draft_attachment_uploads_required(self, draft_id: MetadataId) -> Self;
-    fn with_draft_attachment_optional(
-        self,
-        draft_id: MetadataId,
-        attachment_id: LocalAttachmentId,
-    ) -> Self;
-}
-
-impl DraftAttachmentActionDependencyKeyBuilderExt for ActionDependencyKeysBuilder {
-    fn record_draft_attachment_upload(
-        self,
-        draft_id: MetadataId,
-        attachment_id: LocalAttachmentId,
-    ) -> Self {
-        let keys = [
-            attachment_upload_dependency_key(draft_id, attachment_id),
-            attachment_upload_dependency_key_group(draft_id),
-            attachment_dependency_key(draft_id, attachment_id),
-            attachment_dependency_key_group(draft_id),
-        ];
-        self.with_required_many(keys.clone()).record_many(keys)
-    }
-
-    fn record_draft_attachment_use(
-        self,
-        draft_id: MetadataId,
-        attachment_id: LocalAttachmentId,
-    ) -> Self {
-        let keys = [
-            attachment_dependency_key(draft_id, attachment_id),
-            attachment_dependency_key_group(draft_id),
-        ];
-        self.with_required_many(keys.clone()).record_many(keys)
-    }
-
-    fn with_draft_attachment_optional(
-        self,
-        draft_id: MetadataId,
-        attachment_id: LocalAttachmentId,
-    ) -> Self {
-        let key = attachment_dependency_key(draft_id, attachment_id);
-        self.with_optional(key)
-    }
-
-    fn with_any_draft_attachments_required(self, draft_id: MetadataId) -> Self {
-        self.with_required(attachment_dependency_key_group(draft_id))
-    }
-
-    fn with_any_draft_attachment_uploads_required(self, draft_id: MetadataId) -> Self {
-        self.with_required(attachment_upload_dependency_key_group(draft_id))
-    }
-}
-
-fn attachment_upload_dependency_key(
-    draft_id: MetadataId,
-    attachment_id: LocalAttachmentId,
-) -> ActionDependencyKey {
-    ActionDependencyKey::from(format!(
-        "draft_{draft_id}_attachment_upload_{attachment_id}"
-    ))
-}
-
-fn attachment_dependency_key(
-    draft_id: MetadataId,
-    attachment_id: LocalAttachmentId,
-) -> ActionDependencyKey {
-    ActionDependencyKey::from(format!("draft_{draft_id}_attachment{attachment_id}"))
-}
-
-fn attachment_upload_dependency_key_group(draft_id: MetadataId) -> ActionDependencyKey {
-    ActionDependencyKey::from(format!("draft_{draft_id}_attachment_upload"))
-}
-
-fn attachment_dependency_key_group(draft_id: MetadataId) -> ActionDependencyKey {
-    ActionDependencyKey::from(format!("draft_{draft_id}_attachment"))
 }
 
 #[cfg(test)]

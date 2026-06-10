@@ -105,7 +105,7 @@ impl Action<UserDb> for AttachmentUpload {
 
     fn dependency_keys(&self) -> ActionDependencyKeys {
         ActionDependencyKeysBuilder::new()
-            .record_draft_attachment(self.metadata_id, self.attachment_id)
+            .record_draft_attachment_upload(self.metadata_id, self.attachment_id)
             .build()
     }
 }

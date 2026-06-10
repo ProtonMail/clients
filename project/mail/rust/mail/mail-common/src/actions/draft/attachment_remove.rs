@@ -1,12 +1,10 @@
 use crate::MailContextError;
-use crate::actions::draft::{
-    DraftAttachmentActionDependencyKeyBuilderExt, SEND_ACTION_GROUP, save_attachment_error,
-};
+use crate::actions::draft::{DraftAttachmentActionDependencyKeyBuilderExt, SEND_ACTION_GROUP};
 use crate::datatypes::{LocalAttachmentId, LocalMessageId};
 use crate::draft::{AttachmentRemoveError, AttachmentUploadError};
 use crate::models::{
     Attachment, AttachmentType, DraftAttachmentMetadata, DraftAttachmentOwnership, DraftMetadata,
-    DraftSendResultOrigin, MetadataId,
+    MetadataId,
 };
 use mail_action_queue::action::{
     Action, ActionDependencyKeys, ActionGroup, ActionId, DefaultVersionConverter, Handler,
@@ -72,7 +70,6 @@ impl Action<UserDb> for AttachmentRemove {
     fn dependency_keys(&self) -> ActionDependencyKeys {
         ActionDependencyKeysBuilder::new()
             .with_draft_attachment_optional(self.metadata_id, self.attachment_id)
-            .record_draft_attachment(self.metadata_id, self.attachment_id)
             .build()
     }
 }
@@ -189,50 +186,14 @@ impl Handler<UserDb> for AttachmentRemoveHandler {
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,
     > {
-        let result = action.apply_remote_impl(&self.api, &mut writer_guard).await;
-
-        if let Err(error) = &result {
-            // Replace error only for internal reporting, the action queue needs the original error
-            // to retry.
-            if let Err(e) = save_attachment_error(
-                action.local_message_id.expect("Should be set"),
-                action.attachment_id,
-                DraftSendResultOrigin::AttachmentRemove,
-                &mut writer_guard,
-                error,
-            )
-            .await
-            {
-                error!("Failed to save attachment upload result: {e:?}");
-            }
-        }
-        result
-    }
-    async fn rebase_local(
-        &self,
-        _: ActionId,
-        _: &mut Self::Action,
-        _: &RebaseChangeSet,
-        _: &WriteTx<'_>,
-    ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
-        Ok(())
-    }
-}
-
-impl AttachmentRemove {
-    async fn apply_remote_impl(
-        &self,
-        api: &Session,
-        writer_guard: &mut WriterGuard<'_, UserDb>,
-    ) -> Result<(), MailContextError> {
         // check metadata to see if attachment is owned or inherited
         let Some(attachment_metadata) =
-            DraftAttachmentMetadata::find_by_id(self.attachment_id, writer_guard.tether())
+            DraftAttachmentMetadata::find_by_id(action.attachment_id, writer_guard.tether())
                 .await
                 .inspect_err(|e| error!("Failed to load draft attachment metadata: {e:?}"))?
         else {
             return Err(
-                AttachmentRemoveError::AttachmentMetadataNotFound(self.attachment_id).into(),
+                AttachmentRemoveError::AttachmentMetadataNotFound(action.attachment_id).into(),
             );
         };
 
@@ -241,11 +202,12 @@ impl AttachmentRemove {
             attachment_metadata.ownership,
             DraftAttachmentOwnership::Owned
         ) && let Some(AttachmentType::Remote(Some(remote_id))) =
-            Attachment::local_id_counterpart(self.attachment_id, writer_guard.tether()).await?
+            Attachment::local_id_counterpart(action.attachment_id, writer_guard.tether()).await?
         {
             info!("Deleting {remote_id:?}");
 
-            api.delete_attachment(remote_id)
+            self.api
+                .delete_attachment(remote_id)
                 .await
                 .map_err(|e| -> MailContextError {
                     error!("Failed to delete attachment on the server{e}");
@@ -263,14 +225,14 @@ impl AttachmentRemove {
 
         // Delete metadata & attachment record
         writer_guard
-            .tx::<_, _, <Self as Action<UserDb>>::Error>(async |tx: &WriteTx<'_>| {
+            .tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx: &WriteTx<'_>| {
                 // If we own the attachment, delete it.
                 if matches!(
                     attachment_metadata.ownership,
                     DraftAttachmentOwnership::Owned
                 ) {
-                    info!("Deleting {:?} locally", self.attachment_id);
-                    Attachment::delete_by_id(self.attachment_id, tx)
+                    info!("Deleting {:?} locally", action.attachment_id);
+                    Attachment::delete_by_id(action.attachment_id, tx)
                         .await
                         .inspect_err(|e| {
                             error!("Failed to delete attachment: {e:?}");
@@ -286,5 +248,14 @@ impl AttachmentRemove {
                 Ok(())
             })
             .await
+    }
+    async fn rebase_local(
+        &self,
+        _: ActionId,
+        _: &mut Self::Action,
+        _: &RebaseChangeSet,
+        _: &WriteTx<'_>,
+    ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
+        Ok(())
     }
 }

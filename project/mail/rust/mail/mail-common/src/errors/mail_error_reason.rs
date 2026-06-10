@@ -15,7 +15,6 @@ pub enum MailErrorReason {
     DraftAttachmentUploadReason(DraftAttachmentUploadErrorReason),
     DraftCancelScheduleSendReason(DraftCancelScheduleSendErrorReason),
     DraftSenderAddressChangeReason(DraftSenderAddressChangeErrorReason),
-    DraftAttachmentRemoveReason(DraftAttachmentRemoveErrorReason),
     DraftPasswordReason(DraftPasswordErrorReason),
     DraftExpirationReason(DraftExpirationErrorReason),
     DraftAttachmentDispositionSwapError(DraftAttachmentDispositionSwapErrorReason),
@@ -276,12 +275,6 @@ pub enum DraftAttachmentDispositionSwapErrorReason {
     AttachmentDoesNotExist,
     AttachmentMessageDoesNotExist,
     AttachmentMessageIsNotADraft,
-    BadRequest(String),
-}
-
-#[derive(Debug)]
-pub enum DraftAttachmentRemoveErrorReason {
-    AttachmentNotFoundNotFound,
     BadRequest(String),
 }
 

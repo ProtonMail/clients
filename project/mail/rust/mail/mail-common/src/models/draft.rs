@@ -6,14 +6,14 @@ use crate::datatypes::attachment::ContentId;
 use crate::datatypes::{LocalAttachmentId, LocalConversationId, LocalMessageId};
 use crate::draft::send::EoData;
 use crate::draft::{
-    AttachmentDispositionSwapError, AttachmentRemoveError, AttachmentUploadError,
-    DraftExpirationTime, Error, PackageError, PasswordError, ReplyMode, SaveError, SendError,
+    AttachmentDispositionSwapError, AttachmentUploadError, DraftExpirationTime, Error,
+    PackageError, PasswordError, ReplyMode, SaveError, SendError,
 };
 use crate::models::{Attachment, Message, MessageBodyMetadata};
 use crate::{
-    DraftAttachmentDispositionSwapErrorReason, DraftAttachmentRemoveErrorReason,
-    DraftAttachmentUploadErrorReason, DraftSaveErrorReason, DraftSendErrorReason, MailContextError,
-    MailErrorReason, ProtonMailError, Unexpected, UserApiServiceError,
+    DraftAttachmentDispositionSwapErrorReason, DraftAttachmentUploadErrorReason,
+    DraftSaveErrorReason, DraftSendErrorReason, MailContextError, MailErrorReason, ProtonMailError,
+    Unexpected, UserApiServiceError,
 };
 use anyhow::anyhow;
 use chrono::Utc;
@@ -574,7 +574,15 @@ impl DraftSendResult {
 ///
 /// Unfortunately we can not re-use [`DraftSaveSendErrorReason`] as we can not take ownership of
 /// the error so we have to do our own conversion.
-#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(
+    serde::Serialize,
+    serde::Deserialize,
+    Debug,
+    Clone,
+    Eq,
+    PartialEq,
+    Hash
+)]
 pub enum DraftSendFailure {
     Save(DraftSendFailureSave),
     Send(DraftSendFailureSend),
@@ -582,11 +590,18 @@ pub enum DraftSendFailure {
     NoConnection,
     Server(String),
     AttachmentDispositionSwap(DraftSendFailureDispositionSwap),
-    AttachmentRemove(DraftSendFailureAttachmentRemove),
     Internal,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(
+    serde::Serialize,
+    serde::Deserialize,
+    Debug,
+    Clone,
+    Eq,
+    PartialEq,
+    Hash
+)]
 pub enum DraftSendFailureSave {
     AddressDisabled(String),
     AddressDoesNotHavePrimaryKey(AddressId),
@@ -596,7 +611,15 @@ pub enum DraftSendFailureSave {
     BadRequest(String),
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(
+    serde::Serialize,
+    serde::Deserialize,
+    Debug,
+    Clone,
+    Eq,
+    PartialEq,
+    Hash
+)]
 pub enum DraftSendFailureSend {
     NoRecipients,
     RecipientEmailInvalid(PrivateEmail),
@@ -613,7 +636,15 @@ pub enum DraftSendFailureSend {
     FailedAttachmentUploads,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(
+    serde::Serialize,
+    serde::Deserialize,
+    Debug,
+    Clone,
+    Eq,
+    PartialEq,
+    Hash
+)]
 pub enum DraftSendFailureAttachment {
     Crypto(String),
     TooManyAttachments,
@@ -627,17 +658,19 @@ pub enum DraftSendFailureAttachment {
     BadRequest(String),
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(
+    serde::Serialize,
+    serde::Deserialize,
+    Debug,
+    Clone,
+    Eq,
+    PartialEq,
+    Hash
+)]
 pub enum DraftSendFailureDispositionSwap {
     AttachmentDoesNotExist,
     AttachmentMessagedDoesNotExist,
     AttachmentMessageIsNotADraft,
-    BadRequest(String),
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
-pub enum DraftSendFailureAttachmentRemove {
-    AttachmentDoesNotExist,
     BadRequest(String),
 }
 
@@ -670,8 +703,6 @@ pub enum DraftSendResultOrigin {
     ScheduleSend = 4,
     /// We failed to swap the disposition on the message
     AttachmentDispositionSwap = 5,
-    /// We failed while removing an attachment
-    AttachmentRemove = 6,
 }
 
 impl ToSql for DraftSendResultOrigin {
@@ -812,15 +843,6 @@ impl DraftSendFailure {
                     Self::AttachmentDispositionSwap(DraftSendFailureDispositionSwap::BadRequest(
                         error.clone(),
                     ))
-                }
-            },
-            Error::AttachmentRemove(e) => match e {
-                AttachmentRemoveError::MetadataNotFound(_) => Self::Internal,
-                AttachmentRemoveError::AttachmentMetadataNotFound(_) => {
-                    Self::AttachmentRemove(DraftSendFailureAttachmentRemove::AttachmentDoesNotExist)
-                }
-                AttachmentRemoveError::BadRequest(e) => {
-                    Self::AttachmentRemove(DraftSendFailureAttachmentRemove::BadRequest(e.clone()))
                 }
             },
 
@@ -995,18 +1017,6 @@ impl From<DraftSendFailure> for ProtonMailError {
                 DraftSendFailureDispositionSwap::BadRequest(error) => {
                     Self::Reason(MailErrorReason::DraftAttachmentDispositionSwapError(
                         DraftAttachmentDispositionSwapErrorReason::BadRequest(error),
-                    ))
-                }
-            },
-            DraftSendFailure::AttachmentRemove(e) => match e {
-                DraftSendFailureAttachmentRemove::AttachmentDoesNotExist => {
-                    Self::Reason(MailErrorReason::DraftAttachmentRemoveReason(
-                        DraftAttachmentRemoveErrorReason::AttachmentNotFoundNotFound,
-                    ))
-                }
-                DraftSendFailureAttachmentRemove::BadRequest(e) => {
-                    Self::Reason(MailErrorReason::DraftAttachmentRemoveReason(
-                        DraftAttachmentRemoveErrorReason::BadRequest(e),
                     ))
                 }
             },
@@ -1373,12 +1383,6 @@ impl DraftAttachmentMetadata {
             .is_some_and(|e| e.is_disposition_swap_error())
     }
 
-    pub fn is_remove_error(&self) -> bool {
-        self.error
-            .as_ref()
-            .is_some_and(|e| e.is_attachment_remove_error())
-    }
-
     pub async fn track_action<D: DatabaseMarker, T: Action<D>>(
         attachment_id: LocalAttachmentId,
         action_id: ActionId,
@@ -1492,7 +1496,6 @@ impl FromSql for DraftAttachmentOwnership {
 pub enum DraftAttachmentInternalError {
     Upload(DraftAttachmentInternalUploadError),
     DispositionSwap(DraftAttachmentInternalDispositionError),
-    Remove(DraftAttachmentInternalRemoveRerror),
 }
 
 impl DraftAttachmentInternalError {
@@ -1507,9 +1510,6 @@ impl DraftAttachmentInternalError {
             DraftSendResultOrigin::AttachmentUpload => Self::Upload(
                 DraftAttachmentInternalUploadError::from_mail_context_error(error),
             ),
-            DraftSendResultOrigin::AttachmentRemove => {
-                Self::Remove(DraftAttachmentInternalRemoveRerror::from_mail_context_error(error))
-            }
             _ => {
                 unreachable!("Should not be triggered");
             }
@@ -1548,20 +1548,11 @@ pub enum DraftAttachmentInternalDispositionError {
     BadRequest(String),
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq, Hash)]
-pub enum DraftAttachmentInternalRemoveRerror {
-    AttachmentNotFound,
-    Server(String),
-    Unexpected,
-    BadRequest(String),
-}
-
 impl DraftAttachmentInternalError {
     fn is_upload_error(&self) -> bool {
         match self {
             DraftAttachmentInternalError::Upload(_) => true,
             DraftAttachmentInternalError::DispositionSwap(_) => false,
-            DraftAttachmentInternalError::Remove(_) => false,
         }
     }
 
@@ -1569,15 +1560,6 @@ impl DraftAttachmentInternalError {
         match self {
             DraftAttachmentInternalError::Upload(_) => false,
             DraftAttachmentInternalError::DispositionSwap(_) => true,
-            DraftAttachmentInternalError::Remove(_) => false,
-        }
-    }
-
-    fn is_attachment_remove_error(&self) -> bool {
-        match self {
-            DraftAttachmentInternalError::Upload(_) => false,
-            DraftAttachmentInternalError::DispositionSwap(_) => false,
-            DraftAttachmentInternalError::Remove(_) => true,
         }
     }
 }
@@ -1648,21 +1630,6 @@ impl DraftAttachmentInternalDispositionError {
                 AttachmentDispositionSwapError::BadRequest(error) => {
                     Self::BadRequest(error.clone())
                 }
-            },
-            _ => Self::Unexpected,
-        }
-    }
-}
-
-impl DraftAttachmentInternalRemoveRerror {
-    /// Create a new instance from a [`MailContextError`]
-    pub fn from_mail_context_error(error: &MailContextError) -> Self {
-        match error {
-            MailContextError::Api(e) => Self::Server(e.to_string()),
-            MailContextError::Draft(Error::AttachmentRemove(e)) => match e {
-                AttachmentRemoveError::MetadataNotFound(_) => Self::Unexpected,
-                AttachmentRemoveError::AttachmentMetadataNotFound(_) => Self::AttachmentNotFound,
-                AttachmentRemoveError::BadRequest(e) => Self::BadRequest(e.clone()),
             },
             _ => Self::Unexpected,
         }

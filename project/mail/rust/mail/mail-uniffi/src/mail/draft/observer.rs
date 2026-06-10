@@ -36,8 +36,6 @@ pub enum DraftSendResultOrigin {
     ScheduleSend,
     /// We failed when attempting to swap an attachment disposition
     AttachmentDispositionSwap,
-    /// We failed while removing an attachment
-    AttachmentRemove,
 }
 
 impl From<RealDraftSendResultOrigin> for DraftSendResultOrigin {
@@ -49,7 +47,6 @@ impl From<RealDraftSendResultOrigin> for DraftSendResultOrigin {
             RealDraftSendResultOrigin::AttachmentUpload => Self::AttachmentUpload,
             RealDraftSendResultOrigin::ScheduleSend => Self::ScheduleSend,
             RealDraftSendResultOrigin::AttachmentDispositionSwap => Self::AttachmentDispositionSwap,
-            RealDraftSendResultOrigin::AttachmentRemove => Self::AttachmentRemove,
         }
     }
 }

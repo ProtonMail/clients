@@ -160,18 +160,19 @@ fn sanitize_draft_subject(subject: &str) -> String {
 }
 
 trait DraftAttachmentActionDependencyKeyBuilderExt {
-    fn record_draft_attachment(
+    fn record_draft_attachment_upload(
+        self,
+        draft_id: MetadataId,
+        attachment_id: LocalAttachmentId,
+    ) -> Self;
+    fn record_draft_attachment_use(
         self,
         draft_id: MetadataId,
         attachment_id: LocalAttachmentId,
     ) -> Self;
     fn with_any_draft_attachments_required(self, draft_id: MetadataId) -> Self;
+    fn with_any_draft_attachment_uploads_required(self, draft_id: MetadataId) -> Self;
     fn with_draft_attachment_optional(
-        self,
-        draft_id: MetadataId,
-        attachment_id: LocalAttachmentId,
-    ) -> Self;
-    fn with_draft_attachment_required(
         self,
         draft_id: MetadataId,
         attachment_id: LocalAttachmentId,
@@ -179,7 +180,21 @@ trait DraftAttachmentActionDependencyKeyBuilderExt {
 }
 
 impl DraftAttachmentActionDependencyKeyBuilderExt for ActionDependencyKeysBuilder {
-    fn record_draft_attachment(
+    fn record_draft_attachment_upload(
+        self,
+        draft_id: MetadataId,
+        attachment_id: LocalAttachmentId,
+    ) -> Self {
+        let keys = [
+            attachment_upload_dependency_key(draft_id, attachment_id),
+            attachment_upload_dependency_key_group(draft_id),
+            attachment_dependency_key(draft_id, attachment_id),
+            attachment_dependency_key_group(draft_id),
+        ];
+        self.with_required_many(keys.clone()).record_many(keys)
+    }
+
+    fn record_draft_attachment_use(
         self,
         draft_id: MetadataId,
         attachment_id: LocalAttachmentId,
@@ -188,7 +203,7 @@ impl DraftAttachmentActionDependencyKeyBuilderExt for ActionDependencyKeysBuilde
             attachment_dependency_key(draft_id, attachment_id),
             attachment_dependency_key_group(draft_id),
         ];
-        self.record_many(keys)
+        self.with_required_many(keys.clone()).record_many(keys)
     }
 
     fn with_draft_attachment_optional(
@@ -204,14 +219,18 @@ impl DraftAttachmentActionDependencyKeyBuilderExt for ActionDependencyKeysBuilde
         self.with_required(attachment_dependency_key_group(draft_id))
     }
 
-    fn with_draft_attachment_required(
-        self,
-        draft_id: MetadataId,
-        attachment_id: LocalAttachmentId,
-    ) -> Self {
-        let key = attachment_dependency_key(draft_id, attachment_id);
-        self.with_required(key)
+    fn with_any_draft_attachment_uploads_required(self, draft_id: MetadataId) -> Self {
+        self.with_required(attachment_upload_dependency_key_group(draft_id))
     }
+}
+
+fn attachment_upload_dependency_key(
+    draft_id: MetadataId,
+    attachment_id: LocalAttachmentId,
+) -> ActionDependencyKey {
+    ActionDependencyKey::from(format!(
+        "draft_{draft_id}_attachment_upload_{attachment_id}"
+    ))
 }
 
 fn attachment_dependency_key(
@@ -219,6 +238,10 @@ fn attachment_dependency_key(
     attachment_id: LocalAttachmentId,
 ) -> ActionDependencyKey {
     ActionDependencyKey::from(format!("draft_{draft_id}_attachment{attachment_id}"))
+}
+
+fn attachment_upload_dependency_key_group(draft_id: MetadataId) -> ActionDependencyKey {
+    ActionDependencyKey::from(format!("draft_{draft_id}_attachment_upload"))
 }
 
 fn attachment_dependency_key_group(draft_id: MetadataId) -> ActionDependencyKey {

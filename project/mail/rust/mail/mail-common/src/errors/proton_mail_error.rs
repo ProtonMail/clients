@@ -299,7 +299,13 @@ impl From<DraftError> for ProtonMailError {
             DraftError::Discard(v) => v.into(),
             DraftError::Undo(v) => v.into(),
             DraftError::AttachmentUpload(v) => v.into(),
-            DraftError::AttachmentRemove(v) => v.into(),
+            DraftError::AttachmentRemove(v) => match v {
+                AttachmentRemoveError::MetadataNotFound(_)
+                | AttachmentRemoveError::BadRequest(_)
+                | AttachmentRemoveError::AttachmentMetadataNotFound(_) => {
+                    Self::Unexpected(Unexpected::Draft)
+                }
+            },
             DraftError::CancelScheduleSend(v) => v.into(),
             DraftError::SenderAddressChange(v) => v.into(),
             DraftError::Password(v) => v.into(),
@@ -530,24 +536,6 @@ impl From<AttachmentUploadError> for ProtonMailError {
             AttachmentUploadError::BadRequest(error) => {
                 Self::Reason(MailErrorReason::DraftAttachmentUploadReason(
                     DraftAttachmentUploadErrorReason::BadRequest(error),
-                ))
-            }
-        }
-    }
-}
-
-impl From<AttachmentRemoveError> for ProtonMailError {
-    fn from(value: AttachmentRemoveError) -> Self {
-        match value {
-            AttachmentRemoveError::MetadataNotFound(_) => Self::Unexpected(Unexpected::Internal),
-            AttachmentRemoveError::AttachmentMetadataNotFound(_) => {
-                Self::Reason(MailErrorReason::DraftAttachmentRemoveReason(
-                    DraftAttachmentRemoveErrorReason::AttachmentNotFoundNotFound,
-                ))
-            }
-            AttachmentRemoveError::BadRequest(e) => {
-                Self::Reason(MailErrorReason::DraftAttachmentRemoveReason(
-                    DraftAttachmentRemoveErrorReason::BadRequest(e),
                 ))
             }
         }

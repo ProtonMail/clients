@@ -3,7 +3,6 @@ use crate::mail::Origin;
 use mail_common::{
     ActionErrorReason as RealActionErrorReason, ContextErrorReason as RealContextErrorReason,
     DraftAttachmentDispositionSwapErrorReason as RealDraftAttachmentDispositionSwapErrorReason,
-    DraftAttachmentRemoveErrorReason as RealDraftAttachmentRemoveErrorReason,
     DraftAttachmentUploadErrorReason as RealDraftAttachmentErrorReason,
     DraftCancelScheduleSendErrorReason as RealDraftCancelScheduleSendErrorReason,
     DraftDiscardErrorReason as RealDraftDiscardErrorReason,
@@ -421,23 +420,6 @@ impl From<RealDraftAttachmentDispositionSwapErrorReason>
             RealDraftAttachmentDispositionSwapErrorReason::BadRequest(error) => {
                 Self::BadRequest(error)
             }
-        }
-    }
-}
-
-#[derive(Debug, UniffiEnum)]
-pub enum DraftAttachmentRemoveErrorReason {
-    AttachmentDoesNotExist,
-    BadRequest(String),
-}
-
-impl From<RealDraftAttachmentRemoveErrorReason> for DraftAttachmentRemoveErrorReason {
-    fn from(value: RealDraftAttachmentRemoveErrorReason) -> Self {
-        match value {
-            RealDraftAttachmentRemoveErrorReason::AttachmentNotFoundNotFound => {
-                Self::AttachmentDoesNotExist
-            }
-            RealDraftAttachmentRemoveErrorReason::BadRequest(e) => Self::BadRequest(e),
         }
     }
 }

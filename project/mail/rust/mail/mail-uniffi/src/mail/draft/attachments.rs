@@ -2,9 +2,8 @@ use crate::core::datatypes::Id;
 use crate::errors::unexpected::UnexpectedError;
 use crate::errors::{
     DraftAttachmentDispositionSwapError, DraftAttachmentDispositionSwapErrorReason,
-    DraftAttachmentRemoveError, DraftAttachmentRemoveErrorReason, DraftAttachmentRetryError,
-    DraftAttachmentUploadError, DraftAttachmentUploadErrorReason, ProtonError,
-    VoidDraftAttachmentDispositionSwapResult, VoidProtonResult,
+    DraftAttachmentRetryError, DraftAttachmentUploadError, DraftAttachmentUploadErrorReason,
+    ProtonError, VoidDraftAttachmentDispositionSwapResult, VoidProtonResult,
 };
 use crate::mail::datatypes::AttachmentMetadata;
 use crate::mail::state::MailUserContextPtr;
@@ -17,7 +16,6 @@ use mail_common::draft::attachments::{
     DraftAttachment as RealDraftAttachment,
     DraftAttachmentDispositionSwapError as RealDraftAttachmentDispositionSwapError,
     DraftAttachmentError as RealDraftAttachmentError,
-    DraftAttachmentRemoveError as RealDraftAttachmentRemoveError,
     DraftAttachmentState as RealDraftAttachmentState,
     DraftAttachmentUploadError as RealDraftAttachmentUploadError,
 };
@@ -36,7 +34,6 @@ use tracing::error;
 pub enum DraftAttachmentError {
     Upload(DraftAttachmentUploadError),
     DispositionSwap(DraftAttachmentDispositionSwapError),
-    Remove(DraftAttachmentRemoveError),
 }
 
 impl From<RealDraftAttachmentError> for DraftAttachmentError {
@@ -44,7 +41,6 @@ impl From<RealDraftAttachmentError> for DraftAttachmentError {
         match err {
             RealDraftAttachmentError::Upload(e) => Self::Upload(e.into()),
             RealDraftAttachmentError::DispositionSwap(e) => Self::DispositionSwap(e.into()),
-            RealDraftAttachmentError::Remove(e) => Self::Remove(e.into()),
         }
     }
 }
@@ -140,29 +136,6 @@ impl From<RealDraftAttachmentDispositionSwapError> for DraftAttachmentDispositio
             }
             RealDraftAttachmentDispositionSwapError::BadRequest(error) => {
                 Self::Reason(DraftAttachmentDispositionSwapErrorReason::BadRequest(error))
-            }
-        }
-    }
-}
-
-impl From<RealDraftAttachmentRemoveError> for DraftAttachmentRemoveError {
-    fn from(value: RealDraftAttachmentRemoveError) -> Self {
-        match value {
-            RealDraftAttachmentRemoveError::AttachmentNotFound => {
-                Self::Reason(DraftAttachmentRemoveErrorReason::AttachmentDoesNotExist)
-            }
-            RealDraftAttachmentRemoveError::Server(e) => {
-                // There is no good conversion here, however it should be very rare as all
-                // the important cases are intercepted.
-                Self::Other(ProtonError::ServerError(
-                    UserApiServiceError::OtherHttpError(0, e),
-                ))
-            }
-            RealDraftAttachmentRemoveError::Unexpected => {
-                Self::Other(ProtonError::Unexpected(UnexpectedError::Draft))
-            }
-            RealDraftAttachmentRemoveError::BadRequest(e) => {
-                Self::Reason(DraftAttachmentRemoveErrorReason::BadRequest(e))
             }
         }
     }

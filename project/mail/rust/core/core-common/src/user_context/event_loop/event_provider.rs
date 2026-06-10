@@ -21,6 +21,13 @@ impl EventProviderError for CoreEventProviderError {
             CoreEventProviderError::Other(_) => false,
         }
     }
+
+    fn is_retryable(&self) -> bool {
+        match self {
+            Self::Api(e) => e.is_network_failure() || e.is_server_failure() || e.is_auth_failure(),
+            _ => false,
+        }
+    }
 }
 
 #[async_trait]

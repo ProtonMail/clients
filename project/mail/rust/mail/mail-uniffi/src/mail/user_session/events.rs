@@ -104,6 +104,13 @@ impl MailUserSession {
                                     // user.
                                     continue;
                                 }
+                                ActionEventLoopError::EventLoop(EventLoopError::Provider(e))
+                                    if e.is_retryable() =>
+                                {
+                                    // if the error is retryable do not communicate this to the
+                                    // user.
+                                    continue;
+                                }
                                 ActionEventLoopError::EventLoop(EventLoopError::Refresh(_, _)) => {
                                     EventError::Reason(EventErrorReason::Refresh)
                                 }

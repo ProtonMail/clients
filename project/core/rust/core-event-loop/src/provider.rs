@@ -6,6 +6,9 @@ use crate::{EventId, RawEvent};
 
 pub trait EventProviderError: std::error::Error + Send + Sync + 'static {
     fn is_network_failure(&self) -> bool;
+    fn is_retryable(&self) -> bool {
+        self.is_network_failure()
+    }
 }
 
 pub type EventProviderResult<T> = Result<T, Box<dyn EventProviderError>>;

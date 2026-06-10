@@ -2390,6 +2390,7 @@ version = "0.1.0"
 dependencies = [
  "derive_more 2.1.1",
  "diesel",
+ "lattice",
  "serde",
  "serde_json",
 ]

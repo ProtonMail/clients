@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use mail_action_queue::queue::Queue;
+use mail_action_queue::queue::{Queue, TokioTaskSpawner};
 use mail_api::services::proton::common::MessageId;
 use mail_search::{MailSearchService, MessageMetadata as SearchMessageMetadata};
 use mail_stash::UserDb;
@@ -35,7 +35,9 @@ async fn test_search_service() -> (Stash<UserDb>, MailSearchService) {
 }
 
 async fn test_action_queue(mail_stash: &Stash<UserDb>) -> Queue<UserDb> {
-    Queue::new(mail_stash.clone()).await.expect("action queue")
+    Queue::new(mail_stash.clone(), TokioTaskSpawner)
+        .await
+        .expect("action queue")
 }
 
 fn sample_search_metadata() -> SearchMessageMetadata {

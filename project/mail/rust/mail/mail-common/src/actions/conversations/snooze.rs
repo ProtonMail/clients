@@ -1,18 +1,18 @@
-use crate::AppError;
 use crate::actions::{GenericLabelRelatedActionData, MailActionError, filter_responses};
 use crate::datatypes::{LocalConversationId, RollbackItemType};
 use crate::models::{Conversation, RollbackItem};
+use crate::{AppError, MailUserContext};
 use mail_action_queue::action::{
-    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
+    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type,
 };
 use mail_action_queue::rebase::{RebaseChangeSet, RebaseKey};
 use mail_api::services::proton::ProtonMail;
-use mail_core_api::session::Session;
 use mail_core_common::datatypes::{LocalLabelId, UnixTimestamp};
 use mail_core_common::models::ModelIdExtension;
 use mail_stash::UserDb;
 use mail_stash::stash::WriteTx;
 use serde::{self, Deserialize, Serialize};
+use std::sync::Weak;
 use tracing::error;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -52,7 +52,7 @@ impl Action<UserDb> for Snooze {
 }
 
 pub struct SnoozeHandler {
-    pub api: Session,
+    pub ctx: Weak<MailUserContext>,
 }
 
 impl Handler<UserDb> for SnoozeHandler {
@@ -113,15 +113,14 @@ impl Handler<UserDb> for SnoozeHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        mut guard: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,
     > {
-        let (_, remote_target_ids) = action
-            .action_data
-            .resolve_ids_legacy(guard.tether())
-            .await?;
+        let ctx = self.ctx.upgrade().ok_or(MailActionError::LostContext)?;
+        let mut tether = ctx.user_stash().connection();
+
+        let (_, remote_target_ids) = action.action_data.resolve_ids_legacy(&tether).await?;
 
         if remote_target_ids.is_empty() {
             tracing::warn!(
@@ -136,16 +135,16 @@ impl Handler<UserDb> for SnoozeHandler {
             return Err(MailActionError::App(AppError::SnoozeTimeInThePast));
         }
 
-        let response = self
-            .api
+        let response = ctx
+            .session()
             .put_conversations_snooze(remote_target_ids, action.snooze_until.as_u64())
             .await?;
 
         let responses = filter_responses(response.responses);
 
         if !responses.is_empty() {
-            guard
-                .tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx| {
+            tether
+                .write_tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx| {
                     error!("Snooze operation failed for: {:?}", responses);
 
                     let local_ids =

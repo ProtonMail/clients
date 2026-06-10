@@ -710,6 +710,24 @@ impl ExecutionGuard {
         Ok(())
     }
 
+    #[cfg(feature = "test-utils")]
+    pub async fn expire_guard_for_action<Db: mail_stash::marker::DatabaseMarker>(
+        action_id: ActionId,
+        bond: &WriteTx<'_, Db>,
+    ) -> Result<(), StashError> {
+        bond.execute(
+            indoc! {"
+            UPDATE action_queue_lock SET
+                acquired_at = 0,
+                permit_id = permit_id +1
+            WHERE action_id = ?
+       "},
+            params![action_id],
+        )
+        .await?;
+        Ok(())
+    }
+
     /// Create a new transaction.
     ///
     /// This internally checks whether the permit id still matches what we expect the value to be.
@@ -718,7 +736,7 @@ impl ExecutionGuard {
     /// Every time we are able to write with a valid permit, we also update
     /// the timestamp. This allows for some longer running tasks to extend their lifetime a bit
     /// and prevent unnecessary re-runs.
-    pub async fn tx<Db, F, T, E>(&self, tether: &mut Tether<Db>, closure: F) -> Result<T, E>
+    pub(crate) async fn tx<Db, F, T, E>(&self, tether: &mut Tether<Db>, closure: F) -> Result<T, E>
     where
         Db: mail_stash::marker::DatabaseMarker,
         F: AsyncFnOnce(&WriteTx<'_, Db>) -> Result<T, E>,

@@ -13,7 +13,7 @@ use crate::local_ids::LocalContactGroupId;
 use crate::test_utils::new_contact_test_connection;
 use contact_avatar::AvatarInformation;
 use core_event_loop::v6::{EventSource, EventSubscriber};
-use mail_action_queue::queue::Queue;
+use mail_action_queue::queue::{Queue, TokioTaskSpawner};
 use mail_api_session::mocks::test_session;
 use mail_api_session::session::Session;
 use mail_contacts_api::mocks::ContactsMockServerExt;
@@ -468,7 +468,7 @@ struct TestEventContext {
 impl TestEventContext {
     async fn new(session: Session, stash: Stash<UserDb>) -> Self {
         Self {
-            queue: Queue::new(stash).await.unwrap(),
+            queue: Queue::new(stash, TokioTaskSpawner).await.unwrap(),
             session,
         }
     }

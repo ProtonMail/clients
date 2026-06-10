@@ -1,10 +1,10 @@
 use super::common::{new_factory, new_queue};
 use mail_action_queue::action::{
-    Action, ActionGroup, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
+    Action, ActionGroup, ActionId, DefaultVersionConverter, Handler, Type,
 };
 use mail_action_queue::queue::{
     NoopOnlineStatusWaiter, NoopOnlineStatusWaiterBuilder, QueueAutoExecutorPool,
-    QueueAutoTerminationPolicy, TokioTaskSpawner,
+    QueueAutoTerminationPolicy,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_action_queue::tests::common::{DefaultError, TestDb};
@@ -15,7 +15,6 @@ use std::time::Duration;
 #[tokio::test]
 async fn auto_execute_until_empty() {
     let queue = new_queue(new_factory::<TestAction>(TestHandler)).await;
-    let task_spawner = TokioTaskSpawner;
 
     queue
         .queue_action(TestAction {
@@ -36,7 +35,6 @@ async fn auto_execute_until_empty() {
     let executor = queue.new_executor().into_auto_executor_with_policy(
         Box::new(NoopOnlineStatusWaiter),
         false,
-        &task_spawner,
         QueueAutoTerminationPolicy::Empty,
         tracing::Span::current(),
     );
@@ -48,7 +46,6 @@ async fn auto_execute_until_empty() {
 #[tokio::test]
 async fn auto_execute_until_network_failure() {
     let queue = new_queue(new_factory::<TestAction>(TestHandler)).await;
-    let task_spawner = TokioTaskSpawner;
 
     queue
         .queue_action(TestAction {
@@ -74,7 +71,6 @@ async fn auto_execute_until_network_failure() {
     let executor = queue.new_executor().into_auto_executor_with_policy(
         Box::new(NoopOnlineStatusWaiter),
         false,
-        &task_spawner,
         QueueAutoTerminationPolicy::NetworkLoss,
         tracing::Span::current(),
     );
@@ -86,7 +82,6 @@ async fn auto_execute_until_network_failure() {
 #[tokio::test]
 async fn auto_execute_until_empty_or_network_failure() {
     let queue = new_queue(new_factory::<TestAction>(TestHandler)).await;
-    let task_spawner = TokioTaskSpawner;
 
     let action_id = queue
         .queue_action(TestAction { fail_network: true })
@@ -113,7 +108,6 @@ async fn auto_execute_until_empty_or_network_failure() {
     let executor = queue.new_executor().into_auto_executor_with_policy(
         Box::new(NoopOnlineStatusWaiter),
         false,
-        &task_spawner,
         QueueAutoTerminationPolicy::EmptyOrNetworkLoss,
         tracing::Span::current(),
     );
@@ -128,7 +122,6 @@ async fn auto_execute_until_empty_or_network_failure() {
     let executor = queue.new_executor().into_auto_executor_with_policy(
         Box::new(NoopOnlineStatusWaiter),
         false,
-        &task_spawner,
         QueueAutoTerminationPolicy::EmptyOrNetworkLoss,
         tracing::Span::current(),
     );
@@ -140,7 +133,6 @@ async fn auto_execute_until_empty_or_network_failure() {
 #[tokio::test]
 async fn auto_execute_pool() {
     let queue = new_queue(new_factory::<TestAction>(TestHandler)).await;
-    let task_spawner = TokioTaskSpawner;
 
     for _ in 0..20 {
         queue
@@ -159,7 +151,6 @@ async fn auto_execute_pool() {
         NonZeroUsize::new(3).unwrap(),
         &NoopOnlineStatusWaiterBuilder,
         false,
-        &task_spawner,
         QueueAutoTerminationPolicy::Empty,
         tracing::Span::current(),
     );
@@ -176,7 +167,6 @@ async fn auto_execute_pool() {
 #[tokio::test]
 async fn auto_execute_forever() {
     let queue = new_queue(new_factory::<TestAction>(TestHandler)).await;
-    let task_spawner = TokioTaskSpawner;
 
     queue
         .queue_action(TestAction {
@@ -190,7 +180,6 @@ async fn auto_execute_forever() {
     let executor = queue.new_executor().into_auto_executor_with_policy(
         Box::new(NoopOnlineStatusWaiter),
         false,
-        &task_spawner,
         QueueAutoTerminationPolicy::Never,
         tracing::Span::current(),
     );
@@ -247,7 +236,6 @@ impl Handler<TestDb> for TestHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        _: WriterGuard<'_, TestDb>,
     ) -> Result<
         <Self::Action as Action<TestDb>>::RemoteOutput,
         <Self::Action as Action<TestDb>>::Error,

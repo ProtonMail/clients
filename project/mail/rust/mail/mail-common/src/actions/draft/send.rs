@@ -18,8 +18,7 @@ use crate::{AppError, MailContextError, MailUserContext, draft};
 use chrono::{DateTime, Local};
 use mail_action_queue::action::{
     Action, ActionDependencyKeys, ActionGroup, ActionId, FactoryError, FactoryResult, Handler,
-    Priority, Type, VersionConverter, VersionConverterError, WriterGuard, WriterGuardError,
-    deserialize,
+    Priority, Type, VersionConverter, VersionConverterError, deserialize,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::ProtonMail;
@@ -35,7 +34,7 @@ use mail_crypto_inbox::keys::ComposerPreference;
 use mail_crypto_inbox::proton_crypto::new_pgp_provider;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
-use mail_stash::stash::{StashError, WriteTx};
+use mail_stash::stash::{StashError, Tether, WriteTx};
 use proton_crypto_account::keys::AddressKeySelector;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -304,15 +303,15 @@ impl Handler<UserDb> for SendHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        mut guard: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,
     > {
         let ctx = self.ctx.upgrade().ok_or(MailContextError::LostContext)?;
-        let r = Send::apply_remote_impl(&ctx, action, &mut guard).await;
+        let mut tether = ctx.user_stash().connection();
+        let r = Send::apply_remote_impl(&ctx, action, &mut tether).await;
 
-        if let Err(e) = save_send_status(action, &mut guard, &r).await {
+        if let Err(e) = save_send_status(action, &mut tether, &r).await {
             error!("Failed to save draft send result: {e:?}");
         }
 
@@ -336,7 +335,7 @@ impl Send {
     async fn apply_remote_impl(
         ctx: &MailUserContext,
         action: &mut Self,
-        guard: &mut WriterGuard<'_, UserDb>,
+        tether: &mut Tether<UserDb>,
     ) -> Result<<Self as Action<UserDb>>::RemoteOutput, <Self as Action<UserDb>>::Error> {
         let local_message_id = action.local_message_id.expect("Should be set");
         let session_encryption_key = ctx.core_context().get_encryption_key()?;
@@ -353,17 +352,15 @@ impl Send {
             }
         }
 
-        let local_outbox_label_id = local_outbox_label_id(guard.tether()).await?;
+        let local_outbox_label_id = local_outbox_label_id(tether).await?;
 
         // Check if there are any new attachments that have not yet finished loading.
-        if DraftAttachmentMetadata::has_unsynced_attachments(action.metadata_id, guard.tether())
-            .await?
-        {
+        if DraftAttachmentMetadata::has_unsynced_attachments(action.metadata_id, tether).await? {
             error!("Draft has attachments that have not been uploaded");
             return Err(SendError::MissingAttachmentUploads.into());
         }
 
-        let Some(draft_metadata) = DraftMetadata::find_by_id(action.metadata_id, guard.tether())
+        let Some(draft_metadata) = DraftMetadata::find_by_id(action.metadata_id, tether)
             .await
             .inspect_err(|e| {
                 error!("Failed to load draft metadata: {e:?}");
@@ -382,8 +379,7 @@ impl Send {
             }
         }
 
-        let Some(message_metadata) = Message::find_by_id(local_message_id, guard.tether()).await?
-        else {
+        let Some(message_metadata) = Message::find_by_id(local_message_id, tether).await? else {
             return Err(AppError::MessageMissing(local_message_id).into());
         };
 
@@ -398,8 +394,8 @@ impl Send {
         // the all send label, whereas the regular sent goes to outbox first.
         if message_metadata.is_sent() {
             info!("Message was already sent from another session");
-            guard
-                .tx::<_, (), WriterGuardError>(async |tx| {
+            tether
+                .write_tx::<_, (), MailContextError>(async |tx| {
                     Ok(on_already_sent(action.metadata_id, None, tx).await?)
                 })
                 .await?;
@@ -407,14 +403,13 @@ impl Send {
         }
 
         // Load the mail settings of the sending user.
-        let mail_settings = MailSettings::get(guard.tether())
+        let mail_settings = MailSettings::get(tether)
             .await
             .inspect_err(|e| error!("Failed to load mail settings: {e:?}"))?
             .unwrap_or_default();
 
         // Load body - it is not encrypted.
-        let Some(stored_message_body) =
-            RawMessageBody::load(message_metadata.id(), guard.tether()).await?
+        let Some(stored_message_body) = RawMessageBody::load(message_metadata.id(), tether).await?
         else {
             return Err(SendError::MessageBodyMissing(message_metadata.id()).into());
         };
@@ -447,48 +442,31 @@ impl Send {
 
         let recipients = action.recipients.clone();
         let crypto_mail_settings = mail_settings.crypto_mail_settings();
-        let mut send_prefs_task = ctx.spawn_ex(async move |ctx| {
-            let tether = ctx.user_stash().connection();
-            let pgp = new_pgp_provider();
-            load_prefs(
-                &ctx,
-                &pgp,
-                &tether,
-                &recipients,
-                crypto_mail_settings,
-                composer_preference,
-            )
-            .await
-            .inspect_err(|err| error!("Failed to load send preferences for recipients: {err:?}"))
-        });
 
-        let send_preferences = loop {
-            tokio::select! {
-                _ = tokio::time::sleep(Duration::from_secs(10)) => {
-                    guard.tx::<_,_,WriterGuardError>(async |_| {
-                        Ok(())
-                    }).await?;
-                }
-                r  = &mut send_prefs_task => {
-                        break r.map_err(MailContextError::from)??;
-                }
-            };
-        };
+        let send_preferences = load_prefs(
+            ctx,
+            &pgp,
+            tether,
+            &recipients,
+            crypto_mail_settings,
+            composer_preference,
+        )
+        .await
+        .inspect_err(|err| error!("Failed to load send preferences for recipients: {err:?}"))?;
 
         // Unlock sender address keys
         let address_keys = ctx
             .crypto_key_service()
-            .load_with_tether(ctx.user_context(), guard.tether())
+            .load_with_tether(ctx.user_context(), tether)
             .address_keys(&pgp, &message_metadata.remote_address_id)
             .await
             .map(AddressKeySelector::into_raw_keys)
             .inspect_err(|err| error!("Failed to load address key for sending: {err:?}"))
             .map_err(SendError::AddressKeyLoadingError)?;
 
-        let attachments =
-            DraftAttachmentMetadata::attachment_for_draft(action.metadata_id, guard.tether())
-                .await
-                .inspect_err(|e| error!("Failed to load draft attachments : {e:?}"))?;
+        let attachments = DraftAttachmentMetadata::attachment_for_draft(action.metadata_id, tether)
+            .await
+            .inspect_err(|e| error!("Failed to load draft attachments : {e:?}"))?;
 
         let packages = build_packages(
             ctx,
@@ -503,7 +481,7 @@ impl Send {
             })?,
             &attachments,
             eo_data,
-            guard,
+            tether,
         )
         .await
         .map_err(SendError::SendMessage)
@@ -527,8 +505,8 @@ impl Send {
         {
             Ok(response) => {
                 // Update conversation
-                guard
-                    .tx::<_, _, <Self as Action<UserDb>>::Error>(async |tx| {
+                tether
+                    .write_tx::<_, _, <Self as Action<UserDb>>::Error>(async |tx| {
                         info!("Message sent/scheduled");
                         let mut conversation: Conversation = response.conversation.into();
 
@@ -617,8 +595,8 @@ impl Send {
                             info!("Message already sent on server");
                             // When the message is already sent, we just need to delete the
                             // metadata. The event loop will take care of the rest.
-                            guard
-                                .tx::<_, _, <Self as Action<UserDb>>::Error>(async |tx| {
+                            tether
+                                .write_tx::<_, _, <Self as Action<UserDb>>::Error>(async |tx| {
                                     Ok(on_already_sent(
                                         action.metadata_id,
                                         Some(remote_message_id.clone()),
@@ -676,9 +654,9 @@ impl Send {
 // Simple wrapper function to catch errors
 async fn save_send_status(
     action: &Send,
-    guard: &mut WriterGuard<'_, UserDb>,
+    tether: &mut Tether<UserDb>,
     status: &Result<<Send as Action<UserDb>>::RemoteOutput, MailContextError>,
-) -> Result<(), WriterGuardError> {
+) -> Result<(), StashError> {
     let origin = if action.is_scheduled() {
         DraftSendResultOrigin::ScheduleSend
     } else {
@@ -708,8 +686,8 @@ async fn save_send_status(
     // wiped at this point.
     send_result.has_send_action = true;
 
-    guard
-        .tx::<_, _, WriterGuardError>(async |tx| Ok(send_result.save(tx).await?))
+    tether
+        .write_tx::<_, _, StashError>(async |tx| Ok(send_result.save(tx).await?))
         .await
 }
 

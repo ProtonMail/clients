@@ -4,7 +4,7 @@ use crate::models::Message;
 use crate::{MailContextError, MailUserContext};
 use mail_action_queue::action::{
     Action, ActionDependencyKeys, ActionGroup, ActionId, DefaultVersionConverter, Handler,
-    Priority, Type, WriterGuard,
+    Priority, Type,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_stash::UserDb;
@@ -74,7 +74,6 @@ impl Handler<UserDb> for PrefetchHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        mut guard: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,
@@ -85,8 +84,9 @@ impl Handler<UserDb> for PrefetchHandler {
         );
 
         let ctx = self.ctx.upgrade().ok_or(MailActionError::LostContext)?;
+        let mut tether = ctx.user_stash().connection();
 
-        let Some(local_message) = Message::load(action.local_id, guard.tether()).await? else {
+        let Some(local_message) = Message::load(action.local_id, &tether).await? else {
             error!(
                 "Message not found for prefetch action, message_id: `{}`",
                 action.local_id
@@ -111,7 +111,7 @@ impl Handler<UserDb> for PrefetchHandler {
             let deleted_tombstones = DeletedItem::find_deleted_by_remote_ids(
                 std::iter::once(remote_id.as_str()),
                 DeletedItemType::Message,
-                guard.tether(),
+                &tether,
             )
             .await?;
 
@@ -124,7 +124,7 @@ impl Handler<UserDb> for PrefetchHandler {
             }
         }
 
-        if let Err(e) = local_message.prefetch_message_body(&ctx, &mut guard).await {
+        if let Err(e) = local_message.prefetch_message_body(&ctx, &mut tether).await {
             match e {
                 MailContextError::Api(network_error) => {
                     return Err(MailActionError::Http(network_error));

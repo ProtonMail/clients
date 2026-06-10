@@ -3,9 +3,7 @@ use crate::actions::MailActionError;
 use crate::datatypes::{MobileAction, MobileSetting, MobileSettings};
 use crate::models::MailSettings;
 use anyhow::Context;
-use mail_action_queue::action::{
-    Action, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
-};
+use mail_action_queue::action::{Action, ActionId, DefaultVersionConverter, Handler, Type};
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_core_api::session::Session;
 use mail_stash::UserDb;
@@ -170,7 +168,6 @@ impl Handler<UserDb> for UpdateMobileActionsHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        _guard: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,

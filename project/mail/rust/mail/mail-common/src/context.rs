@@ -6,7 +6,7 @@ use anyhow::anyhow;
 use mail_account_api::login::LoginFlow;
 use mail_account_api::shared::challenge::ChallengeInfo;
 use mail_account_api::signup::SignupFlow;
-use mail_action_queue::action::{self, Action, WriterGuardError};
+use mail_action_queue::action::{self, Action};
 use mail_action_queue::queue::{ActionError as QueueActionError, ActionRequeueReason, QueuedError};
 use mail_calendar_common::RsvpError;
 use mail_core_api::service::ApiServiceError;
@@ -153,8 +153,6 @@ pub enum MailContextError {
     UserContextNotInitialized(UserId),
     #[error("A task was cancelled")]
     TaskCancelled,
-    #[error("Queue Write Guard Expired")]
-    QueueWriterGuardExpired,
     #[error("Bug: Called fetch_attachment_data on a pgp attachment.")]
     CalledFetchedAttachmentOnPgp,
     #[error(
@@ -209,27 +207,9 @@ impl action::Error for MailContextError {
         }
 
         match self {
-            Self::IntoTransactionError(err) => {
-                if let Some(WriterGuardError::Expired) = err.downcast_ref() {
-                    Some(ActionRequeueReason::GuardExpired)
-                } else {
-                    None
-                }
-            }
-
-            Self::QueueWriterGuardExpired => Some(ActionRequeueReason::GuardExpired),
+            Self::IntoTransactionError(_) => None,
             Self::LostContext => Some(ActionRequeueReason::LostContext),
-
             _ => None,
-        }
-    }
-}
-
-impl From<WriterGuardError> for MailContextError {
-    fn from(value: WriterGuardError) -> Self {
-        match value {
-            WriterGuardError::Expired => MailContextError::QueueWriterGuardExpired,
-            WriterGuardError::Stash(e) => MailContextError::Stash(e),
         }
     }
 }
@@ -250,7 +230,7 @@ impl From<CoreContextError> for MailContextError {
             CoreContextError::Stash(err) => MailContextError::Stash(err),
             CoreContextError::ContactError(err) => MailContextError::ContactError(err),
             CoreContextError::DuplicateContext(user_id) => Self::DuplicateContext(user_id),
-            CoreContextError::QueueWriterGuardExpired => Self::QueueWriterGuardExpired,
+            CoreContextError::LostContext => Self::LostContext,
             CoreContextError::Action(core_action_error) => Self::Action(core_action_error.into()),
             CoreContextError::QueuedAction(queued_error) => Self::QueuedAction(queued_error),
             CoreContextError::ActionQueue(error) => Self::ActionQueue(error),

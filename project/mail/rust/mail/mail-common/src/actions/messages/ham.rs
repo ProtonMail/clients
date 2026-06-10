@@ -1,18 +1,19 @@
+use crate::MailUserContext;
 use crate::actions::MailActionError;
 use crate::datatypes::{LocalMessageId, MessageFlags, RollbackItemType};
 use crate::models::{Message, RollbackItem};
 use futures::future::try_join_all;
 use mail_action_queue::action::{
-    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
+    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type,
 };
 use mail_action_queue::rebase::{RebaseChangeSet, RebaseKey};
 use mail_api::services::proton::ProtonMail;
-use mail_core_api::session::Session;
 use mail_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;
 use mail_core_common::models::ModelIdExtension;
 use mail_stash::UserDb;
 use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
+use std::sync::Weak;
 use tracing::info;
 
 /// Action which marks messages as Ham.
@@ -49,7 +50,7 @@ impl Action<UserDb> for Ham {
 }
 
 pub struct HamHandler {
-    pub api: Session,
+    pub ctx: Weak<MailUserContext>,
 }
 
 impl Handler<UserDb> for HamHandler {
@@ -97,17 +98,18 @@ impl Handler<UserDb> for HamHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        guard: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,
     > {
-        let tether = guard.tether();
-        let ids = Message::local_ids_counterpart(action.0.clone(), tether).await?;
+        let ctx = self.ctx.upgrade().ok_or(MailActionError::LostContext)?;
+        let tether = ctx.user_stash().connection();
+        let ids = Message::local_ids_counterpart(action.0.clone(), &tether).await?;
 
         info!("Marking {ids:?} as not spam");
 
-        let iter = ids.iter().map(|id| self.api.put_message_ham(id));
+        let session = ctx.session();
+        let iter = ids.iter().map(|id| session.put_message_ham(id));
 
         _ = try_join_all(iter).await?;
 

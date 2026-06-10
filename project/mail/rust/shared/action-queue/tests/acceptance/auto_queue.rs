@@ -1,14 +1,17 @@
+use crate::acceptance::common::new_queue;
+
 use super::common::{DefaultError, new_queue_typed};
 use mail_action_queue::action::{
-    Action, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard, WriterGuardError,
+    Action, ActionId, DefaultVersionConverter, Factory, Handler, Type,
 };
+use mail_action_queue::db::ExecutionGuard;
 use mail_action_queue::queue::{
     ActionRequeueReason, BroadcastMessage, NoopOnlineStatusWaiter, OnlineStatusWaiter,
-    QueuedActionState, TokioTaskSpawner,
+    QueuedActionState,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_action_queue::tests::common::TestDb;
-use mail_stash::stash::WriteTx;
+use mail_stash::stash::{Stash, WriteTx};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use tokio::time::sleep;
@@ -32,12 +35,10 @@ async fn auto_queued_on_network_failure() {
 async fn auto_queued_on_pause() {
     let queue = new_queue_typed::<SuccessAction>(SuccessActionHandler).await;
     let mut broadcast = queue.new_broadcast_receiver();
-    let task_spawner = TokioTaskSpawner;
 
     let auto_executor = queue.new_executor().into_auto_executor(
         Box::new(NoopOnlineStatusWaiter),
         false,
-        &task_spawner,
         tracing::Span::current(),
     );
 
@@ -72,12 +73,9 @@ async fn auto_queued_on_multiple_resume() {
         BroadcastMessage::Queued(_, _)
     ));
 
-    let task_spawner = TokioTaskSpawner;
-
     let auto_executor = queue.new_executor().into_auto_executor(
         Box::new(NoopOnlineStatusWaiter),
         false,
-        &task_spawner,
         tracing::Span::current(),
     );
 
@@ -97,12 +95,10 @@ async fn auto_queued_on_multiple_resume() {
 async fn auto_queued_on_multiple_pause() {
     let queue = new_queue_typed::<SuccessAction>(SuccessActionHandler).await;
     let mut broadcast = queue.new_broadcast_receiver();
-    let task_spawner = TokioTaskSpawner;
 
     let auto_executor = queue.new_executor().into_auto_executor(
         Box::new(NoopOnlineStatusWaiter),
         false,
-        &task_spawner,
         tracing::Span::current(),
     );
 
@@ -134,12 +130,10 @@ async fn auto_queued_on_multiple_pause() {
 async fn auto_queued_on_pause_and_partially_manual_execution() {
     let queue = new_queue_typed::<SuccessAction>(SuccessActionHandler).await;
     let mut broadcast = queue.new_broadcast_receiver();
-    let task_spawner = TokioTaskSpawner;
 
     let auto_executor = queue.new_executor().into_auto_executor(
         Box::new(NoopOnlineStatusWaiter),
         false,
-        &task_spawner,
         tracing::Span::current(),
     );
 
@@ -178,7 +172,12 @@ async fn auto_queued_on_pause_and_partially_manual_execution() {
 #[tokio::test]
 async fn auto_queued_on_writer_guard_failure() {
     // check if the remote action returns a network error it is queued for execution later.
-    let queue = new_queue_typed::<WriteGuardExpiredAction>(WriterGuardExpiredActionHandler).await;
+    let queue = new_queue(Factory::default()).await;
+    queue
+        .register::<WriteGuardExpiredAction>(WriterGuardExpiredActionHandler {
+            stash: queue.mail_stash().clone(),
+        })
+        .unwrap();
 
     queue
         .queue_action(WriteGuardExpiredAction {})
@@ -216,12 +215,10 @@ async fn execute_all_waits_for_network_to_reoccur() {
     }
     let queue = new_queue_typed::<ErrorAction>(ErrorActionHandler).await;
     let mut broadcast = queue.new_broadcast_receiver();
-    let task_spawner = TokioTaskSpawner;
 
     let auto_executor = queue.new_executor().into_auto_executor(
         Box::new(TimedOnlineStatusWaiter(Duration::from_secs(2))),
         false,
-        &task_spawner,
         tracing::Span::current(),
     );
 
@@ -275,7 +272,6 @@ impl Handler<TestDb> for SuccessActionHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: WriterGuard<'_, TestDb>,
     ) -> Result<
         <Self::Action as Action<TestDb>>::RemoteOutput,
         <Self::Action as Action<TestDb>>::Error,
@@ -336,7 +332,6 @@ impl Handler<TestDb> for ErrorActionHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: WriterGuard<'_, TestDb>,
     ) -> Result<
         <Self::Action as Action<TestDb>>::RemoteOutput,
         <Self::Action as Action<TestDb>>::Error,
@@ -367,8 +362,9 @@ impl Action<TestDb> for WriteGuardExpiredAction {
     type Error = DefaultError;
 }
 
-#[derive(Default)]
-struct WriterGuardExpiredActionHandler;
+struct WriterGuardExpiredActionHandler {
+    pub stash: Stash<TestDb>,
+}
 
 impl Handler<TestDb> for WriterGuardExpiredActionHandler {
     type Action = WriteGuardExpiredAction;
@@ -393,14 +389,18 @@ impl Handler<TestDb> for WriterGuardExpiredActionHandler {
 
     async fn apply_remote(
         &self,
-        _: ActionId,
+        id: ActionId,
         _: &mut Self::Action,
-        _: WriterGuard<'_, TestDb>,
     ) -> Result<
         <Self::Action as Action<TestDb>>::RemoteOutput,
         <Self::Action as Action<TestDb>>::Error,
     > {
-        Err(WriterGuardError::Expired.into())
+        self.stash
+            .connection()
+            .write_tx(async |tx| ExecutionGuard::expire_guard_for_action(id, tx).await)
+            .await
+            .unwrap();
+        Ok(0)
     }
     async fn rebase_local(
         &self,

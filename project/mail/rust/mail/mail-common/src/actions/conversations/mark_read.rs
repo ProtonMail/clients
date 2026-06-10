@@ -1,3 +1,4 @@
+use crate::MailUserContext;
 use crate::actions::{
     ConversationOrMessage, GenericActionData, GenericLabelRelatedActionData, MailActionError,
     filter_responses_by_codes,
@@ -5,16 +6,16 @@ use crate::actions::{
 use crate::datatypes::{LocalConversationId, RollbackItemType};
 use crate::models::{Conversation, Message};
 use mail_action_queue::action::{
-    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
+    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_core_api::consts::General;
-use mail_core_api::session::Session;
 use mail_core_common::datatypes::LocalLabelId;
 use mail_core_common::models::ModelIdExtension;
 use mail_stash::UserDb;
 use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
+use std::sync::Weak;
 use tracing::error;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -48,7 +49,7 @@ impl Action<UserDb> for MarkRead {
 }
 
 pub struct MarkReadHandler {
-    pub api: Session,
+    pub ctx: Weak<MailUserContext>,
 }
 
 impl Handler<UserDb> for MarkReadHandler {
@@ -95,19 +96,20 @@ impl Handler<UserDb> for MarkReadHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        mut guard: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,
     > {
-        let (_, remote_target_ids) = action.data.resolve_ids(guard.tether()).await?;
+        let ctx = self.ctx.upgrade().ok_or(MailActionError::LostContext)?;
+        let mut tether = ctx.user_stash().connection();
+        let (_, remote_target_ids) = action.data.resolve_ids(&tether).await?;
 
         // API call return an error 2501(Conversation was not updated) for conversation already read
         if remote_target_ids.is_empty() {
             return Ok(());
         }
         let responses =
-            Conversation::mark_multiple_as_read_remote(remote_target_ids, &self.api).await?;
+            Conversation::mark_multiple_as_read_remote(remote_target_ids, ctx.session()).await?;
 
         // In this case General::NotExists is returned also for conversations already marked as read
         let failed_ids = filter_responses_by_codes(
@@ -117,8 +119,8 @@ impl Handler<UserDb> for MarkReadHandler {
 
         if !failed_ids.is_empty() {
             error!("Mark read operation failed for: {:?}", failed_ids);
-            guard
-                .tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx| {
+            tether
+                .write_tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx| {
                     GenericActionData::<Conversation>::mark_rollback(
                         &failed_ids,
                         RollbackItemType::Conversation,

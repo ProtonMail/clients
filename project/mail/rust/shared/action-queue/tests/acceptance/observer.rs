@@ -1,7 +1,5 @@
 use super::common::{DefaultError, new_queue_typed};
-use mail_action_queue::action::{
-    Action, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
-};
+use mail_action_queue::action::{Action, ActionId, DefaultVersionConverter, Handler, Type};
 use mail_action_queue::observers::{ActionAwaiter, ActionFailureObserver, ActionFailureReason};
 use mail_action_queue::queue::BroadcastMessage;
 use mail_action_queue::rebase::RebaseChangeSet;
@@ -171,7 +169,6 @@ impl Handler<TestDb> for ErrorActionHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: WriterGuard<'_, TestDb>,
     ) -> Result<
         <Self::Action as Action<TestDb>>::RemoteOutput,
         <Self::Action as Action<TestDb>>::Error,
@@ -235,7 +232,6 @@ impl Handler<TestDb> for SuccessActionHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: WriterGuard<'_, TestDb>,
     ) -> Result<
         <Self::Action as Action<TestDb>>::RemoteOutput,
         <Self::Action as Action<TestDb>>::Error,

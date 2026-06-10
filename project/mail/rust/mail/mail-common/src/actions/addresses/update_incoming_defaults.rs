@@ -4,10 +4,9 @@ use crate::MailUserContext;
 use crate::actions::MailActionError;
 use crate::models::IncomingDefault;
 use mail_action_queue::action::{
-    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
+    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
-use mail_core_api::session::Session;
 use mail_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;
 use mail_stash::UserDb;
 use mail_stash::stash::WriteTx;
@@ -32,7 +31,6 @@ impl Action<UserDb> for SyncIncomingDefaults {
 }
 
 pub struct SyncIncomingDefaultsHandler {
-    pub api: Session,
     pub ctx: Weak<MailUserContext>,
 }
 
@@ -61,17 +59,18 @@ impl Handler<UserDb> for SyncIncomingDefaultsHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        mut guard: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,
     > {
-        let data = IncomingDefault::sync(&self.api).await?;
+        let ctx = self.ctx.upgrade().ok_or(MailActionError::LostContext)?;
+        let data = IncomingDefault::sync(ctx.session()).await?;
 
         tracing::info!("Updating incoming defaults");
 
-        guard
-            .tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx| {
+        let mut tether = ctx.user_stash().connection();
+        tether
+            .write_tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx| {
                 IncomingDefault::replace_all(
                     data.into_iter().map(IncomingDefault::from).collect(),
                     tx,

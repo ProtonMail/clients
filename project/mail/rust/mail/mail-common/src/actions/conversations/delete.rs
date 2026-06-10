@@ -1,19 +1,19 @@
-use crate::AppError;
 use crate::actions::{
     GenericActionData, GenericLabelRelatedActionData, MailActionError, filter_responses,
 };
 use crate::datatypes::{LocalConversationId, RollbackItemType};
 use crate::models::Conversation;
+use crate::{AppError, MailUserContext};
 use mail_action_queue::action::{
-    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
+    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type,
 };
 use mail_action_queue::rebase::{RebaseChangeSet, RebaseKey};
-use mail_core_api::session::Session;
 use mail_core_common::datatypes::LocalLabelId;
 use mail_core_common::models::{ModelExtension, ModelIdExtension};
 use mail_stash::UserDb;
 use mail_stash::stash::WriteTx;
 use serde::{self, Deserialize, Serialize};
+use std::sync::Weak;
 use tracing::error;
 
 /// Delete conversations action.
@@ -44,7 +44,7 @@ impl Action<UserDb> for Delete {
 }
 
 pub struct DeleteHandler {
-    pub api: Session,
+    pub ctx: Weak<MailUserContext>,
 }
 
 impl Handler<UserDb> for DeleteHandler {
@@ -83,39 +83,43 @@ impl Handler<UserDb> for DeleteHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        mut guard: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,
     > {
-        let (remote_label_id, remote_target_ids) =
-            action.0.resolve_ids_legacy(guard.tether()).await?;
+        let ctx = self.ctx.upgrade().ok_or(MailActionError::LostContext)?;
+        let mut tether = ctx.user_stash().connection();
+
+        let (remote_label_id, remote_target_ids) = action.0.resolve_ids_legacy(&tether).await?;
         let remote_label_id =
             remote_label_id.ok_or_else(|| AppError::LabelDoesNotHaveRemoteId(action.0.label_id))?;
 
         let local_ids_without_remote_id = action
             .0
-            .unsynced_item_ids(guard.tether())
+            .unsynced_item_ids(&tether)
             .await
             .inspect_err(|e| error!("Failed to load local only ids: {e:?})"))?;
 
         let failed_ids = if remote_target_ids.is_empty() {
             vec![]
         } else {
-            let responses =
-                Conversation::delete_multiple_remote(remote_target_ids, remote_label_id, &self.api)
-                    .await
-                    .map_err(|e| {
-                        error!("Failed to delete conversations on API: {e:?}");
-                        e
-                    })?;
+            let responses = Conversation::delete_multiple_remote(
+                remote_target_ids,
+                remote_label_id,
+                ctx.session(),
+            )
+            .await
+            .map_err(|e| {
+                error!("Failed to delete conversations on API: {e:?}");
+                e
+            })?;
 
             filter_responses(responses)
         };
 
         if !failed_ids.is_empty() || !local_ids_without_remote_id.is_empty() {
-            guard
-                .tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx| {
+            tether
+                .write_tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx| {
                     if !failed_ids.is_empty() {
                         GenericActionData::<Conversation>::mark_rollback(
                             &failed_ids,

@@ -10,6 +10,7 @@ use crate::services::crypto_key_service::CryptoKeyService;
 use crate::services::{AddressService, GrowthService};
 use crate::{Context, CoreContextError, CoreContextResult, OnSessionDeletedResponse, Origin};
 pub use event_loop::CoreEventLoopContext;
+use futures::future::BoxFuture;
 use mail_action_queue::queue::{self, Queue};
 use mail_core_api::services::proton::{SessionId, UserId};
 use mail_core_api::session::Session;
@@ -19,6 +20,7 @@ use mail_stash::orm::Model;
 use mail_stash::stash::{Stash, StashConfiguration, StashError, WatcherHandle};
 use mail_stash::watcher::TableWatcher;
 use mail_stash::{AccountDb, UserDb};
+use mail_task_service::TaskService;
 use services::{PaymentsService, UserFeatureFlagsService};
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
@@ -110,7 +112,14 @@ impl UserContext {
             let user_stash =
                 Self::open_db(user_stash_path, db_initializers, context.origin()).await?;
             let cancellation_token = context.new_child_cancellation_token();
-            let queue = Queue::new(user_stash.clone()).await?;
+            let queue = Queue::new(
+                user_stash.clone(),
+                UserContextQueueTaskSpawner {
+                    cancellation_token: cancellation_token.clone(),
+                    service: context.task_service().task_service_arc(),
+                },
+            )
+            .await?;
 
             let origin = context.origin();
             let context_cloned = context.clone();
@@ -529,13 +538,14 @@ pub enum DeleteFilesSafeError {
     Moved(io::Error),
 }
 
-impl queue::TaskSpawner for UserContext {
-    fn spawn_task<F>(&self, future: F) -> JoinHandle<()>
-    where
-        F: Future<Output = ()> + Send + 'static,
-    {
-        self.context
-            .task_service()
+struct UserContextQueueTaskSpawner {
+    cancellation_token: CancellationToken,
+    service: Arc<TaskService>,
+}
+
+impl queue::TaskSpawner for UserContextQueueTaskSpawner {
+    fn spawn_task(&self, future: BoxFuture<'static, ()>) -> JoinHandle<()> {
+        self.service
             .spawn_cancellable(self.cancellation_token.clone(), future)
     }
 }

@@ -1,16 +1,16 @@
-use crate::CoreContextError;
 use crate::actions::dependency_builder::ActionDependencyKeysBuilder;
 use crate::datatypes::LocalContactId;
 use crate::models::{Contact, ModelExtension, ModelIdExtension};
+use crate::{CoreContextError, UserContext};
 use mail_action_queue::action::{
-    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
+    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_core_api::services::proton::ContactId;
-use mail_core_api::session::Session;
 use mail_stash::UserDb;
 use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
+use std::sync::Weak;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Delete {
@@ -46,7 +46,7 @@ impl Action<UserDb> for Delete {
 }
 
 pub struct DeleteHandler {
-    pub api: Session,
+    pub ctx: Weak<UserContext>,
 }
 
 impl Handler<UserDb> for DeleteHandler {
@@ -91,18 +91,20 @@ impl Handler<UserDb> for DeleteHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        guard: WriterGuard<'_, UserDb>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
-        let failed = Contact::delete_from_remote(&action.remote_ids, &self.api).await?;
+        let ctx = self.ctx.upgrade().ok_or(CoreContextError::LostContext)?;
+
+        let failed = Contact::delete_from_remote(&action.remote_ids, ctx.session()).await?;
         let mut failed_local_ids = Vec::with_capacity(failed.len());
 
         if failed.is_empty() {
             Ok(())
         } else {
-            let conn = guard.tether();
+            let tether = ctx.mail_stash().connection();
 
             for remote_id in failed {
-                let Some(local_id) = Contact::remote_id_counterpart(remote_id, conn).await? else {
+                let Some(local_id) = Contact::remote_id_counterpart(remote_id, &tether).await?
+                else {
                     continue;
                 };
 

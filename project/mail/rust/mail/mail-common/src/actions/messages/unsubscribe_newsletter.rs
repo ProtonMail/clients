@@ -1,20 +1,18 @@
-use crate::AppError;
 use crate::actions::MailActionError;
 use crate::datatypes::{LocalMessageId, MessageFlags, ParsedHeaders};
 use crate::models::Message;
+use crate::{AppError, MailUserContext};
 use anyhow::anyhow;
-use mail_action_queue::action::{
-    Action, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
-};
+use mail_action_queue::action::{Action, ActionId, DefaultVersionConverter, Handler, Type};
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::ProtonMail;
 use mail_core_api::service::ApiServiceError;
-use mail_core_api::session::Session;
 use mail_core_common::models::ModelIdExtension;
 use mail_stash::UserDb;
 use mail_stash::stash::WriteTx;
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
+use std::sync::Weak;
 use tracing::{debug, warn};
 use url::Url;
 
@@ -93,7 +91,7 @@ impl Action<UserDb> for UnsubscribeNewsletter {
 
 pub struct UnsubscribeNewsletterHandler {
     pub http_client: reqwest::Client,
-    pub api: Session,
+    pub ctx: Weak<MailUserContext>,
 }
 
 impl Handler<UserDb> for UnsubscribeNewsletterHandler {
@@ -123,7 +121,6 @@ impl Handler<UserDb> for UnsubscribeNewsletterHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        g: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,
@@ -144,10 +141,12 @@ impl Handler<UserDb> for UnsubscribeNewsletterHandler {
                     ))
                 })?;
 
-            let remote_msg_id = Message::local_id_counterpart(action.id, g.tether())
+            let ctx = self.ctx.upgrade().ok_or(MailActionError::LostContext)?;
+            let tether = ctx.user_stash().connection();
+            let remote_msg_id = Message::local_id_counterpart(action.id, &tether)
                 .await?
                 .ok_or(AppError::MessageHasNoRemoteId(action.id))?;
-            self.api.mark_unsubscribed(vec![remote_msg_id]).await?;
+            ctx.session().mark_unsubscribed(vec![remote_msg_id]).await?;
 
             return Ok(());
         }

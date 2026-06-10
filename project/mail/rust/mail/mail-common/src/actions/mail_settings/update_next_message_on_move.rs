@@ -1,9 +1,7 @@
 use crate::actions::MailActionError;
 use crate::datatypes::NextMessageOnMove;
 use crate::models::MailSettings;
-use mail_action_queue::action::{
-    Action, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
-};
+use mail_action_queue::action::{Action, ActionId, DefaultVersionConverter, Handler, Type};
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::ProtonMail;
 use mail_api::services::proton::request_data::PutNextMessageOnMoveRequest;
@@ -94,7 +92,6 @@ impl Handler<UserDb> for UpdateNextMessageOnMoveHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        _guard: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,

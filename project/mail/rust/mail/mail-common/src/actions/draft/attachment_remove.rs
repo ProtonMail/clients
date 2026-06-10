@@ -1,4 +1,3 @@
-use crate::MailContextError;
 use crate::actions::draft::{
     DraftAttachmentActionDependencyKeyBuilderExt, SEND_ACTION_GROUP, save_attachment_error,
 };
@@ -8,9 +7,10 @@ use crate::models::{
     Attachment, AttachmentType, DraftAttachmentMetadata, DraftAttachmentOwnership, DraftMetadata,
     DraftSendResultOrigin, MetadataId,
 };
+use crate::{MailContextError, MailUserContext};
 use mail_action_queue::action::{
     Action, ActionDependencyKeys, ActionGroup, ActionId, DefaultVersionConverter, Handler,
-    Priority, Type, WriterGuard,
+    Priority, Type,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::ProtonMail;
@@ -22,6 +22,7 @@ use mail_stash::orm::Model as _;
 use mail_stash::stash::{Tether, WriteTx};
 use mail_stash::{UserDb, params};
 use serde::{Deserialize, Serialize};
+use std::sync::Weak;
 use tracing::{debug, error, info};
 
 #[derive(Serialize, Deserialize)]
@@ -78,7 +79,7 @@ impl Action<UserDb> for AttachmentRemove {
 }
 
 pub struct AttachmentRemoveHandler {
-    pub api: Session,
+    pub ctx: Weak<MailUserContext>,
 }
 
 impl Handler<UserDb> for AttachmentRemoveHandler {
@@ -184,12 +185,13 @@ impl Handler<UserDb> for AttachmentRemoveHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        mut writer_guard: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,
     > {
-        let result = action.apply_remote_impl(&self.api, &mut writer_guard).await;
+        let ctx = self.ctx.upgrade().ok_or(MailContextError::LostContext)?;
+        let mut tether = ctx.user_stash().connection();
+        let result = action.apply_remote_impl(ctx.session(), &mut tether).await;
 
         if let Err(error) = &result {
             // Replace error only for internal reporting, the action queue needs the original error
@@ -198,7 +200,7 @@ impl Handler<UserDb> for AttachmentRemoveHandler {
                 action.local_message_id.expect("Should be set"),
                 action.attachment_id,
                 DraftSendResultOrigin::AttachmentRemove,
-                &mut writer_guard,
+                &mut tether,
                 error,
             )
             .await
@@ -223,11 +225,11 @@ impl AttachmentRemove {
     async fn apply_remote_impl(
         &self,
         api: &Session,
-        writer_guard: &mut WriterGuard<'_, UserDb>,
+        tether: &mut Tether<UserDb>,
     ) -> Result<(), MailContextError> {
         // check metadata to see if attachment is owned or inherited
         let Some(attachment_metadata) =
-            DraftAttachmentMetadata::find_by_id(self.attachment_id, writer_guard.tether())
+            DraftAttachmentMetadata::find_by_id(self.attachment_id, tether)
                 .await
                 .inspect_err(|e| error!("Failed to load draft attachment metadata: {e:?}"))?
         else {
@@ -241,7 +243,7 @@ impl AttachmentRemove {
             attachment_metadata.ownership,
             DraftAttachmentOwnership::Owned
         ) && let Some(AttachmentType::Remote(Some(remote_id))) =
-            Attachment::local_id_counterpart(self.attachment_id, writer_guard.tether()).await?
+            Attachment::local_id_counterpart(self.attachment_id, tether).await?
         {
             info!("Deleting {remote_id:?}");
 
@@ -262,8 +264,8 @@ impl AttachmentRemove {
         }
 
         // Delete metadata & attachment record
-        writer_guard
-            .tx::<_, _, <Self as Action<UserDb>>::Error>(async |tx: &WriteTx<'_>| {
+        tether
+            .write_tx::<_, _, <Self as Action<UserDb>>::Error>(async |tx: &WriteTx<'_>| {
                 // If we own the attachment, delete it.
                 if matches!(
                     attachment_metadata.ownership,

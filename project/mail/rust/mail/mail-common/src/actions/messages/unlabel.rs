@@ -1,15 +1,16 @@
+use crate::MailUserContext;
 use crate::actions::{GenericLabelRelatedActionData, MailActionError, filter_responses};
 use crate::datatypes::{LocalMessageId, RollbackItemType};
 use crate::models::Message;
 use mail_action_queue::action::{
-    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
+    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type,
 };
 use mail_api::services::proton::ProtonMail;
-use mail_core_api::services::proton::Proton;
 use mail_core_common::datatypes::LocalLabelId;
 use mail_core_common::models::ModelIdExtension;
 use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
+use std::sync::Weak;
 use tracing::{error, info};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -40,7 +41,7 @@ impl Action<UserDb> for Unlabel {
 }
 
 pub struct UnlabelHandler {
-    pub api: Proton,
+    pub ctx: Weak<MailUserContext>,
 }
 
 impl Handler<UserDb> for UnlabelHandler {
@@ -75,7 +76,6 @@ impl Handler<UserDb> for UnlabelHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        mut guard: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,
@@ -85,8 +85,10 @@ impl Handler<UserDb> for UnlabelHandler {
 
         info!("Removing {label_id:?} from {message_ids:?}");
 
-        let response = self
-            .api
+        let ctx = self.ctx.upgrade().ok_or(MailActionError::LostContext)?;
+
+        let response = ctx
+            .session()
             .put_messages_unlabel(message_ids, label_id)
             .await?
             .responses;
@@ -96,8 +98,9 @@ impl Handler<UserDb> for UnlabelHandler {
         if !failed_ids.is_empty() {
             error!("Unlabel messages failed for: {failed_ids:?} ");
 
-            guard
-                .tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx| {
+            let mut tether = ctx.user_stash().connection();
+            tether
+                .write_tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx| {
                     let local_ids = Message::remote_ids_counterpart(failed_ids.clone(), tx).await?;
 
                     Message::apply_label(action.0.label_id, local_ids, tx)

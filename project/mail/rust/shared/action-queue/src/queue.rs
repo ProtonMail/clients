@@ -4,7 +4,7 @@ mod tests;
 
 use crate::action::{
     Action, ActionGroup, ActionId, Error as ActionErrorTrait, Factory, FactoryError, FactoryResult,
-    Handler, LocalOutput, Metadata, Priority, Resources, WriterGuard, WriterGuardError,
+    Handler, LocalOutput, Metadata, Priority, Resources, WriterGuardError,
 };
 use crate::db::{
     self, ActionDependency, DEFAULT_LOCK_TIMEOUT, DependencyType, ExecutionGuard, StoredAction,
@@ -13,6 +13,8 @@ use crate::rebase::RebaseChangeSet;
 use anyhow::anyhow;
 use bitflags::bitflags;
 use chrono::DateTime;
+use futures::FutureExt;
+use futures::future::BoxFuture;
 use mail_sqlite3::MigratorError;
 use mail_stash::orm::Model;
 use mail_stash::stash::{Stash, StashError, Tether, WriteTx};
@@ -23,6 +25,7 @@ use std::future::Future;
 use std::num::NonZeroUsize;
 use std::pin::Pin;
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::sync::watch;
 use tokio::task::JoinHandle;
 use topological_sort::TopologicalSort;
@@ -42,6 +45,8 @@ pub enum Error {
     UnknownAction(String),
     #[error("Cyclic Dependency detected")]
     CyclicDependency,
+    #[error("Failed to execute action remote task")]
+    ActionRemoteTaskExec,
 }
 
 /// Errors that result from queuing or apply actions via the queue.
@@ -275,6 +280,7 @@ pub(crate) struct Shared<Db: mail_stash::marker::DatabaseMarker> {
     factory: RwLock<Factory<Db>>,
     broadcast_sender: tokio::sync::broadcast::Sender<BroadcastMessage>,
     queued_action_notifier: tokio::sync::Notify,
+    spawner: Box<dyn TaskSpawner>,
 }
 
 impl<Db: mail_stash::marker::DatabaseMarker> Shared<Db> {
@@ -311,12 +317,16 @@ impl<Db: mail_stash::marker::DatabaseMarker> Queue<Db> {
     }
 
     /// Create a new queue with the given `mail_stash`;
-    pub async fn new(mail_stash: Stash<Db>) -> Result<Self> {
-        Self::with_factory(mail_stash, Factory::new()).await
+    pub async fn new(mail_stash: Stash<Db>, spawner: impl TaskSpawner) -> Result<Self> {
+        Self::with_factory(mail_stash, Factory::new(), spawner).await
     }
 
     /// Create a new queue with the given `mail_stash` and `factory`;
-    pub async fn with_factory(mail_stash: Stash<Db>, factory: Factory<Db>) -> Result<Self> {
+    pub async fn with_factory(
+        mail_stash: Stash<Db>,
+        factory: Factory<Db>,
+        spawner: impl TaskSpawner,
+    ) -> Result<Self> {
         let mut tether = mail_stash.connection();
 
         db::migrate(&mut tether).await?;
@@ -328,6 +338,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> Queue<Db> {
             factory: RwLock::new(factory),
             broadcast_sender: sender,
             queued_action_notifier: tokio::sync::Notify::new(),
+            spawner: Box::new(spawner),
         });
 
         Ok(Self { shared })
@@ -706,7 +717,7 @@ pub enum ActionRequeueReason {
 
 pub(crate) trait ErasedQueuedAction<Db: mail_stash::marker::DatabaseMarker>: Send {
     fn execute<'a>(
-        &'a mut self,
+        self: Box<Self>,
         shared: &'a Shared<Db>,
         tether: &'a mut Tether<Db>,
         guard: ExecutionGuard,
@@ -738,23 +749,17 @@ impl<T: Action<Db>, Db: mail_stash::marker::DatabaseMarker> ErasedQueuedAction<D
     for QueuedAction<T, Db>
 {
     fn execute<'a>(
-        &'a mut self,
+        self: Box<Self>,
         shared: &'a Shared<Db>,
         tether: &'a mut Tether<Db>,
         guard: ExecutionGuard,
         metadata: Arc<QueuedMetadata>,
     ) -> Pin<Box<dyn Future<Output = QueuedResult<QueuedActionState>> + 'a + Send>> {
         Box::pin(async move {
-            let output = execute_action_remote(
-                shared,
-                self.id,
-                &*self.handler,
-                &mut self.action,
-                tether,
-                guard,
-            )
-            .await
-            .map_err(|e| QueuedError::Action(Arc::new(anyhow::Error::new(e)), metadata))?;
+            let output =
+                execute_action_remote(shared, self.id, &self.handler, self.action, tether, guard)
+                    .await
+                    .map_err(|e| QueuedError::Action(Arc::new(anyhow::Error::new(e)), metadata))?;
 
             Ok(match output {
                 ActionRemoteOutput::Executed(_) => QueuedActionState::Executed(self.id),
@@ -863,13 +868,11 @@ impl<Db: mail_stash::marker::DatabaseMarker> QueueExecutor<Db> {
         self,
         online: Box<dyn OnlineStatusWaiter>,
         start_paused: bool,
-        task_spawner: &impl TaskSpawner,
         span: tracing::Span,
     ) -> QueueAutoExecutor<Db> {
         self.into_auto_executor_with_policy(
             online,
             start_paused,
-            task_spawner,
             QueueAutoTerminationPolicy::Never,
             span,
         )
@@ -881,18 +884,10 @@ impl<Db: mail_stash::marker::DatabaseMarker> QueueExecutor<Db> {
         self,
         online: Box<dyn OnlineStatusWaiter>,
         start_paused: bool,
-        task_spawner: &impl TaskSpawner,
         termination_policy: QueueAutoTerminationPolicy,
         span: tracing::Span,
     ) -> QueueAutoExecutor<Db> {
-        QueueAutoExecutor::new(
-            self,
-            online,
-            start_paused,
-            task_spawner,
-            termination_policy,
-            span,
-        )
+        QueueAutoExecutor::new(self, online, start_paused, termination_policy, span)
     }
 
     /// Execute one action from the queue.
@@ -936,7 +931,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> QueueExecutor<Db> {
         async {
             info!("Executing action");
             debug!("{}", action.short_dbg_str());
-            let (mut decoded, metadata) = match decode_action(&self.shared.factory, action) {
+            let (decoded, metadata) = match decode_action(&self.shared.factory, action) {
                 Ok(v) => v,
                 Err(e) => {
                     // Release execution guard if decode failed.
@@ -1017,10 +1012,8 @@ impl QueueAutoTerminationPolicy {
     }
 }
 
-pub trait TaskSpawner {
-    fn spawn_task<F>(&self, future: F) -> JoinHandle<()>
-    where
-        F: Future<Output = ()> + Send + 'static;
+pub trait TaskSpawner: Send + Sync + 'static {
+    fn spawn_task(&self, future: BoxFuture<'static, ()>) -> JoinHandle<()>;
 }
 
 #[async_trait::async_trait]
@@ -1050,10 +1043,7 @@ impl OnlineStatusWaiterBuilder for NoopOnlineStatusWaiterBuilder {
 pub struct TokioTaskSpawner;
 
 impl TaskSpawner for TokioTaskSpawner {
-    fn spawn_task<F>(&self, future: F) -> JoinHandle<()>
-    where
-        F: Future<Output = ()> + Send + 'static,
-    {
+    fn spawn_task(&self, future: BoxFuture<'static, ()>) -> JoinHandle<()> {
         tokio::spawn(future)
     }
 }
@@ -1083,18 +1073,20 @@ impl<Db: mail_stash::marker::DatabaseMarker> QueueAutoExecutor<Db> {
         executor: QueueExecutor<Db>,
         online: Box<dyn OnlineStatusWaiter>,
         start_paused: bool,
-        task_spawner: &impl TaskSpawner,
         termination_policy: QueueAutoTerminationPolicy,
         span: tracing::Span,
     ) -> Self {
         let id = executor.id.clone();
         let (paused_tx, paused_rx) = watch::channel(start_paused);
 
-        let task = task_spawner.spawn_task(async move {
-            Self::run(executor, paused_rx, online, termination_policy)
-                .instrument(span)
-                .await;
-        });
+        let task = executor.shared.clone().spawner.spawn_task(
+            async move {
+                Self::run(executor, paused_rx, online, termination_policy)
+                    .instrument(span)
+                    .await;
+            }
+            .boxed(),
+        );
 
         QueueAutoExecutor {
             task,
@@ -1233,7 +1225,6 @@ impl<Db: mail_stash::marker::DatabaseMarker> QueueAutoExecutorPool<Db> {
         count: NonZeroUsize,
         online: &impl OnlineStatusWaiterBuilder,
         start_paused: bool,
-        task_spawner: &impl TaskSpawner,
         span: tracing::Span,
     ) -> Self {
         Self::with_termination_policy(
@@ -1242,7 +1233,6 @@ impl<Db: mail_stash::marker::DatabaseMarker> QueueAutoExecutorPool<Db> {
             count,
             online,
             start_paused,
-            task_spawner,
             QueueAutoTerminationPolicy::Never,
             span,
         )
@@ -1256,7 +1246,6 @@ impl<Db: mail_stash::marker::DatabaseMarker> QueueAutoExecutorPool<Db> {
         count: NonZeroUsize,
         online: &impl OnlineStatusWaiterBuilder,
         start_paused: bool,
-        task_spawner: &impl TaskSpawner,
         termination_policy: QueueAutoTerminationPolicy,
         span: tracing::Span,
     ) -> Self {
@@ -1267,7 +1256,6 @@ impl<Db: mail_stash::marker::DatabaseMarker> QueueAutoExecutorPool<Db> {
                     .into_auto_executor_with_policy(
                         online.build(),
                         start_paused,
-                        task_spawner,
                         termination_policy,
                         span.clone(),
                     )
@@ -1380,15 +1368,50 @@ async fn execute_action_local<T: Action<Db>, Db: mail_stash::marker::DatabaseMar
 async fn execute_action_remote<T: Action<Db>, Db: mail_stash::marker::DatabaseMarker>(
     shared: &Shared<Db>,
     id: ActionId,
-    handler: &T::Handler,
-    action: &mut T,
+    handler: &Arc<T::Handler>,
+    mut action: T,
     tether: &mut Tether<Db>,
     guard: ExecutionGuard,
 ) -> Result<ActionRemoteOutput<T::RemoteOutput>, ActionError<T, Db>> {
     debug!("Applying action on remote");
 
-    let writer_guard = WriterGuard::new(tether, &guard);
-    let result = handler.apply_remote(id, action, writer_guard).await;
+    let handler_cloned = handler.clone();
+
+    let (action_task_tx, mut action_task_rx) = tokio::sync::mpsc::channel(1);
+
+    shared.spawner.spawn_task(
+        async move {
+            let result = handler_cloned.as_ref().apply_remote(id, &mut action).await;
+            let _ = action_task_tx.send(result).await;
+        }
+        .boxed(),
+    );
+
+    let result = loop {
+        tokio::select! {
+            _ = tokio::time::sleep(Duration::from_secs(15))=> {
+                // do an empty tx to keep execution token alive
+                if let Err(e) = guard.tx(tether, async |_|{
+                    Ok(())
+                }).await {
+                    return match e {
+                        WriterGuardError::Expired => {
+                            Ok(ActionRemoteOutput::Queued(
+                                id,
+                                ActionRequeueReason::GuardExpired,
+                            ))
+                        }
+                        WriterGuardError::Stash(stash_error) =>
+                            Err(ActionError::Queue(Error::DB(stash_error)))
+                    }
+                };
+            }
+            r = action_task_rx.recv() => {
+                break r.ok_or(ActionError::Queue(Error::ActionRemoteTaskExec))?
+            }
+        }
+    };
+
     let mut cancelled_actions = vec![];
 
     let result = match guard

@@ -1,20 +1,20 @@
-use crate::MailContextError;
 use crate::actions::draft::SEND_ACTION_GROUP;
 use crate::datatypes::{LocalConversationId, LocalMessageId, SystemLabelId};
 use crate::draft::DiscardError;
 use crate::models::{Conversation, DraftMetadata, Message, MetadataId};
+use crate::{MailContextError, MailUserContext};
 use mail_action_queue::action::{
-    Action, ActionGroup, ActionId, DefaultVersionConverter, Handler, Priority, Type, WriterGuard,
+    Action, ActionGroup, ActionId, DefaultVersionConverter, Handler, Priority, Type,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::ProtonMail;
 use mail_core_api::consts::General;
 use mail_core_api::services::proton::LabelId;
-use mail_core_api::session::Session;
 use mail_core_common::models::{ModelExtension, ModelIdExtension};
 use mail_stash::UserDb;
 use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
+use std::sync::Weak;
 use tracing::{debug, error, info};
 
 /// Action which discards a Draft.
@@ -52,7 +52,7 @@ impl Action<UserDb> for Discard {
 }
 
 pub struct DiscardHandler {
-    pub api: Session,
+    pub ctx: Weak<MailUserContext>,
 }
 
 impl Handler<UserDb> for DiscardHandler {
@@ -117,7 +117,6 @@ impl Handler<UserDb> for DiscardHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        mut guard: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,
@@ -128,11 +127,13 @@ impl Handler<UserDb> for DiscardHandler {
             return Ok(());
         };
 
-        let Some(message_id) =
-            Message::local_id_counterpart(local_message_id, guard.tether()).await?
+        let ctx = self.ctx.upgrade().ok_or(MailContextError::LostContext)?;
+        let mut tether = ctx.user_stash().connection();
+
+        let Some(message_id) = Message::local_id_counterpart(local_message_id, &tether).await?
         else {
-            return guard
-                .tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx| {
+            return tether
+                .write_tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx| {
                     info!("No server state, deleting locally only");
                     // No remote id, we can't issue the request, we should only delete the local data.
                     Message::delete_by_id(local_message_id, tx)
@@ -169,8 +170,8 @@ impl Handler<UserDb> for DiscardHandler {
         // to do anything.
         info!("Deleting {message_id:?}");
 
-        let response = self
-            .api
+        let response = ctx
+            .session()
             .put_messages_delete(vec![message_id.clone()], Some(LabelId::drafts()))
             .await
             .inspect_err(|e| error!("Failed to delete message on server: {e:?}"))?;

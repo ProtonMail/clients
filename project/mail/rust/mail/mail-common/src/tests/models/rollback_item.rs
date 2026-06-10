@@ -1,6 +1,7 @@
 use super::*;
 use crate as mail_common;
 use crate::datatypes::LocalConversationId;
+use mail_action_queue::queue::TokioTaskSpawner;
 use mail_api::services::proton::common::ConversationId;
 use mail_api::services::proton::prelude::RunningTasks;
 use mail_api::services::proton::responses::GetMessagesResponse;
@@ -100,7 +101,9 @@ async fn test_store_and_delete_remote_items(
     // * RollbackItem is correctly stored *
     let (mail_stash, _tempdir) = new_test_connection_file().await;
     let mut tether = mail_stash.connection();
-    let queue = Queue::new(mail_stash.clone()).await.unwrap();
+    let queue = Queue::new(mail_stash.clone(), TokioTaskSpawner)
+        .await
+        .unwrap();
     tether
         .write_tx::<_, _, StashError>(async |tx| {
             if let Some(items) = &mut expected {
@@ -378,7 +381,9 @@ async fn mock_label(mock_server: &MockServer, items: Vec<RollbackItem>) {
 async fn test_rollback_skips_nonexistent_conversation() {
     let (mail_stash, _tempdir) = new_test_connection_file().await;
     let mut tether = mail_stash.connection();
-    let queue = Queue::new(mail_stash.clone()).await.unwrap();
+    let queue = Queue::new(mail_stash.clone(), TokioTaskSpawner)
+        .await
+        .unwrap();
 
     let existing_conv_id = "existing_conv_123";
     let deleted_conv_id = "deleted_conv_456";
@@ -471,7 +476,9 @@ async fn test_label_rollback_with_parent_dependencies() {
 
     let (mail_stash, _tempdir) = new_test_connection_file().await;
     let mut tether = mail_stash.connection();
-    let queue = Queue::new(mail_stash.clone()).await.unwrap();
+    let queue = Queue::new(mail_stash.clone(), TokioTaskSpawner)
+        .await
+        .unwrap();
 
     // Set up a label hierarchy: grandparent -> parent -> child
     let grandparent_id = "grandparent_123";
@@ -630,7 +637,9 @@ async fn test_label_rollback_with_circular_parent_reference() {
 
     let (mail_stash, _tempdir) = new_test_connection_file().await;
     let mut tether = mail_stash.connection();
-    let queue = Queue::new(mail_stash.clone()).await.unwrap();
+    let queue = Queue::new(mail_stash.clone(), TokioTaskSpawner)
+        .await
+        .unwrap();
 
     // Set up labels where child's parent is also being rolled back (circular reference)
     let parent_id = "parent_123";

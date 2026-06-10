@@ -300,7 +300,9 @@ async fn new_queue() -> Queue<TestDb> {
     factory.register::<Action2>(ActionHandler2).unwrap();
     let pool = Stash::new(StashConfiguration::test()).unwrap();
 
-    Queue::with_factory(pool, factory).await.unwrap()
+    Queue::with_factory(pool, factory, TokioTaskSpawner)
+        .await
+        .unwrap()
 }
 
 #[derive(Deserialize, Serialize, Eq, PartialEq)]
@@ -361,12 +363,7 @@ impl Handler<TestDb> for ActionHandler2 {
         unreachable!()
     }
 
-    async fn apply_remote(
-        &self,
-        _: ActionId,
-        _: &mut Self::Action,
-        _: WriterGuard<'_, TestDb>,
-    ) -> Result<(), NoopError> {
+    async fn apply_remote(&self, _: ActionId, _: &mut Self::Action) -> Result<(), NoopError> {
         unreachable!()
     }
     async fn rebase_local(

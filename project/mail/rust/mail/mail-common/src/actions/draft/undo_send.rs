@@ -6,22 +6,22 @@ use crate::actions::draft::{
 use crate::datatypes::{LocalMessageId, MessageFlags};
 use crate::draft::UndoError;
 use crate::models::Message;
-use crate::{AppError, MailContextError};
+use crate::{AppError, MailContextError, MailUserContext};
 use mail_action_queue::action::{
-    Action, ActionGroup, ActionId, DefaultVersionConverter, Handler, Priority, Type, WriterGuard,
+    Action, ActionGroup, ActionId, DefaultVersionConverter, Handler, Priority, Type,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::ProtonMail;
 use mail_api::services::proton::common::MessageId;
 use mail_core_api::consts::Mail;
 use mail_core_api::service::ApiErrorInfo;
-use mail_core_api::session::Session;
 use mail_core_common::datatypes::UnixTimestamp;
 use mail_core_common::models::ModelExtension;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
 use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
+use std::sync::Weak;
 use tracing::{error, info, warn};
 
 /// Action to cancel sending of a sent message.
@@ -61,7 +61,7 @@ impl Action<UserDb> for UndoSend {
 }
 
 pub struct UndoSendHandler {
-    pub api: Session,
+    pub ctx: Weak<MailUserContext>,
 }
 
 impl Handler<UserDb> for UndoSendHandler {
@@ -164,7 +164,6 @@ impl Handler<UserDb> for UndoSendHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        mut guard: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,
@@ -176,7 +175,9 @@ impl Handler<UserDb> for UndoSendHandler {
 
         info!("Undo sending {:?}", remote_id);
 
-        let response = match self.api.cancel_send(remote_id.clone()).await {
+        let ctx = self.ctx.upgrade().ok_or(MailContextError::LostContext)?;
+
+        let response = match ctx.session().cancel_send(remote_id.clone()).await {
             Ok(r) => r,
             Err(e) => {
                 error!("Failed to cancel send: {e:?}");
@@ -199,8 +200,9 @@ impl Handler<UserDb> for UndoSendHandler {
             }
         };
 
-        guard
-            .tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx| {
+        let mut tether = ctx.user_stash().connection();
+        tether
+            .write_tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx| {
                 let mut message = Message::from_api_metadata(response.message, tx)
                     .await
                     .inspect_err(|e| error!("Failed to convert remote metadata:{e:?}"))?;

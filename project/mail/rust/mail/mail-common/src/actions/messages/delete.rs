@@ -1,3 +1,4 @@
+use crate::MailUserContext;
 use crate::actions::{
     GenericActionData, GenericLabelRelatedActionData, MailActionError, filter_responses,
 };
@@ -6,11 +7,10 @@ use crate::models::{Conversation, Message};
 #[cfg(feature = "foundation_search")]
 use crate::search::MailSearchService;
 use mail_action_queue::action::{
-    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
+    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type,
 };
 use mail_action_queue::rebase::{RebaseChangeSet, RebaseKey};
 use mail_api::services::proton::ProtonMail;
-use mail_core_api::session::Session;
 use mail_core_common::datatypes::LocalLabelId;
 use mail_core_common::models::{ModelExtension, ModelIdExtension};
 use mail_stash::exports::SqliteError;
@@ -18,6 +18,7 @@ use mail_stash::orm::Model;
 use mail_stash::stash::{StashError, WriteTx};
 use mail_stash::{UserDb, params};
 use serde::{Deserialize, Serialize};
+use std::sync::Weak;
 use tracing::{error, info};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -48,7 +49,7 @@ impl Action<UserDb> for Delete {
 }
 
 pub struct DeleteHandler {
-    pub api: Session,
+    pub ctx: Weak<MailUserContext>,
 }
 
 impl Handler<UserDb> for DeleteHandler {
@@ -94,16 +95,18 @@ impl Handler<UserDb> for DeleteHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        mut guard: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,
     > {
-        let (label_id, remote_target_ids) = action.0.resolve_ids_legacy(guard.tether()).await?;
+        let ctx = self.ctx.upgrade().ok_or(MailActionError::LostContext)?;
+        let mut tether = ctx.user_stash().connection();
+
+        let (label_id, remote_target_ids) = action.0.resolve_ids_legacy(&tether).await?;
 
         let local_ids_without_remote_id = action
             .0
-            .unsynced_item_ids(guard.tether())
+            .unsynced_item_ids(&tether)
             .await
             .inspect_err(|e| error!("Failed to load local only ids: {e:?}"))?;
 
@@ -114,8 +117,8 @@ impl Handler<UserDb> for DeleteHandler {
 
             info!("Deleting {message_ids:?}");
 
-            let response = self
-                .api
+            let response = ctx
+                .session()
                 .put_messages_delete(message_ids, label_id)
                 .await?
                 .responses;
@@ -132,7 +135,7 @@ impl Handler<UserDb> for DeleteHandler {
         if !failed_ids.is_empty() || !local_ids_without_remote_id.is_empty() {
             error!("Delete messages operation failed for: {failed_ids:?}");
 
-            guard.tx::<_,_, <Self::Action as Action<UserDb>>::Error>(
+            tether.write_tx::<_,_, <Self::Action as Action<UserDb>>::Error>(
                 async |tx| {
                     if !failed_ids.is_empty() {
                         GenericActionData::<Message>::mark_rollback(&failed_ids, RollbackItemType::Message, tx).await?;
@@ -194,8 +197,8 @@ impl Handler<UserDb> for DeleteHandler {
         // Queue search removal intents for all permanently deleted messages
         #[cfg(feature = "foundation_search")]
         if !permanently_deleted_ids.is_empty() {
-            guard
-                .tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx| {
+            tether
+                .write_tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx| {
                     for id in &permanently_deleted_ids {
                         if let Err(e) = MailSearchService::queue_remove(id.as_u64(), tx).await {
                             error!("Failed to queue search removal for message {}: {:?}", id, e);

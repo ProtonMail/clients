@@ -1,18 +1,18 @@
-use crate::AppError;
 use crate::actions::messages::Move;
 use crate::actions::{LabelAsData, MailActionError};
 use crate::models::{Message, MessageCounter};
+use crate::{AppError, MailUserContext};
 use mail_action_queue::action::{
     Action, ActionDependencyKeys, ActionId, FactoryResult, Handler, Metadata, Type,
-    VersionConverter, WriterGuard,
+    VersionConverter,
 };
 use mail_action_queue::queue::Queue;
 use mail_action_queue::rebase::RebaseChangeSet;
-use mail_core_api::session::Session;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
 use mail_stash::stash::{Tether, WriteTx};
 use serde::{Deserialize, Serialize};
+use std::sync::Weak;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct LabelAs(pub LabelAsData<Message>);
@@ -40,7 +40,7 @@ impl Action<UserDb> for LabelAs {
 }
 
 pub struct LabelAsHandler {
-    pub api: Session,
+    pub ctx: Weak<MailUserContext>,
 }
 
 impl Handler<UserDb> for LabelAsHandler {
@@ -77,12 +77,13 @@ impl Handler<UserDb> for LabelAsHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        guard: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,
     > {
-        action.0.apply_remote(&self.api, guard).await
+        let ctx = self.ctx.upgrade().ok_or(MailActionError::LostContext)?;
+        let mut tether = ctx.user_stash().connection();
+        action.0.apply_remote(ctx.session(), &mut tether).await
     }
     async fn rebase_local(
         &self,

@@ -4,7 +4,7 @@ use crate::models::Message;
 use crate::{AppError, MailUserContext};
 use anyhow::Context as _;
 use mail_action_queue::action::{
-    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
+    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type,
 };
 use mail_action_queue::rebase::{RebaseChangeSet, RebaseKey};
 use mail_api::services::proton::ProtonMail;
@@ -82,20 +82,19 @@ impl Handler<UserDb> for ReportPhishingHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        guard: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,
     > {
         let ctx = self.ctx.upgrade().ok_or(MailActionError::LostContext)?;
-        let tether = guard.tether();
+        let tether = ctx.user_stash().connection();
 
         let body = Message::message_body(&ctx, action.message_id)
             .await
             .context("Failed to get message body")
             .map_err(AppError::Other)?;
 
-        let remote_id = Message::local_id_counterpart(action.message_id, tether)
+        let remote_id = Message::local_id_counterpart(action.message_id, &tether)
             .await?
             .ok_or_else(|| AppError::MessageHasNoRemoteId(action.message_id))?;
 

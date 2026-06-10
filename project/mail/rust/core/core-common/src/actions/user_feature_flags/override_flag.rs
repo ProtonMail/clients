@@ -1,18 +1,18 @@
-use crate::CoreContextError;
 use crate::actions::dependency_builder::ActionDependencyKeysBuilder;
 use crate::datatypes::{FlagMutability, UnixTimestamp, UserFeatureFlagSource};
 use crate::models::{ModelExtension, UserFeatureFlag};
+use crate::{CoreContextError, UserContext};
 use mail_action_queue::action::{
     Action, ActionDependencyKey, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler,
-    Type, WriterGuard,
+    Type,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_core_api::services::proton::FeatureFlagsApi as _;
-use mail_core_api::session::Session;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
 use mail_stash::stash::{RunTransaction, WriteTx};
 use serde::{Deserialize, Serialize};
+use std::sync::Weak;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct OverrideFlag {
@@ -59,7 +59,7 @@ impl Action<UserDb> for OverrideFlag {
 }
 
 pub struct OverrideFlagHandler {
-    pub api: Session,
+    pub ctx: Weak<UserContext>,
 }
 
 impl Handler<UserDb> for OverrideFlagHandler {
@@ -139,15 +139,17 @@ impl Handler<UserDb> for OverrideFlagHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        mut guard: WriterGuard<'_, UserDb>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
-        let response = self
-            .api
+        let ctx = self.ctx.upgrade().ok_or(CoreContextError::LostContext)?;
+
+        let response = ctx
+            .session()
             .put_feature_flag_override(&action.flag_name, action.new_value)
             .await?;
 
-        guard
-            .tx(async |tx| {
+        let mut tether = ctx.mail_stash().connection();
+        tether
+            .write_tx::<_, _, CoreContextError>(async |tx| {
                 let mut flag = UserFeatureFlag::by_name(&action.flag_name, tx)
                     .await?
                     .ok_or_else(|| {
@@ -172,7 +174,7 @@ impl Handler<UserDb> for OverrideFlagHandler {
 
                 flag.save(tx).await?;
 
-                Ok::<_, CoreContextError>(())
+                Ok(())
             })
             .await?;
 

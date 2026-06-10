@@ -6,16 +6,10 @@ pub mod user_feature_flags;
 use crate::{Origin, UserContext};
 use mail_action_queue::action::{Action, FactoryError, Handler};
 use mail_action_queue::queue::Queue;
-use mail_core_api::session::Session;
 use mail_stash::UserDb;
 use std::sync::Weak;
 
-pub(crate) fn register_actions(
-    origin: Origin,
-    queue: &Queue<UserDb>,
-    ctx: &Weak<UserContext>,
-    api: &Session,
-) {
+pub(crate) fn register_actions(origin: Origin, queue: &Queue<UserDb>, ctx: &Weak<UserContext>) {
     fn reg<T>(queue: &Queue<UserDb>, handler: T)
     where
         T: Handler<UserDb>,
@@ -37,10 +31,10 @@ pub(crate) fn register_actions(
     match origin {
         Origin::App => {
             reg(queue, event_poll::EventPollHandler { ctx: ctx.clone() });
-            reg(queue, contacts::DeleteHandler { api: api.clone() });
+            reg(queue, contacts::DeleteHandler { ctx: ctx.clone() });
             reg(
                 queue,
-                user_feature_flags::OverrideFlagHandler { api: api.clone() },
+                user_feature_flags::OverrideFlagHandler { ctx: ctx.clone() },
             );
         }
 

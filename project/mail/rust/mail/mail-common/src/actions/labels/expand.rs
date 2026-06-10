@@ -1,13 +1,12 @@
-use crate::AppError;
 use crate::actions::MailActionError;
 use crate::datatypes::RollbackItemType;
 use crate::models::RollbackItem;
+use crate::{AppError, MailUserContext};
 use mail_action_queue::action::{
-    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
+    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_core_api::services::proton::LabelId;
-use mail_core_api::session::Session;
 use mail_core_common::actions::dependency_builder::{
     ActionDependencyKeysBuilder, LocalIdActionDepExt,
 };
@@ -17,6 +16,7 @@ use mail_stash::UserDb;
 use mail_stash::orm::Model;
 use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
+use std::sync::Weak;
 use tracing::{debug, info};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -66,7 +66,7 @@ impl Action<UserDb> for Expand {
 }
 
 pub struct ExpandHandler {
-    pub api: Session,
+    pub ctx: Weak<MailUserContext>,
 }
 
 impl Handler<UserDb> for ExpandHandler {
@@ -143,7 +143,6 @@ impl Handler<UserDb> for ExpandHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        guard: WriterGuard<'_, UserDb>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
         let action_equal_original_state = action
             .original_state
@@ -154,10 +153,13 @@ impl Handler<UserDb> for ExpandHandler {
             return Ok(());
         }
 
+        let ctx = self.ctx.upgrade().ok_or(MailActionError::LostContext)?;
+
         let remote_id = match action.remote_id.clone() {
             Some(remote_id) => remote_id,
             None => {
-                let label = Label::load(action.local_id, guard.tether())
+                let tether = ctx.user_stash().connection();
+                let label = Label::load(action.local_id, &tether)
                     .await?
                     .ok_or_else(|| AppError::LabelNotFound(action.local_id))?;
 
@@ -184,7 +186,7 @@ impl Handler<UserDb> for ExpandHandler {
             remote_id, action.expand
         );
 
-        Label::patch_expanded(remote_id, action.expand, &self.api).await?;
+        Label::patch_expanded(remote_id, action.expand, ctx.session()).await?;
 
         Ok(())
     }

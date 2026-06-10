@@ -1,10 +1,8 @@
 use super::common::{new_factory, new_queue};
-use mail_action_queue::action::{
-    Action, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
-};
+use mail_action_queue::action::{Action, ActionId, DefaultVersionConverter, Handler, Type};
 use mail_action_queue::queue::{
     ActionRequeueReason, NoopOnlineStatusWaiter, QueueAutoTerminationPolicy, QueuedActionState,
-    QueuedError, TokioTaskSpawner,
+    QueuedError,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_action_queue::tests::common::{DefaultError, TestDb};
@@ -52,7 +50,6 @@ async fn execute_action_with_max_retries_on_network_failure() {
 #[tokio::test]
 async fn auto_execute_with_max_retries_on_network_failure_wont_block_the_queue() {
     let queue = new_queue(new_factory::<TestAction>(TestHandler)).await;
-    let task_spawner = TokioTaskSpawner;
 
     queue
         .queue_action(TestAction { fail_network: true })
@@ -71,7 +68,6 @@ async fn auto_execute_with_max_retries_on_network_failure_wont_block_the_queue()
     let executor = queue.new_executor().into_auto_executor_with_policy(
         Box::new(NoopOnlineStatusWaiter),
         false,
-        &task_spawner,
         QueueAutoTerminationPolicy::Empty,
         tracing::Span::current(),
     );
@@ -126,7 +122,6 @@ impl Handler<TestDb> for TestHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        _: WriterGuard<'_, TestDb>,
     ) -> Result<
         <Self::Action as Action<TestDb>>::RemoteOutput,
         <Self::Action as Action<TestDb>>::Error,

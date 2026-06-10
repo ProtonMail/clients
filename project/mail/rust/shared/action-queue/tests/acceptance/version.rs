@@ -2,7 +2,6 @@ use super::common::{DefaultError, new_factory, new_queue_with_stash, new_stash};
 use mail_action_queue::action;
 use mail_action_queue::action::{
     Action, ActionId, DefaultVersionConverter, FactoryResult, Handler, Type, VersionConverter,
-    WriterGuard,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_action_queue::tests::common::TestDb;
@@ -79,7 +78,6 @@ impl Handler<TestDb> for V1ActionHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: WriterGuard<'_, TestDb>,
     ) -> Result<
         <Self::Action as Action<TestDb>>::RemoteOutput,
         <Self::Action as Action<TestDb>>::Error,
@@ -159,7 +157,6 @@ impl Handler<TestDb> for V2ActionHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        _: WriterGuard<'_, TestDb>,
     ) -> Result<
         <Self::Action as Action<TestDb>>::RemoteOutput,
         <Self::Action as Action<TestDb>>::Error,

@@ -1,3 +1,4 @@
+use crate::MailUserContext;
 use crate::actions::{
     ConversationOrMessage, GenericActionData, GenericLabelRelatedActionData, MailActionError,
     filter_responses_by_codes,
@@ -6,17 +7,17 @@ use crate::datatypes::{LocalConversationId, RollbackItemType};
 use crate::models::{Conversation, Message};
 use anyhow::Context;
 use mail_action_queue::action::{
-    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
+    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_core_api::consts::General;
-use mail_core_api::session::Session;
 use mail_core_common::datatypes::LocalLabelId;
 use mail_core_common::models::ModelIdExtension;
 use mail_stash::UserDb;
 use mail_stash::exports::Transaction;
 use mail_stash::stash::{RunTransaction, WriteTx};
 use serde::{Deserialize, Serialize};
+use std::sync::Weak;
 use tracing::error;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -45,7 +46,7 @@ impl Action<UserDb> for MarkUnread {
 }
 
 pub struct MarkUnreadHandler {
-    pub api: Session,
+    pub ctx: Weak<MailUserContext>,
 }
 
 impl Handler<UserDb> for MarkUnreadHandler {
@@ -82,20 +83,22 @@ impl Handler<UserDb> for MarkUnreadHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        mut guard: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,
     > {
+        let ctx = self.ctx.upgrade().ok_or(MailActionError::LostContext)?;
+        let mut tether = ctx.user_stash().connection();
+
         // API call return an error 2501(Conversation was not updated) for conversation already unread
-        let (remote_label_id, remote_target_ids) = action.0.resolve_ids(guard.tether()).await?;
+        let (remote_label_id, remote_target_ids) = action.0.resolve_ids(&tether).await?;
         if remote_target_ids.is_empty() {
             return Ok(());
         }
         let responses = Conversation::mark_multiple_as_unread_remote(
             remote_target_ids,
             remote_label_id,
-            &self.api,
+            ctx.session(),
         )
         .await?;
 
@@ -107,7 +110,7 @@ impl Handler<UserDb> for MarkUnreadHandler {
 
         if !failed_ids.is_empty() {
             error!("Mark unread operation failed for: {:?}", failed_ids);
-            guard
+            tether
                 .run_write_tx_sync(move |tx: &Transaction<'_>| {
                     GenericActionData::<Conversation>::mark_rollback_sync(
                         &failed_ids,

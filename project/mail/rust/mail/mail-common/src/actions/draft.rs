@@ -21,7 +21,7 @@ use crate::models::{
     DraftSendResultOrigin, MetadataId,
 };
 use crate::{AppError, MailContextError};
-use mail_action_queue::action::{ActionDependencyKey, ActionGroup, WriterGuard, WriterGuardError};
+use mail_action_queue::action::{ActionDependencyKey, ActionGroup};
 use mail_core_api::services::proton::LabelId;
 use mail_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;
 use mail_core_common::datatypes::LocalLabelId;
@@ -108,11 +108,11 @@ async fn save_attachment_error(
     message_id: LocalMessageId,
     attachment_id: LocalAttachmentId,
     origin: DraftSendResultOrigin,
-    writer_guard: &mut WriterGuard<'_, UserDb>,
+    tether: &mut Tether<UserDb>,
     error: &MailContextError,
-) -> Result<(), WriterGuardError> {
-    writer_guard
-        .tx(async |tx| {
+) -> Result<(), MailContextError> {
+    tether
+        .write_tx::<_, _, MailContextError>(async |tx| {
             let mut send_result = DraftSendResult::failure(
                 message_id,
                 origin,

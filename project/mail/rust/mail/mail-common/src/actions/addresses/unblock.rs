@@ -1,21 +1,22 @@
+use crate::MailUserContext;
 use crate::actions::MailActionError;
 use crate::actions::addresses::incoming_defaults_dependency_key;
 use crate::datatypes::LocalIncomingDefaultId;
 use crate::models::{IncomingDefault, IncomingDefaultLocation};
 use anyhow::anyhow;
 use mail_action_queue::action::{
-    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
+    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::ProtonMail;
 use mail_core_api::services::proton::PrivateEmail;
-use mail_core_api::session::Session;
 use mail_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;
 use mail_core_common::models::ModelExtension;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
 use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
+use std::sync::Weak;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Unblock {
@@ -51,7 +52,7 @@ impl Action<UserDb> for Unblock {
 }
 
 pub struct UnblockHandler {
-    pub api: Session,
+    pub ctx: Weak<MailUserContext>,
 }
 
 impl Handler<UserDb> for UnblockHandler {
@@ -115,7 +116,6 @@ impl Handler<UserDb> for UnblockHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        mut guard: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,
@@ -127,17 +127,19 @@ impl Handler<UserDb> for UnblockHandler {
             return Ok(());
         };
 
-        let Some(incoming) = IncomingDefault::find_by_id(local_removed_id, guard.tether()).await?
-        else {
+        let ctx = self.ctx.upgrade().ok_or(MailActionError::LostContext)?;
+        let mut tether = ctx.user_stash().connection();
+
+        let Some(incoming) = IncomingDefault::find_by_id(local_removed_id, &tether).await? else {
             return Err(anyhow!("Missing incoming default for: {}", action.email).into());
         };
 
         if let Some(id) = incoming.remote_id.as_ref() {
-            self.api.delete_incoming_default(id).await?;
+            ctx.session().delete_incoming_default(id).await?;
         }
 
-        guard
-            .tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx| {
+        tether
+            .write_tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx| {
                 incoming.delete(tx).await?;
                 Ok(())
             })

@@ -1,22 +1,23 @@
+use crate::MailUserContext;
 use crate::actions::MailActionError;
 use crate::actions::addresses::incoming_defaults_dependency_key;
 use crate::datatypes::LocalIncomingDefaultId;
 use crate::models::{IncomingDefault, IncomingDefaultLocation};
 use anyhow::anyhow;
 use mail_action_queue::action::{
-    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
+    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::ProtonMail;
 use mail_api::services::proton::response_data::IncomingDefaultLocation as ApiIncomingDefaultLocation;
 use mail_core_api::services::proton::{IncomingDefaultId, PrivateEmail};
-use mail_core_api::session::Session;
 use mail_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;
 use mail_core_common::models::ModelExtension;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
 use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
+use std::sync::Weak;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Block {
@@ -61,7 +62,7 @@ impl Action<UserDb> for Block {
 }
 
 pub struct BlockHandler {
-    pub api: Session,
+    pub ctx: Weak<MailUserContext>,
 }
 
 impl Handler<UserDb> for BlockHandler {
@@ -131,7 +132,6 @@ impl Handler<UserDb> for BlockHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        mut guard: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,
@@ -143,12 +143,14 @@ impl Handler<UserDb> for BlockHandler {
             return Ok(());
         };
 
+        let ctx = self.ctx.upgrade().ok_or(MailActionError::LostContext)?;
+
         let new_incoming = if let Some(remote_id) = action
             .previous
             .as_ref()
             .and_then(|previous| previous.remote_id.as_ref())
         {
-            self.api
+            ctx.session()
                 .put_incoming_default(
                     remote_id.clone(),
                     ApiIncomingDefaultLocation::Blocked,
@@ -157,14 +159,15 @@ impl Handler<UserDb> for BlockHandler {
                 .await?
                 .incoming_default
         } else {
-            self.api
+            ctx.session()
                 .post_incoming_default(ApiIncomingDefaultLocation::Blocked, &action.email)
                 .await?
                 .incoming_default
         };
 
-        guard
-            .tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx| {
+        let mut tether = ctx.user_stash().connection();
+        tether
+            .write_tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx| {
                 IncomingDefault::update_from_api(local_id, new_incoming, tx).await?;
                 Ok(())
             })

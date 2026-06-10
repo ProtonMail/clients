@@ -26,7 +26,7 @@ use anyhow::{Context, anyhow};
 use indoc::formatdoc;
 use mail_action_queue::action::{
     self, Action, ActionDependencyKey, ActionDependencyKeys, ActionGroup, ActionId, FactoryError,
-    Handler, WriterGuard, WriterGuardError,
+    Handler,
 };
 use mail_action_queue::queue::{ActionRequeueReason, Queue};
 use mail_action_queue::rebase::{RebaseChangeSet, RebaseKey};
@@ -92,15 +92,6 @@ impl action::Error for MailActionError {
     }
 }
 
-impl From<WriterGuardError> for MailActionError {
-    fn from(value: WriterGuardError) -> Self {
-        match value {
-            WriterGuardError::Expired => Self::QueueWriterGuardExpired,
-            WriterGuardError::Stash(e) => Self::Stash(e),
-        }
-    }
-}
-
 impl From<anyhow::Error> for MailActionError {
     fn from(value: anyhow::Error) -> Self {
         Self::Other(value)
@@ -114,7 +105,7 @@ impl From<CoreActionError> for MailActionError {
             CoreActionError::Stash(stash_error) => Self::Stash(stash_error),
             CoreActionError::Label(label_error) => Self::Label(label_error),
             CoreActionError::NoInput => Self::NoInput,
-            CoreActionError::QueueWriterGuardExpired => Self::QueueWriterGuardExpired,
+            CoreActionError::LostContext => Self::LostContext,
             CoreActionError::Other(error) => Self::Other(error),
         }
     }
@@ -155,57 +146,51 @@ pub(crate) fn register_actions(
 
     match origin {
         Origin::App => {
-            reg(queue, conversations::DeleteHandler { api: api.clone() });
-            reg(queue, conversations::MarkReadHandler { api: api.clone() });
-            reg(queue, conversations::MarkUnreadHandler { api: api.clone() });
+            replace(queue, conversations::DeleteHandler { ctx: ctx.clone() });
+            replace(queue, conversations::MarkReadHandler { ctx: ctx.clone() });
+            replace(queue, conversations::MarkUnreadHandler { ctx: ctx.clone() });
             replace(queue, conversations::PrefetchHandler { ctx: ctx.clone() });
-            reg(queue, conversations::SnoozeHandler { api: api.clone() });
-            reg(queue, conversations::UnsnoozeHandler { api: api.clone() });
-            reg(queue, block::BlockHandler { api: api.clone() });
-            reg(queue, unblock::UnblockHandler { api: api.clone() });
-            reg(
+            replace(queue, conversations::SnoozeHandler { ctx: ctx.clone() });
+            replace(queue, conversations::UnsnoozeHandler { ctx: ctx.clone() });
+            replace(queue, block::BlockHandler { ctx: ctx.clone() });
+            replace(queue, unblock::UnblockHandler { ctx: ctx.clone() });
+            replace(
                 queue,
-                update_incoming_defaults::SyncIncomingDefaultsHandler {
-                    api: api.clone(),
-                    ctx: ctx.clone(),
-                },
+                update_incoming_defaults::SyncIncomingDefaultsHandler { ctx: ctx.clone() },
             );
-            reg(queue, conversations::MoveHandler { api: api.clone() });
+            replace(queue, conversations::MoveHandler { ctx: ctx.clone() });
             replace(
                 queue,
                 conversations::RefreshMetadataHandler { ctx: ctx.clone() },
             );
-            reg(queue, messages::MoveHandler { api: api.clone() });
-            reg(queue, messages::DeleteHandler { api: api.clone() });
+            replace(queue, messages::MoveHandler { ctx: ctx.clone() });
+            replace(queue, messages::DeleteHandler { ctx: ctx.clone() });
             replace(
                 queue,
-                messages::DeleteAllMessagesInLabelHandler {
-                    api: api.clone(),
-                    ctx: ctx.clone(),
-                },
+                messages::DeleteAllMessagesInLabelHandler { ctx: ctx.clone() },
             );
-            reg(queue, messages::ReadHandler { api: api.clone() });
-            reg(queue, messages::UnreadHandler { api: api.clone() });
-            reg(queue, messages::HamHandler { api: api.clone() });
+            replace(queue, messages::ReadHandler { ctx: ctx.clone() });
+            replace(queue, messages::UnreadHandler { ctx: ctx.clone() });
+            replace(queue, messages::HamHandler { ctx: ctx.clone() });
             replace(queue, messages::ReportPhishingHandler { ctx: ctx.clone() });
             replace(queue, messages::PrefetchHandler { ctx: ctx.clone() });
-            reg(queue, messages::RefreshMetadataHandler { api: api.clone() });
-            reg(
+            replace(queue, messages::RefreshMetadataHandler { ctx: ctx.clone() });
+            replace(
                 queue,
                 messages::UnsubscribeNewsletterHandler {
                     http_client: http_client.clone(),
-                    api: api.clone(),
+                    ctx: ctx.clone(),
                 },
             );
             replace(queue, draft::SaveHandler { ctx: ctx.clone() });
             replace(queue, draft::SendHandler { ctx: ctx.clone() });
-            reg(queue, labels::ExpandHandler { api: api.clone() });
-            reg(queue, messages::LabelAsHandler { api: api.clone() });
-            reg(queue, conversations::LabelAsHandler { api: api.clone() });
-            reg(queue, draft::DiscardHandler { api: api.clone() });
-            reg(queue, draft::UndoSendHandler { api: api.clone() });
+            replace(queue, labels::ExpandHandler { ctx: ctx.clone() });
+            replace(queue, messages::LabelAsHandler { ctx: ctx.clone() });
+            replace(queue, conversations::LabelAsHandler { ctx: ctx.clone() });
+            replace(queue, draft::DiscardHandler { ctx: ctx.clone() });
+            replace(queue, draft::UndoSendHandler { ctx: ctx.clone() });
             replace(queue, draft::AttachmentUploadHandler { ctx: ctx.clone() });
-            reg(queue, draft::AttachmentRemoveHandler { api: api.clone() });
+            replace(queue, draft::AttachmentRemoveHandler { ctx: ctx.clone() });
             replace(queue, refresh::ActionRefreshHandler { ctx: ctx.clone() });
             replace(queue, rollback::RollbackActionHandler { ctx: ctx.clone() });
             reg(
@@ -220,22 +205,22 @@ pub(crate) fn register_actions(
                 queue,
                 mail_settings::UpdateCategoryViewHandler { api: api.clone() },
             );
-            reg(queue, PushNotificationActionHandler { api: api.clone() });
-            reg(
+            replace(queue, PushNotificationActionHandler { ctx: ctx.clone() });
+            replace(
                 queue,
-                draft::AttachmentDispositionUpdateHandler { api: api.clone() },
+                draft::AttachmentDispositionUpdateHandler { ctx: ctx.clone() },
             );
         }
 
         Origin::ShareExt => {
             replace(queue, draft::SaveHandler { ctx: ctx.clone() });
             replace(queue, draft::SendHandler { ctx: ctx.clone() });
-            reg(queue, draft::DiscardHandler { api: api.clone() });
+            replace(queue, draft::DiscardHandler { ctx: ctx.clone() });
             replace(queue, draft::AttachmentUploadHandler { ctx: ctx.clone() });
-            reg(queue, draft::AttachmentRemoveHandler { api: api.clone() });
-            reg(
+            replace(queue, draft::AttachmentRemoveHandler { ctx: ctx.clone() });
+            replace(
                 queue,
-                draft::AttachmentDispositionUpdateHandler { api: api.clone() },
+                draft::AttachmentDispositionUpdateHandler { ctx: ctx.clone() },
             );
         }
     }
@@ -1008,14 +993,12 @@ where
     async fn apply_remote(
         &self,
         api: &Session,
-        mut guard: WriterGuard<'_, UserDb>,
+        tether: &mut Tether<UserDb>,
     ) -> Result<(), MailActionError> {
         //TODO: handle revert
         let Some(dest_label_id) = self.destination else {
             return Ok(());
         };
-
-        let tether = guard.tether();
 
         let dest_label = Label::resolve_remote_label_id(dest_label_id, tether).await?;
         let all_remote_ids =
@@ -1024,8 +1007,8 @@ where
 
         let failed = T::api_apply_label(api, all_remote_ids, dest_label).await?;
         if !failed.is_empty() {
-            guard
-                .tx::<_, _, anyhow::Error>(async move |tx| {
+            tether
+                .write_tx::<_, _, anyhow::Error>(async move |tx| {
                     RollbackItem::save_many(tx, failed, T::ROLLBACK_ITEM_TYPE).await?;
                     Ok(())
                 })
@@ -1454,7 +1437,7 @@ where
     async fn apply_remote(
         &self,
         api: &Session,
-        mut guard: WriterGuard<'_, UserDb>,
+        tether: &mut Tether<UserDb>,
     ) -> Result<(), MailActionError> {
         let (add, remove) = self.segregate_label();
 
@@ -1463,8 +1446,8 @@ where
         // TODO(ET-5398): The order has been inverted to handle a the undo move case correctly
         // by first removing the current location label and then adding the target.
         for (label, items) in remove {
-            let label_id = Label::resolve_remote_label_id(label, guard.tether()).await?;
-            let items = T::local_ids_counterpart(items, guard.tether()).await?;
+            let label_id = Label::resolve_remote_label_id(label, tether).await?;
+            let items = T::local_ids_counterpart(items, tether).await?;
 
             if label_id == almost_all_mail_id {
                 // This does not need to be communicated to the server, but this action is used
@@ -1474,8 +1457,8 @@ where
 
             let failed_ids = T::api_remove_label(api, items, label_id).await?;
             if !failed_ids.is_empty() {
-                guard
-                    .tx::<_, _, anyhow::Error>(async move |tx| {
+                tether
+                    .write_tx::<_, _, anyhow::Error>(async move |tx| {
                         RollbackItem::save_many(tx, failed_ids, T::ROLLBACK_ITEM_TYPE).await?;
                         Ok(())
                     })
@@ -1484,7 +1467,7 @@ where
         }
 
         for (label, items) in add {
-            let label_id = Label::resolve_remote_label_id(label, guard.tether()).await?;
+            let label_id = Label::resolve_remote_label_id(label, tether).await?;
 
             if label_id == almost_all_mail_id {
                 // This does not need to be communicated to the server, but this action is used
@@ -1492,12 +1475,12 @@ where
                 continue;
             }
 
-            let items = T::local_ids_counterpart(items, guard.tether()).await?;
+            let items = T::local_ids_counterpart(items, tether).await?;
 
             let failed_ids = T::api_apply_label(api, items, label_id).await?;
             if !failed_ids.is_empty() {
-                guard
-                    .tx::<_, _, anyhow::Error>(async move |tx| {
+                tether
+                    .write_tx::<_, _, anyhow::Error>(async move |tx| {
                         RollbackItem::save_many(tx, failed_ids, T::ROLLBACK_ITEM_TYPE).await?;
                         Ok(())
                     })

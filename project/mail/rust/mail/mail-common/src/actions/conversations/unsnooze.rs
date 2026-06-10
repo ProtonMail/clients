@@ -1,13 +1,13 @@
+use crate::MailUserContext;
 use crate::actions::{GenericLabelRelatedActionData, MailActionError, filter_responses};
 use crate::datatypes::{LocalConversationId, RollbackItemType};
 use crate::models::{Conversation, ConversationLabel, RollbackItem};
 use itertools::Itertools;
 use mail_action_queue::action::{
-    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
+    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type,
 };
 use mail_action_queue::rebase::{RebaseChangeSet, RebaseKey};
 use mail_api::services::proton::ProtonMail;
-use mail_core_api::session::Session;
 use mail_core_common::datatypes::{LocalLabelId, SystemLabel, UnixTimestamp};
 use mail_core_common::models::ModelIdExtension;
 use mail_stash::exports::ToSql;
@@ -16,6 +16,7 @@ use mail_stash::stash::WriteTx;
 use mail_stash::utils::placeholders;
 use mail_stash::{UserDb, params};
 use serde::{self, Deserialize, Serialize};
+use std::sync::Weak;
 use tracing::error;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -51,7 +52,7 @@ impl Action<UserDb> for Unsnooze {
 }
 
 pub struct UnsnoozeHandler {
-    pub api: Session,
+    pub ctx: Weak<MailUserContext>,
 }
 
 impl Handler<UserDb> for UnsnoozeHandler {
@@ -136,15 +137,14 @@ impl Handler<UserDb> for UnsnoozeHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        mut guard: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,
     > {
-        let (_, remote_target_ids) = action
-            .action_data
-            .resolve_ids_legacy(guard.tether())
-            .await?;
+        let ctx = self.ctx.upgrade().ok_or(MailActionError::LostContext)?;
+        let mut tether = ctx.user_stash().connection();
+
+        let (_, remote_target_ids) = action.action_data.resolve_ids_legacy(&tether).await?;
 
         if remote_target_ids.is_empty() {
             tracing::warn!(
@@ -154,16 +154,16 @@ impl Handler<UserDb> for UnsnoozeHandler {
             return Ok(());
         }
 
-        let response = self
-            .api
+        let response = ctx
+            .session()
             .put_conversations_unsnooze(remote_target_ids)
             .await?;
 
         let responses = filter_responses(response.responses);
 
         if !responses.is_empty() {
-            guard
-                .tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx| {
+            tether
+                .write_tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx| {
                     error!("Unsnooze operation failed for: {:?}", responses);
 
                     for remote_id in responses {

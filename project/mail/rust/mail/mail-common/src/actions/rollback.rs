@@ -3,7 +3,7 @@ use crate::models::RollbackItem;
 use crate::{MailContextError, MailUserContext};
 use mail_action_queue::action::{
     Action, ActionDependencyKeys, ActionGroup, ActionId, DefaultVersionConverter, Handler,
-    Priority, Type, WriterGuard,
+    Priority, Type,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;
@@ -71,7 +71,6 @@ impl Handler<UserDb> for RollbackActionHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        mut writer_guard: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,
@@ -80,9 +79,10 @@ impl Handler<UserDb> for RollbackActionHandler {
             .ctx
             .upgrade()
             .ok_or_else(|| MailContextError::LostContext)?;
+        let mut tether = ctx.user_stash().connection();
         RollbackItem::sync_all(
             ctx.session(),
-            &mut writer_guard,
+            &mut tether,
             Some(ROLLBACK_BATCH_SIZE),
             ctx.action_queue(),
         )

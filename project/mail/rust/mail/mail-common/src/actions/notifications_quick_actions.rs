@@ -3,8 +3,7 @@ use crate::datatypes::mail_notifications::PushNotificationQuickAction;
 use crate::models::Message;
 use crate::{MailContext, MailContextResult, MailUserContext};
 use mail_action_queue::action::{
-    Action, ActionId, Handler, Priority, Type, VersionConverter, VersionConverterError,
-    WriterGuard, deserialize,
+    Action, ActionId, Handler, Priority, Type, VersionConverter, VersionConverterError, deserialize,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_core_api::exports::RetryPolicy;
@@ -12,6 +11,7 @@ use mail_core_api::session::Session;
 use mail_core_common::datatypes::SystemLabel;
 use mail_core_common::db::account::CoreSession;
 use mail_core_common::models::{LabelError, ModelIdExtension};
+use std::sync::Weak;
 
 use mail_api::services::proton::ProtonMail;
 use mail_api::services::proton::common::MessageId;
@@ -232,20 +232,25 @@ impl Action<UserDb> for PushNotificationAction {
 }
 
 pub struct PushNotificationActionHandler {
-    pub api: Session,
+    pub ctx: Weak<MailUserContext>,
 }
 
 impl PushNotificationActionHandler {
     fn read_handler(&self) -> ReadHandler {
         ReadHandler {
-            api: self.api.clone(),
+            ctx: self.ctx.clone(),
         }
     }
 
     fn move_handler(&self) -> MoveHandler {
         MoveHandler {
-            api: self.api.clone(),
+            ctx: self.ctx.clone(),
         }
+    }
+
+    fn session(&self) -> Result<Session, MailActionError> {
+        let ctx = self.ctx.upgrade().ok_or(MailActionError::LostContext)?;
+        Ok(ctx.session().clone())
     }
 }
 
@@ -325,10 +330,10 @@ impl Handler<UserDb> for PushNotificationActionHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        _: WriterGuard<'_, UserDb>,
     ) -> Result<(), MailActionError> {
         if action.apply_remotely {
-            exec_remote(&action.state, &self.api, None, None).await?;
+            let session = self.session()?;
+            exec_remote(&action.state, &session, None, None).await?;
         }
         Ok(())
     }

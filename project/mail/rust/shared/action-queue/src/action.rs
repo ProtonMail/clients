@@ -1,17 +1,15 @@
-use crate::db::{ActionDependency, ExecutionGuard, StoredAction};
+use crate::db::{ActionDependency, StoredAction};
 use crate::queue::{
     ActionError, ActionRequeueReason, ErasedQueuedAction, QueuedAction, QueuedActionOutput,
     QueuedMetadata,
 };
 use crate::rebase::RebaseChangeSet;
-use anyhow::Context;
 use derive_more::derive::TryFrom;
 use mail_stash::exports::{
-    FromSql, FromSqlError, FromSqlResult, SqliteError, ToSql, ToSqlOutput, Transaction, Value,
-    ValueRef,
+    FromSql, FromSqlError, FromSqlResult, SqliteError, ToSql, ToSqlOutput, Value, ValueRef,
 };
 use mail_stash::sql_using_serde;
-use mail_stash::stash::{RunTransaction, StashError, Tether, WriteTx};
+use mail_stash::stash::{StashError, WriteTx};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::any::Any;
@@ -286,7 +284,7 @@ pub trait Action<Db: mail_stash::marker::DatabaseMarker>:
     ///
     /// To ensure we can correctly implement network error detection errors need
     /// to implement the [`Error`] trait.
-    type Error: Error + Send + From<WriterGuardError>;
+    type Error: Error + Send;
 
     fn version(&self) -> u32 {
         Self::VERSION
@@ -308,74 +306,8 @@ pub trait Action<Db: mail_stash::marker::DatabaseMarker>:
 #[allow(type_alias_bounds, reason = "This is only used for convenience")]
 pub type LocalOutput<Db, T: Action<Db>> = Result<QueuedActionOutput<T, Db>, ActionError<T, Db>>;
 
-/// This type exists to make sure that when we attempt to modify local state in the queue executor
-/// we only do so if we have the permission to do so.
-///
-/// Permission is granted if the [`ExecutorGuard`] is still valid. This implementation
-/// detail is abstracted away with this type to make future changes easier.
-///
-/// Database read queries can be made over this type as it implements `Deref<Target=Tether>`.
-/// For writes use the [`transaction()`] method.
-pub struct WriterGuard<'t, Db: mail_stash::marker::DatabaseMarker> {
-    tether: &'t mut Tether<Db>,
-    execution_guard: &'t ExecutionGuard,
-}
-
-impl<'t, Db: mail_stash::marker::DatabaseMarker> WriterGuard<'t, Db> {
-    pub(crate) fn new(tether: &'t mut Tether<Db>, execution_guard: &'t ExecutionGuard) -> Self {
-        Self {
-            tether,
-            execution_guard,
-        }
-    }
-
-    pub async fn tx<F, T, E>(&mut self, closure: F) -> Result<T, E>
-    where
-        F: AsyncFnOnce(&WriteTx<'_, Db>) -> Result<T, E>,
-        E: From<WriterGuardError> + From<StashError>,
-    {
-        self.execution_guard.tx(self.tether, closure).await
-    }
-
-    /// Access the tether for read only db queries.
-    #[must_use]
-    pub fn tether(&self) -> &Tether<Db> {
-        self.tether
-    }
-}
-
-impl<Db: mail_stash::marker::DatabaseMarker> RunTransaction<Db> for WriterGuard<'_, Db> {
-    fn tether(&self) -> &Tether<Db> {
-        self.tether
-    }
-
-    #[allow(clippy::manual_async_fn)]
-    fn run_write_tx<T, F>(&mut self, closure: F) -> impl Future<Output = anyhow::Result<T>>
-    where
-        F: AsyncFnOnce(&WriteTx<'_, Db>) -> Result<T, anyhow::Error>,
-    {
-        async {
-            self.tether
-                .write_tx(closure)
-                .await
-                .context("Could not create transaction for writerguard")
-        }
-    }
-
-    async fn run_write_tx_sync<T, F>(&mut self, closure: F) -> anyhow::Result<T>
-    where
-        F: FnOnce(&Transaction<'_>) -> mail_stash::stash::StashResult<T> + Send + 'static,
-        T: Send + 'static,
-    {
-        self.tether
-            .sync_write_tx_returning(closure)
-            .await
-            .context("Could not create transaction for writerguard")
-    }
-}
-
 #[derive(Debug, thiserror::Error)]
-pub enum WriterGuardError {
+pub(crate) enum WriterGuardError {
     #[error("This executor lock has expired")]
     Expired,
     #[error("{0}")]
@@ -432,7 +364,6 @@ pub trait Handler<Db: mail_stash::marker::DatabaseMarker>: Send + Sync {
         &self,
         this_id: ActionId,
         action: &mut Self::Action,
-        writer_guard: WriterGuard<'_, Db>,
     ) -> impl Future<
         Output = Result<
             <Self::Action as Action<Db>>::RemoteOutput,

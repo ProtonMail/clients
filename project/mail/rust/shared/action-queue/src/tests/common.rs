@@ -1,4 +1,4 @@
-use crate::action::{Action, ActionId, Error, Handler, WriterGuard, WriterGuardError};
+use crate::action::{Action, ActionId, Error, Handler, WriterGuardError};
 use crate::queue::ActionRequeueReason;
 use crate::rebase::RebaseChangeSet;
 use mail_stash::marker::DatabaseMarker;
@@ -45,7 +45,6 @@ where
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: WriterGuard<'_, TestDb>,
     ) -> Result<<T as Action<TestDb>>::RemoteOutput, T::Error> {
         Ok(T::RemoteOutput::default())
     }

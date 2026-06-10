@@ -35,7 +35,7 @@ use async_trait::async_trait;
 use core_event_loop::EventLoopError;
 use futures::{TryFutureExt, try_join};
 use itertools::Itertools;
-use mail_action_queue::action::{self, Action, WriterGuardError};
+use mail_action_queue::action::{self, Action};
 use mail_action_queue::queue::{ActionError as QueueActionError, ActionRequeueReason, QueuedError};
 use mail_api_session::proton_layers::{LocaleHeaders, LocaleProvider};
 use mail_core_api::auth::{Auth, Tokens};
@@ -106,8 +106,8 @@ pub enum CoreContextError {
     ContactError(#[from] ContactError),
     #[error("Attempting to create more than one context for the user with id {0}")]
     DuplicateContext(UserId),
-    #[error("Queue Writer Guard Expired")]
-    QueueWriterGuardExpired,
+    #[error("Lost context")]
+    LostContext,
     #[error(transparent)]
     NetworkMonitorService(#[from] NetworkMonitorServiceError),
     #[error("{0}")]
@@ -121,15 +121,6 @@ impl<T: Action<UserDb, Error: Into<CoreContextError>>> From<QueueActionError<T, 
         match value {
             QueueActionError::Action(e) => e.into(),
             QueueActionError::Queue(e) => Self::ActionQueue(e),
-        }
-    }
-}
-
-impl From<WriterGuardError> for CoreContextError {
-    fn from(value: WriterGuardError) -> Self {
-        match value {
-            WriterGuardError::Expired => CoreContextError::QueueWriterGuardExpired,
-            WriterGuardError::Stash(e) => CoreContextError::Stash(e),
         }
     }
 }
@@ -150,7 +141,7 @@ impl action::Error for CoreContextError {
     fn can_requeue(&self) -> Option<ActionRequeueReason> {
         match self {
             Self::Api(e) if e.is_network_failure() => Some(ActionRequeueReason::NetworkFailed),
-            Self::QueueWriterGuardExpired => Some(ActionRequeueReason::GuardExpired),
+            Self::LostContext => Some(ActionRequeueReason::LostContext),
             _ => None,
         }
     }

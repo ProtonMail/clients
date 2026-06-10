@@ -4,14 +4,14 @@ use crate::models::{Conversation, ConversationScrollData, Message};
 use crate::{AppError, MailUserContext};
 use anyhow::anyhow;
 use mail_action_queue::action::{
-    Action, ActionGroup, ActionId, DefaultVersionConverter, Handler, Priority, Type, WriterGuard,
+    Action, ActionGroup, ActionId, DefaultVersionConverter, Handler, Priority, Type,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::prelude::GetMessagesOptions;
 use mail_core_common::models::{ModelExtension, ModelIdExtension};
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
-use mail_stash::stash::WriteTx;
+use mail_stash::stash::{Tether, WriteTx};
 use serde::{self, Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::Weak;
@@ -79,12 +79,12 @@ impl Handler<UserDb> for RefreshMetadataHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        mut guard: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,
     > {
         let ctx = self.ctx.upgrade().ok_or(MailActionError::LostContext)?;
+        let mut tether = ctx.user_stash().connection();
 
         if action.local_ids.is_empty() {
             tracing::debug!("Refresh metadata for conversations called with empty id list");
@@ -92,7 +92,7 @@ impl Handler<UserDb> for RefreshMetadataHandler {
         }
 
         let remote_ids =
-            Conversation::local_ids_counterpart(action.local_ids.clone(), guard.tether()).await?;
+            Conversation::local_ids_counterpart(action.local_ids.clone(), &tether).await?;
 
         if remote_ids.is_empty() {
             tracing::debug!(
@@ -103,7 +103,7 @@ impl Handler<UserDb> for RefreshMetadataHandler {
         }
 
         let items_sync_result =
-            Conversation::sync_metadata(remote_ids.clone(), ctx.session(), &mut guard).await;
+            Conversation::sync_metadata(remote_ids.clone(), ctx.session(), &mut tether).await;
 
         let refreshed_items = match items_sync_result {
             Ok(items) => items,
@@ -113,11 +113,11 @@ impl Handler<UserDb> for RefreshMetadataHandler {
             Err(e) => {
                 tracing::error!("Unexpected error while refreshing conversations metadata: `{e}`");
                 tracing::info!("Deleting local conversations: `{:?}`", action.local_ids);
-                guard
-                    .tx(async |tx| {
+                tether
+                    .write_tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx| {
                         Conversation::delete_by_ids(action.local_ids.clone(), tx).await?;
                         ConversationScrollData::delete_all(tx).await?;
-                        Result::<(), <Self::Action as Action<UserDb>>::Error>::Ok(())
+                        Ok(())
                     })
                     .await?;
 
@@ -138,7 +138,7 @@ impl Handler<UserDb> for RefreshMetadataHandler {
             .filter(|x| !refreshed_ids.contains(x))
             .copied()
         {
-            if Conversation::local_id_counterpart(not_fresh, guard.tether())
+            if Conversation::local_id_counterpart(not_fresh, &tether)
                 .await?
                 .is_some()
             {
@@ -151,17 +151,17 @@ impl Handler<UserDb> for RefreshMetadataHandler {
             tracing::warn!("Local conversation without remote counterpart found while refreshing.");
             tracing::info!("Deleting local conversations: `{:?}`", not_refreshed);
 
-            guard
-                .tx(async |tx| {
+            tether
+                .write_tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx| {
                     Conversation::delete_by_ids(not_refreshed, tx).await?;
                     ConversationScrollData::delete_all(tx).await?;
-                    Result::<(), <Self::Action as Action<UserDb>>::Error>::Ok(())
+                    Ok(())
                 })
                 .await?;
         }
 
         for conv in refreshed_items {
-            refresh_conversation_messages(conv, &ctx, &mut guard).await?;
+            refresh_conversation_messages(conv, &ctx, &mut tether).await?;
         }
 
         Ok(())
@@ -180,10 +180,10 @@ impl Handler<UserDb> for RefreshMetadataHandler {
 async fn refresh_conversation_messages(
     conversation: Conversation,
     ctx: &MailUserContext,
-    guard: &mut WriterGuard<'_, UserDb>,
+    tether: &mut Tether<UserDb>,
 ) -> Result<(), MailActionError> {
     let local_id = conversation.id();
-    let conv_count = Conversation::message_count(local_id, guard.tether()).await?;
+    let conv_count = Conversation::message_count(local_id, tether).await?;
     if conv_count > 0 {
         let api = ctx.session().clone();
         let remote_msgs = ctx.spawn(async move {
@@ -197,7 +197,7 @@ async fn refresh_conversation_messages(
             .await
         });
         let mut local_msgs: HashMap<_, _> =
-            Message::in_conversation(local_id, ConversationViewOptions::All, guard.tether())
+            Message::in_conversation(local_id, ConversationViewOptions::All, tether)
                 .await?
                 .into_iter()
                 .filter(|msg| msg.remote_id.is_some())
@@ -213,8 +213,8 @@ async fn refresh_conversation_messages(
             }
         };
 
-        guard
-            .tx(async |tx| {
+        tether
+            .write_tx::<_, _, MailActionError>(async |tx| {
                 for remote_msg in remote_msgs.messages {
                     let mut remote_msg = Message::from_api_metadata(remote_msg, tx).await?;
                     let local_msg = local_msgs.remove(&remote_msg.remote_id.clone());
@@ -237,7 +237,7 @@ async fn refresh_conversation_messages(
                     }
                 }
 
-                Result::<(), MailActionError>::Ok(())
+                Ok(())
             })
             .await?;
     }

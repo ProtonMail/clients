@@ -11,7 +11,7 @@ use crate::models::{
 use crate::{MailContextError, MailUserContext};
 use mail_action_queue::action::{
     Action, ActionDependencyKeys, ActionGroup, ActionId, FactoryResult, Handler, Priority, Type,
-    VersionConverter, VersionConverterError, WriterGuard, WriterGuardError, deserialize,
+    VersionConverter, VersionConverterError, deserialize,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::ProtonMail;
@@ -26,8 +26,6 @@ use mail_stash::stash::{Tether, WriteTx};
 use mail_stash::{UserDb, params};
 use serde::{Deserialize, Serialize};
 use std::sync::Weak;
-use std::time::Duration;
-use tokio::time;
 use tracing::{debug, error, info, warn};
 
 /// Action to upload attachments for a given draft.
@@ -282,14 +280,14 @@ impl Handler<UserDb> for AttachmentUploadHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        mut writer_guard: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,
     > {
         let ctx = self.ctx.upgrade().ok_or(MailContextError::LostContext)?;
+        let mut tether = ctx.user_stash().connection();
 
-        let r = action.apply_remote_impl(&ctx, &mut writer_guard).await;
+        let r = action.apply_remote_impl(&ctx, &mut tether).await;
 
         if let Err(error) = &r {
             // Replace error only for internal reporting, the action queue needs the original error
@@ -307,7 +305,7 @@ impl Handler<UserDb> for AttachmentUploadHandler {
                 action.local_message_id.expect("Should be set"),
                 action.attachment_id,
                 DraftSendResultOrigin::AttachmentUpload,
-                &mut writer_guard,
+                &mut tether,
                 error,
             )
             .await
@@ -334,21 +332,19 @@ impl AttachmentUpload {
     async fn apply_remote_impl(
         &self,
         ctx: &MailUserContext,
-        writer_guard: &mut WriterGuard<'_, UserDb>,
+        tether: &mut Tether<UserDb>,
     ) -> Result<<Self as Action<UserDb>>::RemoteOutput, <Self as Action<UserDb>>::Error> {
-        let local_message_id = self.local_message_id(writer_guard.tether()).await?;
+        let local_message_id = self.local_message_id(tether).await?;
 
         let Some(remote_message_id) =
-            Message::local_id_counterpart(local_message_id, writer_guard.tether()).await?
+            Message::local_id_counterpart(local_message_id, tether).await?
         else {
             return Err(
                 AttachmentUploadError::MessageDoesNotExistOnServer(local_message_id).into(),
             );
         };
 
-        let Some(mut attachment) =
-            Attachment::find_by_id(self.attachment_id, writer_guard.tether()).await?
-        else {
+        let Some(mut attachment) = Attachment::find_by_id(self.attachment_id, tether).await? else {
             return Err(AttachmentUploadError::AttachmentDataMissing(self.attachment_id).into());
         };
 
@@ -364,7 +360,7 @@ impl AttachmentUpload {
             local_message_id,
             &remote_message_id,
             &mut attachment,
-            writer_guard,
+            tether,
             self.new_disposition.clone(),
         )
         .await?;
@@ -382,7 +378,7 @@ async fn encrypt_and_upload_attachment(
     local_message_id: LocalMessageId,
     message_id: &MessageId,
     attachment: &mut Attachment,
-    writer_guard: &mut WriterGuard<'_, UserDb>,
+    tether: &mut Tether<UserDb>,
     new_disposition: Option<CombinedAttachmentDisposition>,
 ) -> Result<(), MailContextError> {
     let new_attachment_disposition = if let Some(new_disposition) = new_disposition {
@@ -400,7 +396,7 @@ async fn encrypt_and_upload_attachment(
     };
 
     debug!("Retrieving from cache");
-    let data = match attachment.content_data(ctx, writer_guard).await {
+    let data = match attachment.content_data(ctx, tether).await {
         Ok(data) => data,
         Err(err) => {
             error!("{err}");
@@ -425,27 +421,7 @@ async fn encrypt_and_upload_attachment(
         data_packet: encrypted_attachment.data,
     };
 
-    let mut upload_task =
-        ctx.spawn_ex(async move |ctx| ctx.session().post_attachment(new_attachment_params).await);
-
-    let response = loop {
-        tokio::select! {
-            _ = time::sleep(Duration::from_secs(10)) => {
-                debug!(
-                    "Upload takes a moment - running a no-op transaction to keep \
-                    the action alive",
-                );
-
-                writer_guard
-                    .tx::<_, _, WriterGuardError>(async |_| Ok(()))
-                    .await
-                    .map_err(MailContextError::from)?;
-            }
-            r = &mut upload_task => {
-                break r?
-            }
-        }
-    };
+    let response = ctx.session().post_attachment(new_attachment_params).await;
 
     let response = match response {
         Ok(response) => response,
@@ -472,7 +448,7 @@ async fn encrypt_and_upload_attachment(
                     } else if let Ok(counts) =
                         DraftAttachmentMetadata::total_attachments_size_and_count(
                             metadata_id,
-                            writer_guard.tether(),
+                            tether,
                         )
                         .await
                         .inspect_err(|e| warn!("Failed to load message attachment stats: {e}"))
@@ -513,8 +489,8 @@ async fn encrypt_and_upload_attachment(
     attachment.remote_message_id = Some(message_id.clone());
 
     debug!("Updating database state");
-    writer_guard
-        .tx::<_, _, MailContextError>(async |tx: &WriteTx<'_>| {
+    tether
+        .write_tx::<_, _, MailContextError>(async |tx: &WriteTx<'_>| {
             let Some(mut draft_attachment_metadata) =
                 DraftAttachmentMetadata::find_by_id(attachment.id(), tx).await?
             else {

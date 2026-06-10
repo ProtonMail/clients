@@ -1,6 +1,6 @@
 use super::common::{DefaultError, TestReadExtension, TestWriteExtension, new_queue_typed};
 use mail_action_queue::action::{
-    Action, ActionId, DefaultVersionConverter, Handler, MetadataBuilder, Type, WriterGuard,
+    Action, ActionId, DefaultVersionConverter, Handler, MetadataBuilder, Type,
 };
 use mail_action_queue::queue::{ActionError, AsActionError, BroadcastMessage, QueuedError};
 use mail_action_queue::rebase::RebaseChangeSet;
@@ -234,7 +234,6 @@ impl Handler<TestDb> for RevertActionHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: WriterGuard<'_, TestDb>,
     ) -> Result<
         <Self::Action as Action<TestDb>>::RemoteOutput,
         <Self::Action as Action<TestDb>>::Error,
@@ -303,7 +302,6 @@ impl Handler<TestDb> for ChainCancelActionHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: WriterGuard<'_, TestDb>,
     ) -> Result<
         <Self::Action as Action<TestDb>>::RemoteOutput,
         <Self::Action as Action<TestDb>>::Error,

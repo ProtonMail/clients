@@ -1,4 +1,3 @@
-use crate::MailContextError;
 use crate::actions::draft::{
     DraftAttachmentActionDependencyKeyBuilderExt, SEND_ACTION_GROUP, save_attachment_error,
 };
@@ -9,22 +8,23 @@ use crate::models::{
     Attachment, DraftAttachmentMetadata, DraftAttachmentUploadState, DraftMetadata,
     DraftSendResultOrigin, MetadataId,
 };
+use crate::{MailContextError, MailUserContext};
 use mail_action_queue::action::{
     Action, ActionDependencyKeys, ActionGroup, ActionId, DefaultVersionConverter, Handler,
-    Priority, Type, WriterGuard,
+    Priority, Type,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::ProtonMail;
 use mail_api::services::proton::request_data::NewAttachmentDisposition;
 use mail_core_api::consts::{General, Mail};
 use mail_core_api::service::ApiServiceError;
-use mail_core_api::session::Session;
 use mail_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;
 use mail_core_common::models::ModelExtension;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
 use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
+use std::sync::Weak;
 
 #[derive(Serialize, Deserialize)]
 pub struct AttachmentDispositionUpdate {
@@ -79,7 +79,7 @@ impl Action<UserDb> for AttachmentDispositionUpdate {
 }
 
 pub struct AttachmentDispositionUpdateHandler {
-    pub api: Session,
+    pub ctx: Weak<MailUserContext>,
 }
 
 impl Handler<UserDb> for AttachmentDispositionUpdateHandler {
@@ -175,12 +175,14 @@ impl Handler<UserDb> for AttachmentDispositionUpdateHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        mut writer_guard: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,
     > {
-        let message_id = DraftMetadata::find_by_id(action.metadata_id, writer_guard.tether())
+        let ctx = self.ctx.upgrade().ok_or(MailContextError::LostContext)?;
+        let mut tether = ctx.user_stash().connection();
+
+        let message_id = DraftMetadata::find_by_id(action.metadata_id, &tether)
             .await?
             .ok_or(AttachmentDispositionSwapError::MetadataNotFound(
                 action.metadata_id,
@@ -191,19 +193,17 @@ impl Handler<UserDb> for AttachmentDispositionUpdateHandler {
             ))?;
 
         let r = async {
-            let mut metadata =
-                DraftAttachmentMetadata::find_by_id(action.attachment_id, writer_guard.tether())
-                    .await?
-                    .ok_or(AttachmentDispositionSwapError::AttachmentMetadataNotFound(
-                        action.attachment_id,
-                    ))?;
+            let mut metadata = DraftAttachmentMetadata::find_by_id(action.attachment_id, &tether)
+                .await?
+                .ok_or(AttachmentDispositionSwapError::AttachmentMetadataNotFound(
+                    action.attachment_id,
+                ))?;
 
-            let mut attachment =
-                Attachment::find_by_id(action.attachment_id, writer_guard.tether())
-                    .await?
-                    .ok_or(AttachmentDispositionSwapError::AttachmentNotFound(
-                        action.attachment_id,
-                    ))?;
+            let mut attachment = Attachment::find_by_id(action.attachment_id, &tether)
+                .await?
+                .ok_or(AttachmentDispositionSwapError::AttachmentNotFound(
+                    action.attachment_id,
+                ))?;
             let Some(remote_id) = attachment.remote_id() else {
                 return Err(AttachmentDispositionSwapError::AttachmentHasNoRemoteId(
                     action.attachment_id,
@@ -215,8 +215,8 @@ impl Handler<UserDb> for AttachmentDispositionUpdateHandler {
             // the disposition in quick succession, the state after upload will be Uploaded and
             // some events will not fire.
             metadata.set_disposition_swap_state();
-            writer_guard
-                .tx(async |tx| {
+            tether
+                .write_tx::<_, _, MailContextError>(async |tx| {
                     // we need to reset the attachment state here since it's possible that after attachment upload
                     // the state will be rest after the attachment is uploaded to the server. If we don't
                     // the client UI will not update correctly.
@@ -241,12 +241,11 @@ impl Handler<UserDb> for AttachmentDispositionUpdateHandler {
 
             let new_disposition = match action.mode.clone() {
                 DraftAttachmentDispositionUpdateMode::Retry => {
-                    let attachment =
-                        Attachment::find_by_id(action.attachment_id, writer_guard.tether())
-                            .await?
-                            .ok_or(AttachmentDispositionSwapError::AttachmentNotFound(
-                                action.attachment_id,
-                            ))?;
+                    let attachment = Attachment::find_by_id(action.attachment_id, &tether)
+                        .await?
+                        .ok_or(AttachmentDispositionSwapError::AttachmentNotFound(
+                            action.attachment_id,
+                        ))?;
                     match attachment.disposition {
                         Disposition::Attachment => NewAttachmentDisposition::Attachment,
                         Disposition::Inline => {
@@ -268,8 +267,8 @@ impl Handler<UserDb> for AttachmentDispositionUpdateHandler {
                 new_disposition
             );
 
-            if let Err(e) = self
-                .api
+            if let Err(e) = ctx
+                .session()
                 .put_attachment_disposition(remote_id.clone(), new_disposition)
                 .await
             {
@@ -292,8 +291,8 @@ impl Handler<UserDb> for AttachmentDispositionUpdateHandler {
                 })
             } else {
                 metadata.set_uploaded_state();
-                writer_guard
-                    .tx(async |tx| Ok(metadata.save(tx).await?))
+                tether
+                    .write_tx::<_, _, MailContextError>(async |tx| Ok(metadata.save(tx).await?))
                     .await
                     .inspect_err(|e: &MailContextError| {
                         tracing::error!("Failed to update attachment metadata: {e}")
@@ -308,7 +307,7 @@ impl Handler<UserDb> for AttachmentDispositionUpdateHandler {
                 message_id,
                 action.attachment_id,
                 DraftSendResultOrigin::AttachmentDispositionSwap,
-                &mut writer_guard,
+                &mut tether,
                 err,
             )
             .await

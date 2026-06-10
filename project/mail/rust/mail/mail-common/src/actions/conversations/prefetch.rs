@@ -4,7 +4,7 @@ use crate::models::{Conversation, DeletedItem, Message};
 use crate::{MailContextError, MailUserContext};
 use mail_action_queue::action::{
     Action, ActionDependencyKeys, ActionGroup, ActionId, DefaultVersionConverter, Handler,
-    Priority, Type, WriterGuard,
+    Priority, Type,
 };
 
 use mail_action_queue::rebase::RebaseChangeSet;
@@ -82,7 +82,6 @@ impl Handler<UserDb> for PrefetchHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        mut guard: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,
@@ -90,7 +89,8 @@ impl Handler<UserDb> for PrefetchHandler {
         tracing::trace!("Prefetching {:?}", action.local_id);
 
         let ctx = self.ctx.upgrade().ok_or(MailActionError::LostContext)?;
-        let deleted = Conversation::is_deleted(action.local_id, guard.tether()).await?;
+        let mut tether = ctx.user_stash().connection();
+        let deleted = Conversation::is_deleted(action.local_id, &tether).await?;
 
         if deleted {
             tracing::debug!(
@@ -102,12 +102,12 @@ impl Handler<UserDb> for PrefetchHandler {
 
         // Check if conversation is in deleted_items tombstone table
         if let Some(remote_id) =
-            Conversation::local_id_counterpart(action.local_id, guard.tether()).await?
+            Conversation::local_id_counterpart(action.local_id, &tether).await?
         {
             let deleted_tombstones = DeletedItem::find_deleted_by_remote_ids(
                 std::iter::once(remote_id.as_str()),
                 DeletedItemType::Conversation,
-                guard.tether(),
+                &tether,
             )
             .await?;
 
@@ -123,21 +123,18 @@ impl Handler<UserDb> for PrefetchHandler {
         let _ = Conversation::sync_conversation_messages(
             ctx.network_monitor_service(),
             action.local_id,
-            &mut guard,
+            &mut tether,
             ctx.session(),
             false,
             ctx.action_queue(),
         )
         .await;
 
-        let messages = Message::in_conversation(
-            action.local_id,
-            ConversationViewOptions::All,
-            guard.tether(),
-        )
-        .await?;
+        let messages =
+            Message::in_conversation(action.local_id, ConversationViewOptions::All, &tether)
+                .await?;
 
-        let Some(label) = Label::load(action.local_label_id, guard.tether()).await? else {
+        let Some(label) = Label::load(action.local_label_id, &tether).await? else {
             error!(
                 "Label not found for prefetch action, label_id: `{}`",
                 action.local_label_id
@@ -158,7 +155,7 @@ impl Handler<UserDb> for PrefetchHandler {
             local_id = action.local_id
         );
 
-        let Some(local_message) = Message::load(message_id, guard.tether()).await? else {
+        let Some(local_message) = Message::load(message_id, &tether).await? else {
             error!(
                 "Message not found for prefetch action, conversation_id: `{}`",
                 action.local_id
@@ -166,7 +163,7 @@ impl Handler<UserDb> for PrefetchHandler {
             return Ok(());
         };
 
-        if let Err(e) = local_message.fetch_message_body(&ctx, &mut guard).await {
+        if let Err(e) = local_message.fetch_message_body(&ctx, &mut tether).await {
             match e {
                 MailContextError::Api(network_error) => {
                     return Err(MailActionError::Http(network_error));

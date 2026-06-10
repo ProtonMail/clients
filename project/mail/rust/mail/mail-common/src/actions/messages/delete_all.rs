@@ -4,11 +4,10 @@ use crate::datatypes::LocalMessageId;
 use crate::models::{ConversationCounter, LabelExt, Message, MessageCounter};
 use anyhow::anyhow;
 use mail_action_queue::action::{
-    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
+    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::ProtonMail as _;
-use mail_core_api::session::Session;
 use mail_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;
 use mail_core_common::datatypes::LocalLabelId;
 use mail_core_common::models::{Label, LabelError, ModelExtension};
@@ -95,7 +94,6 @@ impl Action<UserDb> for DeleteAllMessagesInLabel {
 }
 
 pub struct DeleteAllMessagesInLabelHandler {
-    pub api: Session,
     pub ctx: Weak<MailUserContext>,
 }
 
@@ -220,9 +218,10 @@ impl Handler<UserDb> for DeleteAllMessagesInLabelHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        guard: WriterGuard<'_, UserDb>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
-        let label = self.label(action, guard.tether()).await?;
+        let ctx = self.ctx.upgrade().ok_or(MailActionError::LostContext)?;
+        let tether = ctx.user_stash().connection();
+        let label = self.label(action, &tether).await?;
 
         info!(
             local_id = ?label.local_id,
@@ -231,7 +230,7 @@ impl Handler<UserDb> for DeleteAllMessagesInLabelHandler {
         );
 
         if let Some(remote_id) = &label.remote_id {
-            self.api
+            ctx.session()
                 .delete_all_messages_in_label(remote_id.clone())
                 .await?;
 

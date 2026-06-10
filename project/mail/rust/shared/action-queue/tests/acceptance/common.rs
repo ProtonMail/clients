@@ -1,5 +1,5 @@
 use mail_action_queue::action::{Action, Factory};
-use mail_action_queue::queue::Queue;
+use mail_action_queue::queue::{Queue, TokioTaskSpawner};
 pub use mail_action_queue::tests::common::DefaultError;
 use mail_action_queue::tests::common::TestDb;
 use mail_stash::exports::SqliteError;
@@ -7,7 +7,7 @@ use mail_stash::params;
 use mail_stash::stash::{Stash, StashConfiguration, StashError, Tether, WriteTx};
 
 pub async fn new_queue(factory: Factory<TestDb>) -> Queue<TestDb> {
-    Queue::with_factory(new_stash().await, factory)
+    Queue::with_factory(new_stash().await, factory, TokioTaskSpawner)
         .await
         .unwrap()
 }
@@ -16,7 +16,9 @@ pub async fn new_queue_with_stash(
     mail_stash: Stash<TestDb>,
     factory: Factory<TestDb>,
 ) -> Queue<TestDb> {
-    Queue::with_factory(mail_stash, factory).await.unwrap()
+    Queue::with_factory(mail_stash, factory, TokioTaskSpawner)
+        .await
+        .unwrap()
 }
 
 pub async fn new_stash() -> Stash<TestDb> {

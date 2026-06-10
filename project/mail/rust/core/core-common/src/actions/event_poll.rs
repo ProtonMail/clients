@@ -3,7 +3,7 @@ use core_event_loop::EventLoopError;
 use core_event_loop::v6::EventSubscriberError;
 use mail_action_queue::action::{
     self, Action, ActionDependencyKeys, ActionGroup, ActionId, FactoryResult, Handler, Priority,
-    Type, VersionConverter, VersionConverterError, WriterGuard, WriterGuardError, deserialize,
+    Type, VersionConverter, VersionConverterError, deserialize,
 };
 use mail_action_queue::queue::ActionRequeueReason;
 use mail_action_queue::rebase::RebaseChangeSet;
@@ -66,8 +66,6 @@ impl VersionConverter<UserDb> for EventPollVersionConverter {
 pub enum ActionEventLoopError {
     #[error(transparent)]
     EventLoop(#[from] EventLoopError),
-    #[error(transparent)]
-    WriterGuard(#[from] WriterGuardError),
     #[error("Lost context")]
     LostContext,
 }
@@ -90,7 +88,6 @@ impl action::Error for ActionEventLoopError {
                 Some(ActionRequeueReason::NetworkFailed)
             }
 
-            Self::WriterGuard(WriterGuardError::Expired) => Some(ActionRequeueReason::GuardExpired),
             Self::LostContext => Some(ActionRequeueReason::LostContext),
 
             _ => None,
@@ -131,7 +128,6 @@ impl Handler<UserDb> for EventPollHandler {
         &self,
         _: ActionId,
         _: &mut Self::Action,
-        _: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,

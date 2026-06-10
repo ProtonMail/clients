@@ -1,10 +1,10 @@
-use super::common::{DefaultError, TestReadExtension, TestWriteExtension, new_factory, new_queue};
+use super::common::{DefaultError, TestReadExtension, TestWriteExtension, new_queue};
 use mail_action_queue::action::{
-    Action, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
+    Action, ActionId, DefaultVersionConverter, Factory, Handler, Type,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_action_queue::tests::common::TestDb;
-use mail_stash::stash::WriteTx;
+use mail_stash::stash::{Stash, WriteTx};
 use serde::{Deserialize, Serialize};
 
 #[tokio::test]
@@ -12,7 +12,12 @@ async fn state_preserved_after_local_change() {
     // Check if the action state is persisted after local changes and correctly transmitted
     // to subsequent follow ups.
 
-    let queue = new_queue(new_factory::<TestAction>(TestActionHandler)).await;
+    let queue = new_queue(Factory::default()).await;
+    queue
+        .register::<TestAction>(TestActionHandler {
+            stash: queue.mail_stash().clone(),
+        })
+        .unwrap();
     let executor = queue.new_executor();
 
     // Check direct execution.
@@ -49,7 +54,12 @@ async fn rebase_state() {
     // Check if the action state is persisted after local changes and correctly transmitted
     // to subsequent follow ups.
 
-    let queue = new_queue(new_factory::<TestAction>(TestActionHandler)).await;
+    let queue = new_queue(Factory::default()).await;
+    queue
+        .register::<TestAction>(TestActionHandler {
+            stash: queue.mail_stash().clone(),
+        })
+        .unwrap();
 
     // Check direct execution.
     queue
@@ -98,8 +108,9 @@ impl Action<TestDb> for TestAction {
     type Error = DefaultError;
 }
 
-#[derive(Default)]
-struct TestActionHandler;
+struct TestActionHandler {
+    stash: Stash<TestDb>,
+}
 
 const ACTION_VALUE: u32 = 10;
 const ACTION_VALUE_AFTER_LOCAL_APPLY: u32 = 30;
@@ -136,14 +147,14 @@ impl Handler<TestDb> for TestActionHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        mut writer_guard: WriterGuard<'_, TestDb>,
     ) -> Result<
         <Self::Action as Action<TestDb>>::RemoteOutput,
         <Self::Action as Action<TestDb>>::Error,
     > {
         assert_eq!(action.v, ACTION_VALUE_AFTER_LOCAL_APPLY);
-        writer_guard
-            .tx::<_, _, <Self::Action as Action<TestDb>>::Error>(
+        self.stash
+            .connection()
+            .write_tx::<_, _, <Self::Action as Action<TestDb>>::Error>(
                 async |tx: &WriteTx<'_, TestDb>| {
                     Ok(tx.ext_insert_value(ACTION_KEY, ACTION_VALUE_FINAL).await?)
                 },

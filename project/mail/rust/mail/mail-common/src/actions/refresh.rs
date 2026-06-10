@@ -1,7 +1,7 @@
 use crate::MailUserContext;
 use core_event_loop::MAX_ERROR_RETRIES;
 use mail_action_queue::action::{
-    Action, ActionId, DefaultVersionConverter, Handler, Priority, Type, WriterGuard,
+    Action, ActionId, DefaultVersionConverter, Handler, Priority, Type,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_core_common::actions::event_poll::ActionEventLoopError;
@@ -68,7 +68,6 @@ impl Handler<UserDb> for ActionRefreshHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        _: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,

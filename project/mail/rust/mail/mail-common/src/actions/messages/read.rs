@@ -1,17 +1,18 @@
+use crate::MailUserContext;
 use crate::actions::{GenericActionData, MailActionError, filter_responses_by_codes};
 use crate::datatypes::{LocalMessageId, RollbackItemType};
 use crate::models::Message;
 use mail_action_queue::action::{
-    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type, WriterGuard,
+    Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::ProtonMail;
 use mail_core_api::consts::General;
-use mail_core_api::session::Session;
 use mail_core_common::models::ModelIdExtension;
 use mail_stash::UserDb;
 use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
+use std::sync::Weak;
 use tracing::{error, info};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -43,7 +44,7 @@ impl Action<UserDb> for Read {
 }
 
 pub struct ReadHandler {
-    pub api: Session,
+    pub ctx: Weak<MailUserContext>,
 }
 
 impl Handler<UserDb> for ReadHandler {
@@ -76,20 +77,25 @@ impl Handler<UserDb> for ReadHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        mut guard: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,
     > {
+        let ctx = self.ctx.upgrade().ok_or(MailActionError::LostContext)?;
+        let mut tether = ctx.user_stash().connection();
         // API call return an error 2501(Message does not exist) for message already
         // read, so we only pass to apply_remote the things that were unread.
-        let message_ids = action.0.resolve_ids(guard.tether()).await?;
+        let message_ids = action.0.resolve_ids(&tether).await?;
         if message_ids.is_empty() {
             return Ok(());
         }
         info!("Marking {message_ids:?} as read");
 
-        let response = self.api.put_messages_read(message_ids).await?.responses;
+        let response = ctx
+            .session()
+            .put_messages_read(message_ids)
+            .await?
+            .responses;
 
         // In this case General::NotExists is returned also for messages already marked as read
         let failed_ids = filter_responses_by_codes(
@@ -100,8 +106,8 @@ impl Handler<UserDb> for ReadHandler {
         if !failed_ids.is_empty() {
             error!("Read messages operation failed for: {failed_ids:?}");
 
-            guard
-                .tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx| {
+            tether
+                .write_tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx| {
                     GenericActionData::<Message>::mark_rollback(
                         &failed_ids,
                         RollbackItemType::Message,

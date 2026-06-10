@@ -23,7 +23,7 @@
 
 use clap::{Parser, Subcommand};
 use mail_action_queue::action::{
-    Action, ActionGroup, ActionId, DefaultVersionConverter, Handler, NoopError, Type, WriterGuard,
+    Action, ActionGroup, ActionId, DefaultVersionConverter, Handler, NoopError, Type,
 };
 use mail_action_queue::queue::{
     NoopOnlineStatusWaiterBuilder, Queue, QueueAutoExecutorPool, TokioTaskSpawner,
@@ -113,7 +113,6 @@ async fn parent_main(process_count: usize, action_count: usize, consume: bool) {
         while executor.execute_one().await.unwrap().is_none() {}
         drop(executor);
         // we can now auto execute from here on forward.
-        let task_spawner = TokioTaskSpawner;
         let online = NoopOnlineStatusWaiterBuilder;
         let _executors = QueueAutoExecutorPool::new(
             &queue,
@@ -121,7 +120,6 @@ async fn parent_main(process_count: usize, action_count: usize, consume: bool) {
             NonZeroUsize::new(process_count * 2).unwrap(),
             &online,
             false,
-            &task_spawner,
             tracing::Span::current(),
         );
         wait_on_queue_empty(&queue).await;
@@ -167,7 +165,6 @@ async fn child_main(directory: &Path, action_count: Option<usize>) {
             queue.queue_action(TestAction).await.unwrap();
         }
     } else {
-        let task_spawner = TokioTaskSpawner;
         let online = NoopOnlineStatusWaiterBuilder;
         let _executors = QueueAutoExecutorPool::new(
             &queue,
@@ -175,7 +172,6 @@ async fn child_main(directory: &Path, action_count: Option<usize>) {
             NonZeroUsize::new(2).unwrap(),
             &online,
             false,
-            &task_spawner,
             tracing::Span::current(),
         );
         notifier.notified().await;
@@ -217,7 +213,7 @@ async fn new_queue(directory: &Path) -> Queue<TestDb> {
     ))
     .unwrap();
 
-    let queue = Queue::new(mail_stash).await.unwrap();
+    let queue = Queue::new(mail_stash, TokioTaskSpawner).await.unwrap();
 
     queue.register::<TestAction>(TestHandler).unwrap();
     queue
@@ -272,7 +268,6 @@ impl Handler<TestDb> for TestHandler {
         &self,
         id: ActionId,
         _: &mut Self::Action,
-        _: WriterGuard<'_, TestDb>,
     ) -> Result<
         <Self::Action as Action<TestDb>>::RemoteOutput,
         <Self::Action as Action<TestDb>>::Error,

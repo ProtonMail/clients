@@ -1,18 +1,25 @@
-use super::common::{DefaultError, TestWriteExtension, new_factory, new_queue};
+use super::common::{
+    DefaultError, TestWriteExtension, new_factory, new_queue_with_stash, new_stash,
+};
 use mail_action_queue::action::{
-    Action, ActionId, DefaultVersionConverter, Handler, MetadataBuilder, Type, WriterGuard,
+    Action, ActionId, DefaultVersionConverter, Handler, MetadataBuilder, Type,
 };
 use mail_action_queue::db::{DependencyType, ExecutionGuard, StoredAction};
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_action_queue::tests::common::TestDb;
-use mail_stash::stash::WriteTx;
+use mail_stash::stash::{Stash, WriteTx};
 use serde::{Deserialize, Serialize};
 
 #[tokio::test]
 async fn replace_updates_local_state() {
     // When replacing, check that local state is updated when the action is stored.
 
-    let queue = new_queue(new_factory::<TestAction>(TestActionHandler)).await;
+    let stash = new_stash().await;
+    let queue = new_queue_with_stash(
+        stash.clone(),
+        new_factory::<TestAction>(TestActionHandler { stash }),
+    )
+    .await;
     let executor = queue.new_executor();
 
     // Check direct execution.
@@ -45,7 +52,12 @@ async fn replace_updates_local_state() {
 async fn replace_updates_queues_if_action_no_longer_present() {
     // When attempting to replace an action that does not exist, it will be
     // queued instead.
-    let queue = new_queue(new_factory::<TestAction>(TestActionHandler)).await;
+    let stash = new_stash().await;
+    let queue = new_queue_with_stash(
+        stash.clone(),
+        new_factory::<TestAction>(TestActionHandler { stash }),
+    )
+    .await;
     let executor = queue.new_executor();
 
     // Check direct execution.
@@ -80,7 +92,12 @@ async fn replace_updates_queues_if_action_no_longer_present() {
 async fn replace_updates_queues_if_action_is_executing() {
     // When attempting to replace an action that does not exist, it will be
     // queued instead.
-    let queue = new_queue(new_factory::<TestAction>(TestActionHandler)).await;
+    let stash = new_stash().await;
+    let queue = new_queue_with_stash(
+        stash.clone(),
+        new_factory::<TestAction>(TestActionHandler { stash }),
+    )
+    .await;
 
     // Check direct execution.
     let queued_output = queue
@@ -115,7 +132,12 @@ async fn replace_updates_local_state_with_resources() {
     // There was a subtle failure related to the resource table having duplicate entries.
     // This test makes sure this doesn't happen.
 
-    let queue = new_queue(new_factory::<TestAction>(TestActionHandler)).await;
+    let stash = new_stash().await;
+    let queue = new_queue_with_stash(
+        stash.clone(),
+        new_factory::<TestAction>(TestActionHandler { stash }),
+    )
+    .await;
     let mut counter: usize = 10;
 
     let metadata = MetadataBuilder::default()
@@ -164,7 +186,12 @@ async fn replace_updates_local_state_with_resources() {
 async fn replace_updates_previous_dependencies_type() {
     // Action queued with optional dependency, should have that dependency replaced with the
     // required type if it is overwritten.
-    let queue = new_queue(new_factory::<TestAction>(TestActionHandler)).await;
+    let stash = new_stash().await;
+    let queue = new_queue_with_stash(
+        stash.clone(),
+        new_factory::<TestAction>(TestActionHandler { stash }),
+    )
+    .await;
     let queued_output_dep = queue
         .queue_action(TestAction {
             v: ACTION_VALUE_AFTER_LOCAL_APPLY,
@@ -229,8 +256,9 @@ impl Action<TestDb> for TestAction {
     type Error = DefaultError;
 }
 
-#[derive(Default)]
-struct TestActionHandler;
+struct TestActionHandler {
+    stash: Stash<TestDb>,
+}
 
 const ACTION_VALUE_AFTER_LOCAL_APPLY: u32 = 10;
 const ACTION_VALUE_AFTER_REPLACE: u32 = 30;
@@ -262,14 +290,14 @@ impl Handler<TestDb> for TestActionHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        mut guard: WriterGuard<'_, TestDb>,
     ) -> Result<
         <Self::Action as Action<TestDb>>::RemoteOutput,
         <Self::Action as Action<TestDb>>::Error,
     > {
         assert_eq!(action.v, ACTION_VALUE_AFTER_REPLACE);
-        guard
-            .tx::<_, _, <Self::Action as Action<TestDb>>::Error>(async |tx| {
+        self.stash
+            .connection()
+            .write_tx::<_, _, <Self::Action as Action<TestDb>>::Error>(async |tx| {
                 Ok(tx
                     .ext_insert_value(ACTION_KEY, ACTION_VALUE_AFTER_REPLACE)
                     .await?)

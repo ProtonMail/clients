@@ -71,7 +71,7 @@ impl UserContextBuilder {
         cache_path: PathBuf,
     ) -> Arc<UserContext> {
         Arc::new_cyclic(|this| {
-            register_actions(context.origin(), &queue, this, &session);
+            register_actions(context.origin(), &queue, this);
 
             let services = self
                 .services

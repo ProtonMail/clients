@@ -422,7 +422,6 @@ impl MailUserContext {
                                 NonZeroUsize::new(DEFAULT_SEND_QUEUE_POOL_SIZE).unwrap(),
                                 mail_context.core_context().as_ref(),
                                 true,
-                                user_context.as_ref(),
                                 span.clone(),
                             ),
                         })
@@ -433,7 +432,6 @@ impl MailUserContext {
                                 NonZeroUsize::new(DEFAULT_DEFAULT_QUEUE_POOL_SIZE).unwrap(),
                                 mail_context.core_context().as_ref(),
                                 true,
-                                user_context.as_ref(),
                                 span.clone(),
                             );
                             let prefetch_rollback = QueueAutoExecutorPool::new(
@@ -443,7 +441,6 @@ impl MailUserContext {
                                     .unwrap(),
                                 mail_context.core_context().as_ref(),
                                 true,
-                                user_context.as_ref(),
                                 span.clone(),
                             );
                             DefaultQueueExecutor {
@@ -455,7 +452,6 @@ impl MailUserContext {
                             executor: user_context.queue().new_executor_with_group(EVENT_POLL_ACTION_GROUP).into_auto_executor(
                                 mail_context.core_context().as_ref().build(),
                                 true,
-                                user_context.as_ref(),
                                 span.clone(),
                             ),
                         })
@@ -485,7 +481,6 @@ impl MailUserContext {
                                 NonZeroUsize::new(DEFAULT_SHARE_EXT_QUEUE_POOL_SIZE).unwrap(),
                                 mail_context.core_context().as_ref(),
                                 true,
-                                user_context.as_ref(),
                                 span.clone(),
                             )
                         },

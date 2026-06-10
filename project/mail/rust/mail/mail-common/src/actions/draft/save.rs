@@ -19,7 +19,7 @@ use crate::{AppError, MailContextError, MailUserContext, draft};
 use indoc::indoc;
 use mail_action_queue::action::{
     Action, ActionDependencyKeys, ActionGroup, ActionId, FactoryResult, Handler, Priority, Type,
-    VersionConverter, VersionConverterError, WriterGuard, WriterGuardError, deserialize,
+    VersionConverter, VersionConverterError, deserialize,
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::prelude::{DraftParams, DraftReplyOrForwardParams, ExternalId};
@@ -30,7 +30,7 @@ use mail_core_common::datatypes::UnixTimestamp;
 use mail_core_common::models::{Address, ModelExtension, ModelIdExtension};
 use mail_crypto_inbox::message::EncryptedDraft;
 use mail_stash::orm::Model;
-use mail_stash::stash::{StashError, WriteTx};
+use mail_stash::stash::{StashError, Tether, WriteTx};
 use mail_stash::{UserDb, params};
 use serde::{Deserialize, Serialize};
 use std::sync::Weak;
@@ -400,16 +400,16 @@ impl Handler<UserDb> for SaveHandler {
         &self,
         _: ActionId,
         action: &mut Self::Action,
-        mut guard: WriterGuard<'_, UserDb>,
     ) -> Result<
         <Self::Action as Action<UserDb>>::RemoteOutput,
         <Self::Action as Action<UserDb>>::Error,
     > {
         let ctx = self.ctx.upgrade().ok_or(MailContextError::LostContext)?;
-        let r = Save::apply_remote_impl(&ctx, action, &mut guard).await;
+        let mut tether = ctx.user_stash().connection();
+        let r = Save::apply_remote_impl(&ctx, action, &mut tether).await;
 
         if let Err(e) = &r
-            && let Err(e) = save_send_error(action, &mut guard, e).await
+            && let Err(e) = save_send_error(action, &mut tether, e).await
         {
             error!("Failed to save draft send result: {e:?}");
         }
@@ -432,11 +432,11 @@ impl Save {
     async fn apply_remote_impl(
         ctx: &MailUserContext,
         action: &mut Self,
-        guard: &mut WriterGuard<'_, UserDb>,
+        tether: &mut Tether<UserDb>,
     ) -> Result<<Self as Action<UserDb>>::RemoteOutput, <Self as Action<UserDb>>::Error> {
         let session = ctx.session();
 
-        let mut metadata = DraftMetadata::find_by_id(action.metadata_id, guard.tether())
+        let mut metadata = DraftMetadata::find_by_id(action.metadata_id, tether)
             .await?
             .ok_or(SaveError::MetadataNotFound(action.metadata_id))?;
         let local_message_id = action.message_id.expect("Should be set");
@@ -447,7 +447,7 @@ impl Save {
                     action.metadata_id,
                 ))?;
 
-        if Message::find_by_id(local_message_id, guard.tether())
+        if Message::find_by_id(local_message_id, tether)
             .await?
             .is_none()
         {
@@ -455,7 +455,7 @@ impl Save {
             return Err(AppError::MessageMissing(local_message_id).into());
         };
 
-        if Conversation::find_by_id(local_conversation_id, guard.tether())
+        if Conversation::find_by_id(local_conversation_id, tether)
             .await?
             .is_none()
         {
@@ -463,7 +463,7 @@ impl Save {
         };
 
         let remote_parent_id = if let Some(parent_id) = action.parent_id {
-            let Some(remote_id) = Message::local_id_counterpart(parent_id, guard.tether())
+            let Some(remote_id) = Message::local_id_counterpart(parent_id, tether)
                 .await
                 .inspect_err(|e| error!("Failed to resolve remote parent id: {e:?}"))?
             else {
@@ -492,13 +492,13 @@ impl Save {
         // ids.
 
         // Check message id.
-        let remote_message_id = Message::local_id_counterpart(local_message_id, guard.tether())
+        let remote_message_id = Message::local_id_counterpart(local_message_id, tether)
             .await
             .inspect_err(|e| error!("Failed to resolve remote message id: {e}"))?;
 
         // Reload attachments if they don't have remote id or key packets.
         let mut attachments =
-            Attachment::find_by_ids(action.attachment_ids.iter().cloned(), guard.tether())
+            Attachment::find_by_ids(action.attachment_ids.iter().cloned(), tether)
                 .await
                 .inspect_err(|e| error!("Failed to load attachments: {e:?}"))?
                 .into_iter()
@@ -538,7 +538,7 @@ impl Save {
                 action,
                 &attachments,
                 &action.body,
-                guard.tether(),
+                tether,
             )
             .await
             .inspect_err(|e| {
@@ -556,8 +556,8 @@ impl Save {
                 // move the message to sent and schedule a resync.
                 info!("Draft is already sent, moving to sent folder");
 
-                if let Err(e) = guard
-                    .tx::<_, _, MailContextError>(async |tx| {
+                if let Err(e) = tether
+                    .write_tx::<_, _, MailContextError>(async |tx| {
                         DraftMetadata::delete_by_id(action.metadata_id, tx).await?;
 
                         let local_draft_label_id = local_draft_label_id(tx).await?;
@@ -602,7 +602,7 @@ impl Save {
                 &attachments,
                 &action.body,
                 draft_reply_or_forward_params,
-                guard.tether(),
+                tether,
             )
             .await
             .inspect_err(|e| {
@@ -612,8 +612,8 @@ impl Save {
             (message, signatures)
         };
 
-        guard
-            .tx::<_, _, <Self as Action<UserDb>>::Error>(async |bond| {
+        tether
+            .write_tx::<_, _, <Self as Action<UserDb>>::Error>(async |bond| {
                 // There is a small chance that, some rogue event or state update could have
                 // brought in the new draft before we have received the message from
                 // the server and applied the changes in the db. This can happen if we have
@@ -1029,9 +1029,9 @@ impl Save {
 // Simple wrapper function to catch errors
 async fn save_send_error(
     action: &Save,
-    guard: &mut WriterGuard<'_, UserDb>,
+    tether: &mut Tether<UserDb>,
     error: &MailContextError,
-) -> Result<(), WriterGuardError> {
+) -> Result<(), StashError> {
     let error = DraftSendFailure::from_mail_context_error(error);
     if error.is_skippable() {
         return Ok(());
@@ -1041,8 +1041,8 @@ async fn save_send_error(
         action.save_origin,
         error,
     );
-    guard
-        .tx::<_, _, WriterGuardError>(async |tx| Ok(send_result.save(tx).await?))
+    tether
+        .write_tx::<_, _, StashError>(async |tx| Ok(send_result.save(tx).await?))
         .await?;
     Ok(())
 }

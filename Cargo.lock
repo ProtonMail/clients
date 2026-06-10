@@ -973,7 +973,7 @@ dependencies = [
  "bitflags 2.11.1",
  "cexpr",
  "clang-sys",
- "itertools 0.12.1",
+ "itertools 0.10.5",
  "lazy_static",
  "lazycell",
  "log",
@@ -996,7 +996,7 @@ dependencies = [
  "bitflags 2.11.1",
  "cexpr",
  "clang-sys",
- "itertools 0.12.1",
+ "itertools 0.10.5",
  "log",
  "prettyplease",
  "proc-macro2",
@@ -2070,7 +2070,7 @@ version = "3.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "faf9468729b8cbcea668e36183cb69d317348c2e08e994829fb56ebfdfbaac34"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
@@ -4758,9 +4758,9 @@ dependencies = [
 
 [[package]]
 name = "gopenpgp-sys"
-version = "0.3.5"
+version = "0.3.6"
 source = "sparse+https://rust-registry.proton.me/index/"
-checksum = "52136c2eb4a3663c77250f92d7571fbf9b9055097cdcfc48d475acf151b5af16"
+checksum = "adbae7d9596a6a35eb6b25caf22d7368a4c8440c42aa843e07074b9a2a77752a"
 dependencies = [
  "base64",
  "bindgen 0.72.1",
@@ -9632,9 +9632,9 @@ dependencies = [
 
 [[package]]
 name = "proton-crypto"
-version = "0.12.2"
+version = "0.13.0"
 source = "sparse+https://rust-registry.proton.me/index/"
-checksum = "e2020ef41050dd8a6b9dd554fe95a65db13b3ddb05e6a863996aa44c77e6c877"
+checksum = "ad82d071da55cd1212c38f8f0dd9ea14e994dfb6e9a3cd87061b29b74aa179f6"
 dependencies = [
  "facet",
  "gopenpgp-sys",
@@ -9651,9 +9651,9 @@ dependencies = [
 
 [[package]]
 name = "proton-crypto-account"
-version = "0.18.2"
+version = "0.19.0"
 source = "sparse+https://rust-registry.proton.me/index/"
-checksum = "1e6f5577db56fed91c78d064391410359bc43603ee3a109b9ac6b31787190820"
+checksum = "26390ebe951da65ed528f5db853743a34fe48f34ca018d74fd77505c9b65d8c4"
 dependencies = [
  "base64",
  "derive_more 2.1.1",
@@ -9725,9 +9725,9 @@ dependencies = [
 
 [[package]]
 name = "proton-rpgp"
-version = "0.3.3"
+version = "0.4.0"
 source = "sparse+https://rust-registry.proton.me/index/"
-checksum = "8fd78d8715403fe5c12a092ac1799edeb040034af6729b805ff87e4fa20b4a21"
+checksum = "274da7fdfad731b889b3d66bcf2881615390714bae8cc48e0d6d1558ededb392"
 dependencies = [
  "hex",
  "kem",
@@ -11471,7 +11471,7 @@ version = "0.8.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c1c97747dbf44bb1ca44a561ece23508e99cb592e862f22222dcf42f51d1e451"
 dependencies = [
- "heck 0.5.0",
+ "heck 0.4.1",
  "proc-macro2",
  "quote",
  "syn 2.0.117",
@@ -13446,7 +13446,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]

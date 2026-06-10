@@ -7,7 +7,8 @@ use serde::{Deserialize, Serialize};
 use tokio::sync::watch;
 
 // To break cyclic dependency
-use mail_core_common::datatypes::{DeviceEnvironment, RegisteredDevice};
+use mail_core_common::datatypes::{AuthScopes, DeviceEnvironment, RegisteredDevice};
+use mail_core_common::db::account::{EncryptedAccessToken, EncryptedRefreshToken};
 use mail_core_common::device_registration::{
     RegisteredDeviceTaskState, registered_device_task_step,
 };
@@ -158,10 +159,10 @@ async fn skip_registration_when_session_rotated_but_old_context_still_alive() {
             let new_session = mail_core_common::db::account::CoreSession::new(
                 user_id.clone(),
                 new_session_id.clone(),
-                &tokens,
-                &db_key,
-            )
-            .unwrap();
+                EncryptedAccessToken::new(tokens.acc_tok().unwrap(), &db_key).unwrap(),
+                EncryptedRefreshToken::new(tokens.ref_tok(), &db_key).unwrap(),
+                AuthScopes::new(tokens.scopes().unwrap()),
+            );
 
             new_session.with_insert(tx).await?;
             Ok::<_, mail_stash::stash::StashError>(())

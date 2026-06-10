@@ -307,6 +307,7 @@ pub struct MailContext {
     /// at [`MailContext::new`] and consumed by [`MailUserContext::new`] each
     /// time a new user context is built. When absent the user context falls
     /// back to [`crate::search::NoopContentSearchHistoricIndexing`].
+    #[cfg_attr(not(feature = "foundation_search"), allow(dead_code))]
     historic_indexing_provider: Option<crate::search::ContentSearchHistoricIndexingProvider>,
 }
 
@@ -671,7 +672,6 @@ impl MailContext {
         let session = flow
             .take_session()
             .map_err(|_| MailContextError::Other(anyhow!("invalid login state")))?;
-
         let user_ctx = self
             .core_context
             .new_user_context(user_id, async || Ok(session), session_id)
@@ -679,6 +679,22 @@ impl MailContext {
             .map_err(MailContextError::from)?;
         Arc::clone(self)
             .new_user_context(user_ctx, NewMailUserContextOptions::login())
+            .await
+    }
+
+    /// Create a new context from a forked session.
+    pub async fn user_context_from_fork(
+        self: &Arc<Self>,
+        username: String,
+        selector: String,
+        payload_key: Vec<u8>,
+    ) -> MailContextResult<Arc<MailUserContext>> {
+        let core_session = self
+            .core_context
+            .redeem_forked_session(username, selector, payload_key)
+            .await?;
+
+        self.user_context_from_session(&core_session, NewMailUserContextOptions::login())
             .await
     }
 
@@ -924,6 +940,7 @@ impl MailContext {
     /// Returns the historic content-search indexing provider, if any.
     /// Consumed by [`MailUserContext::new`] when constructing the
     /// per-session driver.
+    #[cfg_attr(not(feature = "foundation_search"), allow(dead_code))]
     pub(crate) fn historic_indexing_provider(
         &self,
     ) -> Option<&crate::search::ContentSearchHistoricIndexingProvider> {

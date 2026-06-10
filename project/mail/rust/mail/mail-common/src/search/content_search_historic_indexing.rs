@@ -110,6 +110,7 @@ impl ContentSearchHistoricIndexingService {
         self.inner.cancel_on_teardown();
     }
 
+    #[cfg_attr(not(feature = "foundation_search"), allow(dead_code))]
     pub(crate) fn driver(&self) -> Arc<dyn ContentSearchHistoricIndexing + Send + Sync> {
         Arc::clone(&self.inner)
     }

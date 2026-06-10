@@ -17,7 +17,10 @@ use crate::core_clock::CoreClock;
 use crate::datatypes::{
     ApiConfig, AuthScopes, StoredDevicePrivateKey, StoredDevicePublicKey, TfaStatus,
 };
-use crate::db::account::{CoreAccount, CoreSession, SessionEncryptionKey};
+use crate::db::account::{
+    CoreAccount, CoreSession, EncryptedAccessToken, EncryptedKeySecret, EncryptedRefreshToken,
+    SessionEncryptionKey,
+};
 use crate::db::migrations::{migrate_account_db, verify_account_db};
 use crate::device::DynDeviceInfoProvider;
 use crate::event_loop::EventPollMode;
@@ -30,7 +33,7 @@ use crate::{UserContext, UserDatabaseInitializer, nuke};
 use anyhow::{Context as _, Error as AnyhowError, anyhow};
 use async_trait::async_trait;
 use core_event_loop::EventLoopError;
-use futures::TryFutureExt;
+use futures::{TryFutureExt, try_join};
 use itertools::Itertools;
 use mail_action_queue::action::{self, Action, WriterGuardError};
 use mail_action_queue::queue::{ActionError as QueueActionError, ActionRequeueReason, QueuedError};
@@ -40,7 +43,7 @@ use mail_core_api::service::ApiServiceError;
 use mail_core_api::services::proton::mail_muon::client::{Fingerprint, InfoProvider};
 use mail_core_api::services::proton::{BuildError, SessionId, UserId};
 use mail_core_api::session::{Config as RealApiConfig, Session as ApiSession};
-use mail_core_api::store::{MbpMode, Store, TempStore, UserData};
+use mail_core_api::store::{MbpMode, Store, TempStore, TfaMode, UserData};
 use mail_core_api::verification::DynChallengeNotifier;
 use mail_issue_reporter_service::{IssueLevel, IssueReporter, issue_report_keys_from_error};
 use mail_log_service::LogService;
@@ -150,6 +153,20 @@ impl action::Error for CoreContextError {
             Self::QueueWriterGuardExpired => Some(ActionRequeueReason::GuardExpired),
             _ => None,
         }
+    }
+}
+
+impl From<mail_core_api::fork_payload::ForkPayloadError> for CoreContextError {
+    fn from(e: mail_core_api::fork_payload::ForkPayloadError) -> Self {
+        error!(%e, "fork payload error");
+        Self::Crypto
+    }
+}
+
+impl From<aes_gcm::Error> for CoreContextError {
+    fn from(e: aes_gcm::Error) -> Self {
+        error!(%e, "aes gcm error");
+        Self::Crypto
     }
 }
 
@@ -609,6 +626,102 @@ impl Context {
             .await?;
 
         Ok(())
+    }
+
+    /// Redeem a forked session by its selector and payload key.
+    pub async fn redeem_forked_session(
+        self: &Arc<Self>,
+        name_or_addr: String,
+        selector: String,
+        payload_key: Vec<u8>,
+    ) -> CoreContextResult<CoreSession> {
+        use mail_account_api::protocol::proton::GetSessionsForksResponse;
+        use mail_core_api::fork_payload::decode_fork_payload_base64;
+        use mail_core_api::services::proton::{ProtonAccount, ProtonAuth};
+
+        let GetSessionsForksResponse {
+            session_id,
+            user_id,
+            access_token,
+            refresh_token,
+            scopes,
+            payload,
+        } = self
+            .new_api_session(None)
+            .await?
+            .get_sessions_forks(selector)
+            .inspect_ok(|t| info!(t.session_id, "Received API session from fork"))
+            .inspect_err(|e| error!(?e, "Failed to receive API session from fork"))
+            .await?;
+
+        let passphrase = match payload.as_deref() {
+            Some("") | None => Vec::new(), // FIXME: Is this expected?
+            Some(payload) => decode_fork_payload_base64(payload, &payload_key)?,
+        };
+
+        let (db_account, db_session) = self
+            .account_stash()
+            .connection()
+            .write_tx(async |tx| -> Result<_, CoreContextError> {
+                let user_id: UserId = user_id.clone().into();
+                let session_id: SessionId = session_id.clone().into();
+                let encryption_key = self.get_encryption_key()?;
+                let key_secret = EncryptedKeySecret::new(&passphrase.into(), &encryption_key)?;
+                let access_token = EncryptedAccessToken::new(&access_token, &encryption_key)?;
+                let refresh_token = EncryptedRefreshToken::new(&refresh_token, &encryption_key)?;
+                let auth_scopes = AuthScopes::new(scopes);
+
+                let account = CoreAccount::new(user_id.clone(), name_or_addr)
+                    .with_save(tx)
+                    .await?;
+
+                let session = CoreSession::new(
+                    user_id.clone(),
+                    session_id,
+                    access_token,
+                    refresh_token,
+                    auth_scopes,
+                )
+                .with_key_secret(key_secret)
+                .with_save(tx)
+                .await?;
+
+                Ok((account, session))
+            })
+            .await?;
+
+        let api = self
+            .new_api_session(Some(&db_session))
+            .inspect_ok(|_| info!("Created API session from fork"))
+            .inspect_err(|e| error!(%e, "Could not create API session from fork"))
+            .await?;
+
+        let (tfa, user, user_settings) = try_join!(
+            api.post_auth_info(None).map_ok(|res| res.tfa),
+            api.get_users().map_ok(|res| res.user),
+            api.get_settings().map_ok(|res| res.user_settings),
+        )?;
+
+        let tfa_mode = tfa.map_or(TfaMode::none(), |tfa| TfaMode {
+            totp: tfa.totp_enabled(),
+            fido: tfa.fido_enabled(),
+        });
+
+        self.account_stash()
+            .connection()
+            .write_tx(async |tx| {
+                db_account
+                    .with_username(user.name.unwrap_or_default())
+                    .with_display_name(user.display_name.unwrap_or_default())
+                    .with_mbp_mode(user_settings.password.mode.into())
+                    .with_tfa_mode(tfa_mode.into())
+                    .with_ready()
+                    .save(tx)
+                    .await
+            })
+            .await?;
+
+        Ok(db_session)
     }
 
     /// Get a user context from an existing session.

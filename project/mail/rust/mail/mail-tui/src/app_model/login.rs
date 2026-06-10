@@ -1,5 +1,6 @@
 use crate::CLI_ARGS;
 use crate::app::Command;
+use crate::app_model::fork_select::ForkSelectModel;
 use crate::app_model::mbox_password::MboxPasswordModel;
 use crate::app_model::twofa::TwoFaModel;
 use crate::app_model::{AppState, AppStateHandler, context_init};
@@ -23,6 +24,7 @@ pub enum Message {
     Submit,
     ToggleInput,
     QRLogin,
+    ForkLogin,
     LoginSuccess(LoginFlow),
     LoginFailed(LoginError),
     OpenGlobalFeatureFlags,
@@ -147,6 +149,9 @@ impl AppStateHandler for LoginModel {
             KeyCode::Char('q') if k.modifiers.contains(KeyModifiers::CONTROL) => {
                 Command::message(Message::QRLogin)
             }
+            KeyCode::Char('f') if k.modifiers.contains(KeyModifiers::CONTROL) => {
+                Command::message(Message::ForkLogin)
+            }
             KeyCode::F(12) if k.modifiers.contains(KeyModifiers::SHIFT) => {
                 Command::message(Message::OpenGlobalFeatureFlags)
             }
@@ -216,6 +221,9 @@ impl AppStateHandler for LoginModel {
                 ])
             }
             Message::QRLogin => Self::qr_login(ctx),
+            Message::ForkLogin => {
+                Command::message(Messages::SwitchAppState(ForkSelectModel::new().into()))
+            }
             Message::LoginSuccess(flow) => {
                 if flow.is_awaiting_2fa() {
                     Command::message(Messages::SwitchAppState(TwoFaModel::new(flow).into()))
@@ -283,6 +291,8 @@ impl AppStateHandler for LoginModel {
                 Span::raw("Switch Input"),
                 Span::styled(" C-q: ", Style::new().bold()),
                 Span::raw("QR Login"),
+                Span::styled(" C-f: ", Style::new().bold()),
+                Span::raw("Fork Login"),
             ]),
             area,
         );
@@ -297,6 +307,7 @@ impl AppStateHandler for LoginModel {
             ("enter", "Submit"),
             ("tab", "Switch Input"),
             ("C-q", "QR Login"),
+            ("C-f", "Fork Login"),
         ]
     }
 }

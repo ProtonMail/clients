@@ -32,7 +32,8 @@ pub use mail_api_session::auth::PasswordMode;
 #[serde(rename_all = "PascalCase")]
 pub struct PostAuthInfoRequest {
     /// The username of the user to authenticate.
-    pub username: String,
+    /// If `None`, assumes the request was made by an authenticated session.
+    pub username: Option<String>,
 }
 
 /// The response from a `POST /auth/v4/info` request.
@@ -84,15 +85,48 @@ pub struct GetSessionsUuidResponse {
     pub uuid: String,
 }
 
+/// The response from a `GET /auth/v4/sessions/forks/{selector}` request.
+// TODO: Can we embed `#[serde(flatten)] pub auth: AuthResponse` instead?
+// Would be cleaner but would require making some of its fields optional.
+#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[serde(rename_all = "PascalCase")]
+pub struct GetSessionsForksResponse {
+    /// The ID of the API session that was created.
+    #[serde(rename = "UID")]
+    pub session_id: String,
+
+    /// The ID of the user that logged in.
+    #[serde(rename = "UserID")]
+    pub user_id: String,
+
+    /// The access token of the auth.
+    pub access_token: String,
+
+    /// The refresh token of the auth.
+    pub refresh_token: String,
+
+    /// The scopes this auth has.
+    pub scopes: Vec<String>,
+
+    /// The base64-encoded, encrypted payload.
+    pub payload: Option<String>,
+}
+
 #[allow(async_fn_in_trait)]
 pub trait ProtonAuth {
     /// GET the user's session UUID.
     async fn get_sessions_uuid(&self) -> ApiServiceResult<GetSessionsUuidResponse>;
 
+    /// GET the given forked session.
+    async fn get_sessions_forks(
+        &self,
+        selector: String,
+    ) -> ApiServiceResult<GetSessionsForksResponse>;
+
     /// POST auth info to initialize SRP authentication.
     async fn post_auth_info(
         &self,
-        request: PostAuthInfoRequest,
+        username: Option<String>,
     ) -> ApiServiceResult<PostAuthInfoResponse>;
 }
 

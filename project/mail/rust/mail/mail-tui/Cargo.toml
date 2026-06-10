@@ -7,6 +7,7 @@ license = "AGPL-3.0-only"
 
 [dependencies]
 anyhow = { workspace = true }
+base64 = { workspace = true }
 chrono = { workspace = true }
 clap = { workspace = true }
 crossterm = { version = "0.28.1", features = ["event-stream"] }

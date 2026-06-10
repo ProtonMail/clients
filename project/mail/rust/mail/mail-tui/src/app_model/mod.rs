@@ -2,6 +2,7 @@ pub mod background;
 pub mod contacts;
 pub mod context_init;
 mod feature_flag_variant_fmt;
+pub mod fork_select;
 pub mod global_feature_flags_popup;
 pub mod login;
 pub mod mailbox;
@@ -17,6 +18,7 @@ use crate::app::{Command, Model};
 use crate::app_model::background::BackgroundModel;
 use crate::app_model::contacts::ContactsModel;
 use crate::app_model::context_init::ContextInitModel;
+use crate::app_model::fork_select::ForkSelectModel;
 use crate::app_model::login::LoginModel;
 use crate::app_model::mailbox::MailboxModel;
 use crate::app_model::mbox_password::MboxPasswordModel;
@@ -66,6 +68,8 @@ pub enum AppState {
     SessionSelect(SessionSelectModel),
     /// Log into a new account.
     Login(LoginModel),
+    /// Redeem a forked session.
+    ForkSelect(ForkSelectModel),
     /// Submit 2FA code.
     TwoFA(TwoFaModel),
     /// Mailbox password
@@ -525,6 +529,7 @@ impl AppStateHandler for AppState {
         match self {
             AppState::SessionSelect(state) => state.on_state_enter(),
             AppState::Login(state) => state.on_state_enter(),
+            AppState::ForkSelect(state) => state.on_state_enter(),
             AppState::TwoFA(state) => state.on_state_enter(),
             AppState::ContextInit(state) => state.on_state_enter(),
             AppState::Mailbox(state) => state.on_state_enter(),
@@ -546,6 +551,7 @@ impl AppStateHandler for AppState {
         match self {
             AppState::SessionSelect(state) => state.handle_event(event),
             AppState::Login(state) => state.handle_event(event),
+            AppState::ForkSelect(state) => state.handle_event(event),
             AppState::TwoFA(state) => state.handle_event(event),
             AppState::ContextInit(state) => state.handle_event(event),
             AppState::Mailbox(state) => state.handle_event(event),
@@ -559,6 +565,7 @@ impl AppStateHandler for AppState {
         match self {
             AppState::SessionSelect(state) => state.update(ctx, message),
             AppState::Login(state) => state.update(ctx, message),
+            AppState::ForkSelect(state) => state.update(ctx, message),
             AppState::TwoFA(state) => state.update(ctx, message),
             AppState::ContextInit(state) => state.update(ctx, message),
             AppState::Mailbox(state) => state.update(ctx, message),
@@ -572,6 +579,7 @@ impl AppStateHandler for AppState {
         match self {
             AppState::SessionSelect(state) => state.view(frame, area),
             AppState::Login(state) => state.view(frame, area),
+            AppState::ForkSelect(state) => state.view(frame, area),
             AppState::TwoFA(state) => state.view(frame, area),
             AppState::ContextInit(state) => state.view(frame, area),
             AppState::Mailbox(state) => state.view(frame, area),
@@ -585,12 +593,13 @@ impl AppStateHandler for AppState {
         match self {
             AppState::SessionSelect(state) => state.view_top_bar(frame, area),
             AppState::Login(state) => state.view_top_bar(frame, area),
+            AppState::ForkSelect(state) => state.view_top_bar(frame, area),
             AppState::TwoFA(state) => state.view_top_bar(frame, area),
             AppState::ContextInit(state) => state.view_top_bar(frame, area),
             AppState::Mailbox(state) => state.view_top_bar(frame, area),
             AppState::Contacts(state) => state.view_top_bar(frame, area),
             AppState::Background(state) => state.view_top_bar(frame, area),
-            AppState::MboxPassowrd(state) => state.view_status_bar(frame, area),
+            AppState::MboxPassowrd(state) => state.view_top_bar(frame, area),
         }
     }
 
@@ -598,6 +607,7 @@ impl AppStateHandler for AppState {
         match self {
             AppState::SessionSelect(state) => state.view_status_bar(frame, area),
             AppState::Login(state) => state.view_status_bar(frame, area),
+            AppState::ForkSelect(state) => state.view_status_bar(frame, area),
             AppState::TwoFA(state) => state.view_status_bar(frame, area),
             AppState::ContextInit(state) => state.view_status_bar(frame, area),
             AppState::Mailbox(state) => state.view_status_bar(frame, area),
@@ -611,6 +621,7 @@ impl AppStateHandler for AppState {
         match self {
             AppState::SessionSelect(state) => state.help_bar_lines(),
             AppState::Login(state) => state.help_bar_lines(),
+            AppState::ForkSelect(state) => state.help_bar_lines(),
             AppState::TwoFA(state) => state.help_bar_lines(),
             AppState::ContextInit(state) => state.help_bar_lines(),
             AppState::Mailbox(state) => state.help_bar_lines(),
@@ -624,6 +635,7 @@ impl AppStateHandler for AppState {
         match self {
             AppState::SessionSelect(state) => state.help_options(),
             AppState::Login(state) => state.help_options(),
+            AppState::ForkSelect(state) => state.help_options(),
             AppState::TwoFA(state) => state.help_options(),
             AppState::ContextInit(state) => state.help_options(),
             AppState::Mailbox(state) => state.help_options(),

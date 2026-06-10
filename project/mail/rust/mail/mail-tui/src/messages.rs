@@ -10,6 +10,7 @@ use std::path::Path;
 /// Application messages.
 pub enum Messages {
     Login(crate::app_model::login::Message),
+    ForkSelect(crate::app_model::fork_select::Message),
     SessionSelect(crate::app_model::session_select::Message),
     Contacts(crate::app_model::contacts::Message),
     ContextInit(crate::app_model::context_init::Message),

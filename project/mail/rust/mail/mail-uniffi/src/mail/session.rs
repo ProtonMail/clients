@@ -317,6 +317,30 @@ impl MailSession {
         .map_err(|err| ProtonError::OtherReason(OtherErrorReason::Other(err.to_string())))
     }
 
+    /// Create a new user session from a forked session.
+    #[tracing::instrument(skip_all)]
+    pub async fn user_session_from_fork(
+        self: &Arc<Self>,
+        name_or_addr: String,
+        selector: String,
+        payload_key: Vec<u8>,
+    ) -> Result<Arc<MailUserSession>, UserSessionError> {
+        self.params.origin.guard(Origin::App)?;
+
+        let ctx = self.mail_ctx.clone();
+        let user_ctxs = self.user_ctx.clone();
+
+        uniffi_async(async move {
+            ctx.user_context_from_fork(name_or_addr, selector, payload_key)
+                .map_ok(|ctx| user_ctxs.insert(ctx))
+                .map_ok(MailUserSession::new)
+                .map_err(RealProtonMailError::from)
+                .await
+        })
+        .await
+        .map_err(UserSessionError::from)
+    }
+
     // This function **does NOT** initialize session itself.
     #[tracing::instrument(skip_all)]
     pub async fn initialized_user_session_from_stored_session(

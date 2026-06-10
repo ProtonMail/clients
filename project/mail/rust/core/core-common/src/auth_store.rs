@@ -1,6 +1,10 @@
 //! Implementation of the [`AuthStore`](proton-core-api::auth::Store) over the database.
 
-use crate::db::account::{CoreAccount, CoreSession, EncryptedData, SessionEncryptionKey};
+use crate::datatypes::AuthScopes;
+use crate::db::account::{
+    CoreAccount, CoreSession, EncryptedAccessToken, EncryptedData, EncryptedKeySecret,
+    EncryptedPassword, EncryptedRefreshToken, SessionEncryptionKey,
+};
 use crate::models::ModelExtension;
 use crate::os::{KeyChain, KeyChainExt};
 use anyhow::{Context, bail};
@@ -176,16 +180,32 @@ impl Store for AuthStore {
                             .await?;
                     }
 
+                    let acc_tok = tokens.acc_tok().context("missing access token")?;
+                    let enc_acc_tok = EncryptedAccessToken::new(acc_tok, &key)?;
+                    let ref_tok = tokens.ref_tok();
+                    let enc_ref_tok = EncryptedRefreshToken::new(ref_tok, &key)?;
+                    let scopes = tokens.scopes().context("missing scopes")?;
+                    let scopes = AuthScopes::new(scopes);
+
                     // Load or create the session.
                     if let Some(session) = CoreSession::find_by_id(session_id.clone(), tx).await? {
-                        session.with_tokens(tokens, &key)?.save(tx).await?;
+                        session
+                            .with_tokens(enc_acc_tok, enc_ref_tok, scopes)
+                            .save(tx)
+                            .await?;
                     } else {
                         info!("creating session for {user_id}");
 
-                        CoreSession::new(user_id.clone(), session_id.clone(), tokens, &key)?
-                            .save(tx)
-                            .inspect_err(|e| error!("failed to save session: {e:?}"))
-                            .await?;
+                        CoreSession::new(
+                            user_id.clone(),
+                            session_id.clone(),
+                            enc_acc_tok,
+                            enc_ref_tok,
+                            scopes,
+                        )
+                        .save(tx)
+                        .inspect_err(|e| error!("failed to save session: {e:?}"))
+                        .await?;
                     }
 
                     // Set the user ID if it's not already set.
@@ -278,7 +298,10 @@ impl Store for AuthStore {
                     bail!("failed to set pass: missing {user_id}");
                 };
 
-                account.with_password(pass, &key)?.save(tx).await?;
+                account
+                    .with_password(EncryptedPassword::new(pass, &key)?)
+                    .save(tx)
+                    .await?;
 
                 Ok(())
             })
@@ -345,7 +368,7 @@ impl Store for AuthStore {
 
                 for session in CoreSession::find_by_user_id(user_id.clone(), tx).await? {
                     session
-                        .with_key_secret(&data.key_secret, &key)?
+                        .with_key_secret(EncryptedKeySecret::new(&data.key_secret, &key)?)
                         .save(tx)
                         .await?;
                 }
@@ -380,7 +403,10 @@ impl Store for AuthStore {
                 };
 
                 for session in CoreSession::find_by_user_id(user_id, tx).await? {
-                    session.with_key_secret(&secret, &key)?.save(tx).await?;
+                    session
+                        .with_key_secret(EncryptedKeySecret::new(&secret, &key)?)
+                        .save(tx)
+                        .await?;
                 }
 
                 Ok(())

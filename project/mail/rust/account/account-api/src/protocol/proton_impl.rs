@@ -1,11 +1,7 @@
 //! Blanket implementations of [`ProtonAuth`] and [`ProtonAccount`] for any
 //! [`Sender<ProtonRequest, ProtonResponse>`](mail_muon::common::Sender) type.
 
-use crate::protocol::proton::{
-    AddressId, GetAddressResponse, GetAddressesResponse, GetCaptchaOptions, GetKeysAllOptions,
-    GetKeysSaltsResponse, GetSessionsUuidResponse, GetSettingsResponse, GetUsersResponse,
-    PostAuthInfoRequest, PostAuthInfoResponse, ProtonAccount, ProtonAuth,
-};
+use crate::protocol::proton::*;
 use mail_api_shared::ApiServiceResult;
 use mail_muon::common::Sender;
 use mail_muon::http::HttpReqExt;
@@ -24,12 +20,23 @@ impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> ProtonAuth for This {
             .into_body_json()?)
     }
 
+    async fn get_sessions_forks(
+        &self,
+        selector: String,
+    ) -> ApiServiceResult<GetSessionsForksResponse> {
+        Ok(GET!("{AUTH_V4}/sessions/forks/{selector}")
+            .send_with(self)
+            .await?
+            .ok()?
+            .into_body_json()?)
+    }
+
     async fn post_auth_info(
         &self,
-        request: PostAuthInfoRequest,
+        username: Option<String>,
     ) -> ApiServiceResult<PostAuthInfoResponse> {
         Ok(POST!("{AUTH_V4}/info")
-            .body_json(request)?
+            .body_json(PostAuthInfoRequest { username })?
             .send_with(self)
             .await?
             .ok()?

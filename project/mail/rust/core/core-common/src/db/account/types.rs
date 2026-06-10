@@ -12,7 +12,7 @@ use aes_gcm::{Aes256Gcm, AesGcm, Key, KeySizeUser};
 use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
 use derive_more::{AsRef, Deref};
-use mail_core_api::auth::{Tokens, UserKeySecret};
+use mail_core_api::auth::UserKeySecret;
 
 use mail_core_api::services::proton::{SessionId, UserId};
 use mail_stash::exports::{FromSql, FromSqlResult, SqliteError, ToSql, ToSqlOutput, ValueRef};
@@ -111,15 +111,11 @@ impl CoreAccount {
         }
     }
 
-    pub fn with_password(
-        self,
-        pass: &str,
-        key: &SessionEncryptionKey,
-    ) -> Result<Self, CoreSessionError> {
-        Ok(Self {
-            password: Some(EncryptedPassword::new(pass, key)?),
+    pub fn with_password(self, password: EncryptedPassword) -> Self {
+        Self {
+            password: Some(password),
             ..self
-        })
+        }
     }
 
     #[must_use]
@@ -263,18 +259,6 @@ pub struct CoreSession {
     pub key_secret: Option<EncryptedKeySecret>,
 }
 
-#[derive(Debug, Error)]
-pub enum CoreSessionError {
-    #[error("missing access token")]
-    AccTok,
-
-    #[error("missing auth scopes")]
-    Scopes,
-
-    #[error("AES GCM error: {0}")]
-    AesGcm(#[from] aes_gcm::Error),
-}
-
 impl CoreSession {
     /// Retrieves all sessions associated with the given account ID.
     pub async fn find_by_user_id(
@@ -286,60 +270,50 @@ impl CoreSession {
 
     /// Create a new session for the given account.
     pub fn new(
-        user_id: UserId,
-        session_id: SessionId,
-        tokens: &Tokens,
-        key: &SessionEncryptionKey,
-    ) -> Result<Self, CoreSessionError> {
-        let ref_tok = tokens.ref_tok();
-        let acc_tok = tokens.acc_tok().ok_or(CoreSessionError::AccTok)?;
-        let scopes = tokens.scopes().ok_or(CoreSessionError::Scopes)?;
-
-        Ok(Self {
-            remote_id: session_id,
-            account_id: user_id,
-            access_token: EncryptedAccessToken::new(acc_tok, key)?,
-            refresh_token: EncryptedRefreshToken::new(ref_tok, key)?,
-            auth_scopes: AuthScopes::new(scopes),
+        account_id: UserId,
+        remote_id: SessionId,
+        access_token: EncryptedAccessToken,
+        refresh_token: EncryptedRefreshToken,
+        auth_scopes: AuthScopes,
+    ) -> Self {
+        Self {
+            remote_id,
+            account_id,
+            access_token,
+            refresh_token,
+            auth_scopes,
 
             // --- Optional fields ---
             key_secret: None,
-        })
+        }
     }
 
     /// Update the auth tokens.
     ///
     pub fn with_tokens(
         self,
-        tokens: &Tokens,
-        key: &SessionEncryptionKey,
-    ) -> Result<Self, CoreSessionError> {
-        let ref_tok = tokens.ref_tok();
-        let acc_tok = tokens.acc_tok().ok_or(CoreSessionError::AccTok)?;
-        let scopes = tokens.scopes().ok_or(CoreSessionError::Scopes)?;
-
-        Ok(Self {
-            access_token: EncryptedAccessToken::new(acc_tok, key)?,
-            refresh_token: EncryptedRefreshToken::new(ref_tok, key)?,
-            auth_scopes: AuthScopes::new(scopes),
+        access_token: EncryptedAccessToken,
+        refresh_token: EncryptedRefreshToken,
+        auth_scopes: AuthScopes,
+    ) -> Self {
+        Self {
+            access_token,
+            refresh_token,
+            auth_scopes,
 
             // --- preserve ---
             ..self
-        })
+        }
     }
 
     /// Update the key secret.
-    pub fn with_key_secret(
-        self,
-        key_secret: &UserKeySecret,
-        key: &SessionEncryptionKey,
-    ) -> Result<Self, aes_gcm::Error> {
-        Ok(Self {
-            key_secret: Some(EncryptedKeySecret::new(key_secret, key)?),
+    pub fn with_key_secret(self, key_secret: EncryptedKeySecret) -> Self {
+        Self {
+            key_secret: Some(key_secret),
 
             // --- preserve ---
             ..self
-        })
+        }
     }
 
     pub async fn watch(mail_stash: &Stash<AccountDb>) -> Result<WatcherHandle, StashError> {

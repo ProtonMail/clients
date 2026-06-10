@@ -1,7 +1,7 @@
 use crate::datatypes::AuthScopes;
 use crate::db::account::{
     CoreAccount, CoreSession, CoreSessionObserver, CoreSessionObserverNotification,
-    EncryptedAccessToken, EncryptedRefreshToken, SessionEncryptionKey,
+    EncryptedAccessToken, EncryptedKeySecret, EncryptedRefreshToken, SessionEncryptionKey,
 };
 use crate::db::migrations::migrate_account_db;
 use crate::models::ModelExtension;
@@ -72,7 +72,13 @@ async fn test_session_store_load() {
     let session_id = SessionId::from("remote_id");
     let tokens = new_test_tokens();
 
-    let mut session = CoreSession::new(account.remote_id, session_id, &tokens, &key).unwrap();
+    let mut session = CoreSession::new(
+        account.remote_id,
+        session_id,
+        EncryptedAccessToken::new(tokens.acc_tok().unwrap(), &key).unwrap(),
+        EncryptedRefreshToken::new(tokens.ref_tok(), &key).unwrap(),
+        AuthScopes::new(tokens.scopes().unwrap()),
+    );
 
     tether
         .write_tx::<_, _, StashError>(async |tx| {
@@ -102,10 +108,14 @@ async fn test_session_update() {
     let session_id = SessionId::from("remote_id");
     let tokens = new_test_tokens();
 
-    let mut session = CoreSession::new(account.remote_id, session_id, &tokens, &key)
-        .unwrap()
-        .with_key_secret(&UserKeySecret::from(vec![1, 2, 3, 4]), &key)
-        .unwrap();
+    let mut session = CoreSession::new(
+        account.remote_id,
+        session_id,
+        EncryptedAccessToken::new(tokens.acc_tok().unwrap(), &key).unwrap(),
+        EncryptedRefreshToken::new(tokens.ref_tok(), &key).unwrap(),
+        AuthScopes::new(tokens.scopes().unwrap()),
+    )
+    .with_key_secret(EncryptedKeySecret::new(&UserKeySecret::from([1, 2, 3, 4]), &key).unwrap());
 
     tether
         .write_tx::<_, _, StashError>(async |tx| {
@@ -153,7 +163,13 @@ async fn test_session_delete_user_id() {
     let session_id = SessionId::from("remote_id");
     let tokens = new_test_tokens();
 
-    let mut session = CoreSession::new(account.remote_id, session_id, &tokens, &key).unwrap();
+    let mut session = CoreSession::new(
+        account.remote_id,
+        session_id,
+        EncryptedAccessToken::new(tokens.acc_tok().unwrap(), &key).unwrap(),
+        EncryptedRefreshToken::new(tokens.ref_tok(), &key).unwrap(),
+        AuthScopes::new(tokens.scopes().unwrap()),
+    );
 
     tether
         .write_tx::<_, _, StashError>(async |tx| {
@@ -188,7 +204,13 @@ async fn test_session_delete_session_id() {
     let session_id = SessionId::from("remote_id");
     let tokens = new_test_tokens();
 
-    let mut session = CoreSession::new(account.remote_id, session_id, &tokens, &key).unwrap();
+    let mut session = CoreSession::new(
+        account.remote_id,
+        session_id,
+        EncryptedAccessToken::new(tokens.acc_tok().unwrap(), &key).unwrap(),
+        EncryptedRefreshToken::new(tokens.ref_tok(), &key).unwrap(),
+        AuthScopes::new(tokens.scopes().unwrap()),
+    );
 
     tether
         .write_tx::<_, _, StashError>(async |tx| {
@@ -243,8 +265,13 @@ async fn test_session_observer() {
     let session_id2 = SessionId::from("remote_id2");
     let tokens = new_test_tokens();
 
-    let mut session =
-        CoreSession::new(user_id1.clone(), session_id1.clone(), &tokens, &key).unwrap();
+    let mut session = CoreSession::new(
+        user_id1.clone(),
+        session_id1.clone(),
+        EncryptedAccessToken::new(tokens.acc_tok().unwrap(), &key).unwrap(),
+        EncryptedRefreshToken::new(tokens.ref_tok(), &key).unwrap(),
+        AuthScopes::new(tokens.scopes().unwrap()),
+    );
 
     tether
         .write_tx::<_, _, StashError>(async |tx| {
@@ -268,8 +295,13 @@ async fn test_session_observer() {
     }
 
     // Create another session
-    let mut session =
-        CoreSession::new(user_id2.clone(), session_id2.clone(), &tokens, &key).unwrap();
+    let mut session = CoreSession::new(
+        user_id2.clone(),
+        session_id2.clone(),
+        EncryptedAccessToken::new(tokens.acc_tok().unwrap(), &key).unwrap(),
+        EncryptedRefreshToken::new(tokens.ref_tok(), &key).unwrap(),
+        AuthScopes::new(tokens.scopes().unwrap()),
+    );
     tether
         .write_tx::<_, _, StashError>(async |tx| {
             session.save(tx).await.expect("failed to store session");

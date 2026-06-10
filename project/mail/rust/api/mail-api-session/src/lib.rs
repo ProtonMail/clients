@@ -4,6 +4,7 @@ pub mod build;
 pub mod challenge;
 pub mod consts;
 pub mod crypto_clock;
+pub mod fork_payload;
 pub mod ids;
 pub mod proton_layers;
 pub mod proton_store;

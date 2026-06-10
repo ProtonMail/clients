@@ -1,5 +1,5 @@
 use crate::protocol::DeviceInfo;
-use crate::protocol::proton::{PostAuthInfoRequest, PostAuthInfoResponse, ProtonAuth as _};
+use crate::protocol::proton::{PostAuthInfoResponse, ProtonAuth as _};
 use derive_more::From;
 use mail_api_shared::ApiServiceResult;
 use mail_muon::common::Sender;
@@ -151,11 +151,7 @@ pub async fn get_auth_info(
     client: &impl Sender<ProtonRequest, ProtonResponse>,
     username: &str,
 ) -> ApiServiceResult<PostAuthInfoResponse> {
-    let request = PostAuthInfoRequest {
-        username: username.to_owned(),
-    };
-
-    client.post_auth_info(request).await
+    client.post_auth_info(Some(username.to_owned())).await
 }
 
 #[cfg(test)]

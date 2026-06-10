@@ -8,6 +8,7 @@ license = "AGPL-3.0-only"
 [dependencies]
 anyhow = { workspace = true }
 async-trait = { workspace = true }
+base64 = { workspace = true }
 bytes = { workspace = true }
 chrono = { workspace = true }
 cookie = { workspace = true }
@@ -20,6 +21,7 @@ mail-account-ids = { workspace = true }
 mail-task-service = { workspace = true }
 parking_lot = { workspace = true }
 proton-crypto-account = { workspace = true, features = ["sql"] }
+proton-crypto-subtle = { workspace = true, features = ["legacy"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serde_repr = { workspace = true }

@@ -223,7 +223,7 @@ pub struct SimpleResponse {
 
 /// The response code indicating the status of the request.
 /// A value of 1000 typically indicates success.
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct ResponseCode(i32);
 
 /// Represents the response to a request for setting up a new non-subscriber user address.
@@ -677,7 +677,7 @@ pub enum TwoFaEnabled {
     Both = 3,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 #[serde(rename_all = "PascalCase")]
 pub struct RegisteredKey {
     pub attestation_format: String,
@@ -686,14 +686,14 @@ pub struct RegisteredKey {
     pub name: String,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 #[serde(rename_all = "PascalCase")]
 pub struct Fido2 {
     pub authentication_options: serde_json::Value,
     pub registered_keys: Vec<RegisteredKey>,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 #[serde(rename_all = "PascalCase")]
 pub struct TwoFaInfo {
     pub enabled: TwoFaEnabled,
@@ -701,7 +701,7 @@ pub struct TwoFaInfo {
     pub fido2: Fido2,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 #[serde(rename_all = "PascalCase")]
 pub struct AuthResponse {
     pub code: ResponseCode,

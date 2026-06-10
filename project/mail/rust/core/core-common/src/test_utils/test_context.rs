@@ -1,5 +1,8 @@
-use crate::datatypes::ApiConfig;
-use crate::db::account::{CoreAccount, CoreSession, SessionEncryptionKey};
+use crate::datatypes::{ApiConfig, AuthScopes};
+use crate::db::account::{
+    CoreAccount, CoreSession, EncryptedAccessToken, EncryptedKeySecret, EncryptedRefreshToken,
+    SessionEncryptionKey,
+};
 use crate::device::DynDeviceInfoProvider;
 use crate::event_loop::EventPollMode;
 use crate::event_loop::event_source::CoreEventSource;
@@ -293,13 +296,17 @@ impl TestContext {
                     );
 
                     // Create a fake session.
-                    let session = CoreSession::new(user_id.clone(), session_id, &tokens, &key)
-                        .expect("session should be created")
-                        .with_key_secret(&user_key_secret, &key)
-                        .expect("key secret should be set")
-                        .with_save(tx)
-                        .await
-                        .expect("fake session should save");
+                    let session = CoreSession::new(
+                        user_id.clone(),
+                        session_id,
+                        EncryptedAccessToken::new(tokens.acc_tok().unwrap(), &key).unwrap(),
+                        EncryptedRefreshToken::new(tokens.ref_tok(), &key).unwrap(),
+                        AuthScopes::new(tokens.scopes().unwrap()),
+                    )
+                    .with_key_secret(EncryptedKeySecret::new(&user_key_secret, &key).unwrap())
+                    .with_save(tx)
+                    .await
+                    .expect("fake session should save");
                     Ok((account, session))
                 })
                 .await

@@ -6567,6 +6567,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "base64",
  "bytes",
  "chrono",
  "cookie",
@@ -6582,6 +6583,7 @@ dependencies = [
  "mail-task-service",
  "parking_lot",
  "proton-crypto-account",
+ "proton-crypto-subtle",
  "serde",
  "serde_json",
  "serde_repr",
@@ -7571,6 +7573,7 @@ name = "mail-tui"
 version = "0.4.1"
 dependencies = [
  "anyhow",
+ "base64",
  "chrono",
  "clap",
  "copypasta",

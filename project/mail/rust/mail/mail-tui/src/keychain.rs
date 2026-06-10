@@ -29,36 +29,46 @@ impl AppKeyChain {
         Ok(())
     }
 
-    fn kind_to_entry(&self, kind: KeyChainEntryKind) -> &Arc<keyring::Entry> {
+    fn kind_to_entry(&self, kind: KeyChainEntryKind) -> Option<&Arc<keyring::Entry>> {
         match kind {
-            KeyChainEntryKind::EncryptionKey => &self.session_key,
-            KeyChainEntryKind::DeviceKey => &self.device_key,
-            KeyChainEntryKind::PinHash => panic!("TUI does not support pin protection yet"),
+            KeyChainEntryKind::EncryptionKey => Some(&self.session_key),
+            KeyChainEntryKind::DeviceKey => Some(&self.device_key),
+            KeyChainEntryKind::PinHash => None,
         }
     }
 }
 
 impl KeyChain for AppKeyChain {
     fn store_entry(&self, kind: KeyChainEntryKind, key: SecretString) -> Result<(), KeyChainError> {
-        self.kind_to_entry(kind)
+        let Some(entry) = self.kind_to_entry(kind) else {
+            return Err(KeyChainError::new(
+                anyhow!("TUI does not support pin protection yet").into(),
+            ));
+        };
+
+        entry
             .set_password(key.expose_secret())
             .map_err(|e| KeyChainError::new(anyhow!(e).into()))?;
+
         Ok(())
     }
 
     fn delete_entry(&self, kind: KeyChainEntryKind) -> Result<(), KeyChainError> {
-        if let Err(e) = self.kind_to_entry(kind).delete_credential()
+        if let Some(entry) = self.kind_to_entry(kind)
+            && let Err(e) = entry.delete_credential()
             && !matches!(e, keyring::Error::NoEntry)
         {
             return Err(KeyChainError::new(anyhow!(e).into()));
         }
+
         Ok(())
     }
 
     fn load_entry(&self, kind: KeyChainEntryKind) -> Result<Option<SecretString>, KeyChainError> {
-        match self.kind_to_entry(kind).get_password() {
-            Ok(str) => Ok(Some(str.into())),
-            Err(e) => match e {
+        match self.kind_to_entry(kind).map(|e| e.get_password()) {
+            None => Ok(None),
+            Some(Ok(str)) => Ok(Some(str.into())),
+            Some(Err(e)) => match e {
                 keyring::Error::NoEntry => Ok(None),
                 _ => Err(KeyChainError::new(anyhow!(e).into())),
             },

@@ -8,12 +8,13 @@ use base64::Engine as _;
 use base64::engine::general_purpose;
 use futures::TryFutureExt;
 use mail_api_session::auth::{KeySecret, UserKeySecret};
+use mail_api_session::fork_payload::decode_fork_payload;
 use mail_api_session::session::SessionParts;
 use mail_api_session::store::{Store, UserData};
 use mail_muon::client::flow::{ForkFlowResult, WithCodeFlow, WithCodePollFlow};
 use mail_observability::{PreLoginMetricRecorder, metric};
 use proton_crypto_account::proton_crypto;
-use proton_crypto_subtle::aead::{AesGcmCiphertext, AesGcmKey};
+use proton_crypto_subtle::aead::AesGcmKey;
 use regex::Regex;
 use secrecy::ExposeSecret;
 use serde::{Deserialize, Serialize};
@@ -71,14 +72,22 @@ impl WantQrConfirmation {
         };
         info!("Host Device confirmed QR login");
 
-        let passphrase = Self::decode_payload(payload, &self.encryption_key)
-            .inspect_err(|err| {
-                self.observability.record(QrLoginPostLogin {
-                    status: QrLoginPostLoginStatus::PayloadDecodeFailure,
-                });
-                error!("{err}");
-            })
-            .map_err(|_| LoginError::QRLoginEncoding)?;
+        let passphrase = match payload.as_deref() {
+            Some([]) | None => {
+                warn!("No fork payload received, assuming empty passphrase");
+                Vec::new()
+            }
+
+            Some(payload) => decode_fork_payload(payload, self.encryption_key.as_bytes())
+                .inspect_err(|err| {
+                    self.observability.record(QrLoginPostLogin {
+                        status: QrLoginPostLoginStatus::PayloadDecodeFailure,
+                    });
+                    error!("{err}");
+                })
+                .map_err(|_| LoginError::QRLoginEncoding)?,
+        };
+
         let user = client
             .get_users()
             .await
@@ -89,6 +98,7 @@ impl WantQrConfirmation {
             })
             .map(|res| res.user)
             .map_err(LoginError::UserFetch)?;
+
         let settings = client
             .get_settings()
             .map_ok(|res| res.user_settings)
@@ -136,53 +146,6 @@ impl WantQrConfirmation {
         };
         info!("QR Login was successful");
         Ok(State::Complete(Complete::new(client, data, Some(user))))
-    }
-
-    fn decode_payload(
-        payload: Option<Vec<u8>>,
-        encryption_key: &KeySecret,
-    ) -> Result<Vec<u8>, String> {
-        let Some(payload) = payload.filter(|it| !it.is_empty()) else {
-            return Ok(Vec::default());
-        };
-        let key = AesGcmKey::from_bytes(encryption_key.as_bytes())
-            .map_err(|err| format!("Invalid key: {err}"))?;
-
-        // At this point, it's unknown whether the payload was encrypted in legacy or non-legacy mode, so unfortunately, we have to try both.
-        // Try legacy decryption first
-        info!("Try legacy decryption");
-        let decrypted_payload_bytes = {
-            let cipthertext = AesGcmCiphertext::decode_legacy(&payload)
-                .map_err(|err| format!("Failed to decode legacy payload: {err}"))?;
-
-            // cipthertext -> bytes
-            key.decrypt_legacy(cipthertext, None)
-                .map_err(|err| format!("Failed to decrypt legacy payload: {err}"))
-        };
-        // Then non-legacy
-        let decrypted_payload_bytes = decrypted_payload_bytes.or_else(|_err| {
-            info!("Legacy decryption failed, let's try non-legacy one");
-
-            let cipthertext = AesGcmCiphertext::decode(&payload)
-                .map_err(|err| format!("Failed to decode payload: {err}"))?;
-
-            // cipthertext -> bytes
-            key.decrypt(cipthertext, None)
-                .map_err(|err| format!("Failed to decrypt payload: {err}"))
-        })?;
-        // bytes -> UTF8 String
-        let decrypted_payload = String::from_utf8(decrypted_payload_bytes)
-            .map_err(|err| format!("Failed to parse decrypted payload to valid UTF8: {err}"))?;
-        // UTF8 String -> JSON
-        let json: serde_json::Value = serde_json::from_str(&decrypted_payload)
-            .map_err(|err| format!("Failed to parse payload into JSON: {err}"))?;
-        // JSON keyPassword field
-        let key_password = json
-            .get("keyPassword")
-            .ok_or(String::from("Missing keyPassword field"))?
-            .as_str()
-            .ok_or(String::from("keyPassword  field is not a string"))?;
-        Ok(key_password.as_bytes().to_vec())
     }
 }
 

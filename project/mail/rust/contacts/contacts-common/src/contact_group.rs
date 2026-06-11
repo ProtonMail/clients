@@ -7,7 +7,7 @@ use mail_core_api::service::ApiServiceError;
 use mail_shared_types::{Action, ModelIdExtension};
 use mail_stash::exports::{FromSql, FromSqlResult, SqliteError, ToSql, ToSqlOutput, ValueRef};
 use mail_stash::macros::Model;
-use mail_stash::orm::Model;
+use mail_stash::orm::{Model, ModelHooks};
 use mail_stash::stash::{StashError, WriteTx};
 use mail_stash::{UserDb, rusqlite};
 use serde::{Deserialize, Serialize};
@@ -78,6 +78,7 @@ impl ToSql for ContactGroupColor {
 #[derive(Clone, Debug, Eq, Model, PartialEq)]
 #[TableName("contact_group")]
 #[Database(UserDb)]
+#[ModelHooks]
 pub struct ContactGroup {
     #[IdField(autoincrement)]
     pub local_id: Option<LocalContactGroupId>,
@@ -314,6 +315,28 @@ impl ContactGroup {
     }
 }
 
+impl ModelHooks for ContactGroup {
+    fn after_load(&mut self, _: &rusqlite::Connection) -> mail_stash::stash::StashResult<()> {
+        Ok(())
+    }
+
+    fn before_save(
+        &mut self,
+        tx: &rusqlite::Transaction<'_>,
+    ) -> mail_stash::stash::StashResult<()> {
+        if let Some(remote_id) = &self.remote_id
+            && let Some(local_id) = Self::remote_id_counterpart_sync(remote_id, tx)?
+        {
+            self.local_id = Some(local_id);
+        }
+        Ok(())
+    }
+
+    fn after_save(&mut self, _: &rusqlite::Transaction<'_>) -> mail_stash::stash::StashResult<()> {
+        Ok(())
+    }
+}
+
 pub(crate) const LINK_CONTACT_GROUPS_CONTATCS_QUERY: &str = indoc! {
     "INSERT OR IGNORE INTO contact_contact_groups (local_contact_id, local_contact_group_id)
     SELECT ? AS local_contact_id , local_id as local_contact_group_id FROM contact_group WHERE contact_group.remote_id =?",
@@ -323,3 +346,40 @@ pub(crate) const LINK_CONTACT_GROUPS_EMAILS_QUERY: &str = indoc! {"
     INSERT OR IGNORE INTO contact_email_groups (local_contact_email_id, local_contact_group_id)
     SELECT ? AS local_contact_email_id , local_id as local_contact_group_id FROM contact_group WHERE contact_group.remote_id =?",
 };
+
+#[cfg(test)]
+mod test {
+    use mail_shared_types::ModelExtension;
+
+    use super::*;
+    use crate::test_utils::new_contact_test_connection;
+
+    #[tokio::test]
+    async fn contact_group_update_by_remote_id() {
+        let db = new_contact_test_connection().await;
+        let id = ContactGroupId::from("CG_ID");
+
+        let mut group = ContactGroup {
+            remote_id: Some(id.clone()),
+            ..ContactGroup::test_default()
+        };
+
+        let mut group2 = ContactGroup {
+            remote_id: Some(id),
+            name: "Group2".into(),
+            ..ContactGroup::test_default()
+        };
+
+        let mut tether = db.connection();
+        tether
+            .write_tx(async |tx| {
+                group.save(tx).await?;
+                group2.save(tx).await
+            })
+            .await
+            .unwrap();
+
+        group.reload(&tether).await.unwrap();
+        assert_eq!(group.name, group2.name);
+    }
+}

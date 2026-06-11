@@ -33,11 +33,15 @@ members = [
     "project/calendar/rust/calendar-lattice",
     "project/calendar/rust/calendar-loop",
     "project/calendar/rust/calendar-mail-lattice",
+    "project/calendar/rust/calendar-mini-month",
     "project/calendar/rust/calendar-network",
     "project/calendar/rust/calendar-network-fake",
     "project/calendar/rust/calendar-network-muon",
     "project/calendar/rust/calendar-queue",
     "project/calendar/rust/calendar-seed",
+    "project/calendar/rust/calendar-time",
+    "project/calendar/rust/calendar-time-fake",
+    "project/calendar/rust/calendar-time-jiff",
     "project/calendar/rust/calendar-tui",
     "project/calendar/rust/notify-waker",
     "project/contact/rust/contact-avatar",
@@ -393,12 +397,16 @@ calendar-keychain = { path = "project/calendar/rust/calendar-keychain" }
 calendar-lattice = { path = "project/calendar/rust/calendar-lattice" }
 calendar-loop = { path = "project/calendar/rust/calendar-loop" }
 calendar-mail-lattice = { path = "project/calendar/rust/calendar-mail-lattice" }
+calendar-mini-month = { path = "project/calendar/rust/calendar-mini-month" }
 calendar-network = { path = "project/calendar/rust/calendar-network" }
 calendar-network-fake = { path = "project/calendar/rust/calendar-network-fake" }
 calendar-network-muon = { path = "project/calendar/rust/calendar-network-muon" }
 calendar-queue = { path = "project/calendar/rust/calendar-queue" }
 calendar-seed = { path = "project/calendar/rust/calendar-seed" }
 calendar-telemetry = { path = "project/calendar/rust/calendar-telemetry" }
+calendar-time = { path = "project/calendar/rust/calendar-time" }
+calendar-time-fake = { path = "project/calendar/rust/calendar-time-fake" }
+calendar-time-jiff = { path = "project/calendar/rust/calendar-time-jiff" }
 calendar-tui = { path = "project/calendar/rust/calendar-tui" }
 notify-waker = { path = "project/calendar/rust/notify-waker" }
 

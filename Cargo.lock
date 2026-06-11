@@ -1305,9 +1305,11 @@ dependencies = [
  "calendar-lattice",
  "calendar-loop",
  "calendar-mail-lattice",
+ "calendar-mini-month",
  "calendar-network",
  "calendar-seed",
  "calendar-telemetry",
+ "calendar-time",
  "contact-avatar",
  "crux_core 0.17.0 (git+https://github.com/Patryk27/crux?branch=0.17-patched)",
  "facet",
@@ -1343,6 +1345,8 @@ dependencies = [
  "calendar-network",
  "calendar-network-fake",
  "calendar-network-muon",
+ "calendar-time",
+ "calendar-time-jiff",
  "console_error_panic_hook",
  "crux_core 0.17.0 (git+https://github.com/Patryk27/crux?branch=0.17-patched)",
  "facet",
@@ -1468,6 +1472,7 @@ dependencies = [
  "calendar-lattice",
  "calendar-network",
  "calendar-network-fake",
+ "calendar-time",
  "contact-avatar",
  "facet",
  "insta",
@@ -1587,6 +1592,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "calendar-mini-month"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "calendar-access",
+ "calendar-api",
+ "calendar-bootstrap",
+ "calendar-crypto",
+ "calendar-database",
+ "calendar-database-diesel",
+ "calendar-database-test-utils",
+ "calendar-lattice",
+ "calendar-network-fake",
+ "calendar-time",
+ "calendar-time-fake",
+ "facet",
+ "insta",
+ "jiff",
+ "lattice",
+ "parking_lot",
+ "pretty_assertions",
+ "proton-crypto-account",
+ "serde",
+ "tokio",
+]
+
+[[package]]
 name = "calendar-network"
 version = "0.1.0"
 dependencies = [
@@ -1686,6 +1718,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "calendar-time"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "facet",
+ "jiff",
+ "serde",
+]
+
+[[package]]
+name = "calendar-time-fake"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "calendar-time",
+]
+
+[[package]]
+name = "calendar-time-jiff"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "calendar-time",
+ "jiff",
+]
+
+[[package]]
 name = "calendar-tui"
 version = "0.1.0"
 dependencies = [
@@ -1696,9 +1755,11 @@ dependencies = [
  "calendar-events",
  "calendar-ical",
  "calendar-keychain",
+ "calendar-mini-month",
  "calendar-network",
  "calendar-network-muon",
  "calendar-telemetry",
+ "calendar-time-jiff",
  "clap",
  "crossterm",
  "crux_core 0.17.0 (git+https://github.com/Patryk27/crux?branch=0.17-patched)",

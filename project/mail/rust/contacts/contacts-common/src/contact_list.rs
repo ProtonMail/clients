@@ -19,6 +19,7 @@ use unicode_segmentation::UnicodeSegmentation;
 use crate::contact::Contact;
 use crate::contact_email::ContactEmail;
 
+pub use contact_device::DeviceContact;
 pub use contact_list::{
     ContactEmailItem, ContactGroupItem, ContactItem, ContactItemType, GroupedContacts,
 };
@@ -140,21 +141,6 @@ pub fn build_grouped_contacts(
         .collect();
 
     GroupedContacts::from_contacts_and_groups(pairs, db_groups)
-}
-
-/// Device contact feeded by the mobile/web application.
-/// Used as an input for generating list of contact suggestions ([`ContactSuggestion`])
-///
-#[derive(Debug, Clone, PartialEq, Default)]
-pub struct DeviceContact {
-    /// The field represents unique key identifier used by the user to distinguish elements in the array
-    pub key: String,
-
-    /// The field represents the name of the contact
-    pub name: String,
-
-    /// List of email addresses assigned to the contact. That list has an arbitrary order given by the user
-    pub emails: Vec<PrivateEmail>,
 }
 
 /// Collection of sorted contact suggestions
@@ -363,16 +349,16 @@ impl ContactSuggestion {
 
     fn new_device_contact(contact: DeviceContact) -> FollowingSuggestion {
         FollowingSuggestion::DeviceContact {
-            key: contact.key.clone(),
-            name: contact.name.clone(),
+            key: contact.id.clone(),
+            name: contact.display_name.clone(),
             suggestions: contact
                 .emails
                 .into_iter()
                 .enumerate()
                 .map(|(idx, email)| Self {
-                    key: format!("device-contact-email/{}-{}", contact.key, idx),
-                    avatar_information: AvatarInformation::from(&contact.name),
-                    name: contact.name.clone(),
+                    key: format!("device-contact-email/{}-{}", contact.id, idx),
+                    avatar_information: AvatarInformation::from(&contact.display_name),
+                    name: contact.display_name.clone(),
                     kind: ContactSuggestionKind::DeviceContact(DeviceContactSuggestion { email }),
                 })
                 .collect(),
@@ -927,7 +913,7 @@ mod tests {
                 crate::label!(local_id: crate::lcgid!(910), remote_id: crate::rcgid!("m.schur.productions"), name: "M. Schur Productions".into()),
             ],
             device_contacts: vec![
-                crate::device_contact!(key: "000".to_string(), name: "Aunt Molly".to_string(), emails: vec![
+                crate::device_contact!(id:"000".to_string(), display_name:"Aunt Molly".to_string(), emails: vec![
                     "molly@family.com".into(),
                     "badass@aunt.com".into(),
                 ])
@@ -954,10 +940,10 @@ mod tests {
                 crate::label!(local_id: crate::lcgid!(910), remote_id: crate::rcgid!("m.schur.productions"), name: "M. Schur Productions".into()),
             ],
             device_contacts: vec![
-                crate::device_contact!(key: "000".to_string(), name: "Aunt Molly".to_string(), emails: vec![
+                crate::device_contact!(id:"000".to_string(), display_name:"Aunt Molly".to_string(), emails: vec![
                     "molly@family.com".into(),
                 ]),
-                crate::device_contact!(key: "001".to_string(), name: "Aunt Molly".to_string(), emails: vec![
+                crate::device_contact!(id:"001".to_string(), display_name:"Aunt Molly".to_string(), emails: vec![
                     "badass@aunt.com".into(),
                 ])
             ]
@@ -986,16 +972,16 @@ mod tests {
                 crate::label!(local_id: crate::lcgid!(910), remote_id: crate::rcgid!("m.schur.productions"), name: "M. Schur Productions".to_string()),
             ],
             device_contacts: vec![
-                crate::device_contact!(key: "000".to_string(), name: "Aunt Molly".to_string(), emails: vec![
+                crate::device_contact!(id:"000".to_string(), display_name:"Aunt Molly".to_string(), emails: vec![
                     "molly@family.com".into(),
                 ]),
-                crate::device_contact!(key: "001".to_string(), name: "Aunt Molly".to_string(), emails: vec![
+                crate::device_contact!(id:"001".to_string(), display_name:"Aunt Molly".to_string(), emails: vec![
                     "badass@aunt.com".into(),
                 ]),
-                crate::device_contact!(key: "002".to_string(), name: "Boss".to_string(), emails: vec![
+                crate::device_contact!(id:"002".to_string(), display_name:"Boss".to_string(), emails: vec![
                     "m.scott@pm.me".into()
                 ]),
-                crate::device_contact!(key: "003".to_string(), name: "Aunt Molly (Copy)".to_string(), emails: vec![
+                crate::device_contact!(id:"003".to_string(), display_name:"Aunt Molly (Copy)".to_string(), emails: vec![
                     "badass@aunt.com".into(),
                 ]),
             ]
@@ -1246,10 +1232,10 @@ mod tests {
                     crate::label!(remote_id: crate::rcgid!("m.schur.productions"), name: "M. Schur Productions".to_string()),
                 ],
                 device_contacts: vec![
-                    crate::device_contact!(key: "000".to_string(), name: "Aunt Molly".to_string(), emails: vec![
+                    crate::device_contact!(id:"000".to_string(), display_name:"Aunt Molly".to_string(), emails: vec![
                         "molly@family.com".into(),
                     ]),
-                    crate::device_contact!(key: "001".to_string(), name: "Molly".to_string(), emails: vec![
+                    crate::device_contact!(id:"001".to_string(), display_name:"Molly".to_string(), emails: vec![
                         "badass@aunt.com".into(),
                     ]),
                 ],

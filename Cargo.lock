@@ -2217,6 +2217,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "contact-device"
+version = "0.1.0"
+dependencies = [
+ "mail-proton-ids",
+]
+
+[[package]]
 name = "contact-lattice"
 version = "0.1.0"
 dependencies = [
@@ -6830,6 +6837,7 @@ dependencies = [
  "bytes",
  "contact-avatar",
  "contact-database",
+ "contact-device",
  "contact-lattice",
  "contact-list",
  "contact-service",

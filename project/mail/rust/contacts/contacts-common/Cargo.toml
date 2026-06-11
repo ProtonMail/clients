@@ -46,6 +46,7 @@ contact-database = { workspace = true }
 contact-lattice = { workspace = true }
 contact-list = { workspace = true }
 contact-service = { workspace = true }
+contact-device = { workspace = true }
 mail-db = { workspace = true }
 
 [dev-dependencies]

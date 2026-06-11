@@ -42,6 +42,7 @@ members = [
     "project/calendar/rust/notify-waker",
     "project/contact/rust/contact-avatar",
     "project/contact/rust/contact-database",
+    "project/contact/rust/contact-device",
     "project/contact/rust/contact-lattice",
     "project/contact/rust/contact-list",
     "project/contact/rust/contact-service",
@@ -911,6 +912,9 @@ path = "project/contact/rust/contact-list"
 
 [workspace.dependencies.contact-service]
 path = "project/contact/rust/contact-service"
+
+[workspace.dependencies.contact-device]
+path = "project/contact/rust/contact-device"
 
 [patch.proton]
 mail-muon = { path = "project/mail/rust/forks/muon" }

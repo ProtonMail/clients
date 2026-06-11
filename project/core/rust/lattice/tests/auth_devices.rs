@@ -16,6 +16,7 @@ use lattice::{
         put_auth_devices_device_id_admin::LtAuthPutDevicesDeviceIDAdminReq,
         put_auth_devices_device_id_reject::LtAuthPutDevicesDeviceIDRejectReq,
     },
+    core::LtCoreAuthDeviceId,
     details::AccessTokenWithInsufficientScopeErrorDetails,
 };
 
@@ -43,7 +44,7 @@ async fn test_post_auth_devices_associate() {
     let session = generate_muon_session().await;
     let res = session
         .send_lt(LtAuthPostDevicesAssociateReq {
-            device_id: "1234567890".to_string(),
+            device_id: LtCoreAuthDeviceId("1234567890".to_string()),
             device_token: "1234567890".to_string(),
         })
         .await;
@@ -58,7 +59,7 @@ async fn test_post_auth_devices_associate() {
     assert!(tfa.is_none(), "{tfa:?} is expected to be None");
     let res = session
         .send_lt(LtAuthPostDevicesAssociateReq {
-            device_id: "1234567890".to_string(),
+            device_id: LtCoreAuthDeviceId("1234567890".to_string()),
             device_token: "1234567890".to_string(),
         })
         .await;
@@ -96,7 +97,9 @@ async fn test_post_auth_devices_create() {
 async fn test_delete_auth_devices() {
     let session = generate_muon_session().await;
     let res = session
-        .send_lt(LtAuthDeleteDevicesReq::DeviceID("1234567890".to_string()))
+        .send_lt(LtAuthDeleteDevicesReq::DeviceID(LtCoreAuthDeviceId(
+            "1234567890".to_string(),
+        )))
         .await;
     assert_api_err!(&res,
         LtApiResponseError::AccessTokenWithInsufficientScope(LtApiResponseErrorInfo {
@@ -108,7 +111,9 @@ async fn test_delete_auth_devices() {
     let (session, tfa) = login_muon_session(session, "plus", "plus").await.unwrap();
     assert!(tfa.is_none(), "{tfa:?} is expected to be None");
     let res = session
-        .send_lt(LtAuthDeleteDevicesReq::DeviceID("1234567890".to_string()))
+        .send_lt(LtAuthDeleteDevicesReq::DeviceID(LtCoreAuthDeviceId(
+            "1234567890".to_string(),
+        )))
         .await;
     assert_api_err!(&res, LtApiResponseError::InvalidID(_));
     let res = session.send_lt(LtAuthDeleteDevicesReq::All).await;
@@ -120,7 +125,7 @@ async fn test_post_auth_devices_device_id() {
     let session = generate_muon_session().await;
     let res = session
         .send_lt(LtAuthPostDevicesDeviceIDReq {
-            device_id: "1234567890".to_string(),
+            device_id: LtCoreAuthDeviceId("1234567890".to_string()),
             encrypted_secret: Sensitive::new("secret".to_string()),
         })
         .await;
@@ -135,7 +140,7 @@ async fn test_post_auth_devices_device_id() {
     assert!(tfa.is_none(), "{tfa:?} is expected to be None");
     let res = session
         .send_lt(LtAuthPostDevicesDeviceIDReq {
-            device_id: "1234567890".to_string(),
+            device_id: LtCoreAuthDeviceId("1234567890".to_string()),
             encrypted_secret: Sensitive::new("secret".to_string()),
         })
         .await;
@@ -147,7 +152,7 @@ async fn test_put_auth_devices_device_id_admin() {
     let session = generate_muon_session().await;
     let res = session
         .send_lt(LtAuthPutDevicesDeviceIDAdminReq {
-            device_id: "1234567890".to_string(),
+            device_id: LtCoreAuthDeviceId("1234567890".to_string()),
         })
         .await;
     assert_api_err!(&res,
@@ -161,7 +166,7 @@ async fn test_put_auth_devices_device_id_admin() {
     assert!(tfa.is_none(), "{tfa:?} is expected to be None");
     let res = session
         .send_lt(LtAuthPutDevicesDeviceIDAdminReq {
-            device_id: "1234567890".to_string(),
+            device_id: LtCoreAuthDeviceId("1234567890".to_string()),
         })
         .await;
     assert_api_err!(&res, LtApiResponseError::InvalidID(_));
@@ -172,7 +177,7 @@ async fn test_put_auth_devices_device_id_reject() {
     let session = generate_muon_session().await;
     let res = session
         .send_lt(LtAuthPutDevicesDeviceIDRejectReq {
-            device_id: "1234567890".to_string(),
+            device_id: LtCoreAuthDeviceId("1234567890".to_string()),
         })
         .await;
     assert_api_err!(&res,
@@ -186,7 +191,7 @@ async fn test_put_auth_devices_device_id_reject() {
     assert!(tfa.is_none(), "{tfa:?} is expected to be None");
     let res = session
         .send_lt(LtAuthPutDevicesDeviceIDRejectReq {
-            device_id: "1234567890".to_string(),
+            device_id: LtCoreAuthDeviceId("1234567890".to_string()),
         })
         .await;
     assert_api_err!(&res, LtApiResponseError::InvalidID(_));

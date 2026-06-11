@@ -31,7 +31,7 @@ pub mod post_saml_setup_fields;
 pub mod post_validate_email;
 pub mod post_validate_phone;
 pub mod put_core_address;
-pub mod put_domains;
+pub mod put_domain_flags;
 pub mod put_keys_private;
 pub mod put_organizations_keys_signature;
 pub mod put_users_password;
@@ -43,9 +43,7 @@ pub use crate::auth::devices::{LtAuthDevice, LtAuthDeviceState};
 pub use account_enums::{
     LtCoreDomainVerifyState, LtCoreMemberOrgKeyStatus, LtCoreMemberState, LtCoreSsoType,
 };
-pub use addresses::{
-    ADDRESSES_LIST_MAX_PAGE_SIZE, LtCoreAddressesListQuery, LtCoreAddressesListRes,
-};
+pub use addresses::{LtCoreAddressesListQuery, LtCoreAddressesListRes};
 pub use get_members::{LtCoreMemberListAddress, LtCoreMemberListUnprivatization};
 pub use ids::{LtCoreAuthDeviceId, LtCoreDomainId, LtCoreMemberEncId};
 pub use members::addresses::LtCoreGetMembersMemberIDAddressesReq;
@@ -112,7 +110,7 @@ impl From<proton_crypto_account::keys::LocalSignedKeyList> for LtCoreSignedKeyLi
 pub struct LtCoreAddressKeyInput {
     /// The address ID.
     #[cfg_attr(feature = "serde", serde(rename = "AddressID"))]
-    pub address_id: String,
+    pub address_id: LtAuthAddressId,
 
     /// The private key for the address.
     pub private_key: Sensitive<String>,

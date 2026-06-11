@@ -1,15 +1,12 @@
 //! Shared atlas setup for SSO + org tests (Pass Business admin, domain, SAML IdP fields).
 
-use std::num::NonZeroU32;
-
-use lattice::LtSlimApiPageQuery;
 use lattice::core::get_domain::{LtCoreGetDomainReq, LtCoreGetDomainRes};
-use lattice::core::get_domains::{LtCoreGetDomainsReq, LtCoreGetDomainsRes, MAX_PAGE_SIZE};
-use lattice::core::get_members::{LtCoreGetMembersReq, LtCoreGetMembersRes};
-use lattice::core::post_domains::LtCoreDomainOutput;
+use lattice::core::get_domains::LtCoreGetDomainsReq;
+use lattice::core::post_domains::{LtCoreDomainOutput, LtCorePostDomainsReq};
 use lattice::core::post_saml_setup_fields::{
     LtCorePostSamlSetupFieldsReq, LtCorePostSamlSetupFieldsRes,
 };
+use lattice::core::put_domain_flags::LtCorePutDomainFlagsReq;
 use lattice::core::user_settings::{LtCoreGetSettingsReq, LtCoreGetSettingsRes};
 use lattice::core::{LtCoreDomainId, LtCoreDomainVerifyState, LtCoreSsoType};
 use lattice_quark::payments::subscribed_user_seed::{
@@ -59,16 +56,8 @@ pub async fn create_organization(
         .0
 }
 
-async fn get_domains_lt(session: &Session) -> LtCoreGetDomainsRes {
-    let page_size = NonZeroU32::new(MAX_PAGE_SIZE).expect("valid page size");
-    session
-        .send_lt(LtCoreGetDomainsReq {
-            pagination: LtSlimApiPageQuery::new()
-                .with_pagination(Some(0), Some(page_size))
-                .expect("MAX_PAGE_SIZE is valid page size"),
-        })
-        .await
-        .unwrap()
+async fn get_domains_lt(session: &Session) -> Vec<LtCoreDomainOutput> {
+    session.fetch_all_pages(LtCoreGetDomainsReq).await.unwrap()
 }
 
 pub async fn create_domain_quark(
@@ -96,6 +85,42 @@ async fn get_domain_by_id_lt(session: &Session, domain_id: &LtCoreDomainId) -> L
         .unwrap()
 }
 
+pub async fn set_domain_allowed_for_sso(session: &Session, domain_id: &LtCoreDomainId) {
+    let result = session
+        .send_lt(LtCorePutDomainFlagsReq {
+            domain_id: domain_id.clone(),
+            allowed_for_mail: None,
+            allowed_for_sso: Some(true),
+        })
+        .await;
+    assert!(
+        result.is_ok(),
+        "PUT /core/v4/domains/{domain_id}/flags with AllowedForSSO failed: {result:?}"
+    );
+}
+
+/// Create org domain (POST with SSO intent, or Quark). Does not configure SAML or flags after
+/// activation — use [`setup_org_sso_domain`] for the full harness sequence.
+pub async fn create_org_sso_domain(
+    session: &Session,
+    domain_name: &str,
+    organization_id: u64,
+) -> LtCoreDomainOutput {
+    if let Ok(res) = session
+        .send_lt(LtCorePostDomainsReq {
+            name: domain_name.to_string(),
+            allowed_for_mail: Some(false),
+            allowed_for_sso: Some(true),
+        })
+        .await
+    {
+        return res.domain;
+    }
+
+    create_domain_quark(session, domain_name, organization_id).await;
+    get_domain_lt(session, domain_name).await
+}
+
 pub async fn set_sso_domain(
     session: &Session,
     domain_id: &LtCoreDomainId,
@@ -115,7 +140,6 @@ pub async fn set_sso_domain(
 pub async fn get_domain_lt(session: &Session, domain_name: &str) -> LtCoreDomainOutput {
     let domains = get_domains_lt(session).await;
     domains
-        .domains
         .into_iter()
         .find(|d| d.domain_name == domain_name)
         .unwrap()
@@ -129,11 +153,34 @@ pub async fn refresh_domain_good(
     get_domain_by_id_lt(session, domain_id).await
 }
 
-pub async fn get_members(session: &Session) -> LtCoreGetMembersRes {
-    session
-        .send_lt(LtCoreGetMembersReq::default())
-        .await
-        .unwrap()
+/// After SAML + verify Good: set `DomainFlags::Sso` via `PUT …/flags` if needed, then assert
+/// `sso-intent`.
+pub async fn ensure_domain_sso_intent(session: &Session, domain_id: &LtCoreDomainId) {
+    let mut refreshed = refresh_domain_good(session, domain_id).await;
+    assert_domain_verify_good(&refreshed);
+
+    if !refreshed.domain.flags.sso_intent {
+        set_domain_allowed_for_sso(session, domain_id).await;
+        refreshed = refresh_domain_good(session, domain_id).await;
+    }
+
+    assert!(
+        refreshed.domain.flags.sso_intent,
+        "expected Flags.sso-intent after AllowedForSSO + SAML; domain={:?}",
+        refreshed.domain.domain_name
+    );
+}
+
+/// Create domain, SAML IdP fields, DNS verify Good, and `sso-intent` flag.
+pub async fn setup_org_sso_domain(
+    session: &Session,
+    domain_name: &str,
+    organization_id: u64,
+) -> LtCoreDomainOutput {
+    let domain = create_org_sso_domain(session, domain_name, organization_id).await;
+    set_sso_domain(session, &domain.id).await;
+    ensure_domain_sso_intent(session, &domain.id).await;
+    refresh_domain_good(session, &domain.id).await.domain
 }
 
 pub async fn get_user_settings(session: &Session) -> LtCoreGetSettingsRes {

@@ -15,7 +15,6 @@
 mod common;
 
 use lattice::auth::devices::get_auth_devices::LtAuthGetDevicesReq;
-use lattice::core::addresses::LtCoreAddressesListQuery;
 use lattice::core::get_members::LtCoreGetMembersReq;
 use lattice::core::get_members_me_unprivatize::LtCoreGetMembersMeUnprivatizeReq;
 use lattice::core::get_organizations_keys::LtCoreGetOrganizationsKeysReq;
@@ -94,11 +93,10 @@ async fn test_unprivatize_admin_sets_member_me_endpoint_to_pending() {
 
     let members = org
         .admin_session
-        .send_lt(LtCoreGetMembersReq::default())
+        .fetch_all_pages(LtCoreGetMembersReq)
         .await
         .expect("GET /members");
     let sso_member = members
-        .members
         .iter()
         .find(|m| m.name == subuser_with_domain)
         .expect("SSO user listed as org member");
@@ -114,7 +112,7 @@ async fn test_unprivatize_admin_sets_member_me_endpoint_to_pending() {
         .admin_session
         .send_lt(LtCoreGetMembersMemberIDAddressesReq {
             member_id: sso_member_id.clone(),
-            query: LtCoreAddressesListQuery::default(),
+            query: Default::default(),
         })
         .await
         .expect("GET /members/{id}/addresses");
@@ -124,7 +122,7 @@ async fn test_unprivatize_admin_sets_member_me_endpoint_to_pending() {
         .admin_session
         .send_lt(LtCoreGetMembersMemberIDAddressesReq {
             member_id: LtCoreMemberEncId("not-a-valid-member-id".to_string()),
-            query: LtCoreAddressesListQuery::default(),
+            query: Default::default(),
         })
         .await;
     assert_api_err!(unknown_member_addresses, LtApiResponseError::InvalidID(..));

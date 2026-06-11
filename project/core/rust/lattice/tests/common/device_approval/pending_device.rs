@@ -5,32 +5,37 @@ use lattice::auth::devices::{
     LtAuthDevice, LtAuthDeviceState, LtAuthPostDevicesAssociateReq, LtAuthPostDevicesCreateReq,
     LtAuthPutDevicesDeviceIDAdminReq,
 };
-use lattice::core::LtCoreAddressesListQuery;
+use lattice::core::LtCoreAuthDeviceId;
 use lattice::core::get_core_addresses::LtCoreGetAddressesReq;
 use lattice::core::get_keys_all::LtCoreGetKeysAllReq;
-use lattice::{LatticeError, LtApiResponseError};
+use lattice::{LatticeError, LtApiResponseError, Sensitive};
 use lattice_muon2::LtTransportError;
 use proton_crypto::new_pgp_provider;
 use tokio::time::sleep;
 
 use super::super::Session;
-use super::device_secret::DeviceSecret;
 use super::pending_device_error::PendingDeviceError;
+use core_key::{DeviceSecret, SharedCryptoError};
+
+/// CSPRNG device secret for tests.
+pub fn random_device_secret() -> DeviceSecret {
+    DeviceSecret::random()
+}
 
 pub struct PendingDevice {
-    pub id: String,
+    pub id: LtCoreAuthDeviceId,
     pub device_token: String,
     pub device_secret: DeviceSecret,
     pub confirmation_code: String,
     pub activation_address_id: LtAuthAddressId,
-    pub activation_token: String,
+    pub activation_token: Sensitive<String>,
 }
 
 impl PendingDevice {
     pub async fn register(session: &Session, name: &str) -> Result<Self, PendingDeviceError> {
         let addresses = session
             .send_lt(LtCoreGetAddressesReq {
-                query: LtCoreAddressesListQuery::default(),
+                query: Default::default(),
             })
             .await?;
         let primary_address = addresses
@@ -44,17 +49,16 @@ impl PendingDevice {
                 email: primary_address.email.clone(),
             })
             .await?;
-        let primary_pubkey = keys
-            .address_keys
-            .keys
-            .iter()
-            .find(|k| k.primary)
-            .ok_or(PendingDeviceError::NoPrimaryPublicKey)?;
-
-        let device_secret = DeviceSecret::random();
+        let device_secret = random_device_secret();
         let pgp = new_pgp_provider();
-        let activation_token =
-            device_secret.encrypt_activation_token(&pgp, &primary_pubkey.public_key)?;
+        let activation_token = device_secret
+            .encrypt_activation_token_from_address_keys(&pgp, &keys)
+            .map_err(|e| match e {
+                SharedCryptoError::NoPrimaryAddressPublicKey => {
+                    PendingDeviceError::NoPrimaryPublicKey
+                }
+                e => PendingDeviceError::Crypto(e),
+            })?;
 
         let create_res = session
             .send_lt(LtAuthPostDevicesCreateReq {
@@ -76,9 +80,9 @@ impl PendingDevice {
         Ok(Self {
             id: device.id,
             device_token,
-            confirmation_code: device_secret.display_code(),
+            confirmation_code: device_secret.display_code().to_string(),
             device_secret,
-            activation_address_id: LtAuthAddressId(activation_address_id),
+            activation_address_id,
             activation_token,
         })
     }
@@ -116,8 +120,8 @@ impl PendingDevice {
                 .await
             {
                 Ok(associate) => {
-                    self.device_secret
-                        .decrypt_encrypted_secret(&associate.auth_device.encrypted_secret)?;
+                    core_key::EncryptedSecret::new(&associate.auth_device.encrypted_secret)
+                        .decrypt_to_vec(&self.device_secret.0)?;
                     return Ok(());
                 }
                 Err(e) if Self::is_associate_transient(&e) => {

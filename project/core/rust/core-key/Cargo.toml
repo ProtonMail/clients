@@ -4,9 +4,14 @@
   edition.workspace = true
 
 [dependencies]
+  data-encoding = "2"
   lattice = { path = "../lattice", features = ["core"] }
+  proton-crypto = { workspace = true }
   proton-crypto-account = { workspace = true, features = ["facet"] }
+  proton-crypto-subtle = { workspace = true, features = ["legacy"] }
+  sha2 = { workspace = true }
   thiserror.workspace = true
+  zeroize = { version = "1", features = ["derive"] }
 
 [lints]
   workspace = true

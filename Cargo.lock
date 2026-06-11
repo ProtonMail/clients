@@ -2544,9 +2544,14 @@ dependencies = [
 name = "core-key"
 version = "0.1.0"
 dependencies = [
+ "data-encoding",
  "lattice",
+ "proton-crypto",
  "proton-crypto-account",
+ "proton-crypto-subtle",
+ "sha2",
  "thiserror 2.0.18",
+ "zeroize",
 ]
 
 [[package]]

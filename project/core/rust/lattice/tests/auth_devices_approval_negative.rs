@@ -1,23 +1,27 @@
 //! Negative paths for SSO device approval helpers (no live stack required).
 
+#![recursion_limit = "256"]
+
 mod common;
 
-use lattice::auth::LtAuthAddressId;
+use core_key::DeviceDisplayCodeError;
+use lattice::{Sensitive, auth::LtAuthAddressId, core::LtCoreAuthDeviceId};
 
 use crate::common::device_approval::{
-    device_secret::DeviceSecret, pending_device::PendingDevice,
-    pending_device_error::PendingDeviceError, unprivatized_member::UnprivatizedMember,
+    pending_device::{PendingDevice, random_device_secret},
+    pending_device_error::PendingDeviceError,
+    unprivatized_member::UnprivatizedMember,
 };
 
 #[tokio::test]
 async fn approve_device_rejects_empty_confirmation_code() {
     let pending = PendingDevice {
-        id: "device-id".into(),
+        id: LtCoreAuthDeviceId("device-id".to_string()),
         device_token: "token".into(),
-        device_secret: DeviceSecret::random(),
+        device_secret: random_device_secret(),
         confirmation_code: String::new(),
         activation_address_id: LtAuthAddressId("address-id".into()),
-        activation_token: String::new(),
+        activation_token: Sensitive::new(String::new()),
     };
 
     let member = UnprivatizedMember {
@@ -28,19 +32,17 @@ async fn approve_device_rejects_empty_confirmation_code() {
     };
 
     let err = member.approve_device(&pending).await.unwrap_err();
-    assert!(matches!(err, PendingDeviceError::EmptyConfirmationCode));
-}
-
-#[test]
-fn pending_device_error_state_mismatch_is_typed() {
-    use lattice::auth::devices::LtAuthDeviceState;
-
-    let err = PendingDeviceError::StateMismatch {
-        device_id: "id".into(),
-        expected: LtAuthDeviceState::Active,
-        actual: LtAuthDeviceState::PendingActivation,
-    };
-    let msg = err.to_string();
-    assert!(msg.contains("id"));
-    assert!(msg.contains("mismatch"));
+    assert!(
+        matches!(
+            err,
+            PendingDeviceError::Crypto(core_key::SharedCryptoError::DisplayCode(
+                DeviceDisplayCodeError::WrongLength {
+                    expected: 4,
+                    actual: 0,
+                },
+            ))
+        ),
+        "{:?}",
+        err
+    );
 }

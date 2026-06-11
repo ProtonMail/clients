@@ -1,5 +1,6 @@
 use std::string::FromUtf8Error;
 
+use core_key::SharedCryptoError;
 use derive_more::{Display, Error, From};
 use lattice::LatticeError;
 use lattice_muon2::LtTransportError;
@@ -68,6 +69,9 @@ pub enum UnprivatizeAdminError {
         #[error(ignore)]
         email: String,
     },
+
+    #[display("shared crypto: {_0}")]
+    SharedCrypto(#[from] SharedCryptoError),
 }
 
 impl From<LtTransportError> for UnprivatizeAdminError {

@@ -1,5 +1,7 @@
 use std::borrow::Cow;
 
+use core_sensitive_data::Sensitive;
+
 use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method};
 
 use super::LtAuthDevice;
@@ -13,7 +15,7 @@ pub struct LtAuthPostDevicesCreateReq {
         feature = "serde",
         serde(default, skip_serializing_if = "Option::is_none")
     )]
-    pub activation_token: Option<String>,
+    pub activation_token: Option<Sensitive<String>>,
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

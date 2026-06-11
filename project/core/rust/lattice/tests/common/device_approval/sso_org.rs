@@ -75,11 +75,8 @@ impl SsoOrg {
         let (admin_session, _) =
             login_muon_session(session_init, &admin_username, &admin_password).await?;
 
-        sso_setup::create_domain_quark(&admin_session, &domain_name, org_res.organization_id).await;
-        let domain_lt = sso_setup::get_domain_lt(&admin_session, &domain_name).await;
-        sso_setup::set_sso_domain(&admin_session, &domain_lt.id).await;
-        let refreshed = sso_setup::refresh_domain_good(&admin_session, &domain_lt.id).await;
-        sso_setup::assert_domain_verify_good(&refreshed);
+        sso_setup::setup_org_sso_domain(&admin_session, &domain_name, org_res.organization_id)
+            .await;
 
         Ok(Self {
             admin_session,
@@ -128,16 +125,15 @@ impl SsoOrg {
 
         let admin_state = self.load_admin_pgp_state().await?;
         let pending_row = pending.fetch_admin_pending_row(&self.admin_session).await?;
-        admin_state
-            .approve_member_device(
-                &self.admin_session,
-                &member.session,
-                &member.email,
-                Some(&member.org_passphrase),
-                &pending_row,
-                &pending.confirmation_code,
-            )
-            .await?;
+        super::approve::approve_member_device(
+            &admin_state,
+            &self.admin_session,
+            &member.email,
+            Some(&member.org_passphrase),
+            &pending_row,
+            &pending.confirmation_code,
+        )
+        .await?;
 
         pending
             .expect_absent_from_admin_pending(&self.admin_session)

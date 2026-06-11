@@ -1,18 +1,13 @@
 use std::borrow::Cow;
+use std::num::NonZeroU32;
 
-use crate::{
-    AuthReq, LatticeError, LtContract, LtSerdeQueryParams, LtSlimAPIJSON, LtSlimApiPageQuery,
-};
+use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtPaginable, LtSlimAPIJSON};
 
 use super::post_domains::LtCoreDomainOutput;
 
-pub const MAX_PAGE_SIZE: u32 = 150;
-
-/// Request to get all domains for the user's organization
+/// Request to get all domains for the user's organization.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Default)]
-pub struct LtCoreGetDomainsReq {
-    pub pagination: LtSlimApiPageQuery<MAX_PAGE_SIZE>,
-}
+pub struct LtCoreGetDomainsReq;
 
 /// Response from the get domains endpoint
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -32,14 +27,21 @@ pub struct LtCoreGetDomainsRes {
 impl LtContract for LtCoreGetDomainsReq {
     type Response = LtSlimAPIJSON<LtCoreGetDomainsRes>;
     type Body<'a> = LtSlimAPIJSON<()>;
-    type Query<'q> = LtSerdeQueryParams<&'q LtSlimApiPageQuery<MAX_PAGE_SIZE>>;
+    type Query<'q> = LtNoQueryParams;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
         Ok(Cow::Borrowed("/core/v4/domains"))
     }
+}
 
-    fn query<'a>(&'a self) -> Option<Self::Query<'a>> {
-        Some(LtSerdeQueryParams(&self.pagination))
+impl LtPaginable for LtCoreGetDomainsReq {
+    type Item = LtCoreDomainOutput;
+    const MAX_PAGE_SIZE: NonZeroU32 = NonZeroU32::new(150).unwrap();
+
+    fn page_items(
+        res: LtSlimAPIJSON<LtCoreGetDomainsRes>,
+    ) -> (Option<u32>, Vec<LtCoreDomainOutput>) {
+        (Some(res.0.total), res.0.domains)
     }
 }
 

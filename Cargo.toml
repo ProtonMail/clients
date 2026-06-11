@@ -903,6 +903,9 @@ path = "project/payment/rust/payment-http"
 [workspace.dependencies.payment-observability]
 path = "project/payment/rust/payment-observability"
 
+[workspace.dependencies.payment-telemetry]
+path = "project/payment/rust/payment-telemetry"
+
 [workspace.dependencies.contact-avatar]
 path = "project/contact/rust/contact-avatar"
 

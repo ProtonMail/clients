@@ -8983,6 +8983,7 @@ dependencies = [
  "payment-api",
  "payment-http",
  "payment-observability",
+ "payment-telemetry",
  "serde",
  "serde_json",
  "tempfile",

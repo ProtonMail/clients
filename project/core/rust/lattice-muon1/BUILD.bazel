@@ -4,9 +4,14 @@ load("@rules_rust//rust:defs.bzl", "rust_library")
 rust_library(
     name = "lattice-muon1",
     srcs = glob(["src/**/*.rs"]),
+    crate_features = [
+        "lattice/serde",
+        "mail-muon/unsealed",
+    ],
     proc_macro_deps = all_crate_deps(proc_macro = True),
     visibility = ["//visibility:public"],
     deps = all_crate_deps(normal = True) + [
         "//project/core/rust/lattice",
+        "@crate_index//:mail-muon",
     ],
 )

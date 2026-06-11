@@ -1445,9 +1445,11 @@ dependencies = [
  "calendar-ical",
  "calendar-lattice",
  "calendar-mail-lattice",
+ "contact-lattice",
  "indoc",
  "jiff",
  "lattice",
+ "mail-canonical-email",
  "proton-crypto",
  "proton-crypto-account",
 ]

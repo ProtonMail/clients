@@ -95,6 +95,7 @@ dependencies = [
  "tracing",
  "unicode-segmentation",
  "url",
+ "web-time",
  "zeroize",
 ]
 
@@ -2468,6 +2469,7 @@ dependencies = [
  "lattice",
  "serde",
  "thiserror 2.0.18",
+ "web-time",
 ]
 
 [[package]]
@@ -2651,6 +2653,7 @@ dependencies = [
  "facet",
  "serde",
  "serde_json",
+ "web-time",
 ]
 
 [[package]]

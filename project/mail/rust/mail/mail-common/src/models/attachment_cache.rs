@@ -16,7 +16,7 @@ use mail_crypto_inbox::proton_crypto::new_pgp_provider;
 use mail_stash::exports::{SqliteError, ToSql};
 use mail_stash::macros::Model;
 use mail_stash::orm::Model as _;
-use mail_stash::stash::{RunTransaction, StashError, Tether, WriteTx};
+use mail_stash::stash::{StashError, Tether, WriteTx};
 use mail_stash::utils::placeholders_n;
 use mail_stash::{UserDb, params};
 use std::os::unix::fs::MetadataExt as _;
@@ -74,27 +74,30 @@ impl Attachment {
     pub async fn content_path(
         &self,
         ctx: &MailUserContext,
-        tx: &mut impl RunTransaction,
+        tether: &mut Tether,
     ) -> MailContextResult<PathBuf> {
-        if let Some(path) = Self::path_from_cache_and_update_metadata_atomic(self.id(), tx).await? {
+        if let Some(path) =
+            Self::path_from_cache_and_update_metadata_atomic(self.id(), tether).await?
+        {
             return Ok(path);
         };
 
-        let data = self.fetch_data(ctx, tx.tether()).await?;
+        let data = self.fetch_data(ctx, tether).await?;
 
         // While we were downlaoding, did someone win the race?
         // If so return it. Else store it.
         // TODO(orion): Replace this
-        tx.run_write_tx(async |tx| {
-            if let Some(path) = Self::path_from_cache_and_update_metadata(self.id(), tx).await? {
-                debug!("Someone else won the race");
-                return Ok(path);
-            };
+        tether
+            .write_tx(async |tx| {
+                if let Some(path) = Self::path_from_cache_and_update_metadata(self.id(), tx).await?
+                {
+                    debug!("Someone else won the race");
+                    return Ok(path);
+                };
 
-            Ok(Self::store_in_cache(ctx, &self.filename, self.id(), data, tx).await?)
-        })
-        .await
-        .map_err(MailContextError::IntoTransactionError)
+                Self::store_in_cache(ctx, &self.filename, self.id(), data, tx).await
+            })
+            .await
     }
 
     /// Tries to get the actual bytes of an attachment.
@@ -109,31 +112,34 @@ impl Attachment {
     pub async fn content_data(
         &self,
         ctx: &MailUserContext,
-        tx: &mut impl RunTransaction,
+        tether: &mut Tether,
     ) -> MailContextResult<Vec<u8>> {
-        if let Some(path) = Self::path_from_cache_and_update_metadata_atomic(self.id(), tx).await? {
+        if let Some(path) =
+            Self::path_from_cache_and_update_metadata_atomic(self.id(), tether).await?
+        {
             return Ok(fs::read(path).await?);
         };
 
-        let data = self.fetch_data(ctx, tx.tether()).await?;
+        let data = self.fetch_data(ctx, tether).await?;
 
         // While we were downlaoding, did someone win the race?
         // If so return it. Else store it.
         // TODO(orion): Replace this
-        tx.run_write_tx(async |tx| {
-            if let Some(path) = Self::path_from_cache_and_update_metadata(self.id(), tx).await? {
-                return Ok(fs::read(path).await?);
-            };
+        tether
+            .write_tx(async |tx| {
+                if let Some(path) = Self::path_from_cache_and_update_metadata(self.id(), tx).await?
+                {
+                    return Ok(fs::read(path).await?);
+                };
 
-            if let Err(e) =
-                Self::store_in_cache(ctx, &self.filename, self.id(), data.clone(), tx).await
-            {
-                error!("Could not save attachment to disk/database, but will continue: {e:?}");
-            }
-            Ok(data)
-        })
-        .await
-        .map_err(MailContextError::IntoTransactionError)
+                if let Err(e) =
+                    Self::store_in_cache(ctx, &self.filename, self.id(), data.clone(), tx).await
+                {
+                    error!("Could not save attachment to disk/database, but will continue: {e:?}");
+                }
+                Ok(data)
+            })
+            .await
     }
 
     /// Loads the metadata and file path for the given local [`attachment_id`]
@@ -184,17 +190,16 @@ impl Attachment {
     /// Starts a transaction, returns the fs path to the attachment and updates hit/atime metadata
     async fn path_from_cache_and_update_metadata_atomic(
         id: LocalAttachmentId,
-        tx: &mut impl RunTransaction,
+        tether: &mut Tether,
     ) -> MailContextResult<Option<PathBuf>> {
-        let res = tx
-            .run_write_tx(async |tx| {
+        let res = tether
+            .write_tx(async |tx| {
                 if let Some(path) = Self::path_from_cache_and_update_metadata(id, tx).await? {
                     return Ok(Some(path));
                 };
                 Ok(None)
             })
-            .await
-            .map_err(MailContextError::IntoTransactionError);
+            .await;
 
         let Ok(Some(path)) = res else { return res };
 

@@ -161,8 +161,6 @@ pub enum MailContextError {
     CalledFetchedAttachmentLocalAttachment,
     #[error("Bug: Invalid utf8 somewhere in path: {0:?}.")]
     InvalidUtf8AttachmentPath(std::ffi::OsString),
-    #[error("Could not start transaction: {0}")]
-    IntoTransactionError(anyhow::Error),
     #[error("Communication error with init mediator")]
     InitMediatorError,
     #[error("Lost context")]
@@ -207,7 +205,6 @@ impl action::Error for MailContextError {
         }
 
         match self {
-            Self::IntoTransactionError(_) => None,
             Self::LostContext => Some(ActionRequeueReason::LostContext),
             _ => None,
         }

@@ -76,7 +76,7 @@ use mail_stash::exports::ToSql;
 use mail_stash::macros::{DbRecord, Model};
 use mail_stash::orm::{Model, ModelHooks};
 use mail_stash::params;
-use mail_stash::stash::{RunTransaction, Stash, StashError, Tether, WatcherHandle, WriteTx};
+use mail_stash::stash::{Stash, StashError, Tether, WatcherHandle, WriteTx};
 use mail_telemetry::LatencyEvents;
 use std::collections::hash_map::Entry as HmEntry;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
@@ -1053,24 +1053,25 @@ impl Message {
     pub async fn fetch_message_body(
         &self,
         ctx: &MailUserContext,
-        tx: impl RunTransaction,
+        tether: &mut Tether,
     ) -> Result<DecryptedMessageBody, MailContextError> {
-        self.fetch_message_body_impl(ctx, tx, true, true).await
+        self.fetch_message_body_impl(ctx, tether, true, true).await
     }
 
     #[tracing::instrument(skip_all, fields(message_id=%self.id()))]
     pub async fn prefetch_message_body(
         &self,
         ctx: &MailUserContext,
-        tx: impl RunTransaction,
+        tether: &mut Tether,
     ) -> Result<DecryptedMessageBody, MailContextError> {
-        self.fetch_message_body_impl(ctx, tx, false, false).await
+        self.fetch_message_body_impl(ctx, tether, false, false)
+            .await
     }
 
     async fn fetch_message_body_impl(
         &self,
         ctx: &MailUserContext,
-        mut tx: impl RunTransaction,
+        tether: &mut Tether,
         with_attachment_prefetching: bool,
         with_network_check: bool,
     ) -> Result<DecryptedMessageBody, MailContextError> {
@@ -1078,7 +1079,7 @@ impl Message {
             ctx.as_arc(),
             self.id(),
             &self.remote_address_id,
-            tx.tether(),
+            tether,
         )
         .await?
         {
@@ -1104,7 +1105,7 @@ impl Message {
         }
 
         let (_, encrypted_body) =
-            Self::sync_message_and_body(remote_id, ctx.session(), &mut tx, ctx.action_queue())
+            Self::sync_message_and_body(remote_id, ctx.session(), tether, ctx.action_queue())
                 .await?;
 
         trace!("Message successfully downloaded. Decrypting...");
@@ -1113,7 +1114,7 @@ impl Message {
             ctx,
             &self.remote_address_id,
             encrypted_body,
-            tx.tether(),
+            tether,
             with_attachment_prefetching,
         )
         .await?;
@@ -1550,7 +1551,7 @@ impl Message {
     pub async fn sync_metadata(
         ids: Vec<MessageId>,
         api: &Session,
-        mut tx: impl RunTransaction,
+        tether: &mut Tether,
     ) -> Result<Vec<Self>, MailContextError> {
         let remote_msgs = Self::fetch_metadata(
             GetMessagesOptions {
@@ -1565,30 +1566,29 @@ impl Message {
 
         let mut dep_fetcher = DependencyFetcher::new();
         for msg in &remote_msgs {
-            dep_fetcher
-                .check_api_message_metadata(msg, tx.tether())
-                .await?;
+            dep_fetcher.check_api_message_metadata(msg, tether).await?;
         }
 
         dep_fetcher
-            .fetch_and_store(api, &mut tx)
+            .fetch_and_store(api, tether)
             .await
             .inspect_err(|e| {
                 tracing::error!("Failed to sync message dependencies: {e}");
             })?;
 
-        tx.run_write_tx(async |tx| {
-            for msg in remote_msgs {
-                let sync_decision = Message::sync_decision(&msg, None, tx).await?;
-                let mut remote_msg = Message::from_api_metadata(msg, tx).await?;
-                if sync_decision == MessageSyncDecision::Apply {
-                    remote_msg.save(tx).await?;
+        tether
+            .write_tx(async |tx| {
+                for msg in remote_msgs {
+                    let sync_decision = Message::sync_decision(&msg, None, tx).await?;
+                    let mut remote_msg = Message::from_api_metadata(msg, tx).await?;
+                    if sync_decision == MessageSyncDecision::Apply {
+                        remote_msg.save(tx).await?;
+                    }
+                    local_msgs.push(remote_msg);
                 }
-                local_msgs.push(remote_msg);
-            }
-            Ok(())
-        })
-        .await?;
+                Ok::<_, AppError>(())
+            })
+            .await?;
 
         Ok(local_msgs)
     }
@@ -1610,7 +1610,7 @@ impl Message {
             ctx,
             &message.remote_address_id,
             encrypted,
-            tether.tether(),
+            tether,
             with_attachment_prefetch,
         )
         .await?;
@@ -1618,43 +1618,44 @@ impl Message {
         Ok((message, decrypted))
     }
 
-    #[tracing::instrument(skip(api, tx, queue))]
+    #[tracing::instrument(skip(api, tether, queue))]
     async fn sync_message_and_body(
         message_id: MessageId,
         api: &Session,
-        tx: &mut impl RunTransaction,
+        tether: &mut Tether,
         queue: &Queue<UserDb>,
     ) -> Result<(Message, EncryptedMessageBody), MailContextError> {
         info!("Fetching message");
         let message = api.get_message(message_id).await.map(|v| v.message)?;
 
-        let (mut message, mut body_metadata, body) = Message::from_api_data(message, tx.tether())
+        let (mut message, mut body_metadata, body) = Message::from_api_data(message, tether)
             .await
             .inspect_err(|e| {
                 error!("Failed to convert message from api: {e:?}");
             })?;
 
-        tx.run_write_tx(async |tx| {
-            message.save(tx).await.inspect_err(|e| {
-                error!("Failed to save message metadata: {e:?}");
-            })?;
+        tether
+            .write_tx(async |tx| {
+                message.save(tx).await.inspect_err(|e| {
+                    error!("Failed to save message metadata: {e:?}");
+                })?;
 
-            body_metadata.save(tx).await.inspect_err(|e| {
-                error!("Failed to save message body metadata: {e:?}");
-            })?;
+                body_metadata.save(tx).await.inspect_err(|e| {
+                    error!("Failed to save message body metadata: {e:?}");
+                })?;
 
-            let rebase_change_set = RebaseChangeSet::from(message.id());
-            if let Err(e) = queue
-                .rebase_in(ActionGroup::default(), &rebase_change_set, tx)
-                .await
-            {
-                tracing::error!("Failed to rebase: {e}")
-            }
+                let rebase_change_set = RebaseChangeSet::from(message.id());
+                if let Err(e) = queue
+                    .rebase_in(ActionGroup::default(), &rebase_change_set, tx)
+                    .await
+                {
+                    tracing::error!("Failed to rebase: {e}")
+                }
 
-            Ok(())
-        })
-        .await
-        .map_err(MailContextError::Other)?;
+                Ok(())
+            })
+            .await
+            .map_err(MailContextError::Other)?;
 
         info!("Message saved with {:?}", message.id());
 
@@ -1804,9 +1805,7 @@ impl Message {
         let mut dep_fetcher = DependencyFetcher::new();
         let mut tether = ctx.user_stash().connection();
         for msg in &remote_msgs {
-            dep_fetcher
-                .check_api_message_metadata(msg, tether.tether())
-                .await?;
+            dep_fetcher.check_api_message_metadata(msg, &tether).await?;
         }
 
         dep_fetcher
@@ -1817,7 +1816,7 @@ impl Message {
             })?;
 
         let local_id = tether
-            .run_write_tx::<_, _>(async |tx| {
+            .write_tx(async |tx| {
                 let msg = remote_msgs
                     .into_iter()
                     .next()
@@ -1845,11 +1844,9 @@ impl Message {
 
         // Re-read from DB to get the message with both the API update and
         // rebase (pending local actions) applied.
-        Self::find_by_id(local_id, tether.tether())
-            .await?
-            .ok_or_else(|| {
-                MailContextError::Other(anyhow!("Message not found after sync and rebase"))
-            })
+        Self::find_by_id(local_id, &tether).await?.ok_or_else(|| {
+            MailContextError::Other(anyhow!("Message not found after sync and rebase"))
+        })
     }
 
     /// Bulk check unread status for messages by remote IDs.
@@ -2054,12 +2051,9 @@ impl Message {
         tx: &WriteTx<'_>,
     ) -> Result<Vec<Message>, MailContextError> {
         let remote_ids = api_messages.iter().map(|m| m.id.as_str());
-        let deleted_ids = DeletedItem::find_deleted_by_remote_ids(
-            remote_ids,
-            DeletedItemType::Message,
-            tx.tether(),
-        )
-        .await?;
+        let deleted_ids =
+            DeletedItem::find_deleted_by_remote_ids(remote_ids, DeletedItemType::Message, tx)
+                .await?;
 
         let mut messages = Vec::with_capacity(api_messages.len());
         for api_message in api_messages {

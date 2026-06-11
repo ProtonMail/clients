@@ -12,7 +12,7 @@ use mail_core_api::services::proton::{AddressId, LabelId, ProtonAccount as _};
 use mail_core_api::session::Session;
 use mail_core_common::models::{Address, Label, ModelIdExtension};
 use mail_stash::orm::Model;
-use mail_stash::stash::{RunTransaction, StashError, Tether};
+use mail_stash::stash::{StashError, Tether};
 use std::collections::HashSet;
 use tracing::info;
 
@@ -93,11 +93,11 @@ impl DependencyFetcher {
     pub async fn fetch_and_store(
         &self,
         api: &Session,
-        tx: &mut impl RunTransaction,
+        tether: &mut Tether,
     ) -> Result<HashSet<LabelId>, MailContextError> {
         let mut unresolved_labels = HashSet::new();
         if !self.label_ids.is_empty() {
-            let missing_labels = self.fetch_missing_labels(api, tx).await?;
+            let missing_labels = self.fetch_missing_labels(api, tether).await?;
             unresolved_labels = missing_labels
                 .iter()
                 .filter_map(|l| {
@@ -108,32 +108,33 @@ impl DependencyFetcher {
                 })
                 .collect::<HashSet<_>>();
 
-            tx.run_write_tx(async |tx| {
-                Label::store_labels_async(tx, missing_labels.clone())
-                    .await
-                    .context("Failed to store missing labels")?;
-                let message_counts = missing_labels
-                    .iter()
-                    .map(|v| MessageLabelsCount {
-                        label_id: v.remote_id.clone().unwrap(),
-                        total: 0,
-                        unread: 0,
-                    })
-                    .collect::<Vec<_>>();
-                let conversation_counts = missing_labels
-                    .iter()
-                    .map(|v| ConversationLabelsCount {
-                        label_id: v.remote_id.clone().unwrap(),
-                        total: 0,
-                        unread: 0,
-                    })
-                    .collect::<Vec<_>>();
-                MessageLabelsCount::upsert(message_counts, tx).await?;
-                ConversationLabelsCount::upsert(conversation_counts, tx).await?;
-                Ok(())
-            })
-            .await
-            .map_err(MailContextError::Other)?;
+            tether
+                .write_tx(async |tx| {
+                    Label::store_labels_async(tx, missing_labels.clone())
+                        .await
+                        .context("Failed to store missing labels")?;
+                    let message_counts = missing_labels
+                        .iter()
+                        .map(|v| MessageLabelsCount {
+                            label_id: v.remote_id.clone().unwrap(),
+                            total: 0,
+                            unread: 0,
+                        })
+                        .collect::<Vec<_>>();
+                    let conversation_counts = missing_labels
+                        .iter()
+                        .map(|v| ConversationLabelsCount {
+                            label_id: v.remote_id.clone().unwrap(),
+                            total: 0,
+                            unread: 0,
+                        })
+                        .collect::<Vec<_>>();
+                    MessageLabelsCount::upsert(message_counts, tx).await?;
+                    ConversationLabelsCount::upsert(conversation_counts, tx).await?;
+                    Ok(())
+                })
+                .await
+                .map_err(MailContextError::Other)?;
         }
 
         if !self.address_ids.is_empty() {
@@ -158,14 +159,15 @@ impl DependencyFetcher {
             }
 
             if !addresses.is_empty() {
-                tx.run_write_tx(async |tx| {
-                    for mut address in addresses {
-                        address.save(tx).await?;
-                    }
-                    Ok(())
-                })
-                .await
-                .map_err(MailContextError::Other)?;
+                tether
+                    .write_tx(async |tx| {
+                        for mut address in addresses {
+                            address.save(tx).await?;
+                        }
+                        Ok(())
+                    })
+                    .await
+                    .map_err(MailContextError::Other)?;
             }
         }
 
@@ -179,13 +181,13 @@ impl DependencyFetcher {
     async fn fetch_missing_labels(
         &self,
         api: &Session,
-        tx: &mut impl RunTransaction,
+        tether: &mut Tether,
     ) -> Result<Vec<Label>, MailContextError> {
         info!("Syncing missing labels: {:?}", self.label_ids);
         let missing_labels =
             Label::get_labels_by_ids(api, self.label_ids.iter().cloned().collect()).await?;
 
-        Self::fetch_label_parents(api, missing_labels, &self.label_ids, tx.tether()).await
+        Self::fetch_label_parents(api, missing_labels, &self.label_ids, tether).await
     }
 
     async fn check_label_ids(

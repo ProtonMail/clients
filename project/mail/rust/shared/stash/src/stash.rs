@@ -20,7 +20,6 @@ use crate::orm::{ConversionError, DbRecord};
 use anyhow::{Context, anyhow};
 use core::fmt;
 use core::fmt::Debug;
-use core::future::Future;
 use core::ops::Deref;
 use core::time::Duration;
 use derivative::Derivative;
@@ -1466,81 +1465,6 @@ impl<Db: DatabaseMarker> Drop for ReadTx<'_, Db> {
         if let Some(ro_sender) = self.ro_sender.take() {
             self.tether.sender = ro_sender;
         }
-    }
-}
-
-impl<Db: DatabaseMarker> RunTransaction<Db> for Tether<Db> {
-    fn tether(&self) -> &Tether<Db> {
-        self
-    }
-
-    #[allow(clippy::manual_async_fn)]
-    fn run_write_tx<T, F>(&mut self, closure: F) -> impl Future<Output = anyhow::Result<T>>
-    where
-        F: AsyncFnOnce(&WriteTx<'_, Db>) -> Result<T, anyhow::Error>,
-    {
-        async move {
-            self.write_tx(closure)
-                .await
-                .context("Could not start transaction for tether")
-        }
-    }
-
-    async fn run_write_tx_sync<T, F>(&mut self, closure: F) -> anyhow::Result<T>
-    where
-        F: FnOnce(&rusqlite::Transaction<'_>) -> StashResult<T> + Send + 'static,
-        T: Send + 'static,
-    {
-        self.sync_write_tx_returning(closure)
-            .await
-            .context("Could not start sync transaction for tether")
-    }
-}
-
-/// This trait should only be used in functions that have to create and commit several
-/// transactions.
-/// It exists so that you can pass either a `&mut Tether` or a `&mut WriterGuard`.
-pub trait RunTransaction<Db: DatabaseMarker = crate::marker::UserDb>: Sized {
-    /// Get the tether instance that powers the transaction for read only queries.
-    fn tether(&self) -> &Tether<Db>;
-
-    /// Creates a transaction and run the given `closure`.
-    fn run_write_tx<T, F>(&mut self, closure: F) -> impl Future<Output = anyhow::Result<T>>
-    where
-        F: AsyncFnOnce(&WriteTx<'_, Db>) -> Result<T, anyhow::Error>;
-
-    fn run_write_tx_sync<T, F>(
-        &mut self,
-        closure: F,
-    ) -> impl Future<Output = anyhow::Result<T>> + Send
-    where
-        F: FnOnce(&rusqlite::Transaction<'_>) -> StashResult<T> + Send + 'static,
-        T: Send + 'static;
-}
-
-impl<Db: DatabaseMarker, RT: RunTransaction<Db>> RunTransaction<Db> for &mut RT {
-    fn tether(&self) -> &Tether<Db> {
-        RT::tether(self)
-    }
-
-    #[allow(clippy::manual_async_fn)]
-    fn run_write_tx<T, F>(&mut self, closure: F) -> impl Future<Output = anyhow::Result<T>>
-    where
-        F: AsyncFnOnce(&WriteTx<'_, Db>) -> Result<T, anyhow::Error>,
-    {
-        RT::run_write_tx(self, closure)
-    }
-
-    #[allow(clippy::manual_async_fn)]
-    fn run_write_tx_sync<T, F>(
-        &mut self,
-        closure: F,
-    ) -> impl Future<Output = anyhow::Result<T>> + Send
-    where
-        F: FnOnce(&rusqlite::Transaction<'_>) -> StashResult<T> + Send + 'static,
-        T: Send + 'static,
-    {
-        RT::run_write_tx_sync(self, closure)
     }
 }
 

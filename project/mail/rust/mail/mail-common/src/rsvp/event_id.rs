@@ -7,7 +7,7 @@ use mail_calendar_common::{self as cal, RsvpFetchError};
 use mail_core_common::models::Address;
 use mail_crypto_inbox::proton_crypto;
 use mail_stash::orm::Model;
-use mail_stash::stash::{RunTransaction, Tether};
+use mail_stash::stash::Tether;
 use std::ops;
 use tracing::{debug, info, instrument, warn};
 
@@ -41,7 +41,7 @@ impl RsvpEventId {
         info!("Fetching RSVP");
 
         let pgp = proton_crypto::new_pgp_provider();
-        let keys = RsvpKeys::new(ctx, tether.tether());
+        let keys = RsvpKeys::new(ctx, tether);
         let rsvp_service = ctx.rsvp_service();
         let cache = rsvp_service.cache();
         let contacts = rsvp_service.contacts();

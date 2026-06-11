@@ -13,7 +13,7 @@ use mail_stash::exports::{
 };
 use mail_stash::macros::Model;
 use mail_stash::orm::Model;
-use mail_stash::stash::{RunTransaction, Stash, StashError, Tether};
+use mail_stash::stash::{Stash, StashError, Tether};
 use mail_stash::{AccountDb, UserDb};
 use std::sync::Arc;
 use tracing::instrument;
@@ -119,7 +119,7 @@ impl CustomSettings {
         ctx.user_stash()
             .connection()
             .write_tx(async move |tx| {
-                let mut this = Self::get_or_default(tx.tether()).await?;
+                let mut this = Self::get_or_default(tx).await?;
 
                 this.mobile_signature = signature.map(|sig| Self::sanitize_mobile_signature(&sig));
                 this.save(tx).await?;
@@ -163,7 +163,7 @@ impl CustomSettings {
         ctx.user_stash()
             .connection()
             .write_tx(async move |tx| {
-                let mut this = CustomSettings::get_or_default(tx.tether()).await?;
+                let mut this = CustomSettings::get_or_default(tx).await?;
 
                 this.mobile_signature_enabled = enabled;
                 this.save(tx).await?;
@@ -181,7 +181,7 @@ impl CustomSettings {
         ctx.user_stash()
             .connection()
             .write_tx(async move |tx| {
-                let mut this = CustomSettings::get_or_default(tx.tether()).await?;
+                let mut this = CustomSettings::get_or_default(tx).await?;
 
                 this.swipe_to_adjacent_conversation = enabled;
                 this.save(tx).await?;

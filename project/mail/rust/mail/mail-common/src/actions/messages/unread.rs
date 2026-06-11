@@ -12,7 +12,7 @@ use mail_api::services::proton::ProtonMail;
 use mail_core_api::consts::General;
 use mail_core_common::models::ModelIdExtension;
 use mail_stash::UserDb;
-use mail_stash::stash::{RunTransaction, WriteTx};
+use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
 use std::sync::Weak;
 use tracing::{error, info};
@@ -107,7 +107,7 @@ impl Handler<UserDb> for UnreadHandler {
             error!("Unread messages failed for: {failed_ids:?} ");
 
             tether
-                .run_write_tx_sync(move |tx| {
+                .sync_write_tx(move |tx| {
                     GenericActionData::<Message>::mark_rollback_sync(
                         &failed_ids,
                         RollbackItemType::Message,

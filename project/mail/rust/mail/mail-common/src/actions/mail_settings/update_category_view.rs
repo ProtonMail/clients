@@ -7,7 +7,7 @@ use mail_api::services::proton::request_data::PutMailCategoryViewRequest;
 use mail_core_api::session::Session;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
-use mail_stash::stash::{RunTransaction, WriteTx};
+use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -48,7 +48,7 @@ impl Handler<UserDb> for UpdateCategoryViewHandler {
         action: &mut Self::Action,
         bond: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
-        let mut mail_settings = match MailSettings::get(bond.tether()).await? {
+        let mut mail_settings = match MailSettings::get(bond).await? {
             Some(ms) => ms,
             None => {
                 tracing::warn!("Failed to get mail settings");
@@ -69,7 +69,7 @@ impl Handler<UserDb> for UpdateCategoryViewHandler {
         action: &mut Self::Action,
         bond: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
-        let mut mail_settings = match MailSettings::get(bond.tether()).await? {
+        let mut mail_settings = match MailSettings::get(bond).await? {
             Some(ms) => ms,
             None => {
                 tracing::warn!("Failed to get mail settings");

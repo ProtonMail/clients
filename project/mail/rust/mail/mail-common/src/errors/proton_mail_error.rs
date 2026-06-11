@@ -235,7 +235,6 @@ impl From<MailContextError> for ProtonMailError {
             MailContextError::AccountMissing(_) => Self::Unexpected(Unexpected::Database),
             MailContextError::SettingsMissing(_) => Self::Unexpected(Unexpected::Database),
             MailContextError::SessionMissing(_) => Self::Unexpected(Unexpected::Database),
-            MailContextError::IntoTransactionError(_) => Self::Unexpected(Unexpected::Database),
             MailContextError::Crypto | MailContextError::KeyChainHasNoKey => {
                 Self::Unexpected(Unexpected::Crypto)
             }

@@ -39,7 +39,7 @@ use mail_crypto_inbox::message::packages::{
 use mail_crypto_inbox::proton_crypto::new_srp_provider;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
-use mail_stash::stash::{RunTransaction, Tether};
+use mail_stash::stash::Tether;
 use proton_crypto_account::keys::{
     CryptoMailSettings, PrimaryUnlockedAddressKey, UnlockedAddressKey, UnlockedAddressKeys,
 };
@@ -143,7 +143,7 @@ pub async fn build_packages<P>(
     stored_message_body: &str,
     attachments: &[Attachment],
     eo_data: Option<EoData>,
-    tx: &mut impl RunTransaction,
+    tether: &mut Tether,
 ) -> Result<Vec<Package>, PackageError>
 where
     P: PGPProviderSync,
@@ -175,7 +175,7 @@ where
                     mime_type,
                     stored_message_body,
                     attachments,
-                    tx,
+                    tether,
                 )
                 .await?
             }
@@ -276,7 +276,7 @@ async fn generate_mime_top_package<P>(
     mime_type: MimeType,
     body: &str,
     attachments: &[Attachment],
-    tx: &mut impl RunTransaction,
+    tether: &mut Tether,
 ) -> Result<EncryptedPackageBody, PackageError>
 where
     P: PGPProviderSync,
@@ -305,7 +305,7 @@ where
         }
 
         let loaded_data = attachment
-            .content_data(context, tx)
+            .content_data(context, tether)
             .instrument(
                 debug_span!("mime_package::get_attachment_content_data", id = ?attachment.local_id),
             )

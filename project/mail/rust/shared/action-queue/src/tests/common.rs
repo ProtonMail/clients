@@ -1,4 +1,5 @@
-use crate::action::{Action, ActionId, Error, Handler, WriterGuardError};
+use crate::action::{Action, ActionId, Error, Handler};
+use crate::db::ExecutionGuardError;
 use crate::queue::ActionRequeueReason;
 use crate::rebase::RebaseChangeSet;
 use mail_stash::marker::DatabaseMarker;
@@ -74,11 +75,11 @@ pub enum DefaultError {
     WriterGuardExpired,
 }
 
-impl From<WriterGuardError> for DefaultError {
-    fn from(value: WriterGuardError) -> Self {
+impl From<ExecutionGuardError> for DefaultError {
+    fn from(value: ExecutionGuardError) -> Self {
         match value {
-            WriterGuardError::Expired => Self::WriterGuardExpired,
-            WriterGuardError::Stash(e) => Self::DB(e),
+            ExecutionGuardError::Expired => Self::WriterGuardExpired,
+            ExecutionGuardError::Stash(e) => Self::DB(e),
         }
     }
 }

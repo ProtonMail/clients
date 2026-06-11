@@ -4,10 +4,11 @@ mod tests;
 
 use crate::action::{
     Action, ActionGroup, ActionId, Error as ActionErrorTrait, Factory, FactoryError, FactoryResult,
-    Handler, LocalOutput, Metadata, Priority, Resources, WriterGuardError,
+    Handler, LocalOutput, Metadata, Priority, Resources,
 };
 use crate::db::{
-    self, ActionDependency, DEFAULT_LOCK_TIMEOUT, DependencyType, ExecutionGuard, StoredAction,
+    self, ActionDependency, DEFAULT_LOCK_TIMEOUT, DependencyType, ExecutionGuard,
+    ExecutionGuardError, StoredAction,
 };
 use crate::rebase::RebaseChangeSet;
 use anyhow::anyhow;
@@ -1395,13 +1396,13 @@ async fn execute_action_remote<T: Action<Db>, Db: mail_stash::marker::DatabaseMa
                     Ok(())
                 }).await {
                     return match e {
-                        WriterGuardError::Expired => {
+                        ExecutionGuardError::Expired => {
                             Ok(ActionRemoteOutput::Queued(
                                 id,
                                 ActionRequeueReason::GuardExpired,
                             ))
                         }
-                        WriterGuardError::Stash(stash_error) =>
+                        ExecutionGuardError::Stash(stash_error) =>
                             Err(ActionError::Queue(Error::DB(stash_error)))
                     }
                 };
@@ -1467,13 +1468,13 @@ async fn execute_action_remote<T: Action<Db>, Db: mail_stash::marker::DatabaseMa
         .await
     {
         Ok(v) => v,
-        Err(WriterGuardError::Expired) => {
+        Err(ExecutionGuardError::Expired) => {
             return Ok(ActionRemoteOutput::Queued(
                 id,
                 ActionRequeueReason::GuardExpired,
             ));
         }
-        Err(WriterGuardError::Stash(e)) => return Err(e.into()),
+        Err(ExecutionGuardError::Stash(e)) => return Err(e.into()),
     };
 
     for cancelled_action in cancelled_actions.into_iter().filter(|meta| {

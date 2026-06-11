@@ -4,7 +4,7 @@ mod tests;
 
 use crate::action::{
     self, Action, ActionDependencyKey, ActionDependencyKeys, ActionGroup, ActionId, Metadata,
-    Priority, Resources, Type, WriterGuardError,
+    Priority, Resources, Type,
 };
 use chrono::{DateTime, Utc};
 use include_dir::{Dir, include_dir};
@@ -610,6 +610,14 @@ pub struct ExecutionGuard {
     permit_id: usize,
 }
 
+#[derive(Debug, thiserror::Error)]
+pub(crate) enum ExecutionGuardError {
+    #[error("This executor lock has expired")]
+    Expired,
+    #[error("{0}")]
+    Stash(#[from] StashError),
+}
+
 impl ExecutionGuard {
     /// Check whether the action with `action_id` is being executed.
     pub async fn has_executor<Db: mail_stash::marker::DatabaseMarker>(
@@ -740,7 +748,7 @@ impl ExecutionGuard {
     where
         Db: mail_stash::marker::DatabaseMarker,
         F: AsyncFnOnce(&WriteTx<'_, Db>) -> Result<T, E>,
-        E: From<WriterGuardError> + From<StashError>,
+        E: From<ExecutionGuardError> + From<StashError>,
     {
         tether.write_tx(async |tx| {
                 let changed = tx
@@ -750,7 +758,7 @@ impl ExecutionGuard {
                     )
                     .await?;
                 if changed == 0 {
-                    return Err(WriterGuardError::Expired.into());
+                    return Err(ExecutionGuardError::Expired.into());
                 }
                 closure(tx).await
             }).await
@@ -761,7 +769,7 @@ impl ExecutionGuard {
         self,
         tether: &mut Tether<Db>,
         closure: F,
-    ) -> Result<T, WriterGuardError>
+    ) -> Result<T, ExecutionGuardError>
     where
         Db: mail_stash::marker::DatabaseMarker,
         F: AsyncFnOnce(&WriteTx<'_, Db>) -> Result<T, StashError>,
@@ -775,7 +783,7 @@ impl ExecutionGuard {
                 )
                 .await?;
                 if changed == 0 {
-                    return Err(WriterGuardError::Expired);
+                    return Err(ExecutionGuardError::Expired);
                 }
                 let r = closure(tx).await;
                 self.release(tx).await?;

@@ -1,7 +1,6 @@
 use super::*;
-use crate::action::{
-    ActionGroup, DefaultVersionConverter, MetadataBuilder, Type, WriterGuardError,
-};
+use crate::action::{ActionGroup, DefaultVersionConverter, MetadataBuilder, Type};
+use crate::db::ExecutionGuardError;
 use crate::queue::ActionRequeueReason;
 use crate::tests::common::{NoopActionHandler, TestDb};
 use mail_stash::orm::Model;
@@ -39,9 +38,9 @@ impl action::Error for Error {
     }
 }
 
-impl From<WriterGuardError> for Error {
-    fn from(m: WriterGuardError) -> Self {
-        if matches!(m, WriterGuardError::Expired) {
+impl From<ExecutionGuardError> for Error {
+    fn from(m: ExecutionGuardError) -> Self {
+        if matches!(m, ExecutionGuardError::Expired) {
             Self::WriterGuardExpired
         } else {
             Self::Other

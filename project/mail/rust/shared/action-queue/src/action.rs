@@ -1,4 +1,4 @@
-use crate::db::{ActionDependency, StoredAction};
+use crate::db::{ActionDependency, ExecutionGuardError, StoredAction};
 use crate::queue::{
     ActionError, ActionRequeueReason, ErasedQueuedAction, QueuedAction, QueuedActionOutput,
     QueuedMetadata,
@@ -9,7 +9,7 @@ use mail_stash::exports::{
     FromSql, FromSqlError, FromSqlResult, SqliteError, ToSql, ToSqlOutput, Value, ValueRef,
 };
 use mail_stash::sql_using_serde;
-use mail_stash::stash::{StashError, WriteTx};
+use mail_stash::stash::WriteTx;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::any::Any;
@@ -305,14 +305,6 @@ pub trait Action<Db: mail_stash::marker::DatabaseMarker>:
 
 #[allow(type_alias_bounds, reason = "This is only used for convenience")]
 pub type LocalOutput<Db, T: Action<Db>> = Result<QueuedActionOutput<T, Db>, ActionError<T, Db>>;
-
-#[derive(Debug, thiserror::Error)]
-pub(crate) enum WriterGuardError {
-    #[error("This executor lock has expired")]
-    Expired,
-    #[error("{0}")]
-    Stash(#[from] StashError),
-}
 
 /// Defines how an action behaves.
 ///
@@ -812,8 +804,8 @@ impl Error for NoopError {
     }
 }
 
-impl From<WriterGuardError> for NoopError {
-    fn from(_: WriterGuardError) -> Self {
+impl From<ExecutionGuardError> for NoopError {
+    fn from(_: ExecutionGuardError) -> Self {
         Self {}
     }
 }

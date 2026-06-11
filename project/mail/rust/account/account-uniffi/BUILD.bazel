@@ -1,0 +1,27 @@
+load("@crate_index//:defs.bzl", "all_crate_deps")
+load("@rules_rust//rust:defs.bzl", "rust_library")
+
+rust_library(
+    name = "mail-account-uniffi",
+    srcs = glob(["src/**/*.rs"]),
+    compile_data = ["Cargo.toml"],
+    edition = "2024",
+    proc_macro_deps = all_crate_deps(
+        proc_macro = True,
+    ) + [
+        "//project/mail/rust/uniffi/uniffi-macros:mail-uniffi-macros",
+    ],
+    visibility = ["//visibility:public"],
+    deps = all_crate_deps(
+        normal = True,
+    ) + [
+        "//project/mail/rust/account/account-api:mail-account-api",
+        "//project/mail/rust/account/account-common:mail-account-common",
+        "//project/mail/rust/core/core-api:mail-core-api",
+        "//project/mail/rust/core/core-common:mail-core-common",
+        "//project/mail/rust/shared/observability:mail-observability",
+        "//project/mail/rust/uniffi/uniffi-common:mail-uniffi-common",
+        "//project/mail/rust/uniffi/uniffi-runtime:mail-uniffi-runtime",
+        "@crate_index//:mail-muon",
+    ],
+)

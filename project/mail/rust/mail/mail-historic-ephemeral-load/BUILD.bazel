@@ -1,0 +1,28 @@
+load("@crate_index//:defs.bzl", "all_crate_deps")
+load("@rules_rust//rust:defs.bzl", "rust_library")
+
+rust_library(
+    name = "mail-historic-ephemeral-load",
+    srcs = glob(["src/**/*.rs"]),
+    crate_features = [
+        "mail-common/foundation_search",
+        "mail-core-api/sql",
+    ],
+    edition = "2024",
+    proc_macro_deps = all_crate_deps(
+        proc_macro = True,
+    ),
+    visibility = ["//visibility:public"],
+    deps = all_crate_deps(
+        normal = True,
+    ) + [
+        "//project/mail/rust/core/core-api:mail-core-api",
+        "//project/mail/rust/crypto/crypto-inbox:mail-crypto-inbox",
+        "//project/mail/rust/mail/mail-api",
+        "//project/mail/rust/mail/mail-common",
+        "//project/mail/rust/mail/mail-html-transformer",
+        "//project/mail/rust/mail/mail-search",
+        "//project/mail/rust/shared/action-queue:mail-action-queue",
+        "//project/mail/rust/shared/stash:mail-stash",
+    ],
+)

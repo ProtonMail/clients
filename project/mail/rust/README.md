@@ -15,6 +15,24 @@ cargo install taplo-cli --locked
 
 Any code not formatted this way will be rejected by the CI.
 
+## Bazel
+
+Build the full mail Rust graph:
+
+```bash
+bazel build //project/mail/rust/...
+```
+
+### Features and dependencies
+
+Bazel does not propagate `crate_features` to dependencies the way Cargo does (`dep/feature` entries in
+`Cargo.toml`). A `crate_features` list on a `rust_library` only enables `cfg(feature = "...")` in
+that crate's own sources.
+
+For the default mail production graph, set features on each dependency's `BUILD.bazel` target
+explicitly (for example `sql` on `mail-api`). Use the crate's `Cargo.toml` `[features]` section as
+the reference for which downstream crates need which features.
+
 ## Releases
 
 ### Conventions

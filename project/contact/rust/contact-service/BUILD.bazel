@@ -2,21 +2,14 @@ load("@crate_index//:defs.bzl", "all_crate_deps")
 load("@rules_rust//rust:defs.bzl", "rust_library")
 
 rust_library(
-    name = "mail-api-event-types",
+    name = "contact-service",
     srcs = glob(["src/**/*.rs"]),
-    crate_features = [
-        "mocks",
-        "sql",
-    ],
     edition = "2024",
-    proc_macro_deps = all_crate_deps(
-        proc_macro = True,
-    ),
     visibility = ["//visibility:public"],
     deps = all_crate_deps(
         normal = True,
     ) + [
-        "//project/mail/rust/shared/mail-proton-ids",
-        "//project/mail/rust/shared/stash:mail-stash",
+        "//project/contact/rust/contact-database",
+        "//project/contact/rust/contact-lattice",
     ],
 )

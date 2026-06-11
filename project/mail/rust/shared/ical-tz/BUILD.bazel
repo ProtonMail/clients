@@ -1,13 +1,20 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
+load("@rules_rust//cargo:defs.bzl", "cargo_build_script")
 load("@rules_rust//rust:defs.bzl", "rust_library")
 
+cargo_build_script(
+    name = "build_script",
+    srcs = ["build.rs"],
+    data = ["data/windowsZones.xml"],
+    deps = all_crate_deps(
+        build = True,
+    ),
+)
+
 rust_library(
-    name = "mail-api-event-types",
+    name = "mail-ical-tz",
     srcs = glob(["src/**/*.rs"]),
-    crate_features = [
-        "mocks",
-        "sql",
-    ],
+    compile_data = ["Cargo.toml"],
     edition = "2024",
     proc_macro_deps = all_crate_deps(
         proc_macro = True,
@@ -16,7 +23,6 @@ rust_library(
     deps = all_crate_deps(
         normal = True,
     ) + [
-        "//project/mail/rust/shared/mail-proton-ids",
-        "//project/mail/rust/shared/stash:mail-stash",
+        ":build_script",
     ],
 )

@@ -1,0 +1,15 @@
+load("@crate_index//:defs.bzl", "all_crate_deps")
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+
+rust_binary(
+    name = "mail-html-transformer-fuzz",
+    srcs = ["main.rs"],
+    edition = "2024",
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
+    deps = all_crate_deps(
+        normal = True,
+    ) + [
+        "//project/mail/rust/mail/mail-html-transformer",
+    ],
+)

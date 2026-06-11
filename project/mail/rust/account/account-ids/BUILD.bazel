@@ -2,12 +2,9 @@ load("@crate_index//:defs.bzl", "all_crate_deps")
 load("@rules_rust//rust:defs.bzl", "rust_library")
 
 rust_library(
-    name = "mail-api-event-types",
+    name = "mail-account-ids",
     srcs = glob(["src/**/*.rs"]),
-    crate_features = [
-        "mocks",
-        "sql",
-    ],
+    crate_features = ["sql"],
     edition = "2024",
     proc_macro_deps = all_crate_deps(
         proc_macro = True,

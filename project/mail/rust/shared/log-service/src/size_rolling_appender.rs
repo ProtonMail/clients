@@ -228,7 +228,7 @@ mod tests {
         assert!(rotation_0_file.exists());
         assert!(rotation_1_file.exists());
 
-        assert_eq!(std::fs::read(&rotation_0_file).unwrap(), vec![]);
+        assert_eq!(std::fs::read(&rotation_0_file).unwrap(), Vec::<u8>::new());
         assert_eq!(std::fs::read(&rotation_1_file).unwrap(), BYTES_1);
     }
 

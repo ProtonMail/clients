@@ -1,14 +1,10 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_proc_macro")
 
-rust_library(
-    name = "mail-canonical-email",
+rust_proc_macro(
+    name = "mail-stash-macros",
     srcs = glob(["src/**/*.rs"]),
-    compile_data = ["Cargo.toml"],
     edition = "2024",
-    proc_macro_deps = all_crate_deps(
-        proc_macro = True,
-    ),
     visibility = ["//visibility:public"],
     deps = all_crate_deps(
         normal = True,

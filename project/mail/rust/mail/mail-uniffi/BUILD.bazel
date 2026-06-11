@@ -1,0 +1,65 @@
+load("@crate_index//:defs.bzl", "all_crate_deps")
+load("@rules_rust//cargo:defs.bzl", "cargo_build_script", "cargo_toml_env_vars")
+load("@rules_rust//rust:defs.bzl", "rust_library")
+
+exports_files(["uniffi.toml"])
+
+cargo_toml_env_vars(
+    name = "cargo_env",
+    src = "Cargo.toml",
+)
+
+cargo_build_script(
+    name = "build_script",
+    srcs = ["build.rs"],
+    build_script_env_files = [":cargo_env"],
+    deps = all_crate_deps(
+        build = True,
+    ),
+)
+
+rust_library(
+    name = "mail-uniffi",
+    srcs = glob(["src/**/*.rs"]),
+    compile_data = ["Cargo.toml"],
+    edition = "2024",
+    proc_macro_deps = all_crate_deps(
+        proc_macro = True,
+    ) + [
+        "//project/mail/rust/uniffi/uniffi-macros:mail-uniffi-macros",
+    ],
+    visibility = ["//visibility:public"],
+    deps = all_crate_deps(
+        normal = True,
+    ) + [
+        ":build_script",
+        "//project/contact/rust/contact-database",
+        "//project/core/rust/core-event-loop",
+        "//project/mail/rust/account/account-api:mail-account-api",
+        "//project/mail/rust/account/account-uniffi:mail-account-uniffi",
+        "//project/mail/rust/api/mail-api-payments",
+        "//project/mail/rust/calendar/calendar-api:mail-calendar-api-v1",
+        "//project/mail/rust/calendar/calendar-common:mail-calendar-common",
+        "//project/mail/rust/contacts/contacts-common:mail-contacts-common",
+        "//project/mail/rust/core/core-api:mail-core-api",
+        "//project/mail/rust/core/core-common:mail-core-common",
+        "//project/mail/rust/crypto/crypto-inbox:mail-crypto-inbox",
+        "//project/mail/rust/mail/mail-api",
+        "//project/mail/rust/mail/mail-common",
+        "//project/mail/rust/mail/mail-historic-ephemeral-load",
+        "//project/mail/rust/shared/action-queue:mail-action-queue",
+        "//project/mail/rust/shared/ical:mail-ical",
+        "//project/mail/rust/shared/issue-reporter-service-uniffi:mail-issue-reporter-service-uniffi",
+        "//project/mail/rust/shared/log-service:mail-log-service",
+        "//project/mail/rust/shared/mailto:mail-mailto",
+        "//project/mail/rust/shared/network-monitor-service:mail-network-monitor-service",
+        "//project/mail/rust/shared/observability:mail-observability",
+        "//project/mail/rust/shared/stash:mail-stash",
+        "//project/mail/rust/shared/task-service:mail-task-service",
+        "//project/mail/rust/shared/telemetry-service:mail-telemetry",
+        "//project/mail/rust/shared/vcard:mail-vcard",
+        "//project/mail/rust/uniffi/uniffi-common:mail-uniffi-common",
+        "//project/mail/rust/uniffi/uniffi-runtime:mail-uniffi-runtime",
+        "@crate_index//:mail-muon",
+    ],
+)

@@ -1,0 +1,23 @@
+load("@crate_index//:defs.bzl", "all_crate_deps")
+load("@rules_rust//rust:defs.bzl", "rust_library")
+
+rust_library(
+    name = "mail-calendar-common",
+    srcs = glob(["src/**/*.rs"]),
+    edition = "2024",
+    proc_macro_deps = all_crate_deps(
+        proc_macro = True,
+    ),
+    visibility = ["//visibility:public"],
+    deps = all_crate_deps(
+        normal = True,
+    ) + [
+        "//project/mail/rust/calendar/calendar-api:mail-calendar-api-v1",
+        "//project/mail/rust/core/core-api:mail-core-api",
+        "//project/mail/rust/core/core-common:mail-core-common",
+        "//project/mail/rust/crypto/crypto-calendar:mail-crypto-calendar",
+        "//project/mail/rust/shared/canonical-email:mail-canonical-email",
+        "//project/mail/rust/shared/ical:mail-ical",
+        "//project/mail/rust/shared/network-monitor-service:mail-network-monitor-service",
+    ],
+)

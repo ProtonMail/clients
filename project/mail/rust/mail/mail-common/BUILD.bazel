@@ -1,0 +1,48 @@
+load("@crate_index//:defs.bzl", "all_crate_deps")
+load("@rules_rust//rust:defs.bzl", "rust_library")
+
+rust_library(
+    name = "mail-common",
+    srcs = glob(["src/**/*.rs"]),
+    compile_data = ["Cargo.toml"] + glob(["src/db/offline_migrations/**"]),
+    crate_features = [
+        "events-v6",
+        "foundation_search",
+        "sql",
+    ],
+    edition = "2024",
+    proc_macro_deps = all_crate_deps(
+        proc_macro = True,
+    ) + [
+        "//project/mail/rust/mail/mail-common-derive:mail-common-derive",
+    ],
+    visibility = ["//visibility:public"],
+    deps = all_crate_deps(
+        normal = True,
+    ) + [
+        "//project/core/rust/core-event-loop",
+        "//project/mail/rust/account/account-api:mail-account-api",
+        "//project/mail/rust/api/mail-api-labels",
+        "//project/mail/rust/calendar/calendar-api:mail-calendar-api-v1",
+        "//project/mail/rust/calendar/calendar-common:mail-calendar-common",
+        "//project/mail/rust/contacts/contacts-common:mail-contacts-common",
+        "//project/mail/rust/core/core-api:mail-core-api",
+        "//project/mail/rust/core/core-common:mail-core-common",
+        "//project/mail/rust/crypto/crypto-inbox:mail-crypto-inbox",
+        "//project/mail/rust/mail/mail-api",
+        "//project/mail/rust/mail/mail-html-transformer",
+        "//project/mail/rust/mail/mail-search",
+        "//project/mail/rust/shared/action-queue:mail-action-queue",
+        "//project/mail/rust/shared/canonical-email:mail-canonical-email",
+        "//project/mail/rust/shared/issue-reporter-service:mail-issue-reporter-service",
+        "//project/mail/rust/shared/log-service:mail-log-service",
+        "//project/mail/rust/shared/mail-local-id",
+        "//project/mail/rust/shared/mailto:mail-mailto",
+        "//project/mail/rust/shared/network-monitor-service:mail-network-monitor-service",
+        "//project/mail/rust/shared/observability:mail-observability",
+        "//project/mail/rust/shared/sqlite3:mail-sqlite3",
+        "//project/mail/rust/shared/stash:mail-stash",
+        "//project/mail/rust/shared/task-service:mail-task-service",
+        "//project/mail/rust/shared/telemetry-service:mail-telemetry",
+    ],
+)

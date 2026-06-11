@@ -1,0 +1,25 @@
+load("@crate_index//:defs.bzl", "all_crate_deps")
+load("@rules_rust//rust:defs.bzl", "rust_library")
+
+rust_library(
+    name = "mail-labels-common",
+    srcs = glob(["src/**/*.rs"]),
+    compile_data = ["Cargo.toml"] + glob(["src/db/migrations/**"]),
+    crate_features = ["sql"],
+    edition = "2024",
+    proc_macro_deps = all_crate_deps(
+        proc_macro = True,
+    ),
+    visibility = ["//visibility:public"],
+    deps = all_crate_deps(
+        normal = True,
+    ) + [
+        "//project/mail/rust/api/mail-api-labels",
+        "//project/mail/rust/core/core-api:mail-core-api",
+        "//project/mail/rust/shared/action-queue:mail-action-queue",
+        "//project/mail/rust/shared/mail-local-id",
+        "//project/mail/rust/shared/shared-types:mail-shared-types",
+        "//project/mail/rust/shared/sqlite3:mail-sqlite3",
+        "//project/mail/rust/shared/stash:mail-stash",
+    ],
+)

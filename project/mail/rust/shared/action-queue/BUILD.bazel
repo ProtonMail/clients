@@ -2,12 +2,9 @@ load("@crate_index//:defs.bzl", "all_crate_deps")
 load("@rules_rust//rust:defs.bzl", "rust_library")
 
 rust_library(
-    name = "mail-api-event-types",
+    name = "mail-action-queue",
     srcs = glob(["src/**/*.rs"]),
-    crate_features = [
-        "mocks",
-        "sql",
-    ],
+    compile_data = ["Cargo.toml"] + glob(["src/db/migrations/**"]),
     edition = "2024",
     proc_macro_deps = all_crate_deps(
         proc_macro = True,
@@ -16,7 +13,7 @@ rust_library(
     deps = all_crate_deps(
         normal = True,
     ) + [
-        "//project/mail/rust/shared/mail-proton-ids",
+        "//project/mail/rust/shared/sqlite3:mail-sqlite3",
         "//project/mail/rust/shared/stash:mail-stash",
     ],
 )

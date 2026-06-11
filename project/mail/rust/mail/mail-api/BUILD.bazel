@@ -2,7 +2,7 @@ load("@crate_index//:defs.bzl", "all_crate_deps")
 load("@rules_rust//rust:defs.bzl", "rust_library")
 
 rust_library(
-    name = "mail-proton-ids",
+    name = "mail-api",
     srcs = glob(["src/**/*.rs"]),
     crate_features = ["sql"],
     edition = "2024",
@@ -13,6 +13,12 @@ rust_library(
     deps = all_crate_deps(
         normal = True,
     ) + [
+        "//project/mail/rust/account/account-api:mail-account-api",
+        "//project/mail/rust/core/core-api:mail-core-api",
+        "//project/mail/rust/crypto/crypto-inbox:mail-crypto-inbox",
+        "//project/mail/rust/shared/api-utils:mail-api-utils",
         "//project/mail/rust/shared/stash:mail-stash",
+        "//project/mail/rust/shared/task-service:mail-task-service",
+        "@crate_index//:mail-muon",
     ],
 )

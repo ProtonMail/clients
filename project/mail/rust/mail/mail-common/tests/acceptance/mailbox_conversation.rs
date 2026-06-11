@@ -95,6 +95,7 @@ async fn test_new_mailbox_sync_conversations() {
         user_ctx.user_stash(),
         user_ctx.session(),
         user_ctx.action_queue(),
+        None,
     )
     .await
     .unwrap()
@@ -113,6 +114,7 @@ async fn test_new_mailbox_sync_conversations() {
         user_ctx.user_stash(),
         user_ctx.session(),
         user_ctx.action_queue(),
+        None,
     )
     .await
     .unwrap()
@@ -250,6 +252,7 @@ async fn test_new_mailbox_syncs_new_conversation_messages_on_push_notification()
         user_ctx.user_stash(),
         user_ctx.session(),
         user_ctx.action_queue(),
+        None,
     )
     .await
     .unwrap()
@@ -271,6 +274,7 @@ async fn test_new_mailbox_syncs_new_conversation_messages_on_push_notification()
         user_ctx.user_stash(),
         user_ctx.session(),
         user_ctx.action_queue(),
+        None,
     )
     .await
     .unwrap()
@@ -389,6 +393,7 @@ async fn test_opening_conversation_with_trashed_message() {
         user_ctx.user_stash(),
         user_ctx.session(),
         user_ctx.action_queue(),
+        None,
     )
     .await
     .unwrap()
@@ -408,6 +413,7 @@ async fn test_opening_conversation_with_trashed_message() {
         user_ctx.user_stash(),
         user_ctx.session(),
         user_ctx.action_queue(),
+        None,
     )
     .await
     .unwrap()
@@ -431,6 +437,7 @@ async fn test_opening_conversation_with_trashed_message() {
         user_ctx.user_stash(),
         user_ctx.session(),
         user_ctx.action_queue(),
+        None,
     )
     .await
     .unwrap()
@@ -571,6 +578,7 @@ async fn test_new_mailbox_syncs_new_conversation_if_total_does_not_add_up() {
         user_ctx.user_stash(),
         user_ctx.session(),
         user_ctx.action_queue(),
+        None,
     )
     .await
     .unwrap()
@@ -608,6 +616,7 @@ async fn test_new_mailbox_syncs_new_conversation_if_total_does_not_add_up() {
         user_ctx.user_stash(),
         user_ctx.session(),
         user_ctx.action_queue(),
+        None,
     )
     .await
     .unwrap()
@@ -689,6 +698,7 @@ async fn conversation_and_messages_fetches_missing_dependenceis() {
         user_ctx.user_stash(),
         user_ctx.session(),
         user_ctx.action_queue(),
+        None,
     )
     .await
     .unwrap()
@@ -752,6 +762,7 @@ async fn conversation_and_messages_from_push_notification_fetches_missing_depend
         user_ctx.user_stash(),
         user_ctx.session(),
         user_ctx.action_queue(),
+        None,
     )
     .await
     .unwrap()
@@ -829,6 +840,7 @@ async fn push_notification_sync_returns_post_rebase_conversation() {
         user_ctx.user_stash(),
         user_ctx.session(),
         user_ctx.action_queue(),
+        None,
     )
     .await
     .unwrap()

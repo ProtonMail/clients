@@ -177,6 +177,8 @@ impl Handler<UserDb> for SaveHandler {
     > {
         info!("Saving Draft {}", action.metadata_id);
 
+        let ctx = self.ctx.upgrade().ok_or(MailContextError::LostContext)?;
+
         let local_draft_id = local_draft_label_id(bond).await?;
         let local_all_draft_id = local_all_draft_label_id(bond).await?;
         let local_all_mail_id = local_all_mail_label_id(bond).await?;
@@ -362,7 +364,7 @@ impl Handler<UserDb> for SaveHandler {
         };
 
         RawMessageBody::local_draft(&action.body)
-            .store_and_consume(message.id(), bond)
+            .store_and_consume(message.id(), ctx.search_service(), bond)
             .await
             .inspect_err(|e| {
                 error!("Failed to store draft body in cache :{e:?}");

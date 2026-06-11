@@ -12,7 +12,6 @@ use mail_api::services::proton::common::MessageId;
 use mail_core_common::event_loop::events::Action;
 use mail_stash::stash::WriteTx;
 
-#[cfg(feature = "foundation_search")]
 use crate::search::MailSearchService;
 
 /// Handle search indexing for a single message event (v6 event structure)
@@ -30,12 +29,12 @@ use crate::search::MailSearchService;
 /// # Returns
 ///
 /// Returns `Ok(())` on success, or an `AppError` if indexing operations fail.
-#[cfg(feature = "foundation_search")]
 pub async fn handle_search_indexing_for_message(
     tx: &WriteTx<'_>,
     remote_id: &MessageId,
     action: Action,
     local_id: Option<u64>,
+    search_service: &MailSearchService,
 ) -> Result<(), AppError> {
     use crate::models::Message;
     use mail_core_common::models::ModelIdExtension;
@@ -53,7 +52,7 @@ pub async fn handle_search_indexing_for_message(
             };
 
             // Queue search removal
-            if let Err(e) = MailSearchService::queue_remove(local_id, tx).await {
+            if let Err(e) = search_service.queue_remove(local_id, tx).await {
                 tracing::warn!(
                     "Failed to queue search removal for message {}: {}",
                     local_id,
@@ -74,7 +73,7 @@ pub async fn handle_search_indexing_for_message(
                 return Ok(()); // Message not found, nothing to index
             };
 
-            if let Err(e) = MailSearchService::queue_index(local_id, tx).await {
+            if let Err(e) = search_service.queue_index(local_id, tx).await {
                 tracing::warn!(
                     "Failed to queue search indexing for message {}: {}",
                     local_id,
@@ -84,16 +83,5 @@ pub async fn handle_search_indexing_for_message(
         }
     }
 
-    Ok(())
-}
-
-/// No-op implementation when foundation_search feature is disabled
-#[cfg(not(feature = "foundation_search"))]
-pub async fn handle_search_indexing_for_message(
-    _tx: &WriteTx<'_>,
-    _remote_id: &MessageId,
-    _action: Action,
-    _local_id: Option<u64>,
-) -> Result<(), AppError> {
     Ok(())
 }

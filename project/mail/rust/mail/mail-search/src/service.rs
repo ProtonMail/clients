@@ -397,6 +397,7 @@ impl MailSearchService {
     /// The worker is automatically notified via database table watcher after the
     /// transaction commits, eliminating race conditions and supporting multi-account scenarios.
     pub async fn queue_index(
+        &self,
         message_id: LocalMessageId,
         bond: &WriteTx<'_>,
     ) -> Result<(), StashError> {
@@ -421,6 +422,7 @@ impl MailSearchService {
     /// The worker is automatically notified via database table watcher after the
     /// transaction commits, eliminating race conditions and supporting multi-account scenarios.
     pub async fn queue_index_batch(
+        &self,
         message_ids: &[LocalMessageId],
         bond: &WriteTx<'_>,
     ) -> Result<(), StashError> {
@@ -445,6 +447,7 @@ impl MailSearchService {
     /// The worker is automatically notified via database table watcher after the
     /// transaction commits, eliminating race conditions and supporting multi-account scenarios.
     pub async fn queue_remove(
+        &self,
         message_id: LocalMessageId,
         bond: &WriteTx<'_>,
     ) -> Result<(), StashError> {

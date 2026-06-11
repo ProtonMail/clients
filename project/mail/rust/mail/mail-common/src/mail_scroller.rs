@@ -297,7 +297,6 @@ impl MailScroller<Message> {
         Self::new(ctx, source, page_size, label, enabled_category).await
     }
 
-    #[cfg(feature = "foundation_search")]
     pub async fn local_search(
         ctx: Weak<MailUserContext>,
         options: SearchOptions,

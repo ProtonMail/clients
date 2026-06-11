@@ -180,7 +180,6 @@ impl HybridSearchScrollerSource {
         .await
     }
 
-    #[cfg(feature = "foundation_search")]
     async fn try_local_search(
         ctx: &MailUserContext,
         query: &str,
@@ -191,15 +190,6 @@ impl HybridSearchScrollerSource {
         LocalSearchScrollerSource::perform_local_search(ctx, query, tether).await?;
         let has_results = SearchScrollData::last(tether).await?.is_some();
         Ok(has_results)
-    }
-
-    #[cfg(not(feature = "foundation_search"))]
-    async fn try_local_search(
-        _ctx: &MailUserContext,
-        _query: &str,
-        _tether: &mut Tether,
-    ) -> Result<bool, MailContextError> {
-        Ok(false)
     }
 
     /// Spawns first-page sync in the background and triggers mail scroller refresh on completion.

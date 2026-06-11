@@ -103,8 +103,13 @@ impl Handler<UserDb> for RefreshMetadataHandler {
             .filter_map(|msg| msg.remote_id.clone())
             .collect_vec();
 
-        let items_sync_result =
-            Message::sync_metadata(remote_ids.clone(), ctx.session(), &mut tether).await;
+        let items_sync_result = Message::sync_metadata(
+            remote_ids.clone(),
+            ctx.session(),
+            ctx.search_service(),
+            &mut tether,
+        )
+        .await;
 
         let refreshed_items = match items_sync_result {
             Ok(items) => items,

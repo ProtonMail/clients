@@ -334,7 +334,7 @@ mod tests {
         tether
             .write_tx::<_, (), SE>(async |bond| {
                 for &local_id in &message_ids {
-                    MailSearchService::queue_index(local_id, bond).await?;
+                    search_service.queue_index(local_id, bond).await?;
                 }
                 Ok(())
             })

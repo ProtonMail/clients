@@ -223,6 +223,7 @@ impl EventSubscriber<EventManagerContext, MailEventSourceV5> for MailEventV5Subs
                             &mut rebase_change_set,
                             &mut data,
                             &unresolved_label_ids,
+                            ctx.search_service(),
                         )
                         .await
                         .context("Error handling message events")?;

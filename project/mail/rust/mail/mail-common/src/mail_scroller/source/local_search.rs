@@ -82,7 +82,10 @@ impl LocalSearchScrollerSource {
     ) -> Result<(), MailContextError> {
         use crate::search::search_local_with_keywords;
 
-        let search_service = ctx.search_service();
+        let Some(search_service) = ctx.search_service() else {
+            tracing::warn!("Content Search Service is not enabled");
+            return Ok(());
+        };
 
         // Get local search results
         let local_results = search_local_with_keywords(search_service, tether, query)
@@ -271,6 +274,7 @@ impl LocalSearchScrollerSource {
                     api_messages,
                     &mut rebase_change_set,
                     &unresolved_label_ids,
+                    ctx.search_service(),
                     tx,
                 )
                 .await?;

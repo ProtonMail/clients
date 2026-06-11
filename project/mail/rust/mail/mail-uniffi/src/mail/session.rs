@@ -98,6 +98,7 @@ pub struct MailSessionParams {
     pub app_details: AppDetails,
     pub quarantine_xattr_app_name: Option<String>,
     pub event_poll_duration_seconds: Option<u64>,
+    pub enable_content_search: bool,
 }
 
 // NOTE: Callbacks can not be stored in record types, which is why they are still in the
@@ -214,11 +215,12 @@ async fn create_mail_session_inner(
         Origin::IosShareExt => EventPollMode::Manual,
     };
 
-    #[cfg(feature = "foundation_search")]
-    let historic_indexing_provider =
-        Some(mail_historic_ephemeral_load::historic_indexing_provider());
-    #[cfg(not(feature = "foundation_search"))]
-    let historic_indexing_provider = None;
+    let historic_indexing_provider = if params.enable_content_search {
+        tracing::info!("Enabling Content Search");
+        Some(mail_historic_ephemeral_load::historic_indexing_provider())
+    } else {
+        None
+    };
 
     let mail_ctx = MailContext::new(
         params.origin.into(),

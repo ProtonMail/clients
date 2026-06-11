@@ -280,6 +280,7 @@ pub async fn conversation(
                 &mail_stash,
                 &session,
                 ctx.action_queue(),
+                ctx.search_service(),
             )
             .await?
             .map(Into::into),

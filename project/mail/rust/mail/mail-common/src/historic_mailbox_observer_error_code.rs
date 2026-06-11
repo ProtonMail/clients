@@ -59,7 +59,6 @@ impl std::fmt::Display for HistoricMailboxObserverErrorCode {
     }
 }
 
-#[cfg(feature = "foundation_search")]
 impl From<HistoricMailboxObserverErrorCode> for mail_search::ContentSearchIndexingLastErrorCode {
     fn from(code: HistoricMailboxObserverErrorCode) -> Self {
         match code {

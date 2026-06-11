@@ -93,7 +93,7 @@ async fn setup_local_search_index(
         let raw_body = mail_common::models::RawMessageBody::local_draft(entry.body.clone());
         tether
             .write_tx::<_, _, StashError>(async |bond| {
-                raw_body.store(msg.id(), bond).await?;
+                raw_body.store(msg.id(), None, bond).await?;
                 Ok(())
             })
             .await
@@ -109,6 +109,7 @@ async fn setup_local_search_index(
 
         user_ctx
             .search_service()
+            .expect("Should be set")
             .index_message_body(&message_meta.id, &entry.body, &metadata)
             .await
             .expect("Indexing should succeed");

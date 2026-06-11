@@ -181,6 +181,7 @@ async fn create_attachment_dependencies(
                     attachments_metadata: metadata.clone(),
                 }],
                 None,
+                None,
                 tx,
             )
             .await?;

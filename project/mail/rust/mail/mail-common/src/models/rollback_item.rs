@@ -15,6 +15,7 @@ use mail_core_api::service::ApiServiceError;
 use mail_core_api::services::proton::{LabelId, ProtonIdMarker};
 use mail_core_api::session::Session;
 use mail_core_common::models::Label;
+use mail_search::MailSearchService;
 use mail_stash::macros::Model;
 use mail_stash::orm::Model;
 use mail_stash::stash::{StashError, Tether, WriteTx};
@@ -90,13 +91,14 @@ impl RollbackItem {
         tx: &mut Tether<UserDb>,
         batch: I,
         queue: &Queue<UserDb>,
+        search_service: Option<&MailSearchService>,
     ) -> Result<(), MailContextError>
     where
         I: Into<Option<usize>> + Copy,
     {
-        Self::sync_labels(api, tx, batch, queue).await?;
-        Self::sync_messages(api, tx, batch, queue).await?;
-        Self::sync_conversations(api, tx, batch, queue).await?;
+        Self::sync_labels(api, tx, batch, queue, search_service).await?;
+        Self::sync_messages(api, tx, batch, queue, search_service).await?;
+        Self::sync_conversations(api, tx, batch, queue, search_service).await?;
 
         Ok(())
     }
@@ -107,11 +109,13 @@ impl RollbackItem {
         tx: &mut Tether<UserDb>,
         batch: I,
         queue: &Queue<UserDb>,
+        search_service: Option<&MailSearchService>,
     ) -> Result<(), MailContextError>
     where
         I: Into<Option<usize>>,
     {
-        Self::sync_items_impl::<LabelRollbackHandler>(api, tx, batch.into(), queue).await
+        Self::sync_items_impl::<LabelRollbackHandler>(api, tx, batch.into(), queue, search_service)
+            .await
     }
 
     #[tracing::instrument(skip_all)]
@@ -120,11 +124,19 @@ impl RollbackItem {
         tx: &mut Tether<UserDb>,
         batch: I,
         queue: &Queue<UserDb>,
+        search_service: Option<&MailSearchService>,
     ) -> Result<(), MailContextError>
     where
         I: Into<Option<usize>>,
     {
-        Self::sync_items_impl::<MessageRollbackHandler>(api, tx, batch.into(), queue).await
+        Self::sync_items_impl::<MessageRollbackHandler>(
+            api,
+            tx,
+            batch.into(),
+            queue,
+            search_service,
+        )
+        .await
     }
 
     #[tracing::instrument(skip_all)]
@@ -133,11 +145,19 @@ impl RollbackItem {
         tx: &mut Tether<UserDb>,
         batch: I,
         queue: &Queue<UserDb>,
+        search_service: Option<&MailSearchService>,
     ) -> Result<(), MailContextError>
     where
         I: Into<Option<usize>>,
     {
-        Self::sync_items_impl::<ConversationRollbackHandler>(api, tx, batch.into(), queue).await
+        Self::sync_items_impl::<ConversationRollbackHandler>(
+            api,
+            tx,
+            batch.into(),
+            queue,
+            search_service,
+        )
+        .await
     }
 
     /// This helper method is used to find all rollback items of a specific kind.
@@ -191,6 +211,7 @@ impl RollbackItem {
         tether: &mut Tether,
         batch: Option<usize>,
         queue: &Queue<UserDb>,
+        search_service: Option<&MailSearchService>,
     ) -> Result<(), MailContextError> {
         let items: Vec<H::RemoteId> = Self::find_remote_ids_by_kind(H::item_type(), tether)
             .await?
@@ -231,7 +252,7 @@ impl RollbackItem {
             let mut changeset = RebaseChangeSet::default();
             tether
                 .write_tx(async |tx| {
-                    H::store_items(items, &mut changeset, tx)
+                    H::store_items(items, &mut changeset, search_service, tx)
                         .await
                         .inspect_err(|e| {
                             error!("Failed to store items ({:?}): {e:?}", H::item_type());
@@ -291,6 +312,7 @@ trait RollbackHandler: 'static + Send + Sync {
     fn store_items(
         items: Vec<Self::Item>,
         changeset: &mut RebaseChangeSet,
+        search_service: Option<&MailSearchService>,
         tx: &WriteTx<'_>,
     ) -> impl Future<Output = Result<(), MailContextError>>;
 }
@@ -344,10 +366,13 @@ impl RollbackHandler for MessageRollbackHandler {
     async fn store_items(
         items: Vec<Self::Item>,
         changeset: &mut RebaseChangeSet,
+        search_service: Option<&MailSearchService>,
         tx: &WriteTx<'_>,
     ) -> Result<(), MailContextError> {
         for item in items {
-            if Message::sync_decision(&item, None, tx).await? == MessageSyncDecision::Skip {
+            if Message::sync_decision(&item, None, search_service, tx).await?
+                == MessageSyncDecision::Skip
+            {
                 continue;
             }
             let mut m = Message::from_api_metadata(item, tx).await?;
@@ -434,6 +459,7 @@ impl RollbackHandler for ConversationRollbackHandler {
     async fn store_items(
         items: Vec<Self::Item>,
         changeset: &mut RebaseChangeSet,
+        search_service: Option<&MailSearchService>,
         tx: &WriteTx<'_>,
     ) -> Result<(), MailContextError> {
         for item in items {
@@ -441,8 +467,13 @@ impl RollbackHandler for ConversationRollbackHandler {
             c.save(tx).await?;
             changeset.add(c.id());
 
-            let ids =
-                Message::create_or_update_messages_from_metadata(item.messages, None, tx).await?;
+            let ids = Message::create_or_update_messages_from_metadata(
+                item.messages,
+                None,
+                search_service,
+                tx,
+            )
+            .await?;
             changeset.add_many(ids);
         }
 
@@ -508,6 +539,7 @@ impl RollbackHandler for LabelRollbackHandler {
     async fn store_items(
         items: Vec<Self::Item>,
         changeset: &mut RebaseChangeSet,
+        _: Option<&MailSearchService>,
         tx: &WriteTx<'_>,
     ) -> Result<(), MailContextError> {
         for item in items {

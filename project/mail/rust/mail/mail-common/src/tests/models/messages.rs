@@ -928,6 +928,7 @@ async fn test_create_message() {
             Ok(Message::create_or_update_messages_from_metadata(
                 vec![message.metadata.clone()],
                 None,
+                None,
                 tx,
             )
             .await
@@ -977,7 +978,7 @@ async fn test_create_message_without_synced_conversation() {
     let remote_id = api_metadata.id.clone();
     tether
         .write_tx::<_, _, StashError>(async |tx| {
-            Message::create_or_update_messages_from_metadata(vec![api_metadata], None, tx)
+            Message::create_or_update_messages_from_metadata(vec![api_metadata], None, None, tx)
                 .await
                 .expect("failed to create message");
             Ok(())
@@ -1051,14 +1052,17 @@ async fn test_create_message_with_attachments() {
     );
     let id = conn
         .write_tx::<_, _, StashError>(async |tx| {
-            Ok(
-                Message::create_or_update_messages_from_metadata(vec![message.metadata], None, tx)
-                    .await
-                    .expect("failed to create message")
-                    .into_iter()
-                    .next()
-                    .unwrap(),
+            Ok(Message::create_or_update_messages_from_metadata(
+                vec![message.metadata],
+                None,
+                None,
+                tx,
             )
+            .await
+            .expect("failed to create message")
+            .into_iter()
+            .next()
+            .unwrap())
         })
         .await
         .unwrap();
@@ -1177,14 +1181,17 @@ async fn test_update_message() {
     metadata_updated.metadata.flags = ApiMessageFlags::from_bits(8397841).unwrap();
     let id = tether
         .write_tx::<_, _, StashError>(async |tx| {
-            Ok(
-                Message::create_or_update_messages_from_metadata(vec![message.metadata], None, tx)
-                    .await
-                    .expect("failed to create message")
-                    .into_iter()
-                    .next()
-                    .unwrap(),
+            Ok(Message::create_or_update_messages_from_metadata(
+                vec![message.metadata],
+                None,
+                None,
+                tx,
             )
+            .await
+            .expect("failed to create message")
+            .into_iter()
+            .next()
+            .unwrap())
         })
         .await
         .unwrap();

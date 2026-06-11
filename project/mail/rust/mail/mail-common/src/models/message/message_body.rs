@@ -1,5 +1,4 @@
 use crate::datatypes::LocalMessageId;
-#[cfg(feature = "foundation_search")]
 use crate::search::MailSearchService;
 use indoc::indoc;
 use mail_crypto_inbox::message::RawDecryptedBody;
@@ -10,8 +9,6 @@ use mail_stash::macros::DbRecord;
 use mail_stash::params;
 use mail_stash::stash::{StashError, Tether, WriteTx};
 use rusqlite::types;
-#[cfg(feature = "foundation_search")]
-use tracing::debug;
 use tracing::instrument;
 use types::{FromSqlResult, ValueRef};
 
@@ -125,26 +122,28 @@ impl RawMessageBody {
 
     /// Store the message body
     #[instrument(skip_all, fields(id=%id))]
-    pub async fn store(&self, id: LocalMessageId, tx: &WriteTx<'_>) -> Result<(), StashError> {
-        self.clone().store_and_consume(id, tx).await
+    pub async fn store(
+        &self,
+        id: LocalMessageId,
+        search_service: Option<&MailSearchService>,
+        tx: &WriteTx<'_>,
+    ) -> Result<(), StashError> {
+        self.clone().store_and_consume(id, search_service, tx).await
     }
 
     #[instrument(skip_all, fields(id=%id))]
     pub async fn store_and_consume(
         self,
         id: LocalMessageId,
+        search_service: Option<&MailSearchService>,
         tx: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         // Extract values from self before moving to avoid borrow checker issues.
         // They are needed both for the database insert and for search indexing
         // that happens after self is moved/consumed in the params! macro.
-        #[cfg(feature = "foundation_search")]
         let should_index = self.decryption_error.is_none() && !self.body.is_empty();
-        #[cfg(feature = "foundation_search")]
         let body_len = self.body.len();
-        #[cfg(feature = "foundation_search")]
         let has_decryption_error = self.decryption_error.is_some();
-        #[cfg(feature = "foundation_search")]
         let is_body_empty = self.body.is_empty();
 
         let body = self.body;
@@ -183,15 +182,14 @@ impl RawMessageBody {
         )
         .await?;
 
-        #[cfg(feature = "foundation_search")]
-        {
+        if let Some(service) = search_service {
             if should_index {
                 tracing::info!(
                     "Queueing search index intent for message {} (raw body length: {})",
                     id,
                     body_len
                 );
-                MailSearchService::queue_index(id.as_u64(), tx).await?;
+                service.queue_index(id.as_u64(), tx).await?;
                 tracing::info!("Search index intent queued for message {}", id);
             } else {
                 tracing::debug!(
@@ -209,9 +207,9 @@ impl RawMessageBody {
     /// Store multiple message bodies in a single transaction with batched search index intents.
     ///
     #[instrument(skip_all)]
-    #[cfg(feature = "foundation_search")]
     pub async fn store_and_consume_batch(
         items: Vec<(LocalMessageId, Self)>,
+        search_service: Option<&MailSearchService>,
         tx: &WriteTx<'_>,
     ) -> Result<(), StashError> {
         if items.is_empty() {
@@ -257,14 +255,16 @@ impl RawMessageBody {
             .await?;
         }
 
-        let ids_to_index: Vec<u64> = items
-            .iter()
-            .filter(|(_, body)| body.decryption_error.is_none() && !body.body.is_empty())
-            .map(|(id, _)| id.as_u64())
-            .collect();
+        if let Some(service) = search_service {
+            let ids_to_index: Vec<u64> = items
+                .iter()
+                .filter(|(_, body)| body.decryption_error.is_none() && !body.body.is_empty())
+                .map(|(id, _)| id.as_u64())
+                .collect();
 
-        if !ids_to_index.is_empty() {
-            MailSearchService::queue_index_batch(&ids_to_index, tx).await?;
+            if !ids_to_index.is_empty() {
+                service.queue_index_batch(&ids_to_index, tx).await?;
+            }
         }
 
         Ok(())
@@ -272,7 +272,11 @@ impl RawMessageBody {
 
     /// Delete the message body
     #[instrument(skip_all, fields(id=%id))]
-    pub async fn delete(id: LocalMessageId, tx: &WriteTx<'_>) -> Result<(), StashError> {
+    pub async fn delete(
+        id: LocalMessageId,
+        search_service: Option<&MailSearchService>,
+        tx: &WriteTx<'_>,
+    ) -> Result<(), StashError> {
         tx.execute(
             "DELETE FROM raw_message_body WHERE message_id = ?",
             params![id],
@@ -280,10 +284,9 @@ impl RawMessageBody {
         .await?;
 
         // Queue for search removal (will be processed by worker)
-        #[cfg(feature = "foundation_search")]
-        {
-            MailSearchService::queue_remove(id.as_u64(), tx).await?;
-            debug!("Queued search removal for message {}", id);
+        if let Some(service) = search_service {
+            service.queue_remove(id.as_u64(), tx).await?;
+            tracing::debug!("Queued search removal for message {}", id);
         }
 
         Ok(())

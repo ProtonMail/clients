@@ -28,6 +28,7 @@ use mail_action_queue::queue::{
 use mail_core_api::session::Session;
 use mail_core_common::services::TelemetryService;
 use mail_core_common::utils::MapVec as _;
+use mail_search::MailSearchService;
 use mail_sqlite3::rusqlite::{Transaction, params_from_iter};
 use mail_stash::UserDb;
 use mail_stash::exports::Connection;
@@ -687,12 +688,13 @@ impl Message {
     pub async fn create_or_update_messages_from_metadata_vec(
         metadata: Vec<ApiMessageMetadata>,
         event_action: Option<Action>,
+        search_service: Option<&MailSearchService>,
         bond: &WriteTx<'_>,
     ) -> Result<Vec<Message>, AppError> {
         let mut messages = Vec::with_capacity(metadata.len());
 
         for metadata in metadata {
-            if Self::sync_decision(&metadata, event_action, bond).await?
+            if Self::sync_decision(&metadata, event_action, search_service, bond).await?
                 == MessageSyncDecision::Skip
             {
                 continue;
@@ -708,15 +710,19 @@ impl Message {
     pub async fn create_or_update_messages_from_metadata(
         metadata: Vec<ApiMessageMetadata>,
         event_action: Option<Action>,
+        search_service: Option<&MailSearchService>,
         bond: &WriteTx<'_>,
     ) -> Result<Vec<LocalMessageId>, AppError> {
-        Ok(
-            Self::create_or_update_messages_from_metadata_vec(metadata, event_action, bond)
-                .await?
-                .into_iter()
-                .filter_map(|x| x.local_id)
-                .collect(),
+        Ok(Self::create_or_update_messages_from_metadata_vec(
+            metadata,
+            event_action,
+            search_service,
+            bond,
         )
+        .await?
+        .into_iter()
+        .filter_map(|x| x.local_id)
+        .collect())
     }
 
     pub async fn mark_deleted(
@@ -880,6 +886,7 @@ impl Message {
         label_id: LabelId,
         count: usize,
         api: &PM,
+        search_service: Option<&MailSearchService>,
         tether: &mut Tether,
     ) -> Result<(), AppError> {
         let response = api
@@ -900,7 +907,13 @@ impl Message {
 
         tether
             .write_tx(async |tx| {
-                Self::create_or_update_messages_from_metadata(response.messages, None, tx).await
+                Self::create_or_update_messages_from_metadata(
+                    response.messages,
+                    None,
+                    search_service,
+                    tx,
+                )
+                .await
             })
             .await?;
         Ok(())
@@ -1551,6 +1564,7 @@ impl Message {
     pub async fn sync_metadata(
         ids: Vec<MessageId>,
         api: &Session,
+        search_service: Option<&MailSearchService>,
         tether: &mut Tether,
     ) -> Result<Vec<Self>, MailContextError> {
         let remote_msgs = Self::fetch_metadata(
@@ -1579,7 +1593,8 @@ impl Message {
         tether
             .write_tx(async |tx| {
                 for msg in remote_msgs {
-                    let sync_decision = Message::sync_decision(&msg, None, tx).await?;
+                    let sync_decision =
+                        Message::sync_decision(&msg, None, search_service, tx).await?;
                     let mut remote_msg = Message::from_api_metadata(msg, tx).await?;
                     if sync_decision == MessageSyncDecision::Apply {
                         remote_msg.save(tx).await?;
@@ -1771,7 +1786,9 @@ impl Message {
             return Ok(message.id());
         }
         tracing::debug!("Message does not exist, fetching");
-        let result = Message::sync_metadata(vec![remote_id], ctx.session(), tether).await?;
+        let result =
+            Message::sync_metadata(vec![remote_id], ctx.session(), ctx.search_service(), tether)
+                .await?;
         if result.len() != 1 {
             return Err(MailContextError::Other(anyhow!(
                 "Failed to sync message from server"
@@ -1821,7 +1838,8 @@ impl Message {
                     .into_iter()
                     .next()
                     .expect("already checked non-empty");
-                let sync_decision = Message::sync_decision(&msg, None, tx).await?;
+                let sync_decision =
+                    Message::sync_decision(&msg, None, ctx.search_service(), tx).await?;
                 let mut remote_msg = Message::from_api_metadata(msg, tx).await?;
                 if sync_decision == MessageSyncDecision::Apply {
                     remote_msg.save(tx).await?;
@@ -2048,6 +2066,7 @@ impl Message {
         api_messages: Vec<ApiMessageMetadata>,
         rebase_change_set: &mut RebaseChangeSet,
         unresoled_label_ids: &HashSet<LabelId>,
+        search_service: Option<&MailSearchService>,
         tx: &WriteTx<'_>,
     ) -> Result<Vec<Message>, MailContextError> {
         let remote_ids = api_messages.iter().map(|m| m.id.as_str());
@@ -2065,7 +2084,8 @@ impl Message {
                 );
                 continue;
             }
-            let Some(message) = (if Message::sync_decision(&api_message, None, tx).await?
+            let Some(message) = (if Message::sync_decision(&api_message, None, search_service, tx)
+                .await?
                 == MessageSyncDecision::Skip
             {
                 Message::find_by_remote_id(api_message.id.clone(), tx).await?
@@ -2086,6 +2106,7 @@ impl Message {
     pub(crate) async fn sync_decision(
         metadata: &ApiMessageMetadata,
         event_action: Option<Action>,
+        search_service: Option<&MailSearchService>,
         tx: &WriteTx<'_>,
     ) -> Result<MessageSyncDecision, StashError> {
         // Here the following cases can happen:
@@ -2143,7 +2164,7 @@ impl Message {
         if (event_action == Some(Action::Update) || is_stale_draft)
             && let Some(local_id) = Message::remote_id_counterpart(metadata.id.clone(), tx).await?
         {
-            _ = RawMessageBody::delete(local_id, tx).await;
+            _ = RawMessageBody::delete(local_id, search_service, tx).await;
         }
 
         Ok(MessageSyncDecision::Apply)
@@ -2156,6 +2177,7 @@ impl Message {
         message: Option<&MessageMetadata>,
         changeset: &mut RebaseChangeSet,
         unresolved_label_ids: &HashSet<LabelId>,
+        search_service: Option<&MailSearchService>,
     ) -> Result<Option<LocalMessageId>, AppError> {
         action
             .log_entry(id, async |remote_id| {
@@ -2169,11 +2191,11 @@ impl Message {
         match action {
             Action::Delete => {
                 // Handle search indexing removal before deleting the message
-                #[cfg(feature = "foundation_search")]
-                {
+                if let Some(service) = search_service {
                     use crate::user_context::events::search::handle_search_indexing_for_message;
                     if let Err(e) = handle_search_indexing_for_message(
                         tx, id, action, None, // Will look up local_id if needed
+                        service,
                     )
                     .await
                     {
@@ -2203,7 +2225,8 @@ impl Message {
                     return Ok(None);
                 };
 
-                if Message::sync_decision(message_metadata, Some(action), tx).await?
+                if Message::sync_decision(message_metadata, Some(action), search_service, tx)
+                    .await?
                     == MessageSyncDecision::Skip
                 {
                     tracing::debug!("Create skipped for {id:?}");
@@ -2217,14 +2240,14 @@ impl Message {
                 changeset.add(message.id());
 
                 // Handle search indexing for newly created message
-                #[cfg(feature = "foundation_search")]
-                {
+                if let Some(service) = search_service {
                     use crate::user_context::events::search::handle_search_indexing_for_message;
                     if let Err(e) = handle_search_indexing_for_message(
                         tx,
                         id,
                         action,
                         Some(message.id().as_u64()),
+                        service,
                     )
                     .await
                     {
@@ -2241,7 +2264,8 @@ impl Message {
                     return Ok(None);
                 };
 
-                if Message::sync_decision(message_metadata, Some(action), tx).await?
+                if Message::sync_decision(message_metadata, Some(action), search_service, tx)
+                    .await?
                     == MessageSyncDecision::Skip
                 {
                     tracing::debug!("Update skipped for {id:?}");
@@ -2253,14 +2277,14 @@ impl Message {
                 changeset.add(message.id());
 
                 // Handle search indexing for updated message
-                #[cfg(feature = "foundation_search")]
-                {
+                if let Some(service) = search_service {
                     use crate::user_context::events::search::handle_search_indexing_for_message;
                     if let Err(e) = handle_search_indexing_for_message(
                         tx,
                         id,
                         action,
                         Some(message.id().as_u64()),
+                        service,
                     )
                     .await
                     {

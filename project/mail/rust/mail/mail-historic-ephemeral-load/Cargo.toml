@@ -13,9 +13,7 @@ async-trait = { workspace = true }
 futures = { workspace = true }
 mail-action-queue = { workspace = true }
 mail-api = { workspace = true }
-mail-common = { path = "../mail-common", default-features = true, features = [
-  "foundation_search",
-] }
+mail-common = { workspace = true }
 mail-core-api = { workspace = true, features = ["sql"] }
 mail-crypto-inbox = { workspace = true }
 mail-html-transformer = { workspace = true }

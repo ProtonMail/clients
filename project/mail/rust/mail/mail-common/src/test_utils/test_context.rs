@@ -1,6 +1,7 @@
 use crate::actions::draft::SEND_ACTION_GROUP;
 use crate::context::MailUserDatabaseInitializer;
 use crate::models::IncomingDefault;
+use crate::search::NoopContentSearchHistoricIndexing;
 use crate::{MailContext, MailContextResult, MailUserContext, NewMailUserContextOptions};
 use core_event_loop::v6::EventSubscriberResult;
 use mail_action_queue::action::ActionGroup;
@@ -95,7 +96,7 @@ impl MailTestContext {
             mail_cache_path,
             mail_cache_size,
             None,
-            None,
+            Some(Arc::new(|| Arc::new(NoopContentSearchHistoricIndexing))),
         )
         .await
         .expect("failed to create mail context");

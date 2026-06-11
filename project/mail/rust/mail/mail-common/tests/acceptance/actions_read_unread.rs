@@ -164,7 +164,7 @@ async fn mark_conversation_read(conversations: &[TestCase], expected_read: usize
 
     tether
         .write_tx(async |tx| {
-            Message::create_or_update_messages_from_metadata(messages, None, tx)
+            Message::create_or_update_messages_from_metadata(messages, None, None, tx)
                 .await
                 .unwrap();
 
@@ -254,7 +254,7 @@ async fn mark_conversation_unread(conversations: &[TestCase], expected_read: usi
 
     tether
         .write_tx(async |tx| {
-            Message::create_or_update_messages_from_metadata(messages, None, tx)
+            Message::create_or_update_messages_from_metadata(messages, None, None, tx)
                 .await
                 .unwrap();
 

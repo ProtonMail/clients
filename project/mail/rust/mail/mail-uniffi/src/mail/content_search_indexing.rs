@@ -158,7 +158,12 @@ pub struct WatchContentSearchIndexingStream {
 
 impl WatchContentSearchIndexingStream {
     pub(crate) async fn new(ctx: Arc<MailUserContext>) -> Result<Arc<Self>, RealProtonMailError> {
-        let search_service = ctx.search_service();
+        let search_service = ctx
+            .search_service()
+            .ok_or(RealProtonMailError::Unexpected(Unexpected::Internal))
+            .inspect_err(|_| {
+                tracing::warn!("Content Search Service is not enabled");
+            })?;
         let initial = search_service
             .load_indexing_progress()
             .await
@@ -211,6 +216,9 @@ impl WatchContentSearchIndexingStream {
                 })?;
 
                 ctx.search_service()
+                    .ok_or(UserSessionError::Other(ProtonError::Unexpected(
+                        UnexpectedError::Internal,
+                    )))?
                     .load_indexing_progress()
                     .await
                     .map(ContentSearchIndexingProgress::from)

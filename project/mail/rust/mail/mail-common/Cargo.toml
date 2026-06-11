@@ -29,8 +29,7 @@ sql = [
 proton_mail_error_log = []
 events-v6 = ["mail-core-common/events-v6"]
 # Foundation Search: Local body text search indexing
-foundation_search = []
-foundation_search_index_timing = ["foundation_search"]
+foundation_search_index_timing = []
 
 [dependencies]
 anyhow = { workspace = true }

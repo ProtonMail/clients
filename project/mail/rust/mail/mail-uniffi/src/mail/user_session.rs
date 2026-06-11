@@ -22,7 +22,7 @@ use mail_account_uniffi::password::PasswordFlow;
 use mail_account_uniffi::password_validator::PasswordValidatorService;
 use mail_common::models::Attachment;
 use mail_common::{
-    MailContextError, MailUserContext, ProtonMailError as RealProtonMailError,
+    MailContextError, MailUserContext, ProtonMailError as RealProtonMailError, Unexpected,
     UpsellEligibilityService,
 };
 use mail_core_api::services::proton::ProtonAuth;
@@ -101,20 +101,21 @@ impl MailUserSession {
 /// All methods are prefixed with `content_search_` and live behind the
 /// `foundation_search` feature gate. The orchestrator is resolved from
 /// [`MailUserContext::content_search_historic_indexing`].
-#[cfg(feature = "foundation_search")]
 pub use super::content_search_indexing::{
     ContentSearchIndexingLastErrorCode, ContentSearchIndexingProgress, ContentSearchIndexingStatus,
     ContentSearchStartOutcome, WatchContentSearchIndexingStream,
 };
 
-#[cfg(feature = "foundation_search")]
 #[uniffi_export]
 impl MailUserSession {
     /// Whether the user has opted into content search indexing.
     pub async fn content_search_is_enabled(&self) -> Result<bool, UserSessionError> {
         let ctx = self.ctx()?;
         uniffi_async(async move {
-            ctx.search_service()
+            let Some(service) = ctx.search_service() else {
+                return Ok(false);
+            };
+            service
                 .load_indexing_state()
                 .await
                 .map(|s| s.enabled)
@@ -146,7 +147,11 @@ impl MailUserSession {
     ) -> Result<ContentSearchIndexingStatus, UserSessionError> {
         let ctx = self.ctx()?;
         uniffi_async(async move {
-            ctx.search_service()
+            let Some(service) = ctx.search_service() else {
+                tracing::warn!("Content Search Service is not enabled");
+                return Err(RealProtonMailError::Unexpected(Unexpected::Internal));
+            };
+            service
                 .load_indexing_state()
                 .await
                 .map(|s| ContentSearchIndexingStatus::from(s.status))
@@ -164,7 +169,11 @@ impl MailUserSession {
     ) -> Result<ContentSearchIndexingProgress, UserSessionError> {
         let ctx = self.ctx()?;
         uniffi_async(async move {
-            ctx.search_service()
+            let Some(service) = ctx.search_service() else {
+                tracing::warn!("Content Search Service is not enabled");
+                return Err(RealProtonMailError::Unexpected(Unexpected::Internal));
+            };
+            service
                 .load_indexing_progress()
                 .await
                 .map(ContentSearchIndexingProgress::from)

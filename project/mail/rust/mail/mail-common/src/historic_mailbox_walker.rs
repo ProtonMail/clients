@@ -144,7 +144,6 @@ impl HistoricMailboxObserverError {
     }
 
     /// Stable code persisted in `content_search_indexing_state.last_error`.
-    #[cfg(feature = "foundation_search")]
     #[must_use]
     pub fn last_error_code(&self) -> mail_search::ContentSearchIndexingLastErrorCode {
         self.observer_error_code().into()

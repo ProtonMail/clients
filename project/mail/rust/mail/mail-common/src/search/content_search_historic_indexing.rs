@@ -17,8 +17,6 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 
-#[cfg(feature = "foundation_search")]
-use crate::MailContextError;
 use crate::{MailContextResult, MailUserContext};
 
 pub use mail_search::ContentSearchStartOutcome;
@@ -67,7 +65,6 @@ impl ContentSearchHistoricIndexingService {
     /// Build a service backed by the [`NoopContentSearchHistoricIndexing`]
     /// driver. Used for test harnesses and any [`MailContext`] constructed
     /// without a provider at [`crate::MailContext::new`].
-    #[cfg(feature = "foundation_search")]
     #[must_use]
     pub fn noop() -> Self {
         Self::with_driver(Arc::new(NoopContentSearchHistoricIndexing))
@@ -110,7 +107,6 @@ impl ContentSearchHistoricIndexingService {
         self.inner.cancel_on_teardown();
     }
 
-    #[cfg_attr(not(feature = "foundation_search"), allow(dead_code))]
     pub(crate) fn driver(&self) -> Arc<dyn ContentSearchHistoricIndexing + Send + Sync> {
         Arc::clone(&self.inner)
     }
@@ -124,10 +120,8 @@ impl Drop for ContentSearchHistoricIndexingService {
 
 /// Default used when no provider was registered on [`crate::MailContext`]
 /// (tests and harnesses that do not drive historic indexing).
-#[cfg(feature = "foundation_search")]
 pub struct NoopContentSearchHistoricIndexing;
 
-#[cfg(feature = "foundation_search")]
 #[async_trait]
 impl ContentSearchHistoricIndexing for NoopContentSearchHistoricIndexing {
     async fn start(
@@ -138,10 +132,12 @@ impl ContentSearchHistoricIndexing for NoopContentSearchHistoricIndexing {
     }
 
     async fn set_enabled(&self, ctx: Arc<MailUserContext>, enabled: bool) -> MailContextResult<()> {
-        ctx.search_service()
-            .set_indexing_enabled(enabled)
-            .await
-            .map_err(|e| MailContextError::Other(e.into_inner()))
+        if let Some(service) = ctx.search_service() {
+            Ok(service.set_indexing_enabled(enabled).await?)
+        } else {
+            tracing::warn!("Content Search Service not available");
+            Ok(())
+        }
     }
 
     async fn cancel_indexing(
@@ -150,21 +146,24 @@ impl ContentSearchHistoricIndexing for NoopContentSearchHistoricIndexing {
         clear_data: bool,
     ) -> MailContextResult<()> {
         if clear_data {
-            let task_service = ctx.core_context().task_service().task_service_arc();
-            ctx.search_service()
-                .clear_index_tables(task_service)
-                .await
-                .map_err(|e| MailContextError::Other(e.into_inner()))?;
+            if let Some(service) = ctx.search_service() {
+                let task_service = ctx.core_context().task_service().task_service_arc();
+                service.clear_index_tables(task_service).await?;
+            } else {
+                tracing::warn!("Content Search Service not available");
+            }
         }
         Ok(())
     }
 
     async fn clear_local_data(&self, ctx: Arc<MailUserContext>) -> MailContextResult<()> {
-        let task_service = ctx.core_context().task_service().task_service_arc();
-        ctx.search_service()
-            .clear_index_tables(task_service)
-            .await
-            .map_err(|e| MailContextError::Other(e.into_inner()))
+        if let Some(service) = ctx.search_service() {
+            let task_service = ctx.core_context().task_service().task_service_arc();
+            Ok(service.clear_index_tables(task_service).await?)
+        } else {
+            tracing::warn!("Content Search Service not available");
+            Ok(())
+        }
     }
 }
 
@@ -172,7 +171,6 @@ impl ContentSearchHistoricIndexing for NoopContentSearchHistoricIndexing {
 mod tests {
     use super::*;
 
-    #[cfg(feature = "foundation_search")]
     #[test]
     fn noop_service_constructs_without_panicking() {
         let _service = ContentSearchHistoricIndexingService::noop();

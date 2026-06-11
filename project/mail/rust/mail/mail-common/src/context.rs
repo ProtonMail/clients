@@ -40,6 +40,7 @@ use mail_issue_reporter_service::{
 };
 use mail_log_service::LogService;
 use mail_network_monitor_service::NetworkMonitorServiceError;
+use mail_search::SearchServiceError;
 use mail_sqlite3::MigratorError;
 use mail_stash::stash::{Stash, StashError, WatcherHandle};
 use mail_stash::{AccountDb, UserDb};
@@ -177,6 +178,8 @@ pub enum MailContextError {
     ImageProxyFailed,
     #[error("Category filtering is not supported for the current label")]
     CategoryNotSupported,
+    #[error(transparent)]
+    Search(#[from] SearchServiceError),
     #[error("{0}")]
     Other(#[from] anyhow::Error),
 }
@@ -284,7 +287,6 @@ pub struct MailContext {
     /// at [`MailContext::new`] and consumed by [`MailUserContext::new`] each
     /// time a new user context is built. When absent the user context falls
     /// back to [`crate::search::NoopContentSearchHistoricIndexing`].
-    #[cfg_attr(not(feature = "foundation_search"), allow(dead_code))]
     historic_indexing_provider: Option<crate::search::ContentSearchHistoricIndexingProvider>,
 }
 
@@ -917,7 +919,6 @@ impl MailContext {
     /// Returns the historic content-search indexing provider, if any.
     /// Consumed by [`MailUserContext::new`] when constructing the
     /// per-session driver.
-    #[cfg_attr(not(feature = "foundation_search"), allow(dead_code))]
     pub(crate) fn historic_indexing_provider(
         &self,
     ) -> Option<&crate::search::ContentSearchHistoricIndexingProvider> {

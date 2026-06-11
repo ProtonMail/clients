@@ -1005,6 +1005,7 @@ impl EncryptedMessageBody {
                         raw_decrypted_body
                             .store_and_consume(
                                 self.metadata.local_message_id.expect("Should be set"),
+                                ctx.search_service(),
                                 tx,
                             )
                             .await?;
@@ -1072,6 +1073,7 @@ impl EncryptedMessageBody {
                         raw_decrypted_body
                             .store_and_consume(
                                 self.metadata.local_message_id.expect("Should be set"),
+                                ctx.search_service(),
                                 tx,
                             )
                             .await

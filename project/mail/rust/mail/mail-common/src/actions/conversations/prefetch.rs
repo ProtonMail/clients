@@ -127,6 +127,7 @@ impl Handler<UserDb> for PrefetchHandler {
             ctx.session(),
             false,
             ctx.action_queue(),
+            ctx.search_service(),
         )
         .await;
 

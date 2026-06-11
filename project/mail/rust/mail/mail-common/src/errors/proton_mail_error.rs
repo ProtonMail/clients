@@ -249,7 +249,6 @@ impl From<MailContextError> for ProtonMailError {
             MailContextError::PGPKeySelection(encryption_preferences_error) => {
                 Self::from(encryption_preferences_error)
             }
-
             MailContextError::KeySelection(key_handling_error) => Self::from(key_handling_error),
             MailContextError::App(app_error) => Self::from(app_error),
             MailContextError::Stash(stash_error) => Self::from(stash_error),
@@ -283,6 +282,7 @@ impl From<MailContextError> for ProtonMailError {
             MailContextError::NetworkMonitorService(_) => Self::Unexpected(Unexpected::Internal),
             MailContextError::ImageProxyFailed => Self::Unexpected(Unexpected::Network),
             MailContextError::CategoryNotSupported => Self::Unexpected(Unexpected::Internal),
+            MailContextError::Search(_) => Self::Unexpected(Unexpected::Internal),
         }
     }
 }

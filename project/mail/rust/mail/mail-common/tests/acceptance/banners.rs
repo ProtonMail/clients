@@ -268,7 +268,7 @@ async fn banners() {
             .unwrap();
 
             RawMessageBody::local_draft("im a nigerian prince, click this link")
-                .store(msg_normal.id(), tx)
+                .store(msg_normal.id(), None, tx)
                 .await
                 .unwrap();
 

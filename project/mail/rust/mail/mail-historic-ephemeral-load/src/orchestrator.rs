@@ -206,7 +206,11 @@ async fn run_walker_with_observer(
     config: &ContentSearchIndexingOrchestratorConfig,
     cancel: CancellationToken,
 ) -> IndexingRunOutcome {
-    let search_service = user_ctx.search_service();
+    let Some(search_service) = user_ctx.search_service() else {
+        return IndexingRunOutcome::Fatal {
+            error: ContentSearchIndexingLastErrorCode::FatalApi,
+        };
+    };
     let resume = match resolve_effective_continuation(search_service, None, true).await {
         Ok(r) => r,
         Err(e) => {
@@ -323,7 +327,11 @@ impl ContentSearchIndexingOrchestrator {
         &self,
         user_ctx: Arc<MailUserContext>,
     ) -> Result<ContentSearchStartOutcome, EphemeralHistoricLoadError> {
-        let search_service = user_ctx.search_service();
+        let search_service = user_ctx
+            .search_service()
+            .ok_or(EphemeralHistoricLoadError::Other(anyhow::anyhow!(
+                "Service not available"
+            )))?;
 
         // Snapshot state under lock, then decide.
         let state = search_service
@@ -371,7 +379,14 @@ impl ContentSearchIndexingOrchestrator {
                 run_walker_with_observer(&task_ctx, &task_orchestrator_state.config, task_cancel)
                     .await;
 
-            if let Err(e) = persist_run_outcome(task_ctx.search_service(), &outcome).await {
+            if let Err(e) = persist_run_outcome(
+                task_ctx
+                    .search_service()
+                    .expect("Should be set at this point"),
+                &outcome,
+            )
+            .await
+            {
                 warn!("ContentSearchIndexingOrchestrator: failed to persist final outcome: {e}");
             }
         });
@@ -469,6 +484,9 @@ impl ContentSearchIndexingOrchestrator {
         }
         user_ctx
             .search_service()
+            .ok_or(EphemeralHistoricLoadError::Other(anyhow::anyhow!(
+                "Service not available"
+            )))?
             .set_indexing_enabled(enabled)
             .await
             .map_err(EphemeralHistoricLoadError::from_indexing_state)
@@ -498,6 +516,9 @@ impl ContentSearchIndexingOrchestrator {
         let task_service = user_ctx.core_context().task_service().task_service_arc();
         user_ctx
             .search_service()
+            .ok_or(EphemeralHistoricLoadError::Other(anyhow::anyhow!(
+                "Service not available"
+            )))?
             .clear_index_tables(task_service)
             .await
             .map_err(EphemeralHistoricLoadError::from_indexing_state)

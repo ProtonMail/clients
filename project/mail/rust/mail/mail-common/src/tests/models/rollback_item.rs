@@ -134,7 +134,7 @@ async fn test_store_and_delete_remote_items(
     let (_mock, api) = start_server(&tether, BATCH_SIZE).await;
 
     let mut tether = mail_stash.connection();
-    RollbackItem::sync_all(&api, &mut tether, BATCH_SIZE, &queue)
+    RollbackItem::sync_all(&api, &mut tether, BATCH_SIZE, &queue, None)
         .await
         .unwrap();
 
@@ -144,7 +144,7 @@ async fn test_store_and_delete_remote_items(
     assert_eq!(actual.len(), 0);
 
     // * RollbackItems with no limit for empty mail_stash *
-    RollbackItem::sync_all(&api, &mut tether, None, &queue)
+    RollbackItem::sync_all(&api, &mut tether, None, &queue, None)
         .await
         .unwrap();
 }
@@ -459,7 +459,7 @@ async fn test_rollback_skips_nonexistent_conversation() {
         .mount(&mock_server)
         .await;
 
-    let result = RollbackItem::sync_all(&api, &mut tether, None, &queue).await;
+    let result = RollbackItem::sync_all(&api, &mut tether, None, &queue, None).await;
     assert!(result.is_ok(), "sync_all should succeed: {result:?}");
 
     let remaining = RollbackItem::all(&tether).await.unwrap();
@@ -569,7 +569,7 @@ async fn test_label_rollback_with_parent_dependencies() {
         .mount(&mock_server)
         .await;
 
-    let result = RollbackItem::sync_all(&api, &mut tether, None, &queue).await;
+    let result = RollbackItem::sync_all(&api, &mut tether, None, &queue, None).await;
     assert!(result.is_ok(), "sync_all should succeed: {result:?}");
 
     // Verify all rollback items were processed
@@ -699,7 +699,7 @@ async fn test_label_rollback_with_circular_parent_reference() {
         .mount(&mock_server)
         .await;
 
-    let result = RollbackItem::sync_all(&api, &mut tether, None, &queue).await;
+    let result = RollbackItem::sync_all(&api, &mut tether, None, &queue, None).await;
     assert!(result.is_ok(), "sync_all should succeed: {result:?}");
 
     // Verify all rollback items were processed

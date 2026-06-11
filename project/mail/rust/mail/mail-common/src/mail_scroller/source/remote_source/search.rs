@@ -15,6 +15,7 @@ use mail_core_api::services::proton::LabelId;
 use mail_core_api::session::Session;
 use mail_core_common::datatypes::{LocalLabelId, UnixTimestamp};
 use mail_core_common::models::{Label, ModelExtension, ModelIdExtension};
+use mail_search::MailSearchService;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
 use mail_stash::stash::{StashError, Tether};
@@ -119,6 +120,7 @@ impl SearchScrollerSource {
                 page_size,
                 use_deduped_count_for_total,
                 ctx.action_queue(),
+                ctx.search_service(),
             )
             .await?;
 
@@ -152,6 +154,7 @@ impl SearchScrollerSource {
                     search,
                     page_size,
                     ctx.action_queue(),
+                    ctx.search_service(),
                 )
                 .await?;
             }
@@ -173,6 +176,7 @@ impl SearchScrollerSource {
         page_size: usize,
         use_deduped_count_for_total: bool,
         queue: &Queue<UserDb>,
+        search_service: Option<&MailSearchService>,
     ) -> Result<Vec<Message>, MailContextError> {
         info!("Syncing first page in {remote_label_id:?}");
 
@@ -204,7 +208,8 @@ impl SearchScrollerSource {
             return Ok(vec![]);
         }
 
-        let messages = Self::save_messages(response.messages, session, tether, queue).await?;
+        let messages =
+            Self::save_messages(response.messages, session, tether, queue, search_service).await?;
 
         if use_deduped_count_for_total && let Some(last) = SearchScrollData::last(tether).await? {
             let count = last.visible_element_count(tether).await?;
@@ -226,6 +231,7 @@ impl SearchScrollerSource {
         search: SearchOptions,
         page_size: usize,
         queue: &Queue<UserDb>,
+        search_service: Option<&MailSearchService>,
     ) -> Result<Vec<Message>, MailContextError> {
         info!(
             "Syncing next page in {remote_label_id:?} with end_id={last_element_id:?} and end={last_time}"
@@ -264,7 +270,14 @@ impl SearchScrollerSource {
             return Ok(vec![]);
         }
 
-        Self::save_messages(response.messages, session, &mut tether, queue).await
+        Self::save_messages(
+            response.messages,
+            session,
+            &mut tether,
+            queue,
+            search_service,
+        )
+        .await
     }
 
     async fn save_messages(
@@ -272,6 +285,7 @@ impl SearchScrollerSource {
         api: &Session,
         tether: &mut Tether,
         queue: &Queue<UserDb>,
+        search_service: Option<&MailSearchService>,
     ) -> Result<Vec<Message>, MailContextError> {
         if api_messages.is_empty() {
             return Ok(vec![]);
@@ -302,6 +316,7 @@ impl SearchScrollerSource {
                     api_messages,
                     &mut rebase_change_set,
                     &unresolved_label_ids,
+                    search_service,
                     tx,
                 )
                 .await?;

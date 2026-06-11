@@ -19,9 +19,7 @@ mod acceptance {
     mod draft_send;
     mod draft_undo_send;
     mod drafts_common;
-    #[cfg(feature = "foundation_search")]
     mod foundation_search_integration;
-    #[cfg(feature = "foundation_search")]
     mod hybrid_search_mail_scroller;
     mod mailbox_conversation;
     mod mailbox_create;

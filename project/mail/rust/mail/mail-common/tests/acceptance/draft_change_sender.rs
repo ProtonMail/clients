@@ -200,7 +200,7 @@ async fn change_sender_address_with_alias() {
             message_body_metadata.save(tx).await.unwrap();
 
             RawMessageBody::local_draft("Hello world")
-                .store(message.id(), tx)
+                .store(message.id(), None, tx)
                 .await
         })
         .await

@@ -272,6 +272,7 @@ impl MessagesState {
             ctx.user_stash(),
             ctx.session(),
             ctx.action_queue(),
+            ctx.search_service(),
         )
         .await?
         else {

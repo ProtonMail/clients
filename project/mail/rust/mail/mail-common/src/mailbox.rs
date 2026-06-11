@@ -240,7 +240,7 @@ mod test_utils {
                 }
 
                 ViewMode::Messages => {
-                    Message::sync_first_message_page(remote_id, count, api, tether)
+                    Message::sync_first_message_page(remote_id, count, api, None, tether)
                         .inspect_err(|e| error!("Failed to sync messages for label: {e:?}"))
                         .await
                 }

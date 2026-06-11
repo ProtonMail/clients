@@ -54,6 +54,7 @@ use mail_core_common::models::{
 };
 use mail_core_common::services::NetworkMonitorService;
 use mail_core_common::utils::MapVec as _;
+use mail_search::MailSearchService;
 use mail_stash::exports::{Connection, SqliteError, ToSql, Transaction};
 use mail_stash::macros::Model;
 use mail_stash::orm::{Model, ModelHooks};
@@ -1793,13 +1794,14 @@ impl Conversation {
         Ok(())
     }
 
-    #[tracing::instrument(skip(tether, session, network_monitor_service, queue))]
+    #[tracing::instrument(skip(tether, session, network_monitor_service, search_service, queue))]
     pub async fn sync_conversation_messages_from_push_notification(
         network_monitor_service: &NetworkMonitorService,
         local_conversation_id: LocalConversationId,
         tether: &mut Tether,
         session: &Session,
         queue: &Queue<UserDb>,
+        search_service: Option<&MailSearchService>,
     ) -> Result<Conversation, MailContextError> {
         let Some(conversation) = Self::find_by_id(local_conversation_id, tether).await? else {
             return Err(AppError::ConversationNotFound(local_conversation_id).into());
@@ -1907,13 +1909,17 @@ impl Conversation {
                 // This has been deemed more acceptable than the user complaining that their
                 // conversations can't  be marked as read after marking all
                 // conversations as read.
-                let ids =
-                    Message::create_or_update_messages_from_metadata(message_metadata, None, tx)
-                        .await
-                        .map_err(|e| {
-                            error!("Failed to write message metadata: {e:?}");
-                            e
-                        })?;
+                let ids = Message::create_or_update_messages_from_metadata(
+                    message_metadata,
+                    None,
+                    search_service,
+                    tx,
+                )
+                .await
+                .map_err(|e| {
+                    error!("Failed to write message metadata: {e:?}");
+                    e
+                })?;
                 rebase_change_set.add_many(ids);
 
                 if let Err(e) = queue
@@ -1935,7 +1941,7 @@ impl Conversation {
             .ok_or_else(|| AppError::ConversationNotFound(local_conversation_id).into())
     }
 
-    #[tracing::instrument(skip(tether, session, network_monitor_service, queue))]
+    #[tracing::instrument(skip(tether, session, search_service, network_monitor_service, queue))]
     pub async fn sync_conversation_messages(
         network_monitor_service: &NetworkMonitorService,
         local_conversation_id: LocalConversationId,
@@ -1943,6 +1949,7 @@ impl Conversation {
         session: &Session,
         extra_sync_allowed: bool,
         queue: &Queue<UserDb>,
+        search_service: Option<&MailSearchService>,
     ) -> Result<(), MailContextError> {
         let Some(mut conversation) = Self::find_by_id(local_conversation_id, tether).await? else {
             return Err(AppError::ConversationNotFound(local_conversation_id).into());
@@ -2006,6 +2013,7 @@ impl Conversation {
                     let ids = Message::create_or_update_messages_from_metadata(
                         message_metadata,
                         None,
+                        search_service,
                         tx,
                     )
                     .await
@@ -2057,6 +2065,7 @@ impl Conversation {
                 tether,
                 session,
                 queue,
+                search_service,
             )
             .await?;
             return Ok(());

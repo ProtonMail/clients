@@ -4,8 +4,6 @@ use crate::actions::{
 };
 use crate::datatypes::{LocalConversationId, LocalMessageId, RollbackItemType};
 use crate::models::{Conversation, Message};
-#[cfg(feature = "foundation_search")]
-use crate::search::MailSearchService;
 use mail_action_queue::action::{
     Action, ActionDependencyKeys, ActionId, DefaultVersionConverter, Handler, Type,
 };
@@ -129,7 +127,6 @@ impl Handler<UserDb> for DeleteHandler {
         // Track which local-only messages were permanently deleted (for search removal)
         // Note: Messages with remote_id will be handled by the event subscriber when
         // the delete event is processed, so we don't need to queue search removal for them here.
-        #[cfg(feature = "foundation_search")]
         let mut permanently_deleted_ids = Vec::new();
 
         if !failed_ids.is_empty() || !local_ids_without_remote_id.is_empty() {
@@ -183,7 +180,6 @@ impl Handler<UserDb> for DeleteHandler {
                             .inspect_err(|e| error!("Failed to delete message: {e:?}"))?;
 
                         // Track for search removal (feature-gated)
-                        #[cfg(feature = "foundation_search")]
                         {
                         permanently_deleted_ids.push(id);
                         }
@@ -195,12 +191,13 @@ impl Handler<UserDb> for DeleteHandler {
         }
 
         // Queue search removal intents for all permanently deleted messages
-        #[cfg(feature = "foundation_search")]
-        if !permanently_deleted_ids.is_empty() {
+        if !permanently_deleted_ids.is_empty()
+            && let Some(service) = ctx.search_service()
+        {
             tether
                 .write_tx::<_, _, <Self::Action as Action<UserDb>>::Error>(async |tx| {
                     for id in &permanently_deleted_ids {
-                        if let Err(e) = MailSearchService::queue_remove(id.as_u64(), tx).await {
+                        if let Err(e) = service.queue_remove(id.as_u64(), tx).await {
                             error!("Failed to queue search removal for message {}: {:?}", id, e);
                             // Continue with other messages even if one fails
                         }

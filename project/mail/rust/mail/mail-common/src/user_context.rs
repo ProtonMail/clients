@@ -16,7 +16,6 @@ use crate::events::v6;
 use crate::models::Message;
 use crate::prefetch::{Prefetch, PrefetchJob, PrefetchService};
 use crate::rsvp::RsvpService;
-#[cfg(feature = "foundation_search")]
 use crate::search::{
     ContentSearchHistoricIndexingService, ContentSearchStartOutcome, MailSearchService,
 };
@@ -74,9 +73,7 @@ use std::sync::{Arc, Weak};
 use std::time::Duration;
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
-#[cfg(feature = "foundation_search")]
-use tracing::Instrument;
-use tracing::{error, instrument};
+use tracing::{Instrument, error, instrument};
 
 const DEFAULT_SEND_QUEUE_POOL_SIZE: usize = 4;
 const DEFAULT_DEFAULT_QUEUE_POOL_SIZE: usize = 1;
@@ -378,8 +375,9 @@ impl MailUserContext {
             // Initialize Foundation Search service with Stash connection pool
             // Extract TaskService from the context to ensure proper lifecycle management.
             // The TaskService is extracted from BackgroundAwareTaskService which wraps it.
-            #[cfg(feature = "foundation_search")]
+            if let Some(provider) = mail_context.historic_indexing_provider()
             {
+                tracing::info!("Enabling Content Search");
                 // Get Arc<TaskService> from BackgroundAwareTaskService
                 let task_service = mail_context.core_context().task_service().task_service_arc();
 
@@ -401,15 +399,12 @@ impl MailUserContext {
                 // root (`mail-uniffi`, perf harness, etc.). Tests and
                 // harnesses that pass `None` transparently fall back to the
                 // no-op driver.
-                let historic_service = match mail_context.historic_indexing_provider() {
-                    Some(provider) => {
+                let historic_service =
                         crate::search::ContentSearchHistoricIndexingService::with_driver(
-                            provider(),
-                        )
-                    }
-                    None => crate::search::ContentSearchHistoricIndexingService::noop(),
-                };
+                            provider());
                 builder = builder.with_service(historic_service);
+            } else {
+                tracing::info!("Content Search not Enabled");
             }
 
             builder = match origin {
@@ -500,7 +495,6 @@ impl MailUserContext {
                 Origin::App => {
                     DraftStagingAreaCleaner::new().run(&this)?;
                     this.init_expiration_loop();
-                    #[cfg(feature = "foundation_search")]
                     this.init_search_worker();
                     this.register_subscribers().await?;
                     online_migrations::run(&this).await?;
@@ -618,12 +612,13 @@ impl MailUserContext {
     /// [`tokio::runtime::Runtime`] (`current_thread` scheduler) so bulk indexing does not share
     /// Tokio worker threads with the rest of the mail event loop (prefetch, sync, etc.).
     /// A root [`tracing::Span`] keeps the task identifiable in Perfetto / tracing captures.
-    #[cfg(feature = "foundation_search")]
     fn init_search_worker(&self) {
         use crate::search::StashMessageDataProvider;
         use std::thread;
 
-        let search_service = self.search_service().clone();
+        let Some(search_service) = self.search_service().cloned() else {
+            return;
+        };
         let data_provider = Arc::new(StashMessageDataProvider::new(self.user_stash().clone()));
         let ctx_weak = self.this.clone();
         let shutdown_token = self.cancellation_token.child_token();
@@ -716,55 +711,71 @@ impl MailUserContext {
     }
 
     /// Access the Foundation Search service for local email indexing and search
-    #[cfg(feature = "foundation_search")]
-    pub fn search_service(&self) -> &MailSearchService {
-        self.get_service::<MailSearchService>()
+    pub fn search_service(&self) -> Option<&MailSearchService> {
+        self.get_service_opt::<MailSearchService>()
     }
 
     /// Per-session historic content-search indexing orchestrator.
-    #[cfg(feature = "foundation_search")]
-    pub fn content_search_historic_indexing(&self) -> &ContentSearchHistoricIndexingService {
-        self.get_service::<ContentSearchHistoricIndexingService>()
+    pub fn content_search_historic_indexing(
+        &self,
+    ) -> Option<&ContentSearchHistoricIndexingService> {
+        self.get_service_opt::<ContentSearchHistoricIndexingService>()
     }
 
     /// Start the historic content-search indexing loop (idempotent).
-    #[cfg(feature = "foundation_search")]
     pub async fn content_search_start_historic_indexing(
         &self,
     ) -> MailContextResult<ContentSearchStartOutcome> {
-        let ctx = self.as_arc();
-        let driver = self.content_search_historic_indexing().driver();
-        driver.start(ctx).await
+        if let Some(service) = self.content_search_historic_indexing() {
+            let ctx = self.as_arc();
+            let driver = service.driver();
+            driver.start(ctx).await
+        } else {
+            tracing::warn!("Content Search Service not available");
+            Ok(ContentSearchStartOutcome::NoWork)
+        }
     }
 
     /// Persist the content-search enable preference.
-    #[cfg(feature = "foundation_search")]
     pub async fn content_search_set_historic_indexing_enabled(
         &self,
         enabled: bool,
     ) -> MailContextResult<()> {
-        let ctx = self.as_arc();
-        let driver = self.content_search_historic_indexing().driver();
-        driver.set_enabled(ctx, enabled).await
+        if let Some(service) = self.content_search_historic_indexing() {
+            let ctx = self.as_arc();
+            let driver = service.driver();
+            driver.set_enabled(ctx, enabled).await
+        } else {
+            tracing::warn!("Content Search Service not available");
+            Ok(())
+        }
     }
 
     /// Cancel historic indexing; optionally wipe local index data.
-    #[cfg(feature = "foundation_search")]
     pub async fn content_search_cancel_historic_indexing(
         &self,
         clear_data: bool,
     ) -> MailContextResult<()> {
-        let ctx = self.as_arc();
-        let driver = self.content_search_historic_indexing().driver();
-        driver.cancel_indexing(ctx, clear_data).await
+        if let Some(service) = self.content_search_historic_indexing() {
+            let ctx = self.as_arc();
+            let driver = service.driver();
+            driver.cancel_indexing(ctx, clear_data).await
+        } else {
+            tracing::warn!("Content Search Service not available");
+            Ok(())
+        }
     }
 
     /// Wipe locally-persisted content-search data; cancels an in-flight run first.
-    #[cfg(feature = "foundation_search")]
     pub async fn content_search_clear_historic_indexing_data(&self) -> MailContextResult<()> {
-        let ctx = self.as_arc();
-        let driver = self.content_search_historic_indexing().driver();
-        driver.clear_local_data(ctx).await
+        if let Some(service) = self.content_search_historic_indexing() {
+            let ctx = self.as_arc();
+            let driver = service.driver();
+            driver.clear_local_data(ctx).await
+        } else {
+            tracing::warn!("Content Search Service not available");
+            Ok(())
+        }
     }
 
     /// Get `MailUserContext` for each logged in account.

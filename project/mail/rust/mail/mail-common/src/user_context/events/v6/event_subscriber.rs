@@ -116,6 +116,7 @@ impl EventSubscriber<EventManagerContext, MailEventSourceV6> for MailEventV6Subs
                                 cache.get_message(&event.id),
                                 &mut changeset,
                                 &unresolved_label_ids,
+                                ctx.search_service(),
                             )
                             .await?
                             {

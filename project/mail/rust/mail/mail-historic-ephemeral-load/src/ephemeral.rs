@@ -72,7 +72,11 @@ pub async fn ephemeral_index_batch(
     cancel: CancellationToken,
 ) -> Result<EphemeralHistoricLoadResult, EphemeralHistoricLoadError> {
     let mut timing = EphemeralTimingCollector::default();
-    let search_service = user_ctx.search_service();
+    let search_service = user_ctx
+        .search_service()
+        .ok_or(EphemeralHistoricLoadError::Other(anyhow::anyhow!(
+            "Service not available"
+        )))?;
     let session = user_ctx.session();
 
     let total_fetched = messages.len();
@@ -466,11 +470,16 @@ pub(crate) async fn persist_ephemeral_page(
                     .await
                     .map_err(EphemeralHistoricLoadError::from_indexing_state)?;
             }
-            let messages = Message::create_or_update_messages_from_metadata_vec(metadata, None, tx)
-                .await
-                .map_err(|e: AppError| {
-                    EphemeralHistoricLoadError::MetadataPrepare(MailContextError::App(e))
-                })?;
+            let messages = Message::create_or_update_messages_from_metadata_vec(
+                metadata,
+                None,
+                Some(search_service),
+                tx,
+            )
+            .await
+            .map_err(|e: AppError| {
+                EphemeralHistoricLoadError::MetadataPrepare(MailContextError::App(e))
+            })?;
 
             let mut rebase_change_set = RebaseChangeSet::default();
             for message in &messages {

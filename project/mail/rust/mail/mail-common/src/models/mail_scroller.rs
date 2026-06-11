@@ -1124,7 +1124,6 @@ pub struct SearchScrollData {
 }
 
 /// Highlighting positions for local search results
-#[cfg(feature = "foundation_search")]
 #[derive(Debug, Model, Eq, PartialEq, Clone, TypedBuilder)]
 #[TableName("mail_search_highlighting")]
 #[Database(UserDb)]
@@ -1142,7 +1141,6 @@ impl SearchScrollData {
     /// rows accumulating — mail_search_highlighting has no FK to search_scroll_data.
     pub async fn clear_all_search_data(bond: &WriteTx<'_, UserDb>) -> Result<(), StashError> {
         SearchScrollData::delete_all(bond).await?;
-        #[cfg(feature = "foundation_search")]
         SearchHighlighting::delete_all(bond).await?;
         Ok(())
     }
@@ -1176,7 +1174,6 @@ impl SearchScrollData {
     }
 
     /// Get highlighting positions for a specific message ID
-    #[cfg(feature = "foundation_search")]
     pub async fn highlighting_positions_for_message(
         message_id: LocalMessageId,
         tether: &Tether<UserDb>,

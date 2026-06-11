@@ -2,7 +2,6 @@ mod assigned_actions;
 mod avatar_information;
 mod background_execution;
 mod contacts;
-#[cfg(feature = "foundation_search")]
 mod content_search_indexing;
 pub mod conversations;
 pub mod datatypes;
@@ -17,7 +16,6 @@ pub mod messages;
 mod notifications;
 mod privacy;
 mod rsvp;
-#[cfg(feature = "foundation_search")]
 mod search_results;
 mod session;
 pub mod settings;

@@ -85,6 +85,7 @@ impl Handler<UserDb> for RollbackActionHandler {
             &mut tether,
             Some(ROLLBACK_BATCH_SIZE),
             ctx.action_queue(),
+            ctx.search_service(),
         )
         .await?;
 

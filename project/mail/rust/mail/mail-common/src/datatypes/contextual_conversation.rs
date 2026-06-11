@@ -21,6 +21,7 @@ use mail_core_api::session::Session;
 use mail_core_common::datatypes::{LocalLabelId, UnixTimestamp};
 use mail_core_common::models::{Label, LabelError, ModelExtension, ModelIdExtension as _, User};
 use mail_core_common::services::NetworkMonitorService;
+use mail_search::MailSearchService;
 use mail_stash::orm::Model;
 use mail_stash::stash::{Stash, StashError, Tether, WatcherHandle};
 use mail_stash::{UserDb, params};
@@ -165,6 +166,7 @@ impl ContextualConversation {
                     mail_stash,
                     api,
                     ctx.action_queue(),
+                    ctx.search_service(),
                 )
                 .await?
             }
@@ -177,6 +179,7 @@ impl ContextualConversation {
                     mail_stash,
                     api,
                     ctx.action_queue(),
+                    ctx.search_service(),
                 )
                 .await?
             }
@@ -203,7 +206,8 @@ impl ContextualConversation {
 
     /// Unlike [`conversation_and_messages()`] this version always sync the conversation
     /// data to ensure that we have the most up to date information.
-    #[tracing::instrument(skip(mail_stash, api, network_monitor_service, queue))]
+    #[tracing::instrument(skip(mail_stash, api, network_monitor_service, queue, search_service))]
+    #[allow(clippy::too_many_arguments)]
     pub async fn conversation_and_messages_from_push_notification(
         network_monitor_service: &NetworkMonitorService,
         local_conversation_id: LocalConversationId,
@@ -212,6 +216,7 @@ impl ContextualConversation {
         mail_stash: &Stash<UserDb>,
         api: &Session,
         queue: &Queue<UserDb>,
+        search_service: Option<&MailSearchService>,
     ) -> Result<Option<ContextualConversationAndMessages>, MailContextError> {
         let t = Instant::now();
         let mut conn = mail_stash.connection();
@@ -226,6 +231,7 @@ impl ContextualConversation {
             &mut conn,
             api,
             queue,
+            search_service,
         )
         .await
         {
@@ -275,7 +281,8 @@ impl ContextualConversation {
     ///
     /// This function also retrieve the messages from the server if
     /// they have never been synced before.
-    #[tracing::instrument(skip(mail_stash, api, network_monitor_service, queue))]
+    #[tracing::instrument(skip(mail_stash, api, network_monitor_service, queue, search_service))]
+    #[allow(clippy::too_many_arguments)]
     pub async fn conversation_and_messages(
         network_monitor_service: &NetworkMonitorService,
         local_conversation_id: LocalConversationId,
@@ -285,6 +292,7 @@ impl ContextualConversation {
         api: &Session,
         // set to some for rebasing
         queue: &Queue<UserDb>,
+        search_service: Option<&MailSearchService>,
     ) -> Result<Option<ContextualConversationAndMessages>, MailContextError> {
         Self::conversation_and_messages_impl(
             network_monitor_service,
@@ -295,11 +303,13 @@ impl ContextualConversation {
             api,
             false,
             queue,
+            search_service,
         )
         .await
     }
 
-    #[tracing::instrument(skip(mail_stash, api, network_monitor_service, queue))]
+    #[tracing::instrument(skip(mail_stash, api, network_monitor_service, queue, search_service))]
+    #[allow(clippy::too_many_arguments)]
     pub async fn open_conversation_and_messages(
         network_monitor_service: &NetworkMonitorService,
         local_conversation_id: LocalConversationId,
@@ -308,6 +318,7 @@ impl ContextualConversation {
         mail_stash: &Stash<UserDb>,
         api: &Session,
         queue: &Queue<UserDb>,
+        search_service: Option<&MailSearchService>,
     ) -> Result<Option<ContextualConversationAndMessages>, MailContextError> {
         Self::conversation_and_messages_impl(
             network_monitor_service,
@@ -318,6 +329,7 @@ impl ContextualConversation {
             api,
             true,
             queue,
+            search_service,
         )
         .await
     }
@@ -332,6 +344,7 @@ impl ContextualConversation {
         api: &Session,
         extra_sync_allowed: bool,
         queue: &Queue<UserDb>,
+        search_service: Option<&MailSearchService>,
     ) -> Result<Option<ContextualConversationAndMessages>, MailContextError> {
         let t = Instant::now();
         let mut conn = mail_stash.connection();
@@ -347,6 +360,7 @@ impl ContextualConversation {
             api,
             extra_sync_allowed,
             queue,
+            search_service,
         )
         .await
         {

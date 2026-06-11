@@ -843,16 +843,6 @@ pub struct SearchScroller {
 
 impl SearchScroller {
     #[must_use]
-    #[cfg(not(feature = "foundation_search"))]
-    pub(crate) fn new(scroller: RealMailScroller<RealMessage>, handle: Arc<WatchHandle>) -> Self {
-        Self {
-            scroller: Arc::new(scroller),
-            handle,
-        }
-    }
-
-    #[must_use]
-    #[cfg(feature = "foundation_search")]
     pub(crate) fn new(scroller: RealMailScroller<RealMessage>, handle: Arc<WatchHandle>) -> Self {
         Self {
             scroller: Arc::new(scroller),
@@ -996,7 +986,6 @@ impl SearchScroller {
     }
 }
 
-#[cfg(feature = "foundation_search")]
 #[uniffi_export]
 impl SearchScroller {
     /// Get highlighting positions for a message in the search results

@@ -18,6 +18,7 @@ use mail_core_api::services::proton::LabelId;
 use mail_core_api::session::Session;
 use mail_core_common::datatypes::{LocalLabelId, UnixTimestamp};
 use mail_core_common::models::{Label, ModelExtension};
+use mail_search::MailSearchService;
 use mail_stash::UserDb;
 use mail_stash::stash::{Tether, WriteTx};
 use std::ops::ControlFlow;
@@ -261,6 +262,7 @@ impl RemoteMessageScrollerSource {
             ctx.session(),
             &mut tether,
             ctx.action_queue(),
+            ctx.search_service(),
         )
         .await
     }
@@ -345,6 +347,7 @@ impl RemoteMessageScrollerSource {
             ctx.session(),
             &mut tether,
             ctx.action_queue(),
+            ctx.search_service(),
         )
         .await
     }
@@ -423,6 +426,7 @@ impl RemoteMessageScrollerSource {
             ctx.session(),
             &mut tether,
             ctx.action_queue(),
+            ctx.search_service(),
         )
         .await?;
 
@@ -442,6 +446,7 @@ impl RemoteMessageScrollerSource {
         api: &Session,
         tether: &mut Tether,
         queue: &Queue<UserDb>,
+        search_service: Option<&MailSearchService>,
     ) -> Result<Vec<Message>, MailContextError> {
         if api_messages.is_empty() {
             return Ok(vec![]);
@@ -485,6 +490,7 @@ impl RemoteMessageScrollerSource {
                     api_messages,
                     &mut rebase_change_set,
                     &unresolved_label_ids,
+                    search_service,
                     tx,
                 )
                 .await?;

@@ -179,11 +179,8 @@ impl AppModel {
         let mut keychain = AppKeyChain::new()?;
         keychain.init()?;
 
-        #[cfg(feature = "foundation_search")]
         let historic_indexing_provider =
             Some(mail_historic_ephemeral_load::historic_indexing_provider());
-        #[cfg(not(feature = "foundation_search"))]
-        let historic_indexing_provider = None;
 
         let context = MailContext::new(
             Origin::App,

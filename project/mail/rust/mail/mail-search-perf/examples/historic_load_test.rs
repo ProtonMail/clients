@@ -225,13 +225,21 @@ async fn main() -> Result<(), anyhow::Error> {
 
     // Honour the spec's explicit-enable contract: persist the preference
     // before any start. This is a no-op if the user already enabled it.
-    user_ctx.search_service().set_indexing_enabled(true).await?;
+    user_ctx
+        .search_service()
+        .expect("should be set")
+        .set_indexing_enabled(true)
+        .await?;
 
     // Snapshot the durable counters before we start. With `--reuse-db` the
     // row already holds cumulative totals from previous runs; subtracting
     // this baseline lets `--ceiling` and the per-run report measure only
     // the work done in this invocation.
-    let baseline = user_ctx.search_service().load_indexing_progress().await?;
+    let baseline = user_ctx
+        .search_service()
+        .expect("should be set")
+        .load_indexing_progress()
+        .await?;
     let baseline_indexed = baseline.messages_indexed_total;
     info!(
         "Initial state: status={:?} estimated={} batches_completed={} cumulative indexed/fetched/skipped = {}/{}/{}",
@@ -259,10 +267,11 @@ async fn main() -> Result<(), anyhow::Error> {
     // Live-query watch for progress reporting + ceiling enforcement.
     let watch_handle = user_ctx
         .search_service()
+        .expect("Should be set")
         .watch_indexing_state()
         .await
         .map_err(|e| anyhow::anyhow!("watch_indexing_state: {e}"))?;
-    let progress_search_service = user_ctx.search_service().clone();
+    let progress_search_service = user_ctx.search_service().expect("should be set").clone();
     let progress_orchestrator = orchestrator.clone();
     let progress_task = tokio::spawn(async move {
         let receiver = watch_handle.receiver();
@@ -351,7 +360,11 @@ async fn main() -> Result<(), anyhow::Error> {
     }
     signal_task.abort();
 
-    let final_progress = user_ctx.search_service().load_indexing_progress().await?;
+    let final_progress = user_ctx
+        .search_service()
+        .expect("should be set")
+        .load_indexing_progress()
+        .await?;
     let delta_indexed = final_progress
         .messages_indexed_total
         .saturating_sub(baseline_indexed);
@@ -433,6 +446,7 @@ async fn main() -> Result<(), anyhow::Error> {
         let search_start = Instant::now();
         match user_ctx
             .search_service()
+            .expect("should be set")
             .search_local_with_metadata(query)
             .await
         {

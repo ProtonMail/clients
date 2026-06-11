@@ -1,6 +1,9 @@
 use std::borrow::Cow;
 
-use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method};
+use crate::{
+    AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method,
+    core::LtCoreAuthDeviceId,
+};
 
 use super::LtAuthAssociatedDevice;
 
@@ -9,7 +12,7 @@ use super::LtAuthAssociatedDevice;
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
 pub struct LtAuthPostDevicesAssociateReq {
     #[cfg_attr(feature = "serde", serde(skip))]
-    pub device_id: String,
+    pub device_id: LtCoreAuthDeviceId,
     pub device_token: String,
 }
 

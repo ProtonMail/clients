@@ -84,7 +84,10 @@ impl<'de> serde::Deserialize<'de> for LtUnixTimestamp {
 #[cfg(all(test, feature = "serde"))]
 mod tests {
     use super::*;
-    use crate::auth::devices::{LtAuthDevice, LtAuthDeviceState};
+    use crate::{
+        auth::devices::{LtAuthDevice, LtAuthDeviceState},
+        core::LtCoreAuthDeviceId,
+    };
     use serde::Deserialize;
 
     #[derive(Deserialize)]
@@ -126,7 +129,7 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(device.id, "device-1");
+        assert_eq!(device.id, LtCoreAuthDeviceId("device-1".to_string()));
         assert_eq!(device.state, LtAuthDeviceState::Active);
         assert_eq!(i64::from(device.create_time), 1_710_000_000);
         assert_eq!(i64::from(device.last_activity_time), 1_710_003_600);

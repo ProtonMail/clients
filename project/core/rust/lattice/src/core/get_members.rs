@@ -1,8 +1,9 @@
 use std::borrow::Cow;
+use std::num::NonZeroU32;
 
+use crate::auth::LtAuthAddressId;
 use crate::{
-    AuthReq, LatticeError, LtContract, LtSerdeQueryParams, LtSlimAPIJSON, LtSlimApiPageQuery,
-    Sensitive,
+    AuthReq, LatticeError, LtContract, LtNoQueryParams, LtPaginable, LtSlimAPIJSON, Sensitive,
 };
 
 use super::account_enums::{LtCoreMemberOrgKeyStatus, LtCoreMemberState};
@@ -14,13 +15,10 @@ use super::unpriv_types::{
 };
 use super::user::LtCoreMemberRole;
 
-pub const MAX_PAGE_SIZE: u32 = 150;
-
 /// Request to list all members of the authenticated user's organization.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Default)]
-pub struct LtCoreGetMembersReq {
-    pub pagination: LtSlimApiPageQuery<MAX_PAGE_SIZE>,
-}
+pub struct LtCoreGetMembersReq;
+
 /// Response containing organization members.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -118,7 +116,7 @@ pub struct LtCoreMemberInfo {
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
 pub struct LtCoreMemberListAddress {
     #[cfg_attr(feature = "serde", serde(rename = "ID"))]
-    pub id: String,
+    pub id: LtAuthAddressId,
 
     pub email: String,
 
@@ -159,14 +157,19 @@ pub struct LtCoreMemberListUnprivatization {
 impl LtContract for LtCoreGetMembersReq {
     type Response = LtSlimAPIJSON<LtCoreGetMembersRes>;
     type Body<'a> = LtSlimAPIJSON<()>;
-    type Query<'q> = LtSerdeQueryParams<&'q LtSlimApiPageQuery<MAX_PAGE_SIZE>>;
+    type Query<'q> = LtNoQueryParams;
 
     fn path<'a>(&'a self) -> Result<Cow<'a, str>, LatticeError> {
         Ok(Cow::Borrowed("/core/v4/members"))
     }
+}
 
-    fn query<'a>(&'a self) -> Option<Self::Query<'a>> {
-        Some(LtSerdeQueryParams(&self.pagination))
+impl LtPaginable for LtCoreGetMembersReq {
+    type Item = LtCoreMemberInfo;
+    const MAX_PAGE_SIZE: NonZeroU32 = NonZeroU32::new(150).unwrap();
+
+    fn page_items(res: LtSlimAPIJSON<LtCoreGetMembersRes>) -> (Option<u32>, Vec<LtCoreMemberInfo>) {
+        (res.0.total, res.0.members)
     }
 }
 

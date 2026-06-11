@@ -2,12 +2,13 @@ use std::borrow::Cow;
 
 use crate::{
     AuthReq, LatticeError, LtContract, LtEmptyBody, LtNoQueryParams, LtSlimAPIJSON, Method,
+    core::LtCoreAuthDeviceId,
 };
 
 /// `PUT /auth/v4/devices/{deviceId}/admin` — request org-admin help (no request body; `LtEmptyBody`).
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LtAuthPutDevicesDeviceIDAdminReq {
-    pub device_id: String,
+    pub device_id: LtCoreAuthDeviceId,
 }
 
 impl LtContract for LtAuthPutDevicesDeviceIDAdminReq {

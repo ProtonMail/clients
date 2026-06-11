@@ -164,11 +164,6 @@ use crate::{LatticeError, LtRequestBody, LtRequestQueryParams, LtResponseBody, M
 /// ```
 /// Where `PostRequestRes` is the response type for the request.
 /// This type needs to implement `Deserialize` from `serde`.
-///
-/// ## Query parameters
-///
-/// Use [`LtSlimApiPageQuery`](crate::contract::LtSlimApiPageQuery) with
-/// [`LtSerdeQueryParams`](crate::contract::LtSerdeQueryParams); see `docs/CONTRACTS.md`.
 pub trait LtContract {
     /// The response type for the contract.
     type Response: LtResponseBody;

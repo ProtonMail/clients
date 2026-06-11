@@ -17,13 +17,18 @@ use muon::{
     store::WithoutPersistence,
 };
 
-use lattice::LtTransportProvider;
+use lattice::core::get_members::{LtCoreGetMembersReq, LtCoreMemberInfo};
+use lattice::core::members::addresses::LtCoreGetMembersMemberIDAddressesReq;
 use lattice::core::members::devices::LtCoreGetMembersDevicesPendingReq;
+use lattice::core::{LtCoreAddress, LtCoreMemberEncId};
 use lattice::{
     LtContract, LtResponseBody, LtSlimAPIJSON,
     auth::LtAuthApiSession,
     auth::devices::{LtAuthDevice, LtAuthDeviceState, LtAuthGetDevicesReq},
 };
+
+use crate::common::org_members::{OrgMemberError, find_member_by_email};
+use lattice::{LtPaginable, LtPaginationTransportExt, LtTransportProvider};
 use lattice_muon2::LtTransportError;
 use lattice_quark::{LtQuarkContract, LtQuarkTransportProvider};
 use serde::Deserialize;
@@ -231,6 +236,37 @@ impl Session {
         req: T,
     ) -> Result<E, LtTransportError> {
         self.send_lt_generic(req).await.map(|e| e.0)
+    }
+
+    pub async fn fetch_all_pages<Req>(&self, req: Req) -> Result<Vec<Req::Item>, LtTransportError>
+    where
+        Req: LtPaginable + Clone + Send,
+    {
+        Muon2TestTransport::new(self.0.clone())
+            .fetch_all_pages(req)
+            .await
+    }
+
+    pub async fn find_member_by_email(
+        &self,
+        email: &str,
+    ) -> Result<LtCoreMemberInfo, OrgMemberError> {
+        let members = self
+            .fetch_all_pages(LtCoreGetMembersReq)
+            .await
+            .map_err(OrgMemberError::Transport)?;
+        find_member_by_email(&members, email).cloned()
+    }
+
+    pub async fn member_addresses(
+        &self,
+        member_id: &LtCoreMemberEncId,
+    ) -> Result<Vec<LtCoreAddress>, LtTransportError> {
+        self.fetch_all_pages(LtCoreGetMembersMemberIDAddressesReq {
+            member_id: member_id.clone(),
+            query: Default::default(),
+        })
+        .await
     }
 
     pub async fn send_quark<T: LtQuarkContract>(

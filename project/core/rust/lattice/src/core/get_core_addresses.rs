@@ -1,7 +1,9 @@
 use std::borrow::Cow;
+use std::num::NonZeroU32;
 
 use crate::{
-    AuthReq, LatticeError, LtContract, LtSerdeQueryParams, LtSlimAPIJSON,
+    AuthReq, LatticeError, LtContract, LtPaginable, LtSerdeQueryParams, LtSlimAPIJSON,
+    core::LtCoreAddress,
     core::addresses::{LtCoreAddressesListQuery, LtCoreAddressesListRes},
 };
 
@@ -22,6 +24,15 @@ impl LtContract for LtCoreGetAddressesReq {
 
     fn query<'a>(&'a self) -> Option<Self::Query<'a>> {
         Some(LtSerdeQueryParams(&self.query))
+    }
+}
+
+impl LtPaginable for LtCoreGetAddressesReq {
+    type Item = LtCoreAddress;
+    const MAX_PAGE_SIZE: NonZeroU32 = NonZeroU32::new(150).unwrap();
+
+    fn page_items(res: LtSlimAPIJSON<LtCoreAddressesListRes>) -> (Option<u32>, Vec<LtCoreAddress>) {
+        (res.0.total, res.0.addresses)
     }
 }
 

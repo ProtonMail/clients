@@ -1,9 +1,11 @@
 use derive_more::{Display, Error, From};
+use lattice::core::LtCoreAuthDeviceId;
 use lattice_muon2::LtTransportError;
 use proton_crypto_account::salts::SaltError;
 
-use super::super::org_members::OrgMemberError;
-use super::device_secret_error::DeviceSecretError;
+use core_key::SharedCryptoError;
+
+use crate::common::org_members::OrgMemberError;
 
 #[derive(Debug, Display, Error, From)]
 pub enum PendingDeviceError {
@@ -19,7 +21,7 @@ pub enum PendingDeviceError {
     MissingActivationAddressId,
     #[display("device {device_id} state mismatch: expected {expected:?}, got {actual:?}")]
     StateMismatch {
-        device_id: String,
+        device_id: LtCoreAuthDeviceId,
         expected: lattice::auth::devices::LtAuthDeviceState,
         actual: lattice::auth::devices::LtAuthDeviceState,
     },
@@ -27,10 +29,8 @@ pub enum PendingDeviceError {
     #[display("device {device_id} not found")]
     DeviceNotFound {
         #[error(ignore)]
-        device_id: String,
+        device_id: LtCoreAuthDeviceId,
     },
-    #[display("empty confirmation code")]
-    EmptyConfirmationCode,
     #[display("activation address not found")]
     ActivationAddressNotFound,
     #[display("activation address keys not unlocked")]
@@ -50,7 +50,7 @@ pub enum PendingDeviceError {
     #[display("key passphrase: {_0}")]
     KeyPassphrase(#[from] SaltError),
     #[display("{_0}")]
-    Org(#[from] OrgMemberError),
-    #[display("{_0}")]
-    Crypto(#[from] DeviceSecretError),
+    Crypto(#[from] SharedCryptoError),
+    #[display("org member: {_0}")]
+    OrgMember(#[from] OrgMemberError),
 }

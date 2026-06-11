@@ -20,6 +20,11 @@ pub use unix_timestamp::LtUnixTimestamp;
 
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
+use crate::{
+    auth::LtAuthAddressId,
+    core::{LtCoreAuthDeviceId, LtCoreMemberEncId},
+};
+
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
@@ -48,7 +53,7 @@ pub enum LtAuthDeviceState {
 #[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
 pub struct LtAuthDevice {
     #[cfg_attr(feature = "serde", serde(rename = "ID"))]
-    pub id: String,
+    pub id: LtCoreAuthDeviceId,
     pub state: LtAuthDeviceState,
     pub name: String,
     pub localized_client_name: String,
@@ -70,10 +75,10 @@ pub struct LtAuthDevice {
     pub activation_token: Option<String>,
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     #[cfg_attr(feature = "serde", serde(rename = "ActivationAddressID"))]
-    pub activation_address_id: Option<String>,
+    pub activation_address_id: Option<LtAuthAddressId>,
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     #[cfg_attr(feature = "serde", serde(rename = "MemberID"))]
-    pub member_id: Option<String>,
+    pub member_id: Option<LtCoreMemberEncId>,
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub device_token: Option<String>,
 }

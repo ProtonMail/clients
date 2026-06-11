@@ -133,6 +133,28 @@ Always implement `LtContract` directly on the **request struct** (the value the 
 
 Define `MAX_PAGE_SIZE` on the endpoint or domain module; validate with [`LtSlimApiPageQuery::with_pagination`]. Pagination-only routes use `pub pagination: LtSlimApiPageQuery<MAX_PAGE_SIZE>` on the `Req`; routes with extra flags (e.g. `Handles`) use a composite query struct.
 
+### 3.4 Pagination strategies (Core v4)
+
+The Account backend uses **two pagination models**. Do not assume one behavior for all list endpoints.
+
+| Model | Backend mechanism | Omit `Page` / `PageSize` | `Total` in response | Fetch-all client strategy |
+|-------|-------------------|--------------------------|---------------------|---------------------------|
+| **RequestPagination** | Legacy query params | Returns **all** rows (no SQL `LIMIT`) | Only when `Page` is sent | Single unpaginated request, **or** [`TransportExt::fetch_all_pages`](../../src/contract/pagination/transport_ext.rs) on a [`Paginable`](../../src/contract/pagination/paginable.rs) contract |
+| **OffsetPagination** | Symfony `OffsetPagination` | Treated as **`Page=0`, `PageSize=150`** | **Always** present | **Must** use [`TransportExt::fetch_all_pages`](../../src/contract/pagination/transport_ext.rs) (or [`ApiCtx::lt_auth_fetch_all_pages`](../../../core-muon-op/src/lib.rs) for session-based callers) |
+
+**Core v4 endpoint mapping:**
+
+| Endpoint | Model |
+|----------|-------|
+| `GET /core/v4/members/{memberID}/addresses` | RequestPagination |
+| `GET /core/v4/members` | RequestPagination |
+| `GET /core/v4/addresses` | OffsetPagination |
+| `GET /core/v4/domains` | OffsetPagination |
+
+**Shared rules:** `Page` is **0-based** (`offset = Page × PageSize`). Max `PageSize` is **150** per endpoint; larger values → HTTP 400 / SlimAPI code **2021**. `PageSize` without `Page` → 400 on RequestPagination endpoints.
+
+**Client helpers:** Implement [`Paginable::page_items`](../../src/contract/pagination/paginable.rs) on the request type, then use [`TransportExt::fetch_all_pages`](../../src/contract/pagination/transport_ext.rs) on [`LtTransportProvider`](../../src/transport/provider.rs) (or [`ApiCtx::lt_auth_fetch_all_pages`](../../../core-muon-op/src/lib.rs) for authenticated Muon sessions). Both loop with `Page`/`PageSize` set to [`Paginable::MAX_PAGE_SIZE`](../../src/contract/pagination/paginable.rs), stopping when the page is partial or when accumulated length reaches `Total` (if present).
+
 **Section Checklist:**
 - [ ] `LtContract` is implemented on the request struct.
 - [ ] Path parameters and body fields are strictly separated into different structs.

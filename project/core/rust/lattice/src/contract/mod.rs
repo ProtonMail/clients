@@ -23,7 +23,10 @@ mod serde_query;
 pub use lt_contract::LtContract;
 pub use lt_query_params::{LtNoQueryParams, LtRequestQueryParams};
 #[cfg(feature = "serde")]
-pub use pagination::{LtSlimApiPageQuery, LtSlimApiPageSizeError};
+pub use pagination::{
+    LtPaginable, LtPagination, LtPaginationTransportExt, LtQueryWithPagination, LtSlimApiPageQuery,
+    LtSlimApiPageSizeError, fetch_all_pages_with,
+};
 #[cfg(feature = "serde")]
 pub use presence::LtSlimApiPresenceQuery;
 #[cfg(feature = "serde")]

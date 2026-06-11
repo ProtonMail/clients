@@ -4,12 +4,13 @@ use std::borrow::Cow;
 
 use crate::{
     AuthReq, LatticeError, LtContract, LtEmptyBody, LtNoQueryParams, LtSlimAPIJSON, Method,
+    core::LtCoreAuthDeviceId,
 };
 
 /// Path identifies device; no JSON body.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LtAuthPutDevicesDeviceIDRejectReq {
-    pub device_id: String,
+    pub device_id: LtCoreAuthDeviceId,
 }
 
 impl LtContract for LtAuthPutDevicesDeviceIDRejectReq {

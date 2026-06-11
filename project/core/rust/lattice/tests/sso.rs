@@ -7,6 +7,7 @@ mod common;
 mod common_sso;
 
 use lattice::auth::{LtAuthPasswordMode, LtAuthTwoFactorMethod};
+use lattice::core::get_members::LtCoreGetMembersReq;
 use lattice::core::user_settings::{LtCoreGetSettingsReq, LtCoreGetSettingsRes};
 use lattice::{LtApiResponseError, LtApiResponseErrorInfo};
 
@@ -43,25 +44,10 @@ async fn test_sso_login_end_to_end() {
         .await
         .unwrap();
 
-    let domain =
-        sso_setup::create_domain_quark(&session_init, &domain_name, org_res.organization_id).await;
+    let domain_lt =
+        sso_setup::create_org_sso_domain(&session_init, &domain_name, org_res.organization_id)
+            .await;
 
-    assert_eq!(
-        domain.organization_id, org_res.organization_id,
-        "Domain organization ID is not correct"
-    );
-    assert_eq!(
-        domain.domain_name, domain_name,
-        "Domain name is not correct"
-    );
-
-    let domain_lt = sso_setup::get_domain_lt(&session_init, &domain_name).await;
-
-    assert_eq!(
-        domain_lt.verify_state,
-        lattice::core::LtCoreDomainVerifyState::Default,
-        "Domain verify state is not Default (0)"
-    );
     assert_eq!(
         domain_lt.domain_name, domain_name,
         "Domain name is not correct"
@@ -88,9 +74,7 @@ async fn test_sso_login_end_to_end() {
         "Certificate is not correct"
     );
 
-    // This is necessary to refresh the domain data after setting up SSO
-    let domain_lt = sso_setup::refresh_domain_good(&session_init, &domain_lt.id).await;
-    sso_setup::assert_domain_verify_good(&domain_lt);
+    sso_setup::ensure_domain_sso_intent(&session_init, &domain_lt.id).await;
 
     let subuser_username = format!("ssou_{}", random_string(8));
 
@@ -122,19 +106,21 @@ async fn test_sso_login_end_to_end() {
     );
 
     // Checks the members
-    let users = sso_setup::get_members(&session_init).await;
+    let users = session_init
+        .fetch_all_pages(LtCoreGetMembersReq)
+        .await
+        .unwrap();
     assert_eq!(
-        users.members.len(),
+        users.len(),
         2,
         "Number of members is not 2. Users: {users:#?}"
     );
-    let admin_user = users.members.iter().find(|m| m.name == username).unwrap();
+    let admin_user = users.iter().find(|m| m.name == username).unwrap();
     assert_eq!(
         admin_user.sso, 0,
         "SSO is enabled on the admin user: {admin_user:#?}"
     );
     let subuser_user = users
-        .members
         .iter()
         .find(|m| m.name == subuser_with_domain)
         .unwrap();

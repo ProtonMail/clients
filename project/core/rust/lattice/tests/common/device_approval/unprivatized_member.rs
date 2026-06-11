@@ -1,16 +1,17 @@
+use core_key::{
+    DeviceDisplayCode, DeviceSecret, EncryptedSecret, LockedKeysExt, SharedCryptoError,
+};
 use lattice::Sensitive;
-use lattice::auth::devices::LtAuthDeviceState;
-use lattice::auth::devices::LtAuthPostDevicesDeviceIDReq;
-use lattice::core::LtCoreAddressesListQuery;
+use lattice::auth::devices::{LtAuthDeviceState, LtAuthPostDevicesDeviceIDReq};
 use lattice::core::get_core_addresses::LtCoreGetAddressesReq;
 use lattice::core::keys::LtCoreGetKeySaltsReq;
 use lattice::core::user::get_users::LtCoreGetUsersReq;
 use proton_crypto::new_pgp_provider;
 use proton_crypto_account::salts::KeySecret;
 
+use crate::common::org_members::OrgMemberError;
+
 use super::super::Session;
-use super::super::org_members::{derive_key_passphrase, primary_key_id};
-use super::device_secret::DeviceSecret;
 use super::error::DeviceApprovalError;
 use super::pending_device::PendingDevice;
 use super::pending_device_error::PendingDeviceError;
@@ -24,20 +25,29 @@ pub struct UnprivatizedMember {
 
 impl UnprivatizedMember {
     pub async fn approve_device(&self, pending: &PendingDevice) -> Result<(), PendingDeviceError> {
-        if pending.confirmation_code.is_empty() {
-            return Err(PendingDeviceError::EmptyConfirmationCode);
-        }
+        let confirmation_code = DeviceDisplayCode::parse(&pending.confirmation_code)
+            .map_err(SharedCryptoError::DisplayCode)
+            .map_err(PendingDeviceError::Crypto)?;
 
         let pgp = new_pgp_provider();
+
         let user = self.session.send_lt(LtCoreGetUsersReq).await?.user;
-        let primary_id = primary_key_id(&user)?;
+        let primary_id =
+            user.keys
+                .primary_key_id()
+                .cloned()
+                .ok_or(PendingDeviceError::OrgMember(
+                    OrgMemberError::NoPrimaryUserKey,
+                ))?;
         let salts = self.session.send_lt(LtCoreGetKeySaltsReq).await?;
-        let key_passphrase = derive_key_passphrase(
-            &salts.key_salts,
-            &primary_id,
-            self.backup_password.as_bytes(),
-        )
-        .map_err(PendingDeviceError::KeyPassphrase)?;
+        let key_passphrase = salts
+            .key_salts
+            .salt_for_key(
+                &proton_crypto::new_srp_provider(),
+                &primary_id,
+                self.backup_password.as_bytes(),
+            )
+            .map_err(PendingDeviceError::KeyPassphrase)?;
 
         let user_unlock = user.keys.0.unlock(&pgp, &key_passphrase);
         if user_unlock.unlocked_keys.is_empty() {
@@ -49,7 +59,7 @@ impl UnprivatizedMember {
         let addresses = self
             .session
             .send_lt(LtCoreGetAddressesReq {
-                query: LtCoreAddressesListQuery::default(),
+                query: Default::default(),
             })
             .await?;
 
@@ -74,20 +84,21 @@ impl UnprivatizedMember {
             .map(|k| &k.private_key)
             .collect();
 
-        DeviceSecret::decrypt_activation_token_armored(
+        DeviceSecret::from_activation(
             &pgp,
             &address_private_keys,
-            &pending.activation_token,
-        )?;
+            pending.activation_token.as_str(),
+            &confirmation_code,
+        )
+        .map_err(PendingDeviceError::Crypto)?;
 
-        let encrypted_secret = pending
-            .device_secret
-            .encrypt_passphrase(key_passphrase.as_ref())?;
+        let encrypted_secret =
+            EncryptedSecret::from_key_secret(&key_passphrase, &pending.device_secret.0)?;
 
         self.session
             .send_lt(LtAuthPostDevicesDeviceIDReq {
                 device_id: pending.id.clone(),
-                encrypted_secret: Sensitive::new(encrypted_secret),
+                encrypted_secret: Sensitive::new(encrypted_secret.as_str().to_string()),
             })
             .await?;
 

@@ -17,7 +17,7 @@ use mail_core_api::session::Session;
 use mail_core_common::models::Label;
 use mail_stash::macros::Model;
 use mail_stash::orm::Model;
-use mail_stash::stash::{RunTransaction, StashError, Tether, WriteTx};
+use mail_stash::stash::{StashError, Tether, WriteTx};
 use mail_stash::{UserDb, params};
 use std::fmt::Display;
 use tracing::{debug, error, warn};
@@ -87,7 +87,7 @@ impl RollbackItem {
     ///
     pub async fn sync_all<I>(
         api: &Session,
-        tx: &mut impl RunTransaction,
+        tx: &mut Tether<UserDb>,
         batch: I,
         queue: &Queue<UserDb>,
     ) -> Result<(), MailContextError>
@@ -104,40 +104,40 @@ impl RollbackItem {
     #[tracing::instrument(skip_all)]
     pub async fn sync_labels<I>(
         api: &Session,
-        tx: &mut impl RunTransaction,
+        tx: &mut Tether<UserDb>,
         batch: I,
         queue: &Queue<UserDb>,
     ) -> Result<(), MailContextError>
     where
         I: Into<Option<usize>>,
     {
-        Self::sync_items_impl::<LabelRollbackHandler, _>(api, tx, batch.into(), queue).await
+        Self::sync_items_impl::<LabelRollbackHandler>(api, tx, batch.into(), queue).await
     }
 
     #[tracing::instrument(skip_all)]
     pub async fn sync_messages<I>(
         api: &Session,
-        tx: &mut impl RunTransaction,
+        tx: &mut Tether<UserDb>,
         batch: I,
         queue: &Queue<UserDb>,
     ) -> Result<(), MailContextError>
     where
         I: Into<Option<usize>>,
     {
-        Self::sync_items_impl::<MessageRollbackHandler, _>(api, tx, batch.into(), queue).await
+        Self::sync_items_impl::<MessageRollbackHandler>(api, tx, batch.into(), queue).await
     }
 
     #[tracing::instrument(skip_all)]
     pub async fn sync_conversations<I>(
         api: &Session,
-        tx: &mut impl RunTransaction,
+        tx: &mut Tether<UserDb>,
         batch: I,
         queue: &Queue<UserDb>,
     ) -> Result<(), MailContextError>
     where
         I: Into<Option<usize>>,
     {
-        Self::sync_items_impl::<ConversationRollbackHandler, _>(api, tx, batch.into(), queue).await
+        Self::sync_items_impl::<ConversationRollbackHandler>(api, tx, batch.into(), queue).await
     }
 
     /// This helper method is used to find all rollback items of a specific kind.
@@ -186,18 +186,17 @@ impl RollbackItem {
         Ok(())
     }
 
-    async fn sync_items_impl<H: RollbackHandler, T: RunTransaction>(
+    async fn sync_items_impl<H: RollbackHandler>(
         api: &Session,
-        tx_runner: &mut T,
+        tether: &mut Tether,
         batch: Option<usize>,
         queue: &Queue<UserDb>,
     ) -> Result<(), MailContextError> {
-        let items: Vec<H::RemoteId> =
-            Self::find_remote_ids_by_kind(H::item_type(), tx_runner.tether())
-                .await?
-                .into_iter()
-                .map(H::RemoteId::from)
-                .collect();
+        let items: Vec<H::RemoteId> = Self::find_remote_ids_by_kind(H::item_type(), tether)
+            .await?
+            .into_iter()
+            .map(H::RemoteId::from)
+            .collect();
 
         if items.is_empty() {
             // Nothing to sync.
@@ -220,7 +219,7 @@ impl RollbackItem {
                 error!("Failed to fetch batch ({:?}): {e:?}", H::item_type());
             })?;
 
-            H::fetch_and_apply_dependencies(&mut items, api, tx_runner)
+            H::fetch_and_apply_dependencies(&mut items, api, tether)
                 .await
                 .inspect_err(|e| {
                     error!(
@@ -230,8 +229,8 @@ impl RollbackItem {
                 })?;
 
             let mut changeset = RebaseChangeSet::default();
-            tx_runner
-                .run_write_tx(async |tx| {
+            tether
+                .write_tx(async |tx| {
                     H::store_items(items, &mut changeset, tx)
                         .await
                         .inspect_err(|e| {
@@ -286,7 +285,7 @@ trait RollbackHandler: 'static + Send + Sync {
     fn fetch_and_apply_dependencies(
         items: &mut [Self::Item],
         api: &Session,
-        tx_runner: &mut impl RunTransaction,
+        tx_runner: &mut Tether<UserDb>,
     ) -> impl Future<Output = Result<(), MailContextError>>;
 
     fn store_items(
@@ -323,17 +322,16 @@ impl RollbackHandler for MessageRollbackHandler {
     async fn fetch_and_apply_dependencies(
         items: &mut [Self::Item],
         api: &Session,
-        tx_runner: &mut impl RunTransaction,
+        tether: &mut Tether<UserDb>,
     ) -> Result<(), MailContextError> {
         let mut dependency_fetcher = DependencyFetcher::new();
-        let tether = tx_runner.tether();
         for item in items.iter_mut() {
             dependency_fetcher
                 .check_api_message_metadata(item, tether)
                 .await?;
         }
 
-        let unresolved_label_ids = dependency_fetcher.fetch_and_store(api, tx_runner).await?;
+        let unresolved_label_ids = dependency_fetcher.fetch_and_store(api, tether).await?;
 
         for item in items.iter_mut() {
             item.label_ids
@@ -403,10 +401,9 @@ impl RollbackHandler for ConversationRollbackHandler {
     async fn fetch_and_apply_dependencies(
         items: &mut [Self::Item],
         api: &Session,
-        tx_runner: &mut impl RunTransaction,
+        tether: &mut Tether<UserDb>,
     ) -> Result<(), MailContextError> {
         let mut dependency_fetcher = DependencyFetcher::new();
-        let tether = tx_runner.tether();
         for item in items.iter_mut() {
             dependency_fetcher
                 .check_api_conversation(&item.conversation, tether)
@@ -418,7 +415,7 @@ impl RollbackHandler for ConversationRollbackHandler {
             }
         }
 
-        let unresolved_label_ids = dependency_fetcher.fetch_and_store(api, tx_runner).await?;
+        let unresolved_label_ids = dependency_fetcher.fetch_and_store(api, tether).await?;
 
         for item in items.iter_mut() {
             item.conversation
@@ -473,7 +470,7 @@ impl RollbackHandler for LabelRollbackHandler {
     async fn fetch_and_apply_dependencies(
         items: &mut [Self::Item],
         api: &Session,
-        tx_runner: &mut impl RunTransaction,
+        tether: &mut Tether<UserDb>,
     ) -> Result<(), MailContextError> {
         use std::collections::HashSet;
 
@@ -482,7 +479,6 @@ impl RollbackHandler for LabelRollbackHandler {
             items.iter().map(|label| label.id.clone()).collect();
 
         let mut dependency_fetcher = DependencyFetcher::new();
-        let tether = tx_runner.tether();
         for item in items.iter_mut() {
             // Only check parent dependency if it's not already in the rollback set
             if let Some(parent_id) = &item.parent_id
@@ -492,7 +488,7 @@ impl RollbackHandler for LabelRollbackHandler {
             }
         }
 
-        let unresolved_label_ids = dependency_fetcher.fetch_and_store(api, tx_runner).await?;
+        let unresolved_label_ids = dependency_fetcher.fetch_and_store(api, tether).await?;
 
         for item in items.iter_mut() {
             if let Some(parent_id) = &item.parent_id

@@ -58,7 +58,7 @@ use mail_stash::exports::{Connection, SqliteError, ToSql, Transaction};
 use mail_stash::macros::Model;
 use mail_stash::orm::{Model, ModelHooks};
 use mail_stash::rusqlite::{OptionalExtension, params_from_iter};
-use mail_stash::stash::{RunTransaction, Stash, StashError, Tether, WatcherHandle, WriteTx};
+use mail_stash::stash::{Stash, StashError, Tether, WatcherHandle, WriteTx};
 use mail_stash::utils::{ConnectionExt, IterMapToSql, MapToSql as _, placeholders, placeholders_n};
 use mail_stash::{UserDb, params};
 use serde::{Deserialize, Serialize};
@@ -1463,7 +1463,7 @@ impl Conversation {
     pub async fn sync_metadata<PM: ProtonMail>(
         ids: Vec<ConversationId>,
         api: &PM,
-        mut tx: impl RunTransaction,
+        tether: &mut Tether,
     ) -> Result<Vec<Self>, AppError> {
         let remote_convs = api
             .get_conversations(GetConversationsOptions {
@@ -1474,15 +1474,16 @@ impl Conversation {
             .conversations;
         let mut local_convs = Vec::with_capacity(remote_convs.len());
 
-        tx.run_write_tx(async |tx| {
-            for conv in remote_convs {
-                let mut conv = Self::from(conv);
-                conv.save(tx).await?;
-                local_convs.push(conv);
-            }
-            Ok(())
-        })
-        .await?;
+        tether
+            .write_tx(async |tx| {
+                for conv in remote_convs {
+                    let mut conv = Self::from(conv);
+                    conv.save(tx).await?;
+                    local_convs.push(conv);
+                }
+                Ok::<_, StashError>(())
+            })
+            .await?;
 
         Ok(local_convs)
     }
@@ -1792,15 +1793,15 @@ impl Conversation {
         Ok(())
     }
 
-    #[tracing::instrument(skip(tx, session, network_monitor_service, queue))]
+    #[tracing::instrument(skip(tether, session, network_monitor_service, queue))]
     pub async fn sync_conversation_messages_from_push_notification(
         network_monitor_service: &NetworkMonitorService,
         local_conversation_id: LocalConversationId,
-        tx: &mut impl RunTransaction,
+        tether: &mut Tether,
         session: &Session,
         queue: &Queue<UserDb>,
     ) -> Result<Conversation, MailContextError> {
-        let Some(conversation) = Self::find_by_id(local_conversation_id, tx.tether()).await? else {
+        let Some(conversation) = Self::find_by_id(local_conversation_id, tether).await? else {
             return Err(AppError::ConversationNotFound(local_conversation_id).into());
         };
 
@@ -1835,117 +1836,120 @@ impl Conversation {
 
         let mut dep_fetcher = DependencyFetcher::new();
         dep_fetcher
-            .check_api_conversation(&conversation_response.conversation, tx.tether())
+            .check_api_conversation(&conversation_response.conversation, tether)
             .await?;
         for msg in &conversation_response.messages {
-            dep_fetcher
-                .check_api_message_metadata(msg, tx.tether())
-                .await?;
+            dep_fetcher.check_api_message_metadata(msg, tether).await?;
         }
 
         dep_fetcher
-            .fetch_and_store(session, tx)
+            .fetch_and_store(session, tether)
             .await
             .inspect_err(|e| {
                 tracing::error!("Failed to fetch dependencies : {e}");
             })?;
 
-        tx.run_write_tx::<_, _>(async move |tx| {
-            let mut rebase_change_set = RebaseChangeSet::default();
-            let had_messages = conversation.has_messages;
-            let should_sync_conv = conversation
-                .to_api_conversation()
-                .map(|mut v| {
-                    let sort_conv_labels_fn =
-                        |l1: &ApiConversationLabel, l2: &ApiConversationLabel| l1.id.cmp(&l2.id);
-                    let sort_attachment_metadata =
-                        |l1: &ApiAttachmentMetadata, l2: &ApiAttachmentMetadata| l1.id.cmp(&l2.id);
-                    conversation_response
-                        .conversation
-                        .labels
-                        .sort_unstable_by(sort_conv_labels_fn);
-                    v.labels.sort_unstable_by(sort_conv_labels_fn);
-                    v.attachments_metadata
-                        .sort_unstable_by(sort_attachment_metadata);
-                    conversation_response
-                        .conversation
-                        .attachments_metadata
-                        .sort_unstable_by(sort_attachment_metadata);
+        tether
+            .write_tx(async move |tx| {
+                let mut rebase_change_set = RebaseChangeSet::default();
+                let had_messages = conversation.has_messages;
+                let should_sync_conv = conversation
+                    .to_api_conversation()
+                    .map(|mut v| {
+                        let sort_conv_labels_fn =
+                            |l1: &ApiConversationLabel, l2: &ApiConversationLabel| {
+                                l1.id.cmp(&l2.id)
+                            };
+                        let sort_attachment_metadata =
+                            |l1: &ApiAttachmentMetadata, l2: &ApiAttachmentMetadata| {
+                                l1.id.cmp(&l2.id)
+                            };
+                        conversation_response
+                            .conversation
+                            .labels
+                            .sort_unstable_by(sort_conv_labels_fn);
+                        v.labels.sort_unstable_by(sort_conv_labels_fn);
+                        v.attachments_metadata
+                            .sort_unstable_by(sort_attachment_metadata);
+                        conversation_response
+                            .conversation
+                            .attachments_metadata
+                            .sort_unstable_by(sort_attachment_metadata);
 
-                    v != conversation_response.conversation
-                })
-                .unwrap_or(true);
+                        v != conversation_response.conversation
+                    })
+                    .unwrap_or(true);
 
-            if should_sync_conv {
-                let mut new_conversation: Conversation = conversation_response.conversation.into();
-                new_conversation.local_id = conversation.local_id;
-                new_conversation.has_messages = true;
-                new_conversation.is_known = true;
-                debug!("Updating conversation");
-                new_conversation.save(tx).await?;
-                rebase_change_set.add(new_conversation.id());
-            }
+                if should_sync_conv {
+                    let mut new_conversation: Conversation =
+                        conversation_response.conversation.into();
+                    new_conversation.local_id = conversation.local_id;
+                    new_conversation.has_messages = true;
+                    new_conversation.is_known = true;
+                    debug!("Updating conversation");
+                    new_conversation.save(tx).await?;
+                    rebase_change_set.add(new_conversation.id());
+                }
 
-            let message_metadata: Vec<ApiMessageMetadata> = conversation_response.messages;
-            if had_messages {
-                info!("Messages were synced before");
-            } else {
-                info!("Never synced conversation messages before");
-            }
-            // We need to always update the conversation and messages as it possible
-            // that some message state we have locally does not match the label context
-            // data downloaded from the newer conversation, which can lead to other
-            // action not behaving accordingly.
-            // Note that this does overwrite local state with new state, meaning local
-            // changes can temporarily be lost until the respective actions
-            // are executed on the server.
-            // This has been deemed more acceptable than the user complaining that their
-            // conversations can't  be marked as read after marking all
-            // conversations as read.
-            let ids = Message::create_or_update_messages_from_metadata(message_metadata, None, tx)
-                .await
-                .map_err(|e| {
-                    error!("Failed to write message metadata: {e:?}");
-                    e
-                })?;
-            rebase_change_set.add_many(ids);
+                let message_metadata: Vec<ApiMessageMetadata> = conversation_response.messages;
+                if had_messages {
+                    info!("Messages were synced before");
+                } else {
+                    info!("Never synced conversation messages before");
+                }
+                // We need to always update the conversation and messages as it possible
+                // that some message state we have locally does not match the label context
+                // data downloaded from the newer conversation, which can lead to other
+                // action not behaving accordingly.
+                // Note that this does overwrite local state with new state, meaning local
+                // changes can temporarily be lost until the respective actions
+                // are executed on the server.
+                // This has been deemed more acceptable than the user complaining that their
+                // conversations can't  be marked as read after marking all
+                // conversations as read.
+                let ids =
+                    Message::create_or_update_messages_from_metadata(message_metadata, None, tx)
+                        .await
+                        .map_err(|e| {
+                            error!("Failed to write message metadata: {e:?}");
+                            e
+                        })?;
+                rebase_change_set.add_many(ids);
 
-            if let Err(e) = queue
-                .rebase_in(ActionGroup::default(), &rebase_change_set, tx)
-                .await
-            {
-                tracing::error!("Failed to rebase changes: {e}");
-            }
+                if let Err(e) = queue
+                    .rebase_in(ActionGroup::default(), &rebase_change_set, tx)
+                    .await
+                {
+                    tracing::error!("Failed to rebase changes: {e}");
+                }
 
-            Ok(())
-        })
-        .await
-        .map_err(MailContextError::Other)?;
+                Ok(())
+            })
+            .await
+            .map_err(MailContextError::Other)?;
 
         // Re-read from DB to get the conversation with both the API update and
         // rebase (pending local actions) applied.
-        Self::find_by_id(local_conversation_id, tx.tether())
+        Self::find_by_id(local_conversation_id, tether)
             .await?
             .ok_or_else(|| AppError::ConversationNotFound(local_conversation_id).into())
     }
 
-    #[tracing::instrument(skip(tx, session, network_monitor_service, queue))]
+    #[tracing::instrument(skip(tether, session, network_monitor_service, queue))]
     pub async fn sync_conversation_messages(
         network_monitor_service: &NetworkMonitorService,
         local_conversation_id: LocalConversationId,
-        tx: &mut impl RunTransaction,
+        tether: &mut Tether,
         session: &Session,
         extra_sync_allowed: bool,
         queue: &Queue<UserDb>,
     ) -> Result<(), MailContextError> {
-        let Some(mut conversation) = Self::find_by_id(local_conversation_id, tx.tether()).await?
-        else {
+        let Some(mut conversation) = Self::find_by_id(local_conversation_id, tether).await? else {
             return Err(AppError::ConversationNotFound(local_conversation_id).into());
         };
 
         let total_message_count =
-            Conversation::local_message_count_with_remote_id(local_conversation_id, tx.tether())
-                .await?;
+            Conversation::local_message_count_with_remote_id(local_conversation_id, tether).await?;
         let should_sync_all_messages =
             extra_sync_allowed && total_message_count != conversation.num_messages;
         if !conversation.has_messages {
@@ -1980,75 +1984,77 @@ impl Conversation {
 
             let mut dep_fetcher = DependencyFetcher::new();
             dep_fetcher
-                .check_api_conversation(&conversation_response.conversation, tx.tether())
+                .check_api_conversation(&conversation_response.conversation, tether)
                 .await?;
             for msg in &conversation_response.messages {
-                dep_fetcher
-                    .check_api_message_metadata(msg, tx.tether())
-                    .await?;
+                dep_fetcher.check_api_message_metadata(msg, tether).await?;
             }
 
             dep_fetcher
-                .fetch_and_store(session, tx)
+                .fetch_and_store(session, tether)
                 .await
                 .inspect_err(|e| {
                     tracing::error!("Failed to fetch dependencies : {e}");
                 })?;
 
-            tx.run_write_tx::<_, _>(async move |tx| {
-                let mut rebase_change_set = RebaseChangeSet::default();
+            tether
+                .write_tx(async move |tx| {
+                    let mut rebase_change_set = RebaseChangeSet::default();
 
-                let message_metadata: Vec<ApiMessageMetadata> = conversation_response.messages;
+                    let message_metadata: Vec<ApiMessageMetadata> = conversation_response.messages;
 
-                let ids =
-                    Message::create_or_update_messages_from_metadata(message_metadata, None, tx)
-                        .await
-                        .map_err(|e| {
-                            error!("Failed to write message metadata: {e:?}");
+                    let ids = Message::create_or_update_messages_from_metadata(
+                        message_metadata,
+                        None,
+                        tx,
+                    )
+                    .await
+                    .map_err(|e| {
+                        error!("Failed to write message metadata: {e:?}");
+                        e
+                    })?;
+
+                    rebase_change_set.add_many(ids);
+
+                    if conversation.is_known {
+                        debug!("Conversation was known");
+                        conversation.has_messages = true;
+                        conversation.save(tx).await.map_err(|e| {
+                            error!("Failed to write conversation: {e:?}");
                             e
                         })?;
+                    } else {
+                        debug!("Conversation was not known");
+                        let mut new_conversation: Conversation =
+                            conversation_response.conversation.into();
 
-                rebase_change_set.add_many(ids);
+                        new_conversation.local_id = conversation.local_id;
+                        new_conversation.has_messages = true;
 
-                if conversation.is_known {
-                    debug!("Conversation was known");
-                    conversation.has_messages = true;
-                    conversation.save(tx).await.map_err(|e| {
-                        error!("Failed to write conversation: {e:?}");
-                        e
-                    })?;
-                } else {
-                    debug!("Conversation was not known");
-                    let mut new_conversation: Conversation =
-                        conversation_response.conversation.into();
+                        new_conversation.save(tx).await.map_err(|e| {
+                            error!("Failed to write conversation: {e:?}");
+                            e
+                        })?;
+                        rebase_change_set.add(new_conversation.id());
+                    }
 
-                    new_conversation.local_id = conversation.local_id;
-                    new_conversation.has_messages = true;
+                    if let Err(e) = queue
+                        .rebase_in(ActionGroup::default(), &rebase_change_set, tx)
+                        .await
+                    {
+                        tracing::error!("Failed to rebase changes: {e}");
+                    }
 
-                    new_conversation.save(tx).await.map_err(|e| {
-                        error!("Failed to write conversation: {e:?}");
-                        e
-                    })?;
-                    rebase_change_set.add(new_conversation.id());
-                }
-
-                if let Err(e) = queue
-                    .rebase_in(ActionGroup::default(), &rebase_change_set, tx)
-                    .await
-                {
-                    tracing::error!("Failed to rebase changes: {e}");
-                }
-
-                Ok(())
-            })
-            .await
-            .map_err(MailContextError::Other)?;
+                    Ok(())
+                })
+                .await
+                .map_err(MailContextError::Other)?;
         } else if should_sync_all_messages {
             info!("Message state mismatch, syncing conversation from server");
             Self::sync_conversation_messages_from_push_notification(
                 network_monitor_service,
                 local_conversation_id,
-                tx,
+                tether,
                 session,
                 queue,
             )

@@ -5,8 +5,8 @@ use crate::models::{Contact, ContactEmail};
 use mail_core_api::services::proton::{ContactEmail as ApiContactEmail, ContactId};
 use mail_core_api::session::Session;
 use mail_stash::orm::Model;
-use mail_stash::stash::{RunTransaction, Tether};
-use mail_stash::{UserDb, params};
+use mail_stash::params;
+use mail_stash::stash::Tether;
 
 #[derive(Default)]
 pub struct ContactsDependencyFetcher {
@@ -24,7 +24,7 @@ impl ContactsDependencyFetcher {
     pub async fn fetch_and_store(
         &self,
         api: &Session,
-        tx: &mut (impl RunTransaction<UserDb> + Send),
+        tx: &mut Tether,
     ) -> Result<(), CoreContextError> {
         if !self.contact_ids.is_empty() {
             Contact::sync_contacts_by_ids(api, self.contact_ids.iter().cloned().collect(), tx)

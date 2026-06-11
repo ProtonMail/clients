@@ -9,7 +9,7 @@ use mail_core_common::app_events::OnEnterForegroundEvent;
 use mail_core_common::services::InitializationService;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
-use mail_stash::stash::RunTransaction;
+use mail_stash::stash::StashError;
 use std::time::Duration;
 use tokio::time;
 use tracing::{Instrument, error};
@@ -155,9 +155,9 @@ impl MailUserContext {
     async fn verify_and_cleanup_deleted_items(&self) -> Result<(), MailContextError> {
         let mut tether = self.user_stash().connection();
         tether
-            .run_write_tx(async |tx| {
+            .write_tx(async |tx| {
                 DeletedItem::verify_and_cleanup(tx).await?;
-                Ok(())
+                Ok::<_, StashError>(())
             })
             .await?;
         Ok(())

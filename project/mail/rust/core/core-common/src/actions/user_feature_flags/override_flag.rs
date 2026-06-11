@@ -10,7 +10,7 @@ use mail_action_queue::rebase::RebaseChangeSet;
 use mail_core_api::services::proton::FeatureFlagsApi as _;
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
-use mail_stash::stash::{RunTransaction, WriteTx};
+use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
 use std::sync::Weak;
 
@@ -71,7 +71,7 @@ impl Handler<UserDb> for OverrideFlagHandler {
         action: &mut Self::Action,
         tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
-        let mut flag = UserFeatureFlag::by_name(&action.flag_name, tx.tether())
+        let mut flag = UserFeatureFlag::by_name(&action.flag_name, tx)
             .await?
             .inspect(|flag| {
                 action.previous_state = Some(PreviousFlagState {
@@ -112,7 +112,7 @@ impl Handler<UserDb> for OverrideFlagHandler {
         action: &mut Self::Action,
         tx: &WriteTx<'_>,
     ) -> Result<(), <Self::Action as Action<UserDb>>::Error> {
-        let mut flag = UserFeatureFlag::by_name(&action.flag_name, tx.tether())
+        let mut flag = UserFeatureFlag::by_name(&action.flag_name, tx)
             .await?
             .ok_or_else(|| {
                 CoreContextError::Other(anyhow::anyhow!(

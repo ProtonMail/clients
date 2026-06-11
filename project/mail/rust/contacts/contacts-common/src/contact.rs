@@ -25,9 +25,7 @@ use mail_stash::exports::Transaction;
 use mail_stash::macros::{Model as ModelDerive, ModelRaw};
 use mail_stash::orm::{DbRecord, Model, ModelHooks};
 use mail_stash::rusqlite::{Connection, params_from_iter};
-use mail_stash::stash::{
-    RunTransaction, Stash, StashError, StashResult, Tether, WatcherHandle, WriteTx,
-};
+use mail_stash::stash::{Stash, StashError, StashResult, Tether, WatcherHandle, WriteTx};
 use mail_stash::utils::{ConnectionExt, placeholders};
 use mail_stash::{UserDb, params, rusqlite};
 use mail_vcard::vcard::{PropertyUid, VCard};
@@ -328,10 +326,9 @@ impl Contact {
     pub async fn sync_with_card(
         local_id: LocalContactId,
         api: &Session,
-        tx: &mut impl RunTransaction<UserDb>,
+        tether: &mut Tether<UserDb>,
     ) -> Result<(), ContactError> {
-        let c: u32 = tx
-            .tether()
+        let c: u32 = tether
             .query_value(
                 "SELECT COUNT(*) FROM contact_cards WHERE local_contact_id = ?",
                 params![local_id],
@@ -343,16 +340,16 @@ impl Contact {
             return Ok(());
         }
 
-        Self::force_sync_with_card(local_id, api, tx).await
+        Self::force_sync_with_card(local_id, api, tether).await
     }
 
     pub async fn force_sync_with_card(
         local_id: LocalContactId,
         api: &Session,
-        tx: &mut impl RunTransaction<UserDb>,
+        tether: &mut Tether<UserDb>,
     ) -> Result<(), ContactError> {
         info!("Syncing full contact for contact id {local_id}");
-        let remote_id = Contact::local_id_counterpart(local_id, tx.tether())
+        let remote_id = Contact::local_id_counterpart(local_id, tether)
             .await?
             .ok_or(ContactError::ContactDoesNotHaveRemoteId(local_id))?;
 
@@ -366,24 +363,22 @@ impl Contact {
                 .contact,
         );
 
-        tx.run_write_tx(async |tx| {
-            contact_with_card.save(tx).await.map_err(|err| {
-                error!("Failed to sync full contact to db: {err:?}");
-                err
-            })?;
-
-            Ok(())
-        })
-        .await
-        .map_err(|e| ContactError::Stash(e.into()))?;
+        tether
+            .write_tx(async |tx| {
+                contact_with_card.save(tx).await.map_err(|err| {
+                    error!("Failed to sync full contact to db: {err:?}");
+                    err
+                })
+            })
+            .await?;
         Ok(())
     }
 
     pub async fn sync_contacts_by_ids(
         api: &Session,
         contact_ids: Vec<ContactId>,
-        tx: &mut impl RunTransaction<UserDb>,
-    ) -> Result<Vec<Self>, ApiServiceError> {
+        tether: &mut Tether<UserDb>,
+    ) -> Result<Vec<Self>, ContactError> {
         let batch_size = 10;
         let mut contacts: Vec<Self> = Vec::new();
 
@@ -398,14 +393,14 @@ impl Contact {
             );
         }
 
-        tx.run_write_tx(async |tx| {
-            for contact in &mut contacts {
-                contact.save(tx).await?;
-            }
-            Ok(())
-        })
-        .await
-        .map_err(ApiServiceError::from)?;
+        tether
+            .write_tx(async |tx| {
+                for contact in &mut contacts {
+                    contact.save(tx).await?;
+                }
+                Ok::<_, StashError>(())
+            })
+            .await?;
 
         Ok(contacts)
     }

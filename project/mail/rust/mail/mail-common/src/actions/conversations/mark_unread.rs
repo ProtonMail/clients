@@ -15,7 +15,7 @@ use mail_core_common::datatypes::LocalLabelId;
 use mail_core_common::models::ModelIdExtension;
 use mail_stash::UserDb;
 use mail_stash::exports::Transaction;
-use mail_stash::stash::{RunTransaction, WriteTx};
+use mail_stash::stash::WriteTx;
 use serde::{Deserialize, Serialize};
 use std::sync::Weak;
 use tracing::error;
@@ -111,7 +111,7 @@ impl Handler<UserDb> for MarkUnreadHandler {
         if !failed_ids.is_empty() {
             error!("Mark unread operation failed for: {:?}", failed_ids);
             tether
-                .run_write_tx_sync(move |tx: &Transaction<'_>| {
+                .sync_write_tx(move |tx: &Transaction<'_>| {
                     GenericActionData::<Conversation>::mark_rollback_sync(
                         &failed_ids,
                         RollbackItemType::Conversation,

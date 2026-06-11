@@ -143,9 +143,12 @@ pub struct DeviceContact {
 impl From<DeviceContact> for RealDeviceContact {
     fn from(value: DeviceContact) -> Self {
         Self {
-            key: value.key,
-            name: value.name,
+            id: value.key,
+            display_name: value.name,
             emails: value.emails.map_vec(),
+            given_name: None,
+            family_name: None,
+            phones: vec![],
         }
     }
 }

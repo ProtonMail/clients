@@ -39,13 +39,13 @@ pub struct DeleteAllMessagesInLabel {
 
 impl DeleteAllMessagesInLabel {
     pub async fn new(local_id: LocalLabelId, tether: &Tether) -> Result<Option<Self>, LabelError> {
-        let ids_for_rollback = Message::ids_in_label(local_id, tether).await?;
-
         let label = Label::find_by_id(local_id, tether)
             .await?
             .ok_or_else(|| LabelError::CouldNotResolveRemoteLabel(local_id))?;
 
         if label.is_idle(tether).await? {
+            let ids_for_rollback = Message::ids_in_label(local_id, tether).await?;
+
             Ok(Some(Self {
                 local_id,
                 ids_for_rollback,
@@ -167,6 +167,17 @@ impl Handler<UserDb> for DeleteAllMessagesInLabelHandler {
         label.mark_busy(tx).await?;
 
         self.reset_counters(tx, Some(action), &label).await?;
+
+        // Recompute the set to delete at apply time rather than trusting the snapshot
+        // captured in `new()`. Items can be saved into the label between action creation
+        // and now (e.g. a scroller background page prefetch); those commit before
+        // `mark_busy` so the `is_busy` save-guard does not block them, and they would
+        // otherwise survive the snapshot-based deletion. Anything saved after this point
+        // is blocked by the busy guard, so together the window is fully closed.
+        //
+        // TODO: With this approach we would like to record keys for action dependecy after
+        // the `apply_local` has been run not before
+        action.ids_for_rollback = Message::ids_in_label_with_deleted(action.local_id, tx).await?;
 
         Message::mark_deleted(action.ids_for_rollback.clone(), tx).await?;
 

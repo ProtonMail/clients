@@ -1,9 +1,9 @@
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 use crate::{AuthReq, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method};
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LtAuthDeleteReq;
 
 impl LtContract for LtAuthDeleteReq {

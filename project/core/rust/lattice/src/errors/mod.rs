@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 mod enforced_code;
 pub use enforced_code::EnforcedCode;
 pub mod details;
@@ -9,9 +10,8 @@ use crate::details::{
     LoginFailedErrorDetails,
 };
 
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
-#[derive(Debug, Clone, PartialEq, Eq, Display, Error)]
+#[derive(Debug, Clone, PartialEq, Eq, Display, Error, Deserialize, Serialize)]
+#[serde(rename_all = "PascalCase")]
 #[display("Error[{code}]: {error}, Specifics: {details}, Metadata: {metadata:?}")]
 pub struct LtApiResponseErrorInfo<Code, Details> {
     pub code: Code,
@@ -20,31 +20,29 @@ pub struct LtApiResponseErrorInfo<Code, Details> {
 
     pub error: String,
 
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[serde(flatten)]
     pub metadata: LtApiErrorMetadata,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Display, Error)]
+#[derive(Debug, Clone, PartialEq, Eq, Display, Error, Deserialize, Serialize)]
 #[display("File: {file:?}:{line:?} {exception:?} {message:?}")]
 pub struct LtApiErrorMetadata {
-    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub exception: Option<String>,
-    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub message: Option<String>,
-    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub file: Option<String>,
-    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub line: Option<u32>,
-    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub trace: Option<Vec<LtApiErrorMetadataTrace>>,
-    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub previous: Option<Box<LtApiErrorMetadata>>,
 }
 
 // LtApiErrorMetadataTrace
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Display)]
+#[derive(Debug, Clone, PartialEq, Eq, Display, Deserialize, Serialize)]
 #[display("Trace: {file:?}:{line:?} {function:?}")]
 pub struct LtApiErrorMetadataTrace {
     pub file: String,
@@ -69,9 +67,8 @@ pub const AUTH_DEVICE_TOKEN_INVALID: u32 = 10302;
 /// Error code: device is rejected (device association).
 pub const AUTH_DEVICE_REJECTED: u32 = 10303;
 
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Display)]
-#[cfg_attr(feature = "serde", serde(untagged, rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Display, Deserialize, Serialize)]
+#[serde(untagged, rename_all = "PascalCase")]
 pub enum LtApiResponseError {
     #[display("AccessTokenWithInsufficientScope")]
     AccessTokenWithInsufficientScope(
@@ -153,11 +150,9 @@ pub enum LtApiResponseError {
     #[display("PlanNotSupported")]
     PlanNotSupported(LtApiResponseErrorInfo<EnforcedCode<2011>, NullErrorDetails>),
 
-    #[cfg(feature = "serde")]
     #[display("Other")]
     Other(LtApiResponseErrorInfo<u32, serde_json::Value>),
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Display)]
+#[derive(Debug, Clone, PartialEq, Eq, Display, Deserialize, Serialize)]
 pub struct NullErrorDetails {}

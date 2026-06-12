@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 use crate::{
@@ -7,18 +8,16 @@ use crate::{
 
 use super::LtAuthAssociatedDevice;
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtAuthPostDevicesAssociateReq {
-    #[cfg_attr(feature = "serde", serde(skip))]
+    #[serde(skip)]
     pub device_id: LtCoreAuthDeviceId,
     pub device_token: String,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtAuthPostDevicesAssociateRes {
     pub auth_device: LtAuthAssociatedDevice,
 }

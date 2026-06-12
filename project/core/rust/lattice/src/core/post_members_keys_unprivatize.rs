@@ -1,5 +1,6 @@
 //! `POST /core/v4/members/{id}/keys/unprivatize` — execute unprivatization (distinct from admin request at `POST .../unprivatize`).
 
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method, Sensitive};
@@ -14,40 +15,33 @@ pub struct LtCorePostMembersKeysUnprivatizeReq {
 }
 
 /// `UnprivatizeMemberInput` body.
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCorePostMembersKeysUnprivatizeBody {
     pub user_keys: Vec<LtCoreUnprivatizeUserKey>,
     pub address_keys: Vec<LtCoreUnprivatizeAddressKey>,
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub organization_key_activation: Option<LtCoreUnprivatizeOrganizationKeyActivation>,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCoreUnprivatizeUserKey {
     pub org_private_key: Sensitive<String>,
     pub org_token: Sensitive<String>,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCoreUnprivatizeAddressKey {
-    #[cfg_attr(feature = "serde", serde(rename = "AddressKeyID"))]
+    #[serde(rename = "AddressKeyID")]
     pub address_key_id: String,
     pub org_token_key_packet: Sensitive<String>,
     pub org_signature: Sensitive<String>,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCoreUnprivatizeOrganizationKeyActivation {
     pub token_key_packet: Sensitive<String>,
     pub signature: Sensitive<String>,

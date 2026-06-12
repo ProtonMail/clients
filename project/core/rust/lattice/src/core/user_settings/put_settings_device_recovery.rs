@@ -1,21 +1,20 @@
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method};
 
 use super::LtCoreUserSettings;
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCorePutDeviceRecoveryPreferenceRes {
     pub user_settings: LtCoreUserSettings,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCorePutDeviceRecoveryPreferenceReq {
-    #[cfg_attr(feature = "serde", serde(with = "crate::helpers::bool_int"))]
+    #[serde(with = "crate::helpers::bool_int")]
     pub device_recovery: bool,
 }
 

@@ -6,7 +6,7 @@ edition.workspace = true
 [dependencies]
 derive_more = { workspace = true }
 http = { workspace = true }
-lattice = { workspace = true, features = ["serde"] }
+lattice = { workspace = true }
 muon = { workspace = true }
 
 [lints]

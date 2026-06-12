@@ -1,16 +1,15 @@
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 use crate::{LtContract, LtNoQueryParams, LtSlimAPIJSON, Sensitive, UnauthReq};
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LtAuthGetModulusReq;
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtAuthGetModulusRes {
-    #[cfg_attr(feature = "serde", serde(rename = "ModulusID"))]
+    #[serde(rename = "ModulusID")]
     pub modulus_id: String,
     pub modulus: Sensitive<String>,
 }

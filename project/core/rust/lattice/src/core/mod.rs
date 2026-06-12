@@ -66,6 +66,7 @@ pub use unpriv_types::{
 
 use derive_more::{From, Into};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
+use serde::{Deserialize, Serialize};
 
 use crate::Sensitive;
 use crate::auth::{LtAuthAddressId, LtAuthUserId};
@@ -74,18 +75,16 @@ use crate::core::keys::LtCoreSensitiveAddressKeys;
 /// Async user initialization flag
 #[repr(i32)]
 #[derive(IntoPrimitive, TryFromPrimitive)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(into = "i32", try_from = "i32"))]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(into = "i32", try_from = "i32")]
 pub enum LtCoreAsyncUserInitialization {
     Other = 0,
     CalledByClient = 1,
 }
 
 /// Represents a signed key with its data and signature.
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCoreSignedKeyList {
     /// JSON-encoded content of the SAL
     pub data: Sensitive<String>,
@@ -104,12 +103,11 @@ impl From<proton_crypto_account::keys::LocalSignedKeyList> for LtCoreSignedKeyLi
 }
 
 /// Represents an address key input for key setup.
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCoreAddressKeyInput {
     /// The address ID.
-    #[cfg_attr(feature = "serde", serde(rename = "AddressID"))]
+    #[serde(rename = "AddressID")]
     pub address_id: LtAuthAddressId,
 
     /// The private key for the address.
@@ -118,43 +116,36 @@ pub struct LtCoreAddressKeyInput {
     pub primary: u8,
 
     /// The token associated with the key.
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub token: Option<Sensitive<String>>,
 
     /// The signature of the key.
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub signature: Option<Sensitive<String>>,
 
     /// Signed key list
     pub signed_key_list: LtCoreSignedKeyList,
 
-    #[cfg_attr(feature = "serde", serde(default))]
+    #[serde(default)]
     pub revision: i32,
 }
 
 /// The address of a user (copied from `proton-api-core`)
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 #[allow(clippy::struct_excessive_bools)]
 pub struct LtCoreAddress {
-    #[cfg_attr(feature = "serde", serde(rename = "ID"))]
+    #[serde(rename = "ID")]
     pub id: LtAuthAddressId,
 
-    #[cfg_attr(feature = "serde", serde(rename = "Type"))]
+    #[serde(rename = "Type")]
     pub address_type: LtCoreAddressType,
 
     pub catch_all: bool,
 
     pub display_name: Option<String>,
 
-    #[cfg_attr(feature = "serde", serde(rename = "DomainID"))]
+    #[serde(rename = "DomainID")]
     pub domain_id: Option<String>,
 
     pub email: String,
@@ -163,13 +154,13 @@ pub struct LtCoreAddress {
 
     pub order: u32,
 
-    #[cfg_attr(feature = "serde", serde(rename = "ProtonMX"))]
+    #[serde(rename = "ProtonMX")]
     pub proton_mx: bool,
 
-    #[cfg_attr(feature = "serde", serde(with = "crate::helpers::bool_int"))]
+    #[serde(with = "crate::helpers::bool_int")]
     pub receive: bool,
 
-    #[cfg_attr(feature = "serde", serde(with = "crate::helpers::bool_int"))]
+    #[serde(with = "crate::helpers::bool_int")]
     pub send: bool,
 
     pub signature: Option<String>,
@@ -178,14 +169,23 @@ pub struct LtCoreAddress {
 
     pub status: LtCoreAddressStatus,
 
-    #[cfg_attr(feature = "serde", serde(default))]
+    #[serde(default)]
     pub flags: LtCoreAddressFlags,
 }
 
 /// Address-level bit flags returned by the API.
 #[derive(From, Into)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    PartialEq,
+    Eq,
+    Hash,
+    Serialize,
+    Deserialize
+)]
 pub struct LtCoreAddressFlags(i32);
 
 bitflags::bitflags! {
@@ -201,19 +201,18 @@ bitflags::bitflags! {
         const UsernameReclaimed = 1 << 7;
     }
 }
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCoreAddressSignedKeyList {
     pub data: Option<String>,
 
-    #[cfg_attr(feature = "serde", serde(rename = "ExpectedMinEpochID"))]
+    #[serde(rename = "ExpectedMinEpochID")]
     pub expected_min_epoch_id: Option<u64>,
 
-    #[cfg_attr(feature = "serde", serde(rename = "MaxEpochID"))]
+    #[serde(rename = "MaxEpochID")]
     pub max_epoch_id: Option<u64>,
 
-    #[cfg_attr(feature = "serde", serde(rename = "MinEpochID"))]
+    #[serde(rename = "MinEpochID")]
     pub min_epoch_id: Option<u64>,
 
     pub obsolescence_token: Option<String>,
@@ -224,7 +223,6 @@ pub struct LtCoreAddressSignedKeyList {
 }
 
 /// Represents the status of an address.
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(
     Clone,
     Copy,
@@ -233,10 +231,12 @@ pub struct LtCoreAddressSignedKeyList {
     Hash,
     PartialEq,
     TryFromPrimitive,
-    IntoPrimitive
+    IntoPrimitive,
+    Serialize,
+    Deserialize
 )]
 #[repr(u8)]
-#[cfg_attr(feature = "serde", serde(into = "u8", try_from = "u8"))]
+#[serde(into = "u8", try_from = "u8")]
 pub enum LtCoreAddressStatus {
     /// The address is disabled.
     Disabled = 0,
@@ -249,7 +249,6 @@ pub enum LtCoreAddressStatus {
 }
 
 /// This enum defines different categories of addresses with assigned integer values.
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(
     Clone,
     Copy,
@@ -258,10 +257,12 @@ pub enum LtCoreAddressStatus {
     Hash,
     PartialEq,
     TryFromPrimitive,
-    IntoPrimitive
+    IntoPrimitive,
+    Serialize,
+    Deserialize
 )]
 #[repr(i32)]
-#[cfg_attr(feature = "serde", serde(into = "i32", try_from = "i32"))]
+#[serde(into = "i32", try_from = "i32")]
 pub enum LtCoreAddressType {
     /// An initial type of address.
     Original = 1,
@@ -279,86 +280,74 @@ pub enum LtCoreAddressType {
     External = 5,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCoreU2FKey {
     pub label: String,
     pub key_handle: String,
-    #[cfg_attr(feature = "serde", serde(default))]
+    #[serde(default)]
     pub compromised: Option<i32>,
 }
 
 /// One `AuthDevices` event row (nested shape).
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtAuthDeviceEvent {
-    #[cfg_attr(feature = "serde", serde(rename = "ID"))]
+    #[serde(rename = "ID")]
     pub id: String,
 
     pub action: LtCoreEventAction,
 
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub auth_device: Option<LtAuthDevice>,
 }
 
 /// One `MemberAuthDevices` event row (nested shape).
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCoreMemberAuthDeviceEvent {
-    #[cfg_attr(feature = "serde", serde(rename = "ID"))]
+    #[serde(rename = "ID")]
     pub id: String,
 
     pub action: LtCoreEventAction,
 
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub member_auth_device: Option<LtAuthDevice>,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCoreEvents {
-    #[cfg_attr(feature = "serde", serde(default))]
+    #[serde(default)]
     pub users: Vec<LtCoreEventItem<LtAuthUserId>>,
 
-    #[cfg_attr(feature = "serde", serde(default))]
+    #[serde(default)]
     pub user_settings: Vec<LtCoreEventItem<LtAuthUserId>>,
 
-    #[cfg_attr(feature = "serde", serde(default))]
+    #[serde(default)]
     pub addresses: Vec<LtCoreEventItem<LtAuthAddressId>>,
 
-    #[cfg_attr(feature = "serde", serde(default))]
+    #[serde(default)]
     pub auth_devices: Vec<LtAuthDeviceEvent>,
 
-    #[cfg_attr(feature = "serde", serde(default))]
+    #[serde(default)]
     pub member_auth_devices: Vec<LtCoreMemberAuthDeviceEvent>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCoreEventItem<Id> {
-    #[cfg_attr(feature = "serde", serde(rename = "ID"))]
+    #[serde(rename = "ID")]
     pub id: Id,
 
-    #[cfg_attr(feature = "serde", serde(rename = "Action"))]
     pub action: LtCoreEventAction,
 }
 
 #[repr(u8)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[derive(PartialEq, Eq, Hash)]
 #[derive(IntoPrimitive, TryFromPrimitive)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(into = "u8", try_from = "u8"))]
+#[serde(into = "u8", try_from = "u8")]
 pub enum LtCoreEventAction {
     Delete = 0,
     Create = 1,

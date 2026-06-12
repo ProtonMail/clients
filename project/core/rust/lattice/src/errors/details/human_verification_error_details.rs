@@ -1,8 +1,8 @@
 use derive_more::Display;
+use serde::{Deserialize, Serialize};
 
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Display)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Display, Deserialize, Serialize)]
+#[serde(rename_all = "PascalCase")]
 #[display(
     "HumanVerificationToken: {human_verification_token}, HumanVerificationMethods: {human_verification_methods:?}, Direct: {direct}, Description: {description}, Title: {title}, WebUrl: {web_url}, ExpiresAt: {expires_at}"
 )]
@@ -16,7 +16,7 @@ pub struct HumanVerificationErrorDetails {
     /// payload to fail deserialization and fall through to `LtApiResponseError::Other` when
     /// the backend returned any method other than `captcha`.
     human_verification_methods: Vec<String>,
-    #[cfg_attr(feature = "serde", serde(with = "crate::helpers::bool_int"))]
+    #[serde(with = "crate::helpers::bool_int")]
     direct: bool,
     description: String,
     title: String,
@@ -24,9 +24,8 @@ pub struct HumanVerificationErrorDetails {
     expires_at: u64,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "lowercase"))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Display)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Display, Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
 #[repr(C)]
 #[allow(dead_code)] // wire/API value (e.g. from serde); not constructed in this crate
 pub enum HumanVerificationMethod {

@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 use passkey::types::webauthn::{AuthenticatorTransport, CredentialCreationOptions};
@@ -5,9 +6,8 @@ use passkey::types::webauthn::{AuthenticatorTransport, CredentialCreationOptions
 use super::LtCoreUserSettings;
 use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method, Sensitive};
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCorePostSettings2faRegisterReq {
     pub name: String,
 
@@ -18,9 +18,8 @@ pub struct LtCorePostSettings2faRegisterReq {
     pub registration_options: CredentialCreationOptions,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCorePostSettings2faRegisterRes {
     pub user_settings: LtCoreUserSettings,
 }

@@ -4,11 +4,11 @@ This guide outlines the rules for adding or changing **SlimAPI HTTP contracts** 
 
 ## Transport (Muon) integration
 
-The core **`lattice`** crate defines contracts and, with the **`serde`** feature, the transport-neutral wire layer (`lattice::transport`). It has **no** `muon` / `mail-muon` dependencies. HTTP is wired through two adapter crates:
+The core **`lattice`** crate defines contracts and the transport-neutral wire layer (`lattice::transport`). It has **no** `muon` / `mail-muon` dependencies. HTTP is wired through two adapter crates:
 
 | Layer | Role |
 |-------|------|
-| **`lattice::transport`** (feature `serde`) | Wire types (`LtWireRequest`, `LtWireResponse`) and [`LtTransportProvider`](../src/transport/provider.rs) (contract → wire → send → parse). See `cargo doc -p lattice --features serde --open`. |
+| **`lattice::transport`** | Wire types (`LtWireRequest`, `LtWireResponse`) and [`LtTransportProvider`](../src/transport/provider.rs) (contract → wire → send → parse). See `cargo doc -p lattice --open`. |
 | **`lattice-muon1`** | Mail-muon v1 adapter: [`Muon1Transport`](../../lattice-muon1/src/transport.rs), [`Muon1WireRequestProvider`](../../lattice-muon1/src/wire.rs), [`LatticeExt`](../../lattice-muon1/src/ext.rs), [`RunLatticeContractExt`](../../lattice-muon1/src/ext.rs). |
 | **`lattice-muon2`** | Muon v2 adapter: [`Muon2Transport`](../../lattice-muon2/src/transport.rs), [`Muon2WireRequestProvider`](../../lattice-muon2/src/wire.rs), [`LatticeExt`](../../lattice-muon2/src/ext.rs). |
 
@@ -42,16 +42,14 @@ pub struct LtCorePostDomainReq {
 }
 
 // 2. Request Body DTO (Only the JSON payload)
-#[derive(Debug)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[derive(Debug, Serialize)]
 pub struct LtCorePostDomainBody {
-    #[cfg_attr(feature = "serde", serde(rename = "DomainName"))]
+    #[serde(rename = "DomainName")]
     pub name: String,
 }
 
 // 3. Response DTO (Associated strictly with this request)
-#[derive(Debug)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize))]
+#[derive(Debug, Deserialize)]
 pub struct LtCorePostDomainRes {
     pub success: bool,
 }
@@ -178,12 +176,12 @@ Every contract must explicitly declare its authentication requirements.
 
 ## 5. Serde (JSON) & Secrets
 
-We gate Serde derives behind `#[cfg_attr(feature = "serde", ...)]` to allow the crate to compile faster for consumers who don't need serialization.
+Serde is always available in lattice — `use serde::{Deserialize, Serialize}` and `#[derive(Serialize, Deserialize)]` (or one-sided derives) on DTOs.
 
 **Rules:**
 * **PascalCase:** Use `serde(rename_all = "PascalCase")` on DTOs if the API uses PascalCase. Provide per-field overrides for weird acronyms (e.g., `serde(rename = "AllowedForSSO")`).
 * **Optionals:** Use `serde(skip_serializing_if = "Option::is_none")` to omit absent keys instead of sending `null`.
-* **Unknown Fields:** Use `serde(deny_unknown_fields)` on all types but ensure if it gated behind `test` and `serde` so it only runs in tests.
+* **Unknown Fields:** Use `serde(deny_unknown_fields)` on all types but ensure if it gated behind `test` so it only runs in tests.
 * **Wrapper types:** Use wrapper types around `Strings`, `numbers`... When possible to make code more expressive on IDs.
 * **Enum types:** Prefer using enums then numbers when possible.
 * **Boolean types:** Often in the API `i32` are used in place of headers. Use the `bool_int` serde helper for this.
@@ -192,7 +190,7 @@ We gate Serde derives behind `#[cfg_attr(feature = "serde", ...)]` to allow the 
 * **Secrets:** Use `Sensitive<T>` for tokens, keys, and passwords.
 
 **Section Checklist:**
-- [ ] `cfg_attr` is used for all Serde derives.
+- [ ] Serde derives are applied to all wire DTOs.
 - [ ] Secrets use the `Sensitive<T>` wrapper.
 - [ ] `deny_unknown_fields` is strictly avoided on production code.
 

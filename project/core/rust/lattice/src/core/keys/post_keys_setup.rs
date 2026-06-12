@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::collections::HashMap;
 
@@ -7,9 +8,8 @@ use crate::{
 };
 
 /// Request body for setting up keys
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCoreSetupKeysBody {
     /// Authentication details for the setup.
     pub auth: crate::core::user::LtCoreSrpVerifier,
@@ -18,24 +18,15 @@ pub struct LtCoreSetupKeysBody {
     /// A randomly generated client-side key salt.
     pub key_salt: Sensitive<String>,
     /// The primary key encrypted to the token in `OrgActivationToken` (for magic link setup).
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub org_primary_user_key: Option<Sensitive<String>>,
     /// A 32-byte random token encoded as hex, encrypted to the organization key and signed.
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub org_activation_token: Option<Sensitive<String>>,
     /// List of address keys for the account.
     pub address_keys: Vec<LtCoreAddressKeyInput>,
     /// Base64-encoded AES-GCM encrypted secret using the `DeviceSecret` as key.
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub encrypted_secret: Option<Sensitive<String>>,
 }
 
@@ -44,9 +35,8 @@ pub struct LtCorePostKeysSetupReq {
     pub body: LtCoreSetupKeysBody,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCorePostKeysSetupRes {
     pub user: LtCoreUser,
 }

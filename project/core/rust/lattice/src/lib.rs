@@ -27,10 +27,8 @@ pub use method::*;
 pub mod contract;
 pub use contract::*;
 
-#[cfg(feature = "serde")]
 pub mod transport;
 
-#[cfg(feature = "serde")]
 pub use transport::{
     LtTransportProvider, LtWireMethod, LtWireRequest, LtWireRequestProvider, LtWireResponse,
 };

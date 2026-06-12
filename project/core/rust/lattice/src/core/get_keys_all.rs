@@ -1,11 +1,11 @@
+use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, collections::HashMap, iter::once};
 
 use proton_crypto_account::keys::APIPublicAddressKeys;
 
 use crate::{AuthReq, LatticeError, LtContract, LtRequestQueryParams, LtSlimAPIJSON, Sensitive};
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LtCoreGetKeysAllReq {
     pub email: String,
 }

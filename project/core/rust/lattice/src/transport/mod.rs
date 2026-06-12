@@ -25,11 +25,6 @@
 //! - [`LtWireRequestProvider`] — maps wire ↔ native request/response types.
 //! - [`LtTransportProvider`] — sends native requests and parses SlimAPI / Quark responses.
 //!
-//! # Features
-//!
-//! - **`serde`** (crate feature) — required for SlimAPI JSON error parsing in
-//!   [`LtWireResponse::into_contract_response`].
-//!
 //! Quark commands are provided by the separate `lattice-quark` crate.
 //!
 //! # Muon adapters

@@ -3,6 +3,7 @@
 //! Source: `Proton\Apps\Account\Controller\Auth\ResetAuthDevicesAction`. Scope: `ORGANIZATION` only.
 //! The body matches `ResetAuthDevicesInput` (`AuthDeviceID`, `EncryptedSecret`, `UserKeys` with `ID` + `PrivateKey` per key).
 
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 use crate::auth::LtAuthUserKeyId;
@@ -17,12 +18,11 @@ pub struct LtCorePostMembersDevicesResetReq {
 }
 
 /// `ResetAuthDevicesInput` — all active user keys must be present per server validation.
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCorePostMembersDevicesResetBody {
     /// Device row to activate for the **target** user; other devices for that user are removed.
-    #[cfg_attr(feature = "serde", serde(rename = "AuthDeviceID"))]
+    #[serde(rename = "AuthDeviceID")]
     pub auth_device_id: LtCoreAuthDeviceId,
     /// Base64 AES-GCM ciphertext (key agreement is a client concern beyond this DTO).
     pub encrypted_secret: Sensitive<String>,
@@ -31,11 +31,10 @@ pub struct LtCorePostMembersDevicesResetBody {
 
 /// One user key in `UserKeys` (`ResetAuthDevicesUserKeyDto`); only used on this route.
 /// `ID` is the encrypted user key id, same as [`LtAuthUserKeyId`] (e.g. `PUT /core/v4/keys/{userKeyID}/user`).
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCoreResetAuthDevicesUserKey {
-    #[cfg_attr(feature = "serde", serde(rename = "ID"))]
+    #[serde(rename = "ID")]
     pub id: LtAuthUserKeyId,
     /// Armored PGP private key material (encrypted for the new device as per product flow).
     pub private_key: Sensitive<String>,

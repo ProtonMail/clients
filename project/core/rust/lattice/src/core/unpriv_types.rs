@@ -10,6 +10,7 @@
 
 use derive_more::{Deref, From};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
+use serde::{Deserialize, Serialize};
 
 use crate::Sensitive;
 
@@ -17,9 +18,8 @@ use crate::Sensitive;
 /// (`0` = Declined, `1` = Pending, `2` = Ready).
 #[repr(i32)]
 #[derive(IntoPrimitive, TryFromPrimitive)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(into = "i32", try_from = "i32"))]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(into = "i32", try_from = "i32")]
 pub enum LtCoreUnprivState {
     Declined = 0,
     Pending = 1,
@@ -27,39 +27,33 @@ pub enum LtCoreUnprivState {
 }
 
 /// JSON string: must match signed bytes in admin `POST .../unprivatize` and member views.
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(transparent))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Deref, From)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Deref, From, Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct LtCoreUnprivInvitationData(pub String);
 
 /// Detached PGP armored signature over `InvitationData` with context
 /// `account.unprivatization-invitation-data` (org public key).
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(transparent))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Deref, From)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Deref, From, Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct LtCoreUnprivInvitationSignature(pub Sensitive<String>);
 
 /// Armored PGP public key.
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(transparent))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Deref, From)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Deref, From, Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct LtCoreUnprivPgpPublicKey(pub String);
 
 /// Armored PGP signature over the org public key’s SHA-256 hex fingerprint; context
 /// `account.organization-fingerprint` (signatures use [`Sensitive`] like [`LtCoreUnprivInvitationSignature`]).
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(transparent))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Deref, From)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Deref, From, Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct LtCoreUnprivOrgKeyFingerprintSignature(pub Sensitive<String>);
 
 /// First armored private-key block on the list embed (duplicate of `PrivateKeys[0]` when both set).
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(transparent))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Deref, From)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Deref, From, Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct LtCoreUnprivArmoredPrivateKey(pub Sensitive<String>);
 
 /// Armored PGP “activation” payload on the list embed, when set.
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(transparent))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Deref, From)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Deref, From, Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct LtCoreUnprivActivationToken(pub Sensitive<String>);

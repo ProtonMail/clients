@@ -4,6 +4,7 @@
 //! envelope. [`LtAuthGetSsoRes`] therefore implements [`crate::LtResponseBody`] directly (HTML
 //! parsing) instead of using [`crate::LtSlimAPIJSON`].
 
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::collections::HashMap;
 
@@ -12,22 +13,20 @@ use crate::{
     UnauthReq,
 };
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct LtAuthGetSsoReq {
     /// Token received as SSOChallengeToken from POST /auth/info
     pub token: String,
 
     /// Optional final redirect base URL
     /// This URL is used by the IdP to redirect back after authentication
-    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub final_redirect_base_url: Option<String>,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 /// Parsed IdP redirect URL extracted from the HTML meta refresh (not JSON).
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LtAuthGetSsoRes {
     pub url: String,
 }

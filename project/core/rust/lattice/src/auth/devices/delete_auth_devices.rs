@@ -1,19 +1,18 @@
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 use crate::{
     AuthReq, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method, core::LtCoreAuthDeviceId,
 };
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(C)]
 pub enum LtAuthDeleteDevicesReq {
     All,
     DeviceID(LtCoreAuthDeviceId),
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LtAuthDeleteDevicesRes {}
 
 impl LtContract for LtAuthDeleteDevicesReq {

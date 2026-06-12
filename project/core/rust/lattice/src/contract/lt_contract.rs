@@ -15,11 +15,12 @@ use crate::{LatticeError, LtRequestBody, LtRequestQueryParams, LtResponseBody, M
 /// ### Without path parameters
 /// ```rust
 /// use lattice::{LtContract, LatticeError, Method, LtSlimAPIJSON, LtNoQueryParams};
+/// use serde::Deserialize;
 /// use std::borrow::Cow;
 ///
 /// struct GetRequest;
 ///
-/// #[derive(serde::Deserialize)]
+/// #[derive(Deserialize)]
 /// struct GetRequestRes {
 ///     some_json_field: String,
 /// }
@@ -40,13 +41,14 @@ use crate::{LatticeError, LtRequestBody, LtRequestQueryParams, LtResponseBody, M
 /// ### With path parameters
 /// ```rust
 /// use lattice::{LtContract, LatticeError, Method, LtSlimAPIJSON, LtNoQueryParams};
+/// use serde::Deserialize;
 /// use std::borrow::Cow;
 ///
 /// struct GetRequest {
 ///     some_path_param: String,
 /// }
 ///
-/// #[derive(serde::Deserialize)]
+/// #[derive(Deserialize)]
 /// struct GetRequestRes {
 ///     some_json_field: String,
 /// }
@@ -67,9 +69,10 @@ use crate::{LatticeError, LtRequestBody, LtRequestQueryParams, LtResponseBody, M
 /// ## DELETE
 /// ```rust
 /// use lattice::{LtContract, LatticeError, Method, LtSlimAPIJSON, LtNoQueryParams};
+/// use serde::Deserialize;
 /// use std::borrow::Cow;
 ///
-/// #[derive(serde::Deserialize)]
+/// #[derive(Deserialize)]
 /// struct PutRequestRes {
 ///     some_json_field: String,
 /// }
@@ -99,14 +102,15 @@ use crate::{LatticeError, LtRequestBody, LtRequestQueryParams, LtResponseBody, M
 /// ### Without url parameters
 /// ```rust
 /// use lattice::{LtContract, LatticeError, Method, LtSlimAPIJSON, LtNoQueryParams};
+/// use serde::{Deserialize, Serialize};
 /// use std::borrow::Cow;
 ///
-/// #[derive(serde::Deserialize)]
+/// #[derive(Deserialize)]
 /// struct PostRequestRes {
 ///     some_json_field: String,
 /// }
 ///
-/// #[derive(serde::Serialize)]
+/// #[derive(Serialize)]
 /// struct PostRequest {
 ///     some_json_field: String,
 /// }
@@ -131,9 +135,10 @@ use crate::{LatticeError, LtRequestBody, LtRequestQueryParams, LtResponseBody, M
 /// ### With url parameters
 /// ```rust
 /// use lattice::{LtContract, LatticeError, Method, LtSlimAPIJSON, LtNoQueryParams};
+/// use serde::{Deserialize, Serialize};
 /// use std::borrow::Cow;
 ///
-/// #[derive(serde::Deserialize)]
+/// #[derive(Deserialize)]
 /// struct PostRequestRes {
 ///     some_json_field: String,
 /// }
@@ -143,7 +148,7 @@ use crate::{LatticeError, LtRequestBody, LtRequestQueryParams, LtResponseBody, M
 ///     body: PostRequestBody,
 /// }
 ///
-/// #[derive(serde::Serialize)]
+/// #[derive(Serialize)]
 /// struct PostRequestBody {
 ///     some_json_field: String,
 /// }

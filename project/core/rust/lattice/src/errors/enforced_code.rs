@@ -1,3 +1,4 @@
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct EnforcedCode<const CODE: u32>;
 
@@ -13,11 +14,10 @@ impl<const CODE: u32> std::fmt::Display for EnforcedCode<CODE> {
     }
 }
 
-#[cfg(feature = "serde")]
-impl<'de, const CODE: u32> serde::Deserialize<'de> for EnforcedCode<CODE> {
+impl<'de, const CODE: u32> Deserialize<'de> for EnforcedCode<CODE> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: serde::Deserializer<'de>,
+        D: Deserializer<'de>,
     {
         let code = u32::deserialize(deserializer)?;
         if code == CODE {
@@ -28,11 +28,10 @@ impl<'de, const CODE: u32> serde::Deserialize<'de> for EnforcedCode<CODE> {
     }
 }
 
-#[cfg(feature = "serde")]
-impl<const CODE: u32> serde::Serialize for EnforcedCode<CODE> {
+impl<const CODE: u32> Serialize for EnforcedCode<CODE> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer,
+        S: Serializer,
     {
         serializer.serialize_u32(CODE)
     }

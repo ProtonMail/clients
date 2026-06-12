@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::num::NonZeroU32;
 
@@ -10,12 +11,8 @@ use super::post_domains::LtCoreDomainOutput;
 pub struct LtCoreGetDomainsReq;
 
 /// Response from the get domains endpoint
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    serde(rename_all = "PascalCase", deny_unknown_fields)
-)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase", deny_unknown_fields)]
 pub struct LtCoreGetDomainsRes {
     /// Array of domain objects
     pub domains: Vec<LtCoreDomainOutput>,

@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 use crate::{
@@ -5,11 +6,10 @@ use crate::{
     core::LtCoreAuthDeviceId,
 };
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtAuthPostDevicesDeviceIDReq {
-    #[cfg_attr(feature = "serde", serde(skip))]
+    #[serde(skip)]
     pub device_id: LtCoreAuthDeviceId,
     pub encrypted_secret: Sensitive<String>,
 }

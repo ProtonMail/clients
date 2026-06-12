@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::collections::HashMap;
 
@@ -6,9 +7,8 @@ use crate::{
     auth::LtAuthUserKeyId, core::LtCoreSignedKeyList,
 };
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCorePutKeysUserBody {
     pub private_key: Sensitive<String>,
 
@@ -17,8 +17,7 @@ pub struct LtCorePutKeysUserBody {
     pub signed_key_lists: HashMap<String, LtCoreSignedKeyList>,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct LtCorePutKeysUserReq {
     pub user_key_id: LtAuthUserKeyId,
     pub body: LtCorePutKeysUserBody,

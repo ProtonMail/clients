@@ -1,9 +1,9 @@
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 use crate::{LtContract, LtNoQueryParams, LtSlimAPIJSON, UnauthReq, auth::LtAuthApiSession};
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LtAuthGetSessionsForksByIdReq {
     pub selector: String,
 }
@@ -23,14 +23,13 @@ impl LtContract for LtAuthGetSessionsForksByIdReq {
     }
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtAuthGetSessionsForksByIdRes {
     /// Base64-encoded encrypted payload (if any)
-    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub payload: Option<String>,
     /// Authentication tokens
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[serde(flatten)]
     pub session: LtAuthApiSession,
 }

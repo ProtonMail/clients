@@ -1,6 +1,5 @@
-use std::borrow::Cow;
-
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 
 use crate::{
     LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method, Sensitive, UnauthReq,
@@ -11,16 +10,14 @@ pub const DATA_V1_METRICS_PATH: &str = "/data/v1/metrics";
 /// Value for the `Priority` header (background, low priority).
 pub const METRICS_PRIORITY_HEADER_VALUE: &str = "u=6";
 
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtDataPostMetricsReq {
     pub metrics: Vec<LtDataPostMetricsElement>,
 }
 
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtDataPostMetricsElement {
     pub name: String,
     pub version: u64,

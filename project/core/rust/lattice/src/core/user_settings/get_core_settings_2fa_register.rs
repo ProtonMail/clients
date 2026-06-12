@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 use crate::{
@@ -5,17 +6,15 @@ use crate::{
 };
 use passkey::types::webauthn::{AttestationStatementFormatIdentifiers, CredentialCreationOptions};
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCoreGetSettings2faRegisterRes {
     pub registration_options: CredentialCreationOptions,
     pub attestation_formats: Vec<AttestationStatementFormatIdentifiers>,
     pub registered_keys: Vec<LtAuthFidoKey>,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LtCoreGetSettings2faRegisterReq;
 
 impl LtContract for LtCoreGetSettings2faRegisterReq {

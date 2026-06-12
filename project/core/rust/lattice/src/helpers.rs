@@ -2,7 +2,6 @@
 ///
 /// The `deserialize` function converts `true` to `1` and `false` to `0`,
 /// yielding an error if the value is not `1` or `0`.
-#[cfg(feature = "serde")]
 pub mod bool_int {
     use serde::{Deserialize, Deserializer, Serializer};
 
@@ -33,7 +32,6 @@ pub mod bool_int {
 /// Serializes and deserializes `Option<bool>` as an `i32`.
 ///
 /// Deserializes `1` → `Some(true)`, `0` → `Some(false)`, absent → `None`.
-#[cfg(feature = "serde")]
 #[cfg(feature = "auth")]
 pub mod bool_opt_int {
     use serde::{Deserialize, Deserializer, Serializer};

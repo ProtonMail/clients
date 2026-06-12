@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 pub mod get_users;
 pub mod get_users_available;
 pub mod get_users_available_external;
@@ -13,9 +14,8 @@ use crate::{Sensitive, core::keys::LtCoreSensitiveUserKeys};
 /// The type of account to create.
 #[repr(u8)]
 #[derive(IntoPrimitive, TryFromPrimitive)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(into = "u8", try_from = "u8"))]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(into = "u8", try_from = "u8")]
 pub enum LtCoreCreateUserType {
     Normal = 1,
 
@@ -24,15 +24,14 @@ pub enum LtCoreCreateUserType {
 }
 
 /// Represents the SRP verifier data for authentication.
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCoreSrpVerifier {
     /// The version of the authentication.
     pub version: u8,
 
     /// The modulus ID for authentication.
-    #[cfg_attr(feature = "serde", serde(rename = "ModulusID"))]
+    #[serde(rename = "ModulusID")]
     pub modulus_id: String,
 
     /// The salt used in authentication.
@@ -45,9 +44,18 @@ pub struct LtCoreSrpVerifier {
 /// Indicates whether the username should be parsed as a full email address.
 #[repr(u8)]
 #[derive(IntoPrimitive, TryFromPrimitive)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
-#[cfg_attr(feature = "serde", serde(into = "u8", try_from = "u8"))]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    Default,
+    Serialize,
+    Deserialize
+)]
+#[serde(into = "u8", try_from = "u8")]
 pub enum LtCoreParseDomain {
     /// The username is not a full email address (default).
     #[default]
@@ -57,11 +65,10 @@ pub enum LtCoreParseDomain {
 }
 
 /// Definition: bundles/AccountInternalBundle/src/Application/User/GetUserInfoQueryHandler.php
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCoreUser {
-    #[cfg_attr(feature = "serde", serde(rename = "ID"))]
+    #[serde(rename = "ID")]
     pub id: String,
     pub name: Option<String>,
     pub display_name: Option<String>,
@@ -69,7 +76,7 @@ pub struct LtCoreUser {
     pub currency: String,
     pub credit: i32,
     /// 1: Proton (full), 2: Managed, 3: External, 4: Credentialless
-    #[cfg_attr(feature = "serde", serde(rename = "Type"))]
+    #[serde(rename = "Type")]
     pub user_type: LtCoreUserType,
     pub create_time: i64,
     /// Max space (in bytes)
@@ -84,7 +91,7 @@ pub struct LtCoreUser {
     pub used_drive_space: Option<i64>,
     pub product_used_space: LtCoreProductUsedSpace,
     /// 1 when the user's member has an AI seat, 0 otherwise
-    #[cfg_attr(feature = "serde", serde(rename = "NumAI"))]
+    #[serde(rename = "NumAI")]
     pub num_ai: i32,
     /// The number of lumo seats attributed to the user, 0 otherwise
     pub num_lumo: i32,
@@ -94,13 +101,13 @@ pub struct LtCoreUser {
     pub services: LtCoreProductGroup,
     pub mnemonic_status: LtCoreMnemonicStatus,
     pub role: LtCoreMemberRole,
-    #[cfg_attr(feature = "serde", serde(with = "crate::helpers::bool_int"))]
+    #[serde(with = "crate::helpers::bool_int")]
     pub private: bool,
     pub delinquent: LtCoreDelinquentState,
-    #[cfg_attr(feature = "serde", serde(with = "crate::helpers::bool_int"))]
+    #[serde(with = "crate::helpers::bool_int")]
     pub billed: bool,
     pub keys: LtCoreSensitiveUserKeys,
-    #[cfg_attr(feature = "serde", serde(with = "crate::helpers::bool_int"))]
+    #[serde(with = "crate::helpers::bool_int")]
     pub to_migrate: bool,
     pub organization_private_key: Option<Sensitive<String>>,
     pub account_recovery: Option<LtCoreAccountRecoveryAttempt>,
@@ -109,9 +116,8 @@ pub struct LtCoreUser {
 }
 
 /// Definition: bundles/AccountLegacyBundle/src/Model/UserUsage.php
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCoreProductUsedSpace {
     pub calendar: i64,
     pub contact: i64,
@@ -122,9 +128,8 @@ pub struct LtCoreProductUsedSpace {
 }
 
 /// Definition: apps/Account/app/Dto/AccountRecoveryAttempt.php
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCoreAccountRecoveryAttempt {
     /// 0 => None, 1 => Grace, 2 => Cancelled, 3 => Insecure, 4 => Expired
     pub state: LtCoreAccountRecoveryAttemptState,
@@ -133,16 +138,15 @@ pub struct LtCoreAccountRecoveryAttempt {
     /// 0 => None, 1 => Cancelled, 2 => Authentication
     pub reason: Option<LtCoreAccountRecoveryAttemptCancellationReason>,
     /// The session ID that triggered the process
-    #[cfg_attr(feature = "serde", serde(rename = "UID"))]
+    #[serde(rename = "UID")]
     pub uid: String,
 }
 
 /// Definition: apps/Account/app/Enum/AccountRecoveryAttemptState.php
 #[repr(i32)]
 #[derive(IntoPrimitive, TryFromPrimitive)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(into = "i32", try_from = "i32"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(into = "i32", try_from = "i32")]
 pub enum LtCoreAccountRecoveryAttemptState {
     Grace = 1,
     Cancelled = 2,
@@ -153,19 +157,17 @@ pub enum LtCoreAccountRecoveryAttemptState {
 /// Definition: apps/Account/app/Enum/AccountRecoveryAttemptCancellationReason.php
 #[repr(u8)]
 #[derive(IntoPrimitive, TryFromPrimitive)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 // Note: using u8 here to match the repr and the TryFrom implementation
-#[cfg_attr(feature = "serde", serde(into = "u8", try_from = "u8"))]
+#[serde(into = "u8", try_from = "u8")]
 pub enum LtCoreAccountRecoveryAttemptCancellationReason {
     AbortedUi = 1,
     CancelledAuth = 2,
 }
 
 /// Definition: bundles/AccountBundle/src/User/UserFlags.php
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 pub struct LtCoreUserFlags {
     pub protected: bool,
     pub drive_early_access: bool,
@@ -188,9 +190,8 @@ pub struct LtCoreUserFlags {
 
 /// Definition: bundles/CoreBundle/src/Enum/ProductGroup.php
 #[derive(From, Into)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCoreProductGroup(i32);
 
 bitflags::bitflags! {
@@ -210,9 +211,8 @@ bitflags::bitflags! {
 
 /// Definition: apps/Account/app/Enum/UserLockedFlag.php
 #[derive(From, Into)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCoreUserLockedFlag(i32);
 
 bitflags::bitflags! {
@@ -228,9 +228,8 @@ bitflags::bitflags! {
 /// Definition: bundles/AccountBundle/src/Enum/MnemonicStatus.php
 #[repr(i32)]
 #[derive(IntoPrimitive, TryFromPrimitive)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
-#[cfg_attr(feature = "serde", serde(into = "i32", try_from = "i32"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Copy, Serialize, Deserialize)]
+#[serde(into = "i32", try_from = "i32")]
 pub enum LtCoreMnemonicStatus {
     /// Mnemonic has been opted-out in the settings
     Disabled = 0,
@@ -251,9 +250,8 @@ pub enum LtCoreMnemonicStatus {
 /// Definition: bundles/AccountBundle/src/User/UserType.php
 #[repr(i32)]
 #[derive(IntoPrimitive, TryFromPrimitive)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
-#[cfg_attr(feature = "serde", serde(into = "i32", try_from = "i32"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Copy, Serialize, Deserialize)]
+#[serde(into = "i32", try_from = "i32")]
 pub enum LtCoreUserType {
     /// Internal users
     Proton = 1,
@@ -267,9 +265,8 @@ pub enum LtCoreUserType {
 /// Definition: bundles/AccountBundle/src/Organization/MemberRole.php
 #[repr(i32)]
 #[derive(IntoPrimitive, TryFromPrimitive)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
-#[cfg_attr(feature = "serde", serde(into = "i32", try_from = "i32"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Copy, Serialize, Deserialize)]
+#[serde(into = "i32", try_from = "i32")]
 pub enum LtCoreMemberRole {
     None = 0,
     Member = 1,
@@ -279,9 +276,8 @@ pub enum LtCoreMemberRole {
 /// Definition: bundles/NewPaymentsBundle/src/ValueObject/DelinquentState.php
 #[repr(i32)]
 #[derive(IntoPrimitive, TryFromPrimitive)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
-#[cfg_attr(feature = "serde", serde(into = "i32", try_from = "i32"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Copy, Serialize, Deserialize)]
+#[serde(into = "i32", try_from = "i32")]
 pub enum LtCoreDelinquentState {
     Paid = 0,
     Available = 1,

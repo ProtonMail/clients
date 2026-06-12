@@ -11,25 +11,20 @@
 //! Use [`AuthReq`] and [`UnauthReq`] marker traits to indicate whether a contract
 //! requires authentication. This helps with type-safe session handling.
 
+use serde::{Deserialize, Serialize};
 mod lt_contract;
 mod lt_query_params;
-#[cfg(feature = "serde")]
 mod pagination;
-#[cfg(feature = "serde")]
 mod presence;
-#[cfg(feature = "serde")]
 mod serde_query;
 
 pub use lt_contract::LtContract;
 pub use lt_query_params::{LtNoQueryParams, LtRequestQueryParams};
-#[cfg(feature = "serde")]
 pub use pagination::{
     LtPaginable, LtPagination, LtPaginationTransportExt, LtQueryWithPagination, LtSlimApiPageQuery,
     LtSlimApiPageSizeError, fetch_all_pages_with,
 };
-#[cfg(feature = "serde")]
 pub use presence::LtSlimApiPresenceQuery;
-#[cfg(feature = "serde")]
 pub use serde_query::LtSerdeQueryParams;
 
 use crate::LatticeError;
@@ -86,8 +81,7 @@ impl LtRequestBody for LtEmptyBody {
 /// For general purpose JSON contracts, use [`LtJson`].
 pub struct LtSlimAPIJSON<T>(pub T);
 
-#[cfg(feature = "serde")]
-impl<T: serde::Serialize> LtRequestBody for LtSlimAPIJSON<T> {
+impl<T: Serialize> LtRequestBody for LtSlimAPIJSON<T> {
     fn to_body(&self) -> Result<Vec<u8>, LatticeError> {
         serde_json::to_vec(&self.0).map_err(|e| {
             LatticeError::SerdeJSON(
@@ -101,8 +95,7 @@ impl<T: serde::Serialize> LtRequestBody for LtSlimAPIJSON<T> {
     }
 }
 
-#[cfg(feature = "serde")]
-impl<T: for<'de> serde::Deserialize<'de>> LtResponseBody for LtSlimAPIJSON<T> {
+impl<T: for<'de> Deserialize<'de>> LtResponseBody for LtSlimAPIJSON<T> {
     fn from_body(body: &[u8]) -> Result<Self, LatticeError> {
         let response: crate::LtApiResponse<T> = serde_json::from_slice(body)
             .map_err(|e| LatticeError::SerdeJSON(e, String::from_utf8(body.to_vec()).ok()))?;
@@ -119,8 +112,7 @@ impl<T: for<'de> serde::Deserialize<'de>> LtResponseBody for LtSlimAPIJSON<T> {
 /// For slimAPI contracts, use [`LtSlimAPIJSON`].
 pub struct LtJson<T>(pub T);
 
-#[cfg(feature = "serde")]
-impl<T: serde::Serialize> LtRequestBody for LtJson<T> {
+impl<T: Serialize> LtRequestBody for LtJson<T> {
     fn to_body(&self) -> Result<Vec<u8>, LatticeError> {
         serde_json::to_vec(&self.0).map_err(|e| {
             LatticeError::SerdeJSON(
@@ -134,8 +126,7 @@ impl<T: serde::Serialize> LtRequestBody for LtJson<T> {
     }
 }
 
-#[cfg(feature = "serde")]
-impl<T: for<'de> serde::Deserialize<'de>> LtResponseBody for LtJson<T> {
+impl<T: for<'de> Deserialize<'de>> LtResponseBody for LtJson<T> {
     fn from_body(body: &[u8]) -> Result<Self, LatticeError> {
         Ok(LtJson(serde_json::from_slice(body).map_err(|e| {
             LatticeError::SerdeJSON(e, String::from_utf8(body.to_vec()).ok())

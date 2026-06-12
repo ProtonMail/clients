@@ -3,27 +3,26 @@
 //! Values are always interpreted as Unix seconds. Symfony may emit JSON strings instead of numbers.
 
 use derive_more::{Deref, From, Into};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Deref, From, Into
 )]
 pub struct LtUnixTimestamp(pub i64);
 
-#[cfg(feature = "serde")]
-impl serde::Serialize for LtUnixTimestamp {
+impl Serialize for LtUnixTimestamp {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer,
+        S: Serializer,
     {
         self.0.serialize(serializer)
     }
 }
 
-#[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for LtUnixTimestamp {
+impl<'de> Deserialize<'de> for LtUnixTimestamp {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: serde::Deserializer<'de>,
+        D: Deserializer<'de>,
     {
         use serde::de::{self, Unexpected, Visitor};
 
@@ -81,7 +80,7 @@ impl<'de> serde::Deserialize<'de> for LtUnixTimestamp {
     }
 }
 
-#[cfg(all(test, feature = "serde"))]
+#[cfg(test)]
 mod tests {
     use super::*;
     use crate::{

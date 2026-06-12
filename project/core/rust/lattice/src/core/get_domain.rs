@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, collections::HashMap};
 
 use crate::{AuthReq, LatticeError, LtContract, LtRequestQueryParams, LtSlimAPIJSON, Sensitive};
@@ -5,12 +6,11 @@ use crate::{AuthReq, LatticeError, LtContract, LtRequestQueryParams, LtSlimAPIJS
 use super::{LtCoreDomainId, post_domains::LtCoreDomainOutput};
 
 /// Request to get a specific domain and its DNS check
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct LtCoreGetDomainReq {
     /// The domain ID (enc_id in path)
-    #[cfg_attr(feature = "serde", serde(skip))]
+    #[serde(skip)]
     pub domain_id: LtCoreDomainId,
 
     /// When `Some`, requests a DNS verification refresh (`true` → query parameter `Refresh=1`, `false` → `Refresh=0`).
@@ -19,12 +19,8 @@ pub struct LtCoreGetDomainReq {
 }
 
 /// Response from the get domain endpoint
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    serde(rename_all = "PascalCase", deny_unknown_fields)
-)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase", deny_unknown_fields)]
 pub struct LtCoreGetDomainRes {
     /// The domain details
     pub domain: LtCoreDomainOutput,

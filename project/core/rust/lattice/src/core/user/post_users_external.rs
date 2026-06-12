@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 use crate::{
@@ -5,12 +6,11 @@ use crate::{
     core::user::{LtCoreCreateUserType, LtCoreSrpVerifier, LtCoreUser},
 };
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCorePostUsersExternalReq {
     /// The type of user being created (e.g., internal or external).
-    #[cfg_attr(feature = "serde", serde(rename = "Type"))]
+    #[serde(rename = "Type")]
     pub user_type: LtCoreCreateUserType,
 
     /// The email address associated with the external user.
@@ -23,9 +23,8 @@ pub struct LtCorePostUsersExternalReq {
     pub referrer: Option<String>,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCorePostUsersExternalRes {
     /// The details of the newly created user.
     pub user: LtCoreUser,

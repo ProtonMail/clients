@@ -1,9 +1,9 @@
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 use crate::{LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, UnauthReq};
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LtCoreGetTestsPingReq;
 
 impl LtContract for LtCoreGetTestsPingReq {

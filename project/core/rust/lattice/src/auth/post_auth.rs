@@ -1,3 +1,4 @@
+use serde::{Deserialize, Deserializer, Serialize};
 use std::borrow::Cow;
 
 use crate::{
@@ -8,48 +9,39 @@ use crate::{
     },
 };
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtAuthPostReq {
     pub username: String,
 
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[serde(flatten)]
     pub srp_proof: LtAuthSrpProof,
 
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[serde(flatten)]
     pub tfa_proof: Option<LtAuthTwoFactorProof>,
 
     /// The client's fingerprint, for anti-abuse.
-    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
-    #[cfg(feature = "serde")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub payload: Option<serde_json::Value>,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtAuthPostRes {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[serde(flatten)]
     pub session: LtAuthApiSession,
     pub server_proof: Sensitive<String>,
     pub password_mode: LtAuthPasswordMode,
-    #[cfg_attr(
-        feature = "serde",
-        serde(rename = "2FA", default, deserialize_with = "deserialize_filtered_tfa")
-    )]
+    #[serde(rename = "2FA", default, deserialize_with = "deserialize_filtered_tfa")]
     pub tfa: Option<LtAuthTwoFactorOptions>,
 }
 
-#[cfg(feature = "serde")]
 fn deserialize_filtered_tfa<'de, D>(
     deserializer: D,
 ) -> Result<Option<LtAuthTwoFactorOptions>, D::Error>
 where
-    D: serde::Deserializer<'de>,
+    D: Deserializer<'de>,
 {
-    use serde::Deserialize;
-
     // Execute standard deserialization first
     let opt = Option::<LtAuthTwoFactorOptions>::deserialize(deserializer)?;
 
@@ -73,19 +65,17 @@ impl LtContract for LtAuthPostReq {
 
 impl UnauthReq for LtAuthPostReq {}
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtAuthPostSsoReq {
-    #[cfg_attr(feature = "serde", serde(rename = "SSOResponseToken"))]
+    #[serde(rename = "SSOResponseToken")]
     pub sso_response_token: String,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtAuthPostSsoRes {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[serde(flatten)]
     pub session: LtAuthApiSession,
 }
 

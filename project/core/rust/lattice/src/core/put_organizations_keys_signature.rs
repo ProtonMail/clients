@@ -1,29 +1,27 @@
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 use crate::auth::LtAuthAddressId;
 use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method, Sensitive};
 
 /// `PUT /core/v4/organizations/keys/signature` — publish org-identity (fingerprint) signature.
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LtCorePutOrganizationsKeysSignatureReq {
     pub body: LtCorePutOrganizationsKeysSignatureBody,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCorePutOrganizationsKeysSignatureBody {
     /// Armored detached PGP signature over the org key SHA-256 fingerprint.
     pub signature: Sensitive<String>,
 
     /// Encrypted address id of the signing key.
-    #[cfg_attr(feature = "serde", serde(rename = "AddressID"))]
+    #[serde(rename = "AddressID")]
     pub address_id: LtAuthAddressId,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LtCorePutOrganizationsKeysSignatureRes {}
 
 impl LtContract for LtCorePutOrganizationsKeysSignatureReq {

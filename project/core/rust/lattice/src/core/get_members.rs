@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::num::NonZeroU32;
 
@@ -20,27 +21,22 @@ use super::user::LtCoreMemberRole;
 pub struct LtCoreGetMembersReq;
 
 /// Response containing organization members.
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCoreGetMembersRes {
     pub members: Vec<LtCoreMemberInfo>,
     /// This will only be present if the request includes pagination.
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub total: Option<u32>,
 }
 
 /// Member row as returned by core members APIs (`MemberInfo` in OpenAPI).
 ///
 /// Definition: `apps/Account/app/Dto/MemberInfo.php`. JSON keys mostly PascalCase; `2faStatus` is lower camel.
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCoreMemberInfo {
-    #[cfg_attr(feature = "serde", serde(rename = "ID"))]
+    #[serde(rename = "ID")]
     pub id: LtCoreMemberEncId,
 
     pub role: LtCoreMemberRole,
@@ -49,80 +45,79 @@ pub struct LtCoreMemberInfo {
 
     pub private: i32,
 
-    #[cfg_attr(feature = "serde", serde(rename = "Type"))]
+    #[serde(rename = "Type")]
     pub member_type: i32,
 
     pub max_space: i64,
 
-    #[cfg_attr(feature = "serde", serde(rename = "MaxVPN"))]
+    #[serde(rename = "MaxVPN")]
     pub max_vpn: i32,
 
     pub name: String,
 
     pub used_space: i64,
 
-    #[cfg_attr(feature = "serde", serde(rename = "Self"))]
+    #[serde(rename = "Self")]
     pub is_self: i32,
 
-    #[cfg_attr(feature = "serde", serde(rename = "ToMigrate"))]
+    #[serde(rename = "ToMigrate")]
     pub to_migrate: i32,
 
-    #[cfg_attr(feature = "serde", serde(rename = "BrokenSKL"))]
+    #[serde(rename = "BrokenSKL")]
     pub broken_skl: i32,
 
     pub subscriber: i32,
 
-    #[cfg_attr(feature = "serde", serde(rename = "SSO"))]
+    #[serde(rename = "SSO")]
     pub sso: i32,
 
-    #[cfg_attr(feature = "serde", serde(default))]
+    #[serde(default)]
     pub two_factor_required_time: Option<i64>,
 
-    #[cfg_attr(feature = "serde", serde(rename = "2faStatus"))]
+    #[serde(rename = "2faStatus")]
     pub tfa_status: i32,
 
     /// User keys from `UserKey::getCompleteInfo()` (armored material when present).
     pub keys: LtCoreSensitiveUserKeys,
 
-    #[cfg_attr(feature = "serde", serde(default))]
+    #[serde(default)]
     pub public_key: Option<String>,
 
     /// Bitmask; see `bundles/AccountBundle/src/Organization/MemberPermission.php`.
     pub permissions: i32,
 
-    #[cfg_attr(feature = "serde", serde(rename = "AccessToOrgKey"))]
+    #[serde(rename = "AccessToOrgKey")]
     pub access_to_org_key: LtCoreMemberOrgKeyStatus,
 
-    #[cfg_attr(feature = "serde", serde(rename = "NumAI"))]
+    #[serde(rename = "NumAI")]
     pub num_ai: i32,
 
     /// Unprivatization payload from `MagicLinkService::getUnprivatizationInfoForMember`: `null` or one object.
     ///
     /// Definition: `bundles/AccountInternalBundle/src/Application/Organization/MagicLinkService.php`.
-    #[cfg_attr(feature = "serde", serde(default))]
+    #[serde(default)]
     pub unprivatization: Option<LtCoreMemberListUnprivatization>,
 
-    #[cfg_attr(feature = "serde", serde(rename = "NumLumo"))]
+    #[serde(rename = "NumLumo")]
     pub num_lumo: Option<i32>,
 
     /// Address rows included on member list responses (`withAddress: true` on list members).
-    #[cfg_attr(feature = "serde", serde(default))]
+    #[serde(default)]
     pub addresses: Vec<LtCoreMemberListAddress>,
 }
 
 /// One address entry under `Addresses` on [`LtCoreMemberInfo`].
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCoreMemberListAddress {
-    #[cfg_attr(feature = "serde", serde(rename = "ID"))]
+    #[serde(rename = "ID")]
     pub id: LtAuthAddressId,
 
     pub email: String,
 
     pub status: i32,
 
-    #[cfg_attr(feature = "serde", serde(rename = "Type"))]
+    #[serde(rename = "Type")]
     pub address_type: i32,
 
     pub permissions: i32,
@@ -131,26 +126,25 @@ pub struct LtCoreMemberListAddress {
 /// Embedded `Unprivatization` object on a member list row (non-invited members).
 ///
 /// Keys match the associative array from `MagicLinkService::getUnprivatizationInfoForMember` (PascalCase in JSON).
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCoreMemberListUnprivatization {
-    #[cfg_attr(feature = "serde", serde(default))]
+    #[serde(default)]
     pub state: Option<LtCoreUnprivState>,
-    #[cfg_attr(feature = "serde", serde(default))]
+    #[serde(default)]
     pub invitation_data: Option<LtCoreUnprivInvitationData>,
-    #[cfg_attr(feature = "serde", serde(default))]
+    #[serde(default)]
     pub invitation_signature: Option<LtCoreUnprivInvitationSignature>,
-    #[cfg_attr(feature = "serde", serde(default))]
+    #[serde(default)]
     pub invitation_email: Option<String>,
     /// First split key; duplicate of `private_keys[0]` when both are set (Account).
-    #[cfg_attr(feature = "serde", serde(default))]
+    #[serde(default)]
     pub private_key: Option<LtCoreUnprivArmoredPrivateKey>,
-    #[cfg_attr(feature = "serde", serde(default))]
+    #[serde(default)]
     pub private_keys: Option<Vec<Sensitive<String>>>,
-    #[cfg_attr(feature = "serde", serde(default))]
+    #[serde(default)]
     pub activation_token: Option<LtCoreUnprivActivationToken>,
-    #[cfg_attr(feature = "serde", serde(default))]
+    #[serde(default)]
     pub private_intent: Option<bool>,
 }
 

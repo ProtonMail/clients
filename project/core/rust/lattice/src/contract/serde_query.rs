@@ -1,12 +1,13 @@
+use serde::Serialize;
 use std::borrow::Cow;
 use std::collections::HashMap;
 
 use crate::contract::LtRequestQueryParams;
 use crate::{LatticeError, Sensitive};
 
-pub struct LtSerdeQueryParams<T: serde::Serialize>(pub T);
+pub struct LtSerdeQueryParams<T: Serialize>(pub T);
 
-impl<T: serde::Serialize> LtRequestQueryParams for LtSerdeQueryParams<T> {
+impl<T: Serialize> LtRequestQueryParams for LtSerdeQueryParams<T> {
     fn to_query_params<'a>(
         &'a self,
     ) -> Result<HashMap<Cow<'a, str>, Sensitive<String>>, LatticeError> {

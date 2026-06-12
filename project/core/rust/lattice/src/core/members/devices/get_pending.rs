@@ -3,6 +3,7 @@
 //! Source: `Proton\Apps\Account\Controller\Auth\GetPendingAuthDevicesAction`. Scope: `ORGANIZATION` only.
 //! Wire: top-level key `MemberAuthDevices` with flat [`crate::auth::devices::LtAuthDevice`] elements.
 
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 use crate::auth::devices::LtAuthDevice;
@@ -13,10 +14,9 @@ use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON};
 pub struct LtCoreGetMembersDevicesPendingReq;
 
 /// Response body fields beside `Code` (key `MemberAuthDevices` per server).
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LtCoreGetMembersDevicesPendingRes {
-    #[cfg_attr(feature = "serde", serde(rename = "MemberAuthDevices"))]
+    #[serde(rename = "MemberAuthDevices")]
     pub member_auth_devices: Vec<LtAuthDevice>,
 }
 

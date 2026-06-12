@@ -1,3 +1,4 @@
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::borrow::Cow;
 
 use crate::{
@@ -5,19 +6,17 @@ use crate::{
     core::LtCoreEvents,
 };
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LtCoreGetEventsIdReq {
     pub event_id: LtAuthEventId,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCoreGetEventsIdRes {
-    #[cfg_attr(feature = "serde", serde(rename = "EventID"))]
+    #[serde(rename = "EventID")]
     pub event_id: LtAuthEventId,
-    #[cfg_attr(feature = "serde", serde(flatten, default))]
+    #[serde(flatten, default)]
     pub events: LtCoreEvents,
 }
 
@@ -33,8 +32,7 @@ impl LtContract for LtCoreGetEventsIdReq {
 
 impl AuthReq for LtCoreGetEventsIdReq {}
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LtCoreGetEventsIdRawReq {
     pub event_id: LtAuthEventId,
 }
@@ -42,11 +40,10 @@ pub struct LtCoreGetEventsIdRawReq {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LtCoreGetEventsIdRawRes(pub String);
 
-#[cfg(feature = "serde")]
-impl serde::Serialize for LtCoreGetEventsIdRawRes {
+impl Serialize for LtCoreGetEventsIdRawRes {
     fn serialize<S>(&self, ser: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer,
+        S: Serializer,
     {
         match serde_json::from_str::<serde_json::Value>(&self.0) {
             Ok(value) => value.serialize(ser),
@@ -55,11 +52,10 @@ impl serde::Serialize for LtCoreGetEventsIdRawRes {
     }
 }
 
-#[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for LtCoreGetEventsIdRawRes {
+impl<'de> Deserialize<'de> for LtCoreGetEventsIdRawRes {
     fn deserialize<D>(de: D) -> Result<Self, D::Error>
     where
-        D: serde::Deserializer<'de>,
+        D: Deserializer<'de>,
     {
         match serde_json::Value::deserialize(de) {
             Ok(value) => Ok(Self(value.to_string())),
@@ -80,15 +76,13 @@ impl LtContract for LtCoreGetEventsIdRawReq {
 
 impl AuthReq for LtCoreGetEventsIdRawReq {}
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LtCoreGetEventsLatestReq;
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCoreGetEventsLatestRes {
-    #[cfg_attr(feature = "serde", serde(rename = "EventID"))]
+    #[serde(rename = "EventID")]
     pub event_id: LtAuthEventId,
 }
 

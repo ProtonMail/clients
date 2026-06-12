@@ -1,14 +1,13 @@
 use derive_more::Display;
+use serde::{Deserialize, Serialize};
 
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Display)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Display, Deserialize, Serialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LoginFailedErrorDetails {
     pub login_failed_reason: LoginFailedReason,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Display)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Display, Deserialize, Serialize)]
 #[repr(C)]
 pub enum LoginFailedReason {
     #[display("Wrong password")]

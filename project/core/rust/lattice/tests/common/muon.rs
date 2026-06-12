@@ -1,3 +1,4 @@
+use serde::Deserialize;
 use std::future::Future;
 use std::pin::Pin;
 
@@ -31,7 +32,6 @@ use crate::common::org_members::{OrgMemberError, find_member_by_email};
 use lattice::{LtPaginable, LtPaginationTransportExt, LtTransportProvider};
 use lattice_muon2::LtTransportError;
 use lattice_quark::{LtQuarkContract, LtQuarkTransportProvider};
-use serde::Deserialize;
 
 use crate::common::test_transport::Muon2TestTransport;
 

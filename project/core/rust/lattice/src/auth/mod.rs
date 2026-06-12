@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
 use derive_more::{AsRef, Deref, Display, From, Into};
@@ -18,63 +19,55 @@ pub mod post_auth_2fa;
 pub mod post_auth_info;
 pub mod post_sessions_forks;
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtAuthApiSession {
-    #[cfg_attr(feature = "serde", serde(rename = "UID"))]
+    #[serde(rename = "UID")]
     pub id: LtAuthSessionId,
-    #[cfg_attr(feature = "serde", serde(rename = "UserID"))]
+    #[serde(rename = "UserID")]
     pub user_id: LtAuthUserId,
     /// EventID may be missing in fork responses
-    #[cfg_attr(feature = "serde", serde(rename = "EventID"))]
-    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    #[serde(rename = "EventID")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub event_id: Option<LtAuthEventId>,
     pub access_token: Sensitive<String>,
     pub refresh_token: Sensitive<String>,
-    #[cfg_attr(feature = "serde", serde(default))]
+    #[serde(default)]
     pub scopes: Vec<String>,
 }
 
 #[derive(Into, From, Deref, AsRef)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Display, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Display, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LtAuthEventId(pub String);
 
 #[derive(Into, From, Deref, AsRef)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Display, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Display, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LtAuthSessionId(pub String);
 
 #[derive(Into, From, Deref, AsRef)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Display, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Display, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LtAuthUserId(pub String);
 
 #[derive(Into, From, Deref, AsRef)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Display, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Display, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LtAuthAddressId(pub String);
 
 #[derive(Into, From, Deref, AsRef)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Display, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Display, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LtAuthUserKeyId(pub String);
 
 #[derive(Zeroize)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtAuthFidoKey {
-    #[cfg_attr(feature = "serde", serde(rename = "CredentialID"))]
+    #[serde(rename = "CredentialID")]
     pub credential_id: LtAuthFidoKeyId,
     pub attestation_format: String,
     pub name: String,
 }
 
 #[derive(Zeroize)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LtAuthFidoKeyId(pub Vec<u8>);
 
 impl From<Vec<u8>> for LtAuthFidoKeyId {
@@ -89,11 +82,10 @@ impl From<LtAuthFidoKeyId> for Vec<u8> {
     }
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtAuthSrpChallenge {
-    #[cfg_attr(feature = "serde", serde(rename = "SRPSession"))]
+    #[serde(rename = "SRPSession")]
     pub session: String,
     pub version: u8,
     pub salt: Sensitive<String>,
@@ -101,18 +93,26 @@ pub struct LtAuthSrpChallenge {
     pub server_ephemeral: Sensitive<String>,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Default)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Default, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtAuthTwoFactorOptions {
     pub enabled: LtAuthTwoFactorMethod,
-    #[cfg_attr(feature = "serde", serde(rename = "FIDO2"))]
+    #[serde(rename = "FIDO2")]
     pub fido: Option<LtAuthFidoOptions>,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Default, Clone, PartialEq, Eq, Hash, Copy)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(
+    Debug,
+    Default,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    Copy,
+    Serialize,
+    Deserialize
+)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtAuthTwoFactorMethod(u8);
 
 bitflags::bitflags! {
@@ -122,24 +122,22 @@ bitflags::bitflags! {
     }
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Default)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Default, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtAuthFidoOptions {
-    #[cfg_attr(feature = "serde", serde(rename = "AuthenticationOptions"))]
+    #[serde(rename = "AuthenticationOptions")]
     pub options: Option<CredentialRequestOptions>,
 
-    #[cfg_attr(feature = "serde", serde(rename = "RegisteredKeys"))]
+    #[serde(rename = "RegisteredKeys")]
     pub keys: Vec<LtAuthFidoKey>,
 }
 
 /// Definition: Password mode enum
 #[repr(i32)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
-#[cfg_attr(feature = "serde", serde(into = "i32"))]
-#[cfg_attr(feature = "serde", serde(try_from = "i32"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+#[serde(into = "i32")]
+#[serde(try_from = "i32")]
 pub enum LtAuthPasswordMode {
     One = 1,
     Two = 2,
@@ -163,8 +161,7 @@ impl From<LtAuthPasswordMode> for i32 {
     }
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LtAuthInvalidPasswordModeError;
 
 impl Display for LtAuthInvalidPasswordModeError {

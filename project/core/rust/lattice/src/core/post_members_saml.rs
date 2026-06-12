@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, Method};
@@ -5,26 +6,18 @@ use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtSlimAPIJSON, M
 use super::LtCoreMemberEncId;
 
 /// Request to trigger SAML authentication for a member
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug)]
-#[cfg_attr(
-    feature = "serde",
-    serde(rename_all = "PascalCase", deny_unknown_fields)
-)]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase", deny_unknown_fields)]
 pub struct LtCorePostMembersSamlReq {
     /// The member ID (encrypted ID)
-    #[cfg_attr(feature = "serde", serde(skip))]
+    #[serde(skip)]
     pub member_id: LtCoreMemberEncId,
 }
 
 /// Response from the member SAML endpoint
 /// Contains only the success code (1000)
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "serde",
-    serde(rename_all = "PascalCase", deny_unknown_fields)
-)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase", deny_unknown_fields)]
 pub struct LtCorePostMembersSamlRes {}
 
 impl LtContract for LtCorePostMembersSamlReq {

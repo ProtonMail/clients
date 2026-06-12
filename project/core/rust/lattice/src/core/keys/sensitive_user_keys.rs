@@ -4,14 +4,14 @@
 //! `proton-crypto-account` that don't natively support it.
 
 use proton_crypto_account::keys::{AddressKeys, UserKeys};
+use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::ops::{Deref, DerefMut};
 use zeroize::Zeroize;
 
 /// A wrapper around `UserKeys` that implements `Zeroize` and redacts debug output.
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", serde(transparent))]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct LtCoreSensitiveUserKeys(pub UserKeys);
 
 impl LtCoreSensitiveUserKeys {
@@ -111,9 +111,8 @@ impl fmt::Debug for LtCoreSensitiveUserKeys {
 }
 
 /// A wrapper around `AddressKeys` that implements `Zeroize` and redacts debug output.
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", serde(transparent))]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct LtCoreSensitiveAddressKeys(pub AddressKeys);
 
 impl LtCoreSensitiveAddressKeys {

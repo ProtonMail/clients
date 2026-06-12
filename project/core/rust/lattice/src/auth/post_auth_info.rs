@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 use crate::{
@@ -6,55 +7,51 @@ use crate::{
 };
 
 #[repr(C)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum LtAuthPostInfoIntent {
     Proton,
-    #[cfg_attr(feature = "serde", serde(rename = "SSO"))]
+    #[serde(rename = "SSO")]
     Sso,
     Auto,
 }
 
 /// `ReauthScope` on `POST /auth/v4/info` when a session is present: `password` or `locked` (lowercase in JSON).
 #[repr(C)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "lowercase"))]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum LtAuthReauthScope {
     Password,
     Locked,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtAuthPostInfoReq {
     pub username: Option<String>,
-    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub client_secret: Option<String>,
-    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub intent: Option<LtAuthPostInfoIntent>,
-    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub is_testing: Option<bool>,
-    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub reauth_scope: Option<LtAuthReauthScope>,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase", untagged))]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase", untagged)]
 pub enum LtAuthPostInfoRes {
     SrpChallenge {
         username: Option<String>,
 
-        #[cfg_attr(feature = "serde", serde(flatten))]
+        #[serde(flatten)]
         srp_challenge: LtAuthSrpChallenge,
 
-        #[cfg_attr(feature = "serde", serde(rename = "2FA"))]
+        #[serde(rename = "2FA")]
         tfa: Box<Option<LtAuthTwoFactorOptions>>,
     },
     SsoChallenge {
-        #[cfg_attr(feature = "serde", serde(rename = "SSOChallengeToken"))]
+        #[serde(rename = "SSOChallengeToken")]
         sso_challenge_token: String,
     },
 }

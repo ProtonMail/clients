@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 use crate::{
@@ -5,12 +6,11 @@ use crate::{
     core::user::{LtCoreCreateUserType, LtCoreSrpVerifier, LtCoreUser},
 };
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCorePostUsersReq {
     /// The type of user being created (e.g., internal or external).
-    #[cfg_attr(feature = "serde", serde(rename = "Type"))]
+    #[serde(rename = "Type")]
     pub user_type: LtCoreCreateUserType,
 
     /// The username to be created.
@@ -32,14 +32,12 @@ pub struct LtCorePostUsersReq {
     pub referrer: Option<String>,
 
     /// The challenge payload, if any.
-    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
-    #[cfg(feature = "serde")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub payload: Option<serde_json::Value>,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct LtCorePostUsersRes {
     /// The details of the newly created user.
     pub user: LtCoreUser,

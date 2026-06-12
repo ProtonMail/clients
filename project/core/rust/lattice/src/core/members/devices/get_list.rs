@@ -3,6 +3,7 @@
 //! Source: `Proton\Apps\Account\Controller\Auth\GetAuthDevicesAction::getAuthDevicesFromAdmin`. Scope: `FULL` | `ORGANIZATION`.
 //! Rows use [`crate::auth::devices::LtAuthDevice`] (Core’s `core` feature enables `auth`).
 
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 use crate::auth::devices::LtAuthDevice;
@@ -16,10 +17,9 @@ pub struct LtCoreGetMembersDevicesReq {
 }
 
 /// Response body fields beside `Code` (key `AuthDevices`).
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LtCoreGetMembersDevicesRes {
-    #[cfg_attr(feature = "serde", serde(rename = "AuthDevices"))]
+    #[serde(rename = "AuthDevices")]
     pub auth_devices: Vec<LtAuthDevice>,
 }
 

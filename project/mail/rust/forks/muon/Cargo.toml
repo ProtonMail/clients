@@ -204,3 +204,5 @@ check-cfg = [
   # Set this to enable VCS stamping of the go-crypto lib
   "cfg(crypto_vcs)",
 ]
+
+[workspace]

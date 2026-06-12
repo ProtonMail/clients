@@ -332,30 +332,42 @@ mod helpers;
 pub(crate) use helpers::*;
 
 mod private {
+    use std::sync::Arc;
+
     use super::{AsyncFrom, Auth};
     use crate::env::EnvId;
-    use crate::store::{AuthVersion, InMemoryStore, SafeStore, Store};
+    use crate::store::{AuthVersion, InMemoryStore, Store, StoreHandle};
+    use async_lock::{RwLock, RwLockReadGuard, RwLockWriteGuard};
     use async_trait::async_trait;
-    use futures::FutureExt as _;
+    use derive_more::derive::{Deref, DerefMut};
     /// The stores contained in a [`Client`].
     /// It contains an in-memory store that can never fail and has the local
     /// state of the [`Client`] and a persistent one.
     #[derive(Debug, Clone)]
     pub struct ClientInternalStorage {
+        local_env_id: EnvId,
+        stores: Arc<RwLock<ClientInternalStores>>,
+    }
+
+    #[derive(Debug)]
+    pub struct ClientInternalStores {
         /// The local in-memory store
-        local_store: SafeStore,
+        local_store: StoreHandle,
 
         /// An optional persistent store. The local store will always try to
         /// push its state into the persistent store.
-        persistent_store: Option<SafeStore>,
+        persistent_store: Option<StoreHandle>,
     }
 
     #[async_trait]
     impl AsyncFrom<EnvId> for ClientInternalStorage {
         async fn from(env_id: EnvId) -> Self {
             Self {
-                local_store: SafeStore::new(InMemoryStore::new(env_id, None)),
-                persistent_store: None,
+                local_env_id: env_id.clone(),
+                stores: Arc::new(RwLock::new(ClientInternalStores {
+                    local_store: StoreHandle::new(InMemoryStore::new(env_id, None)),
+                    persistent_store: None,
+                })),
             }
         }
     }
@@ -367,8 +379,11 @@ mod private {
             let auth = store.get_auth().await;
 
             Self {
-                local_store: SafeStore::new(InMemoryStore::new(env_id, Some(auth))),
-                persistent_store: Some(SafeStore::new(store)),
+                local_env_id: env_id.clone(),
+                stores: Arc::new(RwLock::new(ClientInternalStores {
+                    local_store: StoreHandle::new(InMemoryStore::new(env_id, Some(auth))),
+                    persistent_store: Some(StoreHandle::new(store)),
+                })),
             }
         }
     }
@@ -376,14 +391,49 @@ mod private {
     impl ClientInternalStorage {
         /// Get the env the [`Store`] are bound to
         pub(crate) fn env(&self) -> &EnvId {
-            self.local_store.env()
+            &self.local_env_id
         }
 
-        /// Get a reference to the local storage
-        pub(crate) fn local(&self) -> &SafeStore {
-            &self.local_store
+        /// A convenience function that retrieves the local store's auth state.
+        pub(crate) async fn get_auth(&self) -> (AuthVersion, Auth) {
+            self.stores.read().await.get_auth().await
         }
 
+        /// A convenience function that sets the local store's auth state
+        /// and attempts to sync the local store with the persistent store.
+        pub(crate) async fn set_auth(&self, auth: Auth) {
+            let mut guard = self.stores.write().await;
+            guard.set_auth(auth).await;
+        }
+
+        /// Sync the local store with the persistent store
+        /// There is no guarantee that the persistent store is accepting the
+        /// data from the point of view of this function.
+        pub(crate) async fn sync_stores(&self) {
+            let mut guard = self.stores.write().await;
+            guard.sync_stores().await;
+        }
+
+        /// Lock the store for reading.
+        pub async fn read(&self) -> ClientInternalStoresReadGuard<'_> {
+            trace!("locking store for reading");
+            let rg = self.stores.read().await;
+            trace!("store now locked for reading");
+
+            ClientInternalStoresReadGuard(rg)
+        }
+
+        /// Lock the store for writing.
+        pub async fn write(&self) -> ClientInternalStoresWriteGuard<'_> {
+            trace!("locking store for writing");
+            let wg = self.stores.write().await;
+            trace!("store now locked for writing");
+
+            ClientInternalStoresWriteGuard(wg)
+        }
+    }
+
+    impl ClientInternalStores {
         /// A convenience function that retrieves the local store's auth state.
         pub(crate) async fn get_auth(&self) -> (AuthVersion, Auth) {
             self.local_store.get_auth().await
@@ -391,25 +441,46 @@ mod private {
 
         /// A convenience function that sets the local store's auth state
         /// and attempts to sync the local store with the persistent store.
-        pub(crate) async fn set_auth(&self, auth: Auth) {
-            self.local_store.set_auth(auth).await;
-            self.sync_stores().await;
+        pub(crate) async fn set_auth(&mut self, auth: Auth) -> AuthVersion {
+            let v = self.local_store.set_auth(auth.clone()).await;
+            if let Some(persistent_store) = self.persistent_store.as_mut() {
+                info!("pushing from local to persistent storage");
+                // Push the auth from the local store to the persistent store;
+                persistent_store.set_auth(auth).await;
+            }
+            v
         }
 
         /// Sync the local store with the persistent store
         /// There is no guarantee that the persistent store is accepting the
         /// data from the point of view of this function.
-        pub(crate) async fn sync_stores(&self) {
-            if let Some(persistent_store) = self.persistent_store.as_ref() {
+        pub(crate) async fn sync_stores(&mut self) {
+            let (_, auth) = self.local_store.get_auth().await;
+            if let Some(persistent_store) = self.persistent_store.as_mut() {
                 info!("pushing from local to persistent storage");
-
                 // Push the auth from the local store to the persistent store;
-                // we don't care about the new version.
-                self.local_store
-                    .get_auth()
-                    .then(|(_, auth)| persistent_store.set_auth(auth))
-                    .await;
+                persistent_store.set_auth(auth).await;
             }
+        }
+    }
+
+    /// A read guard for a safe auth store which adds logging.
+    #[derive(Debug, Deref)]
+    pub struct ClientInternalStoresReadGuard<'a>(RwLockReadGuard<'a, ClientInternalStores>);
+
+    impl Drop for ClientInternalStoresReadGuard<'_> {
+        fn drop(&mut self) {
+            trace!("releasing read lock on store");
+        }
+    }
+
+    /// A write guard for a safe auth store which adds logging.
+    #[derive(Debug, Deref, DerefMut)]
+    pub struct ClientInternalStoresWriteGuard<'a>(RwLockWriteGuard<'a, ClientInternalStores>);
+
+    impl Drop for ClientInternalStoresWriteGuard<'_> {
+        fn drop(&mut self) {
+            trace!("releasing write lock on store");
         }
     }
 }
@@ -553,8 +624,7 @@ impl Client {
         let _ = sender.layer([layer]).send(DELETE!("/auth/v4")).await;
 
         info!("clearing store");
-        self.stores.local().set_auth(Auth::None).await;
-        self.stores.sync_stores().await;
+        self.stores.set_auth(Auth::None).await;
 
         info!("auth session deleted");
 

@@ -1,10 +1,11 @@
 use crate::auth::{Auth, Tokens};
 use crate::client::ClientInternalStorage;
 use crate::client::headers::{AuthTokenHeader, AuthUidHeader};
+use crate::client::private::ClientInternalStoresWriteGuard;
 use crate::common::{BoxFut, Sender, SenderLayer};
 use crate::http::{HttpReq, HttpReqExt, HttpRes, POST, Status, StatusErr};
 use crate::rest::auth;
-use crate::store::{AuthVersion, SafeStore, StoreWriteGuard};
+use crate::store::AuthVersion;
 use crate::{Error, ErrorKind, InfoProvider, Result};
 use futures::TryFutureExt;
 use http::status::StatusCode;
@@ -60,8 +61,7 @@ impl AuthLayer {
 
         let (ver, auth) = if let Auth::None = auth {
             info!("attempting to get unauth session");
-            let res =
-                new_unauth_session(inner, self.stores.local(), &ver, self.provider.clone()).await?;
+            let res = new_unauth_session(inner, &self.stores, &ver, self.provider.clone()).await?;
 
             info!("create unauth session succeeded, sync to persistent store");
             self.stores.sync_stores().await;
@@ -96,13 +96,10 @@ impl AuthLayer {
             }
         }
 
-        match refresh_store(inner, self.stores.local(), &ver, self.provider.clone()).await {
+        match refresh_store(inner, &self.stores, &ver, self.provider.clone()).await {
             Ok(auth) => match auth.acc_tok() {
                 Some(tok) => {
-                    info!(%uid, "refresh succeeded, sync to persistent store");
-                    self.stores.sync_stores().await;
-
-                    info!(%uid, "sending authenticated request with updated tokens");
+                    info!(%uid, "refresh succeeded, sending authenticated request with updated tokens");
                     Ok(inner.send(req.header(AuthTokenHeader::new(tok))).await?)
                 }
 
@@ -114,8 +111,7 @@ impl AuthLayer {
 
             Err(err @ AuthLayerErr::Auth(AuthErr::Session)) => {
                 warn!(%uid, "auth session no longer exists");
-                self.stores.local().set_auth(Auth::None).await;
-                self.stores.sync_stores().await;
+                self.stores.set_auth(Auth::None).await;
 
                 Err(err)
             }
@@ -181,7 +177,7 @@ where
 
 async fn refresh_store<S>(
     inner: &S,
-    store: &SafeStore,
+    store: &ClientInternalStorage,
     ver: &AuthVersion,
     provider: Option<Arc<dyn InfoProvider>>,
 ) -> Result<Auth, AuthLayerErr>
@@ -213,7 +209,7 @@ where
 
 async fn refresh_authenticated_session<S>(
     inner: &S,
-    store: &mut StoreWriteGuard<'_>,
+    store: &mut ClientInternalStoresWriteGuard<'_>,
     user_id: &str,
     uid: &str,
     tok: &Tokens,
@@ -261,7 +257,7 @@ where
 
 async fn refresh_unauthenticated_session<S>(
     inner: &S,
-    store: &mut StoreWriteGuard<'_>,
+    store: &mut ClientInternalStoresWriteGuard<'_>,
     uid: &str,
     tok: &Tokens,
     provider: Option<Arc<dyn InfoProvider>>,
@@ -347,7 +343,7 @@ where
 
 async fn new_unauth_session<S>(
     inner: &S,
-    store: &SafeStore,
+    store: &ClientInternalStorage,
     ver: &AuthVersion,
     provider: Option<Arc<dyn InfoProvider>>,
 ) -> Result<(AuthVersion, Auth), AuthLayerErr>

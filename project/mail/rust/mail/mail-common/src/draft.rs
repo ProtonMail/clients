@@ -335,6 +335,8 @@ pub enum PackageError {
     AttachmentAddressKeyMissing(AddressId),
     #[error("Failed to write mime body to buffer: {0}")]
     MimeBodyBuild(String),
+    #[error("Failed to convert HTML body to plain text: {0}")]
+    HtmlToTextConversion(String),
     #[error("Failed to extract attachment info for address: {0}")]
     PackageBodyInfoReEncrypt(SessionKeyError),
     #[error("Failed to extract attachment info for address: {0}")]

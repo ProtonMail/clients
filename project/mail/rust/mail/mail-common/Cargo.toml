@@ -74,6 +74,7 @@ mail-search = { workspace = true }
 mail-html-transformer = { workspace = true }
 mail-sqlite3 = { workspace = true }
 mail-task-service = { workspace = true }
+mail-package-builder = { workspace = true }
 mail-common-derive = { workspace = true }
 mail-mailto = { workspace = true }
 regex = { workspace = true }

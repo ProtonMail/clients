@@ -374,30 +374,6 @@ pub(super) fn prepare_text_reply(
     output.push_str(original_body);
 }
 
-/// Converts htm to plain text. If an error occurs the original messages
-/// is returned.
-///
-/// This method also performs basic html sanitizing before converting to text.
-pub fn html_to_text(input: &str) -> String {
-    let mut transformer = Transformer::new(input);
-
-    transformer.transform_from_proton_schemes();
-    transformer.add_noreferrer();
-    transformer.strip_utm();
-    transformer.strip_whitelist(StripStyleSheets::No);
-
-    match transformer.to_plain_text(Html2TextOptions {
-        decorate_links: false,
-        decorate_images: false,
-    }) {
-        Ok(text_body) => text_body,
-        Err(e) => {
-            error!("Failed to convert html to text: {e:?}");
-            input.to_owned()
-        }
-    }
-}
-
 pub struct DarkModeInjection {
     /// Composer head. Not sent to the recipient.
     pub head: String,

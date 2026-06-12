@@ -707,6 +707,10 @@ version = "0.1"
 path = "project/mail/rust/shared/log-service"
 registry = "proton"
 
+[workspace.dependencies.mail-package-builder]
+version = "0.1.0"
+path = "project/mail/rust/shared/mail-package-builder"
+
 [workspace.dependencies.mail-task-service]
 version = "0.1"
 path = "project/mail/rust/shared/task-service"

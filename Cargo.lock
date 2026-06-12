@@ -6828,6 +6828,7 @@ dependencies = [
  "mail-mailto",
  "mail-network-monitor-service",
  "mail-observability",
+ "mail-package-builder",
  "mail-search",
  "mail-sqlite3",
  "mail-stash",
@@ -7466,6 +7467,21 @@ dependencies = [
  "parking_lot",
  "serde",
  "serde_json",
+ "tracing",
+]
+
+[[package]]
+name = "mail-package-builder"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "mail-api",
+ "mail-crypto-inbox",
+ "mail-html-transformer",
+ "mail-proton-ids",
+ "proton-crypto-account",
+ "secrecy",
+ "thiserror 2.0.18",
  "tracing",
 ]
 

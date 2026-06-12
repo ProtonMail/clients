@@ -5,10 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [mail-uniffi-v0.167.1] - 2026-06-08
+## [mail-uniffi-v0.168.0] - 2026-06-12
+
+### Changed
+
+- [ET-6364] Runtime content search opt-in
+- migrate remaining endpoints to lattice - proton/clients/monorepo!2876
 
 ### Features
 
+- add BUILD files for all mail Rust crates - proton/clients/monorepo!2955
+- [ET-6257] [Breaking] Scroller interrupts on location change
+- [CP-11925] Implement fork redeem - proton/clients/monorepo!2889
+- [ET-6290] Sync mediator
 - [ET-6333] introduce highlight_query as part of transform_message parameters - proton/clients/monorepo!2811
 - [ET-6316] Use `CategoryView` FF instead of `MobileCategoryView`
 - XATTR Quarantine Attachments - proton/clients/monorepo!2761
@@ -16,6 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixes
 
+- [ET-6366] Fix contact group update by remote id - proton/clients/monorepo!2981
+- [ET-6353] Do not report event provider failures to user
+- [ET-6276] Make sure outlook long chains of replies are handled correctly - proton/clients/monorepo!2899
 - [ET-6262] [Breaking] Block send if attachment can't be removed
 - [ET-6345] Fix contact group migration
 - [ET-6242] Ensure remove attachment runs in order - proton/clients/monorepo!2826

@@ -53,5 +53,9 @@
   # SSO test dependencies (TLS via rustls; no default-tls/charset/http2/system-proxy)
   reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
 
+[[test]]
+name = "lattice-integration"
+path = "tests/lattice-integration/main.rs"
+
 [lints]
   workspace = true

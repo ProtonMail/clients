@@ -3,8 +3,6 @@
 // `recursion_limit` (128) is exceeded when computing async fn layout (e.g. unprivatize helpers).
 #![recursion_limit = "256"]
 
-mod common;
-
 use lattice_quark::{
     LtQuarkJSONRes,
     payments::subscribed_user_seed::LtQuarkNewPaymentsSeedSubscribedUser,

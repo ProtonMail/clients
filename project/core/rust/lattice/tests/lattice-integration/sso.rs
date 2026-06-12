@@ -3,9 +3,6 @@
 // `recursion_limit` (128) is exceeded when computing async fn layout (e.g. unprivatize helpers).
 #![recursion_limit = "256"]
 
-mod common;
-mod common_sso;
-
 use lattice::auth::{LtAuthPasswordMode, LtAuthTwoFactorMethod};
 use lattice::core::get_members::LtCoreGetMembersReq;
 use lattice::core::user_settings::{LtCoreGetSettingsReq, LtCoreGetSettingsRes};
@@ -19,7 +16,7 @@ async fn get_user_settings(session: &Session) -> LtCoreGetSettingsRes {
 
 #[tokio::test]
 async fn test_sso_login_end_to_end() {
-    let session_init = common::generate_muon_session().await;
+    let session_init = crate::common::generate_muon_session().await;
 
     let res = session_init.send_lt(LtCoreGetSettingsReq).await;
     assert_api_err!(
@@ -70,7 +67,7 @@ async fn test_sso_login_end_to_end() {
     );
     assert_eq!(
         sso_fields.sso.certificate,
-        include_str!("sso_cert.pem"),
+        include_str!("../sso_cert.pem"),
         "Certificate is not correct"
     );
 
@@ -80,9 +77,9 @@ async fn test_sso_login_end_to_end() {
 
     let subuser_with_domain = format!("{}@{}", subuser_username, domain_name);
 
-    let second_session = common::generate_muon_session().await;
+    let second_session = crate::common::generate_muon_session().await;
 
-    let second_session = common_sso::login_with_sso(second_session, &subuser_with_domain)
+    let second_session = crate::common_sso::login_with_sso(second_session, &subuser_with_domain)
         .await
         .unwrap();
 

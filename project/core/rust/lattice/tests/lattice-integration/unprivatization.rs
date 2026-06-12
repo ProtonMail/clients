@@ -12,8 +12,6 @@
 //!
 //! Requires a live atlas stack; run with `ENV_NAME=davy` (see `tests/common/muon.rs`).
 
-mod common;
-
 use lattice::auth::devices::get_auth_devices::LtAuthGetDevicesReq;
 use lattice::core::get_members::LtCoreGetMembersReq;
 use lattice::core::get_members_me_unprivatize::LtCoreGetMembersMeUnprivatizeReq;

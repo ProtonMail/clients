@@ -2,8 +2,6 @@
 
 #![recursion_limit = "256"]
 
-mod common;
-
 use core_key::DeviceDisplayCodeError;
 use lattice::{Sensitive, auth::LtAuthAddressId, core::LtCoreAuthDeviceId};
 

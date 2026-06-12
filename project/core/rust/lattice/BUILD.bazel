@@ -29,5 +29,32 @@ rust_doc_test(
     crate = ":lattice",
 )
 
+# Ephemera-backed integration suite: drives real muon/SSO against a live
+# Atlas backend, so it is non-hermetic -- tagged "manual" to keep it out of
+# `bazel test //project/core/rust/...`. Run explicitly with a deployed backend.
+rust_test(
+    name = "lattice-integration-tests",
+    srcs = glob([
+        "tests/common/**/*.rs",
+        "tests/common_sso/**/*.rs",
+        "tests/lattice-integration/**/*.rs",
+    ]),
+    compile_data = ["tests/sso_cert.pem"],
+    crate_root = "tests/lattice-integration/main.rs",
+    edition = "2024",
+    proc_macro_deps = all_crate_deps(proc_macro_dev = True),
+    rustc_flags = ["--cfg=ci"],
+    tags = ["manual"],
+    deps = all_crate_deps(
+        normal = True,
+        normal_dev = True,
+    ) + [
+        ":lattice",
+        "//project/core/rust/core-key",
+        "//project/core/rust/lattice-muon2",
+        "//project/core/rust/lattice-quark",
+    ],
+)
+
 # Consumed via include_bytes! by account-crux-ffi's SSO integration tests.
 exports_files(["tests/sso_cert.pem"])

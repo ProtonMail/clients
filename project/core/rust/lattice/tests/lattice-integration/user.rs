@@ -3,8 +3,6 @@
 // `recursion_limit` (128) is exceeded when computing async fn layout (e.g. unprivatize helpers).
 #![recursion_limit = "256"]
 
-mod common;
-
 use lattice::{
     LatticeError, LtApiResponseError,
     core::user::get_users_available_external::LtCoreGetUsersAvailableExternalReq,

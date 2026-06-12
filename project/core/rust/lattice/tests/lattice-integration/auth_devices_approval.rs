@@ -4,8 +4,6 @@
 
 #![recursion_limit = "256"]
 
-mod common;
-
 use lattice::auth::devices::LtAuthDeviceState;
 
 use crate::common::device_approval::sso_org::SsoOrg;

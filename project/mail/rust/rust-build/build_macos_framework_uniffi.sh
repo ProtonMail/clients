@@ -6,7 +6,7 @@ set -uo pipefail
 # Builds a macOS-only universal framework for aarch64 (Apple Silicon) and x86_64 (Intel)
 
 MIN_MACOS_VERSION="14.0"
-PROFILE_MACOS="mail-macos"
+PROFILE_MACOS="${PROFILE_MACOS:-mail-macos}"
 
 # Must match where `cargo build` writes (respects CARGO_TARGET_DIR and `.cargo/config.toml`).
 # A hardcoded `../../../target` breaks when the workspace uses another target directory.

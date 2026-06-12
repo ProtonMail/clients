@@ -983,6 +983,10 @@ split-debuginfo = "packed"
 lto = true
 incremental = false
 
+[profile.mail-macos-debug]
+inherits = "dev"
+debug = false
+
 [profile.mail-macos]
 inherits = "release"
 panic = "abort"

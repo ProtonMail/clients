@@ -991,7 +991,7 @@ dependencies = [
  "bitflags 2.11.1",
  "cexpr",
  "clang-sys",
- "itertools 0.10.5",
+ "itertools 0.12.1",
  "lazy_static",
  "lazycell",
  "log",
@@ -1269,6 +1269,7 @@ name = "calendar-bootstrap"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "calendar-api",
  "calendar-database",
  "calendar-database-diesel",
@@ -1278,6 +1279,7 @@ dependencies = [
  "calendar-seed",
  "contact-lattice",
  "futures",
+ "http",
  "jiff",
  "lattice",
  "mail-canonical-email",
@@ -1307,6 +1309,7 @@ dependencies = [
  "calendar-mail-lattice",
  "calendar-mini-month",
  "calendar-network",
+ "calendar-queue",
  "calendar-seed",
  "calendar-telemetry",
  "calendar-time",
@@ -1338,11 +1341,13 @@ name = "calendar-crux"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "calendar-components-crux",
  "calendar-database",
  "calendar-database-diesel",
  "calendar-keychain",
  "calendar-network",
+ "calendar-network-dual",
  "calendar-network-fake",
  "calendar-network-muon",
  "calendar-time",
@@ -1353,7 +1358,9 @@ dependencies = [
  "futures",
  "js-sys",
  "notify-waker",
+ "send_wrapper 0.6.0",
  "serde",
+ "serde-wasm-bindgen",
  "tokio",
  "tracing",
  "tracing-logcat",
@@ -1597,10 +1604,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "calendar-access",
- "calendar-api",
- "calendar-bootstrap",
  "calendar-crypto",
- "calendar-database",
  "calendar-database-diesel",
  "calendar-database-test-utils",
  "calendar-lattice",
@@ -1626,16 +1630,25 @@ dependencies = [
  "async-trait",
  "core-hv-op",
  "core-muon-op",
- "crux_core 0.17.0 (git+https://github.com/Patryk27/crux?branch=0.17-patched)",
  "derive_more 2.1.1",
- "facet",
  "http",
  "serde",
  "serde_json",
- "serde_with",
  "test-case",
  "thiserror 2.0.18",
+ "tracing",
  "url",
+]
+
+[[package]]
+name = "calendar-network-dual"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "calendar-network",
+ "calendar-network-fake",
+ "calendar-network-muon",
+ "parking_lot",
 ]
 
 [[package]]
@@ -1643,8 +1656,10 @@ name = "calendar-network-fake"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "calendar-network",
  "clap",
+ "http",
  "itertools 0.14.0",
  "serde",
  "serde_json",
@@ -1658,6 +1673,7 @@ version = "0.1.0"
 dependencies = [
  "aes-gcm",
  "anyhow",
+ "async-trait",
  "base64",
  "calendar-network",
  "muon",
@@ -2153,7 +2169,7 @@ version = "3.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "faf9468729b8cbcea668e36183cb69d317348c2e08e994829fb56ebfdfbaac34"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -4688,7 +4704,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f288b0a4f20f9a56b5d1da57e2227c661b7b16168e2f72365f57b63326e29b24"
 dependencies = [
  "gloo-timers",
- "send_wrapper",
+ "send_wrapper 0.4.0",
 ]
 
 [[package]]
@@ -11114,6 +11130,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f638d531eccd6e23b980caf34876660d38e265409d8e99b397ab71eb3612fad0"
 
 [[package]]
+name = "send_wrapper"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd0b0ec5f1c1ca621c432a25813d8d60c88abe6d3e08a3eb9cf37d97a0fe3d73"
+dependencies = [
+ "futures-core",
+]
+
+[[package]]
 name = "serde"
 version = "1.0.228"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -11168,6 +11193,17 @@ checksum = "f3a1a3341211875ef120e117ea7fd5228530ae7e7036a779fdc9117be6b3282c"
 dependencies = [
  "ordered-float",
  "serde",
+]
+
+[[package]]
+name = "serde-wasm-bindgen"
+version = "0.6.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8302e169f0eddcc139c70f139d19d6467353af16f9fce27e8c30158036a1e16b"
+dependencies = [
+ "js-sys",
+ "serde",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -11635,7 +11671,7 @@ version = "0.8.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c1c97747dbf44bb1ca44a561ece23508e99cb592e862f22222dcf42f51d1e451"
 dependencies = [
- "heck 0.4.1",
+ "heck 0.5.0",
  "proc-macro2",
  "quote",
  "syn 2.0.117",
@@ -13616,7 +13652,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

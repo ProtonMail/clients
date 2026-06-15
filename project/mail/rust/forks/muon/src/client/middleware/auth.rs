@@ -80,14 +80,14 @@ impl AuthLayer {
         trace!(%uid, "attaching auth UID to request");
         let req = req.header(AuthUidHeader::new(uid));
 
-        let Some(tok) = auth.tokens() else {
+        let Some(old_tok) = auth.tokens() else {
             trace!(%uid, "no auth tokens available, sending as-is");
             return Ok(inner.send(req).await?);
         };
 
-        if let Some(tok) = tok.acc_tok() {
+        if let Some(token) = old_tok.acc_tok() {
             trace!(%uid, "attaching auth token to request");
-            let req = req.clone().header(AuthTokenHeader::new(tok));
+            let req = req.clone().header(AuthTokenHeader::new(token));
 
             debug!(%uid, "sending authenticated request");
             match inner.send(req).await? {
@@ -99,7 +99,7 @@ impl AuthLayer {
         match refresh_store(inner, &self.stores, &ver, self.provider.clone()).await {
             Ok(auth) => match auth.acc_tok() {
                 Some(tok) => {
-                    info!(%uid, "refresh succeeded, sending authenticated request with updated tokens");
+                    info!(%uid, "refresh succeeded, sending authenticated request with updated tokens ({})", old_tok.acc_tok().is_none_or(|v| v != tok));
                     Ok(inner.send(req.header(AuthTokenHeader::new(tok))).await?)
                 }
 
@@ -201,7 +201,7 @@ where
         }
 
         (_, auth) => {
-            trace!("auth session already updated");
+            info!("auth session already updated");
             Ok(auth)
         }
     }

@@ -1,6 +1,7 @@
 mod acceptance {
     mod account;
     mod address;
+    mod auth_refresh;
     mod crypto_key_service;
     mod global_feature_flags;
     mod images_logo;

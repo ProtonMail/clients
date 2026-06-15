@@ -92,7 +92,9 @@ use mail_stash::exports::{
     FromSql, FromSqlError, FromSqlResult, SqliteError, ToSql, ToSqlOutput, Value, ValueRef,
 };
 use mail_stash::utils::sql_using_serde;
-use proton_crypto_account::keys::{AddressKeys as RealAddressKeys, UserKeys as RealUserKeys};
+use proton_crypto_account::keys::{
+    AddressKeys as RealAddressKeys, LockedKey, UserKeys as RealUserKeys,
+};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use smart_default::SmartDefault;
 use std::fmt::Debug;
@@ -789,8 +791,24 @@ impl ToSql for InitializedComponentState {
 
 /// Wrapper type around [`RealAddressKeys`] to implement [`FromSql`] and
 /// [`ToSql`].
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq)]
 pub struct AddressKeys(pub RealAddressKeys);
+
+/// Debug printing of [`AddressKeys`] redacts every secret field of the
+/// underlying keys, mirroring [`UserKeys`]. Only the non-sensitive key
+/// metadata is rendered so logs can identify keys without exposing key
+/// material.
+impl Debug for AddressKeys {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AddressKeys")
+            .field("count", &self.0.0.len())
+            .field(
+                "keys",
+                &self.0.0.iter().map(RedactedLockedKey).collect::<Vec<_>>(),
+            )
+            .finish()
+    }
+}
 
 impl Default for AddressKeys {
     fn default() -> Self {
@@ -1239,8 +1257,38 @@ impl AuthScopes {
 sql_using_serde!(AuthScopes);
 
 /// Wrapper type around [`RealUserKeys`] to implement [`FromSql`] and [`ToSql`].
-#[derive(Clone, Debug, Eq, PartialEq, Into)]
+#[derive(Clone, Eq, PartialEq, Into)]
 pub struct UserKeys(pub RealUserKeys);
+
+/// Debug printing of [`UserKeys`] redacts every secret field of the underlying
+/// keys (private key, token, signature, activation, recovery secret). Only the
+/// non-sensitive key metadata is rendered so logs can identify keys without
+/// ever exposing key material.
+impl Debug for UserKeys {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("UserKeys")
+            .field("count", &self.0.0.len())
+            .field(
+                "keys",
+                &self.0.0.iter().map(RedactedLockedKey).collect::<Vec<_>>(),
+            )
+            .finish()
+    }
+}
+
+struct RedactedLockedKey<'a>(&'a LockedKey);
+
+impl Debug for RedactedLockedKey<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("LockedKey")
+            .field("id", &self.0.id)
+            .field("version", &self.0.version)
+            .field("primary", &self.0.primary)
+            .field("active", &self.0.active)
+            .field("flags", &self.0.flags)
+            .finish_non_exhaustive()
+    }
+}
 
 impl Default for UserKeys {
     fn default() -> Self {

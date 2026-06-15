@@ -226,7 +226,7 @@ pub struct SyncedAddresses {
 }
 
 impl SyncedAddresses {
-    #[tracing::instrument(skip(tx))]
+    #[tracing::instrument(skip_all)]
     pub fn store(self, tx: &Transaction<'_>) -> StashResult<()> {
         let mut query = tx.prepare(Address::INSERT_QUERY)?;
         for address in self.addresses {

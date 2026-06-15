@@ -190,7 +190,7 @@ pub struct SyncedUserSettings {
 }
 
 impl SyncedUserSettings {
-    #[tracing::instrument(skip(tx))]
+    #[tracing::instrument(skip_all)]
     pub fn store(self, tx: &Transaction<'_>) -> Result<(), StashError> {
         let Self {
             mut user,

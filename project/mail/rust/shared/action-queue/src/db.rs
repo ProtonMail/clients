@@ -23,7 +23,6 @@ use mail_stash::rusqlite::{OptionalExtension, params_from_iter};
 use mail_stash::stash::{StashError, Tether, WriteTx};
 use mail_stash::utils::{ConnectionExt, placeholders, placeholders_n};
 use std::collections::HashSet;
-use std::hash::RandomState;
 use std::ops::Add;
 use std::time::Duration;
 use tracing::error;
@@ -490,33 +489,14 @@ impl<Db: mail_stash::marker::DatabaseMarker> StoredAction<Db> {
         )
         .await
     }
-}
 
-impl<Db: mail_stash::marker::DatabaseMarker> ModelHooks for StoredAction<Db> {
-    fn after_load(&mut self, conn: &Connection) -> Result<(), StashError> {
-        // Dependencies
-        let dependencies = Self::all_dependencies_sync(conn, self.id())
-            .inspect_err(|e| error!("failed to load action deps: {e:?}"))?;
-        self.dependencies.extend(dependencies);
-
-        // Resources
-        match conn
-            .query_row_col::<Resources>(
-                "SELECT resource FROM action_queue_resources WHERE action_id = ?",
-                (self.id,),
-            )
-            .optional()?
-        {
-            Some(r) => self.resources = r,
-            None => {
-                error!("failed to load resources");
-            }
-        }
-
-        Ok(())
+    pub async fn update_dependency_keys(&self, tx: &WriteTx<'_, Db>) -> Result<(), StashError> {
+        let this = self.clone();
+        tx.sync_bridge(move |tx| this.update_dependency_keys_sync(tx))
+            .await
     }
 
-    fn after_save(&mut self, tx: &Transaction<'_>) -> Result<(), StashError> {
+    fn update_dependency_keys_sync(&self, tx: &Transaction<'_>) -> Result<(), StashError> {
         // Resolve dependencies from keys
         let direct_dependencies = ActionDependencyKeysTable::resolve_dependency_keys_sync(
             &self.dependency_keys.required,
@@ -547,7 +527,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> ModelHooks for StoredAction<Db> {
             let placeholders = placeholders_n(dependency_set.len());
             let params = dependency_set.iter().map(|dep| dep.dependency_id);
 
-            let existing_action_ids: HashSet<ActionId, RandomState> =
+            let existing_action_ids: HashSet<ActionId> =
                 HashSet::from_iter(tx.query_rows_col::<ActionId>(
                     format!(
                         "SELECT id FROM {} WHERE id IN ({placeholders})",
@@ -572,12 +552,6 @@ impl<Db: mail_stash::marker::DatabaseMarker> ModelHooks for StoredAction<Db> {
             }
         }
 
-        // Create resources
-        tx.execute(
-            "INSERT OR REPLACE INTO action_queue_resources VALUES (?,?)",
-            (self.id, self.resources.clone()),
-        )?;
-
         // Update direct dependency keys
         ActionDependencyKeysTable::store_dependency_keys_sync(
             self.dependency_keys
@@ -590,6 +564,42 @@ impl<Db: mail_stash::marker::DatabaseMarker> ModelHooks for StoredAction<Db> {
             tx,
         )?;
 
+        Ok(())
+    }
+}
+
+impl<Db: mail_stash::marker::DatabaseMarker> ModelHooks for StoredAction<Db> {
+    fn after_load(&mut self, conn: &Connection) -> Result<(), StashError> {
+        // Dependencies
+        let dependencies = Self::all_dependencies_sync(conn, self.id())
+            .inspect_err(|e| error!("failed to load action deps: {e:?}"))?;
+        self.dependencies.extend(dependencies);
+
+        // Resources
+        match conn
+            .query_row_col::<Resources>(
+                "SELECT resource FROM action_queue_resources WHERE action_id = ?",
+                (self.id,),
+            )
+            .optional()?
+        {
+            Some(r) => self.resources = r,
+            None => {
+                error!("failed to load resources");
+            }
+        }
+
+        Ok(())
+    }
+
+    fn after_save(&mut self, tx: &Transaction<'_>) -> Result<(), StashError> {
+        self.update_dependency_keys_sync(tx)?;
+
+        // Create resources
+        tx.execute(
+            "INSERT OR REPLACE INTO action_queue_resources VALUES (?,?)",
+            (self.id, self.resources.clone()),
+        )?;
         Ok(())
     }
 }

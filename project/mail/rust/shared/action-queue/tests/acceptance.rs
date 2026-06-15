@@ -4,6 +4,7 @@ mod acceptance {
     mod auto_queue;
     mod cancellation;
     mod common;
+    mod dependencies;
     mod executors;
     mod max_retries;
     mod observer;

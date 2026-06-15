@@ -3,8 +3,8 @@
 mod tests;
 
 use crate::action::{
-    Action, ActionGroup, ActionId, Error as ActionErrorTrait, Factory, FactoryError, FactoryResult,
-    Handler, LocalOutput, Metadata, Priority, Resources,
+    Action, ActionDependencyKeys, ActionGroup, ActionId, Error as ActionErrorTrait, Factory,
+    FactoryError, FactoryResult, Handler, LocalOutput, Metadata, Priority, Resources,
 };
 use crate::db::{
     self, ActionDependency, DEFAULT_LOCK_TIMEOUT, DependencyType, ExecutionGuard,
@@ -1303,7 +1303,8 @@ async fn execute_action_local<T: Action<Db>, Db: mail_stash::marker::DatabaseMar
     existing_id: Option<ActionId>,
     tx: &WriteTx<'_, Db>,
 ) -> Result<(T::LocalOutput, StoredAction<Db>), ActionError<T, Db>> {
-    let mut stored_action = StoredAction::without_state::<T>(action.dependency_keys(), metadata);
+    let mut stored_action =
+        StoredAction::without_state::<T>(ActionDependencyKeys::default(), metadata);
     if let Some(exising_id) = existing_id {
         stored_action
             .create_or_update(exising_id, tx)
@@ -1318,6 +1319,24 @@ async fn execute_action_local<T: Action<Db>, Db: mail_stash::marker::DatabaseMar
             e
         })?;
     }
+
+    // Execute the local changes
+    let local_output = handler
+        .apply_local(stored_action.id.unwrap(), action, tx)
+        .await
+        .map_err(|e| {
+            error!("Failed to apply local changes: {e:?}");
+            ActionError::Action(e)
+        })?;
+
+    stored_action.dependency_keys = action.dependency_keys();
+    stored_action
+        .update_dependency_keys(tx)
+        .await
+        .map_err(|e| {
+            error!("Failed to update dependency keys: {e:?}");
+            e
+        })?;
 
     // Validate action dependencies for circular deps
     {
@@ -1341,15 +1360,6 @@ async fn execute_action_local<T: Action<Db>, Db: mail_stash::marker::DatabaseMar
             return Err(Error::CyclicDependency.into());
         }
     }
-
-    // Execute the local changes
-    let local_output = handler
-        .apply_local(stored_action.id.unwrap(), action, tx)
-        .await
-        .map_err(|e| {
-            error!("Failed to apply local changes: {e:?}");
-            ActionError::Action(e)
-        })?;
 
     // Update action state.
     stored_action.set_action_state(action).map_err(|e| {

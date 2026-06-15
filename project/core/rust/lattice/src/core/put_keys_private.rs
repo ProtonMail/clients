@@ -47,8 +47,11 @@ pub struct LtCorePutKeysPrivateReq {
     /// Organization private key (armored). Required for org admins (legacy scheme).
     pub organization_key: Option<Sensitive<String>>,
 
-    /// New SRP verifier (`AuthInput`) for the updated password.
-    pub auth: LtCoreSrpVerifier,
+    /// New SRP verifier (`AuthInput`) for the updated password. Omitted when only the
+    /// mailbox (secondary) passphrase changes — re-encrypted private keys are submitted
+    /// but the login password / server-side verifier remain unchanged.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub auth: Option<LtCoreSrpVerifier>,
 
     /// Optional: inline re-authentication (password change with active session proof).
     #[serde(skip_serializing_if = "Option::is_none")]

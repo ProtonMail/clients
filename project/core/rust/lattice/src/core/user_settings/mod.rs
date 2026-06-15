@@ -9,6 +9,8 @@ mod post_device_recovery_secret;
 pub use self::post_device_recovery_secret::*;
 mod put_settings_device_recovery;
 pub use self::put_settings_device_recovery::*;
+mod put_settings_password;
+pub use self::put_settings_password::*;
 
 use super::LtCoreU2FKey;
 use crate::Sensitive;

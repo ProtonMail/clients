@@ -1,4 +1,3 @@
-load("@crate_index//:defs.bzl", "all_crate_deps")
 load("@rules_rust//rust:defs.bzl", "rust_binary")
 
 rust_binary(
@@ -6,7 +5,7 @@ rust_binary(
     srcs = glob(["src/**/*.rs"]),
     edition = "2024",
     visibility = ["//visibility:public"],
-    deps = all_crate_deps(
-        normal = True,
-    ),
+    # Use the isolated crate index (see MODULE.bazel) so mail-side uniffi pins
+    # cannot enable cargo-metadata via workspace feature unification.
+    deps = ["@uniffi_bindgen_index//:uniffi"],
 )

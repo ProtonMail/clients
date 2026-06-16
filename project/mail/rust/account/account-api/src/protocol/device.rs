@@ -65,7 +65,7 @@ impl DeviceInfo {
 /// An interface by which device info can be requested/provided.
 #[async_trait]
 pub trait DeviceInfoProvider: Send + Sync {
-    async fn get_device_info(&self) -> DeviceInfo;
+    async fn get_device_info(&self) -> Option<DeviceInfo>;
 }
 
 #[async_trait]
@@ -73,7 +73,7 @@ impl<T: ?Sized> DeviceInfoProvider for Arc<T>
 where
     T: DeviceInfoProvider,
 {
-    async fn get_device_info(&self) -> DeviceInfo {
+    async fn get_device_info(&self) -> Option<DeviceInfo> {
         self.deref().get_device_info().await
     }
 }

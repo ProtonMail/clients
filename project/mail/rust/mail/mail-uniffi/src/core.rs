@@ -1,6 +1,7 @@
 mod crypto;
 pub mod datatypes;
 pub mod device;
+pub mod effect_channel;
 mod keychain;
 pub mod measurement;
 pub mod observability;

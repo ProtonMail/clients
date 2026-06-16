@@ -27,6 +27,6 @@ impl DeviceInfoService {
 
     pub async fn get_device_info(&self) -> Option<DeviceInfo> {
         let provider = self.provider.as_ref()?;
-        Some(provider.get_device_info().await)
+        provider.get_device_info().await
     }
 }

@@ -30,7 +30,8 @@ use mail_common::models::{
     DraftSendFailure, DraftSendResult, DraftSendResultOrigin, LabelWithCounters,
 };
 use mail_common::{
-    AppError, MailContext, MailContextError, MailContextResult, MailUserContext, Mailbox,
+    AppError, MailContext, MailContextError, MailContextResult, MailScroller as RealMailScroller,
+    MailScrollerItem, MailUserContext, Mailbox,
 };
 use mail_core_common::actions::event_poll::EventPoll;
 use mail_core_common::datatypes::LocalLabelId;
@@ -216,23 +217,38 @@ impl MailboxModel {
     }
 
     fn fetch_initial_categories(&self) -> Command<Messages> {
-        let State::Conversations(state) = &self.state else {
-            return Command::None;
-        };
-        let scroller = state.scroller().clone_inner();
         let ctx = Arc::clone(&self.ctx);
-        Command::task(async move {
-            let category_view = match scroller.category_view().await {
-                Ok(v) => v,
-                Err(_) => return Command::None,
-            };
-            if category_view.available.is_empty() {
-                return Command::None;
+        match &self.state {
+            State::Conversations(state) => {
+                Command::task(Self::load_categories(state.scroller().clone_inner(), ctx))
             }
-            let tether = ctx.user_stash().connection();
-            let categories = category_view.into_labels(&tether).await.unwrap_or_default();
-            Command::message(Message::CategoryViewUpdated(categories))
-        })
+            State::Messages(state) => {
+                let Some(scroller) = state.label_scroller() else {
+                    return Command::None;
+                };
+                Command::task(Self::load_categories(scroller.clone_inner(), ctx))
+            }
+            State::Syncing(_) => Command::None,
+        }
+    }
+
+    async fn load_categories<T>(
+        scroller: Arc<RealMailScroller<T>>,
+        ctx: Arc<MailUserContext>,
+    ) -> Command<Messages>
+    where
+        T: MailScrollerItem,
+    {
+        let category_view = match scroller.category_view().await {
+            Ok(v) => v,
+            Err(_) => return Command::None,
+        };
+        if category_view.available.is_empty() {
+            return Command::None;
+        }
+        let tether = ctx.user_stash().connection();
+        let categories = category_view.into_labels(&tether).await.unwrap_or_default();
+        Command::message(Message::CategoryViewUpdated(categories))
     }
 
     fn open_message_view(
@@ -244,8 +260,10 @@ impl MailboxModel {
         self.mailbox = mbox;
         self.label = label;
         self.state = State::Messages(state);
-        tracing::info!("message viewopen");
-        self.build_item_count_query()
+        Command::batch([
+            self.build_item_count_query(),
+            self.fetch_initial_categories(),
+        ])
     }
 
     fn open_search_view(&mut self, mbox: Mailbox, state: MessagesState) -> Command<Messages> {
@@ -399,15 +417,31 @@ impl MailboxModel {
         let len = self.categories.len() as i64;
         let next_idx = ((active_idx as i64 + delta).rem_euclid(len)) as usize;
         let next_id = self.categories[next_idx].local_id;
-        if let State::Conversations(state) = &self.state {
-            let scroller = state.scroller().clone_inner();
-            Command::task(async move {
-                let _ = scroller.change_category_view(Some(next_id)).await;
-                Command::None
-            })
-        } else {
-            Command::None
+        match &self.state {
+            State::Conversations(state) => {
+                Self::change_category(state.scroller().clone_inner(), next_id)
+            }
+            State::Messages(state) => {
+                let Some(scroller) = state.label_scroller() else {
+                    return Command::None;
+                };
+                Self::change_category(scroller.clone_inner(), next_id)
+            }
+            State::Syncing(_) => Command::None,
         }
+    }
+
+    fn change_category<T>(
+        scroller: Arc<RealMailScroller<T>>,
+        next_id: LocalLabelId,
+    ) -> Command<Messages>
+    where
+        T: MailScrollerItem,
+    {
+        Command::task(async move {
+            let _ = scroller.change_category_view(Some(next_id)).await;
+            Command::None
+        })
     }
 }
 
@@ -516,19 +550,13 @@ impl AppStateHandler for MailboxModel {
         if let Event::Key(key) = &event
             && key.code == KeyCode::Tab
         {
-            if let State::Conversations(_) = &self.state {
-                return self.advance_category();
-            }
-            return Command::None;
+            return self.advance_category();
         }
 
         if let Event::Key(key) = &event
             && key.code == KeyCode::BackTab
         {
-            if let State::Conversations(_) = &self.state {
-                return self.prev_category();
-            }
-            return Command::None;
+            return self.prev_category();
         }
 
         match &mut self.state {

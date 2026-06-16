@@ -20,6 +20,7 @@ _MAIL_COMMON_DEPS = [
     "//project/mail/rust/shared/log-service:mail-log-service",
     "//project/mail/rust/shared/mail-local-id",
     "//project/mail/rust/shared/mail-package-builder:mail-package-builder",
+    "//project/mail/rust/shared/event-service:mail-event-service",
     "//project/mail/rust/shared/mailto:mail-mailto",
     "//project/mail/rust/shared/network-monitor-service:mail-network-monitor-service",
     "//project/mail/rust/shared/observability:mail-observability",

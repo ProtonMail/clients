@@ -1,8 +1,9 @@
 use crate::MailContextError;
-use crate::datatypes::{ConversationLabelsCount, MessageLabelsCount};
+use crate::datatypes::{ConversationLabelsCount, LabelType, MessageLabelsCount};
 use crate::models::{Conversation, Message};
 use anyhow::Context;
 use itertools::Itertools;
+use mail_account_api::protocol::proton::{GetAddressResponse, ProtonAccount};
 use mail_action_queue::action::ActionGroup;
 use mail_action_queue::queue::Queue;
 use mail_action_queue::rebase::RebaseChangeSet;
@@ -10,14 +11,43 @@ use mail_api::services::proton::response_data::{
     Conversation as ApiConversation, MessageMetadata as ApiMessageMetadata,
 };
 use mail_core_api::consts::General;
-use mail_core_api::service::ApiServiceError;
-use mail_core_api::services::proton::{AddressId, LabelId, ProtonCore};
-use mail_core_common::models::{Address, Label, ModelIdExtension};
+use mail_core_api::service::{ApiServiceError, ApiServiceResult};
+use mail_core_api::services::proton::{AddressId, LabelId};
+use mail_core_common::models::{Address, Label, LabelError, ModelIdExtension};
 use mail_stash::UserDb;
 use mail_stash::orm::Model;
 use mail_stash::stash::{StashError, Tether};
 use std::collections::HashSet;
 use tracing::info;
+
+pub trait DependencyApi: Send + Sync {
+    fn get_address_by_id(
+        &self,
+        id: AddressId,
+    ) -> impl std::future::Future<Output = ApiServiceResult<GetAddressResponse>> + Send;
+    fn fetch_labels_by_ids(
+        &self,
+        ids: Vec<LabelId>,
+    ) -> impl std::future::Future<Output = Result<Vec<Label>, LabelError>> + Send;
+    fn fetch_labels(
+        &self,
+        label_types: Vec<LabelType>,
+    ) -> impl std::future::Future<Output = Result<Vec<Label>, LabelError>> + Send;
+}
+
+impl DependencyApi for mail_core_api::session::Session {
+    async fn get_address_by_id(&self, id: AddressId) -> ApiServiceResult<GetAddressResponse> {
+        <mail_core_api::session::Session as ProtonAccount>::get_address_by_id(self, id).await
+    }
+
+    async fn fetch_labels_by_ids(&self, ids: Vec<LabelId>) -> Result<Vec<Label>, LabelError> {
+        Label::get_labels_by_ids(self, ids).await
+    }
+
+    async fn fetch_labels(&self, label_types: Vec<LabelType>) -> Result<Vec<Label>, LabelError> {
+        Label::fetch_labels(self, &label_types).await
+    }
+}
 
 #[derive(Default)]
 pub struct DependencyFetcher {
@@ -100,7 +130,7 @@ impl DependencyFetcher {
         queue: &Queue<UserDb>,
     ) -> Result<HashSet<LabelId>, MailContextError>
     where
-        API: ProtonCore + Sync,
+        API: DependencyApi,
     {
         let mut unresolved_labels = HashSet::new();
         if !self.label_ids.is_empty() {
@@ -196,11 +226,12 @@ impl DependencyFetcher {
         tether: &mut Tether,
     ) -> Result<Vec<Label>, MailContextError>
     where
-        API: ProtonCore + Sync,
+        API: DependencyApi,
     {
         info!("Syncing missing labels: {:?}", self.label_ids);
-        let missing_labels =
-            Label::get_labels_by_ids(api, self.label_ids.iter().cloned().collect()).await?;
+        let missing_labels = api
+            .fetch_labels_by_ids(self.label_ids.iter().cloned().collect())
+            .await?;
 
         Self::fetch_label_parents(api, missing_labels, &self.label_ids, tether).await
     }
@@ -259,7 +290,7 @@ impl DependencyFetcher {
         tether: &Tether,
     ) -> Result<Vec<Label>, MailContextError>
     where
-        API: ProtonCore + Sync,
+        API: DependencyApi,
     {
         let mut all_labels = labels;
         let parent_label_ids = Self::create_parent_ids_set(&all_labels, excluded_parent_ids);
@@ -272,7 +303,7 @@ impl DependencyFetcher {
 
             if !missing_parents_ids.is_empty() {
                 tracing::debug!("Detected missing parent labels: {:?}", missing_parents_ids);
-                let missing_parents = Label::get_labels_by_ids(api, missing_parents_ids).await?;
+                let missing_parents = api.fetch_labels_by_ids(missing_parents_ids).await?;
                 let grandparent_label_ids =
                     Self::create_parent_ids_set(&missing_parents, excluded_parent_ids);
                 let missing_ancestry =
@@ -294,8 +325,7 @@ impl DependencyFetcher {
                         "Detected missing label ancestry lineage, fetching by types instead: {:?}",
                         selected_types
                     );
-                    let all_labels_in_selected_types =
-                        Label::fetch_labels(api, &selected_types).await?;
+                    let all_labels_in_selected_types = api.fetch_labels(selected_types).await?;
                     let label_ids = all_labels_in_selected_types
                         .iter()
                         .filter_map(|l| l.remote_id.clone())

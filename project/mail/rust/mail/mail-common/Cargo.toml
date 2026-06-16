@@ -76,6 +76,7 @@ mail-task-service = { workspace = true }
 mail-package-builder = { workspace = true }
 mail-common-derive = { workspace = true }
 mail-mailto = { workspace = true }
+mail-event-service = { workspace = true }
 regex = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -123,6 +124,7 @@ function_name = { workspace = true }
 tempfile = { workspace = true }
 velcro = { workspace = true }
 wiremock = { workspace = true }
+mockall = { workspace = true }
 mail-common = { path = ".", features = ["test-utils"] }
 criterion = { workspace = true }
 pprof = { workspace = true }

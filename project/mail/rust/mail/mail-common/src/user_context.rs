@@ -50,8 +50,8 @@ use mail_core_common::services::crypto_key_service::mail_core_key_manager::{
 };
 use mail_core_common::services::event_loop_service::EventManagerContext;
 use mail_core_common::services::{
-    EventLoopService, EventPollConfigService, NetworkMonitorService, UserIssueReporterService,
-    UserMetricService,
+    EventLoopService, EventPollConfigService, NetworkMonitorService, UserEventService,
+    UserIssueReporterService, UserMetricService,
 };
 use mail_core_common::{Context as CoreContext, Origin, UserContext};
 use mail_crypto_inbox::keys::{ComposerPreference, SendPreferences};
@@ -1110,6 +1110,11 @@ impl MailUserContext {
     #[must_use]
     pub fn create_child_cancellation_token(&self) -> CancellationToken {
         self.cancellation_token.child_token()
+    }
+
+    #[must_use]
+    pub fn user_event_service(&self) -> &UserEventService {
+        self.user_context.user_event_service()
     }
 }
 

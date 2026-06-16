@@ -26,6 +26,7 @@ pub mod search;
 mod send_queries;
 mod sidebar;
 mod snooze;
+mod sync;
 mod tracker_service;
 mod traits;
 mod upsell_eligibility;
@@ -62,6 +63,7 @@ use mail_core_common::models::LabelError;
 use mail_crypto_inbox::attachment::AttachmentDecryptionError;
 use mail_stash::UserDb;
 use mail_stash::stash::StashError;
+pub use sync::*;
 use thiserror::Error;
 
 #[macro_export]

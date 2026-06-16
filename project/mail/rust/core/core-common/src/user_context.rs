@@ -7,7 +7,7 @@ use crate::db::account::CoreAccount;
 use crate::db::migrations::{migrate_core_db, verify_core_db};
 use crate::models::{Address, InitializationWatcher, Label, User, UserSettings};
 use crate::services::crypto_key_service::CryptoKeyService;
-use crate::services::{AddressService, GrowthService};
+use crate::services::{AddressService, GrowthService, UserEventService};
 use crate::{Context, CoreContextError, CoreContextResult, OnSessionDeletedResponse, Origin};
 pub use event_loop::CoreEventLoopContext;
 use futures::future::BoxFuture;
@@ -163,7 +163,8 @@ impl UserContext {
                         .with_cyclic_service(UserMetricService::new)
                         .with_cyclic_service(GrowthService::new)
                         .with_service(CryptoKeyService::new(user_id_cloned))
-                        .with_service(telemetry_service);
+                        .with_service(telemetry_service)
+                        .with_service(UserEventService::new());
                 }
 
                 builder.build(
@@ -516,6 +517,11 @@ impl UserContext {
     #[must_use]
     pub fn global_feature_flags(&self) -> &crate::services::FeatureFlagsService {
         self.context.feature_flags()
+    }
+
+    #[must_use]
+    pub fn user_event_service(&self) -> &UserEventService {
+        self.get_service::<UserEventService>()
     }
 }
 

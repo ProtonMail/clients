@@ -18,16 +18,8 @@ async fn get_sender_image() {
         .unwrap()
         .push(ApiLabel {
             id: LabelId::from("testlabel"),
-            parent_id: None,
             name: "testlabel".to_owned(),
-            path: None,
-            color: String::new(),
-            label_type: ApiLabelType::Label,
-            notify: false,
-            display: false,
-            sticky: false,
-            expanded: false,
-            order: 0,
+            ..ApiLabel::test_default()
         });
 
     let conversations = params.conversations.clone();

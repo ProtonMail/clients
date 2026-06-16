@@ -74,16 +74,10 @@ impl Params {
             labels: hash_map! {
                 ApiLabelType::Label: vec![ApiLabel {
                     id: LabelId::from("mylabel"),
-                    parent_id: None,
                     name: "mylabel".to_owned(),
-                    path: None,
                     color: String::new(),
                     label_type: ApiLabelType::Label,
-                    notify: false,
-                    display: false,
-                    sticky: false,
-                    expanded: false,
-                    order: 0,
+                    ..ApiLabel::test_default()
                 }]
             },
             addresses: vec![ApiAddress {

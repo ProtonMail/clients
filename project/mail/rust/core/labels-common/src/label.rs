@@ -6,7 +6,9 @@ use crate::local_ids::LocalLabelId;
 use itertools::Itertools;
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_core_api::service::ApiServiceError;
-use mail_core_api::services::proton::{Label as ApiLabel, LabelId, PatchLabelRequest, ProtonCore};
+use mail_core_api::services::proton::{
+    EventId, Label as ApiLabel, LabelId, PatchLabelRequest, ProtonCore,
+};
 use mail_shared_types::{Action, InitializationKey, ModelIdExtension};
 use mail_stash::exports::{Connection, Transaction};
 use mail_stash::macros::Model;
@@ -78,6 +80,12 @@ pub struct Label {
 
     #[DbField]
     pub sticky: bool,
+
+    #[DbField]
+    /// Whenever this field is Some(EventID)
+    /// clients need to show unseen badge for
+    /// given category label
+    pub last_unseen_message: Option<EventId>,
 }
 
 impl ModelIdExtension for Label {
@@ -413,6 +421,7 @@ impl From<ApiLabel> for Label {
             notify: value.notify,
             path: value.path,
             sticky: value.sticky,
+            last_unseen_message: value.last_unseen_message,
         }
     }
 }
@@ -435,6 +444,7 @@ impl Label {
             display_order: Default::default(),
             path: Option::default(),
             sticky: Default::default(),
+            last_unseen_message: Default::default(),
         }
     }
 }
@@ -629,19 +639,11 @@ mod tests {
             .write_tx::<_, _, StashError>(async |tx| {
                 for t in [LabelType::Label, LabelType::Folder, LabelType::System] {
                     let mut new_label = Label {
-                        local_id: None,
                         remote_id: Some(format!("Label-{t:?}").into()),
-                        local_parent_id: None,
-                        remote_parent_id: None,
                         color: LabelColor::purple(),
-                        display: false,
-                        display_order: 0,
-                        expanded: false,
                         label_type: LabelType::Folder,
                         name: "Label".to_owned(),
-                        notify: false,
-                        path: None,
-                        sticky: false,
+                        ..Label::test_default()
                     };
                     new_label.save(tx).await.expect("failed to create label");
                     let db_label = Label::load(new_label.id(), tx)
@@ -664,19 +666,11 @@ mod tests {
                 for t in [LabelType::Label, LabelType::Folder] {
                     let label_name = random_string(1);
                     let mut new_label = Label {
-                        local_id: None,
                         remote_id: Some(format!("Label-{t:?}").into()),
-                        local_parent_id: None,
-                        remote_parent_id: None,
                         color: LabelColor::purple(),
-                        display: false,
-                        display_order: 0,
-                        expanded: false,
                         label_type: LabelType::Folder,
                         name: label_name.clone(),
-                        notify: false,
-                        path: None,
-                        sticky: false,
+                        ..Label::test_default()
                     };
                     new_label.save(tx).await.expect("failed to create label");
                     let db_label = Label::load(new_label.id(), tx)
@@ -699,19 +693,11 @@ mod tests {
                 for t in [LabelType::Label, LabelType::Folder] {
                     let label_name = random_string(100);
                     let mut new_label = Label {
-                        local_id: None,
                         remote_id: Some(format!("Label-{t:?}").into()),
-                        local_parent_id: None,
-                        remote_parent_id: None,
                         color: LabelColor::purple(),
-                        display: false,
-                        display_order: 0,
-                        expanded: false,
                         label_type: LabelType::Folder,
                         name: label_name.clone(),
-                        notify: false,
-                        path: None,
-                        sticky: false,
+                        ..Label::test_default()
                     };
                     new_label.save(tx).await.expect("failed to create label");
                     let db_label = Label::load(new_label.id(), tx)
@@ -727,92 +713,24 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn create_local_label_has_ascending_order_per_type() {
-        let mut tether = new_label_test_connection().await.connection();
-        tether
-            .write_tx::<_, _, StashError>(async |tx| {
-                for t in [LabelType::Label, LabelType::Folder, LabelType::System] {
-                    let mut new_label1 = Label {
-                        local_id: None,
-                        remote_id: Some(format!("Label-{t:?}-01").into()),
-                        local_parent_id: None,
-                        remote_parent_id: None,
-                        color: LabelColor::purple(),
-                        display: false,
-                        display_order: 0,
-                        expanded: false,
-                        label_type: LabelType::Folder,
-                        name: "Label".to_owned(),
-                        notify: false,
-                        path: None,
-                        sticky: false,
-                    };
-                    new_label1.save(tx).await.expect("failed to create label");
-                    let mut new_label2 = Label {
-                        local_id: None,
-                        remote_id: Some(format!("Label-{t:?}-02").into()),
-                        local_parent_id: None,
-                        remote_parent_id: None,
-                        color: LabelColor::purple(),
-                        display: false,
-                        display_order: 0,
-                        expanded: false,
-                        label_type: LabelType::Folder,
-                        name: "Label".to_owned(),
-                        notify: false,
-                        path: None,
-                        sticky: false,
-                    };
-                    new_label2.save(tx).await.expect("failed to create label");
-                    // TODO
-                    // assert_eq!(
-                    //     new_label1.display_order + 1,
-                    //     new_label2.display_order,
-                    //     "Label order for type {:?} does not match",
-                    //     t
-                    // );
-                }
-                Ok(())
-            })
-            .await
-            .unwrap();
-    }
-
-    #[tokio::test]
     async fn update_local_label() {
         let mut tether = new_label_test_connection().await.connection();
         tether
             .write_tx::<_, _, StashError>(async |tx| {
                 let mut new_label = Label {
-                    local_id: None,
                     remote_id: Some("MyLabel".into()),
-                    local_parent_id: None,
-                    remote_parent_id: None,
                     color: LabelColor::purple(),
-                    display: false,
-                    display_order: 0,
-                    expanded: false,
                     label_type: LabelType::Folder,
                     name: "Label".to_owned(),
-                    notify: false,
-                    path: None,
-                    sticky: false,
+                    ..Label::test_default()
                 };
                 new_label.save(tx).await.expect("failed to create label");
                 let new_label2 = Label {
-                    local_id: None,
                     remote_id: Some("MyOtherLabel".into()),
-                    local_parent_id: None,
-                    remote_parent_id: None,
                     color: LabelColor::purple(),
-                    display: false,
-                    display_order: 0,
-                    expanded: false,
                     label_type: LabelType::Folder,
                     name: "Label".to_owned(),
-                    notify: false,
-                    path: None,
-                    sticky: false,
+                    ..Label::test_default()
                 };
                 new_label.save(tx).await.expect("failed to create label");
 
@@ -862,16 +780,11 @@ mod tests {
             .write_tx::<_, _, StashError>(async |tx| {
                 let mut label: Label = ApiLabel {
                     id: LabelId::from("label_id"),
-                    parent_id: None,
                     name: "MyLabel".to_owned(),
-                    path: None,
                     color: "#ffffff".to_owned(),
-                    label_type: ApiLabelType::Label,
-                    notify: false,
                     display: true,
-                    sticky: false,
                     expanded: true,
-                    order: 0,
+                    ..ApiLabel::test_default()
                 }
                 .into();
 
@@ -919,42 +832,31 @@ mod tests {
         vec![
             ApiLabel {
                 id: LabelId::from("label_id"),
-                parent_id: None,
                 name: "MyLabel".to_owned(),
-                path: None,
                 color: "#ffffff".to_owned(),
                 label_type: ApiLabelType::Label,
-                notify: false,
                 display: true,
-                sticky: false,
                 expanded: true,
-                order: 0,
+                ..ApiLabel::test_default()
             },
             ApiLabel {
                 id: LabelId::from("50"),
-                parent_id: None,
                 name: "Inbox2".to_owned(),
-                path: None,
                 color: "#ffffff".to_owned(),
                 label_type: ApiLabelType::System,
                 notify: true,
-                display: false,
                 sticky: true,
-                expanded: false,
-                order: 0,
+                ..ApiLabel::test_default()
             },
             ApiLabel {
                 id: LabelId::from("Folder1"),
-                parent_id: None,
                 name: "Folder1".to_owned(),
-                path: None,
                 color: "#ffffff".to_owned(),
                 label_type: ApiLabelType::Folder,
                 notify: true,
                 display: true,
-                sticky: false,
-                expanded: false,
                 order: 2,
+                ..ApiLabel::test_default()
             },
             ApiLabel {
                 id: LabelId::from("Folder2"),
@@ -963,11 +865,10 @@ mod tests {
                 path: Some("Folder1/Folder2".to_owned()),
                 color: "#ffffff".to_owned(),
                 label_type: ApiLabelType::Folder,
-                notify: false,
-                display: false,
                 sticky: true,
                 expanded: true,
                 order: 3,
+                ..ApiLabel::test_default()
             },
         ]
     }
@@ -975,16 +876,12 @@ mod tests {
     fn test_label(name: &str) -> ApiLabel {
         ApiLabel {
             id: LabelId::from("label_id"),
-            parent_id: None,
             name: name.to_owned(),
-            path: None,
             color: "#ffffff".to_owned(),
             label_type: ApiLabelType::Label,
-            notify: false,
             display: true,
-            sticky: false,
             expanded: true,
-            order: 0,
+            ..ApiLabel::test_default()
         }
     }
 

@@ -229,16 +229,14 @@ impl From<ContactGroup> for mail_api_labels::Label {
         let path = value.name.clone();
         Self {
             id: value.id.into(),
-            parent_id: None,
             color: value.color,
             display: value.display,
-            expanded: false,
             label_type: mail_api_labels::LabelType::ContactGroup,
             name: value.name,
-            notify: false,
             order: value.order,
             path: Some(path),
             sticky: value.sticky,
+            ..Self::test_default()
         }
     }
 }

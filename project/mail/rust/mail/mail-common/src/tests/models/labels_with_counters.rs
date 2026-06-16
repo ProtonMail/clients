@@ -1,7 +1,7 @@
 use crate::datatypes::{ConversationLabelsCount, MessageLabelsCount};
 use crate::models::LabelWithCounters;
 use mail_common::test_utils::db::new_test_connection;
-use mail_core_api::services::proton::{Label as ApiLabel, LabelId, LabelType as ApiLabelType};
+use mail_core_api::services::proton::{Label as ApiLabel, LabelId};
 use mail_core_common::models::Label;
 use mail_stash::orm::Model;
 use mail_stash::stash::StashError;
@@ -12,16 +12,9 @@ async fn label_with_counters() {
     let mut tether = new_test_connection().await.connection();
     let label = ApiLabel {
         id: LabelId::from("label"),
-        parent_id: None,
         name: "Label".to_owned(),
-        path: None,
         color: "00".to_owned(),
-        label_type: ApiLabelType::Label,
-        notify: false,
-        display: false,
-        sticky: false,
-        expanded: false,
-        order: 0,
+        ..ApiLabel::test_default()
     };
 
     let total_conv = 20_u64;

@@ -85,15 +85,8 @@ fn sidebar_test_params(name: &str, state: bool) -> Params {
 fn create_label(name: &str, expanded: bool) -> ApiLabel {
     ApiLabel {
         id: LabelId::from(name),
-        parent_id: None,
-        color: "".to_string(),
-        display: false,
         expanded,
         label_type: LabelType::Folder,
-        name: "".to_string(),
-        notify: false,
-        order: 0,
-        path: None,
-        sticky: false,
+        ..ApiLabel::test_default()
     }
 }

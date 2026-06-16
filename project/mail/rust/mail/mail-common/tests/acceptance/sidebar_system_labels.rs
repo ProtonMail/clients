@@ -153,14 +153,6 @@ fn create_label(label_id: LabelId) -> ApiLabel {
     ApiLabel {
         id: label_id,
         label_type: LabelType::System,
-        parent_id: None,
-        color: "".to_string(),
-        display: false,
-        expanded: false,
-        name: "".to_string(),
-        notify: false,
-        order: 0,
-        path: None,
-        sticky: false,
+        ..ApiLabel::test_default()
     }
 }

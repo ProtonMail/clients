@@ -11,19 +11,11 @@ async fn test_mark_labels_as_initialized() {
     tether
         .write_tx::<_, _, StashError>(async |tx| {
             let mut new_label = Label {
-                local_id: None,
                 remote_id: Some("MyLabel".into()),
-                local_parent_id: None,
-                remote_parent_id: None,
                 color: LabelColor::purple(),
-                display: false,
-                display_order: 0,
-                expanded: false,
                 label_type: LabelType::Folder,
                 name: "Label".to_owned(),
-                notify: false,
-                path: None,
-                sticky: false,
+                ..Label::test_default()
             };
             new_label.save(tx).await.expect("failed to create label");
             let new_label_id = new_label.id();

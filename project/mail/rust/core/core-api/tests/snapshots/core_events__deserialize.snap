@@ -1,7 +1,6 @@
 ---
 source: project/mail/rust/core/core-api/tests/core_events.rs
 expression: mail_event
-snapshot_kind: text
 ---
 CoreEvent {
     event_id: EventId(
@@ -127,6 +126,7 @@ CoreEvent {
                             "Folder/Event Label!",
                         ),
                         sticky: true,
+                        last_unseen_message: None,
                     },
                 ),
             },

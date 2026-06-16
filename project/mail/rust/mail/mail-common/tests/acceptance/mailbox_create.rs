@@ -22,16 +22,8 @@ async fn test_new_mailbox_sync_conversations() {
         .unwrap()
         .push(ApiLabel {
             id: LabelId::from("testlabel"),
-            parent_id: None,
             name: "testlabel".to_owned(),
-            path: None,
-            color: String::new(),
-            label_type: ApiLabelType::Label,
-            notify: false,
-            display: false,
-            sticky: false,
-            expanded: false,
-            order: 0,
+            ..ApiLabel::test_default()
         });
     let conversations = params.conversations.clone();
     ctx.setup_user(params.clone()).await;
@@ -141,16 +133,8 @@ async fn test_new_mailbox_sync_messages() {
         .unwrap()
         .push(ApiLabel {
             id: LabelId::from("testlabel"),
-            parent_id: None,
             name: "testlabel".to_owned(),
-            path: None,
-            color: String::new(),
-            label_type: ApiLabelType::Label,
-            notify: false,
-            display: false,
-            sticky: false,
-            expanded: false,
-            order: 0,
+            ..ApiLabel::test_default()
         });
     ctx.setup_user(params.clone()).await;
     ctx.mock_get_message_metadata(messages, 2_u64).await;
@@ -261,16 +245,8 @@ async fn test_new_mailbox_always_sync_messages_for_drafts_and_sent() {
         .unwrap()
         .push(ApiLabel {
             id: LabelId::from("testlabel"),
-            parent_id: None,
             name: "testlabel".to_owned(),
-            path: None,
-            color: String::new(),
-            label_type: ApiLabelType::Label,
-            notify: false,
-            display: false,
-            sticky: false,
-            expanded: false,
-            order: 0,
+            ..ApiLabel::test_default()
         });
     ctx.setup_user(params.clone()).await;
     ctx.mock_get_message_metadata(messages, 2_u64).await;

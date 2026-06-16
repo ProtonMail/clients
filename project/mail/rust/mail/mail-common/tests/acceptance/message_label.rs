@@ -423,16 +423,8 @@ fn test_mail_settings() -> ApiMailSettings {
 fn test_label(label_id: &LabelId) -> ApiLabel {
     ApiLabel {
         id: label_id.clone(),
-        parent_id: None,
         name: "mylabel".to_owned(),
-        path: None,
-        color: String::new(),
-        label_type: ApiLabelType::Label,
-        notify: false,
-        display: false,
-        sticky: false,
-        expanded: false,
-        order: 0,
+        ..ApiLabel::test_default()
     }
 }
 

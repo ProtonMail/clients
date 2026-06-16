@@ -9,7 +9,7 @@ pub use requests::{
 };
 pub use responses::{GetLabelsResponse, PatchLabelResponse, PostLabelsResponse, PutLabelResponse};
 
-use mail_api_event_types::Action;
+use mail_api_event_types::{Action, EventId};
 use serde::Deserialize;
 #[cfg(feature = "mocks")]
 use serde::Serialize;
@@ -74,6 +74,9 @@ pub struct Label {
 
     #[serde_as(as = "DefaultOnNull<BoolFromInt>")]
     pub sticky: bool,
+
+    #[serde(rename = "LastUnseenMessageEventID")]
+    pub last_unseen_message: Option<EventId>,
 }
 
 #[cfg(feature = "mocks")]
@@ -92,6 +95,7 @@ impl Label {
             order: 0,
             path: None,
             sticky: false,
+            last_unseen_message: None,
         }
     }
 }

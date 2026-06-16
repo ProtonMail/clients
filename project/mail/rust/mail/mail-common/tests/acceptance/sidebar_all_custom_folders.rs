@@ -46,14 +46,9 @@ fn create_label((id, parent_id, name, order): &(&str, Option<&str>, &str, u32)) 
     ApiLabel {
         id: LabelId::from(*id),
         parent_id: parent_id.map(LabelId::from),
-        color: "".to_string(),
-        display: false,
-        expanded: false,
         label_type: LabelType::Folder,
         name: name.to_owned().to_owned(),
-        notify: false,
         order: order.to_owned(),
-        path: None,
-        sticky: false,
+        ..ApiLabel::test_default()
     }
 }

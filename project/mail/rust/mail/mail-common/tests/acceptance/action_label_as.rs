@@ -493,42 +493,18 @@ mod rebase {
         params.labels.entry(ApiLabelType::Folder).or_insert(vec![
             ApiLabel {
                 id: custom_label_id1(),
-                parent_id: None,
-                color: "".to_string(),
-                display: false,
-                expanded: false,
-                label_type: ApiLabelType::Label,
                 name: "Custom1".to_string(),
-                notify: false,
-                order: 0,
-                path: None,
-                sticky: false,
+                ..ApiLabel::test_default()
             },
             ApiLabel {
                 id: custom_label_id2(),
-                parent_id: None,
-                color: "".to_string(),
-                display: false,
-                expanded: false,
-                label_type: ApiLabelType::Label,
                 name: "Custom2".to_string(),
-                notify: false,
-                order: 0,
-                path: None,
-                sticky: false,
+                ..ApiLabel::test_default()
             },
             ApiLabel {
                 id: custom_label_id3(),
-                parent_id: None,
-                color: "".to_string(),
-                display: false,
-                expanded: false,
-                label_type: ApiLabelType::Label,
                 name: "Custom3".to_string(),
-                notify: false,
-                order: 0,
-                path: None,
-                sticky: false,
+                ..ApiLabel::test_default()
             },
         ]);
         ctx.setup_user(params.clone()).await;

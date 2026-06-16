@@ -24,30 +24,15 @@ async fn event_fetches_missing_dependencies() {
 
     let missing_label_1 = ApiLabel {
         id: LabelId::from("MyLabelId1"),
-        parent_id: None,
-        color: "".to_string(),
-        display: false,
-        expanded: false,
-        label_type: ApiLabelType::Label,
         name: "Missing Label 1".to_string(),
-        notify: false,
-        order: 0,
-        path: None,
-        sticky: false,
+        ..ApiLabel::test_default()
     };
 
     let missing_label_2 = ApiLabel {
         id: LabelId::from("MyLabelId2"),
-        parent_id: None,
-        color: "".to_string(),
-        display: false,
-        expanded: false,
         label_type: ApiLabelType::Folder,
         name: "Missing Label 2".to_string(),
-        notify: false,
-        order: 0,
-        path: None,
-        sticky: false,
+        ..ApiLabel::test_default()
     };
 
     let missing_address = ApiAddress {
@@ -254,55 +239,28 @@ async fn event_fetches_missing_nested_dependencies() {
     // Label 1 -> Label 2 -> Label 3
     let missing_label_1 = ApiLabel {
         id: LabelId::from("MyLabelId1"),
-        parent_id: None,
-        color: "".to_string(),
-        display: false,
-        expanded: false,
         label_type: ApiLabelType::Folder,
         name: "Missing Label 1".to_string(),
-        notify: false,
-        order: 0,
-        path: None,
-        sticky: false,
+        ..ApiLabel::test_default()
     };
     let missing_label_2 = ApiLabel {
         id: LabelId::from("MyLabelId2"),
         parent_id: Some(LabelId::from("MyLabelId1")),
-        color: "".to_string(),
-        display: false,
-        expanded: false,
         label_type: ApiLabelType::Folder,
         name: "Missing Label 2".to_string(),
-        notify: false,
-        order: 0,
-        path: None,
-        sticky: false,
+        ..ApiLabel::test_default()
     };
     let missing_label_3 = ApiLabel {
         id: LabelId::from("MyLabelId3"),
         parent_id: Some(LabelId::from("MyLabelId2")),
-        color: "".to_string(),
-        display: false,
-        expanded: false,
         label_type: ApiLabelType::Folder,
         name: "Missing Label 3".to_string(),
-        notify: false,
-        order: 0,
-        path: None,
-        sticky: false,
+        ..ApiLabel::test_default()
     };
     let missing_label_4 = ApiLabel {
         id: LabelId::from("MyLabelId4"),
-        parent_id: None,
-        color: "".to_string(),
-        display: false,
-        expanded: false,
-        label_type: ApiLabelType::Label,
         name: "Missing Label 4".to_string(),
-        notify: false,
-        order: 0,
-        path: None,
-        sticky: false,
+        ..ApiLabel::test_default()
     };
 
     let missing_address = ApiAddress {
@@ -483,30 +441,16 @@ async fn events_skips_unresolved_labels() {
 
     let missing_label_1 = ApiLabel {
         id: LabelId::from("MyLabelId1"),
-        parent_id: None,
-        color: "".to_string(),
-        display: false,
-        expanded: false,
-        label_type: ApiLabelType::Label,
         name: "Missing Label 1".to_string(),
-        notify: false,
-        order: 0,
-        path: None,
-        sticky: false,
+        ..ApiLabel::test_default()
     };
 
     let missing_label_2 = ApiLabel {
         id: LabelId::from("MyLabelId2"),
         parent_id: Some(LabelId::from("MyLabelId1")),
-        color: "".to_string(),
-        display: false,
-        expanded: false,
         label_type: ApiLabelType::Folder,
         name: "Missing Label 2".to_string(),
-        notify: false,
-        order: 0,
-        path: None,
-        sticky: false,
+        ..ApiLabel::test_default()
     };
 
     let missing_address = ApiAddress {
@@ -661,16 +605,9 @@ mod v6 {
 
         let new_label = ApiLabel {
             id: label_id.clone(),
-            parent_id: None,
-            color: "".to_string(),
-            display: false,
-            expanded: false,
             label_type: ApiLabelType::Folder,
             name: "Folder".to_string(),
-            notify: false,
-            order: 0,
-            path: None,
-            sticky: false,
+            ..ApiLabel::test_default()
         };
 
         let new_conversation = ApiConversation {

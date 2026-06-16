@@ -13,16 +13,9 @@ impl ApiLabelTestUtils for ApiLabel {
         (
             ApiLabel {
                 id: label_id.clone(),
-                parent_id: None,
                 name: label_name.to_owned(),
-                path: None,
-                color: String::new(),
                 label_type: label_type.into(),
-                notify: false,
-                display: false,
-                sticky: false,
-                expanded: false,
-                order: 0,
+                ..ApiLabel::test_default()
             },
             label_id,
         )
@@ -104,16 +97,9 @@ impl ApiLabelTestUtils for ApiLabel {
         }
         ApiLabel {
             id: label_id.clone(),
-            parent_id: None,
             name: label_name.to_owned(),
-            path: None,
-            color: String::new(),
             label_type: label_type.into(),
-            notify: false,
-            display: false,
-            sticky: false,
-            expanded: false,
-            order: 0,
+            ..ApiLabel::test_default()
         }
     }
 }

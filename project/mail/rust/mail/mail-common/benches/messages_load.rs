@@ -122,19 +122,9 @@ async fn setup_db(mail_stash: &Stash<UserDb>) -> (LabelId, AddressId) {
             address.save(tx).await.unwrap();
 
             let mut label = Label {
-                local_id: None,
                 remote_id: Some(label_id.clone()),
-                local_parent_id: None,
-                remote_parent_id: None,
-                color: Default::default(),
-                display: false,
-                expanded: false,
                 label_type: LabelType::Folder,
-                name: "".to_string(),
-                notify: false,
-                display_order: 0,
-                path: None,
-                sticky: false,
+                ..Label::test_default()
             };
             label.save(tx).await.unwrap();
 

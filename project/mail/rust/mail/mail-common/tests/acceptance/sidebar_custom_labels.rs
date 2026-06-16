@@ -53,15 +53,8 @@ fn sidebar_test_params(labels: &[(LabelId, String, u32)]) -> TestParams {
 fn create_label((id, name, order): &(LabelId, String, u32)) -> ApiLabel {
     ApiLabel {
         id: id.clone(),
-        parent_id: None,
-        color: "".to_string(),
-        display: false,
-        expanded: false,
-        label_type: LabelType::Label,
         name: name.clone(),
-        notify: false,
         order: order.to_owned(),
-        path: None,
-        sticky: false,
+        ..ApiLabel::test_default()
     }
 }

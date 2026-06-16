@@ -1366,29 +1366,14 @@ mod rebase_messages {
         params.labels.entry(ApiLabelType::Folder).or_insert(vec![
             ApiLabel {
                 id: folder_label_id.clone(),
-                parent_id: None,
-                color: "".to_string(),
-                display: false,
-                expanded: false,
                 label_type: ApiLabelType::Folder,
                 name: "MyFolder".to_string(),
-                notify: false,
-                order: 0,
-                path: None,
-                sticky: false,
+                ..ApiLabel::test_default()
             },
             ApiLabel {
                 id: custom_label_id(),
-                parent_id: None,
-                color: "".to_string(),
-                display: false,
-                expanded: false,
-                label_type: ApiLabelType::Label,
                 name: "Custom".to_string(),
-                notify: false,
-                order: 0,
-                path: None,
-                sticky: false,
+                ..ApiLabel::test_default()
             },
         ]);
         ctx.setup_user(params.clone()).await;
@@ -1866,29 +1851,14 @@ mod rebase_conversations {
         params.labels.entry(ApiLabelType::Folder).or_insert(vec![
             ApiLabel {
                 id: folder_label_id.clone(),
-                parent_id: None,
-                color: "".to_string(),
-                display: false,
-                expanded: false,
                 label_type: ApiLabelType::Folder,
                 name: "MyFolder".to_string(),
-                notify: false,
-                order: 0,
-                path: None,
-                sticky: false,
+                ..ApiLabel::test_default()
             },
             ApiLabel {
                 id: custom_label_id(),
-                parent_id: None,
-                color: "".to_string(),
-                display: false,
-                expanded: false,
-                label_type: ApiLabelType::Label,
                 name: "Custom".to_string(),
-                notify: false,
-                order: 0,
-                path: None,
-                sticky: false,
+                ..ApiLabel::test_default()
             },
         ]);
         ctx.setup_user(params.clone()).await;
@@ -2935,16 +2905,9 @@ async fn move_to_same_category_is_noop() {
 fn test_label(label_id: &LabelId, label_type: ApiLabelType, name: &str) -> ApiLabel {
     ApiLabel {
         id: label_id.clone(),
-        parent_id: None,
         name: name.to_owned(),
-        path: None,
-        color: String::new(),
         label_type,
-        notify: false,
-        display: false,
-        sticky: false,
-        expanded: false,
-        order: 0,
+        ..ApiLabel::test_default()
     }
 }
 

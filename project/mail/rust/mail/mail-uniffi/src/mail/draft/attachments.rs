@@ -297,14 +297,14 @@ impl AttachmentList {
     }
 
     /// Remove an attachment from this draft.
-    pub async fn remove(self: Arc<Self>, id: Id) -> Result<(), ProtonError> {
+    pub async fn remove(self: Arc<Self>, id: Id) -> Result<(), DraftAttachmentRemoveError> {
         let id: LocalAttachmentId = id.into();
         uniffi_async::<(), RealProtonMailError, _>(async move {
             self.draft.remove_attachment(id).await?;
             Ok(())
         })
-        .await
-        .map_err(ProtonError::from)
+        .await?;
+        Ok(())
     }
 
     /// Remove an attachment from this draft by `content-id`.

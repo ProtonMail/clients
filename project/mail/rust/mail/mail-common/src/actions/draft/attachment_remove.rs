@@ -14,6 +14,7 @@ use mail_action_queue::action::{
 };
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::ProtonMail;
+use mail_core_api::consts::Mail;
 use mail_core_api::service::{ApiErrorInfo, ApiServiceError};
 use mail_core_api::session::Session;
 use mail_core_common::actions::dependency_builder::ActionDependencyKeysBuilder;
@@ -247,20 +248,27 @@ impl AttachmentRemove {
         {
             info!("Deleting {remote_id:?}");
 
-            api.delete_attachment(remote_id)
-                .await
-                .map_err(|e| -> MailContextError {
+            match api.delete_attachment(remote_id).await {
+                Ok(()) => {}
+                Err(e) => {
                     error!("Failed to delete attachment on the server{e}");
                     match e {
+                        ApiServiceError::UnprocessableEntity(
+                            _,
+                            Some(ApiErrorInfo { code, .. }),
+                        ) if code == Mail::AttachmentDoesNotExist as u32 => {
+                            tracing::warn!("Attachment does not exist on server");
+                        }
                         ApiServiceError::UnprocessableEntity(
                             _,
                             Some(ApiErrorInfo {
                                 error: Some(error), ..
                             }),
-                        ) => AttachmentRemoveError::BadRequest(error).into(),
-                        e => e.into(),
+                        ) => return Err(AttachmentRemoveError::BadRequest(error).into()),
+                        e => return Err(e.into()),
                     }
-                })?;
+                }
+            }
         }
 
         // Delete metadata & attachment record

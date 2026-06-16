@@ -162,12 +162,12 @@ impl MailTestContext {
     /// Generate new mock for deleting an attachment on the server.
     ///
     #[function_name::named]
-    pub async fn mock_delete_attachment_failure(&self, attachment_id: AttachmentId) {
+    pub async fn mock_delete_attachment_failure(&self, attachment_id: AttachmentId, code: u32) {
         let path_for_attachment = format!("api/mail/v4/attachments/{attachment_id}");
         Mock::given(method("DELETE"))
             .and(path(path_for_attachment))
             .respond_with(ResponseTemplate::new(422).set_body_json(&ApiErrorInfo {
-                code: 12345,
+                code,
                 error: Some("Something failed".into()),
                 details: None,
             }))

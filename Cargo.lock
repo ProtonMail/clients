@@ -9038,6 +9038,7 @@ dependencies = [
  "payment-core",
  "payment-http",
  "payment-observability",
+ "payment-telemetry",
  "thiserror 2.0.18",
  "tracing",
  "tracing-subscriber",

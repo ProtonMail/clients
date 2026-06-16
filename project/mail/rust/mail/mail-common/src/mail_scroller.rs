@@ -1605,7 +1605,7 @@ where
             .map_err(|e| anyhow!("Failed to reload category view after settings change: {e:?}"))?;
         let current = self.source.read().await.category_view().clone();
 
-        if candidate.available == current.available {
+        if current.did_not_change(&candidate) {
             return Ok(ScrollerUpdate::List(ScrollerListUpdate::None {
                 src,
                 scroller_id: self.scroller_id,

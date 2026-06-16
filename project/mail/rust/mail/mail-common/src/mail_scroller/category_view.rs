@@ -20,6 +20,8 @@ pub const CATEGORY_VIEW_FEATURE_FLAG: &str = "CategoryView";
 pub struct CategoryView {
     pub enabled: Option<LocalLabelId>,
     pub available: Vec<LocalLabelId>,
+    /// Keeps track of the unseen field for all active categories
+    pub unseen: Vec<(LocalLabelId, bool)>,
     pub filter_ids: Vec<LocalLabelId>,
 }
 
@@ -47,7 +49,7 @@ impl CategoryView {
         // `into_labels()` reuse that order without resorting.
         let remote_ids = SystemLabel::category_labels().map(|sl| sl.remote_id());
         let labels = LabelWithCounters::from_remote_ids(&tether, remote_ids).await?;
-        let available = SystemLabel::category_labels()
+        let unseen: Vec<(LocalLabelId, bool)> = SystemLabel::category_labels()
             .into_iter()
             .filter_map(|sl| {
                 let lwc = labels.iter().find(|lwc| {
@@ -58,6 +60,7 @@ impl CategoryView {
                 (sl == SystemLabel::CategoryDefault || lwc.label.display)
                     .then_some(lwc.label.local_id)
                     .flatten()
+                    .map(|id| (id, lwc.last_unseen_message.is_some()))
             })
             .collect();
 
@@ -66,7 +69,8 @@ impl CategoryView {
 
         Ok(Self {
             enabled,
-            available,
+            available: unseen.iter().map(|(id, _)| *id).collect(),
+            unseen,
             filter_ids,
         })
     }
@@ -108,9 +112,10 @@ impl CategoryView {
     ///
     /// **Load scope**: always fetches all [`SystemLabel::category_labels()`] from the DB,
     /// regardless of `self.available`. Labels with `display=false` are excluded from the
-    /// returned `Vec` but their unread counts are folded into
-    /// `CategoryDefault.has_unseen_items` — because disabled categories are binned under
-    /// `CategoryDefault` from the user's perspective.
+    /// returned `Vec` but their unread counts are folded into `CategoryDefault.unread` —
+    /// because disabled categories are binned under `CategoryDefault` from the user's
+    /// perspective. The `has_unseen_items` badge is not aggregated: it reflects only each
+    /// label's own `last_unseen_message`.
     ///
     /// **Output scope**: only labels whose local ID is in `self.available` are returned.
     /// Do not widen `self.available` to include display=false labels — doing so would
@@ -186,6 +191,10 @@ impl CategoryView {
                     .await?
                     .is_some_and(|s| s.mail_category_view)
             })
+    }
+
+    pub fn did_not_change(&self, other: &Self) -> bool {
+        self.unseen == other.unseen
     }
 
     fn watched_tables() -> Vec<String> {

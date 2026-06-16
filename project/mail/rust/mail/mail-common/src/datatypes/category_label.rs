@@ -32,7 +32,7 @@ impl CategoryLabel {
             local_id,
             system_label,
             unread,
-            has_unseen_items: unread > 0,
+            has_unseen_items: lwc.last_unseen_message.is_some(),
             enabled,
         }
     }

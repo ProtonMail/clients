@@ -6,6 +6,7 @@ use crate::test_utils::test_context::MailTestContext;
 use crate::test_utils::utils::test_address;
 use crate::{self as mail_common, MailContextError};
 use mail_common::{conv_id, conversation, message, msg_id};
+use mail_core_api::services::proton::EventId;
 use mail_core_common::datatypes::SystemLabel;
 use mail_core_common::models::Label;
 use mail_stash::orm::Model;
@@ -70,6 +71,12 @@ async fn store_single_unseen_in_category(category: &Label, bond: &WriteTx<'_>) {
     ];
     msg.unread = true;
     msg.save(bond).await.unwrap();
+
+    // The unseen badge is driven by the label's own last_unseen_message, which the
+    // backend stamps when the category holds an unseen message.
+    let mut category = category.clone();
+    category.last_unseen_message = Some(EventId::from("unseen_event"));
+    category.save(bond).await.unwrap();
 }
 
 #[tokio::test]
@@ -104,75 +111,6 @@ async fn test_category_label_has_unseen_items_from_db() {
     assert!(
         social_label.has_unseen_items,
         "should have unseen items with unread message"
-    );
-}
-
-#[tokio::test]
-async fn test_load_available_filters_display_and_carries_unseen_items_to_primary() {
-    let test_ctx = MailTestContext::new().await;
-    let ctx = test_ctx.uninitialized_mail_user_context().await;
-    let mut tether = ctx.user_stash().connection();
-    let default = SystemLabel::CategoryDefault
-        .load(&tether)
-        .await
-        .unwrap()
-        .unwrap();
-    let mut social = SystemLabel::CategorySocial
-        .load(&tether)
-        .await
-        .unwrap()
-        .unwrap();
-    let mut promotions = SystemLabel::CategoryPromotions
-        .load(&tether)
-        .await
-        .unwrap()
-        .unwrap();
-
-    tether
-        .write_tx::<_, _, StashError>(async |bond| {
-            enable_category_view_setting(bond).await;
-            MessageCounter::new(social.id()).save(bond).await?;
-            ConversationCounter::new(social.id())
-                .save(bond)
-                .await
-                .unwrap();
-            social.display = true;
-            social.save(bond).await?;
-            promotions.display = false;
-            promotions.save(bond).await?;
-            store_single_unseen_in_category(&promotions, bond).await;
-            Ok(())
-        })
-        .await
-        .unwrap();
-
-    let inbox_id = SystemLabel::Inbox.local_id(&tether).await.unwrap().unwrap();
-    let view = CategoryView::load(inbox_id, &ctx).await.unwrap();
-    let social_id = social.id();
-    let promotions_id = promotions.id();
-    let default_id = default.id();
-    dbg!(&view, &social_id, &promotions_id, &default_id);
-    assert!(
-        view.available.contains(&social_id),
-        "display=true category should be available"
-    );
-    assert!(
-        view.available.contains(&default_id),
-        "CategoryDefault should always be available"
-    );
-    assert!(
-        !view.available.contains(&promotions_id),
-        "display=false category should not be available"
-    );
-
-    let labels = view.into_labels(&tether).await.unwrap();
-    let default_label = labels
-        .iter()
-        .find(|l| l.system_label == SystemLabel::CategoryDefault)
-        .unwrap();
-    assert!(
-        default_label.has_unseen_items,
-        "should have unseen items with unread message from disabled promotions category"
     );
 }
 

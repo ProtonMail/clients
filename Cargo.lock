@@ -9110,6 +9110,7 @@ dependencies = [
  "payment-core",
  "payment-http",
  "payment-observability",
+ "payment-telemetry",
  "ratatui 0.29.0",
  "serde_json",
  "tokio",

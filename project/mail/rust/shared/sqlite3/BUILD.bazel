@@ -1,5 +1,5 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test", "rust_test_suite")
 
 rust_library(
     name = "mail-sqlite3",
@@ -12,6 +12,29 @@ rust_library(
     deps = all_crate_deps(
         normal = True,
     ) + [
+        "//project/mail/rust/shared/stash:mail-stash",
+    ],
+)
+
+rust_test(
+    name = "mail-sqlite3-test",
+    size = "small",
+    compile_data = glob(["tests/migrations/**"]),
+    crate = ":mail-sqlite3",
+    deps = all_crate_deps(normal_dev = True) + [
+        "//project/mail/rust/shared/stash:mail-stash",
+    ],
+)
+
+rust_test_suite(
+    name = "mail-sqlite3-test-suite",
+    size = "small",
+    srcs = glob(["tests/**/*.rs"]),
+    deps = all_crate_deps(
+        normal = True,
+        normal_dev = True,
+    ) + [
+        ":mail-sqlite3",
         "//project/mail/rust/shared/stash:mail-stash",
     ],
 )

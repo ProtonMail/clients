@@ -1,5 +1,5 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_doc_test", "rust_library", "rust_test")
 
 rust_library(
     name = "mail-uniffi-runtime",
@@ -12,4 +12,10 @@ rust_library(
     deps = all_crate_deps(
         normal = True,
     ),
+)
+
+rust_doc_test(
+    name = "mail-uniffi-runtime-doc-test",
+    size = "small",
+    crate = ":mail-uniffi-runtime",
 )

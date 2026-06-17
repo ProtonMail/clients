@@ -122,12 +122,11 @@ impl TextDecorator for Decorator {
 #[cfg(test)]
 mod test {
     use super::*;
-    use std::fs;
     use std::io::Cursor;
 
     #[test]
     fn with_decorate_links() {
-        let input = fs::read_to_string("src/tests/html/smoke.html").unwrap();
+        let input = include_str!("tests/html/smoke.html");
 
         let output = html2text(
             Cursor::new(input),
@@ -143,7 +142,7 @@ mod test {
 
     #[test]
     fn without_decorate_links() {
-        let input = fs::read_to_string("src/tests/html/smoke.html").unwrap();
+        let input = include_str!("tests/html/smoke.html");
 
         let output = html2text(
             Cursor::new(input),
@@ -159,7 +158,7 @@ mod test {
 
     #[test]
     fn decorate_image_blocks_disabled() {
-        let input = fs::read_to_string("src/tests/html/signature.html").unwrap();
+        let input = include_str!("tests/html/signature.html");
         let output = html2text(
             Cursor::new(input),
             Html2TextOptions {
@@ -173,7 +172,7 @@ mod test {
 
     #[test]
     fn decorate_image_blocks_enabled() {
-        let input = fs::read_to_string("src/tests/html/signature.html").unwrap();
+        let input = include_str!("tests/html/signature.html");
         let output = html2text(
             Cursor::new(input),
             Html2TextOptions {
@@ -187,7 +186,7 @@ mod test {
 
     #[test]
     fn newsletter_convert() {
-        let input = fs::read_to_string("src/tests/html/newsletter.html").unwrap();
+        let input = include_str!("tests/html/newsletter.html");
         let output = html2text(
             Cursor::new(input),
             Html2TextOptions {

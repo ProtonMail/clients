@@ -1,5 +1,5 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 
 rust_library(
     name = "mail-labels-common",
@@ -22,4 +22,22 @@ rust_library(
         "//project/mail/rust/shared/sqlite3:mail-sqlite3",
         "//project/mail/rust/shared/stash:mail-stash",
     ],
+)
+
+rust_test(
+    name = "mail-labels-common-test",
+    size = "small",
+    crate = ":mail-labels-common",
+    crate_features = [
+        "test-utils",
+        "mail-core-api/mocks",
+    ],
+    edition = "2024",
+    proc_macro_deps = all_crate_deps(
+        proc_macro_dev = True,
+    ),
+    tags = ["manual"],
+    deps = all_crate_deps(
+        normal_dev = True,
+    ),
 )

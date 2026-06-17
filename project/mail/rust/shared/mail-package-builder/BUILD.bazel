@@ -1,0 +1,21 @@
+load("@rules_rust//rust:defs.bzl", "rust_library")
+
+rust_library(
+    name = "mail-package-builder",
+    srcs = glob(["src/**/*.rs"]),
+    edition = "2024",
+    proc_macro_deps = [
+        "@crate_index//:async-trait",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//project/mail/rust/crypto/crypto-inbox:mail-crypto-inbox",
+        "//project/mail/rust/mail/mail-api",
+        "//project/mail/rust/mail/mail-html-transformer",
+        "//project/mail/rust/shared/mail-proton-ids",
+        "@crate_index//:proton-crypto-account",
+        "@crate_index//:secrecy",
+        "@crate_index//:thiserror",
+        "@crate_index//:tracing",
+    ],
+)

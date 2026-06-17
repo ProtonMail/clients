@@ -1,5 +1,5 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 
 rust_library(
     name = "mail-core-api",
@@ -31,4 +31,31 @@ rust_library(
         "//project/mail/rust/shared/task-service:mail-task-service",
         "@crate_index//:mail-muon",
     ],
+)
+
+rust_test(
+    name = "mail-core-api-test",
+    size = "small",
+    crate = ":mail-core-api",
+    edition = "2024",
+    proc_macro_deps = all_crate_deps(
+        proc_macro_dev = True,
+    ),
+    deps = all_crate_deps(
+        normal_dev = True,
+    ),
+)
+
+rust_test(
+    name = "mail-core-api-core-events-test",
+    size = "small",
+    srcs = ["tests/core_events.rs"],
+    compile_data = ["tests/event.json"],
+    crate_name = "core_events",
+    data = glob(["tests/**/*.snap"]),
+    env = {"INSTA_WORKSPACE_ROOT": "."},
+    deps = all_crate_deps(
+        normal = True,
+        normal_dev = True,
+    ) + [":mail-core-api"],
 )

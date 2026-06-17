@@ -1,5 +1,5 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 
 rust_library(
     name = "mail-contacts-common",
@@ -19,6 +19,7 @@ rust_library(
     ) + [
         "//project/contact/rust/contact-avatar",
         "//project/contact/rust/contact-database",
+        "//project/contact/rust/contact-device",
         "//project/contact/rust/contact-lattice",
         "//project/contact/rust/contact-list",
         "//project/contact/rust/contact-service",
@@ -38,4 +39,19 @@ rust_library(
         "//project/mail/rust/shared/stash:mail-stash",
         "//project/mail/rust/shared/vcard:mail-vcard",
     ],
+)
+
+rust_test(
+    name = "mail-contacts-common-test",
+    size = "small",
+    crate = ":mail-contacts-common",
+    crate_features = ["test-utils"],
+    edition = "2024",
+    proc_macro_deps = all_crate_deps(
+        proc_macro_dev = True,
+    ),
+    tags = ["manual"],
+    deps = all_crate_deps(
+        normal_dev = True,
+    ),
 )

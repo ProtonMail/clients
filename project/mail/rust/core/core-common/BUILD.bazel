@@ -1,5 +1,35 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
+
+_MAIL_CORE_COMMON_DEPS = [
+    "//project/contact/rust/contact-avatar",
+    "//project/core/rust/core-event-loop",
+    "//project/core/rust/lattice",
+    "//project/mail/rust/account/account-api:mail-account-api",
+    "//project/mail/rust/api/mail-api-labels",
+    "//project/mail/rust/api/mail-api-session",
+    "//project/mail/rust/contacts/contacts-api:mail-contacts-api",
+    "//project/mail/rust/contacts/contacts-common:mail-contacts-common",
+    "//project/mail/rust/core/core-api:mail-core-api",
+    "//project/mail/rust/core/core-key-manager:mail-core-key-manager",
+    "//project/mail/rust/core/labels-common:mail-labels-common",
+    "//project/mail/rust/crypto/crypto-notifications:mail-crypto-notifications",
+    "//project/mail/rust/crypto/crypto-pin-hash:mail-crypto-pin-hash",
+    "//project/mail/rust/shared/action-queue:mail-action-queue",
+    "//project/mail/rust/shared/api-utils:mail-api-utils",
+    "//project/mail/rust/shared/event-service:mail-event-service",
+    "//project/mail/rust/shared/issue-reporter-service:mail-issue-reporter-service",
+    "//project/mail/rust/shared/log-service:mail-log-service",
+    "//project/mail/rust/shared/mail-local-id",
+    "//project/mail/rust/shared/network-monitor-service:mail-network-monitor-service",
+    "//project/mail/rust/shared/observability:mail-observability",
+    "//project/mail/rust/shared/shared-types:mail-shared-types",
+    "//project/mail/rust/shared/sqlite3:mail-sqlite3",
+    "//project/mail/rust/shared/stash:mail-stash",
+    "//project/mail/rust/shared/task-service:mail-task-service",
+    "//project/mail/rust/shared/telemetry-service:mail-telemetry",
+    "//project/mail/rust/shared/vcard:mail-vcard",
+]
 
 rust_library(
     name = "mail-core-common",
@@ -19,33 +49,36 @@ rust_library(
     visibility = ["//visibility:public"],
     deps = all_crate_deps(
         normal = True,
-    ) + [
-        "//project/contact/rust/contact-avatar",
-        "//project/core/rust/core-event-loop",
-        "//project/core/rust/lattice",
-        "//project/mail/rust/account/account-api:mail-account-api",
-        "//project/mail/rust/api/mail-api-labels",
-        "//project/mail/rust/api/mail-api-session",
-        "//project/mail/rust/contacts/contacts-api:mail-contacts-api",
-        "//project/mail/rust/contacts/contacts-common:mail-contacts-common",
-        "//project/mail/rust/core/core-api:mail-core-api",
-        "//project/mail/rust/core/core-key-manager:mail-core-key-manager",
-        "//project/mail/rust/core/labels-common:mail-labels-common",
-        "//project/mail/rust/crypto/crypto-notifications:mail-crypto-notifications",
-        "//project/mail/rust/crypto/crypto-pin-hash:mail-crypto-pin-hash",
-        "//project/mail/rust/shared/action-queue:mail-action-queue",
-        "//project/mail/rust/shared/api-utils:mail-api-utils",
-        "//project/mail/rust/shared/event-service:mail-event-service",
-        "//project/mail/rust/shared/issue-reporter-service:mail-issue-reporter-service",
-        "//project/mail/rust/shared/log-service:mail-log-service",
-        "//project/mail/rust/shared/mail-local-id",
-        "//project/mail/rust/shared/network-monitor-service:mail-network-monitor-service",
-        "//project/mail/rust/shared/observability:mail-observability",
-        "//project/mail/rust/shared/shared-types:mail-shared-types",
-        "//project/mail/rust/shared/sqlite3:mail-sqlite3",
-        "//project/mail/rust/shared/stash:mail-stash",
-        "//project/mail/rust/shared/task-service:mail-task-service",
-        "//project/mail/rust/shared/telemetry-service:mail-telemetry",
-        "//project/mail/rust/shared/vcard:mail-vcard",
-    ],
+    ) + _MAIL_CORE_COMMON_DEPS,
+)
+
+rust_test(
+    name = "mail-core-common-test",
+    size = "small",
+    crate = ":mail-core-common",
+    crate_features = ["test-utils"],
+    edition = "2024",
+    proc_macro_deps = all_crate_deps(
+        proc_macro_dev = True,
+    ),
+    tags = ["manual"],
+    deps = all_crate_deps(
+        normal_dev = True,
+    ),
+)
+
+rust_test(
+    name = "mail-core-common-integration-tests",
+    size = "small",
+    srcs = glob(["tests/**/*.rs"]),
+    crate_root = "tests/acceptance.rs",
+    proc_macro_deps = all_crate_deps(
+        proc_macro = True,
+        proc_macro_dev = True,
+    ),
+    tags = ["manual"],
+    deps = all_crate_deps(
+        normal = True,
+        normal_dev = True,
+    ) + [":mail-core-common"] + _MAIL_CORE_COMMON_DEPS,
 )

@@ -1,5 +1,33 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
+
+_MAIL_COMMON_DEPS = [
+    "//project/core/rust/core-event-loop",
+    "//project/mail/rust/account/account-api:mail-account-api",
+    "//project/mail/rust/api/mail-api-labels",
+    "//project/mail/rust/calendar/calendar-api:mail-calendar-api-v1",
+    "//project/mail/rust/calendar/calendar-common:mail-calendar-common",
+    "//project/mail/rust/contacts/contacts-common:mail-contacts-common",
+    "//project/mail/rust/core/core-api:mail-core-api",
+    "//project/mail/rust/core/core-common:mail-core-common",
+    "//project/mail/rust/crypto/crypto-inbox:mail-crypto-inbox",
+    "//project/mail/rust/mail/mail-api",
+    "//project/mail/rust/mail/mail-html-transformer",
+    "//project/mail/rust/mail/mail-search",
+    "//project/mail/rust/shared/action-queue:mail-action-queue",
+    "//project/mail/rust/shared/canonical-email:mail-canonical-email",
+    "//project/mail/rust/shared/issue-reporter-service:mail-issue-reporter-service",
+    "//project/mail/rust/shared/log-service:mail-log-service",
+    "//project/mail/rust/shared/mail-local-id",
+    "//project/mail/rust/shared/mail-package-builder:mail-package-builder",
+    "//project/mail/rust/shared/mailto:mail-mailto",
+    "//project/mail/rust/shared/network-monitor-service:mail-network-monitor-service",
+    "//project/mail/rust/shared/observability:mail-observability",
+    "//project/mail/rust/shared/sqlite3:mail-sqlite3",
+    "//project/mail/rust/shared/stash:mail-stash",
+    "//project/mail/rust/shared/task-service:mail-task-service",
+    "//project/mail/rust/shared/telemetry-service:mail-telemetry",
+]
 
 rust_library(
     name = "mail-common",
@@ -19,30 +47,45 @@ rust_library(
     visibility = ["//visibility:public"],
     deps = all_crate_deps(
         normal = True,
+    ) + _MAIL_COMMON_DEPS,
+)
+
+rust_test(
+    name = "mail-common-test",
+    size = "small",
+    crate = ":mail-common",
+    crate_features = ["test-utils"],
+    data = glob(["src/**/*.snap"]),
+    edition = "2024",
+    env = {"INSTA_WORKSPACE_ROOT": "."},
+    proc_macro_deps = all_crate_deps(
+        proc_macro_dev = True,
+    ),
+    tags = ["manual"],
+    deps = all_crate_deps(
+        normal_dev = True,
+    ),
+)
+
+rust_test(
+    name = "mail-common-integration-tests",
+    size = "small",
+    srcs = glob(["tests/**/*.rs"]),
+    crate_root = "tests/acceptance.rs",
+    data = glob([
+        "tests/**/*.snap",
+        "tests/**/fixtures/**",
+    ]),
+    env = {"INSTA_WORKSPACE_ROOT": "."},
+    proc_macro_deps = all_crate_deps(
+        proc_macro = True,
+        proc_macro_dev = True,
     ) + [
-        "//project/core/rust/core-event-loop",
-        "//project/mail/rust/account/account-api:mail-account-api",
-        "//project/mail/rust/api/mail-api-labels",
-        "//project/mail/rust/calendar/calendar-api:mail-calendar-api-v1",
-        "//project/mail/rust/calendar/calendar-common:mail-calendar-common",
-        "//project/mail/rust/contacts/contacts-common:mail-contacts-common",
-        "//project/mail/rust/core/core-api:mail-core-api",
-        "//project/mail/rust/core/core-common:mail-core-common",
-        "//project/mail/rust/crypto/crypto-inbox:mail-crypto-inbox",
-        "//project/mail/rust/mail/mail-api",
-        "//project/mail/rust/mail/mail-html-transformer",
-        "//project/mail/rust/mail/mail-search",
-        "//project/mail/rust/shared/action-queue:mail-action-queue",
-        "//project/mail/rust/shared/canonical-email:mail-canonical-email",
-        "//project/mail/rust/shared/issue-reporter-service:mail-issue-reporter-service",
-        "//project/mail/rust/shared/log-service:mail-log-service",
-        "//project/mail/rust/shared/mail-local-id",
-        "//project/mail/rust/shared/mailto:mail-mailto",
-        "//project/mail/rust/shared/network-monitor-service:mail-network-monitor-service",
-        "//project/mail/rust/shared/observability:mail-observability",
-        "//project/mail/rust/shared/sqlite3:mail-sqlite3",
-        "//project/mail/rust/shared/stash:mail-stash",
-        "//project/mail/rust/shared/task-service:mail-task-service",
-        "//project/mail/rust/shared/telemetry-service:mail-telemetry",
+        "//project/mail/rust/mail/mail-common-derive:mail-common-derive",
     ],
+    tags = ["manual"],
+    deps = all_crate_deps(
+        normal = True,
+        normal_dev = True,
+    ) + [":mail-common"] + _MAIL_COMMON_DEPS,
 )

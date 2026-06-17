@@ -1,5 +1,5 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_proc_macro")
+load("@rules_rust//rust:defs.bzl", "rust_doc_test", "rust_library", "rust_proc_macro")
 
 rust_proc_macro(
     name = "mail-uniffi-macros",
@@ -9,4 +9,10 @@ rust_proc_macro(
     deps = all_crate_deps(
         normal = True,
     ),
+)
+
+rust_doc_test(
+    name = "mail-uniffi-macros-doc-test",
+    size = "small",
+    crate = ":mail-uniffi-macros",
 )

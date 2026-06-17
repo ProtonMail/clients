@@ -1,5 +1,5 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_doc_test", "rust_library", "rust_test", "rust_test_suite")
 
 rust_library(
     name = "mail-ical",
@@ -12,6 +12,47 @@ rust_library(
     deps = all_crate_deps(
         normal = True,
     ) + [
+        "//project/mail/rust/shared/ical-tz:mail-ical-tz",
+    ],
+)
+
+rust_test(
+    name = "mail-ical-test",
+    size = "small",
+    crate = ":mail-ical",
+    proc_macro_deps = all_crate_deps(proc_macro_dev = True),
+    deps = all_crate_deps(normal_dev = True),
+)
+
+rust_doc_test(
+    name = "mail-ical-doc-test",
+    size = "small",
+    crate = ":mail-ical",
+    proc_macro_deps = all_crate_deps(proc_macro_dev = True),
+    deps = all_crate_deps(
+        normal = True,
+        normal_dev = True,
+    ) + ["//project/mail/rust/shared/ical-tz:mail-ical-tz"],
+)
+
+rust_test_suite(
+    name = "mail-ical-integration-tests",
+    size = "small",
+    srcs = glob(["tests/**/*.rs"]),
+    data = glob([
+        "tests/**/*.snap",
+        "tests/**/*.ics",
+    ]),
+    env = {"INSTA_WORKSPACE_ROOT": "."},
+    proc_macro_deps = all_crate_deps(
+        proc_macro = True,
+        proc_macro_dev = True,
+    ),
+    deps = all_crate_deps(
+        normal = True,
+        normal_dev = True,
+    ) + [
+        ":mail-ical",
         "//project/mail/rust/shared/ical-tz:mail-ical-tz",
     ],
 )

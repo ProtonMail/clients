@@ -26,10 +26,10 @@ impl DateTime<AnyForm> {
     pub(crate) fn validate(&self, cal: &VCalendar) -> Vec<DateTimeViolation> {
         let mut viols = Vec::new();
 
-        if let AnyForm::Tz(tzid) = &self.form {
-            if !cal.timezones.iter().any(|tz| tz.tzid.value == tzid.value) {
-                viols.push(DateTimeViolation::UnknownTimeZone(tzid.value.clone()));
-            }
+        if let AnyForm::Tz(tzid) = &self.form
+            && !cal.timezones.iter().any(|tz| tz.tzid.value == tzid.value)
+        {
+            viols.push(DateTimeViolation::UnknownTimeZone(tzid.value.clone()));
         }
 
         viols
@@ -77,12 +77,11 @@ impl TryFrom<DateTime<AnyForm>> for JiffZoned {
                 let result = dt.in_tz(tz.value.as_str());
 
                 // TODO use let-chains once we bump php-ical to a newer toolchain
-                if result.is_err() {
-                    if let Some(tz) = mail_ical_tz::windows_to_tzdb(tz.value.as_str()) {
-                        if let Ok(this) = dt.in_tz(tz) {
-                            return Ok(this);
-                        }
-                    }
+                if result.is_err()
+                    && let Some(tz) = mail_ical_tz::windows_to_tzdb(tz.value.as_str())
+                    && let Ok(this) = dt.in_tz(tz)
+                {
+                    return Ok(this);
                 }
 
                 result.map_err(Into::into)

@@ -1,5 +1,5 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_doc_test", "rust_library", "rust_test")
 
 rust_library(
     name = "mail-search",
@@ -19,4 +19,23 @@ rust_library(
         "//project/mail/rust/shared/stash:mail-stash",
         "//project/mail/rust/shared/task-service:mail-task-service",
     ],
+)
+
+rust_test(
+    name = "mail-search-test",
+    size = "small",
+    crate = ":mail-search",
+    edition = "2024",
+    proc_macro_deps = all_crate_deps(
+        proc_macro_dev = True,
+    ),
+    deps = all_crate_deps(
+        normal_dev = True,
+    ),
+)
+
+rust_doc_test(
+    name = "mail-search-doc-test",
+    size = "small",
+    crate = ":mail-search",
 )

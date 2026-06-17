@@ -1,5 +1,5 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_doc_test", "rust_library", "rust_test")
 
 rust_library(
     name = "mail-network-monitor-service",
@@ -16,4 +16,19 @@ rust_library(
         "//project/mail/rust/shared/task-service:mail-task-service",
         "@crate_index//:mail-muon",
     ],
+)
+
+rust_test(
+    name = "mail-network-monitor-service-test",
+    size = "small",
+    crate = ":mail-network-monitor-service",
+    deps = all_crate_deps(normal_dev = True) + [
+        "//project/mail/rust/shared/task-service:mail-task-service",
+    ],
+)
+
+rust_doc_test(
+    name = "mail-network-monitor-service-doc-test",
+    size = "small",
+    crate = ":mail-network-monitor-service",
 )

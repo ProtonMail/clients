@@ -1,5 +1,5 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 
 rust_library(
     name = "mail-api-session",
@@ -25,4 +25,12 @@ rust_library(
         "//project/mail/rust/shared/task-service:mail-task-service",
         "@crate_index//:mail-muon",
     ],
+)
+
+rust_test(
+    name = "mail-api-session-test",
+    size = "small",
+    crate = ":mail-api-session",
+    proc_macro_deps = all_crate_deps(proc_macro_dev = True),
+    deps = all_crate_deps(normal_dev = True),
 )

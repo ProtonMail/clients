@@ -1,5 +1,5 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 
 rust_library(
     name = "mail-vcard",
@@ -12,4 +12,11 @@ rust_library(
     deps = all_crate_deps(
         normal = True,
     ),
+)
+
+rust_test(
+    name = "mail-vcard-test",
+    size = "small",
+    crate = ":mail-vcard",
+    deps = all_crate_deps(normal_dev = True),
 )

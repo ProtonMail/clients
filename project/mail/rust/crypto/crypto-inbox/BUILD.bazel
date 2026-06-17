@@ -1,5 +1,5 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_doc_test", "rust_library", "rust_test", "rust_test_suite")
 
 rust_library(
     name = "mail-crypto-inbox",
@@ -15,4 +15,31 @@ rust_library(
     ) + [
         "//project/mail/rust/crypto/crypto-inbox-mime:mail-crypto-inbox-mime",
     ],
+)
+
+rust_test(
+    name = "mail-crypto-inbox-test",
+    size = "small",
+    crate = ":mail-crypto-inbox",
+    deps = all_crate_deps(normal_dev = True),
+)
+
+rust_test_suite(
+    name = "mail-crypto-inbox-integration-tests",
+    size = "small",
+    srcs = glob(["tests/**/*.rs"]),
+    shared_srcs = ["tests/common.rs"],
+    deps = all_crate_deps(
+        normal = True,
+        normal_dev = True,
+    ) + [
+        ":mail-crypto-inbox",
+        "//project/mail/rust/crypto/crypto-inbox-mime:mail-crypto-inbox-mime",
+    ],
+)
+
+rust_doc_test(
+    name = "mail-crypto-inbox-doc-test",
+    size = "small",
+    crate = ":mail-crypto-inbox",
 )

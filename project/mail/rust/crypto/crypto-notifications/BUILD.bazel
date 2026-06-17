@@ -1,5 +1,5 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test", "rust_test_suite")
 
 rust_library(
     name = "mail-crypto-notifications",
@@ -12,4 +12,14 @@ rust_library(
     deps = all_crate_deps(
         normal = True,
     ),
+)
+
+rust_test_suite(
+    name = "mail-crypto-notifications-integration-tests",
+    size = "small",
+    srcs = glob(["tests/**/*.rs"]),
+    deps = all_crate_deps(
+        normal = True,
+        normal_dev = True,
+    ) + [":mail-crypto-notifications"],
 )

@@ -264,10 +264,10 @@ impl<'a> IcsReader<'a> {
                 buf[idx] = self.byte()?;
             }
 
-            if let Some(ch) = buf.utf8_chunks().next() {
-                if let Some(ch) = ch.valid().chars().next() {
-                    break Some(ch);
-                }
+            if let Some(ch) = buf.utf8_chunks().next()
+                && let Some(ch) = ch.valid().chars().next()
+            {
+                break Some(ch);
             }
 
             self.warn(Span::new(pos, self.pos), "invalid unicode character");

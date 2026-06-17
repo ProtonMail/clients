@@ -1,6 +1,6 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
 load("@rules_rust//cargo:defs.bzl", "cargo_build_script", "cargo_toml_env_vars")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 
 exports_files(["uniffi.toml"])
 
@@ -62,4 +62,17 @@ rust_library(
         "//project/mail/rust/uniffi/uniffi-runtime:mail-uniffi-runtime",
         "@crate_index//:mail-muon",
     ],
+)
+
+rust_test(
+    name = "mail-uniffi-test",
+    size = "small",
+    crate = ":mail-uniffi",
+    edition = "2024",
+    proc_macro_deps = all_crate_deps(
+        proc_macro_dev = True,
+    ),
+    deps = all_crate_deps(
+        normal_dev = True,
+    ),
 )

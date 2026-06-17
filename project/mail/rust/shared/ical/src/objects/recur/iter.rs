@@ -346,25 +346,25 @@ impl RecurIterator {
             return Some(*next);
         }
 
-        if let Some(picker) = &mut self.picker {
-            if let Some(next) = picker.pull() {
-                return Some(next);
-            }
+        if let Some(picker) = &mut self.picker
+            && let Some(next) = picker.pull()
+        {
+            return Some(next);
         }
 
         loop {
             let next = self.fact.next_occur_of(&self.curr).ok()?;
 
-            if let (Some(picker), Some(repeat)) = (&mut self.picker, &mut self.repeat) {
-                if next >= *repeat {
-                    *repeat = Fact::next_instance_of(&self.start, self.freq, self.interval, &next)
-                        .ok()?;
+            if let (Some(picker), Some(repeat)) = (&mut self.picker, &mut self.repeat)
+                && next >= *repeat
+            {
+                *repeat =
+                    Fact::next_instance_of(&self.start, self.freq, self.interval, &next).ok()?;
 
-                    picker.close();
+                picker.close();
 
-                    if let Some(next) = picker.pull() {
-                        return Some(next);
-                    }
+                if let Some(next) = picker.pull() {
+                    return Some(next);
                 }
             }
 
@@ -408,10 +408,10 @@ impl Iterator for RecurIterator {
     type Item = JiffZoned;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(count) = self.count {
-            if self.emitted >= count {
-                return None;
-            }
+        if let Some(count) = self.count
+            && self.emitted >= count
+        {
+            return None;
         }
 
         let curr = loop {
@@ -431,19 +431,19 @@ impl Iterator for RecurIterator {
             //
             // This is basically the same condition as above, but adjusted for
             // fast-forwarding.
-            if let Some(since) = &self.since {
-                if curr < **since {
-                    continue;
-                }
+            if let Some(since) = &self.since
+                && curr < **since
+            {
+                continue;
             }
 
             break curr;
         };
 
-        if let Some(until) = &self.until {
-            if curr > **until {
-                return None;
-            }
+        if let Some(until) = &self.until
+            && curr > **until
+        {
+            return None;
         }
 
         self.emitted += 1;

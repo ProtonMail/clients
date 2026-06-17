@@ -1,5 +1,5 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 
 rust_library(
     name = "mail-historic-ephemeral-load",
@@ -24,5 +24,27 @@ rust_library(
         "//project/mail/rust/mail/mail-search",
         "//project/mail/rust/shared/action-queue:mail-action-queue",
         "//project/mail/rust/shared/stash:mail-stash",
+    ],
+)
+
+rust_test(
+    name = "mail-historic-ephemeral-load-test",
+    size = "small",
+    crate = ":mail-historic-ephemeral-load",
+    crate_features = [
+        "mail-api/mocks",
+        "mail-common/foundation_search",
+        "mail-core-api/sql",
+    ],
+    edition = "2024",
+    proc_macro_deps = all_crate_deps(
+        proc_macro_dev = True,
+    ),
+    tags = ["manual"],
+    deps = all_crate_deps(
+        normal_dev = True,
+    ) + [
+        "//project/mail/rust/core/core-common:mail-core-common",
+        "//project/mail/rust/shared/task-service:mail-task-service",
     ],
 )

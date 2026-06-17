@@ -285,7 +285,7 @@ fn with_microsoft_timezone_display_name() {
 #[test_case("whitespaces")]
 fn atypical_case(name: &str) {
     let dir = Path::new("acceptance").join("atypical-cases").join(name);
-    let src = fs::read(Path::new("tests").join(&dir).join("input.ics")).unwrap();
+    let src = fs::read(tests_dir().join(&dir).join("input.ics")).unwrap();
     let cal = VCalendar::from_bytes(&src).unwrap();
 
     let output = {
@@ -327,6 +327,21 @@ fn atypical_case(name: &str) {
     cfg.bind(|| {
         assert_snapshot!("output", output);
     });
+}
+
+/// Locate the crate's `tests/` directory.
+///
+/// Under `cargo test` the fixtures live next to this file, reachable via
+/// `CARGO_MANIFEST_DIR`. Under Bazel that compile-time path is gone at
+/// runtime, but the fixtures are staged in the runfiles tree at the package
+/// path relative to the working directory.
+fn tests_dir() -> std::path::PathBuf {
+    let from_manifest = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests");
+    if from_manifest.is_dir() {
+        from_manifest
+    } else {
+        Path::new("project/mail/rust/shared/ical/tests").to_path_buf()
+    }
 }
 
 #[track_caller]

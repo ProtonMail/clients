@@ -1,5 +1,5 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_doc_test", "rust_library")
 
 rust_library(
     name = "mail-proton-ids",
@@ -15,4 +15,10 @@ rust_library(
     ) + [
         "//project/mail/rust/shared/stash:mail-stash",
     ],
+)
+
+rust_doc_test(
+    name = "mail-proton-ids-doc-test",
+    size = "small",
+    crate = ":mail-proton-ids",
 )

@@ -1,5 +1,5 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 
 rust_library(
     name = "mail-account-ids",
@@ -16,4 +16,17 @@ rust_library(
         "//project/mail/rust/shared/mail-proton-ids",
         "//project/mail/rust/shared/stash:mail-stash",
     ],
+)
+
+rust_test(
+    name = "mail-account-ids-test",
+    size = "small",
+    crate = ":mail-account-ids",
+    edition = "2024",
+    proc_macro_deps = all_crate_deps(
+        proc_macro_dev = True,
+    ),
+    deps = all_crate_deps(
+        normal_dev = True,
+    ),
 )

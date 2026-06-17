@@ -1,5 +1,5 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 
 rust_library(
     name = "mail-crypto-contact-keys",
@@ -14,4 +14,11 @@ rust_library(
     ) + [
         "//project/mail/rust/shared/vcard:mail-vcard",
     ],
+)
+
+rust_test(
+    name = "mail-crypto-contact-keys-test",
+    size = "small",
+    crate = ":mail-crypto-contact-keys",
+    deps = all_crate_deps(normal_dev = True),
 )

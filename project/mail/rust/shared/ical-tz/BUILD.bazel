@@ -1,6 +1,6 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
 load("@rules_rust//cargo:defs.bzl", "cargo_build_script")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 
 cargo_build_script(
     name = "build_script",
@@ -25,4 +25,11 @@ rust_library(
     ) + [
         ":build_script",
     ],
+)
+
+rust_test(
+    name = "mail-ical-tz-test",
+    size = "small",
+    crate = ":mail-ical-tz",
+    deps = all_crate_deps(normal_dev = True),
 )

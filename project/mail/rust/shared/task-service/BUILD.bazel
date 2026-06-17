@@ -1,5 +1,5 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_doc_test", "rust_library", "rust_test")
 
 rust_library(
     name = "mail-task-service",
@@ -14,4 +14,17 @@ rust_library(
     ) + [
         "@crate_index//:mail-muon",
     ],
+)
+
+rust_test(
+    name = "mail-task-service-test",
+    size = "small",
+    crate = ":mail-task-service",
+    deps = all_crate_deps(normal_dev = True),
+)
+
+rust_doc_test(
+    name = "mail-task-service-doc-test",
+    size = "small",
+    crate = ":mail-task-service",
 )

@@ -1,5 +1,5 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_doc_test", "rust_library", "rust_test")
 
 rust_library(
     name = "mail-html-transformer",
@@ -13,4 +13,38 @@ rust_library(
     deps = all_crate_deps(
         normal = True,
     ),
+)
+
+rust_test(
+    name = "mail-html-transformer-test",
+    size = "small",
+    compile_data = glob([
+        "src/**/*.html",
+        "tests/htmls/**/*.html",
+        "benches/*.html",
+    ]),
+    crate = ":mail-html-transformer",
+    data = glob(["src/**/*.snap"]),
+    env = {"INSTA_WORKSPACE_ROOT": "."},
+    proc_macro_deps = all_crate_deps(proc_macro_dev = True),
+    deps = all_crate_deps(normal_dev = True),
+)
+
+rust_test(
+    name = "mail-html-transformer-et-1207-test",
+    size = "small",
+    srcs = ["tests/et-1207.rs"],
+    crate_name = "et_1207",
+    data = glob(["tests/**/*.snap"]),
+    env = {"INSTA_WORKSPACE_ROOT": "."},
+    deps = all_crate_deps(
+        normal = True,
+        normal_dev = True,
+    ) + [":mail-html-transformer"],
+)
+
+rust_doc_test(
+    name = "mail-html-transformer-doc",
+    size = "small",
+    crate = ":mail-html-transformer",
 )

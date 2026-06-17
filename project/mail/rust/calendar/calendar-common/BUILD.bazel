@@ -1,5 +1,15 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
+
+_MAIL_CALENDAR_COMMON_DEPS = [
+    "//project/mail/rust/calendar/calendar-api:mail-calendar-api-v1",
+    "//project/mail/rust/core/core-api:mail-core-api",
+    "//project/mail/rust/core/core-common:mail-core-common",
+    "//project/mail/rust/crypto/crypto-calendar:mail-crypto-calendar",
+    "//project/mail/rust/shared/canonical-email:mail-canonical-email",
+    "//project/mail/rust/shared/ical:mail-ical",
+    "//project/mail/rust/shared/network-monitor-service:mail-network-monitor-service",
+]
 
 rust_library(
     name = "mail-calendar-common",
@@ -11,13 +21,34 @@ rust_library(
     visibility = ["//visibility:public"],
     deps = all_crate_deps(
         normal = True,
-    ) + [
-        "//project/mail/rust/calendar/calendar-api:mail-calendar-api-v1",
-        "//project/mail/rust/core/core-api:mail-core-api",
-        "//project/mail/rust/core/core-common:mail-core-common",
-        "//project/mail/rust/crypto/crypto-calendar:mail-crypto-calendar",
-        "//project/mail/rust/shared/canonical-email:mail-canonical-email",
-        "//project/mail/rust/shared/ical:mail-ical",
-        "//project/mail/rust/shared/network-monitor-service:mail-network-monitor-service",
-    ],
+    ) + _MAIL_CALENDAR_COMMON_DEPS,
+)
+
+rust_test(
+    name = "mail-calendar-common-test",
+    size = "small",
+    crate = ":mail-calendar-common",
+    edition = "2024",
+    proc_macro_deps = all_crate_deps(
+        proc_macro_dev = True,
+    ),
+    deps = all_crate_deps(
+        normal_dev = True,
+    ),
+)
+
+rust_test(
+    name = "mail-calendar-common-integration-tests",
+    size = "small",
+    srcs = glob(["tests/**/*.rs"]),
+    crate_root = "tests/rsvp.rs",
+    proc_macro_deps = all_crate_deps(
+        proc_macro = True,
+        proc_macro_dev = True,
+    ),
+    tags = ["manual"],
+    deps = all_crate_deps(
+        normal = True,
+        normal_dev = True,
+    ) + [":mail-calendar-common"] + _MAIL_CALENDAR_COMMON_DEPS,
 )

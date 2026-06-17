@@ -33,6 +33,38 @@ For the default mail production graph, set features on each dependency's `BUILD.
 explicitly (for example `sql` on `mail-api`). Use the crate's `Cargo.toml` `[features]` section as
 the reference for which downstream crates need which features.
 
+Run Bazel tests locally:
+
+```bash
+bazel test //project/mail/rust/...
+```
+
+## CI
+
+On merged-result / merge-train pipelines, when mail Rust paths change (see
+`project/mail/.gitlab-ci.yml`):
+
+| Job | Command | Notes |
+|-----|---------|-------|
+| `mail:clippy` | `bazel build --config=clippy //project/mail/rust/...` | Linux |
+| `mail:rust:test:linux` | `bazel test //project/mail/rust/...` | Linux |
+| `mail:rust:test:macos` | `bazel test --config=mail-darwin-test //project/mail/rust/...` | macOS (tart runner); mirrors Cargo `mail-darwin-test` profile |
+| `mail:build-mail-uniffi-ios` | `bazel build //project/mail/apple/mail-uniffi:ProtonAppUniffi` | UniFFI / release tag |
+| `mail:build-mail-uniffi-android` | `bazel build :mail_uniffi_android_jni_libs` + Gradle archive | UniFFI / release tag |
+| `mail:deny` / `mail:gopenpgp` | `cargo deny` / `cargo tree` | Workspace policy checks |
+
+Formatting is enforced by the monorepo-wide `lint` job (`bazel run //:format -- check`),
+including mail `Cargo.toml` files.
+
+Bazel test targets mirror Cargo's three layers where they exist:
+
+- `rust_test` — unit tests compiled from `#[cfg(test)]` modules in `src/`
+- `rust_test_suite` / `rust_test` + `crate_root` — integration tests under `tests/`
+- `rust_doc_test` — documentation examples
+
+Crates with no unit tests omit the `rust_test` stub. Heavy acceptance targets stay tagged
+`manual`.
+
 ## Releases
 
 ### Conventions

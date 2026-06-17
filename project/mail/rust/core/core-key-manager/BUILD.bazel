@@ -1,5 +1,5 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_doc_test", "rust_library", "rust_test", "rust_test_suite")
 
 rust_library(
     name = "mail-core-key-manager",
@@ -15,4 +15,24 @@ rust_library(
         "//project/mail/rust/account/account-ids:mail-account-ids",
         "//project/mail/rust/crypto/crypto-contact-keys:mail-crypto-contact-keys",
     ],
+)
+
+rust_doc_test(
+    name = "mail-core-key-manager-doc-test",
+    size = "small",
+    crate = ":mail-core-key-manager",
+)
+
+rust_test_suite(
+    name = "mail-core-key-manager-integration-tests",
+    size = "small",
+    srcs = glob(["tests/**/*.rs"]),
+    proc_macro_deps = all_crate_deps(
+        proc_macro = True,
+        proc_macro_dev = True,
+    ),
+    deps = all_crate_deps(
+        normal = True,
+        normal_dev = True,
+    ) + [":mail-core-key-manager"],
 )

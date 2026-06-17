@@ -1,5 +1,5 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test", "rust_test_suite")
 
 rust_library(
     name = "mail-api",
@@ -19,6 +19,41 @@ rust_library(
         "//project/mail/rust/shared/api-utils:mail-api-utils",
         "//project/mail/rust/shared/stash:mail-stash",
         "//project/mail/rust/shared/task-service:mail-task-service",
+        "@crate_index//:mail-muon",
+    ],
+)
+
+rust_test(
+    name = "mail-api-test",
+    size = "small",
+    crate = ":mail-api",
+    edition = "2024",
+    proc_macro_deps = all_crate_deps(
+        proc_macro_dev = True,
+    ),
+    deps = all_crate_deps(
+        normal_dev = True,
+    ),
+)
+
+rust_test_suite(
+    name = "mail-api-integration-tests",
+    size = "small",
+    srcs = glob(["tests/*.rs"]),
+    compile_data = glob(["tests/**/*.json"]),
+    data = glob(["tests/**/*.snap"]),
+    env = {"INSTA_WORKSPACE_ROOT": "."},
+    proc_macro_deps = all_crate_deps(
+        proc_macro = True,
+        proc_macro_dev = True,
+    ),
+    tags = ["manual"],
+    deps = all_crate_deps(
+        normal = True,
+        normal_dev = True,
+    ) + [
+        ":mail-api",
+        "//project/mail/rust/core/core-common:mail-core-common",
         "@crate_index//:mail-muon",
     ],
 )

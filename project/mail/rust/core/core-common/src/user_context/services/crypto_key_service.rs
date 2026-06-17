@@ -389,12 +389,15 @@ impl ContactPublicKeyLoader for KeyLoader<'_> {
 
         let tether = self.db_conn.tether();
 
-        let contact_email =
+        let contact_email_opt =
             ContactEmail::find_first("WHERE email = ?", params![email.to_owned()], tether)
                 .await
-                .map_err(CryptoKeyLoadingError::DB)?
-                .ok_or(ContactError::CardNotFound(email.to_owned()))
-                .map_err(CryptoKeyLoadingError::ContactError)?;
+                .map_err(CryptoKeyLoadingError::DB)?;
+
+        let Some(contact_email) = contact_email_opt else {
+            debug!("No contact found for: {email}");
+            return Ok(None);
+        };
 
         let local_contact_id = contact_email
             .local_contact_id

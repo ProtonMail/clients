@@ -117,6 +117,7 @@ dependencies = [
  "core-keystore-op",
  "core-logging",
  "core-logging-op",
+ "core-message",
  "core-notification-op",
  "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "ctor 0.6.3",
@@ -181,6 +182,7 @@ dependencies = [
  "core-common-types",
  "core-db-diesel",
  "core-keystore-op",
+ "core-message",
  "core-proton-map",
  "deadpool-diesel",
  "derive_more 2.1.1",
@@ -2494,6 +2496,7 @@ dependencies = [
 name = "core-db-diesel"
 version = "0.1.0"
 dependencies = [
+ "core-message",
  "derive_more 2.1.1",
  "diesel",
  "lattice",
@@ -2672,6 +2675,7 @@ version = "0.1.0"
 dependencies = [
  "facet",
  "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -2723,6 +2727,7 @@ dependencies = [
 name = "core-notification-op"
 version = "0.1.0"
 dependencies = [
+ "core-message",
  "crux_core 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "facet",
  "serde",

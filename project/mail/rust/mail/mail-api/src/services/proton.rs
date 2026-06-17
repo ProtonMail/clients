@@ -96,6 +96,12 @@ pub trait ProtonMail {
     /// For more details see [the API documentation](https://protonmail.gitlab-pages.protontech.ch/Slim-API/mail/#tag/IncomingDefaults/operation/put_mail-%7B_version%7D-incomingdefaults-%7Bid%7D)
     async fn delete_incoming_default(&self, id: &IncomingDefaultId) -> ApiServiceResult<()>;
 
+    /// Updates label with last event_id which is available when viewing the label
+    /// It should only be used for Category Labels such as ex. Promotions, Newsletter etc.
+    /// This is crucial because label_id is part of the path and is defined only for Category Labels
+    /// EventID - should be the lastest known event ID from Mail Event Loop.
+    async fn post_label_seen(&self, label_id: LabelId, event_id: EventId) -> ApiServiceResult<()>;
+
     /// Upload attachment data with the given `params`.
     async fn post_attachment(
         &self,

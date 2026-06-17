@@ -101,6 +101,8 @@ impl From<OtherErrorReason> for MailErrorReason {
 pub enum ActionErrorReason {
     UnknownLabel,
     UnknownContentId,
+    /// The label targeted by the action is not a category label.
+    ExpectedCategoryLabel,
 }
 
 /// Specific Reason for error occurrence within Context.

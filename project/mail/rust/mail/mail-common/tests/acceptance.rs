@@ -22,6 +22,7 @@ mod acceptance {
     mod drafts_common;
     mod foundation_search_integration;
     mod hybrid_search_mail_scroller;
+    mod labels_mark_seen;
     mod mailbox_conversation;
     mod mailbox_create;
     mod message_body;

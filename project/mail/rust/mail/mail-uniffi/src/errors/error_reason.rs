@@ -29,6 +29,7 @@ pub enum ActionErrorReason {
     UnknownLabel,
     UnknownMessage,
     UnknownContentId,
+    ExpectedCategoryLabel,
 }
 
 impl From<RealActionErrorReason> for ActionErrorReason {
@@ -36,6 +37,9 @@ impl From<RealActionErrorReason> for ActionErrorReason {
         match reason {
             RealActionErrorReason::UnknownLabel => ActionErrorReason::UnknownLabel,
             RealActionErrorReason::UnknownContentId => ActionErrorReason::UnknownContentId,
+            RealActionErrorReason::ExpectedCategoryLabel => {
+                ActionErrorReason::ExpectedCategoryLabel
+            }
         }
     }
 }

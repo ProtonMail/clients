@@ -104,6 +104,20 @@ impl<This: ?Sized + Sender<ProtonRequest, ProtonResponse>> ProtonMail for This {
         Ok(())
     }
 
+    async fn post_label_seen(&self, label_id: LabelId, event_id: EventId) -> ApiServiceResult<()> {
+        let body = json!({
+            "LastEventID": event_id
+        });
+
+        POST!("{CORE_V4}/labels/{label_id}/seen")
+            .body_json(body)?
+            .send_with(self)
+            .await?
+            .ok()?;
+
+        Ok(())
+    }
+
     async fn post_attachment(
         &self,
         params: NewAttachmentParams,

@@ -16,6 +16,7 @@ rust_library(
     deps = all_crate_deps(
         normal = True,
     ) + [
+        "//project/core/rust/core-event-loop",
         "//project/mail/rust/shared/mail-proton-ids",
         "//project/mail/rust/shared/stash:mail-stash",
     ],

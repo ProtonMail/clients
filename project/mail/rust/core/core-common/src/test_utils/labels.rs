@@ -1,7 +1,8 @@
 use crate::test_utils::test_context::TestContext;
 use mail_core_api::services::proton::{
-    GetLabelsResponse, Label as ApiLabel, LabelId, PatchLabelRequest, PatchLabelResponse,
+    EventId, GetLabelsResponse, Label as ApiLabel, LabelId, PatchLabelRequest, PatchLabelResponse,
 };
+use serde_json::json;
 use wiremock::matchers::{body_json, method, path};
 use wiremock::{Mock, MockBuilder, ResponseTemplate, Times};
 
@@ -49,6 +50,24 @@ impl TestContext {
             .and(body_json(request))
             .respond_with(ResponseTemplate::new(200).set_body_json(response))
             .expect(1)
+            .named(function_name!())
+            .mount(self.mock_server())
+            .await;
+    }
+
+    #[function_name::named]
+    pub async fn mock_post_label_seen(
+        &self,
+        label_id: LabelId,
+        event_id: EventId,
+        response: ResponseTemplate,
+        expect: impl Into<Times>,
+    ) {
+        Mock::given(method("POST"))
+            .and(path(format!("/api/core/v4/labels/{label_id}/seen")))
+            .and(body_json(json!({ "LastEventID": event_id })))
+            .respond_with(response)
+            .expect(expect)
             .named(function_name!())
             .mount(self.mock_server())
             .await;

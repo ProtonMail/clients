@@ -6627,6 +6627,7 @@ dependencies = [
 name = "mail-api-event-types"
 version = "0.1.0"
 dependencies = [
+ "core-event-loop",
  "mail-proton-ids",
  "mail-stash",
  "serde",

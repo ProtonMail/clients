@@ -7,6 +7,7 @@ use crate::core::datatypes::Id;
 use crate::errors::{ActionError, VoidActionResult};
 use crate::mail::MailUserSession;
 use crate::mail::datatypes::WellKnownLabelColor;
+use mail_common::models::LabelWithCounters as RealLabelWithCounters;
 
 #[uniffi_export]
 #[returns(VoidActionResult)]
@@ -126,6 +127,25 @@ pub async fn delete_label(session: Arc<MailUserSession>, label_id: Id) -> Result
         user_context
             .action_queue()
             .queue_action(action)
+            .await
+            .map_err(ProtonMailError::from)?;
+        Ok::<_, ProtonMailError>(())
+    })
+    .await
+    .map_err(ActionError::from)
+    .into()
+}
+
+#[uniffi_export]
+#[returns(VoidActionResult)]
+#[tracing::instrument(skip_all)]
+pub async fn mark_label_seen(
+    session: Arc<MailUserSession>,
+    local_id: Id,
+) -> Result<(), ActionError> {
+    let ctx = session.ctx()?;
+    uniffi_async(async move {
+        RealLabelWithCounters::action_mark_seen(ctx.action_queue(), local_id.into())
             .await
             .map_err(ProtonMailError::from)?;
         Ok::<_, ProtonMailError>(())

@@ -5,8 +5,10 @@
 mod labels_with_counters;
 
 use super::{ConversationCounter, MessageCounter};
+use crate::actions::labels::MarkSeen;
 use crate::models::MailSettings;
 use indoc::formatdoc;
+use mail_action_queue::queue::{ActionError as QueueActionError, Queue, QueuedActionOutput};
 use mail_core_api::services::proton::{LabelId, ProtonCore};
 use mail_core_common::datatypes::{LabelType, LocalLabelId};
 use mail_core_common::models::{
@@ -30,6 +32,16 @@ pub struct LabelWithCounters {
     pub unread_msg: u64,
     pub total_conv: u64,
     pub unread_conv: u64,
+}
+
+impl LabelWithCounters {
+    pub async fn action_mark_seen(
+        queue: &Queue<UserDb>,
+        local_id: LocalLabelId,
+    ) -> Result<QueuedActionOutput<MarkSeen, UserDb>, QueueActionError<MarkSeen, UserDb>> {
+        let action = MarkSeen::new(local_id);
+        queue.queue_action(action).await
+    }
 }
 
 impl LabelWithCounters {

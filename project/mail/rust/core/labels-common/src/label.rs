@@ -36,6 +36,8 @@ pub enum LabelError {
     CouldNotResolveLocalLabel(LabelId),
     #[error("Label does not have neither remote nor local id")]
     LabelWithoutIds,
+    #[error("Supplied label is not a category")]
+    ExpectedCategoryLabel,
 }
 
 #[derive(Clone, Debug, Eq, Model, PartialEq)]

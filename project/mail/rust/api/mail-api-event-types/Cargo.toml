@@ -6,6 +6,7 @@ rust-version.workspace = true
 license = "AGPL-3.0-only"
 
 [dependencies]
+core-event-loop = { workspace = true }
 mail-proton-ids = { workspace = true }
 serde = { workspace = true }
 serde_repr = { workspace = true }

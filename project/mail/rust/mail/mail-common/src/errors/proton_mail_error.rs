@@ -812,6 +812,9 @@ impl From<LabelError> for ProtonMailError {
                 Self::Unexpected(Unexpected::Internal)
             }
             LabelError::LabelWithoutIds => Self::Unexpected(Unexpected::Internal),
+            LabelError::ExpectedCategoryLabel => {
+                Self::reason(ActionErrorReason::ExpectedCategoryLabel)
+            }
         }
     }
 }

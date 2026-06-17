@@ -2,7 +2,6 @@ use crate::Config;
 use parking_lot::{RwLock, RwLockReadGuard, RwLockUpgradableReadGuard, RwLockWriteGuard};
 use std::fs::{File, OpenOptions};
 use std::io::{ErrorKind, Write};
-use std::os::unix::fs::MetadataExt;
 use std::path::Path;
 use std::sync::atomic::{AtomicU64, Ordering};
 use tracing_subscriber::fmt::MakeWriter;
@@ -43,7 +42,7 @@ impl LogFile {
     fn new(config: &Config) -> std::io::Result<Self> {
         let file_path = config.log_file_path(0);
         let file = new_file(&file_path)?;
-        let file_size = file.metadata()?.size();
+        let file_size = file.metadata()?.len();
         let mut this = Self {
             file,
             written: AtomicU64::new(file_size),

@@ -57,5 +57,8 @@ keyring = { version = "3.6.1", features = ["linux-native"] }
 [target.'cfg(target_os="macos")'.dependencies]
 keyring = { version = "3.6.1", features = ["apple-native"] }
 
+[target.'cfg(target_os="windows")'.dependencies]
+keyring = { version = "3.6.1", features = ["windows-native"] }
+
 [lints]
 workspace = true

@@ -19,7 +19,6 @@ use mail_stash::orm::Model as _;
 use mail_stash::stash::{StashError, Tether, WriteTx};
 use mail_stash::utils::placeholders_n;
 use mail_stash::{UserDb, params};
-use std::os::unix::fs::MetadataExt as _;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -308,7 +307,7 @@ impl Attachment {
         bond: &WriteTx<'_>,
     ) -> MailContextResult<PathBuf> {
         let metadata = tokio::fs::metadata(attachment_path).await?;
-        let data_size = metadata.size();
+        let data_size = metadata.len();
 
         let (path, path_string) = Self::attachment_cache_file_path(ctx, id, name).await?;
 

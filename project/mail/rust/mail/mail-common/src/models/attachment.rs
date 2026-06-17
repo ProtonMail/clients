@@ -33,7 +33,6 @@ use mail_stash::orm::{Model, ModelHooks};
 use mail_stash::stash::{StashError, Tether, WriteTx};
 use mail_stash::{UserDb, params, sql_using_serde};
 use serde::{Deserialize, Serialize};
-use std::os::unix::fs::MetadataExt;
 use std::path::Path;
 use std::str::FromStr;
 use tracing::{debug, error, info, trace};
@@ -549,7 +548,7 @@ impl Attachment {
         };
 
         // Attachment should be <= 25 MB
-        if file_metadata.size() > Attachment::MAX_ATTACHMENT_SIZE {
+        if file_metadata.len() > Attachment::MAX_ATTACHMENT_SIZE {
             return Err(MailContextError::Draft(
                 crate::draft::Error::AttachmentUpload(
                     crate::draft::AttachmentUploadError::AttachmentTooLarge,
@@ -598,7 +597,7 @@ impl Attachment {
             filename: file_name,
             sender: None,
             signature: None,
-            size: file_metadata.size(),
+            size: file_metadata.len(),
             transfer_encoding: None,
             image_width: None,
             image_height: None,

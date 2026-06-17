@@ -7,10 +7,10 @@ use lattice::core::post_members_keys_unprivatize::{
 };
 use lattice::core::{LtCoreAddress, LtCoreUnprivActivationToken, LtCoreUnprivState};
 use proton_crypto::crypto::{
-    AsPublicKeyRef, DataEncoding, Decryptor, DecryptorSync, DetachedSignatureVariant, Encryptor,
-    EncryptorSync, PGPProviderSync, Signer, SignerSync, SigningMode, VerifiedData, WritingMode,
+    DataEncoding, Encryptor, EncryptorSync, PGPProviderSync, Signer, SignerSync, SigningMode,
+    WritingMode,
 };
-use proton_crypto_account::keys::{EncryptedKeyToken, KeyId, KeyTokenSignature, UnlockedUserKey};
+use proton_crypto_account::keys::{ArmoredPrivateKey, KeyId, UnlockedUserKeys};
 use proton_crypto_account::salts::KeySecret;
 
 use crate::sso_device::secure_hex_key_secret_32;
@@ -50,7 +50,7 @@ impl<'a, P: PGPProviderSync> OrgAdminPgp<'a, P> {
 
     pub(crate) fn build_manual_unprivatize_body(
         &self,
-        private_keys: &[Sensitive<String>],
+        private_keys: &[ArmoredPrivateKey],
         activation_token_armored: &LtCoreUnprivActivationToken,
         addrs: &[LtCoreAddress],
         org_random_token: &KeySecret,
@@ -75,14 +75,12 @@ impl<'a, P: PGPProviderSync> OrgAdminPgp<'a, P> {
     fn build_unpriv_address_keys(
         &self,
         addrs: &[LtCoreAddress],
-        member_user_keys: &[UnlockedUserKey<P>],
+        member_user_keys: &UnlockedUserKeys<P>,
     ) -> Result<Vec<LtCoreUnprivatizeAddressKey>, SharedCryptoError> {
         use data_encoding::BASE64;
 
-        let org_public = self.pgp.private_key_to_public_key(self.org_private)?;
-        let decryption_keys: Vec<_> = member_user_keys.iter().map(|k| &k.private_key).collect();
-        let verification_keys: Vec<_> =
-            member_user_keys.iter().map(|k| k.as_public_key()).collect();
+        let org_public = self.public_key()?;
+
         let sign_ctx = self
             .pgp
             .new_signing_context(ADDRESS_ORG_SIGNATURE_CONTEXT.to_owned(), true);
@@ -104,12 +102,8 @@ impl<'a, P: PGPProviderSync> OrgAdminPgp<'a, P> {
                     }
                 })?;
 
-                let secret = self.decrypt_address_key_token(
-                    token,
-                    signature,
-                    &decryption_keys,
-                    &verification_keys,
-                )?;
+                let secret =
+                    self.decrypt_signed_armored_token(token, signature, member_user_keys)?;
 
                 let mut encrypted_body = Vec::new();
                 let detached = self
@@ -145,26 +139,21 @@ impl<'a, P: PGPProviderSync> OrgAdminPgp<'a, P> {
 
     fn unlock_armored_private_keys(
         &self,
-        private_keys: &[Sensitive<String>],
+        private_keys: &[ArmoredPrivateKey],
         random_token: &KeySecret,
-    ) -> Result<Vec<UnlockedUserKey<P>>, SharedCryptoError> {
+    ) -> Result<UnlockedUserKeys<P>, SharedCryptoError> {
         private_keys
             .iter()
             .map(|armored| {
-                let private_key = self.import_armored_private_key(armored, random_token)?;
-                let public_key = self.pgp.private_key_to_public_key(&private_key)?;
-                Ok(UnlockedUserKey::<P> {
-                    id: KeyId(String::new()),
-                    private_key,
-                    public_key,
-                })
+                self.unlock_user_key_from_armored(armored, random_token, KeyId(String::new()))
             })
-            .collect()
+            .collect::<Result<Vec<_>, _>>()
+            .map(UnlockedUserKeys::from)
     }
 
     fn build_unpriv_user_keys(
         &self,
-        private_keys: &[Sensitive<String>],
+        private_keys: &[ArmoredPrivateKey],
         random_token: &KeySecret,
         org_random_token: &KeySecret,
         org_token_armored: &str,
@@ -186,54 +175,25 @@ impl<'a, P: PGPProviderSync> OrgAdminPgp<'a, P> {
             })
             .collect()
     }
-
-    fn decrypt_address_key_token(
-        &self,
-        token: &EncryptedKeyToken,
-        signature: &KeyTokenSignature,
-        decryption_keys: &[&P::PrivateKey],
-        verification_keys: &[&P::PublicKey],
-    ) -> Result<Vec<u8>, SharedCryptoError> {
-        let verified = self
-            .pgp
-            .new_decryptor()
-            .with_decryption_key_refs(decryption_keys)
-            .with_verification_key_refs(verification_keys)
-            .with_detached_signature_ref(
-                signature.0.as_bytes(),
-                DetachedSignatureVariant::Plaintext,
-                true,
-            )
-            .decrypt(token.0.as_bytes(), DataEncoding::Armor)?;
-        verified.verification_result()?;
-        Ok(verified.to_vec())
-    }
-
-    fn import_armored_private_key(
-        &self,
-        armored: &Sensitive<String>,
-        passphrase: &KeySecret,
-    ) -> Result<P::PrivateKey, SharedCryptoError> {
-        self.pgp
-            .private_key_import(
-                armored.as_str().as_bytes(),
-                passphrase.as_ref(),
-                DataEncoding::Armor,
-            )
-            .map_err(SharedCryptoError::Crypto)
-    }
 }
 
 pub trait LtCoreMemberListUnprivatizationExt {
-    fn private_keys(&self) -> Option<Vec<Sensitive<String>>>;
+    fn private_keys(&self) -> Option<Vec<ArmoredPrivateKey>>;
     fn ready_for_admin_keys_completion(&self) -> bool;
 }
 
 impl LtCoreMemberListUnprivatizationExt for LtCoreMemberListUnprivatization {
-    fn private_keys(&self) -> Option<Vec<Sensitive<String>>> {
+    fn private_keys(&self) -> Option<Vec<ArmoredPrivateKey>> {
         match &self.private_keys {
-            Some(keys) if !keys.is_empty() => Some(keys.clone()),
-            _ => self.private_key.as_ref().map(|pk| vec![pk.0.clone()]),
+            Some(keys) if !keys.is_empty() => Some(
+                keys.iter()
+                    .map(|k| ArmoredPrivateKey(k.0.clone().into_inner()))
+                    .collect(),
+            ),
+            _ => self
+                .private_key
+                .as_ref()
+                .map(|pk| vec![ArmoredPrivateKey(pk.0.clone().into_inner())]),
         }
     }
     /// Ready for admin `POST .../keys/unprivatize` (invitation fields may remain).

@@ -1,6 +1,5 @@
 use proton_crypto::crypto::VerificationError;
 use proton_crypto_account::errors::{AccountCryptoError, KeyError, SKLError};
-use proton_crypto_account::keys::KeyId;
 use proton_crypto_account::proton_crypto::CryptoError;
 use proton_crypto_account::salts::SaltError;
 use thiserror::Error;
@@ -35,9 +34,6 @@ pub enum SharedCryptoError {
 
     #[error("no primary public key in address keys")]
     NoPrimaryAddressPublicKey,
-
-    #[error("unlocked key {key_id} not found")]
-    UnlockedKeyNotFound { key_id: KeyId },
 
     #[error("no member user keys unlocked")]
     NoMemberUserKeysUnlocked,

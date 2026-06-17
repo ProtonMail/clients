@@ -1,9 +1,3 @@
-//! SSO org-managed member user-then-admin device approval (live stack).
-//!
-//! Requires a live atlas stack; run with `ENV_NAME=davy` (see `tests/common/muon.rs`).
-
-#![recursion_limit = "256"]
-
 use lattice::auth::devices::LtAuthDeviceState;
 
 use crate::common::device_approval::sso_org::SsoOrg;

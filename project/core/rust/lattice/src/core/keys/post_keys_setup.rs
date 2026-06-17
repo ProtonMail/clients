@@ -4,7 +4,10 @@ use std::collections::HashMap;
 
 use crate::{
     AuthReq, LatticeError, LtContract, LtRequestQueryParams, LtSlimAPIJSON, Method, Sensitive,
-    core::{LtCoreAddressKeyInput, LtCoreAsyncUserInitialization, user::LtCoreUser},
+    core::{
+        LtCoreAddressKeyInput, LtCoreAsyncUserInitialization, LtCoreUnprivActivationToken,
+        user::LtCoreUser,
+    },
 };
 
 /// Request body for setting up keys
@@ -22,7 +25,7 @@ pub struct LtCoreSetupKeysBody {
     pub org_primary_user_key: Option<Sensitive<String>>,
     /// A 32-byte random token encoded as hex, encrypted to the organization key and signed.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub org_activation_token: Option<Sensitive<String>>,
+    pub org_activation_token: Option<LtCoreUnprivActivationToken>,
     /// List of address keys for the account.
     pub address_keys: Vec<LtCoreAddressKeyInput>,
     /// Base64-encoded AES-GCM encrypted secret using the `DeviceSecret` as key.

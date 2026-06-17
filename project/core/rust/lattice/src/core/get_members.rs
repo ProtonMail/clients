@@ -3,9 +3,7 @@ use std::borrow::Cow;
 use std::num::NonZeroU32;
 
 use crate::auth::LtAuthAddressId;
-use crate::{
-    AuthReq, LatticeError, LtContract, LtNoQueryParams, LtPaginable, LtSlimAPIJSON, Sensitive,
-};
+use crate::{AuthReq, LatticeError, LtContract, LtNoQueryParams, LtPaginable, LtSlimAPIJSON};
 
 use super::account_enums::{LtCoreMemberOrgKeyStatus, LtCoreMemberState};
 use super::ids::LtCoreMemberEncId;
@@ -141,7 +139,7 @@ pub struct LtCoreMemberListUnprivatization {
     #[serde(default)]
     pub private_key: Option<LtCoreUnprivArmoredPrivateKey>,
     #[serde(default)]
-    pub private_keys: Option<Vec<Sensitive<String>>>,
+    pub private_keys: Option<Vec<LtCoreUnprivArmoredPrivateKey>>,
     #[serde(default)]
     pub activation_token: Option<LtCoreUnprivActivationToken>,
     #[serde(default)]

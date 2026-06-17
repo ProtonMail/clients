@@ -1,8 +1,3 @@
-// Lattice tests chain `Session` → `Muon2Transport` → `LtContract` over muon's `GenericContext`
-// (connector, store, CookieStore). Muon 2.4+ deepens those nested generics; rustc's default
-// `recursion_limit` (128) is exceeded when computing async fn layout (e.g. unprivatize helpers).
-#![recursion_limit = "256"]
-
 //! Integration tests for org unprivatization:
 //! * admin `GET /organizations/keys` (after identity publish), `PUT /organizations/keys/signature`,
 //!   `POST /members/{id}/unprivatize`, `GET /members` (list row embed), member-device admin routes

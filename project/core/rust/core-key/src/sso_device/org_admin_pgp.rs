@@ -6,10 +6,12 @@ use lattice::core::{
     LtCoreResetAuthDevicesUserKey, LtCoreUnprivActivationToken,
 };
 use proton_crypto::crypto::{
-    DataEncoding, Decryptor, DecryptorSync, Encryptor, EncryptorSync, PGPProviderSync, VerifiedData,
+    AsPublicKeyRef, DataEncoding, Decryptor, DecryptorSync, DetachedSignatureVariant, Encryptor,
+    EncryptorSync, PGPProviderSync, VerifiedData,
 };
 use proton_crypto_account::keys::{
-    LocalUserKey, LockedKey, UnlockedAddressKey, UnlockedUserKey, UserKeys,
+    ArmoredPrivateKey, EncryptedKeyToken, KeyId, KeyTokenSignature, LocalUserKey, LockedKey,
+    UnlockedAddressKeys, UnlockedUserKey, UnlockedUserKeys, UserKeys,
 };
 use proton_crypto_account::salts::KeySecret;
 
@@ -38,6 +40,47 @@ impl<'a, P: PGPProviderSync> OrgAdminPgp<'a, P> {
         }
     }
 
+    pub(crate) fn public_key(&self) -> Result<P::PublicKey, SharedCryptoError> {
+        self.pgp
+            .private_key_to_public_key(self.org_private)
+            .map_err(SharedCryptoError::from)
+    }
+
+    pub(crate) fn decrypt(
+        &self,
+        bytes: &[u8],
+        verify: bool,
+        encoding: DataEncoding,
+    ) -> Result<Sensitive<Vec<u8>>, SharedCryptoError> {
+        if verify {
+            let org_public = self.public_key()?;
+            let verified = self
+                .pgp
+                .new_decryptor()
+                .with_decryption_key(self.org_private)
+                .with_verification_key_refs(&[&org_public])
+                .decrypt(bytes, encoding)
+                .map_err(SharedCryptoError::from)?;
+            Ok(Sensitive::new(verified.to_vec()))
+        } else {
+            let verified = self
+                .pgp
+                .new_decryptor()
+                .with_decryption_key(self.org_private)
+                .decrypt(bytes, encoding)
+                .map_err(SharedCryptoError::from)?;
+            Ok(Sensitive::new(verified.to_vec()))
+        }
+    }
+
+    pub(crate) fn decrypt_armored(
+        &self,
+        bytes: &[u8],
+        verify: bool,
+    ) -> Result<Sensitive<Vec<u8>>, SharedCryptoError> {
+        self.decrypt(bytes, verify, DataEncoding::Armor)
+    }
+
     /// Decrypt an org-armored passphrase blob.
     ///
     /// - `verify: true` — org-signed key tokens on locked user keys (`LockedKey.activation`).
@@ -47,23 +90,22 @@ impl<'a, P: PGPProviderSync> OrgAdminPgp<'a, P> {
         activation_token_armored: &LtCoreUnprivActivationToken,
         verify: bool,
     ) -> Result<KeySecret, SharedCryptoError> {
-        if verify {
-            let org_public = self.pgp.private_key_to_public_key(self.org_private)?;
-            let verified = self
-                .pgp
-                .new_decryptor()
-                .with_decryption_key(self.org_private)
-                .with_verification_key_refs(&[&org_public])
-                .decrypt(activation_token_armored.as_bytes(), DataEncoding::Armor)?;
-            Ok(KeySecret::new(verified.to_vec()))
-        } else {
-            let verified = self
-                .pgp
-                .new_decryptor()
-                .with_decryption_key(self.org_private)
-                .decrypt(activation_token_armored.as_bytes(), DataEncoding::Armor)?;
-            Ok(KeySecret::new(verified.to_vec()))
-        }
+        self.decrypt_armored(activation_token_armored.as_ref(), verify)
+            .map(|v| KeySecret::new(v.into_inner()))
+    }
+
+    pub fn encrypt(
+        &self,
+        bytes: &[u8],
+        encoding: DataEncoding,
+    ) -> Result<Sensitive<Vec<u8>>, SharedCryptoError> {
+        let org_public = self.public_key()?;
+        let encrypted = self
+            .pgp
+            .new_encryptor()
+            .with_encryption_key(&org_public)
+            .encrypt_raw(bytes, encoding)?;
+        Ok(Sensitive::new(encrypted))
     }
 
     /// Encrypt a secret for storage on member user keys (org public key).
@@ -71,13 +113,8 @@ impl<'a, P: PGPProviderSync> OrgAdminPgp<'a, P> {
         &self,
         secret: &KeySecret,
     ) -> Result<String, SharedCryptoError> {
-        let org_public = self.pgp.private_key_to_public_key(self.org_private)?;
-        let encrypted = self
-            .pgp
-            .new_encryptor()
-            .with_encryption_key(&org_public)
-            .encrypt_raw(secret.as_ref(), DataEncoding::Armor)?;
-        Ok(String::from_utf8(encrypted)?)
+        let encrypted = self.encrypt(secret.as_ref(), DataEncoding::Armor)?;
+        Ok(String::from_utf8(encrypted.into_inner())?)
     }
 
     /// Current passphrase for the member's primary user key (for `EncryptedSecret` on org-admin reset).
@@ -99,8 +136,9 @@ impl<'a, P: PGPProviderSync> OrgAdminPgp<'a, P> {
         locked: &LockedKey,
         member_org_passphrase: Option<&KeySecret>,
     ) -> Result<KeySecret, SharedCryptoError> {
-        if let Some(org_token) = locked_activation_token(locked) {
-            self.decrypt_org_armored_token(&org_token, true)
+        if let Some(activation) = &locked.activation {
+            let activation = LtCoreUnprivActivationToken(Sensitive::new(activation.clone()));
+            self.decrypt_org_armored_token(&activation, true)
         } else if let Some(pass) = member_org_passphrase {
             Ok(pass.clone())
         } else {
@@ -112,21 +150,15 @@ impl<'a, P: PGPProviderSync> OrgAdminPgp<'a, P> {
 
     pub fn rearmor_user_keys(
         &self,
-        locked_keys: &[LockedKey],
-        unlocked: &[UnlockedUserKey<P>],
+        unlocked: &UnlockedUserKeys<P>,
         new_passphrase: &KeySecret,
     ) -> Result<Vec<LtCoreResetAuthDevicesUserKey>, SharedCryptoError> {
-        locked_keys
+        unlocked
             .iter()
-            .map(|locked| {
-                let decrypted = unlocked.iter().find(|u| u.id == locked.id).ok_or(
-                    SharedCryptoError::UnlockedKeyNotFound {
-                        key_id: locked.id.clone(),
-                    },
-                )?;
+            .map(|decrypted| {
                 let local = LocalUserKey::relock_user_key(self.pgp, decrypted, new_passphrase)?;
                 Ok(LtCoreResetAuthDevicesUserKey {
-                    id: LtAuthUserKeyId(locked.id.0.clone()),
+                    id: LtAuthUserKeyId(decrypted.id.0.clone()),
                     private_key: Sensitive::new(local.private_key.0.clone()),
                 })
             })
@@ -135,7 +167,7 @@ impl<'a, P: PGPProviderSync> OrgAdminPgp<'a, P> {
 
     pub fn collect_decrypt_keys_for_activation_address<'b>(
         &self,
-        address_keys: &'b [UnlockedAddressKey<P>],
+        address_keys: &'b UnlockedAddressKeys<P>,
         addrs: &[LtCoreAddress],
         activation_address_id: &LtAuthAddressId,
     ) -> Result<Vec<&'b P::PrivateKey>, SharedCryptoError> {
@@ -161,9 +193,9 @@ impl<'a, P: PGPProviderSync> OrgAdminPgp<'a, P> {
     pub fn unlock_member_address_keys(
         &self,
         addrs: &[LtCoreAddress],
-        user_keys: &[UnlockedUserKey<P>],
+        user_keys: &UnlockedUserKeys<P>,
         key_passphrase: &KeySecret,
-    ) -> Result<Vec<UnlockedAddressKey<P>>, SharedCryptoError> {
+    ) -> Result<UnlockedAddressKeys<P>, SharedCryptoError> {
         addrs
             .iter()
             .map(|addr| {
@@ -179,14 +211,14 @@ impl<'a, P: PGPProviderSync> OrgAdminPgp<'a, P> {
                 Ok(unlock.unlocked_keys)
             })
             .collect::<Result<Vec<_>, _>>()
-            .map(|v| v.concat())
+            .map(|v| UnlockedAddressKeys::from(v.concat()))
     }
 
     /// Crypto payload for `POST .../members/{id}/devices/reset`.
     pub fn build_devices_reset_crypto(
         &self,
         member_keys: &UserKeys,
-        unlocked_user_keys: &[UnlockedUserKey<P>],
+        unlocked_user_keys: &UnlockedUserKeys<P>,
         device_secret: &DeviceSecret,
         new_passphrase: &KeySecret,
         member_org_passphrase: Option<&KeySecret>,
@@ -194,8 +226,7 @@ impl<'a, P: PGPProviderSync> OrgAdminPgp<'a, P> {
     ) -> Result<LtCorePostMembersDevicesResetBody, SharedCryptoError> {
         let current_unlock =
             self.member_primary_unlock_passphrase(member_keys, member_org_passphrase)?;
-        let rearmored_user_keys =
-            self.rearmor_user_keys(member_keys.as_ref(), unlocked_user_keys, new_passphrase)?;
+        let rearmored_user_keys = self.rearmor_user_keys(unlocked_user_keys, new_passphrase)?;
         let encrypted_secret = EncryptedSecret::from_key_secret(&current_unlock, &device_secret.0)?;
 
         Ok(LtCorePostMembersDevicesResetBody {
@@ -254,32 +285,73 @@ impl<'a, P: PGPProviderSync> OrgAdminPgp<'a, P> {
         &self,
         member_keys: &UserKeys,
         member_org_passphrase: Option<&KeySecret>,
-    ) -> Result<Vec<UnlockedUserKey<P>>, SharedCryptoError> {
-        let mut unlocked = Vec::new();
-        for locked in member_keys.as_ref() {
-            let passphrase = self.unlock_passphrase_for_locked(locked, member_org_passphrase)?;
-            let private_key = self.pgp.private_key_import(
-                locked.private_key.0.as_bytes(),
-                passphrase.as_ref(),
-                DataEncoding::Armor,
-            )?;
-            let public_key = self.pgp.private_key_to_public_key(&private_key)?;
-            unlocked.push(UnlockedUserKey::<P> {
-                id: locked.id.clone(),
-                private_key,
-                public_key,
-            });
-        }
+    ) -> Result<UnlockedUserKeys<P>, SharedCryptoError> {
+        let unlocked: Vec<UnlockedUserKey<P>> = member_keys
+            .as_ref()
+            .iter()
+            .map(|locked| {
+                let passphrase =
+                    self.unlock_passphrase_for_locked(locked, member_org_passphrase)?;
+                self.unlock_user_key_from_armored(
+                    &locked.private_key,
+                    &passphrase,
+                    locked.id.clone(),
+                )
+            })
+            .collect::<Result<_, SharedCryptoError>>()?;
         if unlocked.is_empty() {
             return Err(SharedCryptoError::NoMemberUserKeysUnlocked);
         }
-        Ok(unlocked)
+        Ok(UnlockedUserKeys::from(unlocked))
     }
-}
 
-fn locked_activation_token(locked: &LockedKey) -> Option<LtCoreUnprivActivationToken> {
-    locked
-        .activation
-        .as_ref()
-        .map(|token| LtCoreUnprivActivationToken(Sensitive::new(token.clone())))
+    pub(crate) fn import_armored_private_key(
+        &self,
+        armored: &ArmoredPrivateKey,
+        passphrase: &KeySecret,
+    ) -> Result<P::PrivateKey, SharedCryptoError> {
+        self.pgp
+            .private_key_import(armored.as_bytes(), passphrase.as_ref(), DataEncoding::Armor)
+            .map_err(SharedCryptoError::from)
+    }
+
+    pub(crate) fn unlock_user_key_from_armored(
+        &self,
+        armored: &ArmoredPrivateKey,
+        passphrase: &KeySecret,
+        id: KeyId,
+    ) -> Result<UnlockedUserKey<P>, SharedCryptoError> {
+        let private_key = self.import_armored_private_key(armored, passphrase)?;
+        let public_key = self.pgp.private_key_to_public_key(&private_key)?;
+        Ok(UnlockedUserKey::<P> {
+            id,
+            private_key,
+            public_key,
+        })
+    }
+
+    pub(crate) fn decrypt_signed_armored_token(
+        &self,
+        token: &EncryptedKeyToken,
+        signature: &KeyTokenSignature,
+        member_user_keys: &UnlockedUserKeys<P>,
+    ) -> Result<Vec<u8>, SharedCryptoError> {
+        let decryption_keys: Vec<_> = member_user_keys.iter().map(|k| &k.private_key).collect();
+        let verification_keys: Vec<_> =
+            member_user_keys.iter().map(|k| k.as_public_key()).collect();
+
+        let verified = self
+            .pgp
+            .new_decryptor()
+            .with_decryption_key_refs(&decryption_keys)
+            .with_verification_key_refs(&verification_keys)
+            .with_detached_signature_ref(
+                signature.0.as_bytes(),
+                DetachedSignatureVariant::Plaintext,
+                true,
+            )
+            .decrypt(token.0.as_bytes(), DataEncoding::Armor)?;
+        verified.verification_result()?;
+        Ok(verified.to_vec())
+    }
 }

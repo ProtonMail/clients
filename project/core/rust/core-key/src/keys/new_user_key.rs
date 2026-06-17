@@ -5,6 +5,7 @@ use crate::keys::OrgManagedKeyMaterial;
 use crate::keys::new_key_id;
 use lattice::Sensitive;
 use lattice::auth::LtAuthAddressId;
+use lattice::core::LtCoreUnprivActivationToken;
 use lattice::core::keys::LtCoreSetupKeysBody;
 use lattice::core::user::LtCoreSrpVerifier;
 use lattice::core::{LtCoreAddress, LtCoreAddressFlags};
@@ -99,7 +100,7 @@ impl NewUserKey {
         let activation_token = Sensitive::new(String::from_utf8(encrypted)?);
         let primary_user_key = LocalUserKey::relock_user_key(pgp, &unlocked_user, org_token)?;
         Ok(OrgManagedKeyMaterial {
-            activation_token,
+            activation_token: LtCoreUnprivActivationToken(activation_token),
             primary_user_key,
         })
     }
@@ -110,7 +111,7 @@ impl NewUserKey {
         new_addr_keys: Vec<NewAddrKey>,
         encrypted_secret: Option<Sensitive<String>>,
         org_primary_user_key: Option<Sensitive<String>>,
-        org_activation_token: Option<Sensitive<String>>,
+        org_activation_token: Option<LtCoreUnprivActivationToken>,
     ) -> LtCoreSetupKeysBody {
         LtCoreSetupKeysBody {
             auth,

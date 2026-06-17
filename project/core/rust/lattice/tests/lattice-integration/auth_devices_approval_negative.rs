@@ -1,7 +1,3 @@
-//! Negative paths for SSO device approval helpers (no live stack required).
-
-#![recursion_limit = "256"]
-
 use core_key::DeviceDisplayCodeError;
 use lattice::{Sensitive, auth::LtAuthAddressId, core::LtCoreAuthDeviceId};
 

@@ -384,14 +384,20 @@ async fn label_as_with_archive() {
 
 mod rebase {
     use super::*;
+    use core_event_loop::v6::EventSubscriber;
     use mail_action_queue::action::ActionGroup;
     use mail_action_queue::rebase::RebaseChangeSet;
+    use mail_api::services::proton::prelude::{MailEventV6, MailMessageEventV6, MessageFlags};
+    use mail_common::events::v6::{MailEventCache, MailEventSourceV6, MailEventV6Subscriber};
     use mail_common::models::ConversationLabel;
     use mail_common::test_utils::scroller::StoreLabeledModelMap;
     use mail_common::{MailUserContext, conv_id, conversation, message, msg_id};
+    use mail_core_api::services::proton::EventId;
     use mail_core_common::datatypes::LocalLabelId;
+    use mail_core_common::services::event_loop_service::EventManagerContext;
     use pretty_assertions::{assert_eq, assert_ne};
     use std::sync::Arc;
+    use tracing::subscriber;
 
     // NOTE: The must_archive rebase is handled by the message/conv move rules.
     fn custom_label_id1() -> LabelId {
@@ -811,6 +817,119 @@ mod rebase {
             .unwrap();
 
         assert_eq!(user_ctx.execute_all_actions().await.unwrap(), 2);
+    }
+
+    #[tokio::test]
+    async fn rebase_reverts_to_last_updated_state_via_event() {
+        let (test_ctx, user_ctx, original_message, _) = setup().await;
+
+        let tether = &mut user_ctx.user_stash().connection();
+
+        let local_inbox = local_label_id(LabelId::inbox(), tether).await;
+        let local_custom_label_id3 = local_label_id(custom_label_id3(), tether).await;
+
+        let _ = Message::action_label_as(
+            tether,
+            user_ctx.action_queue(),
+            local_inbox,
+            vec![original_message.id()],
+            vec![local_custom_label_id3],
+            vec![],
+            false,
+        )
+        .await
+        .unwrap();
+
+        let labeled_message = Message::find_by_id(original_message.id(), tether)
+            .await
+            .unwrap()
+            .unwrap();
+
+        // simulate state update to target.
+
+        let subscriber = MailEventV6Subscriber::from(Arc::downgrade(&user_ctx));
+        let mut cache = MailEventCache::default();
+        let event = MailEventV6 {
+            event_id: EventId::from("EVENT"),
+            labels: None,
+            conversations: None,
+            incoming_defaults: None,
+            mail_settings: None,
+            messages: Some(vec![MailMessageEventV6 {
+                id: original_message.remote_id.clone().unwrap(),
+                action: mail_core_api::services::proton::Action::Update,
+            }]),
+            refresh: false,
+            has_more: false,
+        };
+
+        test_ctx.mock_server().reset().await;
+        test_ctx
+            .mock_get_message_metadata(
+                vec![ApiMessageMetadata {
+                    id: original_message.remote_id.clone().unwrap(),
+                    conversation_id: original_message.remote_conversation_id.clone().unwrap(),
+                    address_id: original_message.remote_address_id.clone(),
+                    attachments_metadata: vec![],
+                    bcc_list: original_message
+                        .bcc_list
+                        .value
+                        .clone()
+                        .into_iter()
+                        .map(Into::into)
+                        .collect(),
+                    cc_list: original_message
+                        .cc_list
+                        .value
+                        .clone()
+                        .into_iter()
+                        .map(Into::into)
+                        .collect(),
+                    expiration_time: original_message.expiration_time.as_u64(),
+                    external_id: original_message.external_id.clone(),
+                    flags: MessageFlags::empty(),
+                    is_forwarded: original_message.is_forwarded,
+                    is_replied: original_message.is_replied,
+                    is_replied_all: original_message.is_replied_all,
+                    label_ids: original_message.label_ids.clone(),
+                    num_attachments: original_message.num_attachments,
+                    order: original_message.display_order,
+                    sender: original_message.sender.clone().into(),
+                    size: original_message.size,
+                    snooze_time: original_message.snooze_time.as_u64(),
+                    subject: original_message.subject.clone(),
+                    time: original_message.time.as_u64(),
+                    to_list: original_message
+                        .to_list
+                        .value
+                        .clone()
+                        .into_iter()
+                        .map(Into::into)
+                        .collect(),
+                    unread: original_message.unread,
+                }],
+                1,
+            )
+            .await;
+        test_ctx.mock_get_conversations_count(None, 1).await;
+        test_ctx.mock_get_messages_count(None, 1).await;
+
+        <MailEventV6Subscriber as EventSubscriber<EventManagerContext, MailEventSourceV6>>::on_event(
+            &subscriber,
+            &user_ctx.user_context().as_arc(),
+            &event,
+            &mut cache,
+        )
+        .await
+        .unwrap();
+
+        let rebased_message = Message::find_by_id(original_message.id(), tether)
+            .await
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(rebased_message, labeled_message);
+        assert_ne!(rebased_message, original_message);
     }
 }
 

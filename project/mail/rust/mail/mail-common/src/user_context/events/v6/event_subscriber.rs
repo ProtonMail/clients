@@ -15,6 +15,7 @@ use core_event_loop::v6::{EventSource, EventSubscriber};
 use core_event_loop::{EventSubscriberError, EventSubscriberResult, RefreshFlag};
 use indoc::formatdoc;
 use itertools::Itertools;
+use mail_action_queue::action::ActionGroup;
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_core_common::datatypes::SystemLabel;
 use mail_core_common::join_task;
@@ -151,6 +152,14 @@ impl EventSubscriber<EventManagerContext, MailEventSourceV6> for MailEventV6Subs
                         .is_some_and(|e| !e.is_empty())
                     {
                         post_event_data.update_incoming_default();
+                    }
+
+                    if let Err(e) = ctx
+                        .action_queue()
+                        .rebase_in(ActionGroup::default(), &changeset, tx)
+                        .await
+                    {
+                        error!("Failed to rebase changes: {e}");
                     }
 
                     Ok::<_, MailEventSubscriberError>(())

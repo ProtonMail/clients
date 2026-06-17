@@ -8,8 +8,7 @@ use mail_api::services::proton::response_data::{
 };
 use mail_core_api::consts::General;
 use mail_core_api::service::ApiServiceError;
-use mail_core_api::services::proton::{AddressId, LabelId, ProtonAccount as _};
-use mail_core_api::session::Session;
+use mail_core_api::services::proton::{AddressId, LabelId, ProtonCore};
 use mail_core_common::models::{Address, Label, ModelIdExtension};
 use mail_stash::orm::Model;
 use mail_stash::stash::{StashError, Tether};
@@ -90,11 +89,14 @@ impl DependencyFetcher {
         Ok(())
     }
 
-    pub async fn fetch_and_store(
+    pub async fn fetch_and_store<API>(
         &self,
-        api: &Session,
+        api: &API,
         tether: &mut Tether,
-    ) -> Result<HashSet<LabelId>, MailContextError> {
+    ) -> Result<HashSet<LabelId>, MailContextError>
+    where
+        API: ProtonCore + Sync,
+    {
         let mut unresolved_labels = HashSet::new();
         if !self.label_ids.is_empty() {
             let missing_labels = self.fetch_missing_labels(api, tether).await?;
@@ -178,11 +180,14 @@ impl DependencyFetcher {
         Ok(unresolved_labels)
     }
 
-    async fn fetch_missing_labels(
+    async fn fetch_missing_labels<API>(
         &self,
-        api: &Session,
+        api: &API,
         tether: &mut Tether,
-    ) -> Result<Vec<Label>, MailContextError> {
+    ) -> Result<Vec<Label>, MailContextError>
+    where
+        API: ProtonCore + Sync,
+    {
         info!("Syncing missing labels: {:?}", self.label_ids);
         let missing_labels =
             Label::get_labels_by_ids(api, self.label_ids.iter().cloned().collect()).await?;
@@ -237,12 +242,15 @@ impl DependencyFetcher {
         Ok(())
     }
 
-    async fn fetch_label_parents(
-        api: &Session,
+    async fn fetch_label_parents<API>(
+        api: &API,
         labels: Vec<Label>,
         excluded_parent_ids: &HashSet<LabelId>,
         tether: &Tether,
-    ) -> Result<Vec<Label>, MailContextError> {
+    ) -> Result<Vec<Label>, MailContextError>
+    where
+        API: ProtonCore + Sync,
+    {
         let mut all_labels = labels;
         let parent_label_ids = Self::create_parent_ids_set(&all_labels, excluded_parent_ids);
 

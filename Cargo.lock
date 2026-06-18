@@ -114,6 +114,7 @@ dependencies = [
  "core-common-types",
  "core-crux-shell",
  "core-feature-flags-op",
+ "core-key",
  "core-keystore-op",
  "core-logging",
  "core-logging-op",

@@ -3,3 +3,10 @@
 
 [registries.proton]
   index = "sparse+https://rust-registry.proton.me/index/"
+
+# Download crates from crates.io via our Nexus proxy.
+[registries.nexus-crates-io-proxy]
+  index = "sparse+https://nexus.protontech.ch/repository/crates-io-proxy/"
+
+[source.crates-io]
+  replace-with = "nexus-crates-io-proxy"

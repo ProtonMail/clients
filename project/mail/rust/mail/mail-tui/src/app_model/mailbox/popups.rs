@@ -595,3 +595,209 @@ impl crate::app_model::Popup for LabelSelectPopup {
         frame.render_stateful_widget(list, list_area, list_state);
     }
 }
+
+#[derive(Debug, Clone, Copy)]
+enum DeleteLabelType {
+    Folder,
+    Label,
+}
+
+pub struct DeleteLabelPopup {
+    folders: Vec<Label>,
+    labels: Vec<Label>,
+    folders_list_state: ScrollableListState,
+    labels_list_state: ScrollableListState,
+    active_label_type: DeleteLabelType,
+}
+
+impl DeleteLabelPopup {
+    pub async fn new(ctx: Arc<MailUserContext>) -> anyhow::Result<Self> {
+        let tether = ctx.user_stash().connection();
+        let folders = Label::find_by_kind(LabelType::Folder, &tether).await?;
+        let labels = Label::find_by_kind(LabelType::Label, &tether).await?;
+        Ok(Self {
+            folders,
+            labels,
+            folders_list_state: ScrollableListState::new(Some(0)),
+            labels_list_state: ScrollableListState::new(Some(0)),
+            active_label_type: DeleteLabelType::Folder,
+        })
+    }
+
+    fn selected_tab_index(&self) -> usize {
+        match self.active_label_type {
+            DeleteLabelType::Folder => 0,
+            DeleteLabelType::Label => 1,
+        }
+    }
+
+    fn selected_label_list(&mut self) -> (&[Label], &mut ScrollableListState) {
+        match self.active_label_type {
+            DeleteLabelType::Label => (&self.labels, &mut self.labels_list_state),
+            DeleteLabelType::Folder => (&self.folders, &mut self.folders_list_state),
+        }
+    }
+
+    fn switch_tab(&mut self) {
+        self.active_label_type = match self.active_label_type {
+            DeleteLabelType::Label => DeleteLabelType::Folder,
+            DeleteLabelType::Folder => DeleteLabelType::Label,
+        }
+    }
+}
+
+impl crate::app_model::Popup for DeleteLabelPopup {
+    fn title(&self) -> Option<String> {
+        Some("Permanently Delete Folder/Label".into())
+    }
+
+    fn handle_event(&mut self, event: Event) -> Command<Messages> {
+        let Event::Key(key) = event else {
+            return Command::None;
+        };
+        let (list, list_state) = self.selected_label_list();
+        if list_state.handle_event(key.code) {
+            return Command::None;
+        }
+
+        match key.code {
+            KeyCode::Tab => {
+                self.switch_tab();
+                Command::None
+            }
+            KeyCode::Enter => {
+                let Some(index) = list_state.selected() else {
+                    return Command::None;
+                };
+
+                let Some(label) = list.get(index) else {
+                    return Command::None;
+                };
+
+                Command::batch([
+                    Command::message(Messages::DismissPopup),
+                    Command::message(Message::DeleteLabel(label.id())),
+                ])
+            }
+
+            _ => Command::None,
+        }
+    }
+
+    fn view(&mut self, frame: &mut Frame, area: Rect) {
+        let [tab_area, list_area] =
+            Layout::vertical([Constraint::Length(3), Constraint::Percentage(100)]).areas(area);
+
+        let tabs = Tabs::new(vec!["Folders", "Labels"])
+            .block(Block::new().borders(Borders::ALL))
+            .select(self.selected_tab_index())
+            .divider(symbols::line::VERTICAL)
+            .padding(" ", " ");
+        frame.render_widget(tabs, tab_area);
+
+        let (list, list_state) = self.selected_label_list();
+
+        let items = list
+            .iter()
+            .map(|label| ListItem::from(label.name.to_owned()))
+            .collect::<Vec<_>>();
+
+        let list = ScrollableList::new(List::new(items));
+        frame.render_stateful_widget(list, list_area, list_state);
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum CreateLabelType {
+    Folder,
+    Label,
+}
+
+impl From<CreateLabelType> for LabelType {
+    fn from(value: CreateLabelType) -> Self {
+        match value {
+            CreateLabelType::Folder => Self::Folder,
+            CreateLabelType::Label => Self::Label,
+        }
+    }
+}
+
+pub struct CreateLabelPopup {
+    create_label_type: CreateLabelType,
+    text_input_state: TextInputState,
+}
+
+impl CreateLabelPopup {
+    pub fn new() -> Self {
+        Self {
+            create_label_type: CreateLabelType::Folder,
+            text_input_state: TextInputState::new(),
+        }
+    }
+
+    fn create_label_type_index(&self) -> usize {
+        match self.create_label_type {
+            CreateLabelType::Folder => 0,
+            CreateLabelType::Label => 1,
+        }
+    }
+
+    fn switch_label_type(&mut self) {
+        self.create_label_type = match self.create_label_type {
+            CreateLabelType::Folder => CreateLabelType::Label,
+            CreateLabelType::Label => CreateLabelType::Folder,
+        };
+    }
+}
+
+impl crate::app_model::Popup for CreateLabelPopup {
+    fn title(&self) -> Option<String> {
+        Some("Create Label".into())
+    }
+
+    fn handle_event(&mut self, event: Event) -> Command<Messages> {
+        let Event::Key(key) = event else {
+            return Command::None;
+        };
+        match key.code {
+            KeyCode::Tab => {
+                self.switch_label_type();
+                Command::None
+            }
+            KeyCode::Enter => {
+                let label_name = self.text_input_state.value();
+                Command::batch([
+                    Command::message(Messages::DismissPopup),
+                    Command::message(Message::CreateLabel(
+                        label_name.to_string(),
+                        self.create_label_type,
+                    )),
+                ])
+            }
+            _ => {
+                self.text_input_state.handle_event(&event);
+                Command::None
+            }
+        }
+    }
+
+    fn view(&mut self, frame: &mut Frame, area: Rect) {
+        let [tab_area, text_area] =
+            Layout::vertical([Constraint::Length(3), Constraint::Length(3)]).areas(area);
+        let tabs = Tabs::new(vec!["Folder", "Label"])
+            .block(Block::new().borders(Borders::ALL))
+            .select(self.create_label_type_index())
+            .divider(symbols::line::VERTICAL)
+            .padding(" ", " ");
+        frame.render_widget(tabs, tab_area);
+        let text_field_label = match self.create_label_type {
+            CreateLabelType::Folder => "Folder name:  ",
+            CreateLabelType::Label => "Label name:  ",
+        };
+        frame.render_stateful_widget(
+            TextInput::new(text_field_label),
+            text_area,
+            &mut self.text_input_state,
+        );
+    }
+}

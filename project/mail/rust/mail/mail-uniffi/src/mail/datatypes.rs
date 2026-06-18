@@ -42,7 +42,7 @@ use mail_common::models::{
 };
 use mail_core_common::datatypes::{
     AvatarInformation as RealAvatarInformation, LabelColor as RealLabelColor,
-    LabelType as RealLabelType,
+    LabelType as RealLabelType, WellKnownLabelColor as RealWellKnownLabelColor,
 };
 use mail_core_common::utils::MapVec as _;
 use mail_stash::orm::Model;
@@ -819,6 +819,57 @@ impl From<RealCustomLabel> for InlineCustomLabel {
             id: value.local_id.into(),
             name: value.name,
             color: value.color.into(),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, UniffiEnum)]
+pub enum WellKnownLabelColor {
+    Purple,
+    Pink,
+    Strawberry,
+    Carrot,
+    Sahara,
+    Enzian,
+    Plum,
+    Cerise,
+    Copper,
+    Soil,
+    Slateblue,
+    Pacific,
+    Reef,
+    Fern,
+    Olive,
+    Cobalt,
+    Ocean,
+    Pine,
+    Forest,
+    Pickle,
+}
+
+impl From<WellKnownLabelColor> for RealWellKnownLabelColor {
+    fn from(value: WellKnownLabelColor) -> Self {
+        match value {
+            WellKnownLabelColor::Purple => Self::Purple,
+            WellKnownLabelColor::Pink => Self::Pink,
+            WellKnownLabelColor::Strawberry => Self::Strawberry,
+            WellKnownLabelColor::Carrot => Self::Carrot,
+            WellKnownLabelColor::Sahara => Self::Sahara,
+            WellKnownLabelColor::Enzian => Self::Enzian,
+            WellKnownLabelColor::Plum => Self::Plum,
+            WellKnownLabelColor::Cerise => Self::Cerise,
+            WellKnownLabelColor::Copper => Self::Copper,
+            WellKnownLabelColor::Soil => Self::Soil,
+            WellKnownLabelColor::Slateblue => Self::Slateblue,
+            WellKnownLabelColor::Pacific => Self::Pacific,
+            WellKnownLabelColor::Reef => Self::Reef,
+            WellKnownLabelColor::Fern => Self::Fern,
+            WellKnownLabelColor::Olive => Self::Olive,
+            WellKnownLabelColor::Cobalt => Self::Cobalt,
+            WellKnownLabelColor::Ocean => Self::Ocean,
+            WellKnownLabelColor::Pine => Self::Pine,
+            WellKnownLabelColor::Forest => Self::Forest,
+            WellKnownLabelColor::Pickle => Self::Pickle,
         }
     }
 }

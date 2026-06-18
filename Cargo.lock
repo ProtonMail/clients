@@ -6661,6 +6661,7 @@ dependencies = [
  "serde_json",
  "serde_repr",
  "serde_with",
+ "wiremock",
 ]
 
 [[package]]
@@ -7358,6 +7359,7 @@ dependencies = [
  "pretty_assertions",
  "rand 0.9.4",
  "serde",
+ "serde_repr",
  "sqlite-watcher",
  "thiserror 2.0.18",
  "tokio",

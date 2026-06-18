@@ -1,10 +1,11 @@
 //! Label API request structures.
 
 use serde::Serialize;
-use serde_with::{BoolFromInt, serde_as};
+use serde_with::{BoolFromInt, DefaultOnNull, serde_as};
 
 use crate::{LabelId, LabelType};
 
+#[serde_as]
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct PostLabelsRequest {
@@ -17,8 +18,12 @@ pub struct PostLabelsRequest {
     pub label_type: LabelType,
 
     pub name: String,
+
+    #[serde_as(as = "DefaultOnNull<BoolFromInt>")]
+    pub notify: bool,
 }
 
+#[serde_as]
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct PutLabelRequest {
@@ -28,6 +33,9 @@ pub struct PutLabelRequest {
     pub color: String,
 
     pub name: String,
+
+    #[serde_as(as = "Option<BoolFromInt>")]
+    pub notify: Option<bool>,
 }
 
 #[serde_as]

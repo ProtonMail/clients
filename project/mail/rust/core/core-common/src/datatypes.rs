@@ -66,6 +66,7 @@ pub use mail_contacts_common::types::{ContactSendingPreferences, ContactTypes};
 pub use mail_api_session::auth_mode::{PasswordMode, TfaStatus};
 pub use mail_labels_common::{
     ALL_LABEL_TYPES, LabelColor, LabelType, Labels, LocalLabelId, MAIL_LABEL_TYPES,
+    WellKnownLabelColor,
 };
 use mail_shared_types::declare_local_id;
 pub use mail_shared_types::{InitializationKey, LocalIdActionDepExt, LocalIdMarker, UnixTimestamp};

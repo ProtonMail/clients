@@ -15,10 +15,11 @@ serde_json = { workspace = true }
 serde_repr = { workspace = true }
 serde_with = { workspace = true }
 mail-stash = { workspace = true, optional = true }
+wiremock = { workspace = true, optional = true }
 
 [features]
 default = []
-mocks = ["mail-api-event-types/mocks", "mail-api-shared/mocks"]
+mocks = ["mail-api-event-types/mocks", "mail-api-shared/mocks", "wiremock"]
 sql = ["dep:mail-stash", "mail-proton-ids/sql", "mail-api-event-types/sql"]
 
 [lints]

@@ -677,6 +677,7 @@ impl<Db: mail_stash::marker::DatabaseMarker> Queue<Db> {
         change_set: &RebaseChangeSet,
         tx: &WriteTx<'_, Db>,
     ) -> QueuedResult<()> {
+        debug!("Rebase actions for set {change_set:?}");
         let ids = StoredAction::rebase_action_order(action_group.as_ref(), tx).await?;
         if ids.is_empty() {
             return Ok(());

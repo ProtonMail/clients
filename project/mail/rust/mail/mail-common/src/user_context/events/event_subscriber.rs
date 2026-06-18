@@ -187,7 +187,7 @@ impl EventSubscriber<EventManagerContext, MailEventSourceV5> for MailEventV5Subs
             let unresolved_label_ids = calculate_missing_dependencies(&event, &tether)
                 .await
                 .context("Failed to calculate dependencies")?
-                .fetch_and_store(ctx.session(), &mut tether)
+                .fetch_and_store(ctx.session(), &mut tether, ctx.action_queue())
                 .await
                 .inspect_err(|e| error!("Failed to fetch or store dependencies: {e}"))?;
 

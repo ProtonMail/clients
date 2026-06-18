@@ -19,7 +19,7 @@ use mail_action_queue::action::ActionGroup;
 use mail_action_queue::rebase::RebaseChangeSet;
 use mail_core_common::datatypes::SystemLabel;
 use mail_core_common::join_task;
-use mail_core_common::models::Label;
+use mail_core_common::models::{Label, ModelExtension as _};
 use mail_core_common::services::event_loop_service::EventManagerContext;
 use mail_issue_reporter_service::{IssueLevel, issue_report_keys_from_error};
 use mail_stash::orm::Model;
@@ -60,7 +60,7 @@ impl EventSubscriber<EventManagerContext, MailEventSourceV6> for MailEventV6Subs
             let unresolved_label_ids = cache
                 .calculate_missing_dependencies(&tether)
                 .await?
-                .fetch_and_store(ctx.session(), &mut tether)
+                .fetch_and_store(ctx.session(), &mut tether, ctx.action_queue())
                 .await
                 .inspect_err(|e| error!("Failed to fetch or store dependencies: {e}"))?;
 
@@ -241,42 +241,61 @@ pub async fn refresh_mail(ctx: &MailUserContext) -> Result<(), MailEventSubscrib
     }
 
     tether
-        .sync_write_tx(move |tx| {
-            tx.execute_batch(&formatdoc! {"
-                DELETE from {};
-                DELETE from {};
-                DELETE from {};
-                ",
-                RollbackItem::table_name(),
-                ConversationScrollData::table_name(),
-                MessageScrollData::table_name(),
-            })?;
+        .write_tx(async |tx| {
+            let change_set = tx
+                .sync_bridge(|tx| {
+                    tx.execute_batch(&formatdoc! {"
+                        DELETE from {};
+                        DELETE from {};
+                        DELETE from {};
+                        ",
+                        RollbackItem::table_name(),
+                        ConversationScrollData::table_name(),
+                        MessageScrollData::table_name(),
+                    })?;
+                    let mut change_set = RebaseChangeSet::default();
 
-            Label::store_labels(tx, all_remote_labels).context("Failed to sync labels")?;
+                    let local_label_ids = Label::store_labels(tx, all_remote_labels)
+                        .context("Failed to sync labels")?;
+                    change_set.add_many(local_label_ids);
 
-            let mut ids = vec![];
-            for local_label_to_remove in all_local_labels.into_values() {
-                if let Some(_system_label) =
-                    SystemLabel::from_opt_rid(local_label_to_remove.remote_id.as_ref())
-                {
-                    // For some reason API does not return all system labels
-                    // we have to make sure to not delete those
-                    continue;
-                }
+                    let mut ids = vec![];
+                    for local_label_to_remove in all_local_labels.into_values() {
+                        if SystemLabel::from_opt_rid(local_label_to_remove.remote_id.as_ref())
+                            .is_some()
+                        {
+                            // For some reason API does not return all system labels
+                            // we have to make sure to not delete those
+                            continue;
+                        }
 
-                debug!(
-                    "Removing label with remote_id {:?}",
-                    local_label_to_remove.remote_id
-                );
-                ids.push(local_label_to_remove.id());
+                        debug!(
+                            "Removing label with remote_id {:?}",
+                            local_label_to_remove.remote_id
+                        );
+                        ids.push(local_label_to_remove.id());
+                    }
+                    Label::delete_by_ids_sync(&ids, tx)?;
+                    change_set.add_many(ids);
+
+                    counters.store(tx)?;
+                    mail_settings.store(tx)?;
+
+                    Ok(change_set)
+                })
+                .await?;
+
+            if let Err(e) = ctx
+                .action_queue()
+                .rebase_in(ActionGroup::default(), &change_set, tx)
+                .await
+            {
+                error!("Failed to rebase changes: {e}");
             }
-            counters.store(tx)?;
-            mail_settings.store(tx)?;
-
             Ok(())
         })
         .await
-        .inspect_err(|e| {
+        .inspect_err(|e: &anyhow::Error| {
             error!("Failed to clear database entries, while refreshing mail: {e}");
         })?;
 

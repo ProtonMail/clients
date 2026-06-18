@@ -124,14 +124,18 @@ impl Sidebar {
     }
 
     async fn get_label(&self, tether: &Tether, label_id: LabelId) -> SidebarResult<Label> {
-        Label::find_first("WHERE remote_id = ?", params![label_id.clone()], tether)
-            .await?
-            .ok_or_else(|| {
-                error!("System Label don't exist: {:?}", label_id);
-                SidebarError::MailContext(MailContextError::App(AppError::RemoteLabelDoesNotExist(
-                    label_id,
-                )))
-            })
+        Label::find_first(
+            "WHERE remote_id = ? AND deleted = 0",
+            params![label_id.clone()],
+            tether,
+        )
+        .await?
+        .ok_or_else(|| {
+            error!("System Label don't exist: {:?}", label_id);
+            SidebarError::MailContext(MailContextError::App(AppError::RemoteLabelDoesNotExist(
+                label_id,
+            )))
+        })
     }
 
     async fn get_label_with_counters(
@@ -139,13 +143,17 @@ impl Sidebar {
         tether: &Tether,
         label_id: LabelId,
     ) -> SidebarResult<LabelWithCounters> {
-        LabelWithCounters::find_first("WHERE remote_id = ?", params![label_id.clone()], tether)
-            .await?
-            .ok_or_else(|| {
-                error!("System Label don't exist: {:?}", label_id);
-                SidebarError::MailContext(MailContextError::App(AppError::RemoteLabelDoesNotExist(
-                    label_id,
-                )))
-            })
+        LabelWithCounters::find_first(
+            "WHERE remote_id = ? AND deleted = 0",
+            params![label_id.clone()],
+            tether,
+        )
+        .await?
+        .ok_or_else(|| {
+            error!("System Label don't exist: {:?}", label_id);
+            SidebarError::MailContext(MailContextError::App(AppError::RemoteLabelDoesNotExist(
+                label_id,
+            )))
+        })
     }
 }

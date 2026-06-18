@@ -867,7 +867,7 @@ impl Message {
             r#"
             WHERE local_id IN (
                 SELECT local_label_id FROM message_labels WHERE local_message_id = ?
-            ) ORDER BY label_type DESC, display_order ASC
+            ) AND deleted = 0 ORDER BY label_type DESC, display_order ASC
             "#,
             (self.local_id,),
             conn,
@@ -1566,6 +1566,7 @@ impl Message {
         api: &Session,
         search_service: Option<&MailSearchService>,
         tether: &mut Tether,
+        queue: &Queue<UserDb>,
     ) -> Result<Vec<Self>, MailContextError> {
         let remote_msgs = Self::fetch_metadata(
             GetMessagesOptions {
@@ -1584,7 +1585,7 @@ impl Message {
         }
 
         dep_fetcher
-            .fetch_and_store(api, tether)
+            .fetch_and_store(api, tether, queue)
             .await
             .inspect_err(|e| {
                 tracing::error!("Failed to sync message dependencies: {e}");
@@ -1786,9 +1787,14 @@ impl Message {
             return Ok(message.id());
         }
         tracing::debug!("Message does not exist, fetching");
-        let result =
-            Message::sync_metadata(vec![remote_id], ctx.session(), ctx.search_service(), tether)
-                .await?;
+        let result = Message::sync_metadata(
+            vec![remote_id],
+            ctx.session(),
+            ctx.search_service(),
+            tether,
+            ctx.action_queue(),
+        )
+        .await?;
         if result.len() != 1 {
             return Err(MailContextError::Other(anyhow!(
                 "Failed to sync message from server"
@@ -1826,7 +1832,7 @@ impl Message {
         }
 
         dep_fetcher
-            .fetch_and_store(ctx.session(), &mut tether)
+            .fetch_and_store(ctx.session(), &mut tether, ctx.action_queue())
             .await
             .inspect_err(|e| {
                 tracing::error!("Failed to sync message dependencies: {e}");

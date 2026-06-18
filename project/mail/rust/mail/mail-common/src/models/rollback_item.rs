@@ -240,7 +240,7 @@ impl RollbackItem {
                 error!("Failed to fetch batch ({:?}): {e:?}", H::item_type());
             })?;
 
-            H::fetch_and_apply_dependencies(&mut items, api, tether)
+            H::fetch_and_apply_dependencies(&mut items, api, tether, queue)
                 .await
                 .inspect_err(|e| {
                     error!(
@@ -307,6 +307,7 @@ trait RollbackHandler: 'static + Send + Sync {
         items: &mut [Self::Item],
         api: &Session,
         tx_runner: &mut Tether<UserDb>,
+        queue: &Queue<UserDb>,
     ) -> impl Future<Output = Result<(), MailContextError>>;
 
     fn store_items(
@@ -345,6 +346,7 @@ impl RollbackHandler for MessageRollbackHandler {
         items: &mut [Self::Item],
         api: &Session,
         tether: &mut Tether<UserDb>,
+        queue: &Queue<UserDb>,
     ) -> Result<(), MailContextError> {
         let mut dependency_fetcher = DependencyFetcher::new();
         for item in items.iter_mut() {
@@ -353,7 +355,9 @@ impl RollbackHandler for MessageRollbackHandler {
                 .await?;
         }
 
-        let unresolved_label_ids = dependency_fetcher.fetch_and_store(api, tether).await?;
+        let unresolved_label_ids = dependency_fetcher
+            .fetch_and_store(api, tether, queue)
+            .await?;
 
         for item in items.iter_mut() {
             item.label_ids
@@ -427,6 +431,7 @@ impl RollbackHandler for ConversationRollbackHandler {
         items: &mut [Self::Item],
         api: &Session,
         tether: &mut Tether<UserDb>,
+        queue: &Queue<UserDb>,
     ) -> Result<(), MailContextError> {
         let mut dependency_fetcher = DependencyFetcher::new();
         for item in items.iter_mut() {
@@ -440,7 +445,9 @@ impl RollbackHandler for ConversationRollbackHandler {
             }
         }
 
-        let unresolved_label_ids = dependency_fetcher.fetch_and_store(api, tether).await?;
+        let unresolved_label_ids = dependency_fetcher
+            .fetch_and_store(api, tether, queue)
+            .await?;
 
         for item in items.iter_mut() {
             item.conversation
@@ -502,6 +509,7 @@ impl RollbackHandler for LabelRollbackHandler {
         items: &mut [Self::Item],
         api: &Session,
         tether: &mut Tether<UserDb>,
+        queue: &Queue<UserDb>,
     ) -> Result<(), MailContextError> {
         use std::collections::HashSet;
 
@@ -519,7 +527,9 @@ impl RollbackHandler for LabelRollbackHandler {
             }
         }
 
-        let unresolved_label_ids = dependency_fetcher.fetch_and_store(api, tether).await?;
+        let unresolved_label_ids = dependency_fetcher
+            .fetch_and_store(api, tether, queue)
+            .await?;
 
         for item in items.iter_mut() {
             if let Some(parent_id) = &item.parent_id

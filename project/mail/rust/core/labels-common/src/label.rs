@@ -5,6 +5,7 @@ use crate::label_type::{ALL_LABEL_TYPES, LabelColor, LabelType, MAIL_LABEL_TYPES
 use crate::local_ids::LocalLabelId;
 use itertools::Itertools;
 use mail_action_queue::rebase::RebaseChangeSet;
+use mail_api_labels::{PostLabelsRequest, PutLabelRequest};
 use mail_core_api::service::ApiServiceError;
 use mail_core_api::services::proton::{
     EventId, Label as ApiLabel, LabelId, PatchLabelRequest, ProtonCore,
@@ -17,7 +18,7 @@ use mail_stash::stash::{Stash, StashError, StashResult, Tether, WatcherHandle, W
 use mail_stash::utils::{MapToSql as _, placeholders};
 use mail_stash::{UserDb, params};
 use sqlite_watcher::watcher::TableObserver;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use thiserror::Error;
 use topological_sort::TopologicalSort;
 use tracing::log::warn;
@@ -228,11 +229,80 @@ impl Label {
         .map(|r| r.label.into())
     }
 
+    #[instrument(skip(api))]
+    pub async fn create_remote<API: ProtonCore>(
+        label_type: LabelType,
+        name: String,
+        color: LabelColor,
+        parent_id: Option<LabelId>,
+        notify: bool,
+        api: &API,
+    ) -> Result<Label, ApiServiceError> {
+        api.post_labels(PostLabelsRequest {
+            parent_id,
+            color: color.to_string(),
+            label_type: label_type.into(),
+            name,
+            notify,
+        })
+        .await
+        .map(|r| r.label.into())
+    }
+
+    #[instrument(skip(api))]
+    pub async fn put_remote<API: ProtonCore>(
+        id: LabelId,
+        name: String,
+        parent_id: Option<LabelId>,
+        color: LabelColor,
+        notify: Option<bool>,
+        api: &API,
+    ) -> Result<Label, ApiServiceError> {
+        api.put_label(
+            id,
+            PutLabelRequest {
+                parent_id,
+                color: color.to_string(),
+                name,
+                notify,
+            },
+        )
+        .await
+        .map(|r| r.label.into())
+    }
+
     #[instrument(skip(tether))]
-    pub async fn find_by_kind(kind: LabelType, tether: &Tether) -> Result<Vec<Self>, StashError> {
+    async fn find_by_kind_with_deleted(
+        kind: LabelType,
+        tether: &Tether,
+    ) -> Result<Vec<Self>, StashError> {
         Label::find(
             "WHERE label_type = ? ORDER BY display_order ASC",
             params![kind],
+            tether,
+        )
+        .await
+    }
+
+    #[instrument(skip(tether))]
+    pub async fn find_by_kind(kind: LabelType, tether: &Tether) -> Result<Vec<Self>, StashError> {
+        Label::find(
+            "WHERE label_type = ? AND deleted = 0 ORDER BY display_order ASC",
+            params![kind],
+            tether,
+        )
+        .await
+    }
+
+    #[instrument(skip(tether))]
+    pub async fn find_by_name_kind(
+        name: String,
+        kind: LabelType,
+        tether: &Tether,
+    ) -> Result<Option<Self>, StashError> {
+        Label::find_first(
+            "WHERE name = ? AND label_type = ? AND deleted = 0",
+            params![name, kind],
             tether,
         )
         .await
@@ -243,7 +313,12 @@ impl Label {
         kind: LabelType,
         tether: &Tether,
     ) -> Result<Vec<LocalLabelId>, StashError> {
-        Label::find_local_id_by(tether, "WHERE label_type = ?", params![kind]).await
+        Label::find_local_id_by(
+            tether,
+            "WHERE label_type = ? AND deleted = 0",
+            params![kind],
+        )
+        .await
     }
 
     #[instrument(skip(tether))]
@@ -253,7 +328,9 @@ impl Label {
     ) -> Result<Vec<Self>, StashError> {
         let placeholders = placeholders(kinds);
         Label::find(
-            format!("WHERE label_type IN ({placeholders}) ORDER BY display_order ASC"),
+            format!(
+                "WHERE label_type IN ({placeholders}) AND deleted = 0 ORDER BY display_order ASC"
+            ),
             kinds.to_sql(),
             tether,
         )
@@ -322,6 +399,9 @@ impl Label {
                 if let Some(label) = label {
                     label.save(tx).await?;
                     changeset.add(label.id());
+                    if let Some(parent) = label.local_parent_id {
+                        changeset.add(parent);
+                    }
                 } else {
                     warn!("Received label create without label");
                 }
@@ -330,12 +410,87 @@ impl Label {
                 if let Some(label) = label {
                     label.save(tx).await?;
                     changeset.add(label.id());
+                    if let Some(parent) = label.local_parent_id {
+                        changeset.add(parent);
+                    }
                 } else {
                     warn!("Received label update without label");
                 }
             }
         }
         Ok(())
+    }
+
+    pub async fn mark_deleted(
+        tx: &WriteTx<'_>,
+        ids: Vec<LocalLabelId>,
+        deleted: bool,
+    ) -> Result<(), StashError> {
+        let deleted = if deleted { "+ 1" } else { "- 1" };
+        let placeholders = placeholders(&ids);
+        tx.execute(
+            format!("UPDATE labels SET deleted = MAX(deleted {deleted}, 0) WHERE local_id in ({placeholders})"),
+            ids.to_sql(),
+        )
+        .await?;
+        Ok(())
+    }
+
+    pub async fn get_deleted(tether: &Tether, id: LocalLabelId) -> Result<i32, StashError> {
+        tether
+            .query_value("SELECT deleted FROM labels WHERE local_id = ?", params!(id))
+            .await
+    }
+
+    pub async fn find_descendants(
+        tether: &Tether,
+        id: LocalLabelId,
+    ) -> Result<Vec<LocalLabelId>, StashError> {
+        let all_labels = Label::find_by_kind_with_deleted(LabelType::Folder, tether).await?;
+        let mut parent_to_children_map = HashMap::<LocalLabelId, Vec<LocalLabelId>>::new();
+        for label in all_labels {
+            if let Some(parent_id) = label.local_parent_id
+                && let Some(id) = label.local_id
+            {
+                debug_assert_ne!(parent_id, id);
+                let entry = parent_to_children_map.entry(parent_id).or_default();
+                entry.push(id);
+            }
+        }
+        let mut out = Vec::new();
+        let mut to_visit = Vec::new();
+        to_visit.push(id);
+        while let Some(id) = to_visit.pop() {
+            let children = parent_to_children_map.remove(&id).unwrap_or_default();
+            for child in children {
+                out.push(child);
+                to_visit.push(child)
+            }
+        }
+        Ok(out)
+    }
+
+    pub async fn max_descendants_display_order(
+        tether: &Tether,
+        id: Option<LocalLabelId>,
+    ) -> Result<u32, StashError> {
+        let descendants = if let Some(id) = id {
+            let descendants = Self::find_descendants(tether, id).await?;
+            let mut out = Vec::new();
+            for d in descendants {
+                if let Some(label) = Label::load(d, tether).await? {
+                    out.push(label);
+                }
+            }
+            out
+        } else {
+            Label::find_by_kind(LabelType::Folder, tether).await?
+        };
+        let mut max_display_order = 0;
+        for label in descendants {
+            max_display_order = max_display_order.max(label.display_order);
+        }
+        Ok(max_display_order)
     }
 }
 
@@ -957,5 +1112,35 @@ mod tests {
                 remote.id
             );
         }
+    }
+
+    #[tokio::test]
+    async fn mark_label_deleted_locally() {
+        let mut tether = new_label_test_connection().await.connection();
+        let label = test_label(random_string(1).as_str());
+        tether
+            .write_tx::<_, _, StashError>(async |tx| Label::from(label.clone()).save(tx).await)
+            .await
+            .unwrap();
+        let local = Label::find_by_kind(label.label_type.into(), &tether)
+            .await
+            .expect("failed to get labels")
+            .into_iter()
+            .find(|l| l.remote_id == Some(label.id.clone()))
+            .expect("failed to find local label");
+        compare_local_to_remote(&tether, &local, &label).await;
+        tether
+            .write_tx::<_, _, StashError>(async |tx| {
+                Label::mark_deleted(tx, vec![local.local_id.unwrap()], true).await?;
+                Ok(())
+            })
+            .await
+            .unwrap();
+        let found = Label::find_by_kind(label.label_type.into(), &tether)
+            .await
+            .expect("failed to get labels")
+            .into_iter()
+            .find(|l| l.remote_id == Some(label.id.clone()));
+        assert!(found.is_none(), "label should be deleted and not visible");
     }
 }

@@ -264,7 +264,9 @@ impl LocalSearchScrollerSource {
                 .check_api_message_metadata(msg, tether)
                 .await?;
         }
-        let unresolved_label_ids = dependency_fetcher.fetch_and_store(&session, tether).await?;
+        let unresolved_label_ids = dependency_fetcher
+            .fetch_and_store(&session, tether, ctx.action_queue())
+            .await?;
 
         let queue = ctx.action_queue();
         tether

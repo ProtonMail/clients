@@ -10,6 +10,7 @@ use crate::app::Command;
 use crate::app_model::mailbox::composer::Composer;
 use crate::app_model::mailbox::conversations::ConversationsState;
 use crate::app_model::mailbox::messages::{DecryptedMessage, MessagesState};
+use crate::app_model::mailbox::popups::CreateLabelType;
 use crate::app_model::watcher::TuiWatchHandle;
 use crate::messages::Messages;
 use anyhow::Context;
@@ -65,6 +66,10 @@ pub enum Message {
     ForcePollEventFinish,
     OpenUserFeatureFlags,
     CategoryViewUpdated(Vec<CategoryLabel>),
+    OpenDeleteLabelPopup,
+    DeleteLabel(LocalLabelId),
+    OpenCreateLabelPopup,
+    CreateLabel(String, CreateLabelType),
 }
 
 pub struct LabelAs<T: LocalIdMarker> {

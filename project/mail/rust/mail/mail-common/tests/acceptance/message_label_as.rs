@@ -397,7 +397,6 @@ mod rebase {
     use mail_core_common::services::event_loop_service::EventManagerContext;
     use pretty_assertions::{assert_eq, assert_ne};
     use std::sync::Arc;
-    use tracing::subscriber;
 
     // NOTE: The must_archive rebase is handled by the message/conv move rules.
     fn custom_label_id1() -> LabelId {

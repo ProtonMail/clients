@@ -4,7 +4,8 @@ use crate::app_model::mailbox::composer::Composer;
 use crate::app_model::mailbox::conversations::ConversationsState;
 use crate::app_model::mailbox::messages::MessagesState;
 use crate::app_model::mailbox::popups::{
-    CustomSnoozeOption, LabelItemPopup, LabelSelectPopup, MoveItemPopup, SnoozeItemPopup,
+    CreateLabelPopup, CreateLabelType, CustomSnoozeOption, DeleteLabelPopup, LabelItemPopup,
+    LabelSelectPopup, MoveItemPopup, SnoozeItemPopup,
 };
 use crate::app_model::mailbox::{Items, Message, poll_event_loop, refresh};
 use crate::app_model::watcher::TuiWatchHandle;
@@ -12,7 +13,7 @@ use crate::app_model::{AppState, AppStateHandler, HelpPopup, YesNoPopup};
 use crate::messages::Messages;
 use crate::widgets::category_tabs::category_tabs;
 use crate::widgets::{CenteredThrobber, ScrollableListState};
-use anyhow::anyhow;
+use anyhow::{Context as _, anyhow};
 use crossterm::event::{KeyCode, KeyModifiers};
 use flume::Sender;
 use futures::FutureExt;
@@ -34,7 +35,7 @@ use mail_common::{
     MailScrollerItem, MailUserContext, Mailbox,
 };
 use mail_core_common::actions::event_poll::EventPoll;
-use mail_core_common::datatypes::LocalLabelId;
+use mail_core_common::datatypes::{LocalLabelId, WellKnownLabelColor};
 use mail_core_common::models::{Label, ModelExtension};
 use ratatui::crossterm::event::Event;
 use ratatui::layout::{Flex, Rect};
@@ -289,6 +290,25 @@ impl MailboxModel {
         })
     }
 
+    fn open_delete_label_popup(&mut self) -> Command<Messages> {
+        let ctx = Arc::clone(&self.ctx);
+        Command::task(async move {
+            match DeleteLabelPopup::new(ctx).await {
+                Ok(state) => Command::message(Messages::RaisePopup(Box::new(state))),
+                Err(e) => {
+                    let e = anyhow!("Failed to load labels: {e}");
+                    tracing::error!("{e:?}");
+                    Command::message(Messages::DisplayError(None, e))
+                }
+            }
+        })
+    }
+
+    fn open_create_label_popup(&mut self) -> Command<Messages> {
+        let state = CreateLabelPopup::new();
+        Command::message(Messages::RaisePopup(Box::new(state)))
+    }
+
     fn open_move_item_popup(&mut self, item: Items) -> Command<Messages> {
         if matches!(&self.state, State::Syncing(_)) {
             return Command::None;
@@ -329,6 +349,36 @@ impl MailboxModel {
         Command::message(Messages::SwitchAppState(AppState::Contacts(
             crate::app_model::contacts::ContactsModel::new(self.ctx.clone()),
         )))
+    }
+
+    fn delete_label(&mut self, label_id: LocalLabelId) -> Command<Messages> {
+        let ctx = Arc::clone(&self.ctx);
+        Command::from_future(async move {
+            let action = mail_common::actions::labels::Delete::new(label_id);
+            ctx.action_queue()
+                .queue_action(action)
+                .await
+                .context("Failed to delete label")?;
+            Ok(())
+        })
+    }
+
+    fn create_label(&mut self, name: String, label_type: CreateLabelType) -> Command<Messages> {
+        let ctx = Arc::clone(&self.ctx);
+        Command::from_future(async move {
+            let action = mail_common::actions::labels::Create::new(
+                None,
+                label_type.into(),
+                name,
+                WellKnownLabelColor::Purple,
+                true,
+            );
+            ctx.action_queue()
+                .queue_action(action)
+                .await
+                .context("Failed to create label")?;
+            Ok(())
+        })
     }
 
     fn select_label(&mut self, label_id: LocalLabelId) -> Command<Messages> {
@@ -498,6 +548,8 @@ impl AppStateHandler for MailboxModel {
                 KeyCode::Char('a') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                     return self.change_filter(ReadFilter::All);
                 }
+                KeyCode::Char('D') => return Message::OpenDeleteLabelPopup.into(),
+                KeyCode::Char('C') => return Message::OpenCreateLabelPopup.into(),
                 KeyCode::F(8) => {
                     return Command::Message(Messages::SwitchAppState(AppState::Background(
                         crate::app_model::background::BackgroundModel::new(
@@ -566,7 +618,7 @@ impl AppStateHandler for MailboxModel {
         }
     }
 
-    fn update(&mut self, _: &Arc<MailContext>, message: Messages) -> Command<Messages> {
+    fn update(&mut self, _ctx: &Arc<MailContext>, message: Messages) -> Command<Messages> {
         let Messages::Mailbox(message) = message else {
             return Command::None;
         };
@@ -657,6 +709,10 @@ impl AppStateHandler for MailboxModel {
                 self.categories = categories;
                 Command::None
             }
+            Message::OpenDeleteLabelPopup => self.open_delete_label_popup(),
+            Message::DeleteLabel(label_id) => self.delete_label(label_id),
+            Message::OpenCreateLabelPopup => self.open_create_label_popup(),
+            Message::CreateLabel(name, label_type) => self.create_label(name, label_type),
         }
     }
 
@@ -707,6 +763,8 @@ impl AppStateHandler for MailboxModel {
             ("F5", "Refresh (Force event loop poll)"),
             ("F8", "[DEBUG]: Put app in background"),
             ("ctrl+h", "[DEBUG]: has more?"),
+            ("C", "Create a custom folder/label"),
+            ("D", "Delete a custom folder/label permanently"),
         ];
 
         self.state.help_options(&mut items);

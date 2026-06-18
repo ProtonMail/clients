@@ -3,6 +3,7 @@ mod acceptance {
     mod action_block_sender;
     mod action_label;
     mod action_label_as;
+    mod action_manipulate_labels;
     mod actions_read_unread;
     mod addresses;
     mod attachment;

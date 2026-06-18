@@ -1126,7 +1126,7 @@ impl Conversation {
         let placeholders = placeholders(&ids);
         let labels = Label::find_sync(
             format!(
-                "WHERE local_id IN ({placeholders}) ORDER BY label_type DESC, display_order ASC",
+                "WHERE local_id IN ({placeholders}) AND deleted = 0 ORDER BY label_type DESC, display_order ASC",
             ),
             params_from_iter(ids),
             conn,
@@ -1845,7 +1845,7 @@ impl Conversation {
         }
 
         dep_fetcher
-            .fetch_and_store(session, tether)
+            .fetch_and_store(session, tether, queue)
             .await
             .inspect_err(|e| {
                 tracing::error!("Failed to fetch dependencies : {e}");
@@ -1998,7 +1998,7 @@ impl Conversation {
             }
 
             dep_fetcher
-                .fetch_and_store(session, tether)
+                .fetch_and_store(session, tether, queue)
                 .await
                 .inspect_err(|e| {
                     tracing::error!("Failed to fetch dependencies : {e}");

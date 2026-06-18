@@ -553,7 +553,9 @@ impl RemoteConversationScrollerSource {
                 .check_api_message_metadata(message, tether)
                 .await?;
         }
-        let unresolved_label_ids = dependency_fetcher.fetch_and_store(api, tether).await?;
+        let unresolved_label_ids = dependency_fetcher
+            .fetch_and_store(api, tether, queue)
+            .await?;
         for conversation in conversations.iter_mut() {
             conversation.prune_unresolved_labels(&unresolved_label_ids);
         }

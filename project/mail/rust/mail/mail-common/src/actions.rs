@@ -184,7 +184,10 @@ pub(crate) fn register_actions(
             );
             replace(queue, draft::SaveHandler { ctx: ctx.clone() });
             replace(queue, draft::SendHandler { ctx: ctx.clone() });
+            replace(queue, labels::CreateHandler { ctx: ctx.clone() });
             replace(queue, labels::ExpandHandler { ctx: ctx.clone() });
+            replace(queue, labels::UpdateHandler { ctx: ctx.clone() });
+            replace(queue, labels::DeleteHandler { ctx: ctx.clone() });
             replace(queue, messages::LabelAsHandler { ctx: ctx.clone() });
             replace(queue, conversations::LabelAsHandler { ctx: ctx.clone() });
             replace(queue, draft::DiscardHandler { ctx: ctx.clone() });

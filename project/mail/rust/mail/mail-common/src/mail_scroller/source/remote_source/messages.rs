@@ -459,7 +459,9 @@ impl RemoteMessageScrollerSource {
                 .check_api_message_metadata(message, tether)
                 .await?;
         }
-        let unresolved_label_ids = dependency_fetcher.fetch_and_store(api, tether).await?;
+        let unresolved_label_ids = dependency_fetcher
+            .fetch_and_store(api, tether, queue)
+            .await?;
 
         // We do not want to notify the UI about the not visible items
         // downloaded in the background

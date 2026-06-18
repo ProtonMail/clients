@@ -3,6 +3,9 @@ use crate::datatypes::{ConversationLabelsCount, MessageLabelsCount};
 use crate::models::{Conversation, Message};
 use anyhow::Context;
 use itertools::Itertools;
+use mail_action_queue::action::ActionGroup;
+use mail_action_queue::queue::Queue;
+use mail_action_queue::rebase::RebaseChangeSet;
 use mail_api::services::proton::response_data::{
     Conversation as ApiConversation, MessageMetadata as ApiMessageMetadata,
 };
@@ -10,6 +13,7 @@ use mail_core_api::consts::General;
 use mail_core_api::service::ApiServiceError;
 use mail_core_api::services::proton::{AddressId, LabelId, ProtonCore};
 use mail_core_common::models::{Address, Label, ModelIdExtension};
+use mail_stash::UserDb;
 use mail_stash::orm::Model;
 use mail_stash::stash::{StashError, Tether};
 use std::collections::HashSet;
@@ -93,6 +97,7 @@ impl DependencyFetcher {
         &self,
         api: &API,
         tether: &mut Tether,
+        queue: &Queue<UserDb>,
     ) -> Result<HashSet<LabelId>, MailContextError>
     where
         API: ProtonCore + Sync,
@@ -112,9 +117,11 @@ impl DependencyFetcher {
 
             tether
                 .write_tx(async |tx| {
-                    Label::store_labels_async(tx, missing_labels.clone())
+                    let mut change_set = RebaseChangeSet::default();
+                    let local_label_ids = Label::store_labels_async(tx, missing_labels.clone())
                         .await
                         .context("Failed to store missing labels")?;
+                    change_set.add_many(local_label_ids);
                     let message_counts = missing_labels
                         .iter()
                         .map(|v| MessageLabelsCount {
@@ -133,6 +140,9 @@ impl DependencyFetcher {
                         .collect::<Vec<_>>();
                     MessageLabelsCount::upsert(message_counts, tx).await?;
                     ConversationLabelsCount::upsert(conversation_counts, tx).await?;
+                    queue
+                        .rebase_in(ActionGroup::default(), &change_set, tx)
+                        .await?;
                     Ok(())
                 })
                 .await

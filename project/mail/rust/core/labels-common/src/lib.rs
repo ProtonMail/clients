@@ -7,5 +7,7 @@ pub mod local_ids;
 pub mod test_utils;
 
 pub use label::{Label, LabelError, LabelWatcher};
-pub use label_type::{ALL_LABEL_TYPES, LabelColor, LabelType, Labels, MAIL_LABEL_TYPES};
+pub use label_type::{
+    ALL_LABEL_TYPES, LabelColor, LabelType, Labels, MAIL_LABEL_TYPES, WellKnownLabelColor,
+};
 pub use local_ids::LocalLabelId;

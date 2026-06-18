@@ -367,7 +367,7 @@ async fn prepare_indexed_messages_metadata(
 
     let mut tether = stash.connection();
     let unresolved_label_ids = dependency_fetcher
-        .fetch_and_store(session, &mut tether)
+        .fetch_and_store(session, &mut tether, user_ctx.action_queue())
         .await?;
 
     let mut metadata = api_messages.to_vec();
@@ -434,7 +434,9 @@ async fn sync_missing_addresses_for_messages(
     drop(tether);
 
     let mut tether = stash.connection();
-    fetcher.fetch_and_store(session, &mut tether).await?;
+    fetcher
+        .fetch_and_store(session, &mut tether, user_ctx.action_queue())
+        .await?;
     Ok(())
 }
 

@@ -1,8 +1,11 @@
 //! Shared API label types.
 
 mod api;
+#[cfg(feature = "mocks")]
+pub mod mocks;
 mod requests;
 mod responses;
+
 pub use api::LabelApi;
 pub use requests::{
     GetLabelsByIdsOptions, GetLabelsOptions, PatchLabelRequest, PostLabelsRequest, PutLabelRequest,

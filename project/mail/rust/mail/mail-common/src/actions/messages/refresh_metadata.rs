@@ -108,6 +108,7 @@ impl Handler<UserDb> for RefreshMetadataHandler {
             ctx.session(),
             ctx.search_service(),
             &mut tether,
+            ctx.action_queue(),
         )
         .await;
 

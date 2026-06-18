@@ -9,6 +9,7 @@ mod device;
 mod draft;
 mod images;
 mod ios_share_ext;
+mod labels;
 mod logging;
 pub mod mail_scroller;
 pub mod mailbox;

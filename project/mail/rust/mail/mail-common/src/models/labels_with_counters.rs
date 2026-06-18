@@ -102,7 +102,7 @@ impl LabelWithCounters {
 
     pub async fn load(label_id: LocalLabelId, tether: &Tether) -> Result<Option<Self>, StashError> {
         Self::find_first(
-            formatdoc!("WHERE {}.local_id = ?", Label::table_name()),
+            formatdoc!("WHERE {}.local_id = ? AND deleted = 0", Label::table_name()),
             params![label_id],
             tether,
         )
@@ -125,7 +125,7 @@ impl LabelWithCounters {
             INNER JOIN {convs}
                 ON {labels}.local_id = {convs}.local_label_id
             WHERE
-                {labels}.label_type = ?
+                {labels}.label_type = ? AND deleted = 0
             ORDER BY
                 {labels}.display_order ASC
             ",
@@ -172,7 +172,7 @@ impl LabelWithCounters {
             INNER JOIN {convs}
                 ON {labels}.local_id = {convs}.local_label_id
             WHERE
-                {labels}.local_id IN ({placeholders})
+                {labels}.local_id IN ({placeholders}) AND deleted = 0
             ORDER BY
                 {labels}.display_order ASC
             ",

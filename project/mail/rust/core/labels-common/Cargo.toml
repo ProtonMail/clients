@@ -20,6 +20,7 @@ mail-stash = { workspace = true }
 mail-local-id = { workspace = true }
 rand = { workspace = true, optional = true }
 serde = { workspace = true }
+serde_repr = { workspace = true }
 sqlite-watcher = { workspace = true }
 thiserror = { workspace = true }
 topological-sort = { workspace = true }

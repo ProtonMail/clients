@@ -33,6 +33,45 @@ rust_library(
     ],
 )
 
+_MAIL_CORE_API_DEPS = [
+    "//project/mail/rust/account/account-api:mail-account-api",
+    "//project/mail/rust/account/account-ids:mail-account-ids",
+    "//project/mail/rust/api/mail-api-bug-report",
+    "//project/mail/rust/api/mail-api-device",
+    "//project/mail/rust/api/mail-api-event-types",
+    "//project/mail/rust/api/mail-api-feature-flags",
+    "//project/mail/rust/api/mail-api-labels:mail-api-labels-with-mocks",
+    "//project/mail/rust/api/mail-api-ping",
+    "//project/mail/rust/api/mail-api-session",
+    "//project/mail/rust/api/mail-api-shared",
+    "//project/mail/rust/contacts/contacts-api:mail-contacts-api-with-mocks",
+    "//project/mail/rust/shared/api-utils:mail-api-utils",
+    "//project/mail/rust/shared/mail-proton-ids",
+    "//project/mail/rust/shared/network-monitor-service:mail-network-monitor-service",
+    "//project/mail/rust/shared/stash:mail-stash",
+    "//project/mail/rust/shared/task-service:mail-task-service",
+    "@crate_index//:mail-muon",
+]
+
+rust_library(
+    name = "mail-core-api-with-mocks",
+    testonly = True,
+    srcs = glob(["src/**/*.rs"]),
+    crate_features = [
+        "sql",
+        "mocks",
+    ],
+    crate_name = "mail_core_api",
+    edition = "2024",
+    proc_macro_deps = all_crate_deps(
+        proc_macro = True,
+    ),
+    visibility = ["//project/mail/rust:__subpackages__"],
+    deps = all_crate_deps(
+        normal = True,
+    ) + _MAIL_CORE_API_DEPS,
+)
+
 rust_test(
     name = "mail-core-api-test",
     size = "small",

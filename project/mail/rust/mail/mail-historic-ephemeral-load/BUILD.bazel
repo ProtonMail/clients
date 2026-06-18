@@ -44,7 +44,8 @@ rust_test(
     deps = all_crate_deps(
         normal_dev = True,
     ) + [
-        "//project/mail/rust/core/core-common:mail-core-common",
+        "//project/mail/rust/core/core-common:mail-core-common-with-test-utils",
+        "//project/mail/rust/mail/mail-api:mail-api-with-mocks",
         "//project/mail/rust/shared/task-service:mail-task-service",
     ],
 )

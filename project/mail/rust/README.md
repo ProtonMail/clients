@@ -46,8 +46,8 @@ On merged-result / merge-train pipelines, when mail Rust paths change (see
 
 | Job | Command | Notes |
 |-----|---------|-------|
+| `test:linux` | `bazel test //project/mail/rust/...` (via `ci/project.gitlab-ci.yml`) | Monorepo-wide Linux Bazel tests |
 | `mail:clippy` | `bazel build --config=clippy //project/mail/rust/...` | Linux |
-| `mail:rust:test:linux` | `bazel test //project/mail/rust/...` | Linux |
 | `mail:rust:test:macos` | `bazel test --config=mail-darwin-test //project/mail/rust/...` | macOS (tart runner); mirrors Cargo `mail-darwin-test` profile |
 | `mail:build-mail-uniffi-ios` | `bazel build //project/mail/apple/mail-uniffi:ProtonAppUniffi` | UniFFI / release tag |
 | `mail:build-mail-uniffi-android` | `bazel build :mail_uniffi_android_jni_libs` + Gradle archive | UniFFI / release tag |
@@ -62,8 +62,15 @@ Bazel test targets mirror Cargo's three layers where they exist:
 - `rust_test_suite` / `rust_test` + `crate_root` — integration tests under `tests/`
 - `rust_doc_test` — documentation examples
 
-Crates with no unit tests omit the `rust_test` stub. Heavy acceptance targets stay tagged
-`manual`.
+Crates with no unit tests omit the `rust_test` stub. Dev binaries and fuzz targets (for example
+`mail-tui`, `mail-ical-cli`, `*-fuzz`, `mail-uniffi-bindgen`) stay tagged `manual` and are
+excluded from `bazel test //project/mail/rust/...`.
+
+`test:linux` (monorepo root) and `mail:rust:test:macos` run unit, doc, and integration tests that
+build under Bazel today (including `mail-action-queue-integration-tests` and
+`mail-core-common-integration-tests`). Suites that still need Bazel `test-utils` / `mocks` wiring
+(`mail-common`, `mail-api`, `mail-calendar-common`, and some `test-utils` unit tests) stay
+`manual` until [!3085](https://gitlab.protontech.ch/proton/clients/monorepo/-/merge_requests/3085).
 
 ## Releases
 

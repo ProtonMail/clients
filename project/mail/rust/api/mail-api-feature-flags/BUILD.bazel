@@ -4,6 +4,7 @@ load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 rust_library(
     name = "mail-api-feature-flags",
     srcs = glob(["src/**/*.rs"]),
+    crate_features = ["mocks"],
     edition = "2024",
     proc_macro_deps = all_crate_deps(
         proc_macro = True,

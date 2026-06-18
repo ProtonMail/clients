@@ -24,19 +24,43 @@ rust_library(
     ],
 )
 
+rust_library(
+    name = "mail-labels-common-with-test-utils",
+    testonly = True,
+    srcs = glob(["src/**/*.rs"]),
+    compile_data = ["Cargo.toml"] + glob(["src/db/migrations/**"]),
+    crate_features = [
+        "sql",
+        "test-utils",
+    ],
+    crate_name = "mail_labels_common",
+    edition = "2024",
+    proc_macro_deps = all_crate_deps(
+        proc_macro = True,
+    ),
+    visibility = ["//project/mail/rust:__subpackages__"],
+    deps = all_crate_deps(
+        normal = True,
+    ) + [
+        "//project/mail/rust/api/mail-api-labels:mail-api-labels-with-mocks",
+        "//project/mail/rust/core/core-api:mail-core-api-with-mocks",
+        "//project/mail/rust/shared/action-queue:mail-action-queue",
+        "//project/mail/rust/shared/mail-local-id",
+        "//project/mail/rust/shared/shared-types:mail-shared-types",
+        "//project/mail/rust/shared/sqlite3:mail-sqlite3",
+        "//project/mail/rust/shared/stash:mail-stash",
+    ],
+)
+
 rust_test(
     name = "mail-labels-common-test",
     size = "small",
-    crate = ":mail-labels-common",
-    crate_features = [
-        "test-utils",
-        "mail-core-api/mocks",
-    ],
+    crate = ":mail-labels-common-with-test-utils",
+    crate_features = ["test-utils"],
     edition = "2024",
     proc_macro_deps = all_crate_deps(
         proc_macro_dev = True,
     ),
-    tags = ["manual"],
     deps = all_crate_deps(
         normal_dev = True,
     ),

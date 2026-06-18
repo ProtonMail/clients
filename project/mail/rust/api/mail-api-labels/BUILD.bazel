@@ -1,6 +1,14 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
 load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 
+_MAIL_API_LABELS_DEPS = [
+    "//project/mail/rust/api/mail-api-event-types",
+    "//project/mail/rust/api/mail-api-shared",
+    "//project/mail/rust/shared/mail-proton-ids",
+    "//project/mail/rust/shared/stash:mail-stash",
+    "@crate_index//:mail-muon",
+]
+
 rust_library(
     name = "mail-api-labels",
     srcs = glob(["src/**/*.rs"]),
@@ -12,13 +20,26 @@ rust_library(
     visibility = ["//visibility:public"],
     deps = all_crate_deps(
         normal = True,
-    ) + [
-        "//project/mail/rust/api/mail-api-event-types",
-        "//project/mail/rust/api/mail-api-shared",
-        "//project/mail/rust/shared/mail-proton-ids",
-        "//project/mail/rust/shared/stash:mail-stash",
-        "@crate_index//:mail-muon",
+    ) + _MAIL_API_LABELS_DEPS,
+)
+
+rust_library(
+    name = "mail-api-labels-with-mocks",
+    testonly = True,
+    srcs = glob(["src/**/*.rs"]),
+    crate_features = [
+        "mocks",
+        "sql",
     ],
+    crate_name = "mail_api_labels",
+    edition = "2024",
+    proc_macro_deps = all_crate_deps(
+        proc_macro = True,
+    ),
+    visibility = ["//project/mail/rust:__subpackages__"],
+    deps = all_crate_deps(
+        normal = True,
+    ) + _MAIL_API_LABELS_DEPS,
 )
 
 rust_test(

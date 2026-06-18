@@ -4,6 +4,7 @@ load("@rules_rust//rust:defs.bzl", "rust_library")
 rust_library(
     name = "core-feature-flags",
     srcs = glob(["src/**/*.rs"]),
+    crate_features = ["mocks"],
     visibility = ["//visibility:public"],
     deps = all_crate_deps(normal = True),
 )

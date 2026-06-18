@@ -23,6 +23,33 @@ rust_library(
     ],
 )
 
+rust_library(
+    name = "mail-api-with-mocks",
+    testonly = True,
+    srcs = glob(["src/**/*.rs"]),
+    crate_features = [
+        "mocks",
+        "sql",
+    ],
+    crate_name = "mail_api",
+    edition = "2024",
+    proc_macro_deps = all_crate_deps(
+        proc_macro = True,
+    ),
+    visibility = ["//project/mail/rust:__subpackages__"],
+    deps = all_crate_deps(
+        normal = True,
+    ) + [
+        "//project/mail/rust/account/account-api:mail-account-api",
+        "//project/mail/rust/core/core-api:mail-core-api-with-mocks",
+        "//project/mail/rust/crypto/crypto-inbox:mail-crypto-inbox",
+        "//project/mail/rust/shared/api-utils:mail-api-utils",
+        "//project/mail/rust/shared/stash:mail-stash",
+        "//project/mail/rust/shared/task-service:mail-task-service",
+        "@crate_index//:mail-muon",
+    ],
+)
+
 rust_test(
     name = "mail-api-test",
     size = "small",
@@ -47,13 +74,16 @@ rust_test_suite(
         proc_macro = True,
         proc_macro_dev = True,
     ),
+    shared_srcs = glob(["tests/common/**"]),
     tags = ["manual"],
     deps = all_crate_deps(
         normal = True,
         normal_dev = True,
     ) + [
-        ":mail-api",
-        "//project/mail/rust/core/core-common:mail-core-common",
+        ":mail-api-with-mocks",
+        "//project/mail/rust/core/core-api:mail-core-api-with-mocks",
+        "//project/mail/rust/core/core-common:mail-core-common-with-test-utils",
         "@crate_index//:mail-muon",
+        "@crate_index//:wiremock",
     ],
 )

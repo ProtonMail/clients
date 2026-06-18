@@ -4,9 +4,47 @@ use mail_core_common::db::account::CoreSession;
 use mail_core_common::models::ModelExtension;
 use mail_core_common::services::SessionObserverService;
 use mail_core_common::test_utils::test_context::TestContext;
-use mail_stash::stash::{StashError, WriteTx};
-use mail_stash::{AccountDb, UserDb};
+use mail_stash::AccountDb;
+use mail_stash::stash::{Stash, StashError, WriteTx};
+use std::path::Path;
 use std::time::Duration;
+
+fn user_db_is_archived_or_removed(path: &Path) -> bool {
+    !path.exists() || path.to_string_lossy().contains(".nuked")
+}
+
+async fn wait_for_user_db_archived_or_removed(path: &Path, timeout: Duration, message: &str) {
+    let deadline = tokio::time::Instant::now() + timeout;
+    while !user_db_is_archived_or_removed(path) {
+        if tokio::time::Instant::now() >= deadline {
+            panic!("{}", message);
+        }
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
+}
+
+async fn wait_for_no_sessions_for_user(
+    user_id: &UserId,
+    account_stash: &Stash<AccountDb>,
+    timeout: Duration,
+    message: &str,
+) {
+    let deadline = tokio::time::Instant::now() + timeout;
+    loop {
+        let tether = account_stash.connection();
+        let count = CoreSession::find_by_user_id(user_id.clone(), &tether)
+            .await
+            .unwrap()
+            .len();
+        if count == 0 {
+            return;
+        }
+        if tokio::time::Instant::now() >= deadline {
+            panic!("{}", message);
+        }
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
+}
 
 #[tokio::test]
 #[allow(unused_variables)]
@@ -139,27 +177,23 @@ async fn test_session_observer_triggers_full_logout_on_session_deletion() {
         .await
         .unwrap();
 
-    // Give the SessionObserver time to detect the change and trigger cleanup
-    tokio::time::sleep(Duration::from_millis(500)).await;
-
     // Verify that SessionObserverService automatically performed full cleanup:
-    // 1. Session should be deleted (already done above)
-    let tether = ctx.context().account_stash().connection();
-    assert_eq!(
-        CoreSession::find_by_user_id(user_id.clone(), &tether)
-            .await
-            .unwrap()
-            .len(),
-        0,
-        "Session should be deleted"
-    );
+    wait_for_no_sessions_for_user(
+        &user_id,
+        ctx.context().account_stash(),
+        Duration::from_secs(5),
+        "Session should be deleted",
+    )
+    .await;
 
-    // 2. User database should be archived/removed (logout_and_delete_user_data does this)
+    // User database should be archived/removed (logout_and_delete_user_data does this)
     // The database file gets renamed with a timestamp and .nuked extension
-    assert!(
-        !user_db_path.exists() || user_db_path.to_string_lossy().contains(".nuked"),
-        "User database should be archived or removed"
-    );
+    wait_for_user_db_archived_or_removed(
+        &user_db_path,
+        Duration::from_secs(5),
+        "User database should be archived or removed",
+    )
+    .await;
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -201,53 +235,22 @@ async fn test_manual_logout_with_session_observer_double_cleanup() {
         logout_result.err()
     );
 
-    // Give SessionObserver time to detect the session deletion and perform its cleanup
-    tokio::time::sleep(Duration::from_millis(500)).await;
+    // Verify final state: sessions are deleted and user data is cleaned up
+    wait_for_no_sessions_for_user(
+        &user_id,
+        ctx.context().account_stash(),
+        Duration::from_secs(5),
+        "All sessions should be deleted after manual logout",
+    )
+    .await;
 
-    // Verify final state: sessions are deleted
-    let tether = ctx.context().account_stash().connection();
-    let remaining_sessions = CoreSession::find_by_user_id(user_id.clone(), &tether)
-        .await
-        .unwrap();
-    assert_eq!(
-        remaining_sessions.len(),
-        0,
-        "All sessions should be deleted after manual logout"
-    );
-
-    // Verify database tables were dropped (nuked) even though sessions were deleted
-    // This ensures sensitive data cannot be read even if filesystem removal fails
-    if user_db_path.exists() && !user_db_path.to_string_lossy().contains(".nuked") {
-        // If database file still exists and isn't archived, verify tables are dropped
-        // Try to open a connection to the user database directly
-        use mail_stash::stash::{Stash, StashConfiguration};
-        let user_stash: Result<Stash<UserDb>, _> = Stash::new(StashConfiguration {
-            path: Some(&user_db_path),
-            read_worker_count: Some(1),
-        });
-        if let Ok(mail_stash) = user_stash {
-            let tether = mail_stash.connection();
-            let tables = tether
-                    .query_values::<_, String>(
-                        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
-                        vec![],
-                    )
-                    .await
-                    .unwrap_or_default();
-            assert_eq!(
-                tables.len(),
-                0,
-                "All tables should be dropped even when sessions are deleted first"
-            );
-        }
-    }
-
-    // Verify user database is cleaned up
     // The SessionObserver's logout_and_delete_user_data() should have archived/removed it
-    assert!(
-        !user_db_path.exists() || user_db_path.to_string_lossy().contains(".nuked"),
-        "User database should be archived or removed by SessionObserver"
-    );
+    wait_for_user_db_archived_or_removed(
+        &user_db_path,
+        Duration::from_secs(5),
+        "User database should be archived or removed by SessionObserver",
+    )
+    .await;
 
     // Why this double-cleanup is safe and idempotent:
     // 1. Session deletion: When logout_account() is called the second time by SessionObserver,

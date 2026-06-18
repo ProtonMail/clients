@@ -9,6 +9,7 @@ rust_library(
         "mail-api-event-types/mocks",
         "mail-proton-ids/sql",
         "mail-utils",
+        "mocks",
         "proton-crypto-account/sql",
         "sql",
     ],

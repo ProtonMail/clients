@@ -6,6 +6,7 @@ rust_library(
     srcs = glob(["src/**/*.rs"]),
     crate_features = [
         "mail-muon/unsealed",
+        "mocks",
         "sql",
     ],
     edition = "2024",

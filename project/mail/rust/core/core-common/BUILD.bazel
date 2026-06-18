@@ -31,6 +31,28 @@ _MAIL_CORE_COMMON_DEPS = [
     "//project/mail/rust/shared/vcard:mail-vcard",
 ]
 
+_MAIL_CORE_COMMON_MOCK_DEPS = [
+    dep.replace(
+        "//project/mail/rust/contacts/contacts-api:mail-contacts-api",
+        "//project/mail/rust/contacts/contacts-api:mail-contacts-api-with-mocks",
+    ).replace(
+        "//project/mail/rust/core/core-api:mail-core-api",
+        "//project/mail/rust/core/core-api:mail-core-api-with-mocks",
+    ).replace(
+        "//project/mail/rust/api/mail-api-labels",
+        "//project/mail/rust/api/mail-api-labels:mail-api-labels-with-mocks",
+    )
+    for dep in _MAIL_CORE_COMMON_DEPS
+]
+
+_MAIL_CORE_COMMON_TEST_UTILS_DEPS = [
+    dep.replace(
+        "//project/mail/rust/core/labels-common:mail-labels-common",
+        "//project/mail/rust/core/labels-common:mail-labels-common-with-test-utils",
+    )
+    for dep in _MAIL_CORE_COMMON_MOCK_DEPS
+]
+
 rust_library(
     name = "mail-core-common",
     srcs = glob(["src/**/*.rs"]),
@@ -50,6 +72,30 @@ rust_library(
     deps = all_crate_deps(
         normal = True,
     ) + _MAIL_CORE_COMMON_DEPS,
+)
+
+rust_library(
+    name = "mail-core-common-with-test-utils",
+    testonly = True,
+    srcs = glob(["src/**/*.rs"]),
+    compile_data = ["Cargo.toml"] + glob([
+        "src/db/migrations/account/**",
+        "src/db/migrations/core/**",
+    ]),
+    crate_features = [
+        "mail-local-id/serde",
+        "sql",
+        "test-utils",
+    ],
+    crate_name = "mail_core_common",
+    edition = "2024",
+    proc_macro_deps = all_crate_deps(
+        proc_macro = True,
+    ),
+    visibility = ["//project/mail/rust:__subpackages__"],
+    deps = all_crate_deps(
+        normal = True,
+    ) + _MAIL_CORE_COMMON_TEST_UTILS_DEPS,
 )
 
 rust_test(
@@ -76,9 +122,11 @@ rust_test(
         proc_macro = True,
         proc_macro_dev = True,
     ),
-    tags = ["manual"],
     deps = all_crate_deps(
         normal = True,
         normal_dev = True,
-    ) + [":mail-core-common"] + _MAIL_CORE_COMMON_DEPS,
+    ) + [
+        ":mail-core-common-with-test-utils",
+        "@crate_index//:wiremock",
+    ] + _MAIL_CORE_COMMON_MOCK_DEPS,
 )

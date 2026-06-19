@@ -349,7 +349,10 @@ impl Context {
 
             let stash_config = StashConfiguration {
                 path: Some(&account_stash_path),
-                ..Default::default()
+                #[cfg(target_pointer_width = "32")]
+                read_worker_count: Some(2),
+                #[cfg(not(target_pointer_width = "32"))]
+                read_worker_count: None,
             };
 
             let account_stash = Stash::<AccountDb>::new(stash_config)?;

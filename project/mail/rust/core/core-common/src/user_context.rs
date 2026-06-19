@@ -349,6 +349,9 @@ impl UserContext {
         let mail_stash = task::spawn_blocking(move || {
             Stash::new(StashConfiguration {
                 path: Some(&path),
+                #[cfg(target_pointer_width = "32")]
+                read_worker_count: Some(4),
+                #[cfg(not(target_pointer_width = "32"))]
                 read_worker_count: None,
             })
         })

@@ -1,9 +1,7 @@
 use mail_log_service::LogService;
 use std::backtrace::Backtrace;
 use std::panic::{set_hook, take_hook};
-use tokio::time::Instant;
 use tracing::error;
-use tracing::span::Id;
 use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
@@ -34,9 +32,7 @@ pub(super) fn init_log(log_service: &LogService, debug: bool) -> std::io::Result
     //         },
     //     );
 
-    let registry = tracing_subscriber::registry()
-        .with(file_subscriber)
-        .with(TimingLayer);
+    let registry = tracing_subscriber::registry().with(file_subscriber);
 
     // Add stdout logging for iOS so logs appear in Xcode console
     // Enabled via "stdout_logging" feature flag (works in both debug and release builds)
@@ -129,55 +125,4 @@ fn log_backtrace_on_panic() {
         error!("Backtrace: {info}\n{}", Backtrace::force_capture());
         previous_hook(info);
     }));
-}
-
-struct Timing {
-    started_at: Instant,
-}
-pub struct TimingLayer;
-impl<S> Layer<S> for TimingLayer
-where
-    S: tracing::Subscriber,
-    S: for<'look> tracing_subscriber::registry::LookupSpan<'look>,
-{
-    fn on_new_span(
-        &self,
-        _attrs: &tracing::span::Attributes<'_>,
-        id: &tracing::span::Id,
-        ctx: tracing_subscriber::layer::Context<'_, S>,
-    ) {
-        let Some(span) = ctx.span(id) else {
-            return;
-        };
-
-        span.extensions_mut().insert(Timing {
-            started_at: Instant::now(),
-        });
-    }
-
-    fn on_close(&self, id: Id, ctx: tracing_subscriber::layer::Context<'_, S>) {
-        let Some(span) = ctx.span(&id) else {
-            return;
-        };
-
-        let extensions = span.extensions();
-        let Some(timing) = extensions.get::<Timing>() else {
-            return;
-        };
-
-        let started_at = timing.started_at;
-
-        let took_ms = (Instant::now() - started_at).as_millis();
-        let name = span.metadata().name();
-        let target = span.metadata().target();
-
-        // 5 seconds
-        if took_ms > 5_000 {
-            tracing::error!("Span {target}::{name} took {took_ms} ms.");
-        } else if took_ms > 500 {
-            tracing::warn!("Span {target}::{name} took {took_ms} ms.");
-        } else {
-            tracing::trace!("Span {target}::{name} took {took_ms} ms.");
-        }
-    }
 }

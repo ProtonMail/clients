@@ -1,3 +1,5 @@
+#![allow(dead_code, unused_imports)]
+
 use mail_action_queue::action::{Action, Factory};
 use mail_action_queue::queue::{Queue, TokioTaskSpawner};
 pub use mail_action_queue::tests::common::DefaultError;

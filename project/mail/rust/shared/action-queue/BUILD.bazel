@@ -1,5 +1,5 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test", "rust_test_suite")
 
 rust_library(
     name = "mail-action-queue",
@@ -51,15 +51,18 @@ rust_test(
     ),
 )
 
-rust_test(
+rust_test_suite(
     name = "mail-action-queue-integration-tests",
     size = "medium",
-    srcs = glob(["tests/**/*.rs"]),
-    crate_root = "tests/acceptance.rs",
+    srcs = glob(
+        ["tests/*.rs"],
+        exclude = ["tests/common.rs"],
+    ),
     proc_macro_deps = all_crate_deps(
         proc_macro = True,
         proc_macro_dev = True,
     ),
+    shared_srcs = ["tests/common.rs"],
     deps = all_crate_deps(
         normal = True,
         normal_dev = True,

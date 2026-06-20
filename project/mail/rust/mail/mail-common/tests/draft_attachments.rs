@@ -1,4 +1,5 @@
-use super::drafts_common::{
+mod drafts_common;
+use drafts_common::{
     draft_message, draft_test_params, draft_test_params_with_mime_type,
     expected_create_draft_params, expected_create_reply_draft_params,
 };

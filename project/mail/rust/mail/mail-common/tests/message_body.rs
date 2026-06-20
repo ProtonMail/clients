@@ -455,5 +455,12 @@ async fn message_body_failed_to_decrypt() {
             .contains(&MessageBanner::UnableToDecrypt)
     );
 
-    insta::assert_snapshot!(body_output.body);
+    insta::with_settings!({
+        prepend_module_to_snapshot => false,
+    }, {
+        insta::assert_snapshot!(
+            "message_body__message_body_failed_to_decrypt",
+            body_output.body
+        );
+    });
 }

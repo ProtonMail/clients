@@ -19,12 +19,11 @@ pub mod watch_handle;
 pub mod app_events;
 
 pub mod device;
+#[cfg(any(test, feature = "test-utils"))]
+pub mod test_utils;
 #[cfg(test)]
 mod tests;
 pub mod validation;
-
-#[cfg(feature = "test-utils")]
-pub mod test_utils;
 
 pub use context::*;
 pub use user_context::*;

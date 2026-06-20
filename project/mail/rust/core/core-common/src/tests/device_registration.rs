@@ -1,17 +1,13 @@
 use std::sync::{Arc, Mutex};
 
+use crate::datatypes::{AuthScopes, DeviceEnvironment, RegisteredDevice};
+use crate::db::account::{EncryptedAccessToken, EncryptedRefreshToken};
+use crate::device_registration::{RegisteredDeviceTaskState, registered_device_task_step};
+use crate::models::ModelExtension;
+use crate::test_utils::test_context::TestContext;
 use mail_core_api::services::proton::{SessionId, UserId};
-use mail_core_common::models::ModelExtension;
-use mail_core_common::test_utils::test_context::TestContext;
 use serde::{Deserialize, Serialize};
 use tokio::sync::watch;
-
-// To break cyclic dependency
-use mail_core_common::datatypes::{AuthScopes, DeviceEnvironment, RegisteredDevice};
-use mail_core_common::db::account::{EncryptedAccessToken, EncryptedRefreshToken};
-use mail_core_common::device_registration::{
-    RegisteredDeviceTaskState, registered_device_task_step,
-};
 use wiremock::matchers::{body_partial_json, method, path};
 use wiremock::{Mock, Request, ResponseTemplate};
 
@@ -136,7 +132,7 @@ async fn skip_registration_when_session_rotated_but_old_context_still_alive() {
     // Rotate/replace the session row in the DB to a new session_id (same user).
     // This mimics scenarios like re-auth / session replacement while in-memory context still exists.
     let core_ctx = ctx.context();
-    let user_id = UserId::from(mail_core_common::test_utils::account::TEST_USER_ID);
+    let user_id = UserId::from(crate::test_utils::account::TEST_USER_ID);
     let old_session_id = SessionId::from("TEST_UID");
     let new_session_id = SessionId::from("NEW_UID");
 
@@ -150,13 +146,10 @@ async fn skip_registration_when_session_rotated_but_old_context_still_alive() {
     let mut tether = core_ctx.account_stash().connection();
     tether
         .write_tx(async |tx| {
-            let _ = mail_core_common::db::account::CoreSession::delete_by_id(
-                old_session_id.clone(),
-                tx,
-            )
-            .await?;
+            let _ =
+                crate::db::account::CoreSession::delete_by_id(old_session_id.clone(), tx).await?;
 
-            let new_session = mail_core_common::db::account::CoreSession::new(
+            let new_session = crate::db::account::CoreSession::new(
                 user_id.clone(),
                 new_session_id.clone(),
                 EncryptedAccessToken::new(tokens.acc_tok().unwrap(), &db_key).unwrap(),

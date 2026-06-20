@@ -1,6 +1,5 @@
-use super::common::{
-    DefaultError, TestWriteExtension, new_factory, new_queue_with_stash, new_stash,
-};
+mod common;
+use common::{DefaultError, TestWriteExtension, new_factory, new_queue_with_stash, new_stash};
 use mail_action_queue::action::{
     Action, ActionId, DefaultVersionConverter, Handler, MetadataBuilder, Type,
 };

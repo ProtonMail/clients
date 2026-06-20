@@ -1,4 +1,5 @@
-use super::drafts_common::*;
+mod drafts_common;
+use drafts_common::*;
 use mail_api::services::proton::prelude::{
     DraftAttachmentKeyPackets, MessageFlags, OperationResult, PutMessagesDeleteResponse,
 };

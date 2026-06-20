@@ -1,4 +1,5 @@
-use crate::acceptance::drafts_common::draft_test_params;
+mod drafts_common;
+use drafts_common::draft_test_params;
 use mail_api::services::proton::common::MessageId;
 use mail_api::services::proton::prelude::{
     ConversationId, MailEvent, MessageEvent, MessageMetadata,

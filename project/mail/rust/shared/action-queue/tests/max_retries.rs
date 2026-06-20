@@ -1,4 +1,5 @@
-use super::common::{new_factory, new_queue};
+mod common;
+use common::{new_factory, new_queue};
 use mail_action_queue::action::{Action, ActionId, DefaultVersionConverter, Handler, Type};
 use mail_action_queue::queue::{
     ActionRequeueReason, NoopOnlineStatusWaiter, QueueAutoTerminationPolicy, QueuedActionState,

@@ -203,12 +203,11 @@ async fn test_session_deletion_cleans_mail_caches() {
     assert!(test_file.exists(), "Test cache file should exist");
 
     // Delete the session from the database (simulating remote logout)
-    ctx.context
-        .account_stash()
-        .connection()
-        .tx(async |tx| {
+    let mut tether = ctx.context.account_stash().connection();
+    tether
+        .write_tx::<_, _, mail_stash::stash::StashError>(async |tx| {
             CoreSession::delete_by_id(session_id.clone(), tx).await?;
-            Ok::<_, mail_stash::stash::StashError>(())
+            Ok(())
         })
         .await
         .unwrap();

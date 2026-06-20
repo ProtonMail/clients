@@ -1,4 +1,5 @@
-use super::common::{DefaultError, new_queue_typed};
+mod common;
+use common::{DefaultError, new_queue_typed};
 use mail_action_queue::action::{Action, ActionId, DefaultVersionConverter, Handler, Type};
 use mail_action_queue::observers::{ActionAwaiter, ActionFailureObserver, ActionFailureReason};
 use mail_action_queue::queue::BroadcastMessage;

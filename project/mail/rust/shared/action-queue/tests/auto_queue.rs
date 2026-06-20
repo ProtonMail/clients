@@ -1,6 +1,7 @@
-use crate::acceptance::common::new_queue;
+mod common;
+use common::new_queue;
 
-use super::common::{DefaultError, new_queue_typed};
+use common::{DefaultError, new_queue_typed};
 use mail_action_queue::action::{
     Action, ActionId, DefaultVersionConverter, Factory, Handler, Type,
 };

@@ -1,5 +1,6 @@
-use super::drafts_common::{self, draft_message};
+mod drafts_common;
 use chrono::{Days, Local, Months, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
+use drafts_common::draft_message;
 use indoc::formatdoc;
 use mail_action_queue::queue::{ActionError, AsActionError, QueuedError};
 use mail_api::services::proton::prelude::{MailEvent, MessageEvent, PostCancelSendResponse};

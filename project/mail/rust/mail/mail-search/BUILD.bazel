@@ -21,6 +21,28 @@ rust_library(
     ],
 )
 
+rust_library(
+    name = "mail-search-with-mocks",
+    testonly = True,
+    srcs = glob(["src/**/*.rs"]),
+    compile_data = ["Cargo.toml"] + glob(["src/migrations/**"]),
+    crate_name = "mail_search",
+    edition = "2024",
+    proc_macro_deps = all_crate_deps(
+        proc_macro = True,
+    ),
+    visibility = ["//project/mail/rust:__subpackages__"],
+    deps = all_crate_deps(
+        normal = True,
+    ) + [
+        "//project/mail/rust/mail/mail-api:mail-api-with-mocks",
+        "//project/mail/rust/mail/mail-html-transformer",
+        "//project/mail/rust/shared/sqlite3:mail-sqlite3",
+        "//project/mail/rust/shared/stash:mail-stash",
+        "//project/mail/rust/shared/task-service:mail-task-service",
+    ],
+)
+
 rust_test(
     name = "mail-search-test",
     size = "small",

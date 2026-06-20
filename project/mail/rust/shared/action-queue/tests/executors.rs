@@ -1,4 +1,5 @@
-use super::common::{new_factory, new_queue};
+mod common;
+use common::{new_factory, new_queue};
 use mail_action_queue::action::{
     Action, ActionGroup, ActionId, DefaultVersionConverter, Handler, Type,
 };

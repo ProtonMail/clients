@@ -1,4 +1,5 @@
-use super::drafts_common::*;
+mod drafts_common;
+use drafts_common::*;
 
 mod ios_share_ext {
     use super::*;

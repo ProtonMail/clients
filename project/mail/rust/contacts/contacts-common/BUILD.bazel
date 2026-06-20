@@ -41,6 +41,49 @@ rust_library(
     ],
 )
 
+rust_library(
+    name = "mail-contacts-common-with-test-utils",
+    testonly = True,
+    srcs = glob(["src/**/*.rs"]),
+    compile_data = ["Cargo.toml"] + glob(["src/db/migrations/**"]),
+    crate_features = [
+        "mail-compat",
+        "sql",
+        "test-utils",
+    ],
+    crate_name = "mail_contacts_common",
+    edition = "2024",
+    proc_macro_deps = all_crate_deps(
+        proc_macro = True,
+    ),
+    visibility = ["//project/mail/rust:__subpackages__"],
+    deps = all_crate_deps(
+        normal = True,
+    ) + [
+        "//project/contact/rust/contact-avatar",
+        "//project/contact/rust/contact-database",
+        "//project/contact/rust/contact-device",
+        "//project/contact/rust/contact-lattice",
+        "//project/contact/rust/contact-list",
+        "//project/contact/rust/contact-service",
+        "//project/core/rust/core-event-loop",
+        "//project/mail/rust/api/mail-api-session",
+        "//project/mail/rust/contacts/contacts-api:mail-contacts-api-with-mocks",
+        "//project/mail/rust/core/core-api:mail-core-api-with-mocks",
+        "//project/mail/rust/core/labels-common:mail-labels-common-with-test-utils",
+        "//project/mail/rust/shared/action-queue:mail-action-queue",
+        "//project/mail/rust/shared/api-utils:mail-api-utils",
+        "//project/mail/rust/shared/issue-reporter-service:mail-issue-reporter-service",
+        "//project/mail/rust/shared/mail-db",
+        "//project/mail/rust/shared/mail-db-stash",
+        "//project/mail/rust/shared/mail-local-id",
+        "//project/mail/rust/shared/shared-types:mail-shared-types",
+        "//project/mail/rust/shared/sqlite3:mail-sqlite3",
+        "//project/mail/rust/shared/stash:mail-stash",
+        "//project/mail/rust/shared/vcard:mail-vcard",
+    ],
+)
+
 rust_test(
     name = "mail-contacts-common-test",
     size = "small",

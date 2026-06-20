@@ -66,10 +66,6 @@ pretty_assertions = { workspace = true }
 sqlite-watcher = { workspace = true }
 async_zip = { version = "0.0.15", features = ["deflate", "chrono"] }
 walkdir = { workspace = true }
-wiremock = { workspace = true, optional = true }
-function_name = { workspace = true, optional = true }
-tempfile = { workspace = true, optional = true }
-rand = { workspace = true, optional = true }
 jiff = { workspace = true }
 url = { workspace = true }
 mail-network-monitor-service = { workspace = true, features = ["muon"] }
@@ -78,12 +74,18 @@ mail-telemetry = { workspace = true }
 topological-sort = { workspace = true }
 velcro = { workspace = true }
 lattice = { workspace = true }
+function_name = { workspace = true, optional = true }
+rand = { workspace = true, optional = true }
+tempfile = { workspace = true, optional = true }
+wiremock = { workspace = true, optional = true }
 
 [dev-dependencies]
 futures = { workspace = true }
 tempfile = { workspace = true }
 rand = { workspace = true }
 insta = { workspace = true }
+function_name = { workspace = true }
+wiremock = { workspace = true }
 mail-core-common = { path = ".", features = ["test-utils"] }
 
 [lints]
@@ -93,13 +95,13 @@ workspace = true
 default = ["sql"]
 sql = ["mail-core-api/sql"]
 test-utils = [
-  "dep:wiremock",
   "dep:function_name",
-  "dep:tempfile",
   "dep:rand",
+  "dep:tempfile",
+  "dep:wiremock",
   "mail-core-api/mocks",
-  "mail-labels-common/test-utils",
   "mail-contacts-api/mocks",
   "mail-contacts-common/test-utils",
+  "mail-labels-common/test-utils",
 ]
 events-v6 = []

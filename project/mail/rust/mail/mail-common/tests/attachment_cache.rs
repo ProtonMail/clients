@@ -1,4 +1,3 @@
-use insta::assert_snapshot;
 use itertools::Itertools;
 use mail_common::datatypes::exclusive_location::ExclusiveLocation;
 use mail_common::datatypes::{Disposition, SystemLabelId as _};
@@ -367,7 +366,11 @@ This test shows the before and after of a cleanup with a max size of {} bytes
         user_ctx.mail_context().attachment_cache_size,
     );
 
-    assert_snapshot!(output);
+    insta::with_settings!({
+        prepend_module_to_snapshot => false,
+    }, {
+        insta::assert_snapshot!("attachment_cache__integration", output);
+    });
 
     Ok(())
 }

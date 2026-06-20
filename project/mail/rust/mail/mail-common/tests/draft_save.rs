@@ -1,4 +1,5 @@
-use super::drafts_common::*;
+mod drafts_common;
+use drafts_common::*;
 use itertools::Itertools;
 use mail_action_queue::queue::{ActionError, AsActionError, QueuedError};
 use mail_api::services::proton::common::ConversationId;
@@ -461,7 +462,11 @@ async fn metadata_is_create_for_existing_not_opened_draft() {
 #[tokio::test]
 async fn create_draft_reply_html() {
     let draft_body = create_draft_reply_impl(MimeType::TextHtml, ReplyMode::Sender).await;
-    insta::assert_snapshot!(draft_body.body)
+    insta::with_settings!({
+        prepend_module_to_snapshot => false,
+    }, {
+        insta::assert_snapshot!("draft_save__create_draft_reply_html", draft_body.body);
+    })
 }
 
 #[tokio::test]

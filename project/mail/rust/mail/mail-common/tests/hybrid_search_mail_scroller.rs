@@ -6,6 +6,7 @@
 //! - The merged view (local plus remote) is visible after refresh
 //! - Pagination, total, and has_more all work correctly with the merged result set
 
+#[path = "hybrid_search_mail_scroller/fixtures/mod.rs"]
 mod fixtures;
 
 use fixtures::hybrid_search_fixture;

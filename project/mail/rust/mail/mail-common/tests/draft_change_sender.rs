@@ -1,4 +1,5 @@
-use super::drafts_common::*;
+mod drafts_common;
+use drafts_common::*;
 use mail_api::services::proton::common::{ConversationId, MessageId};
 use mail_api::services::proton::prelude::MimeType;
 use mail_common::actions::draft::AttachmentRemove;

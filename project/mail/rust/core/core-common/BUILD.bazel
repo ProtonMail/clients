@@ -1,5 +1,5 @@
 load("@crate_index//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test", "rust_test_suite")
 
 _MAIL_CORE_COMMON_DEPS = [
     "//project/contact/rust/contact-avatar",
@@ -47,6 +47,9 @@ _MAIL_CORE_COMMON_MOCK_DEPS = [
 
 _MAIL_CORE_COMMON_TEST_UTILS_DEPS = [
     dep.replace(
+        "//project/mail/rust/contacts/contacts-common:mail-contacts-common",
+        "//project/mail/rust/contacts/contacts-common:mail-contacts-common-with-test-utils",
+    ).replace(
         "//project/mail/rust/core/labels-common:mail-labels-common",
         "//project/mail/rust/core/labels-common:mail-labels-common-with-test-utils",
     )
@@ -83,6 +86,7 @@ rust_library(
         "src/db/migrations/core/**",
     ]),
     crate_features = [
+        "events-v6",
         "mail-local-id/serde",
         "sql",
         "test-utils",
@@ -95,7 +99,12 @@ rust_library(
     visibility = ["//project/mail/rust:__subpackages__"],
     deps = all_crate_deps(
         normal = True,
-    ) + _MAIL_CORE_COMMON_TEST_UTILS_DEPS,
+    ) + _MAIL_CORE_COMMON_TEST_UTILS_DEPS + [
+        "@crate_index//:function_name",
+        "@crate_index//:rand",
+        "@crate_index//:tempfile",
+        "@crate_index//:wiremock",
+    ],
 )
 
 rust_test(
@@ -113,11 +122,10 @@ rust_test(
     ),
 )
 
-rust_test(
+rust_test_suite(
     name = "mail-core-common-integration-tests",
     size = "small",
-    srcs = glob(["tests/**/*.rs"]),
-    crate_root = "tests/acceptance.rs",
+    srcs = glob(["tests/*.rs"]),
     proc_macro_deps = all_crate_deps(
         proc_macro = True,
         proc_macro_dev = True,

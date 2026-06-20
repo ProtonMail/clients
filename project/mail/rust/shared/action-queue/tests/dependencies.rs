@@ -1,3 +1,4 @@
+mod common;
 use mail_action_queue::action::{
     Action, ActionDependencyKeys, DefaultVersionConverter, Handler, MetadataBuilder, NoopError,
     Priority, Type,
@@ -6,7 +7,7 @@ use mail_action_queue::queue::QueuedActionState;
 use mail_action_queue::tests::common::TestDb;
 use serde::{Deserialize, Serialize};
 
-use crate::acceptance::common::new_queue_typed;
+use common::new_queue_typed;
 
 #[derive(Clone, Serialize, Deserialize)]
 struct TestAction {

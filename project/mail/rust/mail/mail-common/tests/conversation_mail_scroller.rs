@@ -841,6 +841,13 @@ async fn test_conversation_mail_scroller_has_insufficient_cached_data_to_fill_fi
         .await
         .unwrap();
 
+    // next-page-on-init is async; on slow CI the init update may arrive after TestScroller::new.
+    if test_scroller.items().len() < 8 {
+        test_scroller
+            .match_next_update(TestUpdate::Append { items: 8 })
+            .await;
+    }
+
     // The next-page-on-init task loads the merged first page during initialization:
     // 3 cached + 5 from the first API page = 8 items (less than two full pages, so
     // they are merged into a single first page).
@@ -1633,7 +1640,7 @@ async fn test_conversation_mail_scroller_reads_non_empty_folder_for_the_first_ti
     // |<-
     // No update is expected as the data is the same
     let update = test_scroller
-        .try_wait_for_update(Duration::from_secs(2))
+        .try_wait_for_update(Duration::from_secs(5))
         .await
         .unwrap();
     assert!(update.is_none());
@@ -1647,11 +1654,36 @@ async fn test_conversation_mail_scroller_reads_non_empty_folder_for_the_first_ti
 
     // We shouldn't get any update as the data is still the same
     let update = test_scroller
-        .try_wait_for_update(Duration::from_secs(2))
+        .try_wait_for_update(Duration::from_secs(5))
         .await
         .unwrap();
     assert!(update.is_none());
     assert_eq!(test_scroller.items().len(), 9);
+
+    // Background first-page sync may still issue GET /conversations after the last
+    // scroller update; wait before wiremock verifies mock_get_conversations (4..=6).
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(10);
+    loop {
+        let get_conversations_calls = ctx
+            .mock_server()
+            .received_requests()
+            .await
+            .unwrap()
+            .iter()
+            .filter(|req| {
+                req.method.as_str() == "GET" && req.url.path() == "/api/mail/v4/conversations"
+            })
+            .count();
+        if get_conversations_calls >= 4 {
+            break;
+        }
+        if tokio::time::Instant::now() >= deadline {
+            panic!(
+                "timed out waiting for get_conversations API calls, got {get_conversations_calls}"
+            );
+        }
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 3)]

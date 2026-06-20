@@ -18,6 +18,29 @@ rust_library(
     ],
 )
 
+rust_library(
+    name = "mail-calendar-api-v1-with-test-utils",
+    testonly = True,
+    srcs = glob(["src/**/*.rs"]),
+    crate_features = [
+        "sql",
+        "test-utils",
+    ],
+    crate_name = "mail_calendar_api_v1",
+    edition = "2024",
+    proc_macro_deps = all_crate_deps(
+        proc_macro = True,
+    ),
+    visibility = ["//project/mail/rust:__subpackages__"],
+    deps = all_crate_deps(
+        normal = True,
+    ) + [
+        "//project/mail/rust/core/core-api:mail-core-api-with-mocks",
+        "//project/mail/rust/shared/stash:mail-stash",
+        "@crate_index//:mail-muon",
+    ],
+)
+
 rust_test(
     name = "mail-calendar-api-v1-test",
     size = "small",

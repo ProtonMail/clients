@@ -316,9 +316,7 @@ where
 
         // Wait for any initial updates that might be available immediately
         // This handles cases where cached data is loaded during scroller initialization
-        test_scroller
-            .try_wait_for_update(Duration::from_secs(1))
-            .await?;
+        test_scroller.try_wait_for_update(TIMEOUT).await?;
 
         Ok(test_scroller)
     }

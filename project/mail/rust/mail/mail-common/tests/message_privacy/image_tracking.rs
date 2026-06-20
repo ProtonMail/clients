@@ -1,4 +1,4 @@
-use crate::acceptance::message_privacy::common::get_or_wait_for_privacy_data;
+use super::common::get_or_wait_for_privacy_data;
 
 use super::common::{create_message_with_html_body, test_params};
 use mail_common::datatypes::{LocalMessageId, SystemLabelId, TrackerDomain};

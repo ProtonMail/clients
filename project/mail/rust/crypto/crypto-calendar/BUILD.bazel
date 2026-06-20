@@ -16,6 +16,23 @@ rust_library(
     ],
 )
 
+rust_library(
+    name = "mail-crypto-calendar-with-test-utils",
+    testonly = True,
+    srcs = glob(["src/**/*.rs"]),
+    crate_name = "mail_crypto_calendar",
+    edition = "2024",
+    proc_macro_deps = all_crate_deps(
+        proc_macro = True,
+    ),
+    visibility = ["//project/mail/rust:__subpackages__"],
+    deps = all_crate_deps(
+        normal = True,
+    ) + [
+        "//project/mail/rust/calendar/calendar-api:mail-calendar-api-v1-with-test-utils",
+    ],
+)
+
 rust_test_suite(
     name = "mail-crypto-calendar-integration-tests",
     size = "small",

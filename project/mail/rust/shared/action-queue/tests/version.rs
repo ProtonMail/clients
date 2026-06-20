@@ -1,4 +1,5 @@
-use super::common::{DefaultError, new_factory, new_queue_with_stash, new_stash};
+mod common;
+use common::{DefaultError, new_factory, new_queue_with_stash, new_stash};
 use mail_action_queue::action;
 use mail_action_queue::action::{
     Action, ActionId, DefaultVersionConverter, FactoryResult, Handler, Type, VersionConverter,

@@ -17,6 +17,15 @@
 #   # Debug build (with debug symbols for LLDB/RustRover debugging)
 #   $0 proton-mail-uniffi ./mail/mail-uniffi/uniffi.toml "./tmp/ios-framework-debug" ios-debug
 
+# Assert go version
+GO_VERSION="$(go version | awk '{print $3}' | sed 's/^go//')"
+if [[ "$GO_VERSION" != "1.22.12" ]]; then
+    echo "INVALID go version: $GO_VERSION"
+    exit 1
+fi
+
+echo "Go version = $GO_VERSION"
+
 MIN_IOS_VERSION="17.2"
 PROFILE="${4:-mail-ios}" # Use 4th argument if provided, otherwise default to "mail-ios"
 # Must match where `cargo build` writes (respects CARGO_TARGET_DIR and `.cargo/config.toml`).

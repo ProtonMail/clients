@@ -4,6 +4,14 @@ set -eu
 # usage arg0 target config_path out_dir
 # Run from the monorepo root workspace (this script lives under project/mail/rust/).
 
+# Assert go version
+GO_VERSION="$(go version | awk '{print $3}' | sed 's/^go//')"
+if [[ "$GO_VERSION" != "1.22.12" ]]; then
+    echo "INVALID go version: $GO_VERSION"
+    exit 1
+fi
+echo "Go version = $GO_VERSION"
+
 # https://android.googlesource.com/platform/external/sqlite/+/refs/heads/main/dist/Android.bp
 export LIBSQLITE3_FLAGS="-DNDEBUG=1 -DSQLITE_POWERSAFE_OVERWRITE=1 -DSQLITE_THREADSAFE=2\
  -DSQLITE_DEFAULT_FILE_PERMISSIONS=0600 -DSQLITE_SECURE_DELETE -DSQLITE_ENABLE_BATCH_ATOMIC_WRITE"

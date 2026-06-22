@@ -15,7 +15,6 @@ use proton_crypto_account::keys::{
 };
 use proton_crypto_account::salts::KeySecret;
 
-use crate::keys::LockedKeysExt;
 use crate::sso_device::device_secret::DeviceSecret;
 use crate::sso_device::encrypted_secret::EncryptedSecret;
 use crate::sso_device::secure_hex_key_secret_32;
@@ -117,20 +116,6 @@ impl<'a, P: PGPProviderSync> OrgAdminPgp<'a, P> {
         Ok(String::from_utf8(encrypted.into_inner())?)
     }
 
-    /// Current passphrase for the member's primary user key (for `EncryptedSecret` on org-admin reset).
-    ///
-    /// Mirrors per-key unlock in [`Self::unlock_org_managed_user_keys`] for the primary key only.
-    pub fn member_primary_unlock_passphrase(
-        &self,
-        member_keys: &UserKeys,
-        member_org_passphrase: Option<&KeySecret>,
-    ) -> Result<KeySecret, SharedCryptoError> {
-        let primary = member_keys
-            .primary_key()
-            .ok_or(SharedCryptoError::NoPrimaryUserKey)?;
-        self.unlock_passphrase_for_locked(primary, member_org_passphrase)
-    }
-
     fn unlock_passphrase_for_locked(
         &self,
         locked: &LockedKey,
@@ -215,19 +200,22 @@ impl<'a, P: PGPProviderSync> OrgAdminPgp<'a, P> {
     }
 
     /// Crypto payload for `POST .../members/{id}/devices/reset`.
+    ///
+    /// The member's user keys are rotated: re-armored under `new_passphrase`. The
+    /// `EncryptedSecret` wraps that same `new_passphrase` (not the member's current
+    /// passphrase) under the device key, because that is the value the member's new
+    /// device recovers and uses to unlock the freshly re-armored keys. Binding the
+    /// current passphrase here would leave the new device unable to unlock the keys
+    /// the server now stores under `new_passphrase`.
     pub fn build_devices_reset_crypto(
         &self,
-        member_keys: &UserKeys,
         unlocked_user_keys: &UnlockedUserKeys<P>,
         device_secret: &DeviceSecret,
         new_passphrase: &KeySecret,
-        member_org_passphrase: Option<&KeySecret>,
         auth_device_id: LtCoreAuthDeviceId,
     ) -> Result<LtCorePostMembersDevicesResetBody, SharedCryptoError> {
-        let current_unlock =
-            self.member_primary_unlock_passphrase(member_keys, member_org_passphrase)?;
         let rearmored_user_keys = self.rearmor_user_keys(unlocked_user_keys, new_passphrase)?;
-        let encrypted_secret = EncryptedSecret::from_key_secret(&current_unlock, &device_secret.0)?;
+        let encrypted_secret = EncryptedSecret::from_key_secret(new_passphrase, &device_secret.0)?;
 
         Ok(LtCorePostMembersDevicesResetBody {
             auth_device_id,
@@ -272,11 +260,9 @@ impl<'a, P: PGPProviderSync> OrgAdminPgp<'a, P> {
         let device_secret =
             DeviceSecret::from_activation(self.pgp, &decrypt_keys, activation_token, &typed_code)?;
         self.build_devices_reset_crypto(
-            member_keys,
             &unlocked_user_keys,
             &device_secret,
             &secure_hex_key_secret_32(),
-            member_org_passphrase,
             pending.id.clone(),
         )
     }
@@ -353,5 +339,85 @@ impl<'a, P: PGPProviderSync> OrgAdminPgp<'a, P> {
             .decrypt(token.0.as_bytes(), DataEncoding::Armor)?;
         verified.verification_result()?;
         Ok(verified.to_vec())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::OrgAdminPgp;
+    use crate::keys::NewUserKey;
+    use crate::sso_device::device_secret::DeviceSecret;
+    use crate::sso_device::encrypted_secret::EncryptedSecret;
+    use lattice::core::LtCoreAuthDeviceId;
+    use proton_crypto::crypto::{DataEncoding, PGPProviderSync};
+    use proton_crypto::{new_pgp_provider, new_srp_provider};
+    use proton_crypto_account::keys::UnlockedUserKeys;
+    use proton_crypto_account::salts::KeySecret;
+
+    /// The org-admin device reset must bind the rotated `new_passphrase` (not the
+    /// member's current passphrase) into `EncryptedSecret`: the value the new device
+    /// recovers has to unlock the keys the admin re-armored under `new_passphrase`.
+    #[test]
+    fn devices_reset_binds_new_passphrase_that_unlocks_rearmored_keys() {
+        let pgp = new_pgp_provider();
+        let srp = new_srp_provider();
+
+        // Member user key, locked under its original passphrase.
+        let member_nk = NewUserKey::init(&srp, &pgp, b"member-old-password").expect("member key");
+        let old_pass = member_nk.pass.clone();
+        let member_unlocked = member_nk.unlock_user_key(&pgp).expect("unlock member key");
+        let unlocked_user_keys = UnlockedUserKeys::from(vec![member_unlocked]);
+
+        // Throwaway org key — only `pgp` is exercised by `build_devices_reset_crypto`.
+        let org_nk = NewUserKey::init(&srp, &pgp, b"org-password").expect("org key");
+        let org_private = org_nk
+            .unlock_user_key(&pgp)
+            .expect("unlock org key")
+            .private_key;
+        let admin_key_passphrase = KeySecret::new(b"admin-key-passphrase".to_vec());
+        let admin = OrgAdminPgp::new(&pgp, &org_private, &admin_key_passphrase);
+
+        let device_secret = DeviceSecret::from_bytes([7u8; 32]);
+        let new_passphrase = KeySecret::new(b"freshly-rotated-passphrase-0123456789".to_vec());
+
+        let body = admin
+            .build_devices_reset_crypto(
+                &unlocked_user_keys,
+                &device_secret,
+                &new_passphrase,
+                LtCoreAuthDeviceId("device-test".into()),
+            )
+            .expect("build devices reset crypto");
+
+        // The new device decrypts EncryptedSecret with its device secret and must
+        // recover exactly `new_passphrase`.
+        let recovered = EncryptedSecret::new(body.encrypted_secret.as_str())
+            .decrypt_to_vec(&device_secret.0)
+            .expect("decrypt encrypted secret");
+        assert_eq!(
+            recovered.as_slice(),
+            new_passphrase.as_ref(),
+            "EncryptedSecret must wrap the rotated new_passphrase"
+        );
+
+        // The re-armored keys must open with the recovered passphrase and not the old one.
+        assert!(!body.user_keys.is_empty(), "expected re-armored user keys");
+        for uk in &body.user_keys {
+            pgp.private_key_import(
+                uk.private_key.as_bytes(),
+                recovered.as_slice(),
+                DataEncoding::Armor,
+            )
+            .expect("recovered passphrase unlocks the re-armored key");
+            assert!(
+                pgp.private_key_import(
+                    uk.private_key.as_bytes(),
+                    old_pass.as_ref(),
+                    DataEncoding::Armor,
+                )
+                .is_err(),
+                "the member's old passphrase must not unlock the rotated key"
+            );
+        }
     }
 }

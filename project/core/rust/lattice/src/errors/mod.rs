@@ -57,6 +57,7 @@ pub const ERROR_AUTH_SWITCH_TO_SRP: u32 = 8101;
 pub const ERROR_UNPRIVATIZATION_NOT_EXISTS: u32 = 10401;
 pub const ERROR_SSO_APPLICATION_INVALID: u32 = 10402;
 pub const ERROR_SSO_CHALLENGE_NOT_FOUND: u32 = 2501;
+pub const ERROR_SCOPE_MISSING_UNEXPECTED: u32 = 9100;
 pub const ERROR_SCOPE_REAUTH_LOCKED: u32 = 9101;
 /// Auth device: not found.
 pub const AUTH_DEVICE_NOT_FOUND: u32 = 10300;
@@ -108,6 +109,11 @@ pub enum LtApiResponseError {
     #[display("UnprivatizationNotExists")]
     UnprivatizationNotExists(
         LtApiResponseErrorInfo<EnforcedCode<ERROR_UNPRIVATIZATION_NOT_EXISTS>, NullErrorDetails>,
+    ),
+
+    #[display("ScopeMissingUnexpected")]
+    ScopeMissingUnexpected(
+        LtApiResponseErrorInfo<EnforcedCode<ERROR_SCOPE_MISSING_UNEXPECTED>, NullErrorDetails>,
     ),
 
     #[display("ScopeReauthLocked")]

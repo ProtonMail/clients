@@ -6,7 +6,7 @@ use crate::common::device_approval::sso_org::SsoOrg;
 async fn test_sso_member_user_then_admin_device_approval() {
     let org = SsoOrg::bootstrap().await.expect("bootstrap sso org");
     let member = org
-        .provision_unprivatized_member()
+        .provision_unprivatized_member_without_invitation_data()
         .await
         .expect("provision unprivatized sso member");
 

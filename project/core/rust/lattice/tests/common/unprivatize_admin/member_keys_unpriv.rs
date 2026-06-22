@@ -16,7 +16,7 @@ pub async fn complete_member_keys_unprivatization<P: PGPProviderSync>(
     let unpriv = member
         .unprivatization
         .as_ref()
-        .filter(|u| u.ready_for_admin_keys_completion())
+        .filter(|u| u.is_ready_for_manual_admin_completion())
         .ok_or_else(|| UnprivatizeAdminError::UnprivatizationNotReady {
             email: member_email.to_string(),
         })?;

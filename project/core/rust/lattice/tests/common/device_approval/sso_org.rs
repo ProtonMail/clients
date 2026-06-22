@@ -98,6 +98,36 @@ impl SsoOrg {
         self.publish_org_identity(&admin_state).await?;
         self.unprivatize_member(&admin_state, &member_email).await?;
 
+        self.finish_unprivatized_member(&admin_state, member_email, backup_password)
+            .await
+    }
+
+    /// Manual admin device-approval flow: member reaches unprivatization `Pending` as a plain
+    /// org-managed (SAML) member, *without* `InvitationData`. A member carrying invitation data
+    /// is classified as automatic/invitation completion and is rejected by
+    /// `is_ready_for_manual_admin_completion`.
+    pub async fn provision_unprivatized_member_without_invitation_data(
+        &self,
+    ) -> Result<UnprivatizedMember, DeviceApprovalError> {
+        let member_local = format!("ssou_{}", random_string(8));
+        let member_email = format!("{member_local}@{}", self.domain_name);
+        let backup_password = random_password();
+
+        let _ = sso_login::login_with_sso(generate_muon_session().await, &member_email).await?;
+
+        let admin_state = self.load_admin_pgp_state().await?;
+        self.publish_org_identity(&admin_state).await?;
+
+        self.finish_unprivatized_member(&admin_state, member_email, backup_password)
+            .await
+    }
+
+    async fn finish_unprivatized_member<P: PGPProviderSync>(
+        &self,
+        admin_state: &AdminPgpState<P>,
+        member_email: String,
+        backup_password: String,
+    ) -> Result<UnprivatizedMember, DeviceApprovalError> {
         let member_session =
             sso_login::login_with_sso(generate_muon_session().await, &member_email).await?;
 

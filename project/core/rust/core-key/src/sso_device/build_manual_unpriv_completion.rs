@@ -179,7 +179,7 @@ impl<'a, P: PGPProviderSync> OrgAdminPgp<'a, P> {
 
 pub trait LtCoreMemberListUnprivatizationExt {
     fn private_keys(&self) -> Option<Vec<ArmoredPrivateKey>>;
-    fn ready_for_admin_keys_completion(&self) -> bool;
+    fn is_ready_for_manual_admin_completion(&self) -> bool;
 }
 
 impl LtCoreMemberListUnprivatizationExt for LtCoreMemberListUnprivatization {
@@ -196,9 +196,25 @@ impl LtCoreMemberListUnprivatizationExt for LtCoreMemberListUnprivatization {
                 .map(|pk| vec![ArmoredPrivateKey(pk.0.clone().into_inner())]),
         }
     }
-    /// Ready for admin `POST .../keys/unprivatize` (invitation fields may remain).
-    fn ready_for_admin_keys_completion(&self) -> bool {
+    /// Ready for admin manual `POST .../keys/unprivatize`.
+    ///
+    /// Manual-approve only. The automatic-approve shape (non-empty `InvitationData` /
+    /// `InvitationSignature`, or `PrivateIntent == true`) is rejected here so it is not
+    /// processed with the wrong (manual) crypto. This codebase has no automatic-approve
+    /// completion path, so a rejected member is not rerouted to an alternative; it just
+    /// skips manual completion. Whether automatic-approve members should reach the admin
+    /// device-approval flow at all is a separate question for the flow owner.
+    ///
+    /// `PrivateIntent` and the invitation fields use truthy/falsy checks (absent or empty
+    /// is admitted), mirroring the reference web client gate.
+    fn is_ready_for_manual_admin_completion(&self) -> bool {
         self.state == Some(LtCoreUnprivState::Ready)
+            && self.private_intent != Some(true)
+            && self.invitation_data.as_ref().is_none_or(|d| d.0.is_empty())
+            && self
+                .invitation_signature
+                .as_ref()
+                .is_none_or(|s| s.0.is_empty())
             && self
                 .activation_token
                 .as_ref()
@@ -207,5 +223,98 @@ impl LtCoreMemberListUnprivatizationExt for LtCoreMemberListUnprivatization {
                 .private_keys
                 .as_ref()
                 .is_some_and(|keys| !keys.is_empty())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use lattice::core::get_members::LtCoreMemberListUnprivatization;
+    use lattice::core::{
+        LtCoreUnprivArmoredPrivateKey, LtCoreUnprivInvitationData, LtCoreUnprivInvitationSignature,
+    };
+
+    fn manual_ready() -> LtCoreMemberListUnprivatization {
+        LtCoreMemberListUnprivatization {
+            state: Some(LtCoreUnprivState::Ready),
+            invitation_data: None,
+            invitation_signature: None,
+            invitation_email: None,
+            private_key: None,
+            private_keys: Some(vec![LtCoreUnprivArmoredPrivateKey("key".into())]),
+            activation_token: Some(LtCoreUnprivActivationToken("token".into())),
+            private_intent: Some(false),
+        }
+    }
+
+    #[test]
+    fn manual_ready_baseline_passes() {
+        assert!(manual_ready().is_ready_for_manual_admin_completion());
+    }
+
+    #[test]
+    fn absent_private_intent_passes() {
+        let mut u = manual_ready();
+        u.private_intent = None;
+        assert!(u.is_ready_for_manual_admin_completion());
+    }
+
+    #[test]
+    fn private_intent_true_is_rejected() {
+        let mut u = manual_ready();
+        u.private_intent = Some(true);
+        assert!(!u.is_ready_for_manual_admin_completion());
+    }
+
+    #[test]
+    fn non_empty_invitation_data_is_rejected() {
+        let mut u = manual_ready();
+        u.invitation_data = Some(LtCoreUnprivInvitationData("data".to_string()));
+        assert!(!u.is_ready_for_manual_admin_completion());
+    }
+
+    #[test]
+    fn non_empty_invitation_signature_is_rejected() {
+        let mut u = manual_ready();
+        u.invitation_signature = Some(LtCoreUnprivInvitationSignature("sig".into()));
+        assert!(!u.is_ready_for_manual_admin_completion());
+    }
+
+    #[test]
+    fn empty_invitation_fields_pass() {
+        let mut u = manual_ready();
+        u.invitation_data = Some(LtCoreUnprivInvitationData(String::new()));
+        u.invitation_signature = Some(LtCoreUnprivInvitationSignature("".into()));
+        assert!(u.is_ready_for_manual_admin_completion());
+    }
+
+    #[test]
+    fn non_ready_state_is_rejected() {
+        let mut u = manual_ready();
+        u.state = Some(LtCoreUnprivState::Pending);
+        assert!(!u.is_ready_for_manual_admin_completion());
+
+        u.state = None;
+        assert!(!u.is_ready_for_manual_admin_completion());
+    }
+
+    #[test]
+    fn missing_or_empty_activation_token_is_rejected() {
+        let mut u = manual_ready();
+        u.activation_token = None;
+        assert!(!u.is_ready_for_manual_admin_completion());
+
+        u.activation_token = Some(LtCoreUnprivActivationToken("".into()));
+        assert!(!u.is_ready_for_manual_admin_completion());
+    }
+
+    #[test]
+    fn missing_or_empty_private_keys_is_rejected() {
+        let mut u = manual_ready();
+        u.private_keys = None;
+        assert!(!u.is_ready_for_manual_admin_completion());
+
+        u.private_keys = Some(vec![]);
+        assert!(!u.is_ready_for_manual_admin_completion());
     }
 }

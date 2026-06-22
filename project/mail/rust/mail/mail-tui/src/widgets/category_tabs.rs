@@ -28,7 +28,7 @@ fn category_tab_title(label: &CategoryLabel) -> Line<'static> {
     Line::from(text)
 }
 
-fn category_display_name(label: SystemLabel) -> &'static str {
+pub(crate) fn category_display_name(label: SystemLabel) -> &'static str {
     match label {
         SystemLabel::CategoryDefault => "Primary",
         SystemLabel::CategorySocial => "Social",

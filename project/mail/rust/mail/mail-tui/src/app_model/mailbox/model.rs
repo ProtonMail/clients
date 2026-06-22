@@ -315,8 +315,9 @@ impl MailboxModel {
         }
 
         let ctx = Arc::clone(&self.ctx);
+        let view = self.label.label.clone();
         Command::task(async move {
-            match MoveItemPopup::new(&ctx, item).await {
+            match MoveItemPopup::new(&ctx, item, view).await {
                 Ok(state) => Command::message(Messages::RaisePopup(Box::new(state))),
                 Err(e) => {
                     let e = anyhow!("Failed to load folders: {e}");

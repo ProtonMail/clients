@@ -2,11 +2,11 @@ use crate::app::Command;
 use crate::app_model::mailbox::{ConversationMessage, Items, Message, MessageMessage};
 use crate::messages::Messages;
 use crate::widgets::utils::{ScrollableState, parse_date_time};
-use crate::widgets::{AsList, ScrollableList, ScrollableListState, TextInput, TextInputState};
+use crate::widgets::{ScrollableList, ScrollableListState, TextInput, TextInputState};
 use chrono::Local;
 use mail_common::actions::LabelAsAction;
 use mail_common::datatypes::{LocalConversationId, ViewMode};
-use mail_common::models::{Conversation, LabelWithCounters, MailLabel};
+use mail_common::models::{Conversation, LabelWithCounters};
 use mail_common::{MailContextResult, MailUserContext, Sidebar, SnoozeOptions, SnoozeTime};
 use mail_core_common::datatypes::{LabelType, LocalLabelId, WeekStart};
 use mail_core_common::models::{Label, ModelExtension};
@@ -19,6 +19,9 @@ use ratatui::{Frame, symbols};
 use std::sync::Arc;
 
 use super::LabelAs;
+
+mod move_item;
+pub use move_item::MoveItemPopup;
 
 pub struct CustomSnoozeOption {
     items: Vec<LocalConversationId>,
@@ -207,71 +210,6 @@ impl crate::app_model::Popup for SnoozeItemPopup {
             })
             .collect::<List<'_>>();
 
-        let list = ScrollableList::new(list);
-        frame.render_stateful_widget(list, area, &mut self.list_state);
-    }
-}
-
-pub struct MoveItemPopup {
-    folders: Vec<Label>,
-    list_state: ScrollableListState,
-    item: Items,
-}
-
-impl MoveItemPopup {
-    pub async fn new(ctx: &MailUserContext, item: Items) -> MailContextResult<Self> {
-        //TODO: improve
-        let tether = ctx.user_stash().connection();
-        let mut folders = Label::find_by_kind(LabelType::Folder, &tether).await?;
-        folders.retain(MailLabel::is_movable_into_folder);
-        let mut system = Label::find_by_kind(LabelType::System, &tether).await?;
-        system.retain(MailLabel::is_movable_into_folder);
-        folders.extend(system);
-        Ok(Self {
-            folders,
-            item,
-            list_state: ScrollableListState::new(Some(0)),
-        })
-    }
-    fn selected_label_id(&self) -> Option<LocalLabelId> {
-        let index = self.list_state.selected()?;
-        self.folders.get(index).map(Model::id)
-    }
-}
-
-impl crate::app_model::Popup for MoveItemPopup {
-    fn title(&self) -> Option<String> {
-        Some("Select Folder to Move to".to_owned())
-    }
-
-    fn handle_event(&mut self, event: Event) -> Command<Messages> {
-        let Event::Key(key) = event else {
-            return Command::None;
-        };
-        if self.list_state.handle_event(key.code) {
-            return Command::None;
-        }
-
-        match key.code {
-            KeyCode::Enter => self
-                .selected_label_id()
-                .map(|id| match self.item.clone() {
-                    Items::Conversation(item_id) => Command::batch([
-                        Command::message(Messages::DismissPopup),
-                        Command::message(ConversationMessage::MoveTo(item_id, id)),
-                    ]),
-                    Items::Message(item_id) => Command::batch([
-                        Command::message(Messages::DismissPopup),
-                        Command::message(MessageMessage::MoveTo(item_id, id)),
-                    ]),
-                })
-                .unwrap_or_default(),
-            _ => Command::None,
-        }
-    }
-
-    fn view(&mut self, frame: &mut Frame, area: Rect) {
-        let list = self.folders.as_list();
         let list = ScrollableList::new(list);
         frame.render_stateful_widget(list, area, &mut self.list_state);
     }

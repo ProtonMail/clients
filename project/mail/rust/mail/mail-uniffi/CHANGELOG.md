@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [mail-uniffi-v0.168.1] - 2026-06-22
+
+### Changed
+
+- rust_test_suite for acceptance tests and test-utils crate - proton/clients/monorepo!3085
+- Limit stash worker pool on 32bit builds
+- Remove timing layer
+- [ET-6355] make DependencyFetcher generic over API - proton/clients/monorepo!3148
+
+### Features
+
+- [ET-6355] Sync Service + Backward sync
+- run rust integration tests in merged-result bazel CI - proton/clients/monorepo!3153
+- [ET-6385] Add new action `MarkSeen` for label and uniffi `mark_label_seen`
+- Labels manipulation actions - proton/clients/monorepo!2613
+- [ET-6385] Correctly handle unseen badge flag for Category View feature
+- add Bazel Rust CI and test targets - proton/clients/monorepo!2956
+- [ET-6385] Add new field to Label models - `last_unseen_message`
+- Add Category View support for message mode inboxes in TUI
+- action queue record key after local apply - proton/clients/monorepo!3042
+
+### Fixes
+
+- [ET-6396] Fix missing v6 event loop rebase - proton/clients/monorepo!3149
+- windows compatibility - proton/clients/monorepo!3117
+- Do not log missing contacts as errors - proton/clients/monorepo!3120
+- [ET-6383] Breaking - replace crashing `with_foreign` async traits with... - proton/clients/monorepo!3087
+- [ET-6352] Delete of non-existing server attachment
+- Anonymize Debug of User and Address database models
+- [ET-6370] Fix muon auth refresh race - proton/clients/monorepo!3023
+- Improve macOS CI build times - proton/clients/monorepo!2765
+
+
 ## [mail-uniffi-v0.168.0] - 2026-06-12
 
 ### Changed
@@ -14,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Features
 
+- shared crate + mail-common integration - proton/clients/monorepo!1760
 - add BUILD files for all mail Rust crates - proton/clients/monorepo!2955
 - [ET-6257] [Breaking] Scroller interrupts on location change
 - [CP-11925] Implement fork redeem - proton/clients/monorepo!2889
@@ -25,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixes
 
+- The delete_all test should stop the race
 - [ET-6366] Fix contact group update by remote id - proton/clients/monorepo!2981
 - [ET-6353] Do not report event provider failures to user
 - [ET-6276] Make sure outlook long chains of replies are handled correctly - proton/clients/monorepo!2899

@@ -1319,6 +1319,7 @@ dependencies = [
  "contact-avatar",
  "crux_core 0.17.0 (git+https://github.com/Patryk27/crux?branch=0.17-patched)",
  "facet",
+ "futures",
  "jiff",
  "lattice",
  "pretty_assertions",
@@ -1719,7 +1720,9 @@ dependencies = [
  "calendar-database",
  "calendar-lattice",
  "calendar-network",
+ "calendar-time",
  "futures",
+ "jiff",
  "lattice",
  "tracing",
  "web-time",
@@ -5881,10 +5884,12 @@ checksum = "1a3546dc96b6d42c5f24902af9e2538e82e39ad350b0c766eb3fbf2d8f3d8359"
 dependencies = [
  "jiff-static",
  "jiff-tzdb-platform",
+ "js-sys",
  "log",
  "portable-atomic",
  "portable-atomic-util",
  "serde_core",
+ "wasm-bindgen",
  "windows-sys 0.61.2",
 ]
 

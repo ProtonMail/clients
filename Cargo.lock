@@ -1423,8 +1423,12 @@ dependencies = [
  "core-db-diesel",
  "core-telemetry",
  "derive_more 2.1.1",
+ "diesel",
+ "diesel-derive-newtype",
  "lattice",
+ "proton-crypto-account",
  "thiserror 2.0.18",
+ "zeroize",
 ]
 
 [[package]]
@@ -1434,6 +1438,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "calendar-database",
+ "calendar-database-test-utils",
  "calendar-lattice",
  "calendar-mail-lattice",
  "contact-lattice",
@@ -1449,6 +1454,7 @@ dependencies = [
  "sqlite-wasm-rs",
  "sqlite-wasm-vfs",
  "thiserror 2.0.18",
+ "tokio",
  "tracing",
 ]
 

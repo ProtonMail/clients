@@ -35,7 +35,6 @@ members = [
     "project/calendar/rust/calendar-mail-lattice",
     "project/calendar/rust/calendar-mini-month",
     "project/calendar/rust/calendar-network",
-    "project/calendar/rust/calendar-network-dual",
     "project/calendar/rust/calendar-network-fake",
     "project/calendar/rust/calendar-network-muon",
     "project/calendar/rust/calendar-queue",
@@ -401,7 +400,6 @@ calendar-loop = { path = "project/calendar/rust/calendar-loop" }
 calendar-mail-lattice = { path = "project/calendar/rust/calendar-mail-lattice" }
 calendar-mini-month = { path = "project/calendar/rust/calendar-mini-month" }
 calendar-network = { path = "project/calendar/rust/calendar-network" }
-calendar-network-dual = { path = "project/calendar/rust/calendar-network-dual" }
 calendar-network-fake = { path = "project/calendar/rust/calendar-network-fake" }
 calendar-network-muon = { path = "project/calendar/rust/calendar-network-muon" }
 calendar-queue = { path = "project/calendar/rust/calendar-queue" }

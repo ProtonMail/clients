@@ -466,6 +466,7 @@ rmp-serde = "1.3"
 send_wrapper = { version = "0.6.0", features = ["futures"] }
 serde-aux = "4.5"
 serde-wasm-bindgen = "0.6.5"
+serde_bytes = "0.11.19"
 serde_qs = "0.13.0"
 sha2 = "0.10.9"
 slotmap = "1.0.7"

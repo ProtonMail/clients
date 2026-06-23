@@ -1,21 +1,17 @@
 use super::datatypes::AppDetails;
 use crate::core::datatypes::ApiConfig;
-use crate::core::effect_channel::{EffectChannel, EffectChannelHandler, Responder};
-use crate::core::resolver::{ResolverRequestStream, resolver_channel};
 use crate::errors::ProtonError;
 use crate::errors::unexpected::UnexpectedError;
 use crate::uniffi_async;
 use futures::{FutureExt, TryFutureExt};
 use itertools::Itertools;
 use mail_common::{
-    MailContextError, ProtonMailError as RealProtonMailError, Unexpected,
+    ProtonMailError as RealProtonMailError, Unexpected,
     UserApiServiceError as RealUserApiServiceError,
 };
 use mail_core_api::verification as hv;
-use parking_lot::Mutex;
 use std::ops::Deref;
 use std::sync::Arc;
-use tokio_util::sync::{CancellationToken, DropGuard};
 use tracing::error;
 
 pub type DynChallengeNotifier = Arc<dyn ChallengeNotifier>;
@@ -228,21 +224,9 @@ impl From<hv::ChallengeLoaderResponse> for ChallengeLoaderResponse {
 }
 
 /// The payload of a human verification challenge.
-#[derive(uniffi::Object)]
+#[derive(Debug, uniffi::Object)]
 pub struct ChallengeLoader {
     inner: hv::ChallengeLoader,
-    // `Some` when a custom resolver was requested. Cancels the resolver stream's token when the
-    // loader is dropped — the loader has no parent context, so it is the resolver stream's
-    // lifetime root. Held only for its `Drop`.
-    _resolver_cancel_on_drop: Option<DropGuard>,
-}
-
-/// A freshly created challenge loader, plus the resolver stream the foreign side must drive
-/// when `ApiConfig::use_custom_resolver` was set (otherwise `None` and muon resolves itself).
-#[derive(uniffi::Record)]
-pub struct ChallengeLoaderBundle {
-    pub loader: Arc<ChallengeLoader>,
-    pub resolver_stream: Option<Arc<ResolverRequestStream>>,
 }
 
 /// Create a new `ChallengeLoader`.
@@ -251,25 +235,11 @@ pub struct ChallengeLoaderBundle {
 pub async fn new_challenge_loader(
     cfg: ApiConfig,
     app: AppDetails,
-) -> Result<ChallengeLoaderBundle, ProtonError> {
-    let use_custom_resolver = cfg.use_custom_resolver;
-    let mut cfg = cfg
+) -> Result<Arc<ChallengeLoader>, ProtonError> {
+    let cfg = cfg
         .into_real_api_config(app)
         .inspect_err(|e| error!("{e:?}"))
         .map_err(|_| UnexpectedError::Config)?;
-
-    // Resolver is opt-in. When requested, the loader owns the resolver stream's lifetime, so a
-    // token rooted on the loader is the right parent: the stream gets a child, and dropping the
-    // loader cancels the root (via the drop guard), cascading to the stream.
-    let mut resolver_cancel_on_drop = None;
-    let resolver_stream = use_custom_resolver.then(|| {
-        let (resolver, handler) = resolver_channel();
-        cfg.resolver = Some(resolver);
-        let token = CancellationToken::new();
-        let stream = ResolverRequestStream::new(handler, token.child_token());
-        resolver_cancel_on_drop = Some(token.drop_guard());
-        stream
-    });
 
     let inner = uniffi_async(async move {
         hv::ChallengeLoader::new(cfg.into())
@@ -279,15 +249,7 @@ pub async fn new_challenge_loader(
     })
     .await?;
 
-    let loader = Arc::new(ChallengeLoader {
-        inner,
-        _resolver_cancel_on_drop: resolver_cancel_on_drop,
-    });
-
-    Ok(ChallengeLoaderBundle {
-        loader,
-        resolver_stream,
-    })
+    Ok(Arc::new(ChallengeLoader { inner }))
 }
 
 #[uniffi_export]
@@ -380,6 +342,7 @@ impl ChallengeLoader {
 }
 
 /// An interface by which human verification challenges can be handled.
+#[uniffi::export(with_foreign)]
 #[async_trait::async_trait]
 pub trait ChallengeNotifier: Send + Sync + 'static {
     /// Called when a human verification challenge is encountered.
@@ -428,124 +391,5 @@ impl<T: ChallengeNotifier> hv::ChallengeNotifier for ChallengeNotifierWrap<T> {
         let payload = ChallengePayload::new(payload);
 
         self.inner.on_challenge(server, payload).map_into().await
-    }
-}
-
-/// The request side of a human-verification challenge: the server and payload to present.
-type ChallengeRequestData = (Arc<ChallengeServer>, Arc<ChallengePayload>);
-
-/// A [`ChallengeNotifier`] that asks the foreign side over a channel instead of calling it.
-struct ChannelChallengeNotifier {
-    channel: EffectChannel<ChallengeRequestData, ChallengeResponse>,
-}
-
-#[async_trait::async_trait]
-impl ChallengeNotifier for ChannelChallengeNotifier {
-    async fn on_challenge(
-        &self,
-        server: Arc<ChallengeServer>,
-        payload: Arc<ChallengePayload>,
-    ) -> ChallengeResponse {
-        self.channel
-            .request((server, payload))
-            .await
-            .unwrap_or_else(|e| {
-                tracing::error!("challenge channel closed: {e}");
-                ChallengeResponse::Cancelled
-            })
-    }
-}
-
-pub(crate) fn challenge_channel() -> (
-    hv::DynChallengeNotifier,
-    EffectChannelHandler<ChallengeRequestData, ChallengeResponse>,
-) {
-    let (channel, handler) = EffectChannel::new();
-    let notifier = ChallengeNotifierWrap::wrap(ChannelChallengeNotifier { channel });
-    (notifier, handler)
-}
-
-/// The foreign side's view of the challenge channel: poll [`next_async`] for a challenge to
-/// solve, answer it, repeat for the session's lifetime.
-#[derive(uniffi::Object)]
-pub struct ChallengeRequestStream {
-    handler: EffectChannelHandler<ChallengeRequestData, ChallengeResponse>,
-    token: CancellationToken,
-}
-
-impl ChallengeRequestStream {
-    pub(crate) fn new(
-        handler: EffectChannelHandler<ChallengeRequestData, ChallengeResponse>,
-        token: CancellationToken,
-    ) -> Arc<Self> {
-        Arc::new(Self { handler, token })
-    }
-}
-
-#[uniffi_export]
-impl ChallengeRequestStream {
-    /// Wait for the next human-verification challenge. Resolves to the request to answer, or
-    /// errors when the stream is cancelled or the requester is gone.
-    #[tracing::instrument(name = "ChallengeRequestStream::next", skip_all)]
-    pub async fn next_async(self: Arc<Self>) -> Result<Arc<ChallengeRequest>, ProtonError> {
-        let pending = self
-            .token
-            .run_until_cancelled(self.handler.next())
-            .await
-            .ok_or_else(|| {
-                tracing::info!("Challenge request stream cancelled");
-                RealProtonMailError::from(MailContextError::TaskCancelled)
-            })?
-            .map_err(|e| {
-                tracing::error!("Challenge requester is gone: {e}");
-                ProtonError::Unexpected(UnexpectedError::Internal)
-            })?;
-
-        let ((server, payload), responder) = pending.split();
-        Ok(Arc::new(ChallengeRequest {
-            server,
-            payload,
-            responder: Mutex::new(Some(responder)),
-        }))
-    }
-
-    /// Stop the stream; a pending or future `next_async` resolves to a cancellation error.
-    pub fn cancel(&self) {
-        tracing::info!("Cancelling challenge request stream");
-        self.token.cancel();
-    }
-}
-
-/// A single outstanding human-verification challenge. The foreign side reads [`server`] and
-/// [`payload`], then calls [`respond`] exactly once.
-#[derive(uniffi::Object)]
-pub struct ChallengeRequest {
-    server: Arc<ChallengeServer>,
-    payload: Arc<ChallengePayload>,
-    // `Option` because the answer is one-shot and exported methods only get `&self`.
-    responder: Mutex<Option<Responder<ChallengeResponse>>>,
-}
-
-#[uniffi_export]
-impl ChallengeRequest {
-    #[must_use]
-    pub fn server(&self) -> Arc<ChallengeServer> {
-        Arc::clone(&self.server)
-    }
-
-    #[must_use]
-    pub fn payload(&self) -> Arc<ChallengePayload> {
-        Arc::clone(&self.payload)
-    }
-
-    pub fn respond(&self, response: ChallengeResponse) {
-        let Some(responder) = self.responder.lock().take() else {
-            tracing::warn!("ChallengeRequest::respond called more than once; ignoring");
-            return;
-        };
-
-        if let Err(e) = responder.respond(response) {
-            tracing::debug!("challenge requester gone before responding: {e}");
-        }
     }
 }

@@ -1526,11 +1526,10 @@ pub struct MuonInfoProvider {
 #[async_trait]
 impl InfoProvider for MuonInfoProvider {
     async fn fingerprint(&self) -> Option<Fingerprint> {
-        let device_info = self.device_info_provider.get_device_info().await?;
-
         let mut map = serde_json::Map::new();
         let key = format!("{}-challenge", self.app_version.replace('@', "-"));
-        map.insert(key, json!(device_info));
+        let value = json!(self.device_info_provider.get_device_info().await);
+        map.insert(key, value);
 
         let result = serde_json::Value::Object(map);
         let fingerprint = result.into();
@@ -1575,7 +1574,7 @@ impl ContextLocaleProvider {
 impl LocaleProvider for ContextLocaleProvider {
     async fn locale_headers(&self) -> LocaleHeaders {
         let accept_language = match &self.device_info_provider {
-            Some(provider) => provider.get_device_info().await.map(|info| info.language),
+            Some(provider) => Some(provider.get_device_info().await.language),
             None => None,
         };
 

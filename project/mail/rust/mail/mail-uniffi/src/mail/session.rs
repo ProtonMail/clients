@@ -1,8 +1,7 @@
 use crate::core::datatypes::{ApiConfig, AppDetails, AppProtection, AppSettings, AppSettingsDiff};
-use crate::core::device::{DeviceInfoRequestStream, device_info_channel};
+use crate::core::device::{DeviceInfoProviderWrap, DynDeviceInfoProvider};
 use crate::core::measurement::{MeasurementEventType, MeasurementValue};
-use crate::core::resolver::{ResolverRequestStream, resolver_channel};
-use crate::core::verification::{ChallengeRequestStream, challenge_channel};
+use crate::core::verification::{ChallengeNotifierWrap, DynChallengeNotifier};
 use crate::core::{
     FFIKeyChain, OSKeyChain, StoredAccount, StoredAccountState, StoredSession, StoredSessionState,
 };
@@ -86,19 +85,6 @@ pub struct MailSession {
     params: MailSessionParams,
 }
 
-/// A freshly created session together with the request streams the foreign side must drive.
-///
-/// `device_info_stream` and `challenge_stream` are always present and must be driven for the
-/// session's lifetime. `resolver_stream` is only `Some` when `ApiConfig::use_custom_resolver`
-/// was set; otherwise muon uses its own resolver and there is nothing to drive.
-#[derive(uniffi::Record)]
-pub struct MailSessionBundle {
-    pub session: Arc<MailSession>,
-    pub device_info_stream: Arc<DeviceInfoRequestStream>,
-    pub challenge_stream: Arc<ChallengeRequestStream>,
-    pub resolver_stream: Option<Arc<ResolverRequestStream>>,
-}
-
 #[derive(uniffi::Record)]
 pub struct MailSessionParams {
     pub origin: Origin,
@@ -115,16 +101,18 @@ pub struct MailSessionParams {
     pub enable_content_search: bool,
 }
 
-// NOTE: The keychain and issue reporter can not be stored in record types, which is why
-// they are still in the constructor.
+// NOTE: Callbacks can not be stored in record types, which is why they are still in the
+// constructor.
 #[must_use]
 #[uniffi_export]
 #[tracing::instrument(skip_all)]
 pub fn create_mail_session(
     params: MailSessionParams,
     key_chain: Box<dyn OSKeyChain>,
+    hv_notifier: Option<DynChallengeNotifier>,
+    device_info_provider: Option<DynDeviceInfoProvider>,
     issue_reporter: Arc<dyn IssueReporter>,
-) -> Result<MailSessionBundle, UserSessionError> {
+) -> Result<Arc<MailSession>, UserSessionError> {
     let runtime = match params.origin {
         Origin::App => async_runtime,
         Origin::IosShareExt => async_runtime_slim,
@@ -134,15 +122,28 @@ pub fn create_mail_session(
     forcego_cfg_missing();
 
     runtime()
-        .block_on(async move { create_mail_session_inner(params, key_chain, issue_reporter).await })
+        .block_on(async move {
+            create_mail_session_inner(
+                params,
+                key_chain,
+                hv_notifier,
+                device_info_provider,
+                issue_reporter,
+            )
+            .await
+        })
         .map_err(UserSessionError::from)
 }
 
+// NOTE: Callbacks can not be stored in record types, which is why they are still in the
+// constructor.
 async fn create_mail_session_inner(
     params: MailSessionParams,
     key_chain: Box<dyn OSKeyChain>,
+    hv_notifier: Option<DynChallengeNotifier>,
+    device_info_provider: Option<DynDeviceInfoProvider>,
     issue_reporter: Arc<dyn IssueReporter>,
-) -> Result<MailSessionBundle, RealProtonMailError> {
+) -> Result<Arc<MailSession>, RealProtonMailError> {
     let log_path = PathBuf::from(&params.log_dir);
     std::fs::create_dir_all(&log_path)?;
 
@@ -194,25 +195,16 @@ async fn create_mail_session_inner(
         })?;
     }
 
-    let api_config = params.api_env_config.clone().unwrap_or_default();
-    let use_custom_resolver = api_config.use_custom_resolver;
-    let mut api_env_config = api_config
+    let api_env_config = params
+        .api_env_config
+        .clone()
+        .unwrap_or_default()
         .into_real_api_config(params.app_details.clone())
         .inspect_err(|e| error!("Failed to get api_env_config {e:?}"))
         .map_err(|_| Unexpected::Config)?;
 
-    // Build the request channels the foreign side will drive. The requester half is wired into
-    // the context (device info + HV) or the API config (resolver); the handler half becomes a
-    // stream below, once the context exists to root its cancellation token. Device info and HV
-    // are always wired; the resolver is opt-in (otherwise muon uses its own).
-    let resolver_handler = use_custom_resolver.then(|| {
-        let (resolver, handler) = resolver_channel();
-        api_env_config.resolver = Some(resolver);
-        handler
-    });
-
-    let (hv_notifier, challenge_handler) = challenge_channel();
-    let (device_info_provider, device_info_handler) = device_info_channel();
+    let hv_notifier = hv_notifier.map(ChallengeNotifierWrap::wrap);
+    let device_info_provider = device_info_provider.map(DeviceInfoProviderWrap::wrap);
 
     debug!(origin = ?params.origin, "Creating Context");
 
@@ -241,8 +233,8 @@ async fn create_mail_session_inner(
         params.quarantine_xattr_app_name.clone(),
         Arc::new(key_chain),
         api_env_config,
-        Some(hv_notifier),
-        Some(device_info_provider),
+        hv_notifier,
+        device_info_provider,
         log_service,
         poll,
         mail_network_monitor_service::Config::default(),
@@ -254,16 +246,6 @@ async fn create_mail_session_inner(
     let user_ctx_map = MailUserContextMap::new();
     let weak_user_ctx_map = Arc::downgrade(&user_ctx_map);
     let core_ctx = mail_ctx.core_context();
-
-    // Build the foreign-facing streams with cancellation tokens that descend from the context,
-    // so session shutdown cancels any loop parked in `next_async`.
-    let device_info_stream =
-        DeviceInfoRequestStream::new(device_info_handler, core_ctx.new_child_cancellation_token());
-    let challenge_stream =
-        ChallengeRequestStream::new(challenge_handler, core_ctx.new_child_cancellation_token());
-    let resolver_stream = resolver_handler.map(|handler| {
-        ResolverRequestStream::new(handler, core_ctx.new_child_cancellation_token())
-    });
 
     if let Some(session_service) = core_ctx.get_service_opt::<SessionObserverService>() {
         let event_service = core_ctx.event_service();
@@ -284,18 +266,11 @@ async fn create_mail_session_inner(
         });
     }
 
-    let session = Arc::new(MailSession {
+    Ok(Arc::new(MailSession {
         mail_ctx,
         user_ctx: user_ctx_map,
         params,
-    });
-
-    Ok(MailSessionBundle {
-        session,
-        device_info_stream,
-        challenge_stream,
-        resolver_stream,
-    })
+    }))
 }
 
 #[uniffi_export]

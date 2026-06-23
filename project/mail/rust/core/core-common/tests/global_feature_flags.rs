@@ -310,8 +310,8 @@ struct MockDeviceInfoProvider {
 
 #[async_trait::async_trait]
 impl DeviceInfoProvider for MockDeviceInfoProvider {
-    async fn get_device_info(&self) -> Option<DeviceInfo> {
-        Some(DeviceInfo {
+    async fn get_device_info(&self) -> DeviceInfo {
+        DeviceInfo {
             country: self.country.clone(),
             language: String::new(),
             timezone: String::new(),
@@ -325,7 +325,7 @@ impl DeviceInfoProvider for MockDeviceInfoProvider {
             storage: 0.0,
             dark_mode: false,
             keyboards: vec![],
-        })
+        }
     }
 }
 

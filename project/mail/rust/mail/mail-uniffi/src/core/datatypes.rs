@@ -52,6 +52,8 @@ mod contact_list;
 mod issue_report;
 mod timestamp;
 
+use crate::core::resolver::{Resolver, ResolverImpl};
+
 pub use self::account_details::*;
 pub use self::app_settings::*;
 pub use self::avatar::*;
@@ -63,7 +65,7 @@ use itertools::Itertools;
 use mail_api::services::proton::common::MessageId;
 use mail_contacts_common::local_ids::LocalContactCardId;
 use mail_core_api::session::EnvIdExt;
-use mail_muon::common::ParseEndpointErr;
+use mail_muon::common::{IntoDyn, ParseEndpointErr};
 use mail_muon::env::EnvId;
 use mail_stash::orm::Model;
 use tracing::error;
@@ -109,6 +111,7 @@ use proton_crypto_account::contacts::ContactCardType as RealCardType;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::ops::Deref;
+use std::sync::Arc;
 use uniffi::{Enum as UniffiEnum, Record as UniffiRecord};
 //  ENUMS
 //==============================================================================
@@ -898,11 +901,8 @@ pub struct ApiConfig {
     /// Proxy to use.
     pub proxy: Option<String>,
 
-    /// Whether to resolve hostnames via a custom resolver the foreign side drives (the
-    /// `resolver_stream` returned alongside the session / challenge loader). When false,
-    /// muon's own resolver is used and no resolver stream is produced. Most clients leave this
-    /// off; turn it on only for custom DNS (e.g. DoH under alternative routing).
-    pub use_custom_resolver: bool,
+    /// A resolver to use.
+    pub resolver: Option<Arc<dyn Resolver>>,
 }
 
 impl Default for ApiConfig {
@@ -911,7 +911,7 @@ impl Default for ApiConfig {
             user_agent: String::from("NoClient/0.1.0"),
             env_id: ApiEnvId::Prod,
             proxy: None,
-            use_custom_resolver: false,
+            resolver: None,
         }
     }
 }
@@ -932,11 +932,7 @@ impl ApiConfig {
             app_details: RealAppDetails::from(details),
             user_agent: Some(self.user_agent),
             proxy: self.proxy,
-            // No resolver is decided during this pure conversion. When `use_custom_resolver`
-            // is set, the caller (`create_mail_session` / `new_challenge_loader`) builds the
-            // channel-backed resolver and assigns it here, because pairing it with a
-            // `ResolverRequestStream` needs a cancellation token only the caller can provide.
-            resolver: None,
+            resolver: self.resolver.map(|r| ResolverImpl::new(r).into_dyn()),
             env_id,
         })
     }

@@ -1,4 +1,4 @@
-#![allow(dead_code, unused_imports)]
+#![allow(dead_code, unused_imports, async_fn_in_trait)]
 
 use mail_action_queue::action::{Action, Factory};
 use mail_action_queue::queue::{Queue, TokioTaskSpawner};

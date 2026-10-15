@@ -20,6 +20,59 @@ use std::str::FromStr;
 use test_case::test_case;
 
 #[test]
+fn subject_prefix_matching_is_case_insensitive() {
+    for (prefix, subject, expected) in [
+        (REPLY_PREFIX, "Re: Project", "Re: Project"),
+        (REPLY_PREFIX, "RE: Project", "RE: Project"),
+        (REPLY_PREFIX, "re: Project", "re: Project"),
+        (REPLY_PREFIX, "rE: Project", "rE: Project"),
+        (REPLY_PREFIX, " \tRE: Project\r\n", "RE: Project"),
+        (FORWARD_PREFIX, "Fw: Project", "Fw: Project"),
+        (FORWARD_PREFIX, "FW: Project", "FW: Project"),
+        (FORWARD_PREFIX, "fw: Project", "fw: Project"),
+        (FORWARD_PREFIX, "fW: Project", "fW: Project"),
+    ] {
+        assert_eq!(
+            apply_prefix_to_subject(prefix, subject),
+            expected,
+            "prefix: {prefix:?}, subject: {subject:?}"
+        );
+    }
+}
+
+#[test]
+fn subject_prefix_matching_adds_missing_prefix_safely() {
+    for (prefix, subject, expected) in [
+        (REPLY_PREFIX, "Project", "Re: Project"),
+        (REPLY_PREFIX, " Project ", "Re: Project"),
+        (REPLY_PREFIX, "", "Re: "),
+        (REPLY_PREFIX, "Re", "Re: Re"),
+        (REPLY_PREFIX, "日本語", "Re: 日本語"),
+        (REPLY_PREFIX, "Fw: Project", "Re: Fw: Project"),
+        (FORWARD_PREFIX, "Re: Project", "Fw: Re: Project"),
+    ] {
+        assert_eq!(
+            apply_prefix_to_subject(prefix, subject),
+            expected,
+            "prefix: {prefix:?}, subject: {subject:?}"
+        );
+    }
+}
+
+#[test]
+fn subject_prefix_matching_does_not_accumulate_after_case_changes() {
+    let mut subject = apply_prefix_to_subject(REPLY_PREFIX, "Project");
+
+    for _ in 0..5 {
+        // Simulate a correspondent changing the leading prefix to uppercase.
+        subject.replace_range(..3, "RE:");
+        subject = apply_prefix_to_subject(REPLY_PREFIX, &subject);
+
+        assert_eq!(subject, "RE: Project");
+    }
+}
+
+#[test]
 fn new_draft_message_creation() {
     let user = user();
     let address = address();

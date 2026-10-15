@@ -533,7 +533,10 @@ pub(super) const PM_SIGNATURE_DIV_CLASS: &str = "protonmail_signature_block-user
 
 pub fn apply_prefix_to_subject(prefix: &str, subject: &str) -> String {
     let trimmed_subject = subject.trim();
-    if trimmed_subject.starts_with(prefix) {
+    if trimmed_subject
+        .get(..prefix.len())
+        .is_some_and(|start| start.eq_ignore_ascii_case(prefix))
+    {
         trimmed_subject.to_string()
     } else {
         format!("{prefix}{trimmed_subject}")
